@@ -30,10 +30,10 @@ jobs:
         run: pip install -r requirements.txt
       - name: Setting environment
         run: |
-          export MYSQL_DATABASE=fmlibdb
-          export MYSQL_USER=fmlibuser
-          export MYSQL_PASSWORD=fmlibpass
-          export MYSQL_ROOT_PASSWORD=fmlibrootpass
+          echo "MYSQL_DATABASE=fmlibdb" >> $GITHUB_ENV
+          echo "MYSQL_USER=fmlibuser" >> $GITHUB_ENV
+          echo "MYSQL_PASSWORD=fmlibpass" >> $GITHUB_ENV
+          echo "MYSQL_ROOT_PASSWORD=fmlibrootpass" >> $GITHUB_ENV
           env | sort
       - name: Run unit tests
         run: pytest ./tests/units.py
