@@ -19,6 +19,14 @@ jobs:
   units:
     name: Unitary Testing
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:latest
+        env:
+          MYSQL_DATABASE: fmlibdb
+          MYSQL_USER: fmlibuser
+          MYSQL_PASSWORD: fmlibpass
+          MYSQL_ROOT_PASSWORD: fmlibrootpass
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -28,12 +36,7 @@ jobs:
           python-version: 3.9
       - name: Install dependencies
         run: pip install -r requirements.txt
-      - name: Setting environment
-        run: |
-          echo "MYSQL_DATABASE=fmlibdb" >> $GITHUB_ENV
-          echo "MYSQL_USER=fmlibuser" >> $GITHUB_ENV
-          echo "MYSQL_PASSWORD=fmlibpass" >> $GITHUB_ENV
-          echo "MYSQL_ROOT_PASSWORD=fmlibrootpass" >> $GITHUB_ENV
-          env | sort
+      - name: Copy .env.example to .env
+        run: cp .env.example .env
       - name: Run unit tests
         run: pytest ./tests/units.py

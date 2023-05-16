@@ -3,3 +3,4 @@ Flask-SQLAlchemy
 python-dotenv
 pymysql
 pytest
+pytest-mysql
