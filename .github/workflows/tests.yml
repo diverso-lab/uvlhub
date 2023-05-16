@@ -34,5 +34,6 @@ jobs:
           export MYSQL_USER=fmlibuser
           export MYSQL_PASSWORD=fmlibpass
           export MYSQL_ROOT_PASSWORD=fmlibrootpass
+          env | sort
       - name: Run unit tests
         run: pytest ./tests/units.py

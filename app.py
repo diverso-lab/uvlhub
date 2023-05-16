@@ -1,11 +1,11 @@
 from flask import jsonify
-from dotenv import load_dotenv
+from dotenv import find_dotenv, load_dotenv
 from sqlalchemy import text
 from flaskr import create_app, db
 
 import os
 
-load_dotenv()
+load_dotenv(find_dotenv())
 app = create_app()
 
 @app.route('/')
