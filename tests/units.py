@@ -24,7 +24,12 @@ class FlaskAppTestCase(unittest.TestCase):
         response = self.app.get('/test_db')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content_type, 'application/json')
-        self.assertEqual(response.json['message'], 'Connection to the database successful')
+        try:
+            self.assertEqual(response.json['message'], 'Connection to the database successful')
+        except KeyError:
+            print("Received unexpected response: ", response.json)
+            raise
+
 
 if __name__ == '__main__':
     unittest.main()
