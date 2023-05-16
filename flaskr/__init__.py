@@ -9,9 +9,10 @@ load_dotenv()
 db = SQLAlchemy()
 
 def create_app(test_config=None):
+    # create and configure the app
     app = Flask(__name__, instance_relative_config=True)
     app = Flask(__name__)
-    app.config['SQLALCHEMY_DATABASE_URI'] = f"mysql+pymysql://{os.getenv('MYSQL_USER')}:{os.getenv('MYSQL_PASSWORD')}@db:3306/{os.getenv('MYSQL_DATABASE')}"
+    app.config['SQLALCHEMY_DATABASE_URI'] = f"mysql+pymysql://{os.getenv('MYSQL_USER')}:{os.getenv('MYSQL_PASSWORD')}@{os.getenv('MYSQL_HOSTNAME')}:3306/{os.getenv('MYSQL_DATABASE')}"
     db.init_app(app)
     
 
