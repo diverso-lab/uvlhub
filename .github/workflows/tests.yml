@@ -27,6 +27,8 @@ jobs:
           MYSQL_USER: fmlibuser
           MYSQL_PASSWORD: fmlibpass
           MYSQL_ROOT_PASSWORD: fmlibrootpass
+        ports:
+          - 3306:3306
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -38,5 +40,9 @@ jobs:
         run: pip install -r requirements.txt
       - name: Copy .env.example to .env
         run: cp .env.example .env
+      - name: Wait for MySQL to be ready
+        run: |
+          apt-get -y install wait-for-it
+          wait-for-it -t 0 mysql:3306 -- echo "MySQL is ready!"
       - name: Run unit tests
         run: pytest ./tests/units.py
