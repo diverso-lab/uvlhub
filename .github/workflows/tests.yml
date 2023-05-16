@@ -28,7 +28,11 @@ jobs:
           python-version: 3.9
       - name: Install dependencies
         run: pip install -r requirements.txt
-      - name: Copy .env.example to .env
-        run: cp .env.example .env
+      - name: Setting environment
+        run: |
+          export MYSQL_DATABASE=fmlibdb
+          export MYSQL_USER=fmlibuser
+          export MYSQL_PASSWORD=fmlibpass
+          export MYSQL_ROOT_PASSWORD=fmlibrootpass
       - name: Run unit tests
         run: pytest ./tests/units.py
