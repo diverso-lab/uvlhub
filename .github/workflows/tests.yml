@@ -1,56 +1,46 @@
-name: Pytest Testing Suite
+name: Flask CI
 
 on:
-  pull_request:
-    branches:
-      - main
-    types:
-      - opened
-      - reopened
-      - edited
-      - review_requested
-      - synchronize
   push:
-    branches:
-      - main
-  workflow_call:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
-  units:
-    name: Unitary Testing
+  build:
+
     runs-on: ubuntu-latest
+
     services:
       mysql:
-        image: mysql:latest
+        image: mysql:5.7
         env:
+          MYSQL_ROOT_PASSWORD: fmlibrootpass
           MYSQL_DATABASE: fmlibdb
           MYSQL_USER: fmlibuser
           MYSQL_PASSWORD: fmlibpass
-          MYSQL_ROOT_PASSWORD: fmlibrootpass
         ports:
           - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.9
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-      - name: Copy .env.example to .env
-        run: cp .env.example .env
-      - name: Prepare wait-for-it.sh
-        run: |
-          curl -sSLO https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh
-          chmod +x wait-for-it.sh
-      - name: Get MySQL container IP
-        run: |
-          CONTAINER_IP=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' mysql)
-          echo "MySQL container IP: $CONTAINER_IP"
-      - name: Wait for MySQL to be ready
-        run: |
-          CONTAINER_IP=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' mysql)
-          ./wait-for-it.sh $CONTAINER_IP:3306 --timeout=0 -- echo "MySQL is ready!"
-      - name: Run unit tests
-        run: pytest ./tests/units.py
+    - uses: actions/checkout@v2
+
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Run Tests
+      run: |
+        export MYSQL_HOSTNAME=127.0.0.1
+        export MYSQL_PORT=3306
+        export MYSQL_DATABASE=fmlibdb
+        export MYSQL_USER=fmlibuser
+        export MYSQL_PASSWORD=fmlibpass
+        pytest tests/units.py
