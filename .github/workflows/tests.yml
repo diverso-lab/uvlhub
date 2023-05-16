@@ -44,8 +44,13 @@ jobs:
         run: |
           curl -sSLO https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh
           chmod +x wait-for-it.sh
+      - name: Get MySQL container IP
+        run: |
+          CONTAINER_IP=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' mysql)
+          echo "MySQL container IP: $CONTAINER_IP"
       - name: Wait for MySQL to be ready
         run: |
-          ./wait-for-it.sh mysql:3306 --timeout=0 -- echo "MySQL is ready!"
+          CONTAINER_IP=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' mysql)
+          ./wait-for-it.sh $CONTAINER_IP:3306 --timeout=0 -- echo "MySQL is ready!"
       - name: Run unit tests
         run: pytest ./tests/units.py
