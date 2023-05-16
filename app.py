@@ -4,12 +4,11 @@ from dotenv import load_dotenv
 from sqlalchemy import text
 import os
 
+from flaskr import create_app, db
+
 load_dotenv()
 
-app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URI')
-
-db = SQLAlchemy(app)
+app = create_app()
 
 @app.route('/')
 def hello_world():

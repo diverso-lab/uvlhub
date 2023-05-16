@@ -1,16 +1,6 @@
 import unittest
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from dotenv import load_dotenv
-from sqlalchemy import text
-import os
 
-load_dotenv()
-
-app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = f"mysql+pymysql://{os.getenv('MYSQL_USER')}:{os.getenv('MYSQL_PASSWORD')}@db:3306/{os.getenv('MYSQL_DATABASE')}"
-
-db = SQLAlchemy(app)
+from app import app
 
 class FlaskAppTestCase(unittest.TestCase):
 
