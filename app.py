@@ -4,11 +4,11 @@ from dotenv import load_dotenv
 from sqlalchemy import text
 import os
 
-# Carga las variables de entorno desde el archivo .env
 load_dotenv()
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = f"mysql+pymysql://{os.getenv('MYSQL_USER')}:{os.getenv('MYSQL_PASSWORD')}@db:3306/{os.getenv('MYSQL_DATABASE')}"
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URI')
+
 db = SQLAlchemy(app)
 
 @app.route('/')
@@ -30,4 +30,4 @@ def test_db():
         return jsonify({'error': str(e)})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run()
