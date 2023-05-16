@@ -1,0 +1,32 @@
+name: Pytest Testing Suite
+'on':
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - reopened
+      - edited
+      - review_requested
+      - synchronize
+  push:
+    branches:
+      - main
+  workflow_call:
+
+jobs:
+
+  units:
+    name: Unitary Testing
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run unit tests
+        run: pytest ./tests/units.py
