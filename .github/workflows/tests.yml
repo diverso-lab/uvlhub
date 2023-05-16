@@ -40,9 +40,12 @@ jobs:
         run: pip install -r requirements.txt
       - name: Copy .env.example to .env
         run: cp .env.example .env
+      - name: Prepare wait-for-it.sh
+        run: |
+          curl -sSLO https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh
+          chmod +x wait-for-it.sh
       - name: Wait for MySQL to be ready
         run: |
-          apt-get -y install wait-for-it
-          wait-for-it -t 0 mysql:3306 -- echo "MySQL is ready!"
+          ./wait-for-it.sh mysql:3306 --timeout=0 -- echo "MySQL is ready!"
       - name: Run unit tests
         run: pytest ./tests/units.py
