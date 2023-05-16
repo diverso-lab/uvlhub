@@ -15,6 +15,7 @@ MYSQL_DATABASE=fmlibdb
 MYSQL_USER=fmlibuser
 MYSQL_PASSWORD=fmlibpass
 MYSQL_ROOT_PASSWORD=fmlibrootpass
+ZENODO_ACCESS_TOKEN=<GET_ACCESS_TOKEN_IN_ZENODO>
 ```
 
 ## Run containers

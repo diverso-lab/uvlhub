@@ -1,7 +1,8 @@
-from flask import jsonify
+from flask import jsonify, request
 from dotenv import find_dotenv, load_dotenv
 from sqlalchemy import text
 from flaskr import create_app, db
+from zenodo import test_zenodo_connection,get_all_depositions
 
 import os
 
@@ -24,6 +25,14 @@ def test_db():
         return jsonify({'message': 'Connection to the database successful'})
     except Exception as e:
         return jsonify({'error': str(e)})
+    
+@app.route('/test_zenodo')
+def test_zenodo():
+    return jsonify(success=test_zenodo_connection())
+
+@app.route('/test_get_all_depositions')
+def test_get_all_depositions():
+    return jsonify(get_all_depositions())
 
 if __name__ == '__main__':
     app.run()
