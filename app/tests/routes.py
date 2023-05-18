@@ -2,7 +2,6 @@ import os
 
 from flask import Blueprint, jsonify
 from sqlalchemy import text
-
 from app import db
 
 test_routes = Blueprint('test_routes', __name__)
