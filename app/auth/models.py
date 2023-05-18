@@ -11,7 +11,7 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(256), unique=True, nullable=False)
     password = db.Column(db.String(128), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
-    data_sets = db.relationship('DataSet', backref='user', lazy=True)
+    #data_sets = db.relationship('DataSet', backref='user', lazy=True) TODO: Implements other model before
 
     def __init__(self, name, email):
         self.name = name
