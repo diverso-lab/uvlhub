@@ -23,3 +23,13 @@ ZENODO_ACCESS_TOKEN=<GET_ACCESS_TOKEN_IN_ZENODO>
 ```
 docker compose up -d 
 ```
+
+## Run migrations
+
+Inside the `fmlib-web` container, run:
+
+```
+flask db init
+flask db migrate
+flask db upgrade
+```
