@@ -18,6 +18,7 @@ def create_app(config_name=None):
     :return: A Flask application object.
     """
     app = Flask(__name__)
+    app.secret_key = {os.getenv('SECRET_KEY', '')}
 
     # Database configuration
     app.config['SQLALCHEMY_DATABASE_URI'] = (

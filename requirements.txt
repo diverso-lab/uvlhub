@@ -1,8 +1,11 @@
 Flask~=2.3.2
 Flask-SQLAlchemy
+Flask-WTF
+WTForms
 python-dotenv~=1.0.0
 pymysql
 pytest
+Jinja2
 requests~=2.30.0
 Flask-Migrate
 SQLAlchemy~=2.0.13
