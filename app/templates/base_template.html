@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for("static", filename="base.css") }}">
+</head>
+<body>
+<div>
+    <ul class="user-info">
+        <li><a href="{{ url_for('public.index') }}">Home</a></li>
+        {% if current_user.is_anonymous %}
+            <li><a href="{{ url_for('auth.login') }}">Login</a></li>
+            <li> | </li>
+            <li><a href="{{ url_for('auth.show_signup_form') }}">Sign up</a></li>
+        {% else %}
+            <li>{{ current_user.name }}</li>
+            <li> | </li>
+            <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
+        {% endif %}
+    </ul>
+</div>
+
+Content block:
+
+{% block content %}{% endblock %}
+</body>
+</html>

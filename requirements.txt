@@ -9,3 +9,7 @@ Jinja2
 requests~=2.30.0
 Flask-Migrate
 SQLAlchemy~=2.0.13
+flask_login
+Werkzeug~=2.3.4
+alembic~=1.11.1
+email_validator

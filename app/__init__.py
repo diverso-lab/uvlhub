@@ -1,14 +1,20 @@
 import os
+import secrets
+
 from flask import Flask
+from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
 from flask_migrate import Migrate
 
+
 # Load environment variables
 load_dotenv()
 
-# Instance of SQLAlchemy
+# Instances
 db = SQLAlchemy()
+migrate = Migrate()
+login_manager = LoginManager()
 
 
 def create_app(config_name=None):
@@ -18,7 +24,7 @@ def create_app(config_name=None):
     :return: A Flask application object.
     """
     app = Flask(__name__)
-    app.secret_key = {os.getenv('SECRET_KEY', '')}
+    app.secret_key = secrets.token_bytes()
 
     # Database configuration
     app.config['SQLALCHEMY_DATABASE_URI'] = (
@@ -26,20 +32,31 @@ def create_app(config_name=None):
         f"@{os.getenv('MYSQL_HOSTNAME', 'localhost')}:3306/{os.getenv('MYSQL_DATABASE', 'default_db')}"
     )
 
+    # Templates configuration
+    app.config['TEMPLATES_AUTO_RELOAD'] = True
+
+    # Login configuration
+    login_manager.init_app(app)
+    login_manager.login_view = "auth.login"
+
     # Initialize SQLAlchemy with the app
     db.init_app(app)
+
+    # Initialize Migrate with the app
+    migrate.init_app(app, db)
 
     # Register routes
     from app.tests.routes import test_routes
     app.register_blueprint(test_routes)
 
-    @app.route('/')
-    def hello_world():
-        return 'Hello, World!'
+    # Register blueprints
+    from .auth import auth_bp
+    app.register_blueprint(auth_bp)
 
-    # Register models and migration
-    from app.models import User, DataSet, File, MetaData, DSMetrics, FeatureModel, FMMetaData, FMMetrics
-    Migrate(app, db)
+    from .public import public_bp
+    app.register_blueprint(public_bp)
+
+    #from app.models import DataSet, File, MetaData, DSMetrics, FeatureModel, FMMetaData, FMMetrics
 
     return app
 
