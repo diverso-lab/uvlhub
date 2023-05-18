@@ -1,28 +1,173 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <title>{% block title %}{% endblock %}</title>
-    <link rel="stylesheet" href="{{ url_for("static", filename="base.css") }}">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="Responsive Admin &amp; Dashboard Template based on Bootstrap 5">
+    <meta name="author" content="AdminKit">
+    <meta name="keywords"
+          content="adminkit, bootstrap, bootstrap 5, admin, dashboard, template, responsive, css, sass, html, theme, front-end, ui kit, web">
+
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link rel="shortcut icon" href="{{ url_for("static", filename="img/icons/icon-48x48.png") }}"/>
+
+
+    <link rel="canonical" href="https://demo-basic.adminkit.io/"/>
+
+    <title>AdminKit Demo - Bootstrap 5 Admin Template</title>
+
+    <link rel="stylesheet" href="{{ url_for("static", filename="css/app.css") }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
+
 <body>
-<div>
-    <ul class="user-info">
-        <li><a href="{{ url_for('public.index') }}">Home</a></li>
-        {% if current_user.is_anonymous %}
-            <li><a href="{{ url_for('auth.login') }}">Login</a></li>
-            <li> | </li>
-            <li><a href="{{ url_for('auth.show_signup_form') }}">Sign up</a></li>
-        {% else %}
-            <li>{{ current_user.name }}</li>
-            <li> | </li>
-            <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
-        {% endif %}
-    </ul>
+<div class="wrapper">
+
+    <nav id="sidebar" class="sidebar js-sidebar">
+        <div class="sidebar-content js-simplebar">
+            <a class="sidebar-brand" href="{{ url_for('public.index') }}">
+                <span class="align-middle">FMLib</span>
+            </a>
+
+            <ul class="sidebar-nav">
+
+                <li class="sidebar-item {{ 'active' if request.endpoint == 'public.index' else '' }}">
+                    <a class="sidebar-link" href="{{ url_for('public.index') }}">
+                        <i class="align-middle" data-feather="sliders"></i> <span class="align-middle">Dashboard</span>
+                    </a>
+                </li>
+
+                {% if current_user.is_anonymous %}
+
+                <li class="sidebar-item {{ 'active' if request.endpoint == 'auth.login' else '' }}">
+                    <a class="sidebar-link" href="{{ url_for('auth.login') }}">
+                        <i class="align-middle" data-feather="log-in"></i> <span class="align-middle">Login</span>
+                    </a>
+                </li>
+
+                <li class="sidebar-item {{ 'active' if request.endpoint == 'auth.show_signup_form' else '' }}">
+                    <a class="sidebar-link" href="{{ url_for('auth.show_signup_form') }}">
+                        <i class="align-middle" data-feather="user-plus"></i> <span class="align-middle">Sign Up</span>
+                    </a>
+                </li>
+
+                {% else %}
+
+                <li class="sidebar-item">
+                    <a class="sidebar-link" href="{{ url_for('auth.logout') }}">
+                        <i class="align-middle" data-feather="log-out"></i> <span class="align-middle">Log out</span>
+                    </a>
+                </li>
+
+                {% endif %}
+
+            </ul>
+
+            <div class="sidebar-cta">
+                <div class="sidebar-cta-content">
+                    <strong class="d-inline-block mb-2">Proof of concept</strong>
+                    <div class="mb-3 text-sm">
+                        This application should only be used for research purposes
+                    </div>
+                    <div class="d-grid">
+                        <a href="https://github.com/diverso-lab/fmlib" class="btn btn-primary">View GitHub</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main">
+        <nav class="navbar navbar-expand navbar-light navbar-bg">
+            <a class="sidebar-toggle js-sidebar-toggle">
+                <i class="hamburger align-self-center"></i>
+            </a>
+            <div class="navbar-collapse collapse">
+                <ul class="navbar-nav navbar-align">
+                    <li class="nav-item dropdown">
+                        <a class="nav-icon dropdown-toggle d-inline-block d-sm-none" href="#" data-bs-toggle="dropdown">
+                            <i class="align-middle" data-feather="settings"></i>
+                        </a>
+
+                        {% if current_user.is_anonymous %}
+                        <a class="nav-link  d-none d-sm-inline-block" href="{{ url_for('auth.login') }}">Login</a>
+                        <a class="nav-link  d-none d-sm-inline-block" href="{{ url_for('auth.show_signup_form') }}">Sign
+                            up</a>
+
+                        {% else %}
+
+                        <a class="nav-link dropdown-toggle d-none d-sm-inline-block" href="#" data-bs-toggle="dropdown">
+                            <span class="text-dark">{{ current_user.name }}</span>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end">
+                            <a class="dropdown-item" href="{{ url_for('auth.logout') }}"> <i class="align-middle me-1"
+                                                                                  data-feather="log-out"></i>Log out</a>
+                        </div>
+
+                        {% endif %}
+
+
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <main class="content">
+            <div class="container-fluid p-0">
+
+                {% block content %}{% endblock %}
+
+                <h1 class="h3 mb-3">Blank Page</h1>
+
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Empty card</h5>
+                            </div>
+                            <div class="card-body">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+
+        <footer class="footer">
+            <div class="container-fluid">
+                <div class="row text-muted">
+                    <div class="col-6 text-start">
+                        <p class="mb-0">
+                            <strong>FMLIB </strong> &copy; DiversoLab
+                        </p>
+                    </div>
+                    <div class="col-6 text-end">
+                        <ul class="list-inline">
+                            <li class="list-inline-item">
+                                <a class="text-muted" href="https://adminkit.io/" target="_blank">Support</a>
+                            </li>
+                            <li class="list-inline-item">
+                                <a class="text-muted" href="https://adminkit.io/" target="_blank">Help Center</a>
+                            </li>
+                            <li class="list-inline-item">
+                                <a class="text-muted" href="https://adminkit.io/" target="_blank">Privacy</a>
+                            </li>
+                            <li class="list-inline-item">
+                                <a class="text-muted" href="https://adminkit.io/" target="_blank">Terms</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
 </div>
 
-Content block:
+<script src="{{ url_for("static", filename="js/app.js") }}"></script>
 
-{% block content %}{% endblock %}
 </body>
+
 </html>
