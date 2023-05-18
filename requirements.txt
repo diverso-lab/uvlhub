@@ -1,7 +1,9 @@
-Flask
+Flask~=2.3.2
 Flask-SQLAlchemy
-python-dotenv
+python-dotenv~=1.0.0
 pymysql
 pytest
-requests
+requests~=2.30.0
 
+
+SQLAlchemy~=2.0.13

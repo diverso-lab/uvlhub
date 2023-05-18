@@ -43,4 +43,4 @@ jobs:
         export MYSQL_DATABASE=fmlibdb
         export MYSQL_USER=fmlibuser
         export MYSQL_PASSWORD=fmlibpass
-        pytest tests/units.py
+        pytest app/tests/units.py
