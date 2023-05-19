@@ -52,6 +52,10 @@ def create_app(config_name=None):
     from .auth import auth_bp
     app.register_blueprint(auth_bp)
 
+    # Register blueprints
+    from .dataset import dataset_bp
+    app.register_blueprint(dataset_bp)
+
     from .public import public_bp
     app.register_blueprint(public_bp)
 

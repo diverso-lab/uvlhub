@@ -29,7 +29,6 @@ docker compose up -d
 Inside the `fmlib-web` container, run:
 
 ```
-flask db init
 flask db migrate
 flask db upgrade
 ```
