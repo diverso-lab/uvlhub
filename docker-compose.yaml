@@ -4,16 +4,12 @@ services:
 
   web:
     build: .
-    command: flask run --host=0.0.0.0 --reload
     volumes:
       - .:/app
     ports:
       - 80:5000
     environment:
-      FLASK_APP: app.py
-      FLASK_RUN_HOST: 0.0.0.0
       FLASK_ENV: development
-      DATABASE_URI: mysql+pymysql://${MYSQL_USER}:${MYSQL_PASSWORD}@db:3306/${MYSQL_DATABASE}
     depends_on:
       - db
   

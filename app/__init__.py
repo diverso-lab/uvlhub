@@ -7,7 +7,6 @@ from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
 from flask_migrate import Migrate
 
-
 # Load environment variables
 load_dotenv()
 
@@ -56,9 +55,14 @@ def create_app(config_name=None):
     from .public import public_bp
     app.register_blueprint(public_bp)
 
-    #from app.models import DataSet, File, MetaData, DSMetrics, FeatureModel, FMMetaData, FMMetrics
+    # from app.models import DataSet, File, MetaData, DSMetrics, FeatureModel, FMMetaData, FMMetrics
 
     return app
+
+
+if __name__ == '__main__':
+    app = create_app()
+    app.run()
 
 
 def get_test_client():

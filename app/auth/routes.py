@@ -39,9 +39,14 @@ def login():
     form = LoginForm()
     if form.validate_on_submit():
         user = User.get_by_email(form.email.data)
+
         if user is not None and user.check_password(form.password.data):
             login_user(user, remember=form.remember_me.data)
             return redirect(url_for('public.index'))
+        else:
+            error = f'Invalid credentials'
+            return render_template("auth/login_form.html", form=form, error=error)
+
     return render_template('auth/login_form.html', form=form)
 
 

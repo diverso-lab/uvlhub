@@ -17,4 +17,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 EXPOSE 5000
 
 # Run the application
-CMD ["python", "-m", "app"]
+CMD ["flask", "run", "--host=0.0.0.0", "--port=5000", "--reload", "--debug"]
+
