@@ -59,8 +59,6 @@ def create_app(config_name=None):
     from .public import public_bp
     app.register_blueprint(public_bp)
 
-    # from app.models import DataSet, File, MetaData, DSMetrics, FeatureModel, FMMetaData, FMMetrics
-
     # Custom error handlers
     register_error_handlers(app)
 
