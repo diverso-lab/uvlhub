@@ -1,7 +1,7 @@
 import os
 import secrets
 
-from flask import Flask
+from flask import Flask, render_template
 from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
@@ -57,6 +57,9 @@ def create_app(config_name=None):
 
     # from app.models import DataSet, File, MetaData, DSMetrics, FeatureModel, FMMetaData, FMMetrics
 
+    # Custom error handlers
+    register_error_handlers(app)
+
     return app
 
 
@@ -64,6 +67,24 @@ if __name__ == '__main__':
     app = create_app()
     app.run()
 
+
+def register_error_handlers(app):
+
+    @app.errorhandler(500)
+    def base_error_handler(e):
+        return render_template('500.html'), 500
+
+    @app.errorhandler(404)
+    def error_404_handler(e):
+        return render_template('404.html'), 404
+
+    @app.errorhandler(401)
+    def error_404_handler(e):
+        return render_template('401.html'), 401
+
+    @app.errorhandler(400)
+    def error_400_handler(e):
+        return render_template('400.html'), 400
 
 def get_test_client():
     """
