@@ -6,7 +6,7 @@ from .models import DataSet, DSMetrics, FeatureModel, File, FMMetaData, FMMetric
 from . import dataset_bp
 
 
-@dataset_bp.route('/dataset/create', methods=['GET', 'POST'])
+@dataset_bp.route('/dataset/upload', methods=['GET', 'POST'])
 def create_dataset():
     form = DataSetForm()
     if form.validate_on_submit():
@@ -15,4 +15,4 @@ def create_dataset():
         app.db.session.commit()
         flash('Your DataSet has been created!')
         return redirect(url_for('index'))
-    return render_template('dataset/create_dataset.html', title='Create DataSet', form=form)
+    return render_template('dataset/upload_dataset.html', title='Create DataSet', form=form)

@@ -1,9 +1,26 @@
 from flask_wtf import FlaskForm
-from wtforms import IntegerField, SubmitField
-from wtforms.validators import DataRequired
+from wtforms import StringField, SelectField, FieldList, FormField, SubmitField, TextAreaField
+from wtforms.validators import DataRequired, URL, Optional
+from enum import Enum
+
+from .models import PublicationType
+
+
+class AuthorForm(FlaskForm):
+    name = StringField('Name', validators=[DataRequired()])
+    affiliation = StringField('Affiliation')
+    orcid = StringField('ORCID')
+    gnd = StringField('GND')
 
 
 class DataSetForm(FlaskForm):
-    user_id = IntegerField('User ID', validators=[DataRequired()])
-    meta_data_id = IntegerField('Meta Data ID', validators=[DataRequired()])
-    submit = SubmitField('Create DataSet')
+    title = StringField('Title', validators=[DataRequired()])
+    description = TextAreaField('Description', validators=[DataRequired()])
+    publication_type = SelectField('Publication Type', choices=[(pt.value, pt.name) for pt in PublicationType],
+                                   validators=[DataRequired()])
+    publication_doi = StringField('Publication DOI', validators=[Optional(), URL()])
+    dataset_doi = StringField('Dataset DOI', validators=[Optional(), URL()])
+    tags = StringField('Tags')
+    authors = FieldList(FormField(AuthorForm))
+    submit = SubmitField('Submit')
+

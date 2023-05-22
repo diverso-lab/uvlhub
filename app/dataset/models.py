@@ -34,7 +34,6 @@ class Author(db.Model):
     fm_meta_data_id = db.Column(db.Integer, db.ForeignKey('fm_meta_data.id'))
 
 
-
 class DSMetrics(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     number_of_models = db.Column(db.String(120))
@@ -47,7 +46,7 @@ class DSMetrics(db.Model):
 class DSMetaData(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(120), nullable=False)
-    description = db.Column(db.String(120), nullable=False)
+    description = db.Column(db.Text, nullable=False)
     publication_type = db.Column(SQLAlchemyEnum(PublicationType), nullable=False)
     publication_doi = db.Column(db.String(120))
     dataset_doi = db.Column(db.String(120))
@@ -92,7 +91,7 @@ class File(db.Model):
 class FMMetaData(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(120), nullable=False)
-    description = db.Column(db.String(120), nullable=False)
+    description = db.Column(db.Text, nullable=False)
     publication_type = db.Column(SQLAlchemyEnum(PublicationType), nullable=False)
     publication_doi = db.Column(db.String(120))
     dataset_doi = db.Column(db.String(120))
@@ -101,7 +100,6 @@ class FMMetaData(db.Model):
     fm_metrics_id = db.Column(db.Integer, db.ForeignKey('fm_metrics.id'))
     fm_metrics = db.relationship('FMMetrics', uselist=False, backref='fm_meta_data')
     authors = db.relationship('Author', backref='fm_metadata', lazy=True, foreign_keys=[Author.fm_meta_data_id])
-
 
     def __repr__(self):
         return f'FMMetaData<{self.title}'
