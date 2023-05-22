@@ -30,6 +30,9 @@ class Author(db.Model):
     affiliation = db.Column(db.String(120))
     orcid = db.Column(db.String(120))
     gnd = db.Column(db.String(120))
+    ds_meta_data_id = db.Column(db.Integer, db.ForeignKey('ds_meta_data.id'))
+    fm_meta_data_id = db.Column(db.Integer, db.ForeignKey('fm_meta_data.id'))
+
 
 
 class DSMetrics(db.Model):
@@ -97,7 +100,8 @@ class FMMetaData(db.Model):
     uvl_version = db.Column(db.String(120))
     fm_metrics_id = db.Column(db.Integer, db.ForeignKey('fm_metrics.id'))
     fm_metrics = db.relationship('FMMetrics', uselist=False, backref='fm_meta_data')
-    authors = db.relationship('Author', backref='fm_metadata', lazy=True)
+    authors = db.relationship('Author', backref='fm_metadata', lazy=True, foreign_keys=[Author.fm_meta_data_id])
+
 
     def __repr__(self):
         return f'FMMetaData<{self.title}'
