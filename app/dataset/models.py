@@ -1,15 +1,35 @@
 from app import db
+from enum import Enum
+from sqlalchemy import Enum as SQLAlchemyEnum
 
 
-class DataSet(db.Model):
+class PublicationType(Enum):
+    ANNOTATION_COLLECTION = 'annotationcollection'
+    BOOK = 'book'
+    BOOK_SECTION = 'section'
+    CONFERENCE_PAPER = 'conferencepaper'
+    DATA_MANAGEMENT_PLAN = 'datamanagementplan'
+    JOURNAL_ARTICLE = 'article'
+    PATENT = 'patent'
+    PREPRINT = 'preprint'
+    PROJECT_DELIVERABLE = 'deliverable'
+    PROJECT_MILESTONE = 'milestone'
+    PROPOSAL = 'proposal'
+    REPORT = 'report'
+    SOFTWARE_DOCUMENTATION = 'softwaredocumentation'
+    TAXONOMIC_TREATMENT = 'taxonomictreatment'
+    TECHNICAL_NOTE = 'technicalnote'
+    THESIS = 'thesis'
+    WORKING_PAPER = 'workingpaper'
+    OTHER = 'other'
+
+
+class Author(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    files = db.relationship('File', backref='data_set', lazy=True)
-    meta_data_id = db.Column(db.Integer, db.ForeignKey('meta_data.id'), nullable=False)
-    feature_models = db.relationship('FeatureModel', backref='data_set', lazy=True)
-
-    def __repr__(self):
-        return f'DataSet<{self.id}>'
+    name = db.Column(db.String(120), nullable=False)
+    affiliation = db.Column(db.String(120))
+    orcid = db.Column(db.String(120))
+    gnd = db.Column(db.String(120))
 
 
 class DSMetrics(db.Model):
@@ -19,6 +39,30 @@ class DSMetrics(db.Model):
 
     def __repr__(self):
         return f'DSMetrics<models={self.number_of_models}, features={self.number_of_features}>'
+
+
+class DSMetaData(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(120), nullable=False)
+    description = db.Column(db.String(120), nullable=False)
+    publication_type = db.Column(SQLAlchemyEnum(PublicationType), nullable=False)
+    publication_doi = db.Column(db.String(120))
+    dataset_doi = db.Column(db.String(120))
+    tags = db.Column(db.String(120))
+    ds_metrics_id = db.Column(db.Integer, db.ForeignKey('ds_metrics.id'))
+    ds_metrics = db.relationship('DSMetrics', uselist=False, backref='ds_meta_data')
+    authors = db.relationship('Author', backref='ds_meta_data', lazy=True)
+
+
+class DataSet(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    files = db.relationship('File', backref='data_set', lazy=True)
+    ds_meta_data_id = db.Column(db.Integer, db.ForeignKey('ds_meta_data.id'), nullable=False)
+    feature_models = db.relationship('FeatureModel', backref='data_set', lazy=True)
+
+    def __repr__(self):
+        return f'DataSet<{self.id}>'
 
 
 class FeatureModel(db.Model):
@@ -44,16 +88,16 @@ class File(db.Model):
 
 class FMMetaData(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    authors = db.Column(db.String(120), nullable=False)
     title = db.Column(db.String(120), nullable=False)
     description = db.Column(db.String(120), nullable=False)
-    publication_type = db.Column(db.String(120))
+    publication_type = db.Column(SQLAlchemyEnum(PublicationType), nullable=False)
     publication_doi = db.Column(db.String(120))
     dataset_doi = db.Column(db.String(120))
     tags = db.Column(db.String(120))
     uvl_version = db.Column(db.String(120))
     fm_metrics_id = db.Column(db.Integer, db.ForeignKey('fm_metrics.id'))
     fm_metrics = db.relationship('FMMetrics', uselist=False, backref='fm_meta_data')
+    authors = db.relationship('Author', backref='fm_metadata', lazy=True)
 
     def __repr__(self):
         return f'FMMetaData<{self.title}'
@@ -66,19 +110,3 @@ class FMMetrics(db.Model):
 
     def __repr__(self):
         return f'FMMetrics<solver={self.solver}, not_solver={self.not_solver}>'
-
-
-class MetaData(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    authors = db.Column(db.String(120), nullable=False)
-    title = db.Column(db.String(120), nullable=False)
-    description = db.Column(db.String(120), nullable=False)
-    publication_type = db.Column(db.String(120))
-    publication_doi = db.Column(db.String(120))
-    dataset_doi = db.Column(db.String(120))
-    tags = db.Column(db.String(120))
-    ds_metrics_id = db.Column(db.Integer, db.ForeignKey('ds_metrics.id'))
-    ds_metrics = db.relationship('DSMetrics', uselist=False, backref='meta_data')
-
-    def __repr__(self):
-        return f'MetaData<{self.title}>'
