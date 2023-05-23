@@ -62,7 +62,13 @@ def create_app(config_name=None):
     # Custom error handlers
     register_error_handlers(app)
 
+    # Injecting FLASK_APP_NAME environment variable into jinja context
+    @app.context_processor
+    def inject_flask_app_name():
+        return dict(FLASK_APP_NAME=os.getenv('FLASK_APP_NAME'))
+
     return app
+
 
 
 if __name__ == '__main__':

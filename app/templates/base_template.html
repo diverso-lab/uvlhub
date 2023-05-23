@@ -16,7 +16,7 @@
 
     <link rel="canonical" href="https://demo-basic.adminkit.io/"/>
 
-    <title>FMLib - DiversoLab</title>
+    <title>{{ FLASK_APP_NAME }} - DiversoLab</title>
 
     <link rel="stylesheet" href="{{ url_for("static", filename="css/app.css") }}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
@@ -28,7 +28,7 @@
     <nav id="sidebar" class="sidebar js-sidebar">
         <div class="sidebar-content js-simplebar">
             <a class="sidebar-brand" href="{{ url_for('public.index') }}">
-                <span class="align-middle">FMLib</span>
+                <span class="align-middle">{{ FLASK_APP_NAME }}</span>
             </a>
 
             <ul class="sidebar-nav">
@@ -78,7 +78,7 @@
                         This application should only be used for research purposes
                     </div>
                     <div class="d-grid">
-                        <a href="https://github.com/diverso-lab/fmlib" class="btn btn-primary">View GitHub</a>
+                        <a href="https://github.com/diverso-lab/{{ FLASK_APP_NAME }}" class="btn btn-primary">View GitHub</a>
                     </div>
                 </div>
             </div>
@@ -135,7 +135,7 @@
                 <div class="row text-muted">
                     <div class="col-6 text-start">
                         <p class="mb-0">
-                            <strong>FMLib </strong> &copy; DiversoLab
+                            <strong>{{ FLASK_APP_NAME }} </strong> &copy; DiversoLab
                         </p>
                     </div>
                     <div class="col-6 text-end">

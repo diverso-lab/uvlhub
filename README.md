@@ -5,11 +5,12 @@
   
 </div>
 
-# fmlib
+# flipa
 
 ## Set `.env` file in root with:
 
 ```
+FLASK_APP_NAME=FLIPA
 MYSQL_HOSTNAME=db
 MYSQL_DATABASE=fmlibdb
 MYSQL_USER=fmlibuser
