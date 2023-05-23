@@ -34,6 +34,9 @@ def create_app(config_name=None):
     # Templates configuration
     app.config['TEMPLATES_AUTO_RELOAD'] = True
 
+    # Uploads feature models configuration
+    app.config['UPLOAD_FOLDER'] = os.path.join(app.root_path, 'uploads')
+
     # Login configuration
     login_manager.init_app(app)
     login_manager.login_view = "auth.login"
@@ -70,14 +73,12 @@ def create_app(config_name=None):
     return app
 
 
-
 if __name__ == '__main__':
     app = create_app()
     app.run()
 
 
 def register_error_handlers(app):
-
     @app.errorhandler(500)
     def base_error_handler(e):
         return render_template('500.html'), 500
@@ -94,9 +95,14 @@ def register_error_handlers(app):
     def error_400_handler(e):
         return render_template('400.html'), 400
 
+
 def get_test_client():
     """
     Function to get the test client of the application.
     :return: A Flask application test client.
     """
     return create_app().test_client()
+
+
+def upload_folder_name():
+    return 'uploads'

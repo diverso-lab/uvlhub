@@ -4,77 +4,254 @@
 
 {% block content %}
 
-<h1 class="h3 mb-3">Upload dataset</h1>
+    <h1 class="h3 mb-3">Upload dataset</h1>
 
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-body">
+    <div class="row">
+        <div class="col-6">
+            <div class="card">
 
-                <form action="" method="post" novalidate>
-                    {{ form.hidden_tag() }}
+                <div class="card-header">
+                    <h5 class="card-title">Basic info</h5>
+                </div>
 
-                    <div class="row">
+                <div class="card-body">
 
-                        <div class="col-6">
+                    <form action="" method="post" novalidate class="form">
+                        {{ form.hidden_tag() }}
 
-                            <div class="row">
+                        <div class="row">
 
-                                <div class="col-12">
-                                    <div class="mb-3">
-                                        {{ form.title.label(class="form-label") }}
-                                        {{ form.title(class="form-control",placeholder="Enter a title for your dataset")
-                                        }}
-                                        {% for error in form.title.errors %}
-                                        <span style="color: red;">{{ error }}</span>
-                                        {% endfor %}
+                            <div class="col-12">
+
+                                <div class="row">
+
+                                    <div class="col-12">
+                                        <div class="mb-3">
+                                            {{ form.title.label(class="form-label") }}
+                                            {{ form.title(class="form-control") }}
+                                            {% for error in form.title.errors %}
+                                                <span style="color: red;">{{ error }}</span>
+                                            {% endfor %}
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div class="col-12">
-                                    <div class="mb-3">
-                                        {{ form.description.label(class="form-label") }}
-                                        {{ form.description(class="form-control",placeholder="Enter a description for your dataset")
-                                        }}
-                                        {% for error in form.description.errors %}
-                                        <span style="color: red;">{{ error }}</span>
-                                        {% endfor %}
+                                    <div class="col-12">
+                                        <div class="mb-3">
+                                            {{ form.description.label(class="form-label") }}
+                                            {{ form.description(rows=4, class="form-control") }}
+                                            {% for error in form.description.errors %}
+                                                <span style="color: red;">{{ error }}</span>
+                                            {% endfor %}
+                                        </div>
                                     </div>
+
+                                    <div class="col-6">
+                                        <div class="mb-3">
+                                            {{ form.publication_type.label(class="form-label") }}
+                                            {{ form.publication_type(class="form-control") }}
+                                        </div>
+
+                                    </div>
+
+                                    <div class="col-12">
+                                        <div class="mb-3">
+                                            {{ form.tags.label(class="form-label") }}
+                                            {{ form.tags(class="form-control") }}
+                                            {% for error in form.tags.errors %}
+                                                <span style="color: red;">{{ error }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+
+                                    <div class="col-12">
+
+                                        <div class="mb-3">
+
+                                            <div id="authors">
+
+                                                {% for author in form.authors.entries %}
+                                                    <div class="author row">
+                                                        {{ author.name.label }} {{ author.name() }}
+                                                        {{ author.affiliation.label }} {{ author.affiliation() }}
+                                                        {{ author.orcid.label }} {{ author.orcid() }}
+                                                        {{ author.gnd.label }} {{ author.gnd() }}
+                                                    </div>
+                                                {% endfor %}
+
+
+                                            </div>
+                                            <button type="button" class="btn btn-secondary" id="add_author">Add author
+                                            </button>
+
+
+                                        </div>
+
+                                    </div>
+
+
                                 </div>
 
                             </div>
 
                         </div>
 
-                    </div>
 
+                        <div class="row">
 
-                    <div class="row">
+                            <div class="col-12">
+                                {{ form.submit(class="btn btn-primary") }}
+                            </div>
 
-                        <div class="col-lg-6 col-12">
-                            {{ form.submit(class="btn btn-primary") }}
                         </div>
 
-                    </div>
+                        <div class="row">
 
-                    <div class="row">
+                            {% if error %}
 
-                        {% if error %}
+                                <div class="mt-3 col-lg-6 col-12">
+                                    <span style="color: red;">{{ error }}</span>
+                                </div>
 
-                        <div class="mt-3 col-lg-6 col-12">
-                            <span style="color: red;">{{ error }}</span>
+                            {% endif %}
+
                         </div>
 
-                        {% endif %}
+                    </form>
 
-                    </div>
+                </div>
+            </div>
+        </div>
 
-                </form>
+        <div class="col-6">
+            <div class="card">
+
+                <div class="card-header">
+                    <h5 class="card-title">Drag and drop your feature models</h5>
+                </div>
+
+                <div class="card-body">
+
+                    <form action="{{ url_for('dataset.upload') }}" class="dropzone" id="myDropzone">
+                        <div id="dropzone-text"></div>
+                    </form>
+
+                    <ul class="mt-2" id="file-list"></ul>
+
+                    <script>
+                        Dropzone.options.myDropzone = {
+                            paramName: 'file',
+                            maxFilesize: 10,
+                            acceptedFiles: '.uvl',
+                            init: function () {
+                                var fileList = document.getElementById('file-list');
+                                var dropzoneText = document.getElementById('dropzone-text');
+
+                                this.on('addedfile', function (file) {
+                                    var listItem = document.createElement('li');
+                                    listItem.innerHTML = file.name;
+
+                                    var removeButton = document.createElement('button');
+                                    removeButton.innerHTML = 'Delete';
+                                    removeButton.classList.add('remove-button');
+                                    removeButton.addEventListener('click', function () {
+                                        fileList.removeChild(listItem);
+                                        this.removeFile(file);
+
+                                        // Ajax request
+                                        var xhr = new XMLHttpRequest();
+                                        xhr.open('POST', '/delete', true);
+                                        xhr.setRequestHeader('Content-Type', 'application/json');
+                                        xhr.onload = function () {
+                                            if (xhr.status === 200) {
+                                                console.log('Deleted file from server');
+                                            }
+                                        };
+                                        xhr.send(JSON.stringify({file: file.name}));
+                                    }.bind(this));
+
+                                    listItem.appendChild(removeButton);
+
+                                    fileList.appendChild(listItem);
+
+                                    dropzoneText.style.display = 'none';
+                                });
+                            }
+                        };
+                    </script>
+
+                </div>
 
             </div>
         </div>
-    </div>
-</div>
 
+    </div>
+
+
+    {% block scripts %}
+
+        <script>
+
+            function addField(newAuthor, name, text, className = 'col-6 mb-3') {
+                var fieldWrapper = document.createElement('div');
+                fieldWrapper.className = className;
+
+                var label = document.createElement('label');
+                label.className = 'form-label';
+                label.for = name;
+                label.textContent = text;
+
+                var field = document.createElement('input');
+                field.name = name;
+                field.className = 'form-control';
+
+                fieldWrapper.appendChild(label);
+                fieldWrapper.appendChild(field);
+                newAuthor.appendChild(fieldWrapper);
+            }
+
+            function addRemoveButton(newAuthor) {
+                var buttonWrapper = document.createElement('div');
+                buttonWrapper.className = 'col-12 mb-2';
+
+                var button = document.createElement('button');
+                button.textContent = 'Remove author';
+                button.className = 'btn btn-danger';
+                button.type = 'button';
+                button.addEventListener('click', function (event) {
+                    event.preventDefault();
+                    newAuthor.remove();
+                });
+
+                buttonWrapper.appendChild(button);
+                newAuthor.appendChild(buttonWrapper);
+            }
+
+            function createAuthorBlock() {
+                var newAuthor = document.createElement('div');
+                newAuthor.className = 'author row';
+                newAuthor.style.cssText = "border:2px dotted #ccc;border-radius:10px;padding:10px;margin:10px 0";
+
+                addField(newAuthor, 'author_name', 'Name');
+                addField(newAuthor, 'author_affiliation', 'Affiliation');
+                addField(newAuthor, 'author_orcid', 'ORCID');
+                addField(newAuthor, 'author_gnd', 'GND');
+                addRemoveButton(newAuthor);
+
+                return newAuthor;
+            }
+
+            document.getElementById('add_author').addEventListener('click', function () {
+                var authors = document.getElementById('authors');
+                var newAuthor = createAuthorBlock();
+                authors.appendChild(newAuthor);
+            });
+
+
+        </script>
+
+
+
+
+    {% endblock %}
 
 {% endblock %}

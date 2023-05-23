@@ -16,11 +16,13 @@ class AuthorForm(FlaskForm):
 class DataSetForm(FlaskForm):
     title = StringField('Title', validators=[DataRequired()])
     description = TextAreaField('Description', validators=[DataRequired()])
-    publication_type = SelectField('Publication Type', choices=[(pt.value, pt.name) for pt in PublicationType],
+    publication_type = SelectField('Publication type',
+                                   choices=[(pt.value, pt.name.replace('_', ' ').title()) for pt in PublicationType],
                                    validators=[DataRequired()])
+
     publication_doi = StringField('Publication DOI', validators=[Optional(), URL()])
     dataset_doi = StringField('Dataset DOI', validators=[Optional(), URL()])
-    tags = StringField('Tags')
+    tags = StringField('Tags (separated by commas)')
     authors = FieldList(FormField(AuthorForm))
     submit = SubmitField('Submit')
 

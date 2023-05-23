@@ -20,6 +20,11 @@
 
     <link rel="stylesheet" href="{{ url_for("static", filename="css/app.css") }}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+
+    <script src="https://unpkg.com/dropzone@5/dist/min/dropzone.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/dropzone@5/dist/min/dropzone.min.css" type="text/css"/>
+
+    <link rel="stylesheet" href="{{ url_for("static", filename="css/dropzone.css") }}">
 </head>
 
 <body>
@@ -41,31 +46,34 @@
 
                 {% if current_user.is_anonymous %}
 
-                <li class="sidebar-item {{ 'active' if request.endpoint == 'auth.login' else '' }}">
-                    <a class="sidebar-link" href="{{ url_for('auth.login') }}">
-                        <i class="align-middle" data-feather="log-in"></i> <span class="align-middle">Login</span>
-                    </a>
-                </li>
+                    <li class="sidebar-item {{ 'active' if request.endpoint == 'auth.login' else '' }}">
+                        <a class="sidebar-link" href="{{ url_for('auth.login') }}">
+                            <i class="align-middle" data-feather="log-in"></i> <span class="align-middle">Login</span>
+                        </a>
+                    </li>
 
-                <li class="sidebar-item {{ 'active' if request.endpoint == 'auth.show_signup_form' else '' }}">
-                    <a class="sidebar-link" href="{{ url_for('auth.show_signup_form') }}">
-                        <i class="align-middle" data-feather="user-plus"></i> <span class="align-middle">Sign Up</span>
-                    </a>
-                </li>
+                    <li class="sidebar-item {{ 'active' if request.endpoint == 'auth.show_signup_form' else '' }}">
+                        <a class="sidebar-link" href="{{ url_for('auth.show_signup_form') }}">
+                            <i class="align-middle" data-feather="user-plus"></i> <span
+                                class="align-middle">Sign Up</span>
+                        </a>
+                    </li>
 
                 {% else %}
 
-                <li class="sidebar-item {{ 'active' if request.endpoint == 'dataset.create_dataset' else '' }}">
-                    <a class="sidebar-link" href="{{ url_for('dataset.create_dataset') }}">
-                        <i class="align-middle" data-feather="upload"></i> <span class="align-middle">Upload dataset</span>
-                    </a>
-                </li>
+                    <li class="sidebar-item {{ 'active' if request.endpoint == 'dataset.create_dataset' else '' }}">
+                        <a class="sidebar-link" href="{{ url_for('dataset.create_dataset') }}">
+                            <i class="align-middle" data-feather="upload"></i> <span
+                                class="align-middle">Upload dataset</span>
+                        </a>
+                    </li>
 
-                <li class="sidebar-item">
-                    <a class="sidebar-link" href="{{ url_for('auth.logout') }}">
-                        <i class="align-middle" data-feather="log-out"></i> <span class="align-middle">Log out</span>
-                    </a>
-                </li>
+                    <li class="sidebar-item">
+                        <a class="sidebar-link" href="{{ url_for('auth.logout') }}">
+                            <i class="align-middle" data-feather="log-out"></i> <span
+                                class="align-middle">Log out</span>
+                        </a>
+                    </li>
 
                 {% endif %}
 
@@ -78,7 +86,8 @@
                         This application should only be used for research purposes
                     </div>
                     <div class="d-grid">
-                        <a href="https://github.com/diverso-lab/{{ FLASK_APP_NAME }}" class="btn btn-primary">View GitHub</a>
+                        <a href="https://github.com/diverso-lab/{{ FLASK_APP_NAME }}" class="btn btn-primary">View
+                            GitHub</a>
                     </div>
                 </div>
             </div>
@@ -98,19 +107,21 @@
                         </a>
 
                         {% if current_user.is_anonymous %}
-                        <a class="nav-link  d-none d-sm-inline-block" href="{{ url_for('auth.login') }}">Login</a>
-                        <a class="nav-link  d-none d-sm-inline-block" href="{{ url_for('auth.show_signup_form') }}">Sign
-                            up</a>
+                            <a class="nav-link  d-none d-sm-inline-block" href="{{ url_for('auth.login') }}">Login</a>
+                            <a class="nav-link  d-none d-sm-inline-block" href="{{ url_for('auth.show_signup_form') }}">Sign
+                                up</a>
 
                         {% else %}
 
-                        <a class="nav-link dropdown-toggle d-none d-sm-inline-block" href="#" data-bs-toggle="dropdown">
-                            <span class="text-dark">{{ current_user.name }}</span>
-                        </a>
-                        <div class="dropdown-menu dropdown-menu-end">
-                            <a class="dropdown-item" href="{{ url_for('auth.logout') }}"> <i class="align-middle me-1"
-                                                                                  data-feather="log-out"></i>Log out</a>
-                        </div>
+                            <a class="nav-link dropdown-toggle d-none d-sm-inline-block" href="#"
+                               data-bs-toggle="dropdown">
+                                <span class="text-dark">{{ current_user.name }}</span>
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-end">
+                                <a class="dropdown-item" href="{{ url_for('auth.logout') }}"> <i
+                                        class="align-middle me-1"
+                                        data-feather="log-out"></i>Log out</a>
+                            </div>
 
                         {% endif %}
 
@@ -124,7 +135,6 @@
             <div class="container-fluid p-0">
 
                 {% block content %}{% endblock %}
-
 
 
             </div>
@@ -161,6 +171,7 @@
 </div>
 
 <script src="{{ url_for("static", filename="js/app.js") }}"></script>
+
 
 </body>
 
