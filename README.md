@@ -27,7 +27,7 @@ docker compose up -d
 
 ## Run migrations
 
-Inside the `fmlib-web` container, run:
+Inside the `web` container, run:
 
 ```
 flask db migrate
