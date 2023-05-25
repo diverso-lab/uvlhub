@@ -4,140 +4,140 @@
 
 {% block content %}
 
-    <h1 class="h3 mb-3">Upload dataset</h1>
+<h1 class="h3 mb-3">Upload dataset</h1>
 
-    <div class="row">
-        <div class="col-6">
-            <div class="card">
+<div class="row">
+    <div class="col-6">
+        <div class="card">
 
-                <div class="card-header">
-                    <h5 class="card-title">Basic info</h5>
-                </div>
+            <div class="card-header">
+                <h5 class="card-title">Basic info</h5>
+            </div>
 
-                <div class="card-body">
+            <div class="card-body">
 
-                    <form action="" method="post" novalidate class="form">
-                        {{ form.hidden_tag() }}
+                <form action="" method="post" novalidate class="form">
+                    {{ form.hidden_tag() }}
 
-                        <div class="row">
+                    <div class="row">
 
-                            <div class="col-12">
+                        <div class="col-12">
 
-                                <div class="row">
+                            <div class="row">
 
-                                    <div class="col-12">
-                                        <div class="mb-3">
-                                            {{ form.title.label(class="form-label") }}
-                                            {{ form.title(class="form-control") }}
-                                            {% for error in form.title.errors %}
-                                                <span style="color: red;">{{ error }}</span>
-                                            {% endfor %}
-                                        </div>
+                                <div class="col-12">
+                                    <div class="mb-3">
+                                        {{ form.title.label(class="form-label") }}
+                                        {{ form.title(class="form-control") }}
+                                        {% for error in form.title.errors %}
+                                        <span style="color: red;">{{ error }}</span>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+
+                                <div class="col-12">
+                                    <div class="mb-3">
+                                        {{ form.description.label(class="form-label") }}
+                                        {{ form.description(rows=4, class="form-control") }}
+                                        {% for error in form.description.errors %}
+                                        <span style="color: red;">{{ error }}</span>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+
+                                <div class="col-6">
+                                    <div class="mb-3">
+                                        {{ form.publication_type.label(class="form-label") }}
+                                        {{ form.publication_type(class="form-control") }}
                                     </div>
 
-                                    <div class="col-12">
-                                        <div class="mb-3">
-                                            {{ form.description.label(class="form-label") }}
-                                            {{ form.description(rows=4, class="form-control") }}
-                                            {% for error in form.description.errors %}
-                                                <span style="color: red;">{{ error }}</span>
-                                            {% endfor %}
-                                        </div>
+                                </div>
+
+                                <div class="col-12">
+                                    <div class="mb-3">
+                                        {{ form.tags.label(class="form-label") }}
+                                        {{ form.tags(class="form-control") }}
+                                        {% for error in form.tags.errors %}
+                                        <span style="color: red;">{{ error }}</span>
+                                        {% endfor %}
                                     </div>
+                                </div>
 
-                                    <div class="col-6">
-                                        <div class="mb-3">
-                                            {{ form.publication_type.label(class="form-label") }}
-                                            {{ form.publication_type(class="form-control") }}
-                                        </div>
+                                <div class="col-12">
 
-                                    </div>
+                                    <div class="mb-3">
 
-                                    <div class="col-12">
-                                        <div class="mb-3">
-                                            {{ form.tags.label(class="form-label") }}
-                                            {{ form.tags(class="form-control") }}
-                                            {% for error in form.tags.errors %}
-                                                <span style="color: red;">{{ error }}</span>
-                                            {% endfor %}
-                                        </div>
-                                    </div>
+                                        <div id="authors">
 
-                                    <div class="col-12">
-
-                                        <div class="mb-3">
-
-                                            <div id="authors">
-
-                                                {% for author in form.authors.entries %}
-                                                    <div class="author row">
-                                                        {{ author.name.label }} {{ author.name() }}
-                                                        {{ author.affiliation.label }} {{ author.affiliation() }}
-                                                        {{ author.orcid.label }} {{ author.orcid() }}
-                                                        {{ author.gnd.label }} {{ author.gnd() }}
-                                                    </div>
-                                                {% endfor %}
-
-
+                                            {% for author in form.authors.entries %}
+                                            <div class="author row">
+                                                {{ author.name.label }} {{ author.name() }}
+                                                {{ author.affiliation.label }} {{ author.affiliation() }}
+                                                {{ author.orcid.label }} {{ author.orcid() }}
+                                                {{ author.gnd.label }} {{ author.gnd() }}
                                             </div>
-                                            <button type="button" class="btn btn-secondary" id="add_author">Add author
-                                            </button>
+                                            {% endfor %}
 
 
                                         </div>
+                                        <button type="button" class="btn btn-secondary" id="add_author">Add author
+                                        </button>
+
 
                                     </div>
 
-
                                 </div>
+
 
                             </div>
 
                         </div>
 
+                    </div>
 
-                        <div class="row">
 
-                            <div class="col-12">
-                                {{ form.submit(class="btn btn-primary") }}
-                            </div>
+                    <div class="row">
 
+                        <div class="col-12">
+                            {{ form.submit(class="btn btn-primary") }}
                         </div>
 
-                        <div class="row">
+                    </div>
 
-                            {% if error %}
+                    <div class="row">
 
-                                <div class="mt-3 col-lg-6 col-12">
-                                    <span style="color: red;">{{ error }}</span>
-                                </div>
+                        {% if error %}
 
-                            {% endif %}
-
+                        <div class="mt-3 col-lg-6 col-12">
+                            <span style="color: red;">{{ error }}</span>
                         </div>
 
-                    </form>
+                        {% endif %}
 
-                </div>
+                    </div>
+
+                </form>
+
             </div>
         </div>
+    </div>
 
-        <div class="col-6">
-            <div class="card">
+    <div class="col-6">
+        <div class="card">
 
-                <div class="card-header">
-                    <h5 class="card-title">Drag and drop your feature models</h5>
-                </div>
+            <div class="card-header">
+                <h5 class="card-title">Drag and drop your feature models</h5>
+            </div>
 
-                <div class="card-body">
+            <div class="card-body">
 
-                    <form action="{{ url_for('dataset.upload') }}" class="dropzone" id="myDropzone">
-                        <div id="dropzone-text"></div>
-                    </form>
+                <form action="{{ url_for('dataset.upload') }}" class="dropzone" id="myDropzone">
+                    <div id="dropzone-text"></div>
+                </form>
 
-                    <ul class="mt-2" id="file-list"></ul>
+                <ul class="mt-2" id="file-list"></ul>
 
-                    <script>
+                <script>
                         Dropzone.options.myDropzone = {
                             paramName: 'file',
                             maxFilesize: 10,
@@ -152,7 +152,7 @@
 
                                     var removeButton = document.createElement('button');
                                     removeButton.innerHTML = 'Delete';
-                                    removeButton.classList.add('remove-button');
+                                    removeButton.classList.add("remove-button", "btn", "btn-danger");
                                     removeButton.addEventListener('click', function () {
                                         fileList.removeChild(listItem);
                                         this.removeFile(file);
@@ -169,27 +169,113 @@
                                         xhr.send(JSON.stringify({file: file.name}));
                                     }.bind(this));
 
+                                    var infoButton = document.createElement('button');
+                                    infoButton.innerHTML = '+Info';
+                                    infoButton.classList.add('info-button','btn','btn-primary');
+                                    infoButton.addEventListener('click', function () {
+
+                                        var infoButtonId = this.id;
+
+                                        var formContainerId = infoButtonId.replace("_button", "");
+                                        var formContainer = document.getElementById(formContainerId);
+
+                                        if (!formContainer) {
+                                            formContainer = document.createElement('div');
+
+                                            var formUniqueId = generateUniqueId();
+
+                                            infoButton.id = formUniqueId + "_button";
+
+                                            formContainer.id = formUniqueId
+
+                                            formContainer.innerHTML = `
+                                                <form action="" method="post" novalidate class="form">
+                                                    <div class="row">
+                                                        <div class="col-12">
+                                                            <div class="row">
+                                                                <div class="col-12">
+                                                                    <div class="mb-3">
+                                                                        <label class="form-label">Title</label>
+                                                                        <input type="text" class="form-control">
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-12">
+                                                                    <div class="mb-3">
+                                                                        <label class="form-label">Description</label>
+                                                                        <textarea rows="4" class="form-control"></textarea>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-6">
+                                                                    <div class="mb-3">
+                                                                        <label class="form-label">Publication Type</label>
+                                                                        <input type="text" class="form-control">
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-12">
+                                                                    <div class="mb-3">
+                                                                        <label class="form-label">Tags</label>
+                                                                        <input type="text" class="form-control">
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-12">
+                                                                    <div class="mb-3">
+                                                                        <label class="form-label">Authors</label>
+                                                                        <div id="authors_uvl_` + formContainer.id  + `">
+                                                                        </div>
+                                                                        <button type="button" class="add_author_to_uvl btn btn-secondary" id="button_authors_uvl_` + formContainer.id  + `">Add author</button>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </form>
+                                            `;
+
+                                        listItem.appendChild(formContainer);
+
+                                        } else {
+                                            if (formContainer.style.display === "none") {
+                                              formContainer.style.display = "block";
+                                            } else {
+                                              formContainer.style.display = "none";
+                                            }
+                                        }
+
+
+
+                                });
+
+
+                                    listItem.appendChild(infoButton);
                                     listItem.appendChild(removeButton);
 
                                     fileList.appendChild(listItem);
 
                                     dropzoneText.style.display = 'none';
                                 });
+
                             }
                         };
-                    </script>
 
-                </div>
+
+                function generateUniqueId() {
+                  return 'form-' + Math.random().toString(36).substr(2, 9);
+                }
+
+
+                </script>
 
             </div>
-        </div>
 
+        </div>
     </div>
 
+</div>
 
-    {% block scripts %}
 
-        <script>
+{% block scripts %}
+
+<script>
 
             function addField(newAuthor, name, text, className = 'col-6 mb-3') {
                 var fieldWrapper = document.createElement('div');
@@ -247,11 +333,29 @@
             });
 
 
-        </script>
+            document.addEventListener('click', function (event) {
+                if (event.target && event.target.classList.contains('add_author_to_uvl')) {
+                    var elementId = event.target.id;
+
+                    elementId = elementId.replace("button_", "");
+
+                    console.log(elementId);
+                    var authors = document.getElementById('elementId');
+                    console.log(authors);
+                    var newAuthor = createAuthorBlock();
+                    authors.appendChild(newAuthor);
+                }
+            });
 
 
 
 
-    {% endblock %}
+
+
+
+</script>
+
+
+{% endblock %}
 
 {% endblock %}

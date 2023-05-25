@@ -43,13 +43,4 @@
     border-radius: 4px;
 }
 
-#file-list .remove-button {
-    display: inline-block;
-    margin-left: 10px;
-    padding: 5px 10px;
-    background-color: #e74c3c;
-    color: #fff;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-}
+
