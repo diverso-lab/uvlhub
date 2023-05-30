@@ -44,12 +44,22 @@
                                     </div>
                                 </div>
 
-                                <div class="col-lg-6 col-12">
+                                <div class="col-lg-6 col-6">
                                     <div class="mb-3">
                                         {{ form.publication_type.label(class="form-label") }}
                                         {{ form.publication_type(class="form-control") }}
                                     </div>
 
+                                </div>
+
+                                <div class="col-lg-6 col-6">
+                                    <div class="mb-3">
+                                        {{ form.publication_doi.label(class="form-label") }}
+                                        {{ form.publication_doi(class="form-control") }}
+                                        {% for error in form.publication_doi.errors %}
+                                            <span style="color: red;">{{ error }}</span>
+                                        {% endfor %}
+                                    </div>
                                 </div>
 
                                 <div class="col-12">
@@ -222,7 +232,7 @@
 
                                     formContainer.innerHTML = `
                                         <div class="row">
-                                            <input type="hidden" value="` + formUniqueId +`" name="uvl_identifier">
+                                            <input type="hidden" value="` + formUniqueId + `" name="uvl_identifier">
                                             <div class="col-12">
                                                 <div class="row">
                                                     <div class="col-12">
@@ -260,6 +270,12 @@
                                                                 <option value="workingpaper">Working Paper</option>
                                                                 <option value="other">Other</option>
                                                             </select>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-lg-6 col-6">
+                                                        <div class="mb-3">
+                                                            <label class="form-label" for="publication_doi">Publication DOI</label>
+                                                            <input class="form-control" name="publication_doi" type="text" value="">
                                                         </div>
                                                     </div>
                                                     <div class="col-12">
@@ -410,7 +426,7 @@
                     let authorsButtonId = event.target.id;
                     let authorsId = authorsButtonId.replace("_button", "");
                     let authors = document.getElementById(authorsId);
-                    let id = authorsId.replace("_form_authors","")
+                    let id = authorsId.replace("_form_authors", "")
                     let newAuthor = createAuthorBlock(id);
                     authors.appendChild(newAuthor);
 

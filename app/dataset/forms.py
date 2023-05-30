@@ -19,7 +19,6 @@ class DataSetForm(FlaskForm):
     publication_type = SelectField('Publication type',
                                    choices=[(pt.value, pt.name.replace('_', ' ').title()) for pt in PublicationType],
                                    validators=[DataRequired()])
-
     publication_doi = StringField('Publication DOI', validators=[Optional(), URL()])
     dataset_doi = StringField('Dataset DOI', validators=[Optional(), URL()])
     tags = StringField('Tags (separated by commas)')
