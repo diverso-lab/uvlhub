@@ -83,10 +83,11 @@ class File(db.Model):
     name = db.Column(db.String(120), nullable=False)
     checksum = db.Column(db.String(120), nullable=False)
     size = db.Column(db.Integer, nullable=False)
-    data_set_id = db.Column(db.Integer, db.ForeignKey('data_set.id'), nullable=False)
+    feature_model_id = db.Column(db.Integer, db.ForeignKey('feature_model.id'), nullable=False)
+    feature_model = db.relationship('FeatureModel', backref='files')
 
     def __repr__(self):
-        return f'File<{self.name}>'
+        return f'File<{self.id}>'
 
 
 class FMMetaData(db.Model):
