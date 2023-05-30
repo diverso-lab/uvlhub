@@ -8,6 +8,7 @@ import app
 from .forms import DataSetForm
 from .models import DataSet, DSMetrics, FeatureModel, File, FMMetaData, FMMetrics, DSMetaData, Author, PublicationType
 from . import dataset_bp
+from ..zenodo import create_new_deposition, test_zenodo_connection
 
 
 @dataset_bp.route('/dataset/upload', methods=['GET', 'POST'])
@@ -26,57 +27,65 @@ def create_dataset():
             basic_info_data = form_data_dict["basic_info_form"]
             uploaded_models_data = form_data_dict["uploaded_models_form"]
 
-            # get dataset metadata
-            title = basic_info_data["title"][0]
-            description = basic_info_data["description"][0]
-            publication_type = basic_info_data["publication_type"][0]
-            publication_doi = basic_info_data["publication_doi"][0]
-            tags = basic_info_data["tags"][0]
+            # create dataset
+            dataset = create_dataset_in_db(basic_info_data)
 
-            # create dataset metadata
-            ds_meta_data = DSMetaData(
-                title=title,
-                description=description,
-                publication_type=PublicationType(publication_type),
-                publication_doi=publication_doi,
-                tags=tags
-            )
-            app.db.session.add(ds_meta_data)
-            app.db.session.commit()
+            # send dataset as deposition to Zenodo
+            zenodo_response_json = create_new_deposition(dataset)
 
-            # create dataset metadata authors
-            # how many authors are there?
-            if "author_name" in basic_info_data:
-                number_of_authors = len(basic_info_data["author_name"])
-                for i in range(number_of_authors):
-
-                    author_name = basic_info_data["author_name"][i]
-                    author_affiliation = basic_info_data["author_affiliation"][i]
-                    author_orcid = basic_info_data["author_orcid"][i]
-                    author_gnd = basic_info_data["author_gnd"][i]
-
-                    author = Author(
-                        name=author_name,
-                        affiliation=author_affiliation,
-                        orcid=author_orcid,
-                        gnd=author_gnd,
-                        ds_meta_data_id=ds_meta_data.id
-                    )
-                    app.db.session.add(author)
-                    app.db.session.commit()
-
-
-
-            dataset = DataSet(user_id=current_user.id, ds_meta_data_id=ds_meta_data.id)
-            app.db.session.add(dataset)
-            app.db.session.commit()
-
-            return jsonify({'message': basic_info_data}), 200
+            return jsonify({'message': zenodo_response_json}), 200
 
         except Exception as e:
             return jsonify({'message': str(e)}), 500
 
     return render_template('dataset/upload_dataset.html', title='Create DataSet', form=form)
+
+
+def create_dataset_in_db(basic_info_data):
+    # get dataset metadata
+    title = basic_info_data["title"][0]
+    description = basic_info_data["description"][0]
+    publication_type = basic_info_data["publication_type"][0]
+    publication_doi = basic_info_data["publication_doi"][0]
+    tags = basic_info_data["tags"][0]
+
+    # create dataset metadata
+    ds_meta_data = DSMetaData(
+        title=title,
+        description=description,
+        publication_type=PublicationType(publication_type),
+        publication_doi=publication_doi,
+        tags=tags
+    )
+    app.db.session.add(ds_meta_data)
+    app.db.session.commit()
+
+    # create dataset metadata authors
+    # how many authors are there?
+    if "author_name" in basic_info_data:
+        number_of_authors = len(basic_info_data["author_name"])
+        for i in range(number_of_authors):
+            author_name = basic_info_data["author_name"][i]
+            author_affiliation = basic_info_data["author_affiliation"][i]
+            author_orcid = basic_info_data["author_orcid"][i]
+            author_gnd = basic_info_data["author_gnd"][i]
+
+            author = Author(
+                name=author_name,
+                affiliation=author_affiliation,
+                orcid=author_orcid,
+                gnd=author_gnd,
+                ds_meta_data_id=ds_meta_data.id
+            )
+            app.db.session.add(author)
+            app.db.session.commit()
+
+    # create dataset
+    dataset = DataSet(user_id=current_user.id, ds_meta_data_id=ds_meta_data.id)
+    app.db.session.add(dataset)
+    app.db.session.commit()
+
+    return dataset
 
 
 @dataset_bp.route('/upload', methods=['POST'])

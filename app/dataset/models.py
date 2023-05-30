@@ -61,6 +61,7 @@ class DataSet(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     files = db.relationship('File', backref='data_set', lazy=True)
     ds_meta_data_id = db.Column(db.Integer, db.ForeignKey('ds_meta_data.id'), nullable=False)
+    ds_meta_data = db.relationship('DSMetaData', backref='data_set', lazy=True)
     feature_models = db.relationship('FeatureModel', backref='data_set', lazy=True)
 
     def __repr__(self):
