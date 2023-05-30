@@ -221,64 +221,65 @@
                                     formContainer.style.display = "none";
 
                                     formContainer.innerHTML = `
+                                        <div class="row">
+                                            <input type="hidden" value="` + formUniqueId +`" name="uvl_identifier">
+                                            <div class="col-12">
                                                 <div class="row">
                                                     <div class="col-12">
-                                                        <div class="row">
-                                                            <div class="col-12">
-                                                                <div class="mb-3">
-                                                                    <label class="form-label">Title</label>
-                                                                    <input type="text" class="form-control" name="title">
-                                                                </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label">Title</label>
+                                                            <input type="text" class="form-control" name="title">
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-12">
+                                                        <div class="mb-3">
+                                                            <label class="form-label">Description</label>
+                                                            <textarea rows="4" class="form-control" name="description"></textarea>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-lg-6 col-12">
+                                                        <div class="mb-3">
+                                                            <label class="form-label" for="publication_type">Publication type</label>
+                                                            <select class="form-control" name="uvl_publication_type" required="">
+                                                                <option value="annotationcollection">Annotation Collection</option>
+                                                                <option value="book">Book</option>
+                                                                <option value="section">Book Section</option>
+                                                                <option value="conferencepaper">Conference Paper</option>
+                                                                <option value="datamanagementplan">Data Management Plan</option>
+                                                                <option value="article">Journal Article</option>
+                                                                <option value="patent">Patent</option>
+                                                                <option value="preprint">Preprint</option>
+                                                                <option value="deliverable">Project Deliverable</option>
+                                                                <option value="milestone">Project Milestone</option>
+                                                                <option value="proposal">Proposal</option>
+                                                                <option value="report">Report</option>
+                                                                <option value="softwaredocumentation">Software Documentation</option>
+                                                                <option value="taxonomictreatment">Taxonomic Treatment</option>
+                                                                <option value="technicalnote">Technical Note</option>
+                                                                <option value="thesis">Thesis</option>
+                                                                <option value="workingpaper">Working Paper</option>
+                                                                <option value="other">Other</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-12">
+                                                        <div class="mb-3">
+                                                            <label class="form-label">Tags (separated by commas)</label>
+                                                            <input type="text" class="form-control" name="tags">
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-12">
+                                                        <div class="mb-3">
+                                                            <label class="form-label">Authors</label>
+                                                            <div id="` + formContainer.id + `_authors">
                                                             </div>
-                                                            <div class="col-12">
-                                                                <div class="mb-3">
-                                                                    <label class="form-label">Description</label>
-                                                                    <textarea rows="4" class="form-control" name="description"></textarea>
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-lg-6 col-12">
-                                                                <div class="mb-3">
-                                                                    <label class="form-label" for="publication_type">Publication type</label>
-                                                                    <select class="form-control" name="uvl_publication_type" required="">
-                                                                        <option value="annotationcollection">Annotation Collection</option>
-                                                                        <option value="book">Book</option>
-                                                                        <option value="section">Book Section</option>
-                                                                        <option value="conferencepaper">Conference Paper</option>
-                                                                        <option value="datamanagementplan">Data Management Plan</option>
-                                                                        <option value="article">Journal Article</option>
-                                                                        <option value="patent">Patent</option>
-                                                                        <option value="preprint">Preprint</option>
-                                                                        <option value="deliverable">Project Deliverable</option>
-                                                                        <option value="milestone">Project Milestone</option>
-                                                                        <option value="proposal">Proposal</option>
-                                                                        <option value="report">Report</option>
-                                                                        <option value="softwaredocumentation">Software Documentation</option>
-                                                                        <option value="taxonomictreatment">Taxonomic Treatment</option>
-                                                                        <option value="technicalnote">Technical Note</option>
-                                                                        <option value="thesis">Thesis</option>
-                                                                        <option value="workingpaper">Working Paper</option>
-                                                                        <option value="other">Other</option>
-                                                                    </select>
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-12">
-                                                                <div class="mb-3">
-                                                                    <label class="form-label">Tags (separated by commas)</label>
-                                                                    <input type="text" class="form-control" name="tags">
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-12">
-                                                                <div class="mb-3">
-                                                                    <label class="form-label">Authors</label>
-                                                                    <div id="` + formContainer.id + `_authors">
-                                                                    </div>
-                                                                    <button type="button" class="add_author_to_uvl btn btn-secondary" id="` + formContainer.id + `_authors_button">Add author</button>
-                                                                </div>
-                                                            </div>
+                                                            <button type="button" class="add_author_to_uvl btn btn-secondary" id="` + formContainer.id + `_authors_button">Add author</button>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            `;
+                                            </div>
+                                        </div>
+                                    `;
 
                                     listItem.appendChild(formContainer);
                                     fileList.appendChild(listItem);
@@ -287,11 +288,6 @@
 
                             }
                         };
-
-
-                        function generateUniqueId() {
-                            return Math.random().toString(36).substr(2, 9);
-                        }
 
 
                     </script>
@@ -345,6 +341,10 @@
 
         <script>
 
+            function generateUniqueId() {
+                return Math.random().toString(36).substr(2, 9);
+            }
+
             function addField(newAuthor, name, text, className = 'col-lg-6 col-12 mb-3') {
                 var fieldWrapper = document.createElement('div');
                 fieldWrapper.className = className;
@@ -380,19 +380,22 @@
                 newAuthor.appendChild(buttonWrapper);
             }
 
-            function createAuthorBlock() {
+            function createAuthorBlock(parameter) {
                 var newAuthor = document.createElement('div');
                 newAuthor.className = 'author row';
                 newAuthor.style.cssText = "border:2px dotted #ccc;border-radius:10px;padding:10px;margin:10px 0";
 
-                addField(newAuthor, 'author_name', 'Name');
-                addField(newAuthor, 'author_affiliation', 'Affiliation');
-                addField(newAuthor, 'author_orcid', 'ORCID');
-                addField(newAuthor, 'author_gnd', 'GND');
+                var suffix = parameter ? '_' + parameter : '';
+
+                addField(newAuthor, 'author_name' + suffix, 'Name');
+                addField(newAuthor, 'author_affiliation' + suffix, 'Affiliation');
+                addField(newAuthor, 'author_orcid' + suffix, 'ORCID');
+                addField(newAuthor, 'author_gnd' + suffix, 'GND');
                 addRemoveButton(newAuthor);
 
                 return newAuthor;
             }
+
 
             document.getElementById('add_author').addEventListener('click', function () {
                 var authors = document.getElementById('authors');
@@ -407,7 +410,8 @@
                     let authorsButtonId = event.target.id;
                     let authorsId = authorsButtonId.replace("_button", "");
                     let authors = document.getElementById(authorsId);
-                    let newAuthor = createAuthorBlock();
+                    let id = authorsId.replace("_form_authors","")
+                    let newAuthor = createAuthorBlock(id);
                     authors.appendChild(newAuthor);
 
                 }
@@ -428,7 +432,9 @@
                         });
                     });
 
-                    console.log(JSON.stringify(formData));
+                    let formDataJson = JSON.stringify(formData);
+
+                    console.log(formDataJson);
                 });
             };
 
