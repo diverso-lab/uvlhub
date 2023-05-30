@@ -7,8 +7,8 @@
     <h1 class="h3 mb-3">Upload dataset</h1>
 
     <div class="row">
-        <div class="col-6">
-            <div class="card">
+        <div class="col-lg-6 col-12">
+            <div class="card" id="basic_info_form">
 
                 <div class="card-header">
                     <h5 class="card-title">Basic info</h5>
@@ -44,7 +44,7 @@
                                     </div>
                                 </div>
 
-                                <div class="col-6">
+                                <div class="col-lg-6 col-12">
                                     <div class="mb-3">
                                         {{ form.publication_type.label(class="form-label") }}
                                         {{ form.publication_type(class="form-control") }}
@@ -111,8 +111,8 @@
             </div>
         </div>
 
-        <div class="col-6">
-            <div class="card">
+        <div class="col-lg-6 col-12">
+            <div class="card" id="uploaded_models_form">
 
                 <div class="card-header">
                     <h5 class="card-title">Drag and drop your feature models</h5>
@@ -154,7 +154,7 @@
                                     */
                                     let formButton = document.createElement('button');
                                     formButton.innerHTML = 'Add info';
-                                    formButton.classList.add('info-button', 'btn', 'btn-primary', "btn-sm");
+                                    formButton.classList.add('info-button', 'btn', 'btn-outline-primary', "btn-sm");
                                     formButton.id = formUniqueId + "_button";
 
                                     formButton.addEventListener('click', function () {
@@ -178,7 +178,7 @@
                                     // remove button
                                     let removeButton = document.createElement('button');
                                     removeButton.innerHTML = 'Delete';
-                                    removeButton.classList.add("remove-button", "btn", "btn-danger", "btn-sm", "remove-button");
+                                    removeButton.classList.add("remove-button", "btn", "btn-outline-danger", "btn-sm", "remove-button");
 
                                     // append space
                                     space = document.createTextNode(" ");
@@ -237,7 +237,7 @@
                                                                         <textarea rows="4" class="form-control"></textarea>
                                                                     </div>
                                                                 </div>
-                                                                <div class="col-6">
+                                                                <div class="col-lg-6 col-12">
                                                                     <div class="mb-3">
                                                                         <label class="form-label" for="publication_type">Publication type</label>
                                                                         <select class="form-control" id="publication_type" name="publication_type" required="">
@@ -307,7 +307,7 @@
 
     <div class="row">
 
-        <div class="col-6">
+        <div class="col-12">
             <div class="card">
                 <div class="card-header">
                     <h5 class="card-title mb-0">Upload dataset</h5>
@@ -319,20 +319,17 @@
                             <input id="agreeCheckbox" class="form-check-input" type="checkbox" value="">
                             <span class="form-check-label">
                                 I agree to have my feature models automatically uploaded to Zenodo and made available to the public according to the <a href="https://en.wikipedia.org/wiki/Open_science" target="_blank">Open Science</a> manifesto
-        </span>
+                            </span>
                         </label>
                     </p>
 
                     <button id="uploadButton" class="btn btn-primary" disabled>Upload dataset</button>
 
                     <script>
-                        // Obtener referencias a los elementos del DOM
                         const checkbox = document.getElementById('agreeCheckbox');
                         const uploadButton = document.getElementById('uploadButton');
 
-                        // Escuchar el evento de cambio en el checkbox
                         checkbox.addEventListener('change', function () {
-                            // Habilitar o deshabilitar el botón según el estado del checkbox
                             uploadButton.disabled = !checkbox.checked;
                         });
                     </script>
@@ -349,7 +346,7 @@
 
         <script>
 
-            function addField(newAuthor, name, text, className = 'col-6 mb-3') {
+            function addField(newAuthor, name, text, className = 'col-lg-6 col-12 mb-3') {
                 var fieldWrapper = document.createElement('div');
                 fieldWrapper.className = className;
 
