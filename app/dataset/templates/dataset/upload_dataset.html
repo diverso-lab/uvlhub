@@ -4,19 +4,18 @@
 
 {% block content %}
 
-<h1 class="h3 mb-3">Upload dataset</h1>
+    <h1 class="h3 mb-3">Upload dataset</h1>
 
-<div class="row">
-    <div class="col-6">
-        <div class="card">
+    <div class="row">
+        <div class="col-6">
+            <div class="card">
 
-            <div class="card-header">
-                <h5 class="card-title">Basic info</h5>
-            </div>
+                <div class="card-header">
+                    <h5 class="card-title">Basic info</h5>
+                </div>
 
-            <div class="card-body">
+                <div class="card-body">
 
-                <form action="" method="post" novalidate class="form">
                     {{ form.hidden_tag() }}
 
                     <div class="row">
@@ -30,7 +29,7 @@
                                         {{ form.title.label(class="form-label") }}
                                         {{ form.title(class="form-control") }}
                                         {% for error in form.title.errors %}
-                                        <span style="color: red;">{{ error }}</span>
+                                            <span style="color: red;">{{ error }}</span>
                                         {% endfor %}
                                     </div>
                                 </div>
@@ -40,7 +39,7 @@
                                         {{ form.description.label(class="form-label") }}
                                         {{ form.description(rows=4, class="form-control") }}
                                         {% for error in form.description.errors %}
-                                        <span style="color: red;">{{ error }}</span>
+                                            <span style="color: red;">{{ error }}</span>
                                         {% endfor %}
                                     </div>
                                 </div>
@@ -58,7 +57,7 @@
                                         {{ form.tags.label(class="form-label") }}
                                         {{ form.tags(class="form-control") }}
                                         {% for error in form.tags.errors %}
-                                        <span style="color: red;">{{ error }}</span>
+                                            <span style="color: red;">{{ error }}</span>
                                         {% endfor %}
                                     </div>
                                 </div>
@@ -70,12 +69,12 @@
                                         <div id="authors">
 
                                             {% for author in form.authors.entries %}
-                                            <div class="author row">
-                                                {{ author.name.label }} {{ author.name() }}
-                                                {{ author.affiliation.label }} {{ author.affiliation() }}
-                                                {{ author.orcid.label }} {{ author.orcid() }}
-                                                {{ author.gnd.label }} {{ author.gnd() }}
-                                            </div>
+                                                <div class="author row">
+                                                    {{ author.name.label }} {{ author.name() }}
+                                                    {{ author.affiliation.label }} {{ author.affiliation() }}
+                                                    {{ author.orcid.label }} {{ author.orcid() }}
+                                                    {{ author.gnd.label }} {{ author.gnd() }}
+                                                </div>
                                             {% endfor %}
 
 
@@ -95,49 +94,39 @@
 
                     </div>
 
-
-                    <div class="row">
-
-                        <div class="col-12">
-                            {{ form.submit(class="btn btn-primary") }}
-                        </div>
-
-                    </div>
-
                     <div class="row">
 
                         {% if error %}
 
-                        <div class="mt-3 col-lg-6 col-12">
-                            <span style="color: red;">{{ error }}</span>
-                        </div>
+                            <div class="mt-3 col-lg-6 col-12">
+                                <span style="color: red;">{{ error }}</span>
+                            </div>
 
                         {% endif %}
 
                     </div>
 
-                </form>
 
+                </div>
             </div>
         </div>
-    </div>
 
-    <div class="col-6">
-        <div class="card">
+        <div class="col-6">
+            <div class="card">
 
-            <div class="card-header">
-                <h5 class="card-title">Drag and drop your feature models</h5>
-            </div>
+                <div class="card-header">
+                    <h5 class="card-title">Drag and drop your feature models</h5>
+                </div>
 
-            <div class="card-body">
+                <div class="card-body">
 
-                <form action="{{ url_for('dataset.upload') }}" class="dropzone" id="myDropzone">
-                    <div id="dropzone-text"></div>
-                </form>
+                    <form action="{{ url_for('dataset.upload') }}" class="dropzone" id="myDropzone">
+                        <div id="dropzone-text"></div>
+                    </form>
 
-                <ul class="mt-2" id="file-list"></ul>
+                    <ul class="mt-2" id="file-list"></ul>
 
-                <script>
+                    <script>
                         Dropzone.options.myDropzone = {
                             paramName: 'file',
                             maxFilesize: 10,
@@ -147,12 +136,54 @@
                                 var dropzoneText = document.getElementById('dropzone-text');
 
                                 this.on('addedfile', function (file) {
-                                    var listItem = document.createElement('li');
-                                    listItem.innerHTML = file.name;
 
-                                    var removeButton = document.createElement('button');
+                                    // actions when UVL model is uploaded
+                                    let listItem = document.createElement('li');
+                                    let h4Element = document.createElement('h4');
+                                    h4Element.textContent = file.name;
+                                    listItem.appendChild(h4Element);
+
+
+                                    // generate unique identifier for UVL form
+                                    let formUniqueId = generateUniqueId();
+
+                                    /*
+                                        ##########################################
+                                        FORM BUTTON
+                                        ##########################################
+                                    */
+                                    let formButton = document.createElement('button');
+                                    formButton.innerHTML = 'Add info';
+                                    formButton.classList.add('info-button', 'btn', 'btn-primary', "btn-sm");
+                                    formButton.id = formUniqueId + "_button";
+
+                                    formButton.addEventListener('click', function () {
+                                        if (formContainer.style.display === "none") {
+                                            formContainer.style.display = "block";
+                                        } else {
+                                            formContainer.style.display = "none";
+                                        }
+                                    });
+
+                                    // append space
+                                    let space = document.createTextNode(" ");
+                                    listItem.appendChild(space);
+
+                                    /*
+                                        ##########################################
+                                        REMOVE BUTTON
+                                        ##########################################
+                                    */
+
+                                    // remove button
+                                    let removeButton = document.createElement('button');
                                     removeButton.innerHTML = 'Delete';
-                                    removeButton.classList.add("remove-button", "btn", "btn-danger");
+                                    removeButton.classList.add("remove-button", "btn", "btn-danger", "btn-sm", "remove-button");
+
+                                    // append space
+                                    space = document.createTextNode(" ");
+                                    listItem.appendChild(space);
+
                                     removeButton.addEventListener('click', function () {
                                         fileList.removeChild(listItem);
                                         this.removeFile(file);
@@ -169,26 +200,27 @@
                                         xhr.send(JSON.stringify({file: file.name}));
                                     }.bind(this));
 
-                                    var infoButton = document.createElement('button');
-                                    infoButton.innerHTML = '+Info';
-                                    infoButton.classList.add('info-button','btn','btn-primary');
-                                    infoButton.addEventListener('click', function () {
+                                    /*
+                                        ##########################################
+                                        APPEND BUTTONS
+                                        ##########################################
+                                    */
+                                    listItem.appendChild(formButton);
+                                    listItem.appendChild(removeButton);
 
-                                        var infoButtonId = this.id;
+                                    /*
+                                        ##########################################
+                                        UVL FORM
+                                        ##########################################
+                                    */
 
-                                        var formContainerId = infoButtonId.replace("_button", "");
-                                        var formContainer = document.getElementById(formContainerId);
+                                    // create specific form for UVL
+                                    let formContainer = document.createElement('div');
+                                    formContainer.id = formUniqueId + "_form";
+                                    formContainer.classList.add('uvl_form', "mt-3");
+                                    formContainer.style.display = "none";
 
-                                        if (!formContainer) {
-                                            formContainer = document.createElement('div');
-
-                                            var formUniqueId = generateUniqueId();
-
-                                            infoButton.id = formUniqueId + "_button";
-
-                                            formContainer.id = formUniqueId
-
-                                            formContainer.innerHTML = `
+                                    formContainer.innerHTML = `
                                                 <form action="" method="post" novalidate class="form">
                                                     <div class="row">
                                                         <div class="col-12">
@@ -207,22 +239,41 @@
                                                                 </div>
                                                                 <div class="col-6">
                                                                     <div class="mb-3">
-                                                                        <label class="form-label">Publication Type</label>
-                                                                        <input type="text" class="form-control">
+                                                                        <label class="form-label" for="publication_type">Publication type</label>
+                                                                        <select class="form-control" id="publication_type" name="publication_type" required="">
+                                                                            <option value="annotationcollection">Annotation Collection</option>
+                                                                            <option value="book">Book</option>
+                                                                            <option value="section">Book Section</option>
+                                                                            <option value="conferencepaper">Conference Paper</option>
+                                                                            <option value="datamanagementplan">Data Management Plan</option>
+                                                                            <option value="article">Journal Article</option>
+                                                                            <option value="patent">Patent</option>
+                                                                            <option value="preprint">Preprint</option>
+                                                                            <option value="deliverable">Project Deliverable</option>
+                                                                            <option value="milestone">Project Milestone</option>
+                                                                            <option value="proposal">Proposal</option>
+                                                                            <option value="report">Report</option>
+                                                                            <option value="softwaredocumentation">Software Documentation</option>
+                                                                            <option value="taxonomictreatment">Taxonomic Treatment</option>
+                                                                            <option value="technicalnote">Technical Note</option>
+                                                                            <option value="thesis">Thesis</option>
+                                                                            <option value="workingpaper">Working Paper</option>
+                                                                            <option value="other">Other</option>
+                                                                        </select>
                                                                     </div>
                                                                 </div>
                                                                 <div class="col-12">
                                                                     <div class="mb-3">
-                                                                        <label class="form-label">Tags</label>
+                                                                        <label class="form-label">Tags (separated by commas)</label>
                                                                         <input type="text" class="form-control">
                                                                     </div>
                                                                 </div>
                                                                 <div class="col-12">
                                                                     <div class="mb-3">
                                                                         <label class="form-label">Authors</label>
-                                                                        <div id="authors_uvl_` + formContainer.id  + `">
+                                                                        <div id="` + formContainer.id + `_authors">
                                                                         </div>
-                                                                        <button type="button" class="add_author_to_uvl btn btn-secondary" id="button_authors_uvl_` + formContainer.id  + `">Add author</button>
+                                                                        <button type="button" class="add_author_to_uvl btn btn-secondary" id="` + formContainer.id + `_authors_button">Add author</button>
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -231,51 +282,72 @@
                                                 </form>
                                             `;
 
-                                        listItem.appendChild(formContainer);
-
-                                        } else {
-                                            if (formContainer.style.display === "none") {
-                                              formContainer.style.display = "block";
-                                            } else {
-                                              formContainer.style.display = "none";
-                                            }
-                                        }
-
-
-
-                                });
-
-
-                                    listItem.appendChild(infoButton);
-                                    listItem.appendChild(removeButton);
-
+                                    listItem.appendChild(formContainer);
                                     fileList.appendChild(listItem);
 
-                                    dropzoneText.style.display = 'none';
                                 });
 
                             }
                         };
 
 
-                function generateUniqueId() {
-                  return 'form-' + Math.random().toString(36).substr(2, 9);
-                }
+                        function generateUniqueId() {
+                            return Math.random().toString(36).substr(2, 9);
+                        }
 
 
-                </script>
+                    </script>
 
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <div class="row">
+
+        <div class="col-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Upload dataset</h5>
+                </div>
+                <div class="card-body">
+
+                    <p class="card-text">
+                        <label class="form-check">
+                            <input id="agreeCheckbox" class="form-check-input" type="checkbox" value="">
+                            <span class="form-check-label">
+                                I agree to have my feature models automatically uploaded to Zenodo and made available to the public according to the <a href="https://en.wikipedia.org/wiki/Open_science" target="_blank">Open Science</a> manifesto
+        </span>
+                        </label>
+                    </p>
+
+                    <button id="uploadButton" class="btn btn-primary" disabled>Upload dataset</button>
+
+                    <script>
+                        // Obtener referencias a los elementos del DOM
+                        const checkbox = document.getElementById('agreeCheckbox');
+                        const uploadButton = document.getElementById('uploadButton');
+
+                        // Escuchar el evento de cambio en el checkbox
+                        checkbox.addEventListener('change', function () {
+                            // Habilitar o deshabilitar el botón según el estado del checkbox
+                            uploadButton.disabled = !checkbox.checked;
+                        });
+                    </script>
+
+                </div>
             </div>
 
         </div>
+
     </div>
 
-</div>
 
+    {% block scripts %}
 
-{% block scripts %}
-
-<script>
+        <script>
 
             function addField(newAuthor, name, text, className = 'col-6 mb-3') {
                 var fieldWrapper = document.createElement('div');
@@ -335,27 +407,26 @@
 
             document.addEventListener('click', function (event) {
                 if (event.target && event.target.classList.contains('add_author_to_uvl')) {
-                    var elementId = event.target.id;
 
-                    elementId = elementId.replace("button_", "");
+                    let authorsButtonId = event.target.id;
+                    console.log(authorsButtonId);
 
-                    console.log(elementId);
-                    var authors = document.getElementById('elementId');
+                    let authorsId = authorsButtonId.replace("_button", "");
+                    console.log(authorsId);
+
+                    let authors = document.getElementById(authorsId);
                     console.log(authors);
-                    var newAuthor = createAuthorBlock();
+
+                    let newAuthor = createAuthorBlock();
                     authors.appendChild(newAuthor);
+
                 }
             });
 
 
+        </script>
 
 
-
-
-
-</script>
-
-
-{% endblock %}
+    {% endblock %}
 
 {% endblock %}
