@@ -125,7 +125,7 @@
             <div class="card" id="uploaded_models_form">
 
                 <div class="card-header">
-                    <h5 class="card-title">Drag and drop your feature models</h5>
+                    <h5 class="card-title">Drag and drop your feature models in UVL format</h5>
                 </div>
 
                 <div class="card-body">
@@ -133,6 +133,9 @@
                     <form action="{{ url_for('dataset.upload') }}" class="dropzone" id="myDropzone">
                         <div id="dropzone-text"></div>
                     </form>
+
+                    <span class="text-danger" id="alerts" style="display: none">
+                    </span>
 
                     <ul class="mt-2" id="file-list"></ul>
 
@@ -144,93 +147,106 @@
                             init: function () {
                                 var fileList = document.getElementById('file-list');
                                 var dropzoneText = document.getElementById('dropzone-text');
+                                var alerts = document.getElementById('alerts');
 
                                 this.on('addedfile', function (file) {
 
-                                    // actions when UVL model is uploaded
-                                    let listItem = document.createElement('li');
-                                    let h4Element = document.createElement('h4');
-                                    h4Element.textContent = file.name;
-                                    listItem.appendChild(h4Element);
-
-
-                                    // generate unique identifier for UVL form
-                                    let formUniqueId = generateUniqueId();
-
-                                    /*
-                                        ##########################################
-                                        FORM BUTTON
-                                        ##########################################
-                                    */
-                                    let formButton = document.createElement('button');
-                                    formButton.innerHTML = 'Add info';
-                                    formButton.classList.add('info-button', 'btn', 'btn-outline-primary', "btn-sm");
-                                    formButton.id = formUniqueId + "_button";
-
-                                    formButton.addEventListener('click', function () {
-                                        if (formContainer.style.display === "none") {
-                                            formContainer.style.display = "block";
-                                        } else {
-                                            formContainer.style.display = "none";
-                                        }
-                                    });
-
-                                    // append space
-                                    let space = document.createTextNode(" ");
-                                    listItem.appendChild(space);
-
-                                    /*
-                                        ##########################################
-                                        REMOVE BUTTON
-                                        ##########################################
-                                    */
-
-                                    // remove button
-                                    let removeButton = document.createElement('button');
-                                    removeButton.innerHTML = 'Delete';
-                                    removeButton.classList.add("remove-button", "btn", "btn-outline-danger", "btn-sm", "remove-button");
-
-                                    // append space
-                                    space = document.createTextNode(" ");
-                                    listItem.appendChild(space);
-
-                                    removeButton.addEventListener('click', function () {
-                                        fileList.removeChild(listItem);
+                                    var ext = file.name.split('.').pop();
+                                    if (ext !== 'uvl') {
                                         this.removeFile(file);
 
-                                        // Ajax request
-                                        var xhr = new XMLHttpRequest();
-                                        xhr.open('POST', '/delete', true);
-                                        xhr.setRequestHeader('Content-Type', 'application/json');
-                                        xhr.onload = function () {
-                                            if (xhr.status === 200) {
-                                                console.log('Deleted file from server');
+                                        var alert = document.createElement('p');
+                                        alert.textContent = 'Invalid file extension: ' + file.name;
+                                        alerts.appendChild(alert);
+                                        alerts.style.display = 'block';
+
+                                    } else {
+                                        // actions when UVL model is uploaded
+                                        let listItem = document.createElement('li');
+                                        let h4Element = document.createElement('h4');
+                                        h4Element.textContent = file.name;
+                                        listItem.appendChild(h4Element);
+
+
+                                        // generate unique identifier for UVL form
+                                        let formUniqueId = generateUniqueId();
+
+                                        /*
+                                            ##########################################
+                                            FORM BUTTON
+                                            ##########################################
+                                        */
+                                        let formButton = document.createElement('button');
+                                        formButton.innerHTML = 'Add info';
+                                        formButton.classList.add('info-button', 'btn', 'btn-outline-primary', "btn-sm");
+                                        formButton.id = formUniqueId + "_button";
+
+                                        formButton.addEventListener('click', function () {
+                                            if (formContainer.style.display === "none") {
+                                                formContainer.style.display = "block";
+                                                formButton.innerHTML = 'Hide info';
+                                            } else {
+                                                formContainer.style.display = "none";
+                                                formButton.innerHTML = 'Add info';
                                             }
-                                        };
-                                        xhr.send(JSON.stringify({file: file.name}));
-                                    }.bind(this));
+                                        });
 
-                                    /*
-                                        ##########################################
-                                        APPEND BUTTONS
-                                        ##########################################
-                                    */
-                                    listItem.appendChild(formButton);
-                                    listItem.appendChild(removeButton);
+                                        // append space
+                                        let space = document.createTextNode(" ");
+                                        listItem.appendChild(space);
 
-                                    /*
-                                        ##########################################
-                                        UVL FORM
-                                        ##########################################
-                                    */
+                                        /*
+                                            ##########################################
+                                            REMOVE BUTTON
+                                            ##########################################
+                                        */
 
-                                    // create specific form for UVL
-                                    let formContainer = document.createElement('div');
-                                    formContainer.id = formUniqueId + "_form";
-                                    formContainer.classList.add('uvl_form', "mt-3");
-                                    formContainer.style.display = "none";
+                                        // remove button
+                                        let removeButton = document.createElement('button');
+                                        removeButton.innerHTML = 'Delete';
+                                        removeButton.classList.add("remove-button", "btn", "btn-outline-danger", "btn-sm", "remove-button");
 
-                                    formContainer.innerHTML = `
+                                        // append space
+                                        space = document.createTextNode(" ");
+                                        listItem.appendChild(space);
+
+                                        removeButton.addEventListener('click', function () {
+                                            fileList.removeChild(listItem);
+                                            this.removeFile(file);
+
+                                            // Ajax request
+                                            var xhr = new XMLHttpRequest();
+                                            xhr.open('POST', '/delete', true);
+                                            xhr.setRequestHeader('Content-Type', 'application/json');
+                                            xhr.onload = function () {
+                                                if (xhr.status === 200) {
+                                                    console.log('Deleted file from server');
+                                                }
+                                            };
+                                            xhr.send(JSON.stringify({file: file.name}));
+                                        }.bind(this));
+
+                                        /*
+                                            ##########################################
+                                            APPEND BUTTONS
+                                            ##########################################
+                                        */
+                                        listItem.appendChild(formButton);
+                                        listItem.appendChild(removeButton);
+
+                                        /*
+                                            ##########################################
+                                            UVL FORM
+                                            ##########################################
+                                        */
+
+                                        // create specific form for UVL
+                                        let formContainer = document.createElement('div');
+                                        formContainer.id = formUniqueId + "_form";
+                                        formContainer.classList.add('uvl_form', "mt-3");
+                                        formContainer.style.display = "none";
+
+                                        formContainer.innerHTML = `
                                         <div class="row">
                                             <input type="hidden" value="` + formUniqueId + `" name="uvl_identifier">
                                             <input type="hidden" value="` + file.name + `" name="uvl_filename">
@@ -304,8 +320,11 @@
                                         </div>
                                     `;
 
-                                    listItem.appendChild(formContainer);
-                                    fileList.appendChild(listItem);
+                                        listItem.appendChild(formContainer);
+                                        fileList.appendChild(listItem);
+
+                                    }
+
 
                                 });
 
