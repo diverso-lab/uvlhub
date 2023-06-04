@@ -1,6 +1,7 @@
 import os
 import json
 import hashlib
+import shutil
 
 from flask import flash, redirect, render_template, url_for, request, jsonify
 from flask_login import login_required, current_user
@@ -59,6 +60,9 @@ def create_dataset():
                 deposition_doi = zenodo_get_doi(deposition_id)
                 dataset.ds_meta_data.dataset_doi = deposition_doi
                 app.db.session.commit()
+
+                # move feature models permanently
+                move_feature_models(dataset.id, feature_models)
 
             return jsonify({'message': zenodo_response_json}), 200
 
@@ -193,6 +197,20 @@ def calculate_checksum_and_size(file_path):
         content = file.read()
         hash_md5 = hashlib.md5(content).hexdigest()
         return hash_md5, file_size
+
+
+def move_feature_models(dataset_id, feature_models):
+
+    user_id = current_user.id
+    source_dir = f'uploads/temp/{user_id}/'
+    dest_dir = f'uploads/user_{user_id}/dataset_{dataset_id}/'
+
+    os.makedirs(dest_dir, exist_ok=True)
+
+    for feature_model in feature_models:
+        uvl_filename = feature_model.fm_meta_data.uvl_filename
+        shutil.move(os.path.join(source_dir, uvl_filename), dest_dir)
+
 
 
 @dataset_bp.route('/upload', methods=['POST'])
