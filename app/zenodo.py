@@ -3,7 +3,9 @@ import os
 import json
 
 from dotenv import load_dotenv
+from flask_login import current_user
 
+import app
 from app.dataset.models import DataSet
 
 load_dotenv()
@@ -57,6 +59,30 @@ def create_new_deposition(dataset: DataSet):
         raise Exception(error_message)
     return response.json()
 
+def upload_file(deposition_id, feature_models):
+
+    for feature_model in feature_models:
+        file_name = feature_model.fm_meta_data.title
+
+        data = {'name': file_name}
+        user_id = current_user.id
+        file_path = os.path.join(app.upload_folder_name(), 'temp', str(user_id), file_name)
+        files = {'file': open(file_path, 'rb')}
+
+    '''
+    file_names = [model['name'] for model in feature_models]
+
+    data = {'names': file_names}
+
+    headers = {"Content-Type": "application/json"}
+    publish_url = f'{ZENODO_API_URL}/{deposition_id}/files'
+    params = {'access_token': ZENODO_ACCESS_TOKEN}
+    response = requests.post(publish_url, params=params, headers=headers)
+    if response.status_code != 201:
+        error_message = 'Failed to upload files. Error details: {}'.format(response.json())
+        raise Exception(error_message)
+    return response.json()
+    '''
 
 def publish_deposition(deposition_id):
     headers = {"Content-Type": "application/json"}

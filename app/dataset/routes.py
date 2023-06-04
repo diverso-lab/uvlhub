@@ -42,6 +42,10 @@ def create_dataset():
                 feature_models = create_feature_models_in_db(dataset, uploaded_models_data)
 
                 # TODO: Send feature models to Zenodo
+                deposition_id = data.get('id')
+
+                # TODO: Iterate for each feature model (one feature model = one request to Zenodo
+
 
             return jsonify({'message': zenodo_response_json}), 200
 
