@@ -9,7 +9,8 @@ import app
 from .forms import DataSetForm
 from .models import DataSet, DSMetrics, FeatureModel, File, FMMetaData, FMMetrics, DSMetaData, Author, PublicationType
 from . import dataset_bp
-from ..zenodo import zenodo_create_new_deposition, test_zenodo_connection, zenodo_upload_file
+from ..zenodo import zenodo_create_new_deposition, test_zenodo_connection, zenodo_upload_file, \
+    zenodo_publish_deposition, zenodo_get_doi
 
 
 @dataset_bp.route('/dataset/upload', methods=['GET', 'POST'])
@@ -41,7 +42,7 @@ def create_dataset():
                 deposition_id = data.get('id')
 
                 # update dataset with deposition id in Zenodo
-                dataset.deposition_id = deposition_id
+                dataset.ds_meta_data.deposition_id = deposition_id
                 app.db.session.commit()
 
                 # create feature models
@@ -51,12 +52,20 @@ def create_dataset():
                 for feature_model in feature_models:
                     zenodo_upload_file(deposition_id, feature_model)
 
+                # publish deposition
+                zenodo_publish_deposition(deposition_id)
+
+                # update DOI
+                deposition_doi = zenodo_get_doi(deposition_id)
+                dataset.ds_meta_data.dataset_doi = deposition_doi
+                app.db.session.commit()
+
             return jsonify({'message': zenodo_response_json}), 200
 
         except Exception as e:
             return jsonify({'message': str(e)}), 500
 
-    return render_template('dataset/upload_dataset.html', title='Create DataSet', form=form)
+    return render_template('dataset/upload_dataset.html', form=form)
 
 
 def create_dataset_in_db(basic_info_data):

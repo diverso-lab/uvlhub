@@ -75,8 +75,7 @@ def zenodo_upload_file(deposition_id, feature_model):
     return response.json()
 
 
-
-def publish_deposition(deposition_id):
+def zenodo_publish_deposition(deposition_id):
     headers = {"Content-Type": "application/json"}
     publish_url = f'{ZENODO_API_URL}/{deposition_id}/actions/publish'
     params = {'access_token': ZENODO_ACCESS_TOKEN}
@@ -86,11 +85,15 @@ def publish_deposition(deposition_id):
     return response.json()
 
 
-def get_doi(deposition_id):
+def zenodo_get_deposition(deposition_id):
     headers = {"Content-Type": "application/json"}
     deposition_url = f'{ZENODO_API_URL}/{deposition_id}'
     params = {'access_token': ZENODO_ACCESS_TOKEN}
     response = requests.get(deposition_url, params=params, headers=headers)
     if response.status_code != 200:
         raise Exception('Failed to get deposition')
-    return response.json().get('doi')
+    return response.json()
+
+
+def zenodo_get_doi(deposition_id):
+    return zenodo_get_deposition(deposition_id).get('doi')
