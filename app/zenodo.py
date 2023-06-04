@@ -30,8 +30,7 @@ def get_all_depositions():
     return response.json()
 
 
-def create_new_deposition(dataset: DataSet):
-
+def zenodo_create_new_deposition(dataset: DataSet):
     metadata = {
         'title': dataset.ds_meta_data.title,
         'upload_type': 'publication',
@@ -59,30 +58,23 @@ def create_new_deposition(dataset: DataSet):
         raise Exception(error_message)
     return response.json()
 
-def upload_file(deposition_id, feature_models):
 
-    for feature_model in feature_models:
-        file_name = feature_model.fm_meta_data.title
+def zenodo_upload_file(deposition_id, feature_model):
+    uvl_filename = feature_model.fm_meta_data.uvl_filename
+    data = {'name': uvl_filename}
+    user_id = current_user.id
+    file_path = os.path.join(app.upload_folder_name(), 'temp', str(user_id), uvl_filename)
+    files = {'file': open(file_path, 'rb')}
 
-        data = {'name': file_name}
-        user_id = current_user.id
-        file_path = os.path.join(app.upload_folder_name(), 'temp', str(user_id), file_name)
-        files = {'file': open(file_path, 'rb')}
-
-    '''
-    file_names = [model['name'] for model in feature_models]
-
-    data = {'names': file_names}
-
-    headers = {"Content-Type": "application/json"}
     publish_url = f'{ZENODO_API_URL}/{deposition_id}/files'
     params = {'access_token': ZENODO_ACCESS_TOKEN}
-    response = requests.post(publish_url, params=params, headers=headers)
+    response = requests.post(publish_url, params=params, data=data, files=files)
     if response.status_code != 201:
         error_message = 'Failed to upload files. Error details: {}'.format(response.json())
         raise Exception(error_message)
     return response.json()
-    '''
+
+
 
 def publish_deposition(deposition_id):
     headers = {"Content-Type": "application/json"}

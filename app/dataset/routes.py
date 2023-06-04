@@ -9,7 +9,7 @@ import app
 from .forms import DataSetForm
 from .models import DataSet, DSMetrics, FeatureModel, File, FMMetaData, FMMetrics, DSMetaData, Author, PublicationType
 from . import dataset_bp
-from ..zenodo import create_new_deposition, test_zenodo_connection
+from ..zenodo import zenodo_create_new_deposition, test_zenodo_connection, zenodo_upload_file
 
 
 @dataset_bp.route('/dataset/upload', methods=['GET', 'POST'])
@@ -32,20 +32,24 @@ def create_dataset():
             dataset = create_dataset_in_db(basic_info_data)
 
             # send dataset as deposition to Zenodo
-            zenodo_response_json = create_new_deposition(dataset)
+            zenodo_response_json = zenodo_create_new_deposition(dataset)
 
             response_data = json.dumps(zenodo_response_json)
             data = json.loads(response_data)
             if data.get('conceptrecid'):
 
+                deposition_id = data.get('id')
+
+                # update dataset with deposition id in Zenodo
+                dataset.deposition_id = deposition_id
+                app.db.session.commit()
+
                 # create feature models
                 feature_models = create_feature_models_in_db(dataset, uploaded_models_data)
 
-                # TODO: Send feature models to Zenodo
-                deposition_id = data.get('id')
-
-                # TODO: Iterate for each feature model (one feature model = one request to Zenodo
-
+                # iterate for each feature model (one feature model = one request to Zenodo
+                for feature_model in feature_models:
+                    zenodo_upload_file(deposition_id, feature_model)
 
             return jsonify({'message': zenodo_response_json}), 200
 
@@ -123,6 +127,7 @@ def create_feature_models_in_db(dataset: DataSet, uploaded_models_data: dict):
 
             # create feature model metadata
             feature_model_metadata = FMMetaData(
+                uvl_filename=uvl_filename,
                 title=title,
                 description=description,
                 publication_type=PublicationType(uvl_publication_type),
