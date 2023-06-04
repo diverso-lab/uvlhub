@@ -115,6 +115,7 @@ def create_feature_models_in_db(dataset: DataSet, uploaded_models_data: dict):
             uvl_publication_type = uploaded_models_data["uvl_publication_type"][i]
             publication_doi = uploaded_models_data["publication_doi"][i]
             tags = uploaded_models_data["tags"][i]
+            uvl_version = uploaded_models_data["uvl_version"][i]
 
             # create feature model metadata
             feature_model_metadata = FMMetaData(
@@ -122,7 +123,8 @@ def create_feature_models_in_db(dataset: DataSet, uploaded_models_data: dict):
                 description=description,
                 publication_type=PublicationType(uvl_publication_type),
                 publication_doi=publication_doi,
-                tags=tags
+                tags=tags,
+                uvl_version=uvl_version
             )
             app.db.session.add(feature_model_metadata)
             app.db.session.commit()
