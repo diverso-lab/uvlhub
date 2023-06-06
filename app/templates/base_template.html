@@ -70,6 +70,13 @@
                         </a>
                     </li>
 
+                <li class="sidebar-item {{ 'active' if request.endpoint == 'dataset.list_dataset' else '' }}">
+                        <a class="sidebar-link" href="{{ url_for('dataset.list_dataset') }}">
+                            <i class="align-middle" data-feather="list"></i> <span
+                                class="align-middle">My datasets</span>
+                        </a>
+                    </li>
+
                     <li class="sidebar-item">
                         <a class="sidebar-link" href="{{ url_for('auth.logout') }}">
                             <i class="align-middle" data-feather="log-out"></i> <span

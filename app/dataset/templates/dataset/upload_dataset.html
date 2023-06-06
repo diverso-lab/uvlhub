@@ -500,14 +500,14 @@
                     })
                         .then(response => {
                             if (response.ok) {
-                                console.log('JSON sent successfully');
+                                console.log('Dataset sent successfully');
                                 response.json().then(data => {
                                     console.log(data.message);
+                                    window.location.href = "/dataset/list";
                                 });
                             } else {
                                 response.json().then(data => {
                                     console.error('Error: ' + data.message);
-                                    //console.error('Validation errors:', data.errors);
                                 });
                             }
                         })

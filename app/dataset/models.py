@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from app import db
 from enum import Enum
 from sqlalchemy import Enum as SQLAlchemyEnum
@@ -61,6 +63,7 @@ class DataSet(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     ds_meta_data_id = db.Column(db.Integer, db.ForeignKey('ds_meta_data.id'), nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     ds_meta_data = db.relationship('DSMetaData', backref='data_set', lazy=True)
     feature_models = db.relationship('FeatureModel', backref='data_set', lazy=True)
 

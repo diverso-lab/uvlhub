@@ -73,6 +73,16 @@ def create_dataset():
     return render_template('dataset/upload_dataset.html', form=form)
 
 
+@dataset_bp.route('/dataset/list', methods=['GET', 'POST'])
+@login_required
+def list_dataset():
+    user_datasets = DataSet.query.join(DSMetaData).filter(
+        DataSet.user_id == current_user.id,
+        DSMetaData.dataset_doi.isnot(None)
+    ).order_by(DataSet.created_at.desc()).all()
+    return render_template('dataset/list_datasets.html', datasets=user_datasets)
+
+
 def create_dataset_in_db(basic_info_data):
     # get dataset metadata
     title = basic_info_data["title"][0]
