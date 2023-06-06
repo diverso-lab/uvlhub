@@ -13,3 +13,4 @@ flask_login
 Werkzeug~=2.3.4
 alembic~=1.11.1
 email_validator
+flamapy-fm-dist

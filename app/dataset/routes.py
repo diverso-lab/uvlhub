@@ -10,6 +10,7 @@ import app
 from .forms import DataSetForm
 from .models import DataSet, DSMetrics, FeatureModel, File, FMMetaData, FMMetrics, DSMetaData, Author, PublicationType
 from . import dataset_bp
+from ..flama import flamapy_valid_model
 from ..zenodo import zenodo_create_new_deposition, test_zenodo_connection, zenodo_upload_file, \
     zenodo_publish_deposition, zenodo_get_doi
 
@@ -200,7 +201,6 @@ def calculate_checksum_and_size(file_path):
 
 
 def move_feature_models(dataset_id, feature_models):
-
     user_id = current_user.id
     source_dir = f'uploads/temp/{user_id}/'
     dest_dir = f'uploads/user_{user_id}/dataset_{dataset_id}/'
@@ -210,7 +210,6 @@ def move_feature_models(dataset_id, feature_models):
     for feature_model in feature_models:
         uvl_filename = feature_model.fm_meta_data.uvl_filename
         shutil.move(os.path.join(source_dir, uvl_filename), dest_dir)
-
 
 
 @dataset_bp.route('/upload', methods=['POST'])
@@ -224,10 +223,18 @@ def upload():
         if not os.path.exists(temp_folder):
             os.makedirs(temp_folder)
 
-        file.save(os.path.join(temp_folder, file.filename))
-        return jsonify({'message': 'File uploaded successfully'})
+        try:
+            file.save(os.path.join(temp_folder, file.filename))
+            valid_model = flamapy_valid_model(uvl_filename=file.filename)
+            if valid_model:
+                return jsonify({'message': 'UVL uploaded and validated successfully'}), 200
+            else:
+                return jsonify({'message': 'No valid model'}), 400
+        except Exception as e:
+            return jsonify({'message': str(e)}), 500
+
     else:
-        return jsonify({'error': 'Error: No valid file'})
+        return jsonify({'message': 'No valid file'}), 400
 
 
 @dataset_bp.route('/delete', methods=['POST'])
