@@ -63,6 +63,10 @@
 
                 {% else %}
 
+                    <li class="sidebar-header">
+						Datasets
+					</li>
+
                     <li class="sidebar-item {{ 'active' if request.endpoint == 'dataset.create_dataset' else '' }}">
                         <a class="sidebar-link" href="{{ url_for('dataset.create_dataset') }}">
                             <i class="align-middle" data-feather="upload"></i> <span
@@ -70,12 +74,16 @@
                         </a>
                     </li>
 
-                <li class="sidebar-item {{ 'active' if request.endpoint == 'dataset.list_dataset' else '' }}">
+                    <li class="sidebar-item {{ 'active' if request.endpoint == 'dataset.list_dataset' else '' }}">
                         <a class="sidebar-link" href="{{ url_for('dataset.list_dataset') }}">
                             <i class="align-middle" data-feather="list"></i> <span
                                 class="align-middle">My datasets</span>
                         </a>
                     </li>
+
+                    <li class="sidebar-header">
+						Options
+					</li>
 
                     <li class="sidebar-item">
                         <a class="sidebar-link" href="{{ url_for('auth.logout') }}">
