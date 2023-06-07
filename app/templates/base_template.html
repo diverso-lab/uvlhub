@@ -14,7 +14,7 @@
     <link rel="shortcut icon" href="{{ url_for("static", filename="img/icons/icon-250x250.png") }}"/>
 
 
-    <link rel="canonical" href="https://demo-basic.adminkit.io/"/>
+    <link rel="canonical" href="https://www.uvlhub.io"/>
 
     <title>{{ FLASK_APP_NAME }} - DiversoLab</title>
 
@@ -35,8 +35,9 @@
     <nav id="sidebar" class="sidebar js-sidebar">
         <div class="sidebar-content js-simplebar">
             <a class="sidebar-brand" href="{{ url_for('public.index') }}">
-                <span class="align-middle">{{ FLASK_APP_NAME }}</span>
+                <img src="{{ url_for("static", filename="img/logos/logo-dark.svg") }}" class="d-block" style="max-width: 100%; height: auto;">
             </a>
+
 
             <ul class="sidebar-nav">
 
