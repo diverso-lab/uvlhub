@@ -5,6 +5,10 @@
   
 </div>
 
+<div style="text-align: center;">
+  <img src="https://www.uvlhub.io/static/img/logos/logo-dark.svg" alt="Logo">
+</div>
+
 # uvlhub.io
 
 ## Set `.env` file in root with:
