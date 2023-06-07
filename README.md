@@ -6,10 +6,12 @@
 </div>
 
 <div style="text-align: center;">
-  <img src="https://www.uvlhub.io/static/img/logos/logo-dark.svg" alt="Logo">
+  <img src="https://www.uvlhub.io/static/img/logos/logo-light.svg" alt="Logo">
 </div>
 
 # uvlhub.io
+
+Repository of feature models in UVL format integrated with Zenodo and FlamaPy - DiversoLab
 
 ## Set `.env` file in root with:
 
