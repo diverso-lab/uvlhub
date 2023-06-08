@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   web:
-    build: .
+    build: drorganvidez/uvlhub:v0.0.1
     volumes:
       - .:/app
     ports:
