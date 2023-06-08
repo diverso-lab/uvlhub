@@ -6,6 +6,7 @@ from sqlalchemy import Enum as SQLAlchemyEnum
 
 
 class PublicationType(Enum):
+    NONE = 'none'
     ANNOTATION_COLLECTION = 'annotationcollection'
     BOOK = 'book'
     BOOK_SECTION = 'section'
@@ -31,7 +32,6 @@ class Author(db.Model):
     name = db.Column(db.String(120), nullable=False)
     affiliation = db.Column(db.String(120))
     orcid = db.Column(db.String(120))
-    gnd = db.Column(db.String(120))
     ds_meta_data_id = db.Column(db.Integer, db.ForeignKey('ds_meta_data.id'))
     fm_meta_data_id = db.Column(db.Integer, db.ForeignKey('fm_meta_data.id'))
 

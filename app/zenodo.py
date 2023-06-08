@@ -33,14 +33,14 @@ def get_all_depositions():
 def zenodo_create_new_deposition(dataset: DataSet):
     metadata = {
         'title': dataset.ds_meta_data.title,
-        'upload_type': 'publication',
-        'publication_type': dataset.ds_meta_data.publication_type.value,
+        'upload_type': 'dataset' if dataset.ds_meta_data.publication_type.value == "none" else 'publication',
+        'publication_type': dataset.ds_meta_data.publication_type.value if
+        dataset.ds_meta_data.publication_type.value != "none" else None,
         'description': dataset.ds_meta_data.description,
         'creators': [{
             'name': author.name,
             'affiliation': author.affiliation,
-            'orcid': '0000-0002-1694-233X',
-            'gnd': '170118215'} for author in dataset.ds_meta_data.authors],
+            'orcid': '0000-0002-1694-233X'} for author in dataset.ds_meta_data.authors],
         'keywords': dataset.ds_meta_data.tags.split(", "),
         'access_right': 'open',
         'license': 'CC-BY-4.0'

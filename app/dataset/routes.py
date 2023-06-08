@@ -110,13 +110,11 @@ def create_dataset_in_db(basic_info_data):
             author_name = basic_info_data["author_name"][i]
             author_affiliation = basic_info_data["author_affiliation"][i]
             author_orcid = basic_info_data["author_orcid"][i]
-            author_gnd = basic_info_data["author_gnd"][i]
 
             author = Author(
                 name=author_name,
                 affiliation=author_affiliation,
                 orcid=author_orcid,
-                gnd=author_gnd,
                 ds_meta_data_id=ds_meta_data.id
             )
             app.db.session.add(author)
@@ -178,7 +176,6 @@ def create_feature_models_in_db(dataset: DataSet, uploaded_models_data: dict):
                         name=uploaded_models_data[f"author_name_{uvl_identifier}"][a],
                         affiliation=uploaded_models_data[f"author_affiliation_{uvl_identifier}"][a],
                         orcid=uploaded_models_data[f"author_orcid_{uvl_identifier}"][a],
-                        gnd=uploaded_models_data[f"author_gnd_{uvl_identifier}"][a],
                         fm_meta_data_id=feature_model_metadata.id
                     )
                     app.db.session.add(author)

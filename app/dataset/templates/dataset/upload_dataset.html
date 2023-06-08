@@ -83,7 +83,6 @@
                                                     {{ author.name.label }} {{ author.name() }}
                                                     {{ author.affiliation.label }} {{ author.affiliation() }}
                                                     {{ author.orcid.label }} {{ author.orcid() }}
-                                                    {{ author.gnd.label }} {{ author.gnd() }}
                                                 </div>
                                             {% endfor %}
 
@@ -274,7 +273,8 @@
                                                 <div class="col-lg-6 col-12">
                                                     <div class="mb-3">
                                                         <label class="form-label" for="publication_type">Publication type</label>
-                                                        <select class="form-control" name="uvl_publication_type" required="">
+                                                        <select class="form-control" name="uvl_publication_type">
+                                                            <option value="none">None</option>
                                                             <option value="annotationcollection">Annotation Collection</option>
                                                             <option value="book">Book</option>
                                                             <option value="section">Book Section</option>
@@ -444,7 +444,6 @@
                 addField(newAuthor, 'author_name' + suffix, 'Name');
                 addField(newAuthor, 'author_affiliation' + suffix, 'Affiliation');
                 addField(newAuthor, 'author_orcid' + suffix, 'ORCID');
-                addField(newAuthor, 'author_gnd' + suffix, 'GND');
                 addRemoveButton(newAuthor);
 
                 return newAuthor;
