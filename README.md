@@ -13,7 +13,15 @@
 
 Repository of feature models in UVL format integrated with Zenodo and FlamaPy - DiversoLab
 
+## Clone repo
+
+```
+git clone https://github.com/diverso-lab/uvlhub.git
+```
+
 ## Set `.env` file in root with:
+
+Create an `.env` file in the root of the project with this information. It is important to obtain a token in Zenodo first.
 
 ```
 FLASK_APP_NAME=UVLHUB.IO
@@ -27,8 +35,19 @@ ZENODO_ACCESS_TOKEN=<GET_ACCESS_TOKEN_IN_ZENODO>
 
 ## Deploy in develop
 
+To deploy the software under development environment, run:
+
 ```
 docker compose -f docker-compose.dev.yml up -d 
+```
+
+This will apply the migrations to the database and run the Flask application. 
+
+However, if during development there are new changes in the model, run inside the `web` container:
+
+```
+flask db migrate
+flask db upgrade
 ```
 
 ## Deploy in production
@@ -37,11 +56,12 @@ docker compose -f docker-compose.dev.yml up -d
 docker compose -f docker-compose.prod.yml up -d 
 ```
 
-## Run migrations
-
-Inside the `web` container, run:
+For a continuous deployment of the `uvlhub:latest` image, run the following WatchTower container with a 2-minute check interval:
 
 ```
-flask db migrate
-flask db upgrade
+docker run -d 
+  --name watchtower
+  -v /var/run/docker.sock:/var/run/docker.sock
+  containrrr/watchtower
+  uvlhub-web-1
 ```
