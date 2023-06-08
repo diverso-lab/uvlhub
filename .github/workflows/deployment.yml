@@ -17,6 +17,6 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ secrets.DOCKER_USER }}/uvlhub:${{ github.event.release.tag_name }}
+          tags: ${{ secrets.DOCKER_USER }}/${{ secrets.DOCKER_USER }}/uvlhub:${{ github.event.release.tag_name }}
           username: ${{ secrets.DOCKER_USER }}
           password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
