@@ -26,7 +26,7 @@
 
                                 <div class="col-12">
                                     <div class="mb-3">
-                                        {{ form.title.label(class="form-label") }}
+                                        {{ form.title.label(class="form-label") }} *
                                         {{ form.title(class="form-control") }}
                                         {% for error in form.title.errors %}
                                             <span style="color: red;">{{ error }}</span>
@@ -36,7 +36,7 @@
 
                                 <div class="col-12">
                                     <div class="mb-3">
-                                        {{ form.description.label(class="form-label") }}
+                                        {{ form.description.label(class="form-label") }} *
                                         {{ form.description(rows=4, class="form-control") }}
                                         {% for error in form.description.errors %}
                                             <span style="color: red;">{{ error }}</span>
