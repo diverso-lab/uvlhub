@@ -43,11 +43,21 @@ docker compose -f docker-compose.dev.yml up -d
 
 This will apply the migrations to the database and run the Flask application. 
 
+### Migrations
+
 However, if during development there are new changes in the model, run inside the `web` container:
 
 ```
 flask db migrate
 flask db upgrade
+```
+
+### Tests
+
+To run unit test, please enter inside `web` container:
+
+```
+pytest app/tests/units.py
 ```
 
 ## Deploy in production
