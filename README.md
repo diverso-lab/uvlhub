@@ -59,9 +59,10 @@ docker compose -f docker-compose.prod.yml up -d
 For a continuous deployment of the `uvlhub:latest` image, run the following WatchTower container with a 2-minute check interval:
 
 ```
-docker run -d 
-  --name watchtower
-  -v /var/run/docker.sock:/var/run/docker.sock
-  containrrr/watchtower
-  uvlhub-web-1
+docker run -d
+--name watchtower
+-v /var/run/docker.sock:/var/run/docker.sock
+containrrr/watchtower
+--interval 120
+uvlhub-web-1
 ```
