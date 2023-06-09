@@ -139,11 +139,12 @@
                     <ul class="mt-2" id="file-list"></ul>
 
                     <script>
-                        Dropzone.options.myDropzone = {
+                        let dropzone = Dropzone.options.myDropzone = {
                             paramName: 'file',
                             maxFilesize: 10,
                             acceptedFiles: '.uvl',
                             init: function () {
+
                                 var fileList = document.getElementById('file-list');
                                 var dropzoneText = document.getElementById('dropzone-text');
                                 var alerts = document.getElementById('alerts');
@@ -164,7 +165,11 @@
 
                                 });
 
-                                this.on('success', function(file, response) {
+                                this.on('success', function (file, response) {
+
+                                    let dropzone = this;
+
+                                    show_upload_dataset();
 
                                     console.log("File uploaded: ", response);
                                     // actions when UVL model is uploaded
@@ -183,8 +188,9 @@
                                         ##########################################
                                     */
                                     let formButton = document.createElement('button');
-                                    formButton.innerHTML = 'Add info';
-                                    formButton.classList.add('info-button', 'btn', 'btn-outline-primary', "btn-sm");
+                                    formButton.innerHTML = 'Show info';
+                                    formButton.classList.add('info-button', 'btn', 'btn-outline-secondary', "btn-sm");
+                                    formButton.style.borderRadius = '5px';
                                     formButton.id = formUniqueId + "_button";
 
                                     formButton.addEventListener('click', function () {
@@ -209,8 +215,9 @@
 
                                     // remove button
                                     let removeButton = document.createElement('button');
-                                    removeButton.innerHTML = 'Delete';
+                                    removeButton.innerHTML = 'Delete model';
                                     removeButton.classList.add("remove-button", "btn", "btn-outline-danger", "btn-sm", "remove-button");
+                                    removeButton.style.borderRadius = '5px';
 
                                     // append space
                                     space = document.createTextNode(" ");
@@ -227,6 +234,11 @@
                                         xhr.onload = function () {
                                             if (xhr.status === 200) {
                                                 console.log('Deleted file from server');
+
+                                                if (dropzone.files.length === 0) {
+                                                    document.getElementById("upload_dataset").style.display = "none";
+                                                }
+
                                             }
                                         };
                                         xhr.send(JSON.stringify({file: file.name}));
@@ -332,7 +344,7 @@
 
                                 });
 
-                                this.on('error', function(file, response) {
+                                this.on('error', function (file, response) {
                                     console.error("Error uploading file: ", response);
                                     var alert = document.createElement('p');
                                     alert.textContent = 'UVL not valid: ' + file.name;
@@ -353,7 +365,7 @@
 
     </div>
 
-    <div class="row">
+    <div class="row" id="upload_dataset" style="display: none">
 
         <div class="col-12">
             <div class="card">
@@ -372,14 +384,19 @@
                         </label>
                     </p>
 
-                    <button id="uploadButton" class="btn btn-primary" disabled>Upload dataset</button>
+                    <button id="upload_button" class="btn btn-primary" disabled>Upload dataset</button>
+
+                    <div id="loading" style="display: none">
+                    <img width="40px" src="{{ url_for("static", filename="gifs/loading.svg") }}"/>
+                        Uploading dataset, please wait...
+                    </div>
 
                     <script>
                         const checkbox = document.getElementById('agreeCheckbox');
-                        const uploadButton = document.getElementById('uploadButton');
+                        const upload_button = document.getElementById('upload_button');
 
                         checkbox.addEventListener('change', function () {
-                            uploadButton.disabled = !checkbox.checked;
+                            upload_button.disabled = !checkbox.checked;
                         });
                     </script>
 
@@ -394,6 +411,10 @@
     {% block scripts %}
 
         <script>
+
+            function show_upload_dataset() {
+                document.getElementById("upload_dataset").style.display = "block";
+            }
 
             function generateUniqueId() {
                 return Math.random().toString(36).substr(2, 9);
@@ -441,7 +462,7 @@
 
                 var suffix = parameter ? '_' + parameter : '';
 
-                addField(newAuthor, 'author_name' + suffix, 'Name');
+                addField(newAuthor, 'author_name' + suffix, 'Name *');
                 addField(newAuthor, 'author_affiliation' + suffix, 'Affiliation');
                 addField(newAuthor, 'author_orcid' + suffix, 'ORCID');
                 addRemoveButton(newAuthor);
@@ -471,7 +492,12 @@
             });
 
             window.onload = function () {
-                document.getElementById('uploadButton').addEventListener('click', function () {
+
+                document.getElementById('upload_button').addEventListener('click', function () {
+
+                    document.getElementById("upload_button").style.display = "none";
+                    document.getElementById("loading").style.display = "block";
+
                     const formData = {basic_info_form: {}, uploaded_models_form: {}};
 
                     ["basic_info_form", "uploaded_models_form"].forEach((formId) => {

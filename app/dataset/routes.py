@@ -119,6 +119,14 @@ def create_dataset_in_db(basic_info_data):
             )
             app.db.session.add(author)
             app.db.session.commit()
+    else:
+        author = Author(
+            name=current_user.name,
+            affiliation='', # TODO: Add affiliation and ORCID to user profile
+            ds_meta_data_id=ds_meta_data.id
+        )
+        app.db.session.add(author)
+        app.db.session.commit()
 
     # create dataset
     dataset = DataSet(user_id=current_user.id, ds_meta_data_id=ds_meta_data.id)

@@ -6,11 +6,11 @@ python-dotenv~=1.0.0
 pymysql
 pytest
 Jinja2
-requests~=2.30.0
+requests==2.31.0
 Flask-Migrate
 SQLAlchemy~=2.0.13
 flask_login
-Werkzeug~=2.3.4
+Werkzeug==2.3.6
 alembic~=1.11.1
 email_validator
 cryptography
