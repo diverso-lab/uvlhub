@@ -47,5 +47,11 @@ services:
     volumes:
       - db_data:/var/lib/mysql
 
+  watchtower:
+    image: containrrr/watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --interval 120 uvlhub-web-1
+
 volumes:
   db_data:
