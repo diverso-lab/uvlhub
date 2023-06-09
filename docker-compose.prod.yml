@@ -51,7 +51,7 @@ services:
     image: containrrr/watchtower
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-    command: --interval 120 uvlhub-web-1
+    command: --cleanup --interval 120 uvlhub-web-1
     restart: always
 
 volumes:
