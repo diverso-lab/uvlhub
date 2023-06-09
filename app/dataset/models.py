@@ -88,7 +88,6 @@ class File(db.Model):
     checksum = db.Column(db.String(120), nullable=False)
     size = db.Column(db.Integer, nullable=False)
     feature_model_id = db.Column(db.Integer, db.ForeignKey('feature_model.id'), nullable=False)
-    feature_model_rel = db.relationship('FeatureModel', backref='related_files')
 
     def __repr__(self):
         return f'File<{self.id}>'
