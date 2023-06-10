@@ -34,11 +34,13 @@ def create_app(config_name=None):
     db.init_app(app)
     migrate.init_app(app, db)
 
+    from app.tests.routes import test_routes
     from .auth import auth_bp
     from .dataset import dataset_bp
     from .public import public_bp
 
     # Register blueprints
+    app.register_blueprint(test_routes)
     app.register_blueprint(auth_bp)
     app.register_blueprint(dataset_bp)
     app.register_blueprint(public_bp)
