@@ -7,6 +7,7 @@ from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
 from flask_migrate import Migrate
 
+
 # Load environment variables
 load_dotenv()
 
@@ -16,10 +17,9 @@ migrate = Migrate()
 login_manager = LoginManager()
 
 
-def create_app(config_name=None):
+def create_app():
     """
     Factory function to create the Flask application.
-    :param config_name: The name of the configuration to use.
     :return: A Flask application object.
     """
     app = Flask(__name__)
@@ -38,6 +38,7 @@ def create_app(config_name=None):
     app.config['UPLOAD_FOLDER'] = os.path.join(app.root_path, 'uploads')
 
     # Login configuration
+    from . import auth
     login_manager.init_app(app)
     login_manager.login_view = "auth.login"
 
