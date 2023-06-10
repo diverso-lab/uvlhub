@@ -2,7 +2,6 @@ from flask import (render_template, redirect, url_for,
                    request, current_app)
 from flask_login import current_user, login_user, logout_user
 
-from app import login_manager
 from . import auth_bp
 from .forms import SignupForm, LoginForm
 from .models import User
@@ -54,9 +53,3 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for('public.index'))
-
-
-
-@login_manager.user_loader
-def load_user(user_id):
-    return User.get_by_id(int(user_id))
