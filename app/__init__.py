@@ -106,3 +106,6 @@ def get_test_client():
 
 def upload_folder_name():
     return 'uploads'
+
+
+app = create_app()
