@@ -13,6 +13,7 @@ load_dotenv()
 db = SQLAlchemy()
 migrate = Migrate()
 
+
 def create_app(config_name=None):
     app = Flask(__name__)
     app.secret_key = secrets.token_bytes()
@@ -22,6 +23,12 @@ def create_app(config_name=None):
         f"mysql+pymysql://{os.getenv('MYSQL_USER', 'default_user')}:{os.getenv('MYSQL_PASSWORD', 'default_password')}"
         f"@{os.getenv('MYSQL_HOSTNAME', 'localhost')}:3306/{os.getenv('MYSQL_DATABASE', 'default_db')}"
     )
+
+    # Templates configuration
+    app.config['TEMPLATES_AUTO_RELOAD'] = True
+
+    # Uploads feature models configuration
+    app.config['UPLOAD_FOLDER'] = os.path.join(app.root_path, 'uploads')
 
     # Initialize SQLAlchemy and Migrate with the app
     db.init_app(app)
@@ -49,7 +56,13 @@ def create_app(config_name=None):
     # Custom error handlers
     register_error_handlers(app)
 
+    # Injecting FLASK_APP_NAME environment variable into jinja context
+    @app.context_processor
+    def inject_flask_app_name():
+        return dict(FLASK_APP_NAME=os.getenv('FLASK_APP_NAME'))
+
     return app
+
 
 def register_error_handlers(app):
     @app.errorhandler(500)
@@ -67,7 +80,6 @@ def register_error_handlers(app):
     @app.errorhandler(400)
     def error_400_handler(e):
         return render_template('400.html'), 400
-
 
 
 def get_test_client():
