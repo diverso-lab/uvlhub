@@ -1,5 +1,5 @@
 # Use an official Python runtime as a parent image
-FROM python:3.10
+FROM python:3.11-alpine
 
 # Set the working directory in the container to /app
 WORKDIR /app
@@ -12,6 +12,9 @@ COPY requirements.txt .
 
 # Install any needed packages specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Update pip
+RUN pip install --no-cache-dir --upgrade pip
 
 # Expose port 5000
 EXPOSE 5000

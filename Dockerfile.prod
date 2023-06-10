@@ -1,5 +1,5 @@
 # Use an official Python runtime as a parent image
-FROM python:3.10
+FROM python:3.10-alpine
 
 # Set the working directory in the container to /app
 WORKDIR /app
@@ -13,14 +13,14 @@ COPY requirements.txt .
 # Install any needed packages specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Update pip
+RUN pip install --no-cache-dir --upgrade pip
+
 # Copy the migration scripts to the /app directory in the container
 COPY migrations/ ./migrations
 
 # Expose port 5000
 EXPOSE 5000
 
-# Set the environment variable for production
-ENV FLASK_ENV=production
-
-# Run the database migrations and then start the application
-CMD flask db upgrade && flask run --host=0.0.0.0 --port=5000
+# Run the database migrations and then start the application with Gunicorn
+CMD flask db upgrade && gunicorn --bind 0.0.0.0:5000 app:app
