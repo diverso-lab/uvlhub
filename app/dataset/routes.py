@@ -1,9 +1,12 @@
+import io
 import os
 import json
 import hashlib
 import shutil
+import tempfile
+from zipfile import ZipFile
 
-from flask import flash, redirect, render_template, url_for, request, jsonify
+from flask import flash, redirect, render_template, url_for, request, jsonify, send_file, send_from_directory
 from flask_login import login_required, current_user
 
 import app
@@ -122,7 +125,7 @@ def create_dataset_in_db(basic_info_data):
     else:
         author = Author(
             name=current_user.name,
-            affiliation='', # TODO: Add affiliation and ORCID to user profile
+            affiliation='',  # TODO: Add affiliation and ORCID to user profile
             ds_meta_data_id=ds_meta_data.id
         )
         app.db.session.add(author)
@@ -265,3 +268,40 @@ def delete():
         return jsonify({'message': 'File deleted successfully'})
     else:
         return jsonify({'error': 'Error: File not found'})
+
+
+@dataset_bp.route('/dataset/download/<int:dataset_id>', methods=['GET'])
+def download_dataset(dataset_id):
+    dataset = DataSet.query.get(dataset_id)
+    if dataset is None:
+        return "Dataset not found", 404
+
+    file_path = f"uploads/user_{dataset.user_id}/dataset_{dataset.id}/"
+
+    temp_dir = tempfile.mkdtemp()
+    zip_path = os.path.join(temp_dir, f'dataset_{dataset_id}.zip')
+
+    with ZipFile(zip_path, 'w') as zipf:
+
+        for subdir, dirs, files in os.walk(file_path):
+            for file in files:
+
+                full_path = os.path.join(subdir, file)
+
+                zipf.write(full_path, arcname=os.path.basename(file))
+
+    return send_from_directory(
+        temp_dir,
+        f'dataset_{dataset_id}.zip',
+        as_attachment=True,
+        mimetype='application/zip'
+    )
+
+
+@dataset_bp.route('/dataset/view/<int:dataset_id>', methods=['GET'])
+def view_dataset(dataset_id):
+    dataset = DataSet.query.get(dataset_id)
+    if dataset is None:
+        return "Dataset not found", 404
+
+    return render_template('dataset/view_dataset.html', dataset=dataset)
