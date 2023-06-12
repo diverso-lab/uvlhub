@@ -7,7 +7,8 @@ import shutil
 import tempfile
 from zipfile import ZipFile
 
-from flask import flash, redirect, render_template, url_for, request, jsonify, send_file, send_from_directory, abort
+from flask import flash, redirect, render_template, url_for, request, jsonify, send_file, send_from_directory, abort, \
+    current_app
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 
@@ -338,19 +339,10 @@ def view_dataset(dataset_id):
 @dataset_bp.route('/file/download/<int:file_id>', methods=['GET'])
 def download_file(file_id):
     file = File.query.get_or_404(file_id)
-    # Let's assume that the file's name includes its extension
     filename = file.name
-    # Define the directory where the files are stored.
-    # Please replace this path with the actual path where your files are stored
+
     directory_path = f"uploads/user_{file.feature_model.data_set.user_id}/dataset_{file.feature_model.data_set_id}/"
+    parent_directory_path = os.path.dirname(current_app.root_path)
+    file_path = os.path.join(parent_directory_path, directory_path)
 
-    full_path = os.path.join(directory_path, filename)
-    logging.info("Full path to the file: " + full_path)
-
-    return full_path
-
-    try:
-        return send_from_directory(directory=directory_path, path=filename, as_attachment=True)
-    except Exception as e:
-        logging.error("Error sending file: ", exc_info=True)
-        return "An error occurred: {}".format(e), 500
+    return send_from_directory(directory=file_path, path=filename, as_attachment=True)

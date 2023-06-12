@@ -55,8 +55,8 @@ class DSMetaData(db.Model):
     dataset_doi = db.Column(db.String(120))
     tags = db.Column(db.String(120))
     ds_metrics_id = db.Column(db.Integer, db.ForeignKey('ds_metrics.id'))
-    ds_metrics = db.relationship('DSMetrics', uselist=False, backref='ds_meta_data')
-    authors = db.relationship('Author', backref='ds_meta_data', lazy=True)
+    ds_metrics = db.relationship('DSMetrics', uselist=False, backref='ds_meta_data', cascade="all, delete")
+    authors = db.relationship('Author', backref='ds_meta_data', lazy=True, cascade="all, delete")
 
 
 class DataSet(db.Model):
@@ -64,8 +64,8 @@ class DataSet(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     ds_meta_data_id = db.Column(db.Integer, db.ForeignKey('ds_meta_data.id'), nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    ds_meta_data = db.relationship('DSMetaData', backref='data_set', lazy=True)
-    feature_models = db.relationship('FeatureModel', backref='data_set', lazy=True)
+    ds_meta_data = db.relationship('DSMetaData', backref='data_set', lazy=True, cascade="all, delete")
+    feature_models = db.relationship('FeatureModel', backref='data_set', lazy=True, cascade="all, delete")
 
     def __repr__(self):
         return f'DataSet<{self.id}>'
@@ -75,8 +75,8 @@ class FeatureModel(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     data_set_id = db.Column(db.Integer, db.ForeignKey('data_set.id'), nullable=False)
     fm_meta_data_id = db.Column(db.Integer, db.ForeignKey('fm_meta_data.id'))
-    files = db.relationship('File', backref='feature_model', lazy=True)
-    fm_meta_data = db.relationship('FMMetaData', uselist=False, backref='feature_model')
+    files = db.relationship('File', backref='feature_model', lazy=True, cascade="all, delete")
+    fm_meta_data = db.relationship('FMMetaData', uselist=False, backref='feature_model', cascade="all, delete")
 
     def __repr__(self):
         return f'FeatureModel<{self.id}>'
@@ -114,7 +114,7 @@ class FMMetaData(db.Model):
     uvl_version = db.Column(db.String(120))
     fm_metrics_id = db.Column(db.Integer, db.ForeignKey('fm_metrics.id'))
     fm_metrics = db.relationship('FMMetrics', uselist=False, backref='fm_meta_data')
-    authors = db.relationship('Author', backref='fm_metadata', lazy=True, foreign_keys=[Author.fm_meta_data_id])
+    authors = db.relationship('Author', backref='fm_metadata', lazy=True, cascade="all, delete", foreign_keys=[Author.fm_meta_data_id])
 
     def __repr__(self):
         return f'FMMetaData<{self.title}'
