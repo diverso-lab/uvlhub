@@ -89,6 +89,16 @@ class File(db.Model):
     size = db.Column(db.Integer, nullable=False)
     feature_model_id = db.Column(db.Integer, db.ForeignKey('feature_model.id'), nullable=False)
 
+    def get_formatted_size(self):
+        if self.size < 1024:
+            return f'{self.size} bytes'
+        elif self.size < 1024 ** 2:
+            return f'{round(self.size / 1024, 2)} KB'
+        elif self.size < 1024 ** 3:
+            return f'{round(self.size / (1024 ** 2), 2)} MB'
+        else:
+            return f'{round(self.size / (1024 ** 3), 2)} GB'
+
     def __repr__(self):
         return f'File<{self.id}>'
 

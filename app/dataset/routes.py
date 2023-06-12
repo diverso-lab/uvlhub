@@ -6,7 +6,7 @@ import shutil
 import tempfile
 from zipfile import ZipFile
 
-from flask import flash, redirect, render_template, url_for, request, jsonify, send_file, send_from_directory
+from flask import flash, redirect, render_template, url_for, request, jsonify, send_file, send_from_directory, abort
 from flask_login import login_required, current_user
 
 import app
@@ -285,7 +285,6 @@ def download_dataset(dataset_id):
 
         for subdir, dirs, files in os.walk(file_path):
             for file in files:
-
                 full_path = os.path.join(subdir, file)
 
                 zipf.write(full_path, arcname=os.path.basename(file))
@@ -305,3 +304,18 @@ def view_dataset(dataset_id):
         return "Dataset not found", 404
 
     return render_template('dataset/view_dataset.html', dataset=dataset)
+
+
+@dataset_bp.route('/file/download/<int:file_id>', methods=['GET'])
+def download_file(file_id):
+    file = File.query.get_or_404(file_id)
+    try:
+        # Let's assume that the file's name includes its extension
+        filename = file.name
+        # Define the directory where the files are stored.
+        # Please replace this path with the actual path where your files are stored
+        directory_path = "uploads/user_{}/dataset_{}/".format(file.feature_model.data_set.user_id,
+                                                              file.feature_model.data_set_id)
+        return send_from_directory(directory=directory_path, filename=filename, as_attachment=True)
+    except FileNotFoundError:
+        abort(404)

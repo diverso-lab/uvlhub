@@ -1,0 +1,89 @@
+{% extends "base_template.html" %}
+
+{% block title %}View dataset{% endblock %}
+
+{% block content %}
+
+    <h1 class="h3 mb-3">View dataset: {{ dataset.ds_meta_data.title }}</h1>
+
+    <div class="row">
+
+        <div class="col-12 col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">{{ dataset.ds_meta_data.title }}</h5>
+                </div>
+                <div class="card-body">
+
+                    <p class="card-text">
+                        {{ dataset.ds_meta_data.description }}
+                    </p>
+
+                    <p>
+                        Authors:
+
+                        {% for author in dataset.ds_meta_data.authors %}
+                            {{ author.name }}
+                        {% endfor %}
+                    </p>
+
+                    <p class="card-text">
+                        {% for tag in dataset.ds_meta_data.tags.split(',') %}
+                            <span class="badge bg-primary me-1">{{ tag.strip() }}</span>
+                        {% endfor %}
+                    </p>
+
+
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">UVL files</h5>
+                </div>
+                <div class="card-body">
+
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Size</th>
+                            <th>Download</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+
+                        {% for feature_model in dataset.feature_models %}
+                            {% for file in feature_model.files %}
+                                <tr>
+                                    <td>
+                                        {{ file.name }}
+                                    </td>
+                                    <td>
+                                        {{ file.get_formatted_size() }}
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('dataset.download_file', file_id=file.id) }}">
+                                            <i data-feather="download"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        {% endfor %}
+
+                        </tbody>
+                    </table>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    {% block scripts %}
+
+    {% endblock %}
+
+{% endblock %}
