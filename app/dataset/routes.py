@@ -312,12 +312,13 @@ def download_dataset(dataset_id):
     zip_path = os.path.join(temp_dir, f'dataset_{dataset_id}.zip')
 
     with ZipFile(zip_path, 'w') as zipf:
-
         for subdir, dirs, files in os.walk(file_path):
             for file in files:
                 full_path = os.path.join(subdir, file)
 
-                zipf.write(full_path, arcname=os.path.basename(file))
+                relative_path = os.path.relpath(full_path, file_path)
+
+                zipf.write(full_path, arcname=os.path.join(os.path.basename(zip_path[:-4]), relative_path))
 
     return send_from_directory(
         temp_dir,
@@ -325,6 +326,7 @@ def download_dataset(dataset_id):
         as_attachment=True,
         mimetype='application/zip'
     )
+
 
 
 @dataset_bp.route('/dataset/view/<int:dataset_id>', methods=['GET'])
