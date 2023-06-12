@@ -3,9 +3,12 @@ This module contains functions to interact with Zenodo and perform operations re
 """
 
 import os
+from typing import Tuple, List
+
 import requests
 
 from dotenv import load_dotenv
+from flask import current_app, jsonify, Response
 from flask_login import current_user
 
 import app
@@ -28,6 +31,63 @@ def test_zenodo_connection() -> bool:
     params = {'access_token': ZENODO_ACCESS_TOKEN}
     response = requests.get(ZENODO_API_URL, params=params, headers=headers)
     return response.status_code == 200
+
+
+def test_full_zenodo_connection() -> Response:
+    """
+    Test the connection with Zenodo by creating a deposition, uploading an empty test file, and deleting the deposition.
+
+    Returns:
+        bool: True if the connection, upload, and deletion are successful, False otherwise.
+    """
+
+    success = True
+
+    # Create an empty file
+    file_path = os.path.join(current_app.root_path, "test_file.txt")
+    with open(file_path, 'w') as file:
+        pass
+
+    messages = []  # List to store messages
+
+    # Step 1: Create a deposition on Zenodo
+    headers = {"Content-Type": "application/json"}
+    data = {
+        "metadata": {
+            "title": "Test Deposition",
+            "upload_type": "dataset",
+            "description": "This is a test deposition created via Zenodo API",
+            "creators": [{"name": "John Doe"}]
+        }
+    }
+
+    params = {'access_token': ZENODO_ACCESS_TOKEN}
+    response = requests.post(ZENODO_API_URL, json=data, params=params, headers=headers)
+
+    if response.status_code != 201:
+        messages.append(f"Failed to create test deposition on Zenodo. Response code: {response.status_code}")
+        success = False
+
+    deposition_id = response.json()["id"]
+
+    # Step 2: Upload an empty file to the deposition
+    data = {'name':  "test_file.txt"}
+    file_path = os.path.join(current_app.root_path, "test_file.txt")
+    files = {'file': open(file_path, 'rb')}
+    publish_url = f'{ZENODO_API_URL}/{deposition_id}/files'
+    response = requests.post(publish_url, params=params, data=data, files=files)
+
+    if response.status_code != 201:
+        messages.append(f"Failed to upload test file to Zenodo. Response code: {response.status_code}")
+        success = False
+
+    # Step 3: Delete the deposition
+    response = requests.delete(f"{ZENODO_API_URL}/{deposition_id}", params=params)
+
+    if os.path.exists(file_path):
+        os.remove(file_path)
+
+    return jsonify({"success": success, "messages": messages})
 
 
 def get_all_depositions() -> dict:
@@ -78,7 +138,7 @@ def zenodo_create_new_deposition(dataset: DataSet) -> dict:
     params = {'access_token': ZENODO_ACCESS_TOKEN}
     response = requests.post(ZENODO_API_URL, params=params, json=data, headers=headers)
     if response.status_code != 201:
-        error_message = 'Failed to create deposition. Error details: {}'.format(response.json())
+        error_message = f'Failed to create deposition. Error details: {response.json()}'
         raise Exception(error_message)
     return response.json()
 
@@ -104,7 +164,7 @@ def zenodo_upload_file(deposition_id: int, feature_model: FeatureModel) -> dict:
     params = {'access_token': ZENODO_ACCESS_TOKEN}
     response = requests.post(publish_url, params=params, data=data, files=files)
     if response.status_code != 201:
-        error_message = 'Failed to upload files. Error details: {}'.format(response.json())
+        error_message = f'Failed to upload files. Error details: {response.json()}'
         raise Exception(error_message)
     return response.json()
 

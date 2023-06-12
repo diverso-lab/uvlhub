@@ -1,5 +1,6 @@
 import os
 import secrets
+import logging
 
 from flask import Flask, render_template
 from flask_sqlalchemy import SQLAlchemy
@@ -23,6 +24,9 @@ def create_app(config_name=None):
         f"mysql+pymysql://{os.getenv('MYSQL_USER', 'default_user')}:{os.getenv('MYSQL_PASSWORD', 'default_password')}"
         f"@{os.getenv('MYSQL_HOSTNAME', 'localhost')}:3306/{os.getenv('MYSQL_DATABASE', 'default_db')}"
     )
+
+    # Timezone
+    app.config['TIMEZONE'] = 'Europe/Madrid'
 
     # Templates configuration
     app.config['TEMPLATES_AUTO_RELOAD'] = True
@@ -55,6 +59,9 @@ def create_app(config_name=None):
         from app.auth.models import User
         return User.query.get(int(user_id))
 
+    # Logging
+    logging.basicConfig(filename='app.log', level=logging.DEBUG)
+
     # Custom error handlers
     register_error_handlers(app)
 
@@ -69,18 +76,22 @@ def create_app(config_name=None):
 def register_error_handlers(app):
     @app.errorhandler(500)
     def base_error_handler(e):
+        app.logger.error('Internal Server Error: %s', str(e))  # Error logging
         return render_template('500.html'), 500
 
     @app.errorhandler(404)
     def error_404_handler(e):
+        app.logger.warning('Page Not Found: %s', str(e))  # Warning logging
         return render_template('404.html'), 404
 
     @app.errorhandler(401)
     def error_401_handler(e):
+        app.logger.warning('Unauthorized Access: %s', str(e))  # Warning logging
         return render_template('401.html'), 401
 
     @app.errorhandler(400)
     def error_400_handler(e):
+        app.logger.warning('Bad Request: %s', str(e))  # Warning logging
         return render_template('400.html'), 400
 
 

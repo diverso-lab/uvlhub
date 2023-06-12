@@ -1,4 +1,5 @@
 import io
+import logging
 import os
 import json
 import hashlib
@@ -8,6 +9,7 @@ from zipfile import ZipFile
 
 from flask import flash, redirect, render_template, url_for, request, jsonify, send_file, send_from_directory, abort
 from flask_login import login_required, current_user
+from werkzeug.utils import secure_filename
 
 import app
 from .forms import DataSetForm
@@ -15,7 +17,12 @@ from .models import DataSet, DSMetrics, FeatureModel, File, FMMetaData, FMMetric
 from . import dataset_bp
 from ..flama import flamapy_valid_model
 from ..zenodo import zenodo_create_new_deposition, test_zenodo_connection, zenodo_upload_file, \
-    zenodo_publish_deposition, zenodo_get_doi
+    zenodo_publish_deposition, zenodo_get_doi, test_full_zenodo_connection
+
+
+@dataset_bp.route('/zenodo/test', methods=['GET'])
+def zenodo_test() -> dict:
+    return test_full_zenodo_connection()
 
 
 @dataset_bp.route('/dataset/upload', methods=['GET', 'POST'])
@@ -53,20 +60,33 @@ def create_dataset():
                 # create feature models
                 feature_models = create_feature_models_in_db(dataset, uploaded_models_data)
 
-                # iterate for each feature model (one feature model = one request to Zenodo
-                for feature_model in feature_models:
-                    zenodo_upload_file(deposition_id, feature_model)
+                try:
+                    # iterate for each feature model (one feature model = one request to Zenodo
+                    for feature_model in feature_models:
+                        zenodo_upload_file(deposition_id, feature_model)
 
-                # publish deposition
-                zenodo_publish_deposition(deposition_id)
+                    # publish deposition
+                    zenodo_publish_deposition(deposition_id)
 
-                # update DOI
-                deposition_doi = zenodo_get_doi(deposition_id)
-                dataset.ds_meta_data.dataset_doi = deposition_doi
-                app.db.session.commit()
+                    # update DOI
+                    deposition_doi = zenodo_get_doi(deposition_id)
+                    dataset.ds_meta_data.dataset_doi = deposition_doi
+                    app.db.session.commit()
+                except Exception as e:
+                    pass
 
                 # move feature models permanently
                 move_feature_models(dataset.id, feature_models)
+
+            else:
+                # it has not been possible to create the deposition in Zenodo, so we save everything locally
+
+                # create feature models
+                feature_models = create_feature_models_in_db(dataset, uploaded_models_data)
+
+                # move feature models permanently
+                move_feature_models(dataset.id, feature_models)
+                pass
 
             return jsonify({'message': zenodo_response_json}), 200
 
@@ -79,11 +99,20 @@ def create_dataset():
 @dataset_bp.route('/dataset/list', methods=['GET', 'POST'])
 @login_required
 def list_dataset():
-    user_datasets = DataSet.query.join(DSMetaData).filter(
+
+    # synchronized datasets
+    datasets = DataSet.query.join(DSMetaData).filter(
         DataSet.user_id == current_user.id,
         DSMetaData.dataset_doi.isnot(None)
     ).order_by(DataSet.created_at.desc()).all()
-    return render_template('dataset/list_datasets.html', datasets=user_datasets)
+
+    # local datasets
+    local_datasets = DataSet.query.join(DSMetaData).filter(
+        DataSet.user_id == current_user.id,
+        DSMetaData.dataset_doi.is_(None)
+    ).order_by(DataSet.created_at.desc()).all()
+
+    return render_template('dataset/list_datasets.html', datasets=datasets, local_datasets=local_datasets)
 
 
 def create_dataset_in_db(basic_info_data):
@@ -309,13 +338,19 @@ def view_dataset(dataset_id):
 @dataset_bp.route('/file/download/<int:file_id>', methods=['GET'])
 def download_file(file_id):
     file = File.query.get_or_404(file_id)
+    # Let's assume that the file's name includes its extension
+    filename = file.name
+    # Define the directory where the files are stored.
+    # Please replace this path with the actual path where your files are stored
+    directory_path = f"uploads/user_{file.feature_model.data_set.user_id}/dataset_{file.feature_model.data_set_id}/"
+
+    full_path = os.path.join(directory_path, filename)
+    logging.info("Full path to the file: " + full_path)
+
+    return full_path
+
     try:
-        # Let's assume that the file's name includes its extension
-        filename = file.name
-        # Define the directory where the files are stored.
-        # Please replace this path with the actual path where your files are stored
-        directory_path = "uploads/user_{}/dataset_{}/".format(file.feature_model.data_set.user_id,
-                                                              file.feature_model.data_set_id)
-        return send_from_directory(directory=directory_path, filename=filename, as_attachment=True)
-    except FileNotFoundError:
-        abort(404)
+        return send_from_directory(directory=directory_path, path=filename, as_attachment=True)
+    except Exception as e:
+        logging.error("Error sending file: ", exc_info=True)
+        return "An error occurred: {}".format(e), 500

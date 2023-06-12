@@ -7,6 +7,35 @@
     <h1 class="h3 mb-3">Upload dataset</h1>
 
     <div class="row">
+        <div class="col-12 mb-3">
+            <div class="alert alert-warning" role="alert" id="test_zenodo_connection_error" style="display: none">
+                <div class="alert-message">
+
+                    <h4 class="alert-heading"><i class="align-middle" data-feather="alert-triangle"></i> Limited
+                        connection to the Zenodo API</h4>
+                    <p class="p-0 m-0">
+                        There seems to be some kind of problem with the Zenodo API and synchronization of your dataset
+                        files may not be possible. We will save your files locally to eventually synchronize them with
+                        Zenodo. Sorry for the inconvenience, Zenodo is an external service and we can't do
+                        anything about it.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+
+    {% if messages %}
+        <ul>
+            {% for message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <div class="row">
         <div class="col-lg-6 col-12">
             <div class="card" id="basic_info_form">
 
@@ -392,6 +421,30 @@
                         Uploading dataset, please wait...
                     </div>
 
+                    <div class="row">
+                        <div class="col-12 mb-3">
+
+                        </div>
+                    </div>
+
+                    <div class="alert alert-error" role="alert" id="upload_error"
+                         style="display: none">
+                        <div class="alert-message">
+
+                            <h4 class="alert-heading"><i class="align-middle" data-feather="alert-triangle"></i> Limited
+                                connection to the Zenodo API</h4>
+                            <p class="p-0 m-0">
+                                There seems to be some kind of problem with the Zenodo API and synchronization of your
+                                dataset
+                                files may not be possible. We will save your files locally to eventually synchronize
+                                them with
+                                Zenodo. Sorry for the inconvenience, Zenodo is an external service and we can't do
+                                anything about it.
+                            </p>
+                        </div>
+                    </div>
+
+
                     <span class="text-danger mt-2" id="upload_error" style="display: none">
 
                     </span>
@@ -539,12 +592,16 @@
             function write_upload_error(error_message) {
                 let upload_error = document.getElementById("upload_error");
                 let alert = document.createElement('p');
+                alert.style.margin = '0';
+                alert.style.padding = '0';
                 alert.textContent = 'Upload error: ' + error_message;
                 upload_error.appendChild(alert);
                 upload_error.style.display = 'block';
             }
 
             window.onload = function () {
+
+                test_zenodo_connection();
 
                 document.getElementById('upload_button').addEventListener('click', function () {
 
@@ -610,6 +667,25 @@
                 });
             };
 
+            function test_zenodo_connection() {
+                var xhr = new XMLHttpRequest();
+                xhr.open('GET', '/zenodo/test', true);
+                xhr.setRequestHeader('Content-Type', 'application/json');
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState === 4 && xhr.status === 200) {
+                        var response = JSON.parse(xhr.responseText);
+                        if (!response.success) {
+                            document.getElementById("test_zenodo_connection_error").style.display = "block";
+                            console.log(response);  // Imprimir el objeto JSON en la consola
+                            console.log(response.success);  // Imprimir el valor de la clave "success"
+                            console.log(response.messages);  // Imprimir el valor de la clave "messages"
+                        }
+                    } else if (xhr.readyState === 4 && xhr.status !== 200) {
+                        console.error('Error:', xhr.status);  // Imprimir el mensaje de error en la consola
+                    }
+                };
+                xhr.send();
+            }
 
         </script>
 

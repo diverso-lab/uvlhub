@@ -1,3 +1,15 @@
 .error {
   border: 1px solid red;
 }
+
+.alert-warning{
+  background-color: #FFF3CD;
+  padding: 20px;
+  border-radius: 5px;
+}
+
+.alert-error{
+  background-color: #F9D6D9;
+  padding: 20px;
+  border-radius: 5px;
+}
