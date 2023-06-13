@@ -46,7 +46,13 @@
 
                 <li class="sidebar-item {{ 'active' if request.endpoint == 'public.index' else '' }}">
                     <a class="sidebar-link" href="{{ url_for('public.index') }}">
-                        <i class="align-middle" data-feather="sliders"></i> <span class="align-middle">Dashboard</span>
+                        <i class="align-middle" data-feather="home"></i> <span class="align-middle">Home</span>
+                    </a>
+                </li>
+
+                <li class="sidebar-item {{ 'active' if request.endpoint == 'explore.index' else '' }}">
+                    <a class="sidebar-link" href="{{ url_for('explore.index') }}">
+                        <i class="align-middle" data-feather="search"></i> <span class="align-middle">Explore</span>
                     </a>
                 </li>
 

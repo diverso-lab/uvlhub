@@ -2,7 +2,7 @@ from datetime import datetime
 
 from app import db
 from enum import Enum
-from sqlalchemy import Enum as SQLAlchemyEnum
+from sqlalchemy import Enum as SQLAlchemyEnum, inspect
 
 
 class PublicationType(Enum):
@@ -66,6 +66,18 @@ class DataSet(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     ds_meta_data = db.relationship('DSMetaData', backref='data_set', lazy=True, cascade="all, delete")
     feature_models = db.relationship('FeatureModel', backref='data_set', lazy=True, cascade="all, delete")
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'created_at': self.created_at,
+            'title': self.ds_meta_data.title,
+            'description': self.ds_meta_data.description,
+            'authors': [{'name': author.name, 'orcid': author.orcid, 'affiliation': author.affiliation} for author in self.ds_meta_data.authors],
+            'uvl_filenames': [fm.fm_meta_data.uvl_filename for fm in self.feature_models if fm.fm_meta_data],
+            'publication_type': self.ds_meta_data.publication_type.value if self.ds_meta_data.publication_type else None,
+            'publication_doi': self.ds_meta_data.publication_doi
+        }
 
     def __repr__(self):
         return f'DataSet<{self.id}>'

@@ -1,0 +1,157 @@
+{% extends "base_template.html" %}
+
+{% block title %}Explore{% endblock %}
+
+{% block content %}
+
+    <h1 class="h3 mb-3">Explore</h1>
+
+    <div class="row">
+        <div class="col-lg-5 fixed-column" id="filters">
+
+             {{ form.hidden_tag() }}
+
+            <h4 class="h4 mb-3">Filters</h4>
+            <div class="row">
+
+                <div class="col-12">
+
+                    <div class="row">
+
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label class="form-label" for="query">Title, description, authors,
+                                    tags..</label>
+                                <input class="form-control" id="query" name="query" required="" type="text"
+                                       value="" autofocus>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-12">
+                            <div class="mb-3">
+                                <label class="form-label" for="publication_type">Filter by publication
+                                    type</label>
+                                <select class="form-control" id="publication_type" name="publication_type"
+                                        required="">
+                                    <option value="any">Any</option>
+                                    <option value="none">None</option>
+                                    <option value="annotationcollection">Annotation Collection</option>
+                                    <option value="book">Book</option>
+                                    <option value="section">Book Section</option>
+                                    <option value="conferencepaper">Conference Paper</option>
+                                    <option value="datamanagementplan">Data Management Plan</option>
+                                    <option value="article">Journal Article</option>
+                                    <option value="patent">Patent</option>
+                                    <option value="preprint">Preprint</option>
+                                    <option value="deliverable">Project Deliverable</option>
+                                    <option value="milestone">Project Milestone</option>
+                                    <option value="proposal">Proposal</option>
+                                    <option value="report">Report</option>
+                                    <option value="softwaredocumentation">Software Documentation</option>
+                                    <option value="taxonomictreatment">Taxonomic Treatment</option>
+                                    <option value="technicalnote">Technical Note</option>
+                                    <option value="thesis">Thesis</option>
+                                    <option value="workingpaper">Working Paper</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+
+                        </div>
+
+                        <div class="col-lg-12">
+
+                            <div>
+                                Sort results
+                                <label class="form-check">
+                                    <input class="form-check-input" type="radio" value="newest" name="sorting"
+                                           checked="">
+                                    <span class="form-check-label">
+                                      Newest first
+                                    </span>
+                                </label>
+                                <label class="form-check">
+                                    <input class="form-check-input" type="radio" value="oldest" name="sorting">
+                                    <span class="form-check-label">
+                                      Oldest first
+                                    </span>
+                                </label>
+                            </div>
+
+                        </div>
+
+                        <div class="col-12">
+
+                            <div class="mt-3">
+
+                                <div id="authors">
+
+                                </div>
+                                <button type="button" class="btn btn-outline-primary" id="search">
+
+                                    <i data-feather="search"></i>
+                                    Search datasets
+                                </button>
+
+                            </div>
+
+                        </div>
+
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="row">
+
+            </div>
+
+        </div>
+
+        <div class="col-lg-7 scrollable-column">
+            <h4 class="h4 mb-3">Results:</h4>
+        </div>
+
+    </div>
+
+    {% block scripts %}
+
+        <script>
+
+            document.addEventListener('DOMContentLoaded', () => {
+                const filters = document.querySelectorAll('#filters input, #filters select, #filters [type="radio"]');
+
+                filters.forEach(filter => {
+                    filter.addEventListener('input', () => {
+                        const csrfToken = document.getElementById('csrf_token').value;
+                        const searchCriteria = {
+                            csrf_token: csrfToken,
+                            query: document.querySelector('#query').value,
+                            publication_type: document.querySelector('#publication_type').value,
+                            sorting: document.querySelector('[name="sorting"]:checked').value,
+
+                        };
+
+                        fetch('/explore', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(searchCriteria),
+                        })
+                            .then(response => response.json())
+                            .then(data => {
+
+                                console.log(data);
+                            });
+                    });
+                });
+            });
+
+
+        </script>
+
+    {% endblock %}
+
+{% endblock %}

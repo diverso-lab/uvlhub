@@ -6,6 +6,7 @@ from flask import Flask, render_template
 from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
 from flask_migrate import Migrate
+from flask_wtf import CSRFProtect
 
 # Load environment variables
 load_dotenv()
@@ -41,12 +42,14 @@ def create_app(config_name=None):
     from app.tests.routes import test_routes
     from .auth import auth_bp
     from .dataset import dataset_bp
+    from .explore import explore_bp
     from .public import public_bp
 
     # Register blueprints
     app.register_blueprint(test_routes)
     app.register_blueprint(auth_bp)
     app.register_blueprint(dataset_bp)
+    app.register_blueprint(explore_bp)
     app.register_blueprint(public_bp)
 
     from flask_login import LoginManager
