@@ -110,11 +110,13 @@
         </div>
 
         <div class="col-lg-7 scrollable-column">
-            <h4 class="h4 mb-3">Results:</h4>
+            <h4 class="h4 mb-3">Results:
+                <span id="results_number"></span>
+            </h4>
 
-            <div id="results">
+            <div class="row">
 
-                <div class="row">
+                <div id="results">
 
                     <div class="col-12">
                         <div class="card">
@@ -144,6 +146,7 @@
 
             </div>
 
+
         </div>
 
     </div>
@@ -153,6 +156,9 @@
         <script>
 
             document.addEventListener('DOMContentLoaded', () => {
+
+                document.getElementById('results').innerHTML = '';
+
                 const filters = document.querySelectorAll('#filters input, #filters select, #filters [type="radio"]');
 
                 filters.forEach(filter => {
@@ -166,6 +172,8 @@
 
                         };
 
+                        console.log(document.querySelector('#publication_type').value);
+
                         fetch('/explore', {
                             method: 'POST',
                             headers: {
@@ -177,11 +185,45 @@
                             .then(data => {
 
                                 console.log(data);
+                                document.getElementById('results').innerHTML = '';
+
+                                // results counter
+                                const resultCount = data.length;
+                                const resultText = resultCount === 1 ? 'dataset' : 'datasets';
+                                document.getElementById('results_number').textContent = `${resultCount} ${resultText} found`;
+
+                                data.forEach(dataset => {
+                                    let card = document.createElement('div');
+                                    card.className = 'col-12';
+                                    card.innerHTML = `
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <h4 class="d-flex align-items-center justify-content-between">${dataset.title}
+                                                    <span class="badge bg-primary badge-sm">${dataset.publication_type}</span>
+                                                </h4>
+                                                <p class="text-secondary">${formatDate(dataset.created_at)}</p>
+                                                <p class="card-text">${dataset.description}</p>
+                                                <p class="p-0 m-0">Authors:</p>
+                                                ${dataset.authors.map(author => `<p>${author.name} (${author.affiliation}, ${author.orcid})</p>`).join('')}
+                                                <p class="card-text">
+                                                    ${dataset.tags.map(tag => `<span class="badge bg-primary me-1">${tag}</span>`).join('')}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    `;
+
+                                    document.getElementById('results').appendChild(card);
+                                });
                             });
                     });
                 });
             });
 
+            function formatDate(dateString) {
+                const options = {day: 'numeric', month: 'long', year: 'numeric', hour: 'numeric', minute: 'numeric'};
+                const date = new Date(dateString);
+                return date.toLocaleString('en-US', options);
+            }
 
         </script>
 

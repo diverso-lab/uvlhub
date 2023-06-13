@@ -7,7 +7,7 @@ from sqlalchemy import or_, desc, asc
 
 from . import explore_bp
 from .forms import ExploreForm
-from ..dataset.models import DataSet, DSMetaData, Author, FeatureModel, FMMetaData
+from ..dataset.models import DataSet, DSMetaData, Author, FeatureModel, FMMetaData, PublicationType
 
 
 @explore_bp.route('/explore', methods=['GET'])
@@ -36,17 +36,19 @@ def explore():
         filters.append(FMMetaData.uvl_filename.ilike(f'%{word}%'))
         filters.append(DSMetaData.tags.ilike(f'%{word}%'))
 
-    if publication_type != 'any':
-        filters.append(DSMetaData.publication_type == publication_type)
-
     datasets = DataSet.query \
         .join(DSMetaData) \
         .join(Author) \
         .join(FeatureModel) \
-        .join(FMMetaData) \
-        .filter(or_(*filters))
+        .join(FMMetaData)
 
-    # order by created_at
+    # Filter by publication_type if it is not 'any'
+    if publication_type != 'any':
+        datasets = datasets.filter(DSMetaData.publication_type == publication_type)
+
+    datasets = datasets.filter(or_(*filters))
+
+    # Order by created_at
     if order == 'oldest':
         datasets = datasets.order_by(DataSet.created_at.asc())
     else:
