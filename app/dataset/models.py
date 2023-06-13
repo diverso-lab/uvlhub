@@ -76,7 +76,8 @@ class DataSet(db.Model):
             'authors': [{'name': author.name, 'orcid': author.orcid, 'affiliation': author.affiliation} for author in self.ds_meta_data.authors],
             'uvl_filenames': [fm.fm_meta_data.uvl_filename for fm in self.feature_models if fm.fm_meta_data],
             'publication_type': self.ds_meta_data.publication_type.value if self.ds_meta_data.publication_type else None,
-            'publication_doi': self.ds_meta_data.publication_doi
+            'publication_doi': self.ds_meta_data.publication_doi,
+            'tags': self.ds_meta_data.tags.split(",") if self.ds_meta_data.tags else [],
         }
 
     def __repr__(self):

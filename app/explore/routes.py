@@ -1,7 +1,9 @@
+import re
+
 import unidecode
 
 from flask import render_template, request, abort, jsonify
-from sqlalchemy import or_
+from sqlalchemy import or_, desc, asc
 
 from . import explore_bp
 from .forms import ExploreForm
@@ -17,43 +19,41 @@ def index():
 @explore_bp.route('/explore', methods=['POST'])
 def explore():
     criteria = request.get_json()
-
     query = criteria.get('query', '')
-    sorting = criteria.get('sorting', 'newest')
-    publication_type = criteria.get('publication_type')
+    order = criteria.get('sorting', 'newest')
+    publication_type = criteria.get('publication_type', 'any')
 
-    # Normalize
+    # Normalize and remove unwanted characters
     normalized_query = unidecode.unidecode(query).lower()
+    cleaned_query = re.sub(r'[,.]', '', normalized_query)
+    query_words = cleaned_query.split()
 
-    # Split the query into words
-    words = normalized_query.split()
+    filters = []
+    for word in query_words:
+        filters.append(DSMetaData.title.ilike(f'%{word}%'))
+        filters.append(DSMetaData.description.ilike(f'%{word}%'))
+        filters.append(Author.name.ilike(f'%{word}%'))
+        filters.append(FMMetaData.uvl_filename.ilike(f'%{word}%'))
+        filters.append(DSMetaData.tags.ilike(f'%{word}%'))
 
-    # Build the query
-    data_query = DataSet.query \
+    if publication_type != 'any':
+        filters.append(DSMetaData.publication_type == publication_type)
+
+    datasets = DataSet.query \
         .join(DSMetaData) \
         .join(Author) \
         .join(FeatureModel) \
-        .join(FMMetaData)
+        .join(FMMetaData) \
+        .filter(or_(*filters))
 
-    # Filter by each word in the query
-    for word in words:
-        data_query = data_query.filter(or_(
-            DSMetaData.title.ilike(f'%{word}%'),
-            DSMetaData.description.ilike(f'%{word}%'),
-            Author.name.ilike(f'%{word}%'),
-            FMMetaData.uvl_filename.ilike(f'%{word}%'),
-        ))
+    # order by created_at
+    if order == 'oldest':
+        datasets = datasets.order_by(DataSet.created_at.asc())
+    else:
+        datasets = datasets.order_by(DataSet.created_at.desc())
 
-    # Filter by publication type if provided and not 'any'
-    if publication_type is not None and publication_type != 'any':
-        data_query = data_query.filter(DSMetaData.publication_type == publication_type)
+    datasets = datasets.all()
 
-    # Apply sorting
-    if sorting == 'newest':
-        data_query = data_query.order_by(DataSet.created_at.desc())
-    else:  # sorting == 'oldest'
-        data_query = data_query.order_by(DataSet.created_at.asc())
+    dataset_dicts = [dataset.to_dict() for dataset in datasets]
 
-    datasets = data_query.all()
-
-    return jsonify([dataset.to_dict() for dataset in datasets])
+    return jsonify(dataset_dicts)
