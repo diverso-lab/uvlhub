@@ -68,14 +68,19 @@ class DataSet(db.Model):
     feature_models = db.relationship('FeatureModel', backref='data_set', lazy=True, cascade="all, delete")
 
     def to_dict(self):
+        publication_type = self.ds_meta_data.publication_type
+        if publication_type:
+            publication_type = publication_type.name.replace('_', ' ').title()
+
         return {
             'id': self.id,
             'created_at': self.created_at,
             'title': self.ds_meta_data.title,
             'description': self.ds_meta_data.description,
-            'authors': [{'name': author.name, 'orcid': author.orcid, 'affiliation': author.affiliation} for author in self.ds_meta_data.authors],
+            'authors': [{'name': author.name, 'orcid': author.orcid, 'affiliation': author.affiliation} for author in
+                        self.ds_meta_data.authors],
             'uvl_filenames': [fm.fm_meta_data.uvl_filename for fm in self.feature_models if fm.fm_meta_data],
-            'publication_type': self.ds_meta_data.publication_type.value if self.ds_meta_data.publication_type else None,
+            'publication_type': publication_type,
             'publication_doi': self.ds_meta_data.publication_doi,
             'tags': self.ds_meta_data.tags.split(",") if self.ds_meta_data.tags else [],
         }
