@@ -28,10 +28,10 @@ pycodestyle==2.10.0
 pycparser==2.21
 pyflakes==3.0.1
 PyMySQL==1.0.3
-pytest==7.3.1
+pytest==7.3.2
 python-dotenv==1.0.0
 requests==2.31.0
-SQLAlchemy==2.0.15
+SQLAlchemy==2.0.16
 typing_extensions==4.6.3
 urllib3==2.0.3
 Werkzeug==2.3.6
