@@ -5,7 +5,8 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="Repository of feature models in UVL format integrated with Zenodo and FlamaPy - DiversoLab">
+    <meta name="description"
+          content="Repository of feature models in UVL format integrated with Zenodo and FlamaPy - DiversoLab">
     <meta name="author" content="DiversoLab">
     <meta name="keywords"
           content="diversolab, uvl, feature models, software product line, university of seville, david benavides, david romero">
@@ -38,7 +39,8 @@
     <nav id="sidebar" class="sidebar js-sidebar">
         <div class="sidebar-content js-simplebar">
             <a class="sidebar-brand" href="{{ url_for('public.index') }}">
-                <img src="{{ url_for("static", filename="img/logos/logo-dark.svg") }}" class="d-block" style="max-width: 100%; height: auto;">
+                <img src="{{ url_for("static", filename="img/logos/logo-dark.svg") }}" class="d-block"
+                     style="max-width: 100%; height: auto;">
             </a>
 
 
@@ -74,8 +76,8 @@
                 {% else %}
 
                     <li class="sidebar-header">
-						Datasets
-					</li>
+                        Datasets
+                    </li>
 
                     <li class="sidebar-item {{ 'active' if request.endpoint == 'dataset.create_dataset' else '' }}">
                         <a class="sidebar-link" href="{{ url_for('dataset.create_dataset') }}">
@@ -92,8 +94,8 @@
                     </li>
 
                     <li class="sidebar-header">
-						Options
-					</li>
+                        Options
+                    </li>
 
                     <li class="sidebar-item">
                         <a class="sidebar-link" href="{{ url_for('auth.logout') }}">
@@ -126,6 +128,14 @@
             <a class="sidebar-toggle js-sidebar-toggle">
                 <i class="hamburger align-self-center"></i>
             </a>
+
+            <form class="d-none d-sm-inline-block" onsubmit="submitSearchForm(event)">
+                <div class="input-group input-group-navbar">
+                    <input type="text" id="search-query" class="form-control rounded-search"
+                           placeholder="Search datasets..." aria-label="Search">
+                </div>
+            </form>
+
             <div class="navbar-collapse collapse">
                 <ul class="navbar-nav navbar-align">
                     <li class="nav-item dropdown">
@@ -178,10 +188,12 @@
                     <div class="col-6 text-end">
                         <ul class="list-inline">
                             <li class="list-inline-item">
-                                <a class="text-muted" href="https://github.com/diverso-lab/flipa" target="_blank">GitHub</a>
+                                <a class="text-muted" href="https://github.com/diverso-lab/flipa"
+                                   target="_blank">GitHub</a>
                             </li>
                             <li class="list-inline-item">
-                                <a class="text-muted" href="https://grupo.us.es/diversolab/" target="_blank">Diverso Lab</a>
+                                <a class="text-muted" href="https://grupo.us.es/diversolab/" target="_blank">Diverso
+                                    Lab</a>
                             </li>
                         </ul>
                     </div>
@@ -193,6 +205,13 @@
 
 <script src="{{ url_for("static", filename="js/app.js") }}"></script>
 
+<script>
+    function submitSearchForm(event) {
+        event.preventDefault();
+        let query = document.getElementById('search-query').value;
+        window.location.href = '/explore?query=' + encodeURIComponent(query);
+    }
+</script>
 
 </body>
 

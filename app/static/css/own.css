@@ -25,3 +25,11 @@
     height: 100vh;
     overflow-y: auto;
 }
+
+.rounded-search {
+    border: none;
+    border-radius: 20px;
+    background-color: #f3f6fa;
+    font-size: 12px;
+    padding: 10px 50px 10px 20px;
+}

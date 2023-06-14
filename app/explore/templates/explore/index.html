@@ -88,7 +88,7 @@
 
                                 </div>
 
-                               <button id="clear-filters" class="btn btn-outline-primary">
+                                <button id="clear-filters" class="btn btn-outline-primary">
                                     <i data-feather="x-circle" style="vertical-align: middle; margin-top: -2px"></i>
                                     Clear filters
                                 </button>
@@ -139,6 +139,9 @@
             });
 
             function send_query() {
+
+                console.log("send query...")
+
                 document.getElementById('results').innerHTML = '';
 
                 const filters = document.querySelectorAll('#filters input, #filters select, #filters [type="radio"]');
@@ -308,6 +311,26 @@
                 queryInput.dispatchEvent(new Event('input', {bubbles: true}));
             }
 
+            document.addEventListener('DOMContentLoaded', () => {
+
+                //let queryInput = document.querySelector('#query');
+                //queryInput.dispatchEvent(new Event('input', {bubbles: true}));
+
+                let urlParams = new URLSearchParams(window.location.search);
+                let queryParam = urlParams.get('query');
+
+                if (queryParam && queryParam.trim() !== '') {
+
+                    const queryInput = document.getElementById('query');
+                    queryInput.value = queryParam
+                    queryInput.dispatchEvent(new Event('input', {bubbles: true}));
+                    console.log("throw event");
+
+                }else{
+                    const queryInput = document.getElementById('query');
+                    queryInput.dispatchEvent(new Event('input', {bubbles: true}));
+                }
+            });
 
         </script>
 
