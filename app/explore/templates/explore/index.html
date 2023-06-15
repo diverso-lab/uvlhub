@@ -112,21 +112,34 @@
         </div>
 
         <div class="col-lg-7 scrollable-column">
-            <h4 class="h4 mb-3">Results:
+            <h4 class="h4 mb-3">
+                Results:
                 <span id="results_number"></span>
             </h4>
 
             <div class="row">
+                <div id="results"></div>
 
-                <div id="results">
+                <div id="results_not_found"
+                     style="text-align: center; display:none; justify-content: center;">
 
+                    <div class="card">
+
+                        <div class="card-body">
+                            <img src="{{ url_for('static', filename='img/items/not_found.svg') }}"
+                                 style="width: 25%; height: auto;"/>
+                            <p class="mt-2 mb-0">
+                                We have not found any datasets that meet your search criteria. How about trying some
+                                others?
+                            </p>
+                        </div>
+
+                    </div>
 
                 </div>
-
             </div>
-
-
         </div>
+
 
     </div>
 
@@ -143,6 +156,8 @@
                 console.log("send query...")
 
                 document.getElementById('results').innerHTML = '';
+                document.getElementById("results_not_found").style.display = "none";
+                console.log("hide not found icon");
 
                 const filters = document.querySelectorAll('#filters input, #filters select, #filters [type="radio"]');
 
@@ -176,6 +191,14 @@
                                 const resultCount = data.length;
                                 const resultText = resultCount === 1 ? 'dataset' : 'datasets';
                                 document.getElementById('results_number').textContent = `${resultCount} ${resultText} found`;
+
+                                if(resultCount === 0){
+                                    console.log("show not found icon");
+                                    document.getElementById("results_not_found").style.display = "block";
+                                } else {
+                                    document.getElementById("results_not_found").style.display = "none";
+                                }
+
 
                                 data.forEach(dataset => {
                                     let card = document.createElement('div');
@@ -324,7 +347,7 @@
                     queryInput.dispatchEvent(new Event('input', {bubbles: true}));
                     console.log("throw event");
 
-                }else{
+                } else {
                     const queryInput = document.getElementById('query');
                     queryInput.dispatchEvent(new Event('input', {bubbles: true}));
                 }
