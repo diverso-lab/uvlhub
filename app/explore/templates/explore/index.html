@@ -11,7 +11,6 @@
 
             {{ form.hidden_tag() }}
 
-            <h4 class="h4 mb-3">Filters</h4>
             <div class="row">
 
                 <div class="col-12">
@@ -112,31 +111,27 @@
         </div>
 
         <div class="col-lg-7 scrollable-column">
-            <h4 class="h4 mb-3">
-                Results:
+            <h3 class="h3 mb-3">
                 <span id="results_number"></span>
-            </h4>
+            </h3>
 
             <div class="row">
+
                 <div id="results"></div>
 
-                <div id="results_not_found"
-                     style="text-align: center; display:none; justify-content: center;">
+                <div class="col text-center" id="results_not_found">
+                   <img src="{{ url_for('static', filename='img/items/not_found.svg') }}"
+                         style="width: 50%; max-width: 100px; height: auto; margin-top: 30px"/>
+                    <p style="margin-top: 20px">
+                        We have not found any datasets that meet your search criteria. <br>How about trying some others?
+                    </p>
+                </div>
 
-                    <div class="card">
-
-                        <div class="card-body">
-                            <img src="{{ url_for('static', filename='img/items/not_found.svg') }}"
-                                 style="width: 25%; height: auto;"/>
-                            <p class="mt-2 mb-0">
-                                We have not found any datasets that meet your search criteria. How about trying some
-                                others?
-                            </p>
-                        </div>
-
-                    </div>
+                <div id="results_not_found" style="text-align: center;">
 
                 </div>
+
+
             </div>
         </div>
 
@@ -192,7 +187,7 @@
                                 const resultText = resultCount === 1 ? 'dataset' : 'datasets';
                                 document.getElementById('results_number').textContent = `${resultCount} ${resultText} found`;
 
-                                if(resultCount === 0){
+                                if (resultCount === 0) {
                                     console.log("show not found icon");
                                     document.getElementById("results_not_found").style.display = "block";
                                 } else {

@@ -25,7 +25,7 @@ def index():
 
         # Normalize and remove unwanted characters
         normalized_query = unidecode.unidecode(query).lower()
-        cleaned_query = re.sub(r'[,.]', '', normalized_query)
+        cleaned_query = re.sub(r'[,.":\'()\[\]^;!¡¿?]', '', normalized_query)
         query_words = cleaned_query.split()
 
         filters = []

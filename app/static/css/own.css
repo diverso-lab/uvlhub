@@ -19,10 +19,12 @@
     top: 0;
     height: 100vh;
     overflow-y: auto;
+    padding-right: 50px;
+    padding-top: 5px;
 }
 
 .scrollable-column {
-    height: 100vh;
+    height: 200vh;
     overflow-y: auto;
 }
 
