@@ -100,7 +100,6 @@ def create_dataset():
 @dataset_bp.route('/dataset/list', methods=['GET', 'POST'])
 @login_required
 def list_dataset():
-
     # synchronized datasets
     datasets = DataSet.query.join(DSMetaData).filter(
         DataSet.user_id == current_user.id,
@@ -328,13 +327,9 @@ def download_dataset(dataset_id):
     )
 
 
-
 @dataset_bp.route('/dataset/view/<int:dataset_id>', methods=['GET'])
 def view_dataset(dataset_id):
-    dataset = DataSet.query.get(dataset_id)
-    if dataset is None:
-        return "Dataset not found", 404
-
+    dataset = DataSet.query.get_or_404(dataset_id)
     return render_template('dataset/view_dataset.html', dataset=dataset)
 
 
@@ -348,3 +343,21 @@ def download_file(file_id):
     file_path = os.path.join(parent_directory_path, directory_path)
 
     return send_from_directory(directory=file_path, path=filename, as_attachment=True)
+
+
+'''
+    API ENDPOINTS FOR DATASET MODEL
+'''
+
+
+@dataset_bp.route('/api/v1/dataset/', methods=['GET'])
+def get_all_dataset():
+    datasets = DataSet.query.order_by(DataSet.created_at.desc()).all()
+    dataset_list = [dataset.to_dict() for dataset in datasets]
+    return jsonify(dataset_list)
+
+
+@dataset_bp.route('/api/v1/dataset/<int:dataset_id>', methods=['GET'])
+def get_dataset(dataset_id):
+    dataset = DataSet.query.get_or_404(dataset_id)
+    return dataset.to_dict()

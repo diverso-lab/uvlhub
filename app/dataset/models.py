@@ -1,4 +1,7 @@
+from collections import OrderedDict
 from datetime import datetime
+
+from flask import request
 
 from app import db
 from enum import Enum
@@ -35,6 +38,13 @@ class Author(db.Model):
     ds_meta_data_id = db.Column(db.Integer, db.ForeignKey('ds_meta_data.id'))
     fm_meta_data_id = db.Column(db.Integer, db.ForeignKey('fm_meta_data.id'))
 
+    def to_dict(self):
+        return {
+            'name': self.name,
+            'affiliation': self.affiliation,
+            'orcid': self.orcid
+        }
+
 
 class DSMetrics(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -67,22 +77,40 @@ class DataSet(db.Model):
     ds_meta_data = db.relationship('DSMetaData', backref='data_set', lazy=True, cascade="all, delete")
     feature_models = db.relationship('FeatureModel', backref='data_set', lazy=True, cascade="all, delete")
 
-    def to_dict(self):
-        publication_type = self.ds_meta_data.publication_type
-        if publication_type:
-            publication_type = publication_type.name.replace('_', ' ').title()
+    def get_cleaned_publication_type(self):
+        return self.ds_meta_data.publication_type.name.replace('_', ' ').title()
 
+    def get_zenodo_url(self):
+        return f'https://zenodo.org/record/{self.ds_meta_data.deposition_id}' if self.ds_meta_data.dataset_doi else None
+
+    def get_files_count(self):
+        return sum(len(fm.files) for fm in self.feature_models)
+
+    def get_file_total_size(self):
+        return sum(file.size for fm in self.feature_models for file in fm.files)
+
+    def get_file_total_size_for_human(self):
+        return get_human_readable_size(self.get_file_total_size())
+
+    def to_dict(self):
         return {
+            'title': self.ds_meta_data.title,
             'id': self.id,
             'created_at': self.created_at,
-            'title': self.ds_meta_data.title,
+            'created_at_timestamp': int(self.created_at.timestamp()),
             'description': self.ds_meta_data.description,
-            'authors': [{'name': author.name, 'orcid': author.orcid, 'affiliation': author.affiliation} for author in
-                        self.ds_meta_data.authors],
-            'uvl_filenames': [fm.fm_meta_data.uvl_filename for fm in self.feature_models if fm.fm_meta_data],
-            'publication_type': publication_type,
+            'authors': [author.to_dict() for author in self.ds_meta_data.authors],
+            'publication_type': self.get_cleaned_publication_type(),
             'publication_doi': self.ds_meta_data.publication_doi,
+            'dataset_doi': self.ds_meta_data.dataset_doi,
             'tags': self.ds_meta_data.tags.split(",") if self.ds_meta_data.tags else [],
+            'url': f'{request.host_url.rstrip("/")}/dataset/view/{self.id}',
+            'download': f'{request.host_url.rstrip("/")}/dataset/download/{self.id}',
+            'zenodo': self.get_zenodo_url(),
+            'files': [file.to_dict() for fm in self.feature_models for file in fm.files],
+            'files_count': self.get_files_count(),
+            'total_size_in_bytes': self.get_file_total_size(),
+            'total_size_in_human_format': self.get_file_total_size_for_human(),
         }
 
     def __repr__(self):
@@ -108,14 +136,17 @@ class File(db.Model):
     feature_model_id = db.Column(db.Integer, db.ForeignKey('feature_model.id'), nullable=False)
 
     def get_formatted_size(self):
-        if self.size < 1024:
-            return f'{self.size} bytes'
-        elif self.size < 1024 ** 2:
-            return f'{round(self.size / 1024, 2)} KB'
-        elif self.size < 1024 ** 3:
-            return f'{round(self.size / (1024 ** 2), 2)} MB'
-        else:
-            return f'{round(self.size / (1024 ** 3), 2)} GB'
+        return get_human_readable_size(self.size)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'checksum': self.checksum,
+            'size_in_bytes': self.size,
+            'size_in_human_format': get_human_readable_size(self.size),
+            'url': f'{request.host_url.rstrip("/")}/file/download/{self.id}',
+        }
 
     def __repr__(self):
         return f'File<{self.id}>'
@@ -132,7 +163,8 @@ class FMMetaData(db.Model):
     uvl_version = db.Column(db.String(120))
     fm_metrics_id = db.Column(db.Integer, db.ForeignKey('fm_metrics.id'))
     fm_metrics = db.relationship('FMMetrics', uselist=False, backref='fm_meta_data')
-    authors = db.relationship('Author', backref='fm_metadata', lazy=True, cascade="all, delete", foreign_keys=[Author.fm_meta_data_id])
+    authors = db.relationship('Author', backref='fm_metadata', lazy=True, cascade="all, delete",
+                              foreign_keys=[Author.fm_meta_data_id])
 
     def __repr__(self):
         return f'FMMetaData<{self.title}'
@@ -145,3 +177,14 @@ class FMMetrics(db.Model):
 
     def __repr__(self):
         return f'FMMetrics<solver={self.solver}, not_solver={self.not_solver}>'
+
+
+def get_human_readable_size(size):
+    if size < 1024:
+        return f'{size} bytes'
+    elif size < 1024 ** 2:
+        return f'{round(size / 1024, 2)} KB'
+    elif size < 1024 ** 3:
+        return f'{round(size / (1024 ** 2), 2)} MB'
+    else:
+        return f'{round(size / (1024 ** 3), 2)} GB'

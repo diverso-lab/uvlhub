@@ -20,14 +20,14 @@
 
     <div class="row">
 
-        <div class="col-12 col-md-6">
+        <div class="col-12 col-md-8">
 
             <div class="card">
                 <div class="card-body">
                     <div class="d-flex align-items-center justify-content-between">
                         <h3>{{ dataset.ds_meta_data.title }}</h3>
                         <div>
-                            <span class="badge bg-secondary">{{ dataset.ds_meta_data.publication_type.name|replace('-', ' ')|title }}</span>
+                            <span class="badge bg-secondary">{{ dataset.get_cleaned_publication_type() }}</span>
                         </div>
                     </div>
                     <p class="text-secondary">{{ dataset.created_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
@@ -117,6 +117,19 @@
 
                         <div class="col-md-4 col-12">
                             <span class=" text-secondary">
+                                Zenodo URL
+                            </span>
+                        </div>
+                        <div class="col-md-8 col-12">
+                            <a href="{{ dataset.get_zenodo_url()}}" target="_blank">{{ dataset.get_zenodo_url()}}</a>
+                        </div>
+
+                    </div>
+
+                    <div class="row mb-2">
+
+                        <div class="col-md-4 col-12">
+                            <span class=" text-secondary">
                                 Tags
                             </span>
                         </div>
@@ -133,9 +146,9 @@
 
         </div>
 
-        <div class="col-12 col-md-6">
+        <div class="col-12 col-md-4">
 
-        <h1 class="h3 mb-3">UVL models</h1>
+            <h1 class="h3 mb-3">UVL models ({{ dataset.get_files_count() }})</h1>
 
             <table class="table">
                 <thead>
@@ -170,10 +183,10 @@
                 </tbody>
             </table>
 
-            <a href="/dataset/download/{{ dataset.id }}" class="btn btn-primary btn-sm"
+            <a href="/dataset/download/{{ dataset.id }}" class="btn btn-primary"
                style="border-radius: 5px;">
                 <i data-feather="download" class="center-button-icon"></i>
-                Download all models
+                Download all ({{ dataset.get_file_total_size_for_human() }})
             </a>
 
         </div>
