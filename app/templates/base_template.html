@@ -206,11 +206,19 @@
 <script src="{{ url_for("static", filename="js/app.js") }}"></script>
 
 <script>
+
     function submitSearchForm(event) {
         event.preventDefault();
         let query = document.getElementById('search-query').value;
         window.location.href = '/explore?query=' + encodeURIComponent(query);
     }
+
+    function copyText(div_identifier) {
+        let textToCopy = document.getElementById(div_identifier).textContent;
+        textToCopy = textToCopy.trim();
+        navigator.clipboard.writeText(textToCopy);
+    }
+
 </script>
 
 </body>

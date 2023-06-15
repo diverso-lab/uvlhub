@@ -33,3 +33,8 @@
     font-size: 12px;
     padding: 10px 50px 10px 20px;
 }
+
+.center-button-icon {
+    vertical-align: middle;
+    margin-top: -2px
+}
