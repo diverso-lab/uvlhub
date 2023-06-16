@@ -60,9 +60,30 @@ To run unit test, please enter inside `web` container:
 pytest app/tests/units.py
 ```
 
-## Deploy in production
+## Deploy in production (Docker Compose)
 
 ```
 docker compose -f docker-compose.prod.yml up -d 
 ```
 
+## Deploy in production (Docker Swarm)
+
+To have an elastic growth of services, the use of Docker Swarm is recommended.
+
+First, we start a new cluster
+
+```
+docker swarm init --advertise-addr <IP_SERVER>
+```
+
+Now, we start the services
+
+```
+docker stack deploy -c docker-compose.swarm.yml uvlhub
+```
+
+To stop the deployment:
+
+```
+docker stack rm uvlhub
+```
