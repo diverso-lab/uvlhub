@@ -3,6 +3,7 @@ import secrets
 import logging
 
 from flask import Flask, render_template
+from flask_login import current_user
 from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
 from flask_migrate import Migrate
@@ -39,10 +40,12 @@ def create_app(config_name=None):
     db.init_app(app)
     migrate.init_app(app, db)
 
+    # Import blueprints
     from app.tests.routes import test_routes
     from .auth import auth_bp
     from .dataset import dataset_bp
     from .explore import explore_bp
+    from .profile import profile_bp
     from .public import public_bp
 
     # Register blueprints
@@ -50,6 +53,7 @@ def create_app(config_name=None):
     app.register_blueprint(auth_bp)
     app.register_blueprint(dataset_bp)
     app.register_blueprint(explore_bp)
+    app.register_blueprint(profile_bp)
     app.register_blueprint(public_bp)
 
     from flask_login import LoginManager
@@ -108,6 +112,18 @@ def get_test_client():
 
 def upload_folder_name():
     return 'uploads'
+
+
+def get_user_by_token(token):
+    # TODO
+    from app.auth.models import User
+    return User.query.first()
+
+
+def get_authenticated_user_profile():
+    if current_user.is_authenticated:
+        return current_user.profile
+    return None
 
 
 app = create_app()

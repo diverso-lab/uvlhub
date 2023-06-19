@@ -5,6 +5,7 @@ import json
 import hashlib
 import shutil
 import tempfile
+from typing import List
 from zipfile import ZipFile
 
 from flask import flash, redirect, render_template, url_for, request, jsonify, send_file, send_from_directory, abort, \
@@ -16,6 +17,7 @@ import app
 from .forms import DataSetForm
 from .models import DataSet, DSMetrics, FeatureModel, File, FMMetaData, FMMetrics, DSMetaData, Author, PublicationType
 from . import dataset_bp
+from ..auth.models import User
 from ..flama import flamapy_valid_model
 from ..zenodo import zenodo_create_new_deposition, test_zenodo_connection, zenodo_upload_file, \
     zenodo_publish_deposition, zenodo_get_doi, test_full_zenodo_connection
@@ -247,8 +249,8 @@ def calculate_checksum_and_size(file_path):
         return hash_md5, file_size
 
 
-def move_feature_models(dataset_id, feature_models):
-    user_id = current_user.id
+def move_feature_models(dataset_id, feature_models,user=None):
+    user_id = current_user.id if user is None else user.id
     source_dir = f'uploads/temp/{user_id}/'
     dest_dir = f'uploads/user_{user_id}/dataset_{dataset_id}/'
 
@@ -361,3 +363,197 @@ def get_all_dataset():
 def get_dataset(dataset_id):
     dataset = DataSet.query.get_or_404(dataset_id)
     return dataset.to_dict()
+
+
+@dataset_bp.route('/api/v1/dataset/', methods=['POST'])
+def api_create_dataset():
+    """
+    PART 1: GET DATA
+    """
+
+    user = app.get_user_by_token("BLABLABLA")  # TODO
+    data = json.loads(request.files['json'].read())
+    temp_folder = os.path.join(app.upload_folder_name(), 'temp', str(user.id))
+
+    info = data['info']
+    models = data['models']
+
+    """
+    PART 2: CREATE BASIC DATA
+    """
+    ds_meta_data = _create_ds_meta_data(info=info)
+    authors = _create_authors(info=info, ds_meta_data=ds_meta_data)
+    dataset = _create_dataset(user=user, ds_meta_data=ds_meta_data)
+
+    """
+    PART 3: SEND BASIC DATA TO ZENODO
+    """
+    zenodo_response_json = zenodo_create_new_deposition(dataset)
+    response_data = json.dumps(zenodo_response_json)
+    zenodo_json_data = json.loads(response_data)
+
+    """
+    PART 4: SAVE FILES IN TEMP FOLDER
+    """
+    files = request.files.to_dict()
+    for filename, file in files.items():
+        if filename != 'json':
+
+            if file and filename.endswith('.uvl'):
+
+                # create temporal folder for this user
+                if not os.path.exists(temp_folder):
+                    os.makedirs(temp_folder)
+
+                try:
+                    file.save(os.path.join(temp_folder, filename))
+                    # TODO: Change valid model function
+                    valid_model = flamapy_valid_model(uvl_filename=filename, user=user)
+                    if valid_model:
+                        continue
+                    else:
+                        return jsonify({'message': f'{filename} is not a valid model'}), 400
+                except Exception as e:
+                    return jsonify({'exception': str(e)}), 500
+
+            else:
+                return jsonify({'message': f'{filename} is not a valid extension'}), 400
+
+    """
+    PART 5: CREATE FEATURE MODELS
+    """
+    feature_models = _create_feature_models(dataset=dataset, models=models, user=user)
+
+    if zenodo_json_data.get('conceptrecid'):
+
+        # update dataset with deposition id in Zenodo
+        deposition_id = zenodo_json_data.get('id')
+        dataset.ds_meta_data.deposition_id = deposition_id
+        app.db.session.commit()
+
+        """
+        PART 6: SEND FILES TO ZENODO AND PUBLISH
+        """
+        try:
+            # iterate for each feature model (one feature model = one request to Zenodo
+            for feature_model in feature_models:
+                zenodo_upload_file(deposition_id, feature_model, user=user)
+
+            # publish deposition
+            zenodo_publish_deposition(deposition_id)
+
+            # update DOI
+            deposition_doi = zenodo_get_doi(deposition_id)
+            dataset.ds_meta_data.dataset_doi = deposition_doi
+            app.db.session.commit()
+        except Exception as e:
+            return jsonify({'exception': str(e)}), 500
+
+    """
+    PART 7: MOVE FEATURE MODELS PERMANENTLY
+    """
+    move_feature_models(dataset.id, feature_models, user=user)
+
+    return jsonify({'message': 'Everything works fine!'}), 200
+
+
+def _create_ds_meta_data(info: dict) -> DSMetaData:
+    ds_meta_data = DSMetaData(
+        title=info["title"],
+        description=info["description"],
+        publication_type=PublicationType(info["publication_type"]),
+        publication_doi=info["publication_doi"],
+        tags=','.join(tag.strip() for tag in info['tags'])
+    )
+    app.db.session.add(ds_meta_data)
+    app.db.session.commit()
+
+    return ds_meta_data
+
+
+def _create_authors(info: dict, ds_meta_data: DSMetaData) -> List[Author]:
+    authors = []
+
+    authors_info = info.get("authors")
+    if authors_info:
+        for author_info in authors_info:
+            author = Author(
+                name=author_info.get("name"),
+                affiliation=author_info.get("affiliation"),
+                orcid=author_info.get("orcid", None),
+                ds_meta_data_id=ds_meta_data.id
+            )
+            authors.append(author)
+            app.db.session.add(author)
+
+        app.db.session.commit()
+
+    return authors
+
+
+def _create_dataset(user: User, ds_meta_data: DSMetaData) -> DataSet:
+    dataset = DataSet(user_id=user.id, ds_meta_data_id=ds_meta_data.id)
+    app.db.session.add(dataset)
+    app.db.session.commit()
+
+    return dataset
+
+
+def _create_feature_models(dataset: DataSet, models: dict, user: User) -> List[FeatureModel]:
+    feature_models = []
+
+    for model in models:
+
+        filename = model['filename']
+        title = model['title']
+        description = model['description']
+        publication_type = model['publication_type']
+        publication_doi = model['publication_doi']
+        tags = ','.join(tag.strip() for tag in model['tags'])
+
+        # create feature model metadata
+        feature_model_metadata = FMMetaData(
+            uvl_filename=filename,
+            title=title,
+            description=description,
+            publication_type=publication_type,
+            publication_doi=publication_doi,
+            tags=tags
+        )
+        app.db.session.add(feature_model_metadata)
+        app.db.session.commit()
+
+        # associated authors in feature model
+        for author_data in model['authors']:
+            author = Author(
+                name=author_data['name'],
+                affiliation=author_data['affiliation'],
+                fm_meta_data_id=feature_model_metadata.id
+            )
+            app.db.session.add(author)
+            app.db.session.commit()
+
+        # create feature model
+        feature_model = FeatureModel(
+            data_set_id=dataset.id,
+            fm_meta_data_id=feature_model_metadata.id
+        )
+        app.db.session.add(feature_model)
+        app.db.session.commit()
+
+        # associated files in feature model
+        user_id = user.id
+        file_path = os.path.join(app.upload_folder_name(), 'temp', str(user_id), model['filename'])
+        checksum, size = calculate_checksum_and_size(file_path)
+        file = File(
+            name=model['filename'],
+            checksum=checksum,
+            size=size,
+            feature_model_id=feature_model.id
+        )
+        app.db.session.add(file)
+        app.db.session.commit()
+
+        feature_models.append(feature_model)
+
+    return feature_models

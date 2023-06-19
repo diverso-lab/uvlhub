@@ -8,6 +8,12 @@
     border-radius: 5px;
 }
 
+.alert-success {
+    background-color: #D4EDD9;
+    padding: 20px;
+    border-radius: 5px;
+}
+
 .alert-error {
     background-color: #F9D6D9;
     padding: 20px;

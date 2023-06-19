@@ -9,8 +9,8 @@ FLAMAPY_API_URL = "http://flamapyapi:8000"
 FLAMAPY_API_VERSION = "api/v1/operations"
 
 
-def flamapy_valid_model(uvl_filename: str) -> bool:
-    user_id = current_user.id
+def flamapy_valid_model(uvl_filename: str, user=None) -> bool:
+    user_id = current_user.id if user is None else user.id
     file_path = os.path.join(app.upload_folder_name(), 'temp', str(user_id), uvl_filename)
     files = {'model': open(file_path, 'rb')}
 

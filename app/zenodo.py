@@ -143,20 +143,22 @@ def zenodo_create_new_deposition(dataset: DataSet) -> dict:
     return response.json()
 
 
-def zenodo_upload_file(deposition_id: int, feature_model: FeatureModel) -> dict:
+def zenodo_upload_file(deposition_id: int, feature_model: FeatureModel, user=None) -> dict:
     """
     Upload a file to a deposition in Zenodo.
 
     Args:
         deposition_id (int): The ID of the deposition in Zenodo.
         feature_model (FeatureModel): The FeatureModel object representing the feature model.
+        user (FeatureModel): The User object representing the file owner.
 
     Returns:
         dict: The response in JSON format with the details of the uploaded file.
     """
+    from app.auth.models import User
     uvl_filename = feature_model.fm_meta_data.uvl_filename
     data = {'name': uvl_filename}
-    user_id = current_user.id
+    user_id = current_user.id if user is None else user.id
     file_path = os.path.join(app.upload_folder_name(), 'temp', str(user_id), uvl_filename)
     files = {'file': open(file_path, 'rb')}
 

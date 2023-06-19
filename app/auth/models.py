@@ -5,17 +5,14 @@ from app import db
 
 
 class User(db.Model, UserMixin):
-
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(80), nullable=False)
+
     email = db.Column(db.String(256), unique=True, nullable=False)
     password = db.Column(db.String(128), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
-    data_sets = db.relationship('DataSet', backref='user', lazy=True)
 
-    def __init__(self, name, email):
-        self.name = name
-        self.email = email
+    data_sets = db.relationship('DataSet', backref='user', lazy=True)
+    profile = db.relationship('UserProfile', backref='user', uselist=False)
 
     def __repr__(self):
         return f'<User {self.email}>'
