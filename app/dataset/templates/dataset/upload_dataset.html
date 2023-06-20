@@ -183,6 +183,7 @@
 
                     <script>
                         let dropzone = Dropzone.options.myDropzone = {
+                            url: "/dataset/file/upload",
                             paramName: 'file',
                             maxFilesize: 10,
                             acceptedFiles: '.uvl',
@@ -218,9 +219,8 @@
                                     // actions when UVL model is uploaded
                                     let listItem = document.createElement('li');
                                     let h4Element = document.createElement('h4');
-                                    h4Element.textContent = file.name;
+                                    h4Element.textContent = response.filename;
                                     listItem.appendChild(h4Element);
-
 
                                     // generate unique identifier for UVL form
                                     let formUniqueId = generateUniqueId();
@@ -272,7 +272,7 @@
 
                                         // Ajax request
                                         let xhr = new XMLHttpRequest();
-                                        xhr.open('POST', '/delete', true);
+                                        xhr.open('POST', '/dataset/file/delete', true);
                                         xhr.setRequestHeader('Content-Type', 'application/json');
                                         xhr.onload = function () {
                                             if (xhr.status === 200) {
@@ -311,7 +311,7 @@
                                     formContainer.innerHTML = `
                                     <div class="row">
                                         <input type="hidden" value="` + formUniqueId + `" name="uvl_identifier">
-                                        <input type="hidden" value="` + file.name + `" name="uvl_filename">
+                                        <input type="hidden" value="` + response.filename + `" name="uvl_filename">
                                         <div class="col-12">
                                             <div class="row">
                                                 <div class="col-12">

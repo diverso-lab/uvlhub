@@ -257,7 +257,7 @@ def calculate_checksum_and_size(file_path):
         return hash_md5, file_size
 
 
-def move_feature_models(dataset_id, feature_models,user=None):
+def move_feature_models(dataset_id, feature_models, user=None):
     user_id = current_user.id if user is None else user.id
     source_dir = f'uploads/temp/{user_id}/'
     dest_dir = f'uploads/user_{user_id}/dataset_{dataset_id}/'
@@ -269,7 +269,7 @@ def move_feature_models(dataset_id, feature_models,user=None):
         shutil.move(os.path.join(source_dir, uvl_filename), dest_dir)
 
 
-@dataset_bp.route('/upload', methods=['POST'])
+@dataset_bp.route('/dataset/file/upload', methods=['POST'])
 @login_required
 def upload():
     file = request.files['file']
@@ -277,14 +277,32 @@ def upload():
     temp_folder = os.path.join(app.upload_folder_name(), 'temp', str(user_id))
 
     if file and file.filename.endswith('.uvl'):
+
+        # create temp folder
         if not os.path.exists(temp_folder):
             os.makedirs(temp_folder)
 
+        file_path = os.path.join(temp_folder, file.filename)
+
+        if os.path.exists(file_path):
+            # Generate unique filename (by recursion)
+            base_name, extension = os.path.splitext(file.filename)
+            i = 1
+            while os.path.exists(os.path.join(temp_folder, f"{base_name} ({i}){extension}")):
+                i += 1
+            new_filename = f"{base_name} ({i}){extension}"
+            file_path = os.path.join(temp_folder, new_filename)
+        else:
+            new_filename = file.filename
+
         try:
-            file.save(os.path.join(temp_folder, file.filename))
-            valid_model = flamapy_valid_model(uvl_filename=file.filename)
+            file.save(file_path)
+            valid_model = flamapy_valid_model(uvl_filename=new_filename)
             if valid_model:
-                return jsonify({'message': 'UVL uploaded and validated successfully'}), 200
+                return jsonify({
+                    'message': 'UVL uploaded and validated successfully',
+                    'filename' : new_filename
+                }), 200
             else:
                 return jsonify({'message': 'No valid model'}), 400
         except Exception as e:
@@ -294,7 +312,7 @@ def upload():
         return jsonify({'message': 'No valid file'}), 400
 
 
-@dataset_bp.route('/delete', methods=['POST'])
+@dataset_bp.route('/dataset/file/delete', methods=['POST'])
 def delete():
     data = request.get_json()
     filename = data.get('file')
@@ -311,9 +329,7 @@ def delete():
 
 @dataset_bp.route('/dataset/download/<int:dataset_id>', methods=['GET'])
 def download_dataset(dataset_id):
-    dataset = DataSet.query.get(dataset_id)
-    if dataset is None:
-        return "Dataset not found", 404
+    dataset = DataSet.query.get_or_404(dataset_id)
 
     file_path = f"uploads/user_{dataset.user_id}/dataset_{dataset.id}/"
 
