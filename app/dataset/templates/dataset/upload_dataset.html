@@ -101,6 +101,23 @@
                                     </div>
                                 </div>
 
+                                <div class="col-lg-6 col-12 mb-3">
+                                    <label class="form-label">Author name</label>
+                                    <input class="form-control"
+                                           disabled
+                                           value="{{ current_user.profile.surname }}, {{ current_user.profile.name }}">
+                                </div>
+                                <div class="col-lg-6 col-12 mb-3">
+                                    <label class="form-label">Author affiliation</label>
+                                    <input class="form-control"
+                                           disabled value="{{ current_user.profile.affiliation }}">
+                                </div>
+                                <div class="col-lg-6 col-12 mb-3">
+                                    <label class="form-label">Author ORCID</label>
+                                    <input class="form-control"
+                                           disabled value="{{ current_user.profile.orcid }}">
+                                </div>
+
                                 <div class="col-12">
 
                                     <div class="mb-3">
@@ -115,11 +132,9 @@
                                                 </div>
                                             {% endfor %}
 
-
                                         </div>
                                         <button type="button" class="btn btn-secondary" id="add_author">Add author
                                         </button>
-
 
                                     </div>
 
@@ -634,30 +649,43 @@
                         formUploadData.append('csrf_token', csrfToken);
                         formUploadData.append('formData', formDataJson);
 
-                        fetch('/dataset/upload', {
-                            method: 'POST',
-                            body: formUploadData
-                        })
-                            .then(response => {
-                                if (response.ok) {
-                                    console.log('Dataset sent successfully');
-                                    response.json().then(data => {
-                                        console.log(data.message);
-                                        window.location.href = "/dataset/list";
-                                    });
-                                } else {
-                                    response.json().then(data => {
-                                        console.error('Error: ' + data.message);
-                                        hide_loading();
+                        let checked_orcid = true;
+                        formData.basic_info_form.author_orcid.forEach(function (orcid) {
+                            if (orcid.trim() !== '' && !isValidOrcid(orcid)) {
+                                hide_loading();
+                                write_upload_error("ORCID value does not conform to valid format: " + orcid);
+                                checked_orcid = false;
+                            }
+                        });
 
-                                        write_upload_error(data.message);
 
-                                    });
-                                }
+                        if (checked_orcid) {
+                            fetch('/dataset/upload', {
+                                method: 'POST',
+                                body: formUploadData
                             })
-                            .catch(error => {
-                                console.error('Error in POST request:', error);
-                            });
+                                .then(response => {
+                                    if (response.ok) {
+                                        console.log('Dataset sent successfully');
+                                        response.json().then(data => {
+                                            console.log(data.message);
+                                            window.location.href = "/dataset/list";
+                                        });
+                                    } else {
+                                        response.json().then(data => {
+                                            console.error('Error: ' + data.message);
+                                            hide_loading();
+
+                                            write_upload_error(data.message);
+
+                                        });
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('Error in POST request:', error);
+                                });
+                        }
+
 
                     } else {
                         hide_loading();
@@ -676,15 +704,20 @@
                         var response = JSON.parse(xhr.responseText);
                         if (!response.success) {
                             document.getElementById("test_zenodo_connection_error").style.display = "block";
-                            console.log(response);  // Imprimir el objeto JSON en la consola
-                            console.log(response.success);  // Imprimir el valor de la clave "success"
-                            console.log(response.messages);  // Imprimir el valor de la clave "messages"
+                            console.log(response);
+                            console.log(response.success);
+                            console.log(response.messages);
                         }
                     } else if (xhr.readyState === 4 && xhr.status !== 200) {
-                        console.error('Error:', xhr.status);  // Imprimir el mensaje de error en la consola
+                        console.error('Error:', xhr.status);
                     }
                 };
                 xhr.send();
+            }
+
+            function isValidOrcid(orcid) {
+                let orcidRegex = /^\d{4}-\d{4}-\d{4}-\d{4}$/;
+                return orcidRegex.test(orcid);
             }
 
         </script>

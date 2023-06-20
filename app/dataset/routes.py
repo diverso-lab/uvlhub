@@ -137,6 +137,17 @@ def create_dataset_in_db(basic_info_data):
     app.db.session.commit()
 
     # create dataset metadata authors
+
+    # I always add myself
+    author = Author(
+        name=f"{current_user.profile.surname}, {current_user.profile.name}",
+        affiliation=current_user.profile.affiliation if hasattr(current_user.profile, 'affiliation') else None,
+        orcid=current_user.profile.orcid if hasattr(current_user.profile, 'orcid') else None,
+        ds_meta_data_id=ds_meta_data.id
+    )
+    app.db.session.add(author)
+    app.db.session.commit()
+
     # how many authors are there?
     if "author_name" in basic_info_data:
         number_of_authors = len(basic_info_data["author_name"])
@@ -153,16 +164,6 @@ def create_dataset_in_db(basic_info_data):
             )
             app.db.session.add(author)
             app.db.session.commit()
-
-    # I always add myself
-    author = Author(
-        name=f"{current_user.profile.surname}, {current_user.profile.name}",
-        affiliation=current_user.profile.affiliation if hasattr(current_user.profile, 'affiliation') else None,
-        orcid=current_user.profile.orcid if hasattr(current_user.profile, 'orcid') else None,
-        ds_meta_data_id=ds_meta_data.id
-    )
-    app.db.session.add(author)
-    app.db.session.commit()
 
     # create dataset
     dataset = DataSet(user_id=current_user.id, ds_meta_data_id=ds_meta_data.id)
