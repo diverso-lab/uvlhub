@@ -25,13 +25,13 @@ def show_signup_form():
             error = f'Email {email} in use'
         else:
             # Create user
-            user = User(name=name, email=email)
+            user = User(email=email)
             user.set_password(password)
             user.save()
 
             # Create user profile
             profile = UserProfile(name=name, surname=surname)
-            profile.user = user
+            profile.user_id = user.id
             profile.save()
 
             # Log user

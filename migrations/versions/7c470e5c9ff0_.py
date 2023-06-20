@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 72e570a6c322
+Revision ID: 7c470e5c9ff0
 Revises: 
-Create Date: 2023-06-09 19:47:33.239299
+Create Date: 2023-06-20 09:40:58.686090
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '72e570a6c322'
+revision = '7c470e5c9ff0'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -32,7 +32,6 @@ def upgrade():
     )
     op.create_table('user',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('name', sa.String(length=80), nullable=False),
     sa.Column('email', sa.String(length=256), nullable=False),
     sa.Column('password', sa.String(length=128), nullable=False),
     sa.Column('is_admin', sa.Boolean(), nullable=True),
@@ -64,6 +63,17 @@ def upgrade():
     sa.Column('fm_metrics_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['fm_metrics_id'], ['fm_metrics.id'], ),
     sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('user_profile',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('orcid', sa.String(length=19), nullable=True),
+    sa.Column('affiliation', sa.String(length=100), nullable=True),
+    sa.Column('name', sa.String(length=100), nullable=False),
+    sa.Column('surname', sa.String(length=100), nullable=False),
+    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('user_id')
     )
     op.create_table('author',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -111,6 +121,7 @@ def downgrade():
     op.drop_table('feature_model')
     op.drop_table('data_set')
     op.drop_table('author')
+    op.drop_table('user_profile')
     op.drop_table('fm_meta_data')
     op.drop_table('ds_meta_data')
     op.drop_table('user')

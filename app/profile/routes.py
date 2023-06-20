@@ -14,14 +14,16 @@ def edit_profile():
     form = UserProfileForm()
 
     if request.method == 'POST' and form.validate_on_submit():
-        orcid = form.orcid.data
-        name = form.name.data
-        surname = form.surname.data
+        orcid = form.orcid.data.strip()
+        name = form.name.data.strip()
+        surname = form.surname.data.strip()
+        affiliation = form.affiliation.data.strip()
 
         profile = get_authenticated_user_profile()
         profile.orcid = orcid
         profile.name = name
         profile.surname = surname
+        profile.affiliation = affiliation
         profile.save()
 
         flash('Saved profile', 'success')

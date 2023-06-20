@@ -66,6 +66,20 @@
 
                 <div class="row form-group mt-3">
 
+                    <div class="col-6">
+                        {{ form.affiliation.label(class="form-label") }}
+                        {% set affiliation_value = form.affiliation.data if form.affiliation.data else (current_user.profile.affiliation  if current_user.profile.affiliation else '') %}
+                        {{ form.affiliation(class="form-control", placeholder="Enter your affiliation", required=true, value=affiliation_value) }}
+                        {% for error in form.affiliation.errors %}
+                            <span style="color: red;">{{ error }}</span>
+                            <br>
+                        {% endfor %}
+                    </div>
+
+                </div>
+
+                <div class="row form-group mt-3">
+
                     <div class="col-12">
                         {{ form.orcid.label(class="form-label") }}
                         {% set orcid_value = form.orcid.data if form.orcid.data else (current_user.profile.orcid  if current_user.profile.orcid else '') %}
