@@ -71,7 +71,7 @@ def test_full_zenodo_connection() -> Response:
     deposition_id = response.json()["id"]
 
     # Step 2: Upload an empty file to the deposition
-    data = {'name':  "test_file.txt"}
+    data = {'name': "test_file.txt"}
     file_path = os.path.join(current_app.root_path, "test_file.txt")
     files = {'file': open(file_path, 'rb')}
     publish_url = f'{ZENODO_API_URL}/{deposition_id}/files'
@@ -118,13 +118,14 @@ def zenodo_create_new_deposition(dataset: DataSet) -> dict:
     metadata = {
         'title': dataset.ds_meta_data.title,
         'upload_type': 'dataset' if dataset.ds_meta_data.publication_type.value == "none" else 'publication',
-        'publication_type': dataset.ds_meta_data.publication_type.value if
-        dataset.ds_meta_data.publication_type.value != "none" else None,
+        'publication_type': dataset.ds_meta_data.publication_type.value
+        if dataset.ds_meta_data.publication_type.value != "none" else None,
         'description': dataset.ds_meta_data.description,
         'creators': [{
             'name': author.name,
             'affiliation': author.affiliation,
-            'orcid': '0000-0002-1694-233X'} for author in dataset.ds_meta_data.authors],
+            **({'orcid': author.orcid} if author.orcid else {})
+        } for author in dataset.ds_meta_data.authors],
         'keywords': dataset.ds_meta_data.tags.split(", "),
         'access_right': 'open',
         'license': 'CC-BY-4.0'
