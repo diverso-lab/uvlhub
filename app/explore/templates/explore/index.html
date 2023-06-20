@@ -4,9 +4,37 @@
 
 {% block content %}
 
-    <h1 class="h3 mb-3">Explore</h1>
+    <h1 class="h2 mb-3"><b>Explore</b></h1>
 
     <div class="row">
+
+        <h3 class="h3 mb-3">
+                <span id="results_number"></span>
+            </h3>
+
+        <div class="col-lg-7 scrollable-column">
+
+
+            <div class="row">
+
+                <div id="results"></div>
+
+                <div class="col text-center" id="results_not_found">
+                    <img src="{{ url_for('static', filename='img/items/not_found.svg') }}"
+                         style="width: 50%; max-width: 100px; height: auto; margin-top: 30px"/>
+                    <p style="margin-top: 20px">
+                        We have not found any datasets that meet your search criteria. <br>How about trying some others?
+                    </p>
+                </div>
+
+                <div id="results_not_found" style="text-align: center;">
+
+                </div>
+
+
+            </div>
+        </div>
+
         <div class="col-lg-5 fixed-column" id="filters">
 
             {{ form.hidden_tag() }}
@@ -114,31 +142,6 @@
 
             </div>
 
-        </div>
-
-        <div class="col-lg-7 scrollable-column">
-            <h3 class="h3 mb-3">
-                <span id="results_number"></span>
-            </h3>
-
-            <div class="row">
-
-                <div id="results"></div>
-
-                <div class="col text-center" id="results_not_found">
-                   <img src="{{ url_for('static', filename='img/items/not_found.svg') }}"
-                         style="width: 50%; max-width: 100px; height: auto; margin-top: 30px"/>
-                    <p style="margin-top: 20px">
-                        We have not found any datasets that meet your search criteria. <br>How about trying some others?
-                    </p>
-                </div>
-
-                <div id="results_not_found" style="text-align: center;">
-
-                </div>
-
-
-            </div>
         </div>
 
 

@@ -4,7 +4,7 @@
 
 {% block content %}
 
-    <h1 class="h3 mb-3">Upload dataset</h1>
+    <h1 class="h2 mb-3"><b>Upload</b> dataset</h1>
 
     <div class="row">
         <div class="col-12 mb-3">
@@ -36,279 +36,279 @@
     <div class="row">
 
         <div class="col-xl-6 col-lg-12 col-md-12 col-sm-12">
-            <div class="card" id="basic_info_form">
+            <div id="basic_info_form">
 
-                <div class="card-header">
-                    <h5 class="card-title">Basic info</h5>
-                </div>
+                {{ form.hidden_tag() }}
 
-                <div class="card-body">
+                <div class="row">
 
-                    {{ form.hidden_tag() }}
+                    <div class="col-12">
 
-                    <div class="row">
+                        <h1 class="h3 mb-3">Basic info</h1>
 
-                        <div class="col-12">
+                        <div class="row" style="padding-left: 2rem">
 
-                            <div class="row">
-
-                                <div class="col-12">
-                                    <div class="mb-3">
-                                        {{ form.title.label(class="form-label") }} *
-                                        {{ form.title(class="form-control") }}
-                                        {% for error in form.title.errors %}
-                                            <span style="color: red;">{{ error }}</span>
-                                        {% endfor %}
-                                    </div>
+                            <div class="col-lg-6 col-xs-12 col-md-12">
+                                <div class="mb-3">
+                                    {{ form.title.label(class="form-label") }} *
+                                    {{ form.title(class="form-control") }}
+                                    {% for error in form.title.errors %}
+                                        <span style="color: red;">{{ error }}</span>
+                                    {% endfor %}
                                 </div>
+                            </div>
 
-                                <div class="col-12">
-                                    <div class="mb-3">
-                                        {{ form.description.label(class="form-label") }} *
-                                        {{ form.description(rows=4, class="form-control") }}
-                                        {% for error in form.description.errors %}
-                                            <span style="color: red;">{{ error }}</span>
-                                        {% endfor %}
-                                    </div>
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    {{ form.description.label(class="form-label") }} *
+                                    {{ form.description(rows=4, class="form-control") }}
+                                    {% for error in form.description.errors %}
+                                        <span style="color: red;">{{ error }}</span>
+                                    {% endfor %}
                                 </div>
+                            </div>
 
-                                <div class="col-lg-6 col-6">
-                                    <div class="mb-3">
-                                        {{ form.publication_type.label(class="form-label") }}
-                                        {{ form.publication_type(class="form-control") }}
-                                    </div>
-
+                            <div class="col-lg-6 col-6">
+                                <div class="mb-3">
+                                    {{ form.publication_type.label(class="form-label") }}
+                                    {{ form.publication_type(class="form-control") }}
                                 </div>
-
-                                <div class="col-lg-6 col-6">
-                                    <div class="mb-3">
-                                        {{ form.publication_doi.label(class="form-label") }}
-                                        {{ form.publication_doi(class="form-control") }}
-                                        {% for error in form.publication_doi.errors %}
-                                            <span style="color: red;">{{ error }}</span>
-                                        {% endfor %}
-                                    </div>
-                                </div>
-
-                                <div class="col-12">
-                                    <div class="mb-3">
-                                        {{ form.tags.label(class="form-label") }}
-                                        {{ form.tags(class="form-control") }}
-                                        {% for error in form.tags.errors %}
-                                            <span style="color: red;">{{ error }}</span>
-                                        {% endfor %}
-                                    </div>
-                                </div>
-
-                                <div class="col-lg-6 col-12 mb-3">
-                                    <label class="form-label">Author name</label>
-                                    <input class="form-control"
-                                           disabled
-                                           value="{{ current_user.profile.surname }}, {{ current_user.profile.name }}">
-                                </div>
-                                <div class="col-lg-6 col-12 mb-3">
-                                    <label class="form-label">Author affiliation</label>
-                                    <input class="form-control"
-                                           disabled value="{{ current_user.profile.affiliation }}">
-                                </div>
-                                <div class="col-lg-6 col-12 mb-3">
-                                    <label class="form-label">Author ORCID</label>
-                                    <input class="form-control"
-                                           disabled value="{{ current_user.profile.orcid }}">
-                                </div>
-
-                                <div class="col-12">
-
-                                    <div class="mb-3">
-
-                                        <div id="authors">
-
-                                            {% for author in form.authors.entries %}
-                                                <div class="author row">
-                                                    {{ author.name.label }} {{ author.name() }}
-                                                    {{ author.affiliation.label }} {{ author.affiliation() }}
-                                                    {{ author.orcid.label }} {{ author.orcid() }}
-                                                </div>
-                                            {% endfor %}
-
-                                        </div>
-                                        <button type="button" class="btn btn-secondary" id="add_author">Add author
-                                        </button>
-
-                                    </div>
-
-                                </div>
-
 
                             </div>
+
+                            <div class="col-lg-6 col-6">
+                                <div class="mb-3">
+                                    {{ form.publication_doi.label(class="form-label") }}
+                                    {{ form.publication_doi(class="form-control") }}
+                                    {% for error in form.publication_doi.errors %}
+                                        <span style="color: red;">{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <div class="col-6">
+                                <div class="mb-3">
+                                    {{ form.tags.label(class="form-label") }}
+                                    {{ form.tags(class="form-control") }}
+                                    {% for error in form.tags.errors %}
+                                        <span style="color: red;">{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <h1 class="h3 mb-3 mt-4">Authors</h1>
+
+                        <div class="row" style="padding-left: 2rem">
+
+                            <div class="col-lg-6 col-12 mb-3">
+                                <label class="form-label">Author name</label>
+                                <input class="form-control"
+                                       disabled
+                                       value="{{ current_user.profile.surname }}, {{ current_user.profile.name }}">
+                            </div>
+
+                            <div class="col-lg-6 col-12 mb-3">
+                                <label class="form-label">Author affiliation</label>
+                                <input class="form-control"
+                                       disabled value="{{ current_user.profile.affiliation }}">
+                            </div>
+
+                            <div class="col-lg-6 col-12 mb-3">
+                                <label class="form-label">Author ORCID</label>
+                                <input class="form-control"
+                                       disabled value="{{ current_user.profile.orcid }}">
+                            </div>
+
+                            <div class="col-12">
+
+                                <div class="mb-3">
+
+                                    <div id="authors">
+
+                                        {% for author in form.authors.entries %}
+                                            <div class="author row">
+                                                {{ author.name.label }} {{ author.name() }}
+                                                {{ author.affiliation.label }} {{ author.affiliation() }}
+                                                {{ author.orcid.label }} {{ author.orcid() }}
+                                            </div>
+                                        {% endfor %}
+
+                                    </div>
+                                    <button type="button" class="btn btn-secondary" id="add_author">Add author
+                                    </button>
+
+                                </div>
+
+                            </div>
+
 
                         </div>
 
                     </div>
 
-                    <div class="row">
+                </div>
 
-                        {% if error %}
+                <div class="row">
 
-                            <div class="mt-3 col-lg-6 col-12">
-                                <span style="color: red;">{{ error }}</span>
-                            </div>
+                    {% if error %}
 
-                        {% endif %}
+                        <div class="mt-3 col-lg-6 col-12">
+                            <span style="color: red;">{{ error }}</span>
+                        </div>
 
-                    </div>
-
+                    {% endif %}
 
                 </div>
+
+
             </div>
         </div>
 
         <div class="col-xl-6 col-lg-12 col-md-12 col-sm-12">
-            <div class="card" id="uploaded_models_form">
 
-                <div class="card-header">
-                    <h5 class="card-title">Drag and drop your feature models in UVL format</h5>
-                </div>
+            <h1 class="h3 mb-3 mt-2">UVL models</h1>
 
-                <div class="card-body">
+            <div id="uploaded_models_form" style="padding-left: 2rem">
 
-                    <form action="{{ url_for('dataset.upload') }}" class="dropzone" id="myDropzone">
-                        <div id="dropzone-text"></div>
-                    </form>
+                <form action="{{ url_for('dataset.upload') }}" class="dropzone" id="myDropzone">
+                    <div id="dropzone-text"></div>
+                </form>
 
-                    <span class="text-danger" id="alerts" style="display: none">
+                <span class="text-danger" id="alerts" style="display: none">
                     </span>
 
-                    <ul class="mt-2" id="file-list"></ul>
+                <ul class="mt-2" id="file-list"></ul>
 
-                    <script>
-                        let dropzone = Dropzone.options.myDropzone = {
-                            url: "/dataset/file/upload",
-                            paramName: 'file',
-                            maxFilesize: 10,
-                            acceptedFiles: '.uvl',
-                            init: function () {
+                <script>
+                    let dropzone = Dropzone.options.myDropzone = {
+                        url: "/dataset/file/upload",
+                        paramName: 'file',
+                        maxFilesize: 10,
+                        acceptedFiles: '.uvl',
+                        init: function () {
 
-                                let fileList = document.getElementById('file-list');
-                                let dropzoneText = document.getElementById('dropzone-text');
-                                let alerts = document.getElementById('alerts');
+                            let fileList = document.getElementById('file-list');
+                            let dropzoneText = document.getElementById('dropzone-text');
+                            let alerts = document.getElementById('alerts');
 
-                                this.on('addedfile', function (file) {
+                            this.on('addedfile', function (file) {
 
-                                    let ext = file.name.split('.').pop();
-                                    if (ext !== 'uvl') {
-                                        this.removeFile(file);
+                                let ext = file.name.split('.').pop();
+                                if (ext !== 'uvl') {
+                                    this.removeFile(file);
 
-                                        let alert = document.createElement('p');
-                                        alert.textContent = 'Invalid file extension: ' + file.name;
-                                        alerts.appendChild(alert);
-                                        alerts.style.display = 'block';
+                                    let alert = document.createElement('p');
+                                    alert.textContent = 'Invalid file extension: ' + file.name;
+                                    alerts.appendChild(alert);
+                                    alerts.style.display = 'block';
 
+                                }
+
+
+                            });
+
+                            this.on('success', function (file, response) {
+
+                                let dropzone = this;
+
+                                show_upload_dataset();
+
+                                console.log("File uploaded: ", response);
+                                // actions when UVL model is uploaded
+                                let listItem = document.createElement('li');
+                                let h4Element = document.createElement('h4');
+                                h4Element.textContent = response.filename;
+                                listItem.appendChild(h4Element);
+
+                                // generate unique identifier for UVL form
+                                let formUniqueId = generateUniqueId();
+
+                                /*
+                                    ##########################################
+                                    FORM BUTTON
+                                    ##########################################
+                                */
+                                let formButton = document.createElement('button');
+                                formButton.innerHTML = 'Show info';
+                                formButton.classList.add('info-button', 'btn', 'btn-outline-secondary', "btn-sm");
+                                formButton.style.borderRadius = '5px';
+                                formButton.id = formUniqueId + "_button";
+
+                                formButton.addEventListener('click', function () {
+                                    if (formContainer.style.display === "none") {
+                                        formContainer.style.display = "block";
+                                        formButton.innerHTML = 'Hide info';
+                                    } else {
+                                        formContainer.style.display = "none";
+                                        formButton.innerHTML = 'Add info';
                                     }
-
-
                                 });
 
-                                this.on('success', function (file, response) {
+                                // append space
+                                let space = document.createTextNode(" ");
+                                listItem.appendChild(space);
 
-                                    let dropzone = this;
+                                /*
+                                    ##########################################
+                                    REMOVE BUTTON
+                                    ##########################################
+                                */
 
-                                    show_upload_dataset();
+                                // remove button
+                                let removeButton = document.createElement('button');
+                                removeButton.innerHTML = 'Delete model';
+                                removeButton.classList.add("remove-button", "btn", "btn-outline-danger", "btn-sm", "remove-button");
+                                removeButton.style.borderRadius = '5px';
 
-                                    console.log("File uploaded: ", response);
-                                    // actions when UVL model is uploaded
-                                    let listItem = document.createElement('li');
-                                    let h4Element = document.createElement('h4');
-                                    h4Element.textContent = response.filename;
-                                    listItem.appendChild(h4Element);
+                                // append space
+                                space = document.createTextNode(" ");
+                                listItem.appendChild(space);
 
-                                    // generate unique identifier for UVL form
-                                    let formUniqueId = generateUniqueId();
+                                removeButton.addEventListener('click', function () {
+                                    fileList.removeChild(listItem);
+                                    this.removeFile(file);
 
-                                    /*
-                                        ##########################################
-                                        FORM BUTTON
-                                        ##########################################
-                                    */
-                                    let formButton = document.createElement('button');
-                                    formButton.innerHTML = 'Show info';
-                                    formButton.classList.add('info-button', 'btn', 'btn-outline-secondary', "btn-sm");
-                                    formButton.style.borderRadius = '5px';
-                                    formButton.id = formUniqueId + "_button";
+                                    // Ajax request
+                                    let xhr = new XMLHttpRequest();
+                                    xhr.open('POST', '/dataset/file/delete', true);
+                                    xhr.setRequestHeader('Content-Type', 'application/json');
+                                    xhr.onload = function () {
+                                        if (xhr.status === 200) {
+                                            console.log('Deleted file from server');
 
-                                    formButton.addEventListener('click', function () {
-                                        if (formContainer.style.display === "none") {
-                                            formContainer.style.display = "block";
-                                            formButton.innerHTML = 'Hide info';
-                                        } else {
-                                            formContainer.style.display = "none";
-                                            formButton.innerHTML = 'Add info';
-                                        }
-                                    });
-
-                                    // append space
-                                    let space = document.createTextNode(" ");
-                                    listItem.appendChild(space);
-
-                                    /*
-                                        ##########################################
-                                        REMOVE BUTTON
-                                        ##########################################
-                                    */
-
-                                    // remove button
-                                    let removeButton = document.createElement('button');
-                                    removeButton.innerHTML = 'Delete model';
-                                    removeButton.classList.add("remove-button", "btn", "btn-outline-danger", "btn-sm", "remove-button");
-                                    removeButton.style.borderRadius = '5px';
-
-                                    // append space
-                                    space = document.createTextNode(" ");
-                                    listItem.appendChild(space);
-
-                                    removeButton.addEventListener('click', function () {
-                                        fileList.removeChild(listItem);
-                                        this.removeFile(file);
-
-                                        // Ajax request
-                                        let xhr = new XMLHttpRequest();
-                                        xhr.open('POST', '/dataset/file/delete', true);
-                                        xhr.setRequestHeader('Content-Type', 'application/json');
-                                        xhr.onload = function () {
-                                            if (xhr.status === 200) {
-                                                console.log('Deleted file from server');
-
-                                                if (dropzone.files.length === 0) {
-                                                    document.getElementById("upload_dataset").style.display = "none";
-                                                    clean_upload_errors();
-                                                }
-
+                                            if (dropzone.files.length === 0) {
+                                                document.getElementById("upload_dataset").style.display = "none";
+                                                clean_upload_errors();
                                             }
-                                        };
-                                        xhr.send(JSON.stringify({file: file.name}));
-                                    }.bind(this));
 
-                                    /*
-                                        ##########################################
-                                        APPEND BUTTONS
-                                        ##########################################
-                                    */
-                                    listItem.appendChild(formButton);
-                                    listItem.appendChild(removeButton);
+                                        }
+                                    };
+                                    xhr.send(JSON.stringify({file: file.name}));
+                                }.bind(this));
 
-                                    /*
-                                        ##########################################
-                                        UVL FORM
-                                        ##########################################
-                                    */
+                                /*
+                                    ##########################################
+                                    APPEND BUTTONS
+                                    ##########################################
+                                */
+                                listItem.appendChild(formButton);
+                                listItem.appendChild(removeButton);
 
-                                    // create specific form for UVL
-                                    let formContainer = document.createElement('div');
-                                    formContainer.id = formUniqueId + "_form";
-                                    formContainer.classList.add('uvl_form', "mt-3");
-                                    formContainer.style.display = "none";
+                                /*
+                                    ##########################################
+                                    UVL FORM
+                                    ##########################################
+                                */
 
-                                    formContainer.innerHTML = `
+                                // create specific form for UVL
+                                let formContainer = document.createElement('div');
+                                formContainer.id = formUniqueId + "_form";
+                                formContainer.classList.add('uvl_form', "mt-3");
+                                formContainer.style.display = "none";
+
+                                formContainer.innerHTML = `
                                     <div class="row">
                                         <input type="hidden" value="` + formUniqueId + `" name="uvl_identifier">
                                         <input type="hidden" value="` + response.filename + `" name="uvl_filename">
@@ -383,26 +383,24 @@
                                     </div>
                                     `;
 
-                                    listItem.appendChild(formContainer);
-                                    fileList.appendChild(listItem);
+                                listItem.appendChild(formContainer);
+                                fileList.appendChild(listItem);
 
-                                });
+                            });
 
-                                this.on('error', function (file, response) {
-                                    console.error("Error uploading file: ", response);
-                                    let alert = document.createElement('p');
-                                    alert.textContent = 'UVL not valid: ' + file.name;
-                                    alerts.appendChild(alert);
-                                    alerts.style.display = 'block';
-                                });
+                            this.on('error', function (file, response) {
+                                console.error("Error uploading file: ", response);
+                                let alert = document.createElement('p');
+                                alert.textContent = 'UVL not valid: ' + file.name;
+                                alerts.appendChild(alert);
+                                alerts.style.display = 'block';
+                            });
 
-                            }
-                        };
+                        }
+                    };
 
 
-                    </script>
-
-                </div>
+                </script>
 
             </div>
         </div>
@@ -412,68 +410,71 @@
     <div class="row" id="upload_dataset" style="display: none">
 
         <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Upload dataset</h5>
-                </div>
-                <div class="card-body">
 
-                    <p class="card-text">
-                        <label class="form-check">
-                            <input id="agreeCheckbox" class="form-check-input" type="checkbox" value="">
-                            <span class="form-check-label">
+            <hr>
+
+            <h1 class="h3 mb-3 mt-2">Upload dataset</h1>
+
+            <div style="padding-left: 2rem">
+
+                <label class="form-check">
+                    <input id="agreeCheckbox" class="form-check-input" type="checkbox" value="">
+                    <span class="form-check-label" style="font-size: 15px">
                                 I agree to have my feature models automatically uploaded to Zenodo and made available to the public according to the <a
-                                    href="https://en.wikipedia.org/wiki/Open_science" target="_blank">Open Science</a> manifesto
+                            href="https://en.wikipedia.org/wiki/Open_science" target="_blank">Open Science</a> manifesto
                             </span>
-                        </label>
-                    </p>
+                </label>
 
-                    <button id="upload_button" class="btn btn-primary" disabled>Upload dataset</button>
+                <button id="upload_button" class="btn btn-primary mt-2" disabled>
+                    <i data-feather="upload" class="center-button-icon"></i>
+                    Upload dataset</button>
 
-                    <div id="loading" style="display: none">
-                        <img width="40px" src="{{ url_for("static", filename="gifs/loading.svg") }}"/>
-                        Uploading dataset, please wait...
+                <div id="loading" style="display: none">
+                    <img width="40px" src="{{ url_for("static", filename="gifs/loading.svg") }}"/>
+                    Uploading dataset, please wait...
+                </div>
+
+                <div class="row">
+                    <div class="col-12 mb-3">
+
                     </div>
+                </div>
 
-                    <div class="row">
-                        <div class="col-12 mb-3">
+                <div class="alert alert-error" role="alert" id="upload_error"
+                     style="display: none">
+                    <div class="alert-message">
 
-                        </div>
+                        <h4 class="alert-heading"><i class="align-middle" data-feather="alert-triangle"></i> Limited
+                            connection to the Zenodo API</h4>
+                        <p class="p-0 m-0">
+                            There seems to be some kind of problem with the Zenodo API and synchronization of your
+                            dataset
+                            files may not be possible. We will save your files locally to eventually synchronize
+                            them with
+                            Zenodo. Sorry for the inconvenience, Zenodo is an external service and we can't do
+                            anything about it.
+                        </p>
                     </div>
-
-                    <div class="alert alert-error" role="alert" id="upload_error"
-                         style="display: none">
-                        <div class="alert-message">
-
-                            <h4 class="alert-heading"><i class="align-middle" data-feather="alert-triangle"></i> Limited
-                                connection to the Zenodo API</h4>
-                            <p class="p-0 m-0">
-                                There seems to be some kind of problem with the Zenodo API and synchronization of your
-                                dataset
-                                files may not be possible. We will save your files locally to eventually synchronize
-                                them with
-                                Zenodo. Sorry for the inconvenience, Zenodo is an external service and we can't do
-                                anything about it.
-                            </p>
-                        </div>
-                    </div>
+                </div>
 
 
-                    <span class="text-danger mt-2" id="upload_error" style="display: none">
+                <span class="text-danger mt-2" id="upload_error" style="display: none">
 
                     </span>
 
-                    <script>
-                        const checkbox = document.getElementById('agreeCheckbox');
-                        const upload_button = document.getElementById('upload_button');
+                <script>
+                    const checkbox = document.getElementById('agreeCheckbox');
+                    const upload_button = document.getElementById('upload_button');
 
-                        checkbox.addEventListener('change', function () {
-                            upload_button.disabled = !checkbox.checked;
-                        });
-                    </script>
+                    checkbox.addEventListener('change', function () {
+                        upload_button.disabled = !checkbox.checked;
+                    });
+                </script>
 
-                </div>
             </div>
+
+
+
 
         </div>
 
@@ -530,7 +531,7 @@
             function createAuthorBlock(parameter) {
                 let newAuthor = document.createElement('div');
                 newAuthor.className = 'author row';
-                newAuthor.style.cssText = "border:2px dotted #ccc;border-radius:10px;padding:10px;margin:10px 0";
+                newAuthor.style.cssText = "border:2px dotted #ccc;border-radius:10px;padding:10px;margin:10px 0; background-color: white";
 
                 let suffix = parameter ? '_' + parameter : '';
 

@@ -25,8 +25,7 @@
     top: 0;
     height: 100vh;
     overflow-y: auto;
-    padding-right: 50px;
-    padding-top: 5px;
+    padding-left: 50px;
 }
 
 .scrollable-column {
@@ -45,4 +44,39 @@
 .center-button-icon {
     vertical-align: middle;
     margin-top: -2px
+}
+
+.card-header-slim {
+    padding-bottom: 0px;
+}
+
+.card-body-slim {
+    padding-top: 0px
+}
+
+.card-dark {
+    background-color: #2B3947 !important;
+    color: #ffffff;
+}
+
+.card-header-dark {
+    background: inherit;
+    color: inherit !important;
+}
+
+.card-welcome{
+    background: #F68017 radial-gradient(circle at center left, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.5));
+    color: #ffffff;
+}
+
+.card-header-welcome {
+    background: inherit;
+    color: inherit !important;
+}
+
+.card-title-light {
+    margin-left: 1.25rem;
+    margin-top: 1.25rem;
+    color: white;
+    font-size: 17px;
 }
