@@ -25,8 +25,6 @@
 
     </div>
 
-
-
     {% if messages %}
         <ul>
             {% for message in messages %}
@@ -36,7 +34,8 @@
     {% endif %}
 
     <div class="row">
-        <div class="col-lg-6 col-12">
+
+        <div class="col-xl-6 col-lg-12 col-md-12 col-sm-12">
             <div class="card" id="basic_info_form">
 
                 <div class="card-header">
@@ -164,7 +163,7 @@
             </div>
         </div>
 
-        <div class="col-lg-6 col-12">
+        <div class="col-xl-6 col-lg-12 col-md-12 col-sm-12">
             <div class="card" id="uploaded_models_form">
 
                 <div class="card-header">
@@ -650,16 +649,34 @@
                         formUploadData.append('formData', formDataJson);
 
                         let checked_orcid = true;
-                        formData.basic_info_form.author_orcid.forEach(function (orcid) {
-                            if (orcid.trim() !== '' && !isValidOrcid(orcid)) {
-                                hide_loading();
-                                write_upload_error("ORCID value does not conform to valid format: " + orcid);
-                                checked_orcid = false;
+                        if (Array.isArray(formData.basic_info_form.author_orcid)) {
+                            for (let orcid of formData.basic_info_form.author_orcid) {
+                                orcid = orcid.trim();
+                                if (orcid !== '' && !isValidOrcid(orcid)) {
+                                    hide_loading();
+                                    write_upload_error("ORCID value does not conform to valid format: " + orcid);
+                                    checked_orcid = false;
+                                    break;
+                                }
                             }
-                        });
+                        }
 
 
-                        if (checked_orcid) {
+                        let checked_name = true;
+                        if (Array.isArray(formData.basic_info_form.author_name)) {
+                            for (let name of formData.basic_info_form.author_name) {
+                                name = name.trim();
+                                if (name === '') {
+                                    hide_loading();
+                                    write_upload_error("The author's name cannot be empty");
+                                    checked_name = false;
+                                    break;
+                                }
+                            }
+                        }
+
+
+                        if (checked_orcid && checked_name) {
                             fetch('/dataset/upload', {
                                 method: 'POST',
                                 body: formUploadData
