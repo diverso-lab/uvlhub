@@ -96,6 +96,11 @@ def create_dataset():
         except Exception as e:
             return jsonify({'message': str(e)}), 500
 
+    # Delete temp folder
+    file_path = os.path.join(app.upload_folder_name(), 'temp', str(current_user.id))
+    if os.path.exists(file_path) and os.path.isdir(file_path):
+        shutil.rmtree(file_path)
+
     return render_template('dataset/upload_dataset.html', form=form)
 
 
