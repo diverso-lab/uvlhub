@@ -5,17 +5,20 @@ import json
 import hashlib
 import shutil
 import tempfile
+import uuid
+from datetime import datetime
 from typing import List
 from zipfile import ZipFile
 
 from flask import flash, redirect, render_template, url_for, request, jsonify, send_file, send_from_directory, abort, \
-    current_app
+    current_app, make_response
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 
 import app
 from .forms import DataSetForm
-from .models import DataSet, DSMetrics, FeatureModel, File, FMMetaData, FMMetrics, DSMetaData, Author, PublicationType
+from .models import DataSet, DSMetrics, FeatureModel, File, FMMetaData, FMMetrics, DSMetaData, Author, PublicationType, \
+    DSDownloadRecord, DSViewRecord
 from . import dataset_bp
 from ..auth.models import User
 from ..flama import flamapy_valid_model
@@ -345,18 +348,62 @@ def download_dataset(dataset_id):
 
                 zipf.write(full_path, arcname=os.path.join(os.path.basename(zip_path[:-4]), relative_path))
 
-    return send_from_directory(
-        temp_dir,
-        f'dataset_{dataset_id}.zip',
-        as_attachment=True,
-        mimetype='application/zip'
-    )
+    user_cookie = request.cookies.get('download_cookie')
+    if not user_cookie:
+        user_cookie = str(uuid.uuid4())  # Generate a new unique identifier if it does not exist
+        # Save the cookie to the user's browser
+        resp = make_response(send_from_directory(
+            temp_dir,
+            f'dataset_{dataset_id}.zip',
+            as_attachment=True,
+            mimetype='application/zip'
+        ))
+        resp.set_cookie('download_cookie', user_cookie)
+    else:
+        resp = send_from_directory(
+            temp_dir,
+            f'dataset_{dataset_id}.zip',
+            as_attachment=True,
+            mimetype='application/zip'
+        )
+
+    # Record the download in your database
+    download_record = DSDownloadRecord(
+        user_id=current_user.id if current_user.is_authenticated else None,
+        dataset_id=dataset_id,
+        download_date=datetime.utcnow(),
+        download_cookie=user_cookie)
+
+    app.db.session.add(download_record)
+    app.db.session.commit()
+
+    return resp
 
 
 @dataset_bp.route('/dataset/view/<int:dataset_id>', methods=['GET'])
 def view_dataset(dataset_id):
     dataset = DataSet.query.get_or_404(dataset_id)
-    return render_template('dataset/view_dataset.html', dataset=dataset)
+
+    # Get the cookie from the request or generate a new one if it does not exist
+    user_cookie = request.cookies.get('view_cookie')
+    if not user_cookie:
+        user_cookie = str(uuid.uuid4())
+
+    # Record the view in your database
+    view_record = DSViewRecord(
+        user_id=current_user.id if current_user.is_authenticated else None,
+        dataset_id=dataset_id,
+        view_date=datetime.utcnow(),
+        view_cookie=user_cookie)
+    app.db.session.add(view_record)
+    app.db.session.commit()
+
+    # Save the cookie to the user's browser
+    resp = make_response(render_template('dataset/view_dataset.html', dataset=dataset))
+    resp.set_cookie('view_cookie', user_cookie)
+
+    return resp
+
 
 
 @dataset_bp.route('/file/download/<int:file_id>', methods=['GET'])

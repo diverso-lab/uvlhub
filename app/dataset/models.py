@@ -179,6 +179,28 @@ class FMMetrics(db.Model):
         return f'FMMetrics<solver={self.solver}, not_solver={self.not_solver}>'
 
 
+class DSDownloadRecord(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    dataset_id = db.Column(db.Integer, db.ForeignKey('data_set.id'))
+    download_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    download_cookie = db.Column(db.String(36), nullable=False)  # Assuming UUID4 strings
+
+    def __repr__(self):
+        return f'<Download id={self.id} dataset_id={self.dataset_id} date={self.download_date} cookie={self.download_cookie}>'
+
+
+class DSViewRecord(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    dataset_id = db.Column(db.Integer, db.ForeignKey('data_set.id'))
+    view_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    view_cookie = db.Column(db.String(36), nullable=False)  # Assuming UUID4 strings
+
+    def __repr__(self):
+        return f'<View id={self.id} dataset_id={self.dataset_id} date={self.view_date} cookie={self.view_cookie}>'
+
+
 def get_human_readable_size(size):
     if size < 1024:
         return f'{size} bytes'
