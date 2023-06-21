@@ -18,7 +18,7 @@ from werkzeug.utils import secure_filename
 import app
 from .forms import DataSetForm
 from .models import DataSet, DSMetrics, FeatureModel, File, FMMetaData, FMMetrics, DSMetaData, Author, PublicationType, \
-    DSDownloadRecord, DSViewRecord
+    DSDownloadRecord, DSViewRecord, FileDownloadRecord
 from . import dataset_bp
 from ..auth.models import User
 from ..flama import flamapy_valid_model
@@ -304,7 +304,7 @@ def upload():
             if valid_model:
                 return jsonify({
                     'message': 'UVL uploaded and validated successfully',
-                    'filename' : new_filename
+                    'filename': new_filename
                 }), 200
             else:
                 return jsonify({'message': 'No valid model'}), 400
@@ -405,7 +405,6 @@ def view_dataset(dataset_id):
     return resp
 
 
-
 @dataset_bp.route('/file/download/<int:file_id>', methods=['GET'])
 def download_file(file_id):
     file = File.query.get_or_404(file_id)
@@ -415,7 +414,25 @@ def download_file(file_id):
     parent_directory_path = os.path.dirname(current_app.root_path)
     file_path = os.path.join(parent_directory_path, directory_path)
 
-    return send_from_directory(directory=file_path, path=filename, as_attachment=True)
+    # Get the cookie from the request or generate a new one if it does not exist
+    user_cookie = request.cookies.get('file_download_cookie')
+    if not user_cookie:
+        user_cookie = str(uuid.uuid4())
+
+    # Record the download in your database
+    download_record = FileDownloadRecord(
+        user_id=current_user.id if current_user.is_authenticated else None,
+        file_id=file_id,
+        download_date=datetime.utcnow(),
+        download_cookie=user_cookie)
+    app.db.session.add(download_record)
+    app.db.session.commit()
+
+    # Save the cookie to the user's browser
+    resp = make_response(send_from_directory(directory=file_path, path=filename, as_attachment=True))
+    resp.set_cookie('file_download_cookie', user_cookie)
+
+    return resp
 
 
 '''

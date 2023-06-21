@@ -203,6 +203,18 @@ class DSViewRecord(db.Model):
         return f'<View id={self.id} dataset_id={self.dataset_id} date={self.view_date} cookie={self.view_cookie}>'
 
 
+class FileDownloadRecord(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    file_id = db.Column(db.Integer, db.ForeignKey('file.id'))
+    download_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    download_cookie = db.Column(db.String(36), nullable=False)  # Assuming UUID4 strings
+
+    def __repr__(self):
+        return f'<FileDownload id={self.id} file_id={self.file_id} date={self.download_date} cookie={self.download_cookie}>'
+
+
+
 def get_human_readable_size(size):
     if size < 1024:
         return f'{size} bytes'

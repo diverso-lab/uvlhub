@@ -123,7 +123,7 @@ def zenodo_create_new_deposition(dataset: DataSet) -> dict:
         'description': dataset.ds_meta_data.description,
         'creators': [{
             'name': author.name,
-            'affiliation': author.affiliation,
+            **({'affiliation': author.affiliation} if author.affiliation else {}),
             **({'orcid': author.orcid} if author.orcid else {})
         } for author in dataset.ds_meta_data.authors],
         'keywords': dataset.ds_meta_data.tags.split(", "),
