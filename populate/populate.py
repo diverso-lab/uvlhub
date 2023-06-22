@@ -81,8 +81,8 @@ def uvl_models_populate():
                             dataset = {
                                 "info": {
                                     "title": dataset_name,
-                                    "description": "Unavailable",
-                                    "publication_type": "conferencepaper",
+                                    "description": dataset_name,
+                                    "publication_type": "none",
                                     "publication_doi": publication_doi,
                                     "tags": [main_name.lower(), category_name.lower(), directory.replace("_", " ").lower()],
                                     "authors": [
@@ -117,71 +117,7 @@ def uvl_models_populate():
 
     print(f"Number of datasets found: {number_of_datasets}")
 
+
 uvl_models_populate()
 
-'''
 
-data = {
-    "info": {
-        "title": "Uplading dataset from UVLHUB REST API",
-        "description": "oh yes!",
-        "publication_type": "book",
-        "publication_doi": "http://",
-        "tags": ["tag1", "tag2"],
-        "authors": [
-            {
-                "name": "david romero",
-                "affiliation": "University of Seville"
-            },
-            {
-                "name": "pepe benavides",
-                "affiliation": "University of Malaga"
-            }
-        ]
-    },
-    "models": [
-        {
-            "filename": "filename1.uvl",
-            "title": "hello model 1",
-            "description": "hello world",
-            "publication_type": "book",
-            "publication_doi": "http://",
-            "tags": ["tag1", "tag2"],
-            "authors": [
-                {
-                    "name": "david romero",
-                    "affiliation": "University of Seville"
-                },
-                {
-                    "name": "pepe benavides",
-                    "affiliation": "University of Malaga"
-                }
-            ]
-        },
-        {
-            "filename": "filename2.uvl",
-            "title": "hello model 2",
-            "description": "hello world",
-            "publication_type": "book",
-            "publication_doi": "http://",
-            "tags": ["tag1", "tag2"],
-            "authors": [
-                {
-                    "name": "david romero",
-                    "affiliation": "University of Seville"
-                },
-                {
-                    "name": "pepe benavides",
-                    "affiliation": "University of Malaga"
-                }
-            ]
-        }
-    ]
-}
-
-filenames = ['filename1.uvl', 'filename2.uvl']
-
-response = create_dataset_endpoint(data, filenames)
-print(response.text)
-
-'''
