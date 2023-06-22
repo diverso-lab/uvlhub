@@ -1,0 +1,32 @@
+namespace Onlineshop
+
+features
+	Onlineshop {abstract}	
+		mandatory
+			Payment {abstract}	
+				alternative
+					Debit Card
+					Credit Card
+			Product Selection {abstract}	
+				mandatory
+					Catalog	
+						optional
+							Categories
+							Sort
+
+				optional
+					Search
+
+		optional
+			UserManagement {abstract}	
+				or
+					Orders
+					Security
+					Payments
+					Wishlist
+
+constraints
+	Search => Security
+	Security => !Payments
+	Payments => !Security
+	Sort | Search

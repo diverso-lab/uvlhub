@@ -1,0 +1,12 @@
+ID;Question;Type;Range;Cardinality;Constraint/Rule;"Visible/relevant if"
+Gen_Planning1;Heat-based or Sequence-based Planning?;Enumeration;Heat | Sequence;1:1;;true
+Gen_Planning2;Lot Planning or Product Planning?;Enumeration;Lot | Product;1:1;;;;
+Gen_Plan_Analysis;Show Details of Plan Analysis in HMI?;Boolean;true | false;;;isTaken(Gen_Planning2);;
+Gen_Plan_Product;Show Details of Product Quality in HMI?;Boolean;true | false;;;getValue(Gen_Planning2) == Gen_Planning2.Product
+Gen_Watchdogs;Shall Watchdogs also be shown?;Boolean;true | false;;;
+Mat_Tracking;MaterialTracking Subsystem included?;Boolean;true | false;;;
+Mat_Lines;Number of Casting Lines?;Double;1-100;;;
+Cooling_L2;Cooling L2 included?;Boolean;true | false;;;
+Cooling_Segment;Segment Cooling included?;Boolean;true | false;;;Cooling_L2
+QA_A;Quality Management A included?;Boolean;true | false;;;QA_C
+QA_C;Quality Management C included?;Boolean;true | false;;;

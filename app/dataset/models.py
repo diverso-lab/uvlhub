@@ -79,6 +79,10 @@ class DataSet(db.Model):
     ds_meta_data = db.relationship('DSMetaData', backref='data_set', lazy=True, cascade="all, delete")
     feature_models = db.relationship('FeatureModel', backref='data_set', lazy=True, cascade="all, delete")
 
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
+
     def get_cleaned_publication_type(self):
         return self.ds_meta_data.publication_type.name.replace('_', ' ').title()
 

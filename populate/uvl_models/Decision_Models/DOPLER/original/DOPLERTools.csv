@@ -1,0 +1,32 @@
+ID;Question;Type;Range;Cardinality;Constraint/Rule;"Visible/relevant if"
+ALL;Do you want all standard Tools?;Boolean;true | false;;"if (ALL) { CW =true; DK =true; PK=true; }";true
+CW;Do you want Product Derivation and Configuration Support?;Boolean;true | false;;;!ALL
+CW_authentication;Do you need authentication for product derivation?;Boolean;true | false;;;CW
+CW_autogenerate;Do you want ConfigurationWizard to automatically generate configurations after each save?;Boolean;true | false;;;CW
+CW_decisionboard;Include CW Decisionboard?;Boolean;true | false;;;CW
+CW_documenation;Do you want to have documentation integrated in ConfigurationWizard?;Boolean;true | false;;;CW
+CW_flatfilegenerator;Do you want a generator for simple text output?;Boolean;true | false;;;CW
+CW_views;Which of the following visualizations do you want to use during product derivation?;Enumeration;Table-based | Tree-based | Graph-based;01:03;;CW
+CW_requirementsView;Do you want to capture new requirements integrated with the product derivation tool?;Boolean;true | false;;;CW
+CW_sharepoint;Include CW Sharepoint?;Boolean;true | false;;;CW
+CW_wordgenerator;Include MS Word Generator for ConfigurationWizard?;Boolean;true | false;;;CW
+CW_wordgenerator_wordAddIn;Do you want editing support in MS Word to create variable MS Word documents?;Boolean;true | false;;;CW_wordgenerator
+CW_guidance;How should guidance on decisions in ConfigurationWizard be displayed?;Enumeration;Always | After first selection;01:01;;CW
+CW_resolution;Which default-resolution shall the ConfigurationWizard application have?;Enumeration;800x600 | 1024x768 | 1280x1024 | 1400x1050 | 1600x1200 | 1900x1080;01:01;"if CW_resolution.800x600 {CW_resolution_width=800; CW_resolution_height=600; }
+if  CW_resolution.1024x768 {CW_resolution_width=1024; CW_resolution_height=768; }
+if  CW_resolution.1280x1024 {CW_resolution_width=1280; CW_resolution_height=1024; }
+if  CW_resolution.1400x1050 {CW_resolution_width=1400; CW_resolution_height=1050; }
+if  CW_resolution.1600x1200 {CW_resolution_width=1600; CW_resolution_height=1200; }
+if  CW_resolution.1900x1080 {CW_resolution_width=1900; CW_resolution_height=1080; }";CW
+CW_resolution_height;;Double;;;;false
+CW_resolution_width;;Double;;;;false
+DK;Do you want variability modelling (DecisionKing)?;Boolean;true | false;;;!ALL
+DK_builder;Include consistency checking for variability modelling?;Boolean;true | false;;;DK
+DK_merger;Do you want support for fragmented modelling with model merging?;Boolean;true | false;;;DK
+DK_metamodelling;Do you want to define your own asset types and relationships?;Boolean;true | false;;;DK
+DK_modelconverter;Do you have old DOPLER models?;Boolean;true | false;;;(isTaken(PK) && PK) || (isTaken(DK) && DK)
+DK_rulelang_editor;Do you want a seperate editor with synthax support for the rule language?;Boolean;true | false;;;DK
+DK_sharepoint;Include sharepoint export support for developers?;Boolean;true | false;;;DK || PK
+PK;Do you want support for derivation and project management (ProjectKing)?;Boolean;true | false;;;!ALL
+SERVER;Include Dopler Server?;Boolean;true | false;;;true
+ProprietaryTools;Include Proprietary Tools?;Boolean;true | false;;;(isTaken(CW) && CW) || (isTaken(DK) && DK)

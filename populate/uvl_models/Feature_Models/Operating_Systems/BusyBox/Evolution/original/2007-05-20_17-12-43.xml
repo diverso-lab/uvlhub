@@ -1,0 +1,4320 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<featureModel>
+    <properties/>
+    <struct>
+        <and abstract="true" mandatory="true" name="__Root__">
+            <feature name="CONFIG_FEATURE_TFTP_PUT"/>
+            <feature name="CONFIG_TFTP"/>
+            <feature name="CONFIG_FEATURE_SUID"/>
+            <feature name="CONFIG_CROND"/>
+            <feature name="CONFIG_KILL"/>
+            <feature name="CONFIG_KILLALL"/>
+            <feature name="CONFIG_FEATURE_FIND_PERM"/>
+            <feature name="CONFIG_FIND"/>
+            <feature name="CONFIG_APP_UDHCPD"/>
+            <feature name="CONFIG_APP_DUMPLEASES"/>
+            <feature name="CONFIG_VI"/>
+            <feature name="CONFIG_FEATURE_VI_READONLY"/>
+            <feature name="CONFIG_FEATURE_IFUPDOWN_IFCONFIG_BUILTIN"/>
+            <feature name="CONFIG_FEATURE_IFUPDOWN_IP"/>
+            <feature name="CONFIG_FEATURE_BUFFERS_GO_ON_STACK"/>
+            <feature name="CONFIG_FEATURE_BUFFERS_USE_MALLOC"/>
+            <feature name="CONFIG_FEATURE_MODPROBE_FANCY_ALIAS"/>
+            <feature name="CONFIG_MODPROBE"/>
+            <feature name="CONFIG_NITPICK"/>
+            <feature name="CONFIG_FEATURE_FIND_MMIN"/>
+            <feature name="CONFIG_RUNCON"/>
+            <feature name="CONFIG_FEATURE_RUNCON_LONG_OPTIONS"/>
+            <feature name="CONFIG_GETOPT_LONG"/>
+            <feature name="CONFIG_INSTALL_APPLET_HARDLINKS"/>
+            <feature name="CONFIG_INSTALL_APPLET_SYMLINKS"/>
+            <feature name="CONFIG_FEATURE_INIT_COREDUMPS"/>
+            <feature name="CONFIG_INIT"/>
+            <feature name="CONFIG_FEATURE_MDEV_CONF"/>
+            <feature name="CONFIG_MDEV"/>
+            <feature name="CONFIG_FEATURE_MAKEDEVS_TABLE"/>
+            <feature name="CONFIG_FEATURE_MAKEDEVS_LEAF"/>
+            <feature name="CONFIG_MAKEDEVS"/>
+            <feature name="CONFIG_FEATURE_SECURETTY"/>
+            <feature name="CONFIG_LOGIN"/>
+            <feature name="CONFIG_FEATURE_EDITING_SAVEHISTORY"/>
+            <feature name="CONFIG_FEATURE_EDITING"/>
+            <feature name="CONFIG_AR"/>
+            <feature name="CONFIG_FEATURE_AR_LONG_FILENAMES"/>
+            <feature name="CONFIG_HDPARM"/>
+            <feature name="CONFIG_FEATURE_HDPARM_HDIO_SCAN_HWIF"/>
+            <feature name="CONFIG_FEATURE_VI_WIN_RESIZE"/>
+            <feature name="CONFIG_FEATURE_SUID_CONFIG_QUIET"/>
+            <feature name="CONFIG_FEATURE_SUID_CONFIG"/>
+            <feature name="CONFIG_TEST"/>
+            <feature name="CONFIG_ASH_BUILTIN_TEST"/>
+            <feature name="CONFIG_IP"/>
+            <feature name="CONFIG_FEATURE_IP_ADDRESS"/>
+            <feature name="CONFIG_FEATURE_IFUPDOWN_IP_BUILTIN"/>
+            <feature name="CONFIG_FEATURE_2_6_MODULES"/>
+            <feature name="CONFIG_FEATURE_FDISK_WRITABLE"/>
+            <feature name="CONFIG_FEATURE_OSF_LABEL"/>
+            <feature name="CONFIG_SU"/>
+            <feature name="CONFIG_BUILD_LIBBUSYBOX"/>
+            <feature name="CONFIG_FEATURE_SHARED_BUSYBOX"/>
+            <feature name="CONFIG_FEATURE_WTMP"/>
+            <feature name="CONFIG_FEATURE_UTMP"/>
+            <feature name="CONFIG_GETTY"/>
+            <feature name="CONFIG_FEATURE_SETCONSOLE_LONG_OPTIONS"/>
+            <feature name="CONFIG_MOUNT"/>
+            <feature name="CONFIG_FEATURE_MOUNT_CIFS"/>
+            <feature name="CONFIG_FEATURE_ALLOW_EXEC"/>
+            <feature name="CONFIG_AWK"/>
+            <feature name="CONFIG_IPCALC"/>
+            <feature name="CONFIG_FEATURE_IPCALC_FANCY"/>
+            <feature name="CONFIG_FEATURE_SH_IS_ASH"/>
+            <feature name="CONFIG_FEATURE_SH_IS_MSH"/>
+            <feature name="CONFIG_DU"/>
+            <feature name="CONFIG_FEATURE_DU_DEFAULT_BLOCKSIZE_1K"/>
+            <feature name="CONFIG_FEATURE_INIT_SYSLOG"/>
+            <feature name="CONFIG_SELINUX"/>
+            <feature name="CONFIG_CHCON"/>
+            <feature name="CONFIG_HTTPD"/>
+            <feature name="CONFIG_FEATURE_HTTPD_ENCODE_URL_STR"/>
+            <feature name="CONFIG_FEATURE_XARGS_SUPPORT_ZERO_TERM"/>
+            <feature name="CONFIG_XARGS"/>
+            <feature name="CONFIG_START_STOP_DAEMON"/>
+            <feature name="CONFIG_FEATURE_START_STOP_DAEMON_LONG_OPTIONS"/>
+            <feature name="CONFIG_FEATURE_IP_TUNNEL"/>
+            <feature name="CONFIG_LS"/>
+            <feature name="CONFIG_FEATURE_LS_COLOR"/>
+            <feature name="CONFIG_STAT"/>
+            <feature name="CONFIG_FEATURE_STAT_FORMAT"/>
+            <feature name="CONFIG_WHO"/>
+            <feature name="CONFIG_MKDIR"/>
+            <feature name="CONFIG_FEATURE_MKDIR_LONG_OPTIONS"/>
+            <feature name="CONFIG_FEATURE_SPLIT_FANCY"/>
+            <feature name="CONFIG_SPLIT"/>
+            <feature name="CONFIG_FEATURE_CHCON_LONG_OPTIONS"/>
+            <feature name="CONFIG_FEATURE_USE_INITTAB"/>
+            <feature name="CONFIG_GETSEBOOL"/>
+            <feature name="CONFIG_ASH"/>
+            <feature name="CONFIG_ASH_READ_NCHARS"/>
+            <feature name="CONFIG_FEATURE_LS_TIMESTAMPS"/>
+            <feature name="CONFIG_FEATURE_IP_SHORT_FORMS"/>
+            <feature name="CONFIG_RUN_PARTS"/>
+            <feature name="CONFIG_FEATURE_RUN_PARTS_FANCY"/>
+            <feature name="CONFIG_HWCLOCK"/>
+            <feature name="CONFIG_FEATURE_HWCLOCK_LONG_OPTIONS"/>
+            <feature name="CONFIG_FEATURE_SYSLOG"/>
+            <feature name="CONFIG_FEATURE_SH_IS_LASH"/>
+            <feature name="CONFIG_FEATURE_SH_IS_HUSH"/>
+            <feature name="CONFIG_FEATURE_SH_IS_NONE"/>
+            <feature name="CONFIG_NAMEIF"/>
+            <feature name="CONFIG_FEATURE_HDPARM_HDIO_UNREGISTER_HWIF"/>
+            <feature name="CONFIG_FEATURE_SUN_LABEL"/>
+            <feature name="CONFIG_FEATURE_FULL_LIBBUSYBOX"/>
+            <feature name="CONFIG_FEATURE_LSMOD_PRETTY_2_6_OUTPUT"/>
+            <feature name="CONFIG_LSMOD"/>
+            <feature name="CONFIG_FEATURE_FIND_DELETE"/>
+            <feature name="CONFIG_FEATURE_FIND_DEPTH"/>
+            <feature name="CONFIG_PS"/>
+            <feature name="CONFIG_FEATURE_PS_WIDE"/>
+            <feature name="CONFIG_FEATURE_HTTPD_SETUID"/>
+            <feature name="CONFIG_FEATURE_FIND_EXEC"/>
+            <feature name="CONFIG_FEATURE_AWK_MATH"/>
+            <feature name="CONFIG_FDISK"/>
+            <feature name="CONFIG_FEATURE_FDISK_ADVANCED"/>
+            <feature name="CONFIG_FEATURE_DEB_TAR_LZMA"/>
+            <feature name="CONFIG_DPKG_DEB"/>
+            <feature name="CONFIG_DPKG"/>
+            <feature name="CONFIG_FEATURE_SH_STANDALONE"/>
+            <feature name="CONFIG_FEATURE_PREFER_APPLETS"/>
+            <feature name="CONFIG_INSTALL_APPLET_DONT"/>
+            <feature name="CONFIG_FEATURE_INSTALLER"/>
+            <feature name="CONFIG_FEATURE_LS_RECURSIVE"/>
+            <feature name="CONFIG_FEATURE_VI_OPTIMIZE_CURSOR"/>
+            <feature name="CONFIG_FEATURE_LS_FOLLOWLINKS"/>
+            <feature name="CONFIG_IFCONFIG"/>
+            <feature name="CONFIG_FEATURE_IFCONFIG_HW"/>
+            <feature name="CONFIG_FEATURE_LS_FILETYPES"/>
+            <feature name="CONFIG_FEATURE_VI_USE_SIGNALS"/>
+            <feature name="CONFIG_MKSWAP"/>
+            <feature name="CONFIG_FEATURE_MKSWAP_V0"/>
+            <feature name="CONFIG_FEATURE_BUFFERS_GO_IN_BSS"/>
+            <feature name="CONFIG_SELINUXENABLED"/>
+            <feature name="CONFIG_GETENFORCE"/>
+            <feature name="CONFIG_FEATURE_INETD_SUPPORT_BUILTIN_DAYTIME"/>
+            <feature name="CONFIG_INETD"/>
+            <feature name="CONFIG_FEATURE_DPKG_DEB_EXTRACT_ONLY"/>
+            <feature name="CONFIG_ASH_BUILTIN_ECHO"/>
+            <feature name="CONFIG_ECHO"/>
+            <feature name="CONFIG_FEATURE_TOP_CPU_USAGE_PERCENTAGE"/>
+            <feature name="CONFIG_TOP"/>
+            <feature name="CONFIG_FEATURE_SORT_BIG"/>
+            <feature name="CONFIG_SORT"/>
+            <feature name="CONFIG_UMOUNT"/>
+            <feature name="CONFIG_FEATURE_UMOUNT_ALL"/>
+            <feature name="CONFIG_LASH"/>
+            <feature name="CONFIG_TRUE"/>
+            <feature name="CONFIG_EFENCE"/>
+            <feature name="CONFIG_NO_DEBUG_LIB"/>
+            <feature name="CONFIG_DF"/>
+            <feature name="CONFIG_FEATURE_HUMAN_READABLE"/>
+            <feature name="CONFIG_FEATURE_CLEAN_UP"/>
+            <feature name="CONFIG_FEATURE_FANCY_ECHO"/>
+            <feature name="CONFIG_FEATURE_INSMOD_LOAD_MAP"/>
+            <feature name="CONFIG_FEATURE_INSMOD_LOAD_MAP_FULL"/>
+            <feature name="CONFIG_IFUPDOWN"/>
+            <feature name="CONFIG_FEATURE_IFUPDOWN_MAPPING"/>
+            <feature name="CONFIG_HUSH_INTERACTIVE"/>
+            <feature name="CONFIG_HUSH"/>
+            <feature name="CONFIG_FEATURE_IP_ROUTE"/>
+            <feature name="CONFIG_IPROUTE"/>
+            <feature name="CONFIG_FEATURE_TAR_CREATE"/>
+            <feature name="CONFIG_TAR"/>
+            <feature name="CONFIG_DMESG"/>
+            <feature name="CONFIG_FEATURE_DMESG_PRETTY"/>
+            <feature name="CONFIG_FEATURE_IP_LINK"/>
+            <feature name="CONFIG_FEATURE_ROTATE_LOGFILE"/>
+            <feature name="CONFIG_SYSLOGD"/>
+            <feature name="CONFIG_FEATURE_WGET_STATUSBAR"/>
+            <feature name="CONFIG_WGET"/>
+            <feature name="CONFIG_LESS"/>
+            <feature name="CONFIG_FEATURE_LESS_REGEXP"/>
+            <feature name="CONFIG_FEATURE_FIND_SIZE"/>
+            <feature name="CONFIG_KILLALL5"/>
+            <feature name="CONFIG_FEATURE_SHADOWPASSWDS"/>
+            <feature name="CONFIG_USE_BB_PWD_GRP"/>
+            <feature name="CONFIG_USE_BB_SHADOW"/>
+            <feature name="CONFIG_FEATURE_HTTPD_RELOAD_CONFIG_SIGHUP"/>
+            <feature name="CONFIG_FEATURE_DEL_USER_FROM_GROUP"/>
+            <feature name="CONFIG_DELGROUP"/>
+            <feature name="CONFIG_FEATURE_MV_LONG_OPTIONS"/>
+            <feature name="CONFIG_FEATURE_GREP_CONTEXT"/>
+            <feature name="CONFIG_GREP"/>
+            <feature name="CONFIG_FEATURE_FIND_PRUNE"/>
+            <feature name="CONFIG_FEATURE_TELNET_AUTOLOGIN"/>
+            <feature name="CONFIG_TELNET"/>
+            <feature name="CONFIG_FEATURE_HDPARM_HDIO_GETSET_DMA"/>
+            <feature name="CONFIG_FEATURE_VERBOSE_USAGE"/>
+            <feature name="CONFIG_SHOW_USAGE"/>
+            <feature name="CONFIG_FEATURE_TR_EQUIV"/>
+            <feature name="CONFIG_TR"/>
+            <feature name="CONFIG_RMMOD"/>
+            <feature name="CONFIG_INSMOD"/>
+            <feature name="CONFIG_FEATURE_2_4_MODULES"/>
+            <feature name="CONFIG_SETCONSOLE"/>
+            <feature name="CONFIG_DEVFSD"/>
+            <feature name="CONFIG_DEVFSD_VERBOSE"/>
+            <feature name="CONFIG_FEATURE_VI_SET"/>
+            <feature name="CONFIG_FEATURE_DD_IBS_OBS"/>
+            <feature name="CONFIG_DD"/>
+            <feature name="CONFIG_FEATURE_LZMA_FAST"/>
+            <feature name="CONFIG_UNLZMA"/>
+            <feature name="CONFIG_FEATURE_LS_SORTFILES"/>
+            <feature name="CONFIG_ADDGROUP"/>
+            <feature name="CONFIG_FEATURE_ADDUSER_TO_GROUP"/>
+            <feature name="CONFIG_FEATURE_MD5_SHA1_SUM_CHECK"/>
+            <feature name="CONFIG_SHA1SUM"/>
+            <feature name="CONFIG_MD5SUM"/>
+            <feature name="CONFIG_FEATURE_LESS_MAXLINES"/>
+            <feature name="CONFIG_LFS"/>
+            <feature name="CONFIG_FDISK_SUPPORT_LARGE_DISKS"/>
+            <feature name="CONFIG_IPADDR"/>
+            <feature name="CONFIG_MSH"/>
+            <feature name="CONFIG_FEATURE_RUN_PARTS_LONG_OPTIONS"/>
+            <feature name="CONFIG_FEATURE_MODPROBE_MULTIPLE_OPTIONS"/>
+            <feature name="CONFIG_FEATURE_VI_DOT_CMD"/>
+            <feature name="CONFIG_FEATURE_FIND_USER"/>
+            <feature name="CONFIG_FEATURE_FIND_GROUP"/>
+            <feature name="CONFIG_HUSH_JOB"/>
+            <feature name="CONFIG_STATIC"/>
+            <feature name="CONFIG_FEATURE_IPV6"/>
+            <feature name="CONFIG_FEATURE_IFUPDOWN_IPV6"/>
+            <feature name="CONFIG_IPRULE"/>
+            <feature name="CONFIG_FEATURE_INETD_SUPPORT_BUILTIN_CHARGEN"/>
+            <feature name="CONFIG_FEATURE_QUERY_MODULE_INTERFACE"/>
+            <feature name="CONFIG_FEATURE_HWCLOCK_ADJTIME_FHS"/>
+            <feature name="CONFIG_FEATURE_FANCY_SLEEP"/>
+            <feature name="CONFIG_SLEEP"/>
+            <feature name="CONFIG_GUNZIP"/>
+            <feature name="CONFIG_FEATURE_GUNZIP_UNCOMPRESS"/>
+            <feature name="CONFIG_IPCRM"/>
+            <feature name="CONFIG_FEATURE_INETD_SUPPORT_BUILTIN_TIME"/>
+            <feature name="CONFIG_FEATURE_HTTPD_CONFIG_WITH_MIME_TYPES"/>
+            <feature name="CONFIG_FEATURE_FIND_INUM"/>
+            <feature name="CONFIG_TRACEROUTE"/>
+            <feature name="CONFIG_FEATURE_TRACEROUTE_VERBOSE"/>
+            <feature name="CONFIG_FEATURE_TAR_LZMA"/>
+            <feature name="CONFIG_IPLINK"/>
+            <feature name="CONFIG_FEATURE_TRACEROUTE_SOURCE_ROUTE"/>
+            <feature name="CONFIG_FEATURE_TAB_COMPLETION"/>
+            <feature name="CONFIG_FEATURE_USERNAME_COMPLETION"/>
+            <feature name="CONFIG_FEATURE_IP_RULE"/>
+            <feature name="CONFIG_ZCIP"/>
+            <feature name="CONFIG_FEATURE_HTTPD_CGI"/>
+            <feature name="CONFIG_FALSE"/>
+            <feature name="CONFIG_FEATURE_FIND_TYPE"/>
+            <feature name="CONFIG_FEATURE_EDITING_HISTORY"/>
+            <feature name="CONFIG_UNIX2DOS"/>
+            <feature name="CONFIG_DOS2UNIX"/>
+            <feature name="CONFIG_FEATURE_INSMOD_LOADINKMEM"/>
+            <feature name="CONFIG_TELNETD"/>
+            <feature name="CONFIG_PING6"/>
+            <feature name="CONFIG_NETSTAT"/>
+            <feature name="CONFIG_FEATURE_NETSTAT_WIDE"/>
+            <feature name="CONFIG_FEATURE_RFC3397"/>
+            <feature name="CONFIG_APP_UDHCPC"/>
+            <feature name="CONFIG_FEATURE_TAR_LONG_OPTIONS"/>
+            <feature name="CONFIG_MD5_SIZE_VS_SPEED"/>
+            <feature name="CONFIG_ASH_RANDOM_SUPPORT"/>
+            <feature name="CONFIG_FEATURE_AIX_LABEL"/>
+            <feature name="CONFIG_FEATURE_IFUPDOWN_EXTERNAL_DHCP"/>
+            <feature name="CONFIG_LOAD_POLICY"/>
+            <feature name="CONFIG_FEATURE_GREP_FGREP_ALIAS"/>
+            <feature name="CONFIG_FEATURE_DEB_TAR_BZ2"/>
+            <feature name="CONFIG_FEATURE_EDITING_FANCY_PROMPT"/>
+            <feature name="CONFIG_DMALLOC"/>
+            <feature name="CONFIG_TEE"/>
+            <feature name="CONFIG_FEATURE_TEE_USE_BLOCK_IO"/>
+            <feature name="CONFIG_FEATURE_TASKSET_FANCY"/>
+            <feature name="CONFIG_TASKSET"/>
+            <feature name="CONFIG_FEATURE_TR_CLASSES"/>
+            <feature name="CONFIG_FEATURE_INETD_RPC"/>
+            <feature name="CONFIG_HAVE_DOT_CONFIG"/>
+            <feature name="CONFIG_LAST"/>
+            <feature name="CONFIG_FEATURE_GREP_EGREP_ALIAS"/>
+            <feature name="CONFIG_FEATURE_IFUPDOWN_IPV4"/>
+            <feature name="CONFIG_MV"/>
+            <feature name="CONFIG_FEATURE_CHECK_TAINTED_MODULE"/>
+            <feature name="CONFIG_FEATURE_WGET_AUTHENTICATION"/>
+            <feature name="CONFIG_FEATURE_UDHCP_SYSLOG"/>
+            <feature name="CONFIG_DIFF"/>
+            <feature name="CONFIG_FEATURE_DIFF_MINIMAL"/>
+            <feature name="CONFIG_DEBUG_INIT"/>
+            <feature name="CONFIG_WATCH"/>
+            <feature name="CONFIG_DATE"/>
+            <feature name="CONFIG_FEATURE_HTTPD_BASIC_AUTH"/>
+            <feature name="CONFIG_FEATURE_HTTPD_AUTH_MD5"/>
+            <feature name="CONFIG_FEATURE_ENV_LONG_OPTIONS"/>
+            <feature name="CONFIG_FBSET"/>
+            <feature name="CONFIG_FEATURE_FBSET_READMODE"/>
+            <feature name="CONFIG_FEATURE_IFCONFIG_SLIP"/>
+            <feature name="CONFIG_SETENFORCE"/>
+            <feature name="CONFIG_FEATURE_FANCY_PING"/>
+            <feature name="CONFIG_PING"/>
+            <feature name="CONFIG_FEATURE_IPC_SYSLOG"/>
+            <feature name="CONFIG_FEATURE_HTTPD_CONFIG_WITH_SCRIPT_INTERPR"/>
+            <feature name="CONFIG_FEATURE_VI_SETOPTS"/>
+            <feature name="CONFIG_MORE"/>
+            <feature name="CONFIG_FEATURE_AUTOWIDTH"/>
+            <feature name="CONFIG_ASH_READ_TIMEOUT"/>
+            <feature name="CONFIG_FEATURE_LOGREAD_REDUCED_LOCKING"/>
+            <feature name="CONFIG_LOGREAD"/>
+            <feature name="CONFIG_FEATURE_FTPGETPUT_LONG_OPTIONS"/>
+            <feature name="CONFIG_FEATURE_XARGS_SUPPORT_TERMOPT"/>
+            <feature name="CONFIG_FEATURE_MDEV_EXEC"/>
+            <feature name="CONFIG_FEATURE_LESS_FLAGCS"/>
+            <feature name="CONFIG_FEATURE_IFCONFIG_STATUS"/>
+            <feature name="CONFIG_FEATURE_HAVE_RPC"/>
+            <feature name="CONFIG_ASH_EXPAND_PRMT"/>
+            <feature name="CONFIG_FEATURE_FBSET_FANCY"/>
+            <feature name="CONFIG_ROUTE"/>
+            <feature name="CONFIG_VLOCK"/>
+            <feature name="CONFIG_PASSWD"/>
+            <feature name="CONFIG_FEATURE_IPCALC_LONG_OPTIONS"/>
+            <feature name="CONFIG_FEATURE_SU_CHECKS_SHELLS"/>
+            <feature name="CONFIG_FEATURE_DD_SIGNAL_HANDLING"/>
+            <feature name="CONFIG_FEATURE_CROND_CALL_SENDMAIL"/>
+            <feature name="CONFIG_FEATURE_FIND_MTIME"/>
+            <feature name="CONFIG_FEATURE_DIFF_DIR"/>
+            <feature name="CONFIG_LOGIN_SCRIPTS"/>
+            <feature name="CONFIG_MATCHPATHCON"/>
+            <feature name="CONFIG_FEATURE_SGI_LABEL"/>
+            <feature name="CONFIG_RESIZE"/>
+            <feature name="CONFIG_FEATURE_RESIZE_PRINT"/>
+            <feature name="CONFIG_FEATURE_HDPARM_HDIO_DRIVE_RESET"/>
+            <feature name="CONFIG_READLINK"/>
+            <feature name="CONFIG_FEATURE_READLINK_FOLLOW"/>
+            <feature name="CONFIG_CRONTAB"/>
+            <feature name="CONFIG_FEATURE_INSMOD_VERSION_CHECKING"/>
+            <feature name="CONFIG_FEATURE_DEB_TAR_GZ"/>
+            <feature name="CONFIG_FEATURE_REMOTE_LOG"/>
+            <feature name="CONFIG_FEATURE_TAR_FROM"/>
+            <feature name="CONFIG_FEATURE_LESS_BRACKETS"/>
+            <feature name="CONFIG_FEATURE_PIDOF_OMIT"/>
+            <feature name="CONFIG_PIDOF"/>
+            <feature name="CONFIG_EXPR"/>
+            <feature name="CONFIG_EXPR_MATH_SUPPORT_64"/>
+            <feature name="CONFIG_FEATURE_HTTPD_SET_REMOTE_PORT_TO_ENV"/>
+            <feature name="CONFIG_FEATURE_MOUNT_FLAGS"/>
+            <feature name="CONFIG_FEATURE_LS_USERNAME"/>
+            <feature name="CONFIG_FEATURE_WGET_LONG_OPTIONS"/>
+            <feature name="CONFIG_IPTUNNEL"/>
+            <feature name="CONFIG_FEATURE_TAR_GZIP"/>
+            <feature name="CONFIG_FEATURE_XARGS_SUPPORT_QUOTES"/>
+            <feature name="CONFIG_FEATURE_TFTP_BLOCKSIZE"/>
+            <feature name="CONFIG_FEATURE_HDPARM_GET_IDENTITY"/>
+            <feature name="CONFIG_FEATURE_UNARCHIVE_TAPE"/>
+            <feature name="CONFIG_CPIO"/>
+            <feature name="CONFIG_TAIL"/>
+            <feature name="CONFIG_FEATURE_FANCY_TAIL"/>
+            <feature name="CONFIG_ASH_OPTIMIZE_FOR_SIZE"/>
+            <feature name="CONFIG_ASH_MATH_SUPPORT"/>
+            <feature name="CONFIG_FEATURE_TAR_BZIP2"/>
+            <feature name="CONFIG_FEATURE_FIND_XDEV"/>
+            <feature name="CONFIG_FEATURE_EDITING_FANCY_KEYS"/>
+            <feature name="CONFIG_FEATURE_FIND_NEWER"/>
+            <feature name="CONFIG_FEATURE_START_STOP_DAEMON_FANCY"/>
+            <feature name="CONFIG_CP"/>
+            <feature name="CONFIG_FEATURE_PRESERVE_HARDLINKS"/>
+            <feature name="CONFIG_FEATURE_VI_YANKMARK"/>
+            <feature name="CONFIG_FEATURE_XARGS_SUPPORT_CONFIRMATION"/>
+            <feature name="CONFIG_FEATURE_SU_SYSLOG"/>
+            <feature name="CONFIG_FEATURE_MINIX2"/>
+            <feature name="CONFIG_FSCK_MINIX"/>
+            <feature name="CONFIG_MKFS_MINIX"/>
+            <feature name="CONFIG_HEAD"/>
+            <feature name="CONFIG_FEATURE_FANCY_HEAD"/>
+            <feature name="CONFIG_FEATURE_FIND_PRINT0"/>
+            <feature name="CONFIG_FEATURE_EDITING_VI"/>
+            <feature name="CONFIG_FEATURE_INETD_SUPPORT_BUILTIN_DISCARD"/>
+            <feature name="CONFIG_FEATURE_IPC_SYSLOG_BUFFER_SIZE"/>
+            <feature name="CONFIG_FEATURE_TELNETD_STANDALONE"/>
+            <feature name="CONFIG_FAKEIDENTD"/>
+            <feature name="CONFIG_FEATURE_USE_TERMIOS"/>
+            <feature name="CONFIG_ASH_ALIAS"/>
+            <feature name="CONFIG_FEATURE_DATE_ISOFMT"/>
+            <feature name="CONFIG_FEATURE_COMPRESS_USAGE"/>
+            <feature name="CONFIG_WC"/>
+            <feature name="CONFIG_FEATURE_WC_LARGE"/>
+            <feature name="CONFIG_FEATURE_FIND_PAREN"/>
+            <feature name="CONFIG_FEATURE_MOUNT_LOOP"/>
+            <feature name="CONFIG_ENV"/>
+            <feature name="CONFIG_FEATURE_DIFF_BINARY"/>
+            <feature name="CONFIG_FEATURE_LESS_FLAGS"/>
+            <feature name="CONFIG_FEATURE_MOUNT_FSTAB"/>
+            <feature name="CONFIG_FEATURE_LS_COLOR_IS_DEFAULT"/>
+            <feature name="CONFIG_LOGGER"/>
+            <feature name="CONFIG_ASH_CMDCMD"/>
+            <feature name="CONFIG_ASH_MATH_SUPPORT_64"/>
+            <feature name="CONFIG_ASH_MAIL"/>
+            <feature name="CONFIG_FEATURE_MTAB_SUPPORT"/>
+            <feature name="CONFIG_FEATURE_PASSWD_WEAK_CHECK"/>
+            <feature name="CONFIG_NC"/>
+            <feature name="CONFIG_NC_SERVER"/>
+            <feature name="CONFIG_FEATURE_INSMOD_KSYMOOPS_SYMBOLS"/>
+            <feature name="CONFIG_FEATURE_MOUNT_NFS"/>
+            <feature name="CONFIG_BUSYBOX_EXEC_PATH"/>
+            <feature name="CONFIG_FEATURE_SH_EXTRA_QUIET"/>
+            <feature name="CONFIG_FEATURE_TAR_COMPRESS"/>
+            <feature name="CONFIG_FEATURE_FIND_PATH"/>
+            <feature name="CONFIG_FEATURE_IFCONFIG_BROADCAST_PLUS"/>
+            <feature name="CONFIG_ASH_GETOPTS"/>
+            <feature name="CONFIG_PREFIX"/>
+            <feature name="CONFIG_FEATURE_VI_SEARCH"/>
+            <feature name="CONFIG_FEATURE_EXTRA_QUIET"/>
+            <feature name="CONFIG_FEATURE_INIT_SCTTY"/>
+            <feature name="CONFIG_FEATURE_TFTP_GET"/>
+            <feature name="CONFIG_FEATURE_PIDOF_SINGLE"/>
+            <feature name="CONFIG_DEVFSD_FG_NP"/>
+            <feature name="CONFIG_DEVFSD_MODLOAD"/>
+            <feature name="CONFIG_NC_EXTRA"/>
+            <feature name="CONFIG_FEATURE_VI_COLON"/>
+            <feature name="CONFIG_FEATURE_LESS_MARKS"/>
+            <feature name="CONFIG_FEATURE_IFCONFIG_MEMSTART_IOADDR_IRQ"/>
+            <feature name="CONFIG_FEATURE_INSTALL_LONG_OPTIONS"/>
+            <feature name="CONFIG_DEBUG_TFTP"/>
+            <feature name="CONFIG_SULOGIN"/>
+            <feature name="CONFIG_DEBUG_CROND_OPTION"/>
+            <feature name="CONFIG_INSTALL"/>
+            <feature name="CONFIG_FEATURE_TRACEROUTE_USE_ICMP"/>
+            <feature name="CONFIG_FEATURE_HDPARM_HDIO_TRISTATE_HWIF"/>
+            <feature name="CONFIG_APP_DHCPRELAY"/>
+            <feature name="CONFIG_FEATURE_UDHCP_DEBUG"/>
+            <feature name="CONFIG_FTPGET"/>
+            <feature name="CONFIG_FTPPUT"/>
+            <feature name="CONFIG_FEATURE_INETD_SUPPORT_BUILTIN_ECHO"/>
+            <feature name="CONFIG_READAHEAD"/>
+            <feature name="CONFIG_PASSWORD_MINLEN"/>
+            <feature name="CONFIG_ASH_JOB_CONTROL"/>
+            <feature name="CONFIG_FEATURE_INITRD"/>
+            <feature name="CONFIG_IPCS"/>
+            <feature name="CONFIG_FEATURE_TAR_OLDGNU_COMPATIBILITY"/>
+            <feature name="CONFIG_FEATURE_TAR_GNU_EXTENSIONS"/>
+            <feature name="CONFIG_FEATURE_TELNET_TTYPE"/>
+            <feature name="CONFIG_FEATURE_FIND_NOT"/>
+            <feature name="CONFIG_FEATURE_TEST_64"/>
+        </and>
+    </struct>
+    <constraints>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_TFTP_PUT</var>
+                </not>
+                <var>CONFIG_TFTP</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_SUID</var>
+                <not>
+                    <var>CONFIG_CROND</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_KILL</var>
+                <not>
+                    <var>CONFIG_KILLALL</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_FIND_PERM</var>
+                </not>
+                <var>CONFIG_FIND</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_APP_UDHCPD</var>
+                <not>
+                    <var>CONFIG_APP_DUMPLEASES</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_VI</var>
+                <not>
+                    <var>CONFIG_FEATURE_VI_READONLY</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_IFUPDOWN_IFCONFIG_BUILTIN</var>
+                </not>
+                <not>
+                    <var>CONFIG_FEATURE_IFUPDOWN_IP</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_BUFFERS_GO_ON_STACK</var>
+                </not>
+                <not>
+                    <var>CONFIG_FEATURE_BUFFERS_USE_MALLOC</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_MODPROBE_FANCY_ALIAS</var>
+                </not>
+                <var>CONFIG_MODPROBE</var>
+                <var>CONFIG_NITPICK</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FIND</var>
+                <not>
+                    <var>CONFIG_FEATURE_FIND_MMIN</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_RUNCON</var>
+                <not>
+                    <var>CONFIG_FEATURE_RUNCON_LONG_OPTIONS</var>
+                </not>
+                <var>CONFIG_GETOPT_LONG</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_INSTALL_APPLET_HARDLINKS</var>
+                </not>
+                <not>
+                    <var>CONFIG_INSTALL_APPLET_SYMLINKS</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_INIT_COREDUMPS</var>
+                </not>
+                <var>CONFIG_INIT</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_MDEV_CONF</var>
+                </not>
+                <var>CONFIG_MDEV</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_MAKEDEVS_TABLE</var>
+                <var>CONFIG_FEATURE_MAKEDEVS_LEAF</var>
+                <not>
+                    <var>CONFIG_MAKEDEVS</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_SECURETTY</var>
+                </not>
+                <var>CONFIG_LOGIN</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_EDITING_SAVEHISTORY</var>
+                </not>
+                <var>CONFIG_FEATURE_EDITING</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_AR</var>
+                <not>
+                    <var>CONFIG_FEATURE_AR_LONG_FILENAMES</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_HDPARM</var>
+                <not>
+                    <var>CONFIG_FEATURE_HDPARM_HDIO_SCAN_HWIF</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_VI_WIN_RESIZE</var>
+                </not>
+                <var>CONFIG_VI</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_SUID_CONFIG_QUIET</var>
+                </not>
+                <var>CONFIG_FEATURE_SUID_CONFIG</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_TEST</var>
+                <not>
+                    <var>CONFIG_ASH_BUILTIN_TEST</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_IP</var>
+                <not>
+                    <var>CONFIG_FEATURE_IP_ADDRESS</var>
+                </not>
+                <var>CONFIG_FEATURE_IFUPDOWN_IP_BUILTIN</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_MODPROBE_FANCY_ALIAS</var>
+                <not>
+                    <var>CONFIG_FEATURE_2_6_MODULES</var>
+                </not>
+                <not>
+                    <var>CONFIG_MODPROBE</var>
+                </not>
+                <var>CONFIG_NITPICK</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_FDISK_WRITABLE</var>
+                <not>
+                    <var>CONFIG_FEATURE_OSF_LABEL</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_SUID</var>
+                <not>
+                    <var>CONFIG_SU</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_BUILD_LIBBUSYBOX</var>
+                <not>
+                    <var>CONFIG_FEATURE_SHARED_BUSYBOX</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_WTMP</var>
+                </not>
+                <var>CONFIG_FEATURE_UTMP</var>
+                <not>
+                    <var>CONFIG_GETTY</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_SETCONSOLE_LONG_OPTIONS</var>
+                </not>
+                <var>CONFIG_GETOPT_LONG</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_MOUNT</var>
+                <not>
+                    <var>CONFIG_FEATURE_MOUNT_CIFS</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_VI</var>
+                <not>
+                    <var>CONFIG_FEATURE_ALLOW_EXEC</var>
+                </not>
+                <var>CONFIG_AWK</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_IPCALC</var>
+                <not>
+                    <var>CONFIG_FEATURE_IPCALC_FANCY</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_SH_IS_ASH</var>
+                </not>
+                <not>
+                    <var>CONFIG_FEATURE_SH_IS_MSH</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_DU</var>
+                <not>
+                    <var>CONFIG_FEATURE_DU_DEFAULT_BLOCKSIZE_1K</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_INIT</var>
+                <not>
+                    <var>CONFIG_FEATURE_INIT_SYSLOG</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_SELINUX</var>
+                <not>
+                    <var>CONFIG_CHCON</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_HTTPD</var>
+                <not>
+                    <var>CONFIG_FEATURE_HTTPD_ENCODE_URL_STR</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_XARGS_SUPPORT_ZERO_TERM</var>
+                </not>
+                <var>CONFIG_XARGS</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_START_STOP_DAEMON</var>
+                <not>
+                    <var>CONFIG_FEATURE_START_STOP_DAEMON_LONG_OPTIONS</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_IP_TUNNEL</var>
+                </not>
+                <var>CONFIG_IP</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_LS</var>
+                <not>
+                    <var>CONFIG_FEATURE_LS_COLOR</var>
+                </not>
+                <var>CONFIG_GETOPT_LONG</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_STAT</var>
+                <not>
+                    <var>CONFIG_FEATURE_STAT_FORMAT</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_WTMP</var>
+                <not>
+                    <var>CONFIG_FEATURE_UTMP</var>
+                </not>
+                <var>CONFIG_WHO</var>
+                <var>CONFIG_LOGIN</var>
+                <var>CONFIG_SU</var>
+                <var>CONFIG_GETTY</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_MKDIR</var>
+                <not>
+                    <var>CONFIG_FEATURE_MKDIR_LONG_OPTIONS</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_SPLIT_FANCY</var>
+                </not>
+                <var>CONFIG_SPLIT</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_CHCON_LONG_OPTIONS</var>
+                </not>
+                <var>CONFIG_SELINUX</var>
+                <var>CONFIG_CHCON</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_USE_INITTAB</var>
+                </not>
+                <var>CONFIG_INIT</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_SELINUX</var>
+                <not>
+                    <var>CONFIG_GETSEBOOL</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_ASH</var>
+                <not>
+                    <var>CONFIG_ASH_READ_NCHARS</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_LS_TIMESTAMPS</var>
+                </not>
+                <var>CONFIG_LS</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_IP</var>
+                <not>
+                    <var>CONFIG_FEATURE_IP_SHORT_FORMS</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_RUN_PARTS</var>
+                <not>
+                    <var>CONFIG_FEATURE_RUN_PARTS_FANCY</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_HWCLOCK</var>
+                <not>
+                    <var>CONFIG_FEATURE_HWCLOCK_LONG_OPTIONS</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_LOGIN</var>
+                </not>
+                <var>CONFIG_FEATURE_SYSLOG</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_SH_IS_ASH</var>
+                <var>CONFIG_FEATURE_SH_IS_LASH</var>
+                <var>CONFIG_FEATURE_SH_IS_HUSH</var>
+                <var>CONFIG_FEATURE_SH_IS_NONE</var>
+                <var>CONFIG_FEATURE_SH_IS_MSH</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_WTMP</var>
+                </not>
+                <var>CONFIG_FEATURE_UTMP</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_NAMEIF</var>
+                </not>
+                <var>CONFIG_FEATURE_SYSLOG</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_HDPARM_HDIO_UNREGISTER_HWIF</var>
+                </not>
+                <var>CONFIG_HDPARM</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_FDISK_WRITABLE</var>
+                <not>
+                    <var>CONFIG_FEATURE_SUN_LABEL</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_BUILD_LIBBUSYBOX</var>
+                <not>
+                    <var>CONFIG_FEATURE_FULL_LIBBUSYBOX</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_LSMOD_PRETTY_2_6_OUTPUT</var>
+                </not>
+                <var>CONFIG_LSMOD</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_FIND_DELETE</var>
+                </not>
+                <var>CONFIG_FEATURE_FIND_DEPTH</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_PS</var>
+                <not>
+                    <var>CONFIG_FEATURE_PS_WIDE</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_SH_IS_ASH</var>
+                </not>
+                <not>
+                    <var>CONFIG_FEATURE_SH_IS_NONE</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_HTTPD</var>
+                <not>
+                    <var>CONFIG_FEATURE_HTTPD_SETUID</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FIND</var>
+                <not>
+                    <var>CONFIG_FEATURE_FIND_EXEC</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_AWK</var>
+                <not>
+                    <var>CONFIG_FEATURE_AWK_MATH</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FDISK</var>
+                <not>
+                    <var>CONFIG_FEATURE_FDISK_ADVANCED</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_DEB_TAR_LZMA</var>
+                </not>
+                <var>CONFIG_DPKG_DEB</var>
+                <var>CONFIG_DPKG</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_SH_STANDALONE</var>
+                <var>CONFIG_FEATURE_PREFER_APPLETS</var>
+                <not>
+                    <var>CONFIG_INSTALL_APPLET_DONT</var>
+                </not>
+                <var>CONFIG_FEATURE_INSTALLER</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_LS</var>
+                <not>
+                    <var>CONFIG_FEATURE_LS_RECURSIVE</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_VI_OPTIMIZE_CURSOR</var>
+                </not>
+                <var>CONFIG_VI</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_LS</var>
+                <not>
+                    <var>CONFIG_FEATURE_LS_FOLLOWLINKS</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_IFCONFIG</var>
+                <not>
+                    <var>CONFIG_FEATURE_IFCONFIG_HW</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_SH_IS_LASH</var>
+                </not>
+                <not>
+                    <var>CONFIG_FEATURE_SH_IS_MSH</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_LS_FILETYPES</var>
+                </not>
+                <var>CONFIG_LS</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_RUNCON</var>
+                <not>
+                    <var>CONFIG_FEATURE_RUNCON_LONG_OPTIONS</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_VI</var>
+                <not>
+                    <var>CONFIG_FEATURE_VI_USE_SIGNALS</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_MKSWAP</var>
+                <not>
+                    <var>CONFIG_FEATURE_MKSWAP_V0</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_BUFFERS_GO_IN_BSS</var>
+                </not>
+                <var>CONFIG_NITPICK</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_SELINUX</var>
+                <not>
+                    <var>CONFIG_SELINUXENABLED</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_MODPROBE_FANCY_ALIAS</var>
+                </not>
+                <var>CONFIG_MODPROBE</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_SELINUX</var>
+                <not>
+                    <var>CONFIG_GETENFORCE</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_INETD_SUPPORT_BUILTIN_DAYTIME</var>
+                </not>
+                <var>CONFIG_INETD</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_DPKG_DEB_EXTRACT_ONLY</var>
+                </not>
+                <var>CONFIG_DPKG_DEB</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_ASH_BUILTIN_ECHO</var>
+                </not>
+                <var>CONFIG_ECHO</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_INSTALL_APPLET_DONT</var>
+                </not>
+                <not>
+                    <var>CONFIG_INSTALL_APPLET_HARDLINKS</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_TOP_CPU_USAGE_PERCENTAGE</var>
+                </not>
+                <var>CONFIG_TOP</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_SORT_BIG</var>
+                </not>
+                <var>CONFIG_SORT</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_UMOUNT</var>
+                <not>
+                    <var>CONFIG_FEATURE_UMOUNT_ALL</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_LASH</var>
+                </not>
+                <var>CONFIG_TRUE</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_EFENCE</var>
+                </not>
+                <not>
+                    <var>CONFIG_NO_DEBUG_LIB</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_DF</var>
+                <var>CONFIG_LS</var>
+                <var>CONFIG_DU</var>
+                <not>
+                    <var>CONFIG_FEATURE_HUMAN_READABLE</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_CLEAN_UP</var>
+                </not>
+                <var>CONFIG_NITPICK</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_INIT</var>
+                </not>
+                <var>CONFIG_FEATURE_SYSLOG</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_RUNCON_LONG_OPTIONS</var>
+                </not>
+                <var>CONFIG_GETOPT_LONG</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_FANCY_ECHO</var>
+                </not>
+                <var>CONFIG_ECHO</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_INSMOD_LOAD_MAP</var>
+                <not>
+                    <var>CONFIG_FEATURE_INSMOD_LOAD_MAP_FULL</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_UTMP</var>
+                <not>
+                    <var>CONFIG_WHO</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_SH_IS_LASH</var>
+                </not>
+                <not>
+                    <var>CONFIG_FEATURE_SH_IS_HUSH</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_IFUPDOWN</var>
+                <not>
+                    <var>CONFIG_FEATURE_IFUPDOWN_MAPPING</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_HUSH_INTERACTIVE</var>
+                </not>
+                <var>CONFIG_HUSH</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_IP_ROUTE</var>
+                </not>
+                <not>
+                    <var>CONFIG_FEATURE_IP_SHORT_FORMS</var>
+                </not>
+                <var>CONFIG_IPROUTE</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_TAR_CREATE</var>
+                </not>
+                <var>CONFIG_TAR</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_DMESG</var>
+                <not>
+                    <var>CONFIG_FEATURE_DMESG_PRETTY</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_HUSH</var>
+                </not>
+                <var>CONFIG_TRUE</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_IP_LINK</var>
+                </not>
+                <var>CONFIG_IP</var>
+                <var>CONFIG_FEATURE_IFUPDOWN_IP_BUILTIN</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_IFUPDOWN</var>
+                <not>
+                    <var>CONFIG_FEATURE_IFUPDOWN_IFCONFIG_BUILTIN</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_ROTATE_LOGFILE</var>
+                </not>
+                <var>CONFIG_SYSLOGD</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_WGET_STATUSBAR</var>
+                </not>
+                <var>CONFIG_WGET</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_LESS</var>
+                <not>
+                    <var>CONFIG_FEATURE_LESS_REGEXP</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_LS</var>
+                <not>
+                    <var>CONFIG_FEATURE_LS_COLOR</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_FIND_SIZE</var>
+                </not>
+                <var>CONFIG_FIND</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_KILL</var>
+                <not>
+                    <var>CONFIG_KILLALL5</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_IP_SHORT_FORMS</var>
+                <not>
+                    <var>CONFIG_IPROUTE</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_SHADOWPASSWDS</var>
+                <var>CONFIG_USE_BB_PWD_GRP</var>
+                <not>
+                    <var>CONFIG_USE_BB_SHADOW</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_MAKEDEVS_TABLE</var>
+                </not>
+                <var>CONFIG_MAKEDEVS</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_HTTPD_RELOAD_CONFIG_SIGHUP</var>
+                </not>
+                <var>CONFIG_HTTPD</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_DEL_USER_FROM_GROUP</var>
+                </not>
+                <var>CONFIG_DELGROUP</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_MV_LONG_OPTIONS</var>
+                </not>
+                <var>CONFIG_GETOPT_LONG</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_GREP_CONTEXT</var>
+                </not>
+                <var>CONFIG_GREP</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_FIND_PRUNE</var>
+                </not>
+                <var>CONFIG_FIND</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_TELNET_AUTOLOGIN</var>
+                </not>
+                <var>CONFIG_TELNET</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_HDPARM</var>
+                <not>
+                    <var>CONFIG_FEATURE_HDPARM_HDIO_GETSET_DMA</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_VERBOSE_USAGE</var>
+                </not>
+                <var>CONFIG_SHOW_USAGE</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_TR_EQUIV</var>
+                </not>
+                <var>CONFIG_TR</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_MODPROBE_FANCY_ALIAS</var>
+                </not>
+                <var>CONFIG_FEATURE_2_6_MODULES</var>
+                <var>CONFIG_MODPROBE</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_BUFFERS_GO_ON_STACK</var>
+                </not>
+                <not>
+                    <var>CONFIG_FEATURE_BUFFERS_GO_IN_BSS</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_RMMOD</var>
+                <var>CONFIG_INSMOD</var>
+                <var>CONFIG_MODPROBE</var>
+                <not>
+                    <var>CONFIG_FEATURE_2_4_MODULES</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_SETCONSOLE_LONG_OPTIONS</var>
+                </not>
+                <var>CONFIG_SETCONSOLE</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_DEVFSD</var>
+                <not>
+                    <var>CONFIG_DEVFSD_VERBOSE</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_MAKEDEVS_TABLE</var>
+                </not>
+                <not>
+                    <var>CONFIG_FEATURE_MAKEDEVS_LEAF</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_VI</var>
+                <not>
+                    <var>CONFIG_FEATURE_VI_SET</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_DD_IBS_OBS</var>
+                </not>
+                <var>CONFIG_DD</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_LZMA_FAST</var>
+                </not>
+                <var>CONFIG_UNLZMA</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_LS</var>
+                <not>
+                    <var>CONFIG_FEATURE_LS_SORTFILES</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_ADDGROUP</var>
+                <not>
+                    <var>CONFIG_FEATURE_ADDUSER_TO_GROUP</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_MD5_SHA1_SUM_CHECK</var>
+                </not>
+                <var>CONFIG_SHA1SUM</var>
+                <var>CONFIG_MD5SUM</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_LESS</var>
+                <not>
+                    <var>CONFIG_FEATURE_LESS_MAXLINES</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_LFS</var>
+                <var>CONFIG_FDISK</var>
+                <not>
+                    <var>CONFIG_FDISK_SUPPORT_LARGE_DISKS</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_IPADDR</var>
+                </not>
+                <var>CONFIG_FEATURE_IP_ADDRESS</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_SH_STANDALONE</var>
+                </not>
+                <var>CONFIG_LASH</var>
+                <var>CONFIG_ASH</var>
+                <var>CONFIG_MSH</var>
+                <var>CONFIG_HUSH</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_IP_ROUTE</var>
+                <not>
+                    <var>CONFIG_IPROUTE</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_RUN_PARTS_LONG_OPTIONS</var>
+                </not>
+                <var>CONFIG_GETOPT_LONG</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_MODPROBE</var>
+                <not>
+                    <var>CONFIG_FEATURE_MODPROBE_MULTIPLE_OPTIONS</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_VI</var>
+                <not>
+                    <var>CONFIG_FEATURE_VI_DOT_CMD</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_FIND_USER</var>
+                </not>
+                <var>CONFIG_FIND</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FIND</var>
+                <not>
+                    <var>CONFIG_FEATURE_FIND_GROUP</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_HUSH_INTERACTIVE</var>
+                <not>
+                    <var>CONFIG_HUSH_JOB</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_UTMP</var>
+                <not>
+                    <var>CONFIG_WHO</var>
+                </not>
+                <not>
+                    <var>CONFIG_SU</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_BUILD_LIBBUSYBOX</var>
+                <not>
+                    <var>CONFIG_STATIC</var>
+                </not>
+                <not>
+                    <var>CONFIG_FEATURE_SHARED_BUSYBOX</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_IPV6</var>
+                <not>
+                    <var>CONFIG_FEATURE_IFUPDOWN_IPV6</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_CROND</var>
+                </not>
+                <var>CONFIG_FEATURE_SYSLOG</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_IPRULE</var>
+                </not>
+                <var>CONFIG_FEATURE_IP_SHORT_FORMS</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_IFUPDOWN</var>
+                <not>
+                    <var>CONFIG_FEATURE_IFUPDOWN_IP</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_INETD_SUPPORT_BUILTIN_CHARGEN</var>
+                </not>
+                <var>CONFIG_INETD</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_2_4_MODULES</var>
+                <not>
+                    <var>CONFIG_FEATURE_QUERY_MODULE_INTERFACE</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_HWCLOCK</var>
+                <not>
+                    <var>CONFIG_FEATURE_HWCLOCK_ADJTIME_FHS</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_FANCY_SLEEP</var>
+                </not>
+                <var>CONFIG_SLEEP</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_GUNZIP</var>
+                <not>
+                    <var>CONFIG_FEATURE_GUNZIP_UNCOMPRESS</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_SUID</var>
+                <not>
+                    <var>CONFIG_IPCRM</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_INETD_SUPPORT_BUILTIN_TIME</var>
+                </not>
+                <var>CONFIG_INETD</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_HTTPD</var>
+                <not>
+                    <var>CONFIG_FEATURE_HTTPD_CONFIG_WITH_MIME_TYPES</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_IFCONFIG</var>
+                <not>
+                    <var>CONFIG_FEATURE_IFUPDOWN_IFCONFIG_BUILTIN</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FIND</var>
+                <not>
+                    <var>CONFIG_FEATURE_FIND_INUM</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_TRACEROUTE</var>
+                <not>
+                    <var>CONFIG_FEATURE_TRACEROUTE_VERBOSE</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_TAR_LZMA</var>
+                </not>
+                <var>CONFIG_TAR</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_MKDIR_LONG_OPTIONS</var>
+                </not>
+                <var>CONFIG_GETOPT_LONG</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_IP_SHORT_FORMS</var>
+                <not>
+                    <var>CONFIG_IPLINK</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_TRACEROUTE</var>
+                <not>
+                    <var>CONFIG_FEATURE_TRACEROUTE_SOURCE_ROUTE</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_TAB_COMPLETION</var>
+                <not>
+                    <var>CONFIG_FEATURE_USERNAME_COMPLETION</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_IPRULE</var>
+                </not>
+                <var>CONFIG_FEATURE_IP_RULE</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_SH_STANDALONE</var>
+                </not>
+                <var>CONFIG_FEATURE_PREFER_APPLETS</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_UTMP</var>
+                <not>
+                    <var>CONFIG_WHO</var>
+                </not>
+                <not>
+                    <var>CONFIG_GETTY</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_SYSLOG</var>
+                <not>
+                    <var>CONFIG_ZCIP</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_HTTPD_CGI</var>
+                </not>
+                <var>CONFIG_HTTPD</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_HUSH</var>
+                </not>
+                <var>CONFIG_FALSE</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_FIND_TYPE</var>
+                </not>
+                <var>CONFIG_FIND</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_TEST</var>
+                <not>
+                    <var>CONFIG_MSH</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_EDITING</var>
+                <not>
+                    <var>CONFIG_FEATURE_EDITING_HISTORY</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_LFS</var>
+                </not>
+                <var>CONFIG_FDISK_SUPPORT_LARGE_DISKS</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_UNIX2DOS</var>
+                </not>
+                <var>CONFIG_DOS2UNIX</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_INSMOD_LOADINKMEM</var>
+                </not>
+                <var>CONFIG_FEATURE_2_4_MODULES</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_SYSLOG</var>
+                <not>
+                    <var>CONFIG_TELNETD</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_IPV6</var>
+                <not>
+                    <var>CONFIG_PING6</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_NETSTAT</var>
+                <not>
+                    <var>CONFIG_FEATURE_NETSTAT_WIDE</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_RFC3397</var>
+                </not>
+                <var>CONFIG_APP_UDHCPC</var>
+                <var>CONFIG_APP_UDHCPD</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_UTMP</var>
+                <not>
+                    <var>CONFIG_WHO</var>
+                </not>
+                <not>
+                    <var>CONFIG_LOGIN</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_TAR_LONG_OPTIONS</var>
+                </not>
+                <var>CONFIG_TAR</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_MD5_SIZE_VS_SPEED</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_WTMP</var>
+                </not>
+                <var>CONFIG_FEATURE_UTMP</var>
+                <not>
+                    <var>CONFIG_WHO</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_ASH</var>
+                <not>
+                    <var>CONFIG_ASH_RANDOM_SUPPORT</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FDISK</var>
+                <not>
+                    <var>CONFIG_FEATURE_AIX_LABEL</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_TEST</var>
+                <not>
+                    <var>CONFIG_HUSH</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_ASH</var>
+                <not>
+                    <var>CONFIG_ASH_BUILTIN_ECHO</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_IFUPDOWN</var>
+                <not>
+                    <var>CONFIG_FEATURE_IFUPDOWN_EXTERNAL_DHCP</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_LOAD_POLICY</var>
+                </not>
+                <var>CONFIG_SELINUX</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_GREP</var>
+                <not>
+                    <var>CONFIG_FEATURE_GREP_FGREP_ALIAS</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_DEB_TAR_BZ2</var>
+                </not>
+                <var>CONFIG_DPKG_DEB</var>
+                <var>CONFIG_DPKG</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_EDITING</var>
+                <not>
+                    <var>CONFIG_FEATURE_EDITING_FANCY_PROMPT</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_DMALLOC</var>
+                </not>
+                <not>
+                    <var>CONFIG_NO_DEBUG_LIB</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_TEE</var>
+                <not>
+                    <var>CONFIG_FEATURE_TEE_USE_BLOCK_IO</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_TASKSET_FANCY</var>
+                </not>
+                <var>CONFIG_TASKSET</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_TR_CLASSES</var>
+                </not>
+                <var>CONFIG_TR</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_INETD_RPC</var>
+                </not>
+                <var>CONFIG_INETD</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_HAVE_DOT_CONFIG</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_WTMP</var>
+                <not>
+                    <var>CONFIG_LAST</var>
+                </not>
+                <not>
+                    <var>CONFIG_SU</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_GREP_EGREP_ALIAS</var>
+                </not>
+                <var>CONFIG_GREP</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_IFUPDOWN</var>
+                <not>
+                    <var>CONFIG_FEATURE_IFUPDOWN_IPV4</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_MV</var>
+                <not>
+                    <var>CONFIG_FEATURE_MV_LONG_OPTIONS</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_2_6_MODULES</var>
+                </not>
+                <not>
+                    <var>CONFIG_FEATURE_QUERY_MODULE_INTERFACE</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_CHECK_TAINTED_MODULE</var>
+                </not>
+                <var>CONFIG_INSMOD</var>
+                <var>CONFIG_LSMOD</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_WGET</var>
+                <not>
+                    <var>CONFIG_FEATURE_WGET_AUTHENTICATION</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_CHCON_LONG_OPTIONS</var>
+                </not>
+                <var>CONFIG_CHCON</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_UDHCP_SYSLOG</var>
+                </not>
+                <var>CONFIG_APP_UDHCPC</var>
+                <var>CONFIG_APP_UDHCPD</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_DIFF</var>
+                <not>
+                    <var>CONFIG_FEATURE_DIFF_MINIMAL</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_INIT</var>
+                <not>
+                    <var>CONFIG_DEBUG_INIT</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_WATCH</var>
+                </not>
+                <var>CONFIG_DATE</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_IP</var>
+                </not>
+                <var>CONFIG_FEATURE_IP_ADDRESS</var>
+                <not>
+                    <var>CONFIG_FEATURE_IFUPDOWN_IP_BUILTIN</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_HTTPD_BASIC_AUTH</var>
+                <not>
+                    <var>CONFIG_FEATURE_HTTPD_AUTH_MD5</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_CHCON_LONG_OPTIONS</var>
+                </not>
+                <var>CONFIG_SELINUX</var>
+                <var>CONFIG_GETOPT_LONG</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_GETOPT_LONG</var>
+                <not>
+                    <var>CONFIG_FEATURE_ENV_LONG_OPTIONS</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FBSET</var>
+                <not>
+                    <var>CONFIG_FEATURE_FBSET_READMODE</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_IFCONFIG</var>
+                <not>
+                    <var>CONFIG_FEATURE_IFCONFIG_SLIP</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_SELINUX</var>
+                <not>
+                    <var>CONFIG_SETENFORCE</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_BUFFERS_GO_IN_BSS</var>
+                </not>
+                <not>
+                    <var>CONFIG_FEATURE_BUFFERS_USE_MALLOC</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_FANCY_PING</var>
+                </not>
+                <var>CONFIG_PING</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_IPC_SYSLOG</var>
+                </not>
+                <var>CONFIG_SYSLOGD</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_HTTPD_CGI</var>
+                <not>
+                    <var>CONFIG_FEATURE_HTTPD_CONFIG_WITH_SCRIPT_INTERPR</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_IPRULE</var>
+                <not>
+                    <var>CONFIG_FEATURE_IP_RULE</var>
+                </not>
+                <not>
+                    <var>CONFIG_FEATURE_IP_SHORT_FORMS</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_VI</var>
+                <not>
+                    <var>CONFIG_FEATURE_VI_SETOPTS</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_MORE</var>
+                <var>CONFIG_TELNET</var>
+                <var>CONFIG_LS</var>
+                <not>
+                    <var>CONFIG_FEATURE_AUTOWIDTH</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_ASH</var>
+                <not>
+                    <var>CONFIG_ASH_READ_TIMEOUT</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_LOGREAD_REDUCED_LOCKING</var>
+                </not>
+                <var>CONFIG_LOGREAD</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_FIND_DELETE</var>
+                </not>
+                <var>CONFIG_FIND</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_UDHCP_SYSLOG</var>
+                </not>
+                <var>CONFIG_FEATURE_SYSLOG</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_FTPGETPUT_LONG_OPTIONS</var>
+                </not>
+                <var>CONFIG_GETOPT_LONG</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_XARGS_SUPPORT_TERMOPT</var>
+                </not>
+                <var>CONFIG_XARGS</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_INSTALL_APPLET_DONT</var>
+                </not>
+                <not>
+                    <var>CONFIG_INSTALL_APPLET_SYMLINKS</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_MDEV_EXEC</var>
+                </not>
+                <var>CONFIG_FEATURE_MDEV_CONF</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_LOGREAD</var>
+                </not>
+                <var>CONFIG_FEATURE_IPC_SYSLOG</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_SYSLOG</var>
+                <not>
+                    <var>CONFIG_GETTY</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_WTMP</var>
+                </not>
+                <var>CONFIG_FEATURE_UTMP</var>
+                <not>
+                    <var>CONFIG_LOGIN</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_LESS_FLAGCS</var>
+                </not>
+                <var>CONFIG_LESS</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_IFCONFIG</var>
+                <not>
+                    <var>CONFIG_FEATURE_IFCONFIG_STATUS</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_RUNCON</var>
+                </not>
+                <var>CONFIG_SELINUX</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_HAVE_RPC</var>
+                <not>
+                    <var>CONFIG_FEATURE_INETD_RPC</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_IP_LINK</var>
+                <not>
+                    <var>CONFIG_IPLINK</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_ASH</var>
+                <not>
+                    <var>CONFIG_ASH_EXPAND_PRMT</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_SYSLOG</var>
+                <not>
+                    <var>CONFIG_DEVFSD</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_FBSET_FANCY</var>
+                </not>
+                <var>CONFIG_FBSET</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_RUNCON_LONG_OPTIONS</var>
+                </not>
+                <var>CONFIG_SELINUX</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_RUNCON_LONG_OPTIONS</var>
+                </not>
+                <var>CONFIG_SELINUX</var>
+                <var>CONFIG_GETOPT_LONG</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_IFUPDOWN_IFCONFIG_BUILTIN</var>
+                </not>
+                <var>CONFIG_ROUTE</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_SH_IS_HUSH</var>
+                </not>
+                <not>
+                    <var>CONFIG_FEATURE_SH_IS_NONE</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_SUID</var>
+                <not>
+                    <var>CONFIG_VLOCK</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_SUID</var>
+                <not>
+                    <var>CONFIG_PASSWD</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_GETOPT_LONG</var>
+                <not>
+                    <var>CONFIG_FEATURE_IPCALC_LONG_OPTIONS</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_SU_CHECKS_SHELLS</var>
+                </not>
+                <var>CONFIG_SU</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_ASH</var>
+                <not>
+                    <var>CONFIG_ASH_BUILTIN_TEST</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_DD</var>
+                <not>
+                    <var>CONFIG_FEATURE_DD_SIGNAL_HANDLING</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_LASH</var>
+                <not>
+                    <var>CONFIG_FEATURE_SH_IS_LASH</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_UNIX2DOS</var>
+                <not>
+                    <var>CONFIG_DOS2UNIX</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_CROND_CALL_SENDMAIL</var>
+                </not>
+                <var>CONFIG_CROND</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_IFUPDOWN</var>
+                <not>
+                    <var>CONFIG_FEATURE_IFUPDOWN_IPV6</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_IFUPDOWN</var>
+                <not>
+                    <var>CONFIG_FEATURE_IFUPDOWN_IFCONFIG_BUILTIN</var>
+                </not>
+                <not>
+                    <var>CONFIG_FEATURE_IFUPDOWN_IP</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_FIND_MTIME</var>
+                </not>
+                <var>CONFIG_FIND</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_DIFF</var>
+                <not>
+                    <var>CONFIG_FEATURE_DIFF_DIR</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_LOGIN_SCRIPTS</var>
+                </not>
+                <var>CONFIG_LOGIN</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_WTMP</var>
+                </not>
+                <var>CONFIG_FEATURE_UTMP</var>
+                <not>
+                    <var>CONFIG_SU</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_IPCALC</var>
+                <not>
+                    <var>CONFIG_FEATURE_IPCALC_LONG_OPTIONS</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_MATCHPATHCON</var>
+                </not>
+                <var>CONFIG_SELINUX</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FDISK</var>
+                <not>
+                    <var>CONFIG_FEATURE_SGI_LABEL</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_RESIZE</var>
+                <not>
+                    <var>CONFIG_FEATURE_RESIZE_PRINT</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_RUNCON</var>
+                <not>
+                    <var>CONFIG_FEATURE_RUNCON_LONG_OPTIONS</var>
+                </not>
+                <var>CONFIG_SELINUX</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_HDPARM</var>
+                <not>
+                    <var>CONFIG_FEATURE_HDPARM_HDIO_DRIVE_RESET</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_READLINK</var>
+                <not>
+                    <var>CONFIG_FEATURE_READLINK_FOLLOW</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_IP</var>
+                <var>CONFIG_FEATURE_IP_ADDRESS</var>
+                <not>
+                    <var>CONFIG_FEATURE_IFUPDOWN_IP_BUILTIN</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_IPADDR</var>
+                </not>
+                <var>CONFIG_FEATURE_IP_SHORT_FORMS</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_SUID</var>
+                <not>
+                    <var>CONFIG_CRONTAB</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_INSMOD</var>
+                <not>
+                    <var>CONFIG_FEATURE_INSMOD_VERSION_CHECKING</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_START_STOP_DAEMON_LONG_OPTIONS</var>
+                </not>
+                <var>CONFIG_GETOPT_LONG</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_DEB_TAR_GZ</var>
+                </not>
+                <var>CONFIG_DPKG_DEB</var>
+                <var>CONFIG_DPKG</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_REMOTE_LOG</var>
+                </not>
+                <var>CONFIG_SYSLOGD</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_TAR_FROM</var>
+                </not>
+                <var>CONFIG_TAR</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_IP_LINK</var>
+                <not>
+                    <var>CONFIG_FEATURE_IFUPDOWN_IP_BUILTIN</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_LESS</var>
+                <not>
+                    <var>CONFIG_FEATURE_LESS_BRACKETS</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_PIDOF_OMIT</var>
+                </not>
+                <var>CONFIG_PIDOF</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_SYSLOG</var>
+                <not>
+                    <var>CONFIG_SU</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_EXPR</var>
+                <not>
+                    <var>CONFIG_EXPR_MATH_SUPPORT_64</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_IP_ROUTE</var>
+                </not>
+                <var>CONFIG_IP</var>
+                <var>CONFIG_FEATURE_IFUPDOWN_IP_BUILTIN</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_MSH</var>
+                </not>
+                <var>CONFIG_TRUE</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_HTTPD_CGI</var>
+                <not>
+                    <var>CONFIG_FEATURE_HTTPD_SET_REMOTE_PORT_TO_ENV</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_MOUNT_FLAGS</var>
+                </not>
+                <var>CONFIG_MOUNT</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_INSMOD_LOAD_MAP</var>
+                </not>
+                <var>CONFIG_FEATURE_2_6_MODULES</var>
+                <var>CONFIG_FEATURE_2_4_MODULES</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_IPADDR</var>
+                <not>
+                    <var>CONFIG_FEATURE_IP_SHORT_FORMS</var>
+                </not>
+                <not>
+                    <var>CONFIG_FEATURE_IP_ADDRESS</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_LASH</var>
+                </not>
+                <var>CONFIG_TEST</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_LESS</var>
+                </not>
+                <var>CONFIG_FEATURE_LESS_MAXLINES</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_IP</var>
+                <not>
+                    <var>CONFIG_FEATURE_IFUPDOWN_IP_BUILTIN</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_DMALLOC</var>
+                </not>
+                <not>
+                    <var>CONFIG_EFENCE</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_SH_IS_ASH</var>
+                </not>
+                <not>
+                    <var>CONFIG_FEATURE_SH_IS_LASH</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_LS</var>
+                <not>
+                    <var>CONFIG_FEATURE_LS_USERNAME</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_WGET_LONG_OPTIONS</var>
+                </not>
+                <var>CONFIG_WGET</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_IPTUNNEL</var>
+                </not>
+                <var>CONFIG_FEATURE_IP_SHORT_FORMS</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_SH_IS_HUSH</var>
+                </not>
+                <not>
+                    <var>CONFIG_FEATURE_SH_IS_MSH</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_TAR_GZIP</var>
+                </not>
+                <var>CONFIG_TAR</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FIND</var>
+                <not>
+                    <var>CONFIG_FEATURE_FIND_DEPTH</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_XARGS_SUPPORT_QUOTES</var>
+                </not>
+                <var>CONFIG_XARGS</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_TFTP</var>
+                <not>
+                    <var>CONFIG_FEATURE_TFTP_BLOCKSIZE</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_HDPARM_GET_IDENTITY</var>
+                </not>
+                <var>CONFIG_HDPARM</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_UNARCHIVE_TAPE</var>
+                </not>
+                <var>CONFIG_TAR</var>
+                <var>CONFIG_CPIO</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_TAIL</var>
+                <not>
+                    <var>CONFIG_FEATURE_FANCY_TAIL</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_ASH</var>
+                <not>
+                    <var>CONFIG_ASH_OPTIMIZE_FOR_SIZE</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_RMMOD</var>
+                <var>CONFIG_INSMOD</var>
+                <not>
+                    <var>CONFIG_FEATURE_2_6_MODULES</var>
+                </not>
+                <var>CONFIG_MODPROBE</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_ASH</var>
+                <not>
+                    <var>CONFIG_ASH_MATH_SUPPORT</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_TAR_BZIP2</var>
+                </not>
+                <var>CONFIG_TAR</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_FIND_XDEV</var>
+                </not>
+                <var>CONFIG_FIND</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_IP_ROUTE</var>
+                <not>
+                    <var>CONFIG_IP</var>
+                </not>
+                <not>
+                    <var>CONFIG_FEATURE_IFUPDOWN_IP_BUILTIN</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_SH_IS_HUSH</var>
+                </not>
+                <var>CONFIG_HUSH</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_BUFFERS_GO_ON_STACK</var>
+                <var>CONFIG_FEATURE_BUFFERS_GO_IN_BSS</var>
+                <not>
+                    <var>CONFIG_NITPICK</var>
+                </not>
+                <var>CONFIG_FEATURE_BUFFERS_USE_MALLOC</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_CHCON_LONG_OPTIONS</var>
+                </not>
+                <var>CONFIG_GETOPT_LONG</var>
+                <var>CONFIG_CHCON</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_EDITING</var>
+                <not>
+                    <var>CONFIG_FEATURE_EDITING_FANCY_KEYS</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_FIND_NEWER</var>
+                </not>
+                <var>CONFIG_FIND</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_START_STOP_DAEMON</var>
+                <not>
+                    <var>CONFIG_FEATURE_START_STOP_DAEMON_FANCY</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_SYSLOG</var>
+                <not>
+                    <var>CONFIG_INETD</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_MODPROBE_FANCY_ALIAS</var>
+                </not>
+                <var>CONFIG_FEATURE_2_6_MODULES</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_MV</var>
+                <var>CONFIG_CP</var>
+                <not>
+                    <var>CONFIG_FEATURE_PRESERVE_HARDLINKS</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_MAKEDEVS_LEAF</var>
+                </not>
+                <var>CONFIG_MAKEDEVS</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_VI_YANKMARK</var>
+                </not>
+                <var>CONFIG_VI</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_XARGS_SUPPORT_CONFIRMATION</var>
+                </not>
+                <var>CONFIG_XARGS</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_2_4_MODULES</var>
+                <not>
+                    <var>CONFIG_FEATURE_INSMOD_VERSION_CHECKING</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_SU_SYSLOG</var>
+                </not>
+                <var>CONFIG_SU</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_MINIX2</var>
+                </not>
+                <var>CONFIG_FSCK_MINIX</var>
+                <var>CONFIG_MKFS_MINIX</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_IP_LINK</var>
+                </not>
+                <not>
+                    <var>CONFIG_FEATURE_IP_SHORT_FORMS</var>
+                </not>
+                <var>CONFIG_IPLINK</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_IP_ADDRESS</var>
+                <not>
+                    <var>CONFIG_FEATURE_IFUPDOWN_IP_BUILTIN</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_HEAD</var>
+                <not>
+                    <var>CONFIG_FEATURE_FANCY_HEAD</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_FIND_PRINT0</var>
+                </not>
+                <var>CONFIG_FIND</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_EDITING</var>
+                <not>
+                    <var>CONFIG_FEATURE_EDITING_VI</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_FDISK_WRITABLE</var>
+                <not>
+                    <var>CONFIG_FEATURE_AIX_LABEL</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_IP_ROUTE</var>
+                <not>
+                    <var>CONFIG_FEATURE_IFUPDOWN_IP_BUILTIN</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_WTMP</var>
+                </not>
+                <var>CONFIG_FEATURE_UTMP</var>
+                <var>CONFIG_WHO</var>
+                <var>CONFIG_LOGIN</var>
+                <var>CONFIG_SU</var>
+                <var>CONFIG_GETTY</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_INETD_SUPPORT_BUILTIN_DISCARD</var>
+                </not>
+                <var>CONFIG_INETD</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_IPC_SYSLOG_BUFFER_SIZE</var>
+                <not>
+                    <var>CONFIG_FEATURE_IPC_SYSLOG</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_TELNETD_STANDALONE</var>
+                </not>
+                <var>CONFIG_TELNETD</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_WTMP</var>
+                <not>
+                    <var>CONFIG_LAST</var>
+                </not>
+                <not>
+                    <var>CONFIG_GETTY</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_IP_ROUTE</var>
+                <var>CONFIG_IP</var>
+                <not>
+                    <var>CONFIG_FEATURE_IFUPDOWN_IP_BUILTIN</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FAKEIDENTD</var>
+                </not>
+                <var>CONFIG_FEATURE_SYSLOG</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_HTTPD_BASIC_AUTH</var>
+                </not>
+                <var>CONFIG_HTTPD</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_MODPROBE_FANCY_ALIAS</var>
+                </not>
+                <var>CONFIG_FEATURE_2_6_MODULES</var>
+                <var>CONFIG_NITPICK</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_BUFFERS_GO_ON_STACK</var>
+                </not>
+                <var>CONFIG_NITPICK</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_MORE</var>
+                <not>
+                    <var>CONFIG_FEATURE_USE_TERMIOS</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_ASH</var>
+                <not>
+                    <var>CONFIG_ASH_ALIAS</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_DATE_ISOFMT</var>
+                </not>
+                <var>CONFIG_DATE</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_COMPRESS_USAGE</var>
+                </not>
+                <var>CONFIG_SHOW_USAGE</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_WTMP</var>
+                <not>
+                    <var>CONFIG_LAST</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_USE_BB_PWD_GRP</var>
+                <not>
+                    <var>CONFIG_USE_BB_SHADOW</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_WC</var>
+                <not>
+                    <var>CONFIG_FEATURE_WC_LARGE</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_IP_TUNNEL</var>
+                <not>
+                    <var>CONFIG_IPTUNNEL</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_FDISK_WRITABLE</var>
+                <not>
+                    <var>CONFIG_FEATURE_FDISK_ADVANCED</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_FIND_PAREN</var>
+                </not>
+                <var>CONFIG_FIND</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_MOUNT_LOOP</var>
+                </not>
+                <var>CONFIG_MOUNT</var>
+                <var>CONFIG_UMOUNT</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_ENV</var>
+                <not>
+                    <var>CONFIG_FEATURE_ENV_LONG_OPTIONS</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_WTMP</var>
+                </not>
+                <var>CONFIG_LAST</var>
+                <var>CONFIG_LOGIN</var>
+                <var>CONFIG_SU</var>
+                <var>CONFIG_GETTY</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_DIFF</var>
+                <not>
+                    <var>CONFIG_FEATURE_DIFF_BINARY</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_WGET_LONG_OPTIONS</var>
+                </not>
+                <var>CONFIG_GETOPT_LONG</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_LFS</var>
+                </not>
+                <var>CONFIG_FDISK</var>
+                <var>CONFIG_FDISK_SUPPORT_LARGE_DISKS</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_LESS_FLAGS</var>
+                </not>
+                <var>CONFIG_LESS</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_MOUNT</var>
+                <not>
+                    <var>CONFIG_FEATURE_MOUNT_FSTAB</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_DMALLOC</var>
+                <var>CONFIG_EFENCE</var>
+                <var>CONFIG_NO_DEBUG_LIB</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_LS_COLOR_IS_DEFAULT</var>
+                </not>
+                <var>CONFIG_FEATURE_LS_COLOR</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_SUN_LABEL</var>
+                </not>
+                <var>CONFIG_FDISK</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_LOGGER</var>
+                </not>
+                <var>CONFIG_FEATURE_SYSLOG</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_ASH</var>
+                <not>
+                    <var>CONFIG_ASH_CMDCMD</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_ASH_MATH_SUPPORT</var>
+                <not>
+                    <var>CONFIG_ASH_MATH_SUPPORT_64</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_ASH_MAIL</var>
+                </not>
+                <var>CONFIG_ASH</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_CHCON_LONG_OPTIONS</var>
+                </not>
+                <var>CONFIG_GETOPT_LONG</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_MOUNT</var>
+                <not>
+                    <var>CONFIG_FEATURE_MTAB_SUPPORT</var>
+                </not>
+                <var>CONFIG_UMOUNT</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_PASSWD_WEAK_CHECK</var>
+                </not>
+                <var>CONFIG_PASSWD</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_NC</var>
+                <not>
+                    <var>CONFIG_NC_SERVER</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_INSMOD</var>
+                <not>
+                    <var>CONFIG_FEATURE_INSMOD_KSYMOOPS_SYMBOLS</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_ASH</var>
+                <not>
+                    <var>CONFIG_FEATURE_EDITING_SAVEHISTORY</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_MOUNT</var>
+                <not>
+                    <var>CONFIG_FEATURE_MOUNT_NFS</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_2_6_MODULES</var>
+                <not>
+                    <var>CONFIG_FEATURE_2_4_MODULES</var>
+                </not>
+                <var>CONFIG_FEATURE_QUERY_MODULE_INTERFACE</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_BUSYBOX_EXEC_PATH</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_LASH</var>
+                <var>CONFIG_ASH</var>
+                <var>CONFIG_MSH</var>
+                <var>CONFIG_HUSH</var>
+                <not>
+                    <var>CONFIG_FEATURE_SH_EXTRA_QUIET</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_NITPICK</var>
+                <not>
+                    <var>CONFIG_FEATURE_BUFFERS_USE_MALLOC</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_TAR_LONG_OPTIONS</var>
+                </not>
+                <var>CONFIG_GETOPT_LONG</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_TAR_COMPRESS</var>
+                </not>
+                <var>CONFIG_TAR</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_FIND_PATH</var>
+                </not>
+                <var>CONFIG_FIND</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_IP_LINK</var>
+                <var>CONFIG_IP</var>
+                <not>
+                    <var>CONFIG_FEATURE_IFUPDOWN_IP_BUILTIN</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_IFCONFIG</var>
+                <not>
+                    <var>CONFIG_FEATURE_IFCONFIG_BROADCAST_PLUS</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_STATIC</var>
+                </not>
+                <not>
+                    <var>CONFIG_FEATURE_SHARED_BUSYBOX</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_ASH</var>
+                <not>
+                    <var>CONFIG_ASH_GETOPTS</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_RUN_PARTS</var>
+                <not>
+                    <var>CONFIG_FEATURE_RUN_PARTS_LONG_OPTIONS</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_PREFIX</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_EDITING</var>
+                </not>
+                <var>CONFIG_FEATURE_EDITING_HISTORY</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_INSMOD_KSYMOOPS_SYMBOLS</var>
+                </not>
+                <var>CONFIG_FEATURE_2_4_MODULES</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_VI</var>
+                <not>
+                    <var>CONFIG_FEATURE_VI_SEARCH</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_MODPROBE</var>
+                </not>
+                <var>CONFIG_FEATURE_MODPROBE_MULTIPLE_OPTIONS</var>
+                <var>CONFIG_NITPICK</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FDISK</var>
+                <not>
+                    <var>CONFIG_FEATURE_OSF_LABEL</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_INSTALL_APPLET_DONT</var>
+                <var>CONFIG_INSTALL_APPLET_HARDLINKS</var>
+                <var>CONFIG_INSTALL_APPLET_SYMLINKS</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_EXTRA_QUIET</var>
+                </not>
+                <var>CONFIG_INIT</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_LS_COLOR</var>
+                </not>
+                <var>CONFIG_GETOPT_LONG</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_INIT</var>
+                <not>
+                    <var>CONFIG_FEATURE_INIT_SCTTY</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_SUID</var>
+                <not>
+                    <var>CONFIG_LOGIN</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_TFTP</var>
+                <not>
+                    <var>CONFIG_FEATURE_TFTP_GET</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_PIDOF_SINGLE</var>
+                </not>
+                <var>CONFIG_PIDOF</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_PASSWD</var>
+                </not>
+                <var>CONFIG_FEATURE_SYSLOG</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_ASH</var>
+                </not>
+                <var>CONFIG_TEST</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_DEVFSD_FG_NP</var>
+                </not>
+                <var>CONFIG_DEVFSD</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_SUID</var>
+                <not>
+                    <var>CONFIG_FEATURE_SUID_CONFIG</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_DEVFSD_MODLOAD</var>
+                </not>
+                <var>CONFIG_DEVFSD</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_NC_EXTRA</var>
+                </not>
+                <var>CONFIG_NC</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_VI_COLON</var>
+                </not>
+                <var>CONFIG_VI</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_MOUNT_NFS</var>
+                </not>
+                <var>CONFIG_FEATURE_SYSLOG</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_LESS</var>
+                <not>
+                    <var>CONFIG_FEATURE_LESS_MARKS</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_INSMOD_LOAD_MAP</var>
+                </not>
+                <var>CONFIG_INSMOD</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_IFCONFIG_MEMSTART_IOADDR_IRQ</var>
+                </not>
+                <var>CONFIG_IFCONFIG</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_MOUNT_NFS</var>
+                </not>
+                <var>CONFIG_FEATURE_HAVE_RPC</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_INSMOD_LOADINKMEM</var>
+                </not>
+                <var>CONFIG_INSMOD</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_INSTALL_LONG_OPTIONS</var>
+                </not>
+                <var>CONFIG_GETOPT_LONG</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_IP_TUNNEL</var>
+                </not>
+                <var>CONFIG_IPTUNNEL</var>
+                <not>
+                    <var>CONFIG_FEATURE_IP_SHORT_FORMS</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_TFTP</var>
+                <not>
+                    <var>CONFIG_DEBUG_TFTP</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_WTMP</var>
+                <not>
+                    <var>CONFIG_LAST</var>
+                </not>
+                <not>
+                    <var>CONFIG_LOGIN</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_IP_LINK</var>
+                <not>
+                    <var>CONFIG_IP</var>
+                </not>
+                <not>
+                    <var>CONFIG_FEATURE_IFUPDOWN_IP_BUILTIN</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_SULOGIN</var>
+                </not>
+                <var>CONFIG_FEATURE_SYSLOG</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_FDISK_WRITABLE</var>
+                <not>
+                    <var>CONFIG_FEATURE_SGI_LABEL</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_DEBUG_CROND_OPTION</var>
+                </not>
+                <var>CONFIG_CROND</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_FDISK_WRITABLE</var>
+                </not>
+                <var>CONFIG_FDISK</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_PING6</var>
+                </not>
+                <var>CONFIG_PING</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_INSTALL_LONG_OPTIONS</var>
+                </not>
+                <var>CONFIG_INSTALL</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_IFUPDOWN_IP</var>
+                <not>
+                    <var>CONFIG_FEATURE_IFUPDOWN_IP_BUILTIN</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_TRACEROUTE_USE_ICMP</var>
+                </not>
+                <var>CONFIG_TRACEROUTE</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_HDPARM</var>
+                <not>
+                    <var>CONFIG_FEATURE_HDPARM_HDIO_TRISTATE_HWIF</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_MODPROBE</var>
+                <not>
+                    <var>CONFIG_FEATURE_MODPROBE_MULTIPLE_OPTIONS</var>
+                </not>
+                <var>CONFIG_NITPICK</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_MSH</var>
+                </not>
+                <var>CONFIG_FALSE</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_SH_IS_ASH</var>
+                </not>
+                <not>
+                    <var>CONFIG_FEATURE_SH_IS_HUSH</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_IPC_SYSLOG_BUFFER_SIZE</var>
+                </not>
+                <var>CONFIG_FEATURE_IPC_SYSLOG</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_ASH</var>
+                <not>
+                    <var>CONFIG_FEATURE_SH_IS_ASH</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_APP_DHCPRELAY</var>
+                </not>
+                <var>CONFIG_APP_UDHCPD</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_MSH</var>
+                <not>
+                    <var>CONFIG_FEATURE_SH_IS_MSH</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_TAB_COMPLETION</var>
+                </not>
+                <var>CONFIG_FEATURE_EDITING</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_SH_IS_LASH</var>
+                </not>
+                <not>
+                    <var>CONFIG_FEATURE_SH_IS_NONE</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_UDHCP_DEBUG</var>
+                </not>
+                <var>CONFIG_APP_UDHCPC</var>
+                <var>CONFIG_APP_UDHCPD</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FTPGET</var>
+                <not>
+                    <var>CONFIG_FEATURE_FTPGETPUT_LONG_OPTIONS</var>
+                </not>
+                <var>CONFIG_FTPPUT</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_LASH</var>
+                </not>
+                <var>CONFIG_FALSE</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_SH_IS_NONE</var>
+                </not>
+                <not>
+                    <var>CONFIG_FEATURE_SH_IS_MSH</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_INETD_SUPPORT_BUILTIN_ECHO</var>
+                </not>
+                <var>CONFIG_INETD</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_LFS</var>
+                <not>
+                    <var>CONFIG_READAHEAD</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_PASSWORD_MINLEN</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_LFS</var>
+                </not>
+                <not>
+                    <var>CONFIG_FDISK</var>
+                </not>
+                <var>CONFIG_FDISK_SUPPORT_LARGE_DISKS</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_ASH</var>
+                <not>
+                    <var>CONFIG_ASH_JOB_CONTROL</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_INIT</var>
+                <not>
+                    <var>CONFIG_FEATURE_INITRD</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FEATURE_SHADOWPASSWDS</var>
+                <not>
+                    <var>CONFIG_USE_BB_SHADOW</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_IPCS</var>
+                </not>
+                <var>CONFIG_FEATURE_SUID</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_CHCON_LONG_OPTIONS</var>
+                </not>
+                <var>CONFIG_SELINUX</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_TAR</var>
+                <not>
+                    <var>CONFIG_FEATURE_TAR_OLDGNU_COMPATIBILITY</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_TAR_GNU_EXTENSIONS</var>
+                </not>
+                <var>CONFIG_TAR</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_HWCLOCK_LONG_OPTIONS</var>
+                </not>
+                <var>CONFIG_GETOPT_LONG</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_TELNET_TTYPE</var>
+                </not>
+                <var>CONFIG_TELNET</var>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_FIND</var>
+                <not>
+                    <var>CONFIG_FEATURE_FIND_NOT</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <var>CONFIG_TEST</var>
+                <not>
+                    <var>CONFIG_FEATURE_TEST_64</var>
+                </not>
+            </disj>
+        </rule>
+        <rule>
+            <disj>
+                <not>
+                    <var>CONFIG_FEATURE_IP_RULE</var>
+                </not>
+                <var>CONFIG_IP</var>
+            </disj>
+        </rule>
+    </constraints>
+    <calculations Auto="true" Constraints="true" Features="true" Redundant="true" Tautology="true"/>
+    <comments/>
+    <featureOrder userDefined="false"/>
+</featureModel>

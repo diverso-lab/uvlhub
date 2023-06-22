@@ -455,33 +455,38 @@ def get_dataset(dataset_id):
 
 @dataset_bp.route('/api/v1/dataset/', methods=['POST'])
 def api_create_dataset():
+
     """
-    PART 1: GET DATA
+    ENDPOINT FOR CREATE DATASET
+    """
+
+    """
+    PART 1: GET BASIC DATA
     """
 
     user = app.get_user_by_token("BLABLABLA")  # TODO
     data = json.loads(request.files['json'].read())
     temp_folder = os.path.join(app.upload_folder_name(), 'temp', str(user.id))
 
+    # Delete the existing temp_folder if it exists
+    if os.path.exists(temp_folder):
+        shutil.rmtree(temp_folder)
+
+    # Create the new temp_folder
+    os.makedirs(temp_folder)
+
     info = data['info']
     models = data['models']
 
     """
-    PART 2: CREATE BASIC DATA
+    PART 2: SAVE BASIC DATA
     """
     ds_meta_data = _create_ds_meta_data(info=info)
     authors = _create_authors(info=info, ds_meta_data=ds_meta_data)
     dataset = _create_dataset(user=user, ds_meta_data=ds_meta_data)
 
     """
-    PART 3: SEND BASIC DATA TO ZENODO
-    """
-    zenodo_response_json = zenodo_create_new_deposition(dataset)
-    response_data = json.dumps(zenodo_response_json)
-    zenodo_json_data = json.loads(response_data)
-
-    """
-    PART 4: SAVE FILES IN TEMP FOLDER
+    PART 3: SAVE FILES IN TEMP FOLDER
     """
     files = request.files.to_dict()
     for filename, file in files.items():
@@ -494,18 +499,29 @@ def api_create_dataset():
                     os.makedirs(temp_folder)
 
                 try:
+                    filename = os.path.basename(file.filename)
                     file.save(os.path.join(temp_folder, filename))
                     # TODO: Change valid model function
-                    valid_model = flamapy_valid_model(uvl_filename=filename, user=user)
-                    if valid_model:
-                        continue
+                    # valid_model = flamapy_valid_model(uvl_filename=filename, user=user)
+                    if True:
+                        continue # TODO
                     else:
+                        dataset.delete()
                         return jsonify({'message': f'{filename} is not a valid model'}), 400
                 except Exception as e:
-                    return jsonify({'exception': str(e)}), 500
+                    dataset.delete()
+                    return jsonify({'Exception in save files in temp folder': str(e)}), 500
 
             else:
+                dataset.delete()
                 return jsonify({'message': f'{filename} is not a valid extension'}), 400
+
+    """
+    PART 4: SEND BASIC DATA TO ZENODO
+    """
+    zenodo_response_json = zenodo_create_new_deposition(dataset)
+    response_data = json.dumps(zenodo_response_json)
+    zenodo_json_data = json.loads(response_data)
 
     """
     PART 5: CREATE FEATURE MODELS
@@ -542,7 +558,7 @@ def api_create_dataset():
     """
     move_feature_models(dataset.id, feature_models, user=user)
 
-    return jsonify({'message': 'Everything works fine!'}), 200
+    return jsonify(dataset.to_dict()), 200
 
 
 def _create_ds_meta_data(info: dict) -> DSMetaData:
@@ -592,12 +608,12 @@ def _create_feature_models(dataset: DataSet, models: dict, user: User) -> List[F
 
     for model in models:
 
-        filename = model['filename']
-        title = model['title']
-        description = model['description']
-        publication_type = model['publication_type']
-        publication_doi = model['publication_doi']
-        tags = ','.join(tag.strip() for tag in model['tags'])
+        filename = os.path.basename(model['filename']) # only name of file with .uvl extension
+        title = model.get('title', '')
+        description = model.get('description', '')
+        publication_type = model.get('publication_type', 'none')
+        publication_doi = model.get('publication_doi', '')
+        tags = ','.join(tag.strip() for tag in model.get('tags', []))
 
         # create feature model metadata
         feature_model_metadata = FMMetaData(
@@ -612,14 +628,17 @@ def _create_feature_models(dataset: DataSet, models: dict, user: User) -> List[F
         app.db.session.commit()
 
         # associated authors in feature model
-        for author_data in model['authors']:
-            author = Author(
-                name=author_data['name'],
-                affiliation=author_data['affiliation'],
-                fm_meta_data_id=feature_model_metadata.id
-            )
-            app.db.session.add(author)
-            app.db.session.commit()
+        if 'authors' in model and isinstance(model['authors'], list):
+            for author_data in model['authors']:
+                if 'name' in author_data:
+                    author = Author(
+                        name=author_data.get('name'),
+                        affiliation=author_data.get('affiliation'),
+                        orcid=author_data.get('orcid'),
+                        fm_meta_data_id=feature_model_metadata.id
+                    )
+                    app.db.session.add(author)
+                    app.db.session.commit()
 
         # create feature model
         feature_model = FeatureModel(
@@ -631,10 +650,10 @@ def _create_feature_models(dataset: DataSet, models: dict, user: User) -> List[F
 
         # associated files in feature model
         user_id = user.id
-        file_path = os.path.join(app.upload_folder_name(), 'temp', str(user_id), model['filename'])
+        file_path = os.path.join(app.upload_folder_name(), 'temp', str(user_id), filename)
         checksum, size = calculate_checksum_and_size(file_path)
         file = File(
-            name=model['filename'],
+            name=filename,
             checksum=checksum,
             size=size,
             feature_model_id=feature_model.id

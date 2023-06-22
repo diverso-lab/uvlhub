@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<OvModel FactoryId="de.ovgu.featureide.core.ovm.factory.OvmModelFactory" Name="">
+	<OvModelMetainformation Description="">
+		<graphics key="showhiddenfeatures" value="true"/>
+		<graphics key="legendposition" value="849,27"/>
+		<graphics key="legendautolayout" value="false"/>
+		<graphics key="showshortnames" value="false"/>
+		<graphics key="layout" value="horizontal"/>
+		<graphics key="showcollapsedconstraints" value="true"/>
+		<graphics key="legendhidden" value="false"/>
+		<graphics key="layoutalgorithm" value="1"/>
+	</OvModelMetainformation>
+	<OvModelVariationPoint Alternative="true" MaxChoices="2" MinChoices="1" Name="Messaging" Optional="false">
+		<OvModelVariationBaseMetainformation Abstract="false" Description="Different kinds of cars, that need different driving rules applied to them." Hidden="false" PartOfOvModelRoot="true">
+			<graphics key="collapsed" value="false"/>
+		</OvModelVariationBaseMetainformation>
+		<OptionalChildren>
+			<OvModelVariant Name="SMS" Optional="true">
+				<OvModelVariationBaseMetainformation Abstract="false" Description="" Hidden="false" PartOfOvModelRoot="true"/>
+			</OvModelVariant>
+			<OvModelVariant Name="MMS" Optional="true">
+				<OvModelVariationBaseMetainformation Abstract="false" Description="" Hidden="false" PartOfOvModelRoot="true"/>
+			</OvModelVariant>
+		</OptionalChildren>
+	</OvModelVariationPoint>
+	<OvModelVariationPoint Alternative="false" MaxChoices="-1" MinChoices="-1" Name="Utility Features" Optional="false">
+		<OvModelVariationBaseMetainformation Abstract="false" Description=" " Hidden="false" PartOfOvModelRoot="true">
+			<graphics key="collapsed" value="false"/>
+		</OvModelVariationBaseMetainformation>
+		<OptionalChildren>
+			<OvModelVariant Name="Calculator" Optional="true">
+				<OvModelVariationBaseMetainformation Abstract="false" Description="" Hidden="false" PartOfOvModelRoot="true"/>
+			</OvModelVariant>
+			<OvModelVariant Name="Currency Exchange" Optional="true">
+				<OvModelVariationBaseMetainformation Abstract="false" Description="" Hidden="false" PartOfOvModelRoot="true"/>
+			</OvModelVariant>
+		</OptionalChildren>
+	</OvModelVariationPoint>
+	<OvModelVariationPoint Alternative="true" MaxChoices="1" MinChoices="1" Name="OS" Optional="false">
+		<OvModelVariationBaseMetainformation Abstract="false" Description=" " Hidden="false" PartOfOvModelRoot="true">
+			<graphics key="collapsed" value="false"/>
+		</OvModelVariationBaseMetainformation>
+		<OptionalChildren>
+			<OvModelVariant Name="Symbian" Optional="true">
+				<OvModelVariationBaseMetainformation Abstract="false" Description="" Hidden="false" PartOfOvModelRoot="true"/>
+			</OvModelVariant>
+			<OvModelVariant Name="WinCE" Optional="true">
+				<OvModelVariationBaseMetainformation Abstract="false" Description="" Hidden="false" PartOfOvModelRoot="true"/>
+			</OvModelVariant>
+		</OptionalChildren>
+	</OvModelVariationPoint>
+	<OvModelRequiresConstraint Name="CURRENCY_EXCHANGE_IMPLIES_CALCULATOR">
+		<OvModelConstraintMetainformation Description="If currency exchange is chosen calculator needs to be chosen too"/>
+		<OvModelVariationPointReference Name="Currency Exchange"/>
+		<OvModelVariationPointReference Name="Calculator"/>
+	</OvModelRequiresConstraint>
+</OvModel>

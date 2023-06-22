@@ -1,0 +1,138 @@
+namespace BerkeleyDb
+
+features
+	BerkeleyDb {abstract}	
+		optional
+			BerkeleyDB {abstract}	
+				mandatory
+					FPersistency {abstract}	
+						optional
+							Persistency {abstract}	
+								mandatory
+									FIOFeature {abstract}	
+										alternative
+											NIO {abstract}	
+												mandatory
+													FNIOType {abstract}	
+														alternative
+															featureNIO
+															featureChunkedNIO
+
+												optional
+													featureDirectNIO
+											IO {abstract}	
+												mandatory
+													featureIO
+
+												optional
+													featureSynchronizedIO
+
+								optional
+									FPersistencyFeatures {abstract}	
+										or
+											featureChecksum
+											featureFileHandleCache
+											featureHandleFullDiscError
+											featureEnvironmentLock
+											Checkpointer {abstract}	
+												optional
+													featureCustomizableCheckpointerTime
+													featureCustomizableCheckpointerBytes
+													featureCheckpointerDaemon
+											Cleaner {abstract}	
+												optional
+													featureLookAheadCache
+													featureCleanerDaemon
+					FBtree {abstract}	
+						optional
+							BTree {abstract}	
+								optional
+									featureVerifier
+									featureTreeVisitor
+									featureINCompressor
+									FEvictor {abstract}	
+										optional
+											Evictor {abstract}	
+												mandatory
+													featureEvictor
+
+												optional
+													featureCriticalEviction
+													featureEvictorDaemon
+					BASE
+
+				optional
+					FLogging {abstract}	
+						optional
+							Logging {abstract}	
+								mandatory
+									featureLoggingBase
+
+								optional
+									featureLoggingFile
+									featureLoggingConsole
+									featureLoggingDbLog
+									featureLoggingFinest
+									featureLoggingFiner
+									featureLoggingFine
+									featureLoggingInfo
+									featureLoggingConfig
+									featureLoggingSevere
+					FStatistics {abstract}	
+						optional
+							Statistics {abstract}	
+								mandatory
+									FStatisticsFeatures {abstract}	
+										or
+											EnvStats {abstract}	
+												mandatory
+													featureStatisticsEnvBase
+
+												optional
+													featureStatisticsEnvLog
+													featureStatisticsEnvINCompressor
+													featureStatisticsEnvFSync
+													featureStatisticsEnvEvictor
+													featureStatisticsEnvCleaner
+													featureStatisticsEnvCheckpointer
+													featureStatisticsEnvCaching
+											featureStatisticsDatabase
+											featureStatisticsLock
+											featureStatisticsPreload
+											featureStatisticsSequence
+											featureStatisticsTransaction
+									featureStatisticsBase
+					featureMemoryBudget
+					FConcurrency {abstract}	
+						or
+							featureLatch
+							featureFSync
+							featureTransaction
+							dummyFeatureLocking
+							featureCheckLeaks
+					FDbOperation {abstract}	
+						or
+							featureDeleteDb
+							featureTruncateDb
+
+constraints
+	featureEvictor | featureEvictorDaemon | featureLookAheadCache | featureStatisticsEnvCaching => featureMemoryBudget
+	featureCheckLeaks => featureStatisticsLock
+	featureCriticalEviction => featureINCompressor
+	featureCustomizableCheckpointerBytes => featureCustomizableCheckpointerTime
+	featureDeleteDb => dummyFeatureLocking & featureEvictor & featureINCompressor & featureMemoryBudget
+	featureLatch => dummyFeatureLocking & featureCheckLeaks & featureDeleteDb & featureEvictor & featureFileHandleCache & featureFSync & featureINCompressor & featureMemoryBudget & featureStatisticsLock & featureTreeVisitor & featureTruncateDb & featureVerifier
+	featureLoggingSevere => featureEnvironmentLock
+	featureLoggingFine => dummyFeatureLocking & featureEvictor & featureINCompressor
+	featureLoggingInfo => featureChecksum & featureMemoryBudget
+	featureLoggingBase | featureLoggingFinest => featureTransaction
+	featureMemoryBudget => featureEvictor & featureLatch
+	featureStatisticsLock | featureStatisticsTransaction => dummyFeatureLocking
+	featureStatisticsEnvEvictor => featureEvictor
+	featureStatisticsEnvFSync => featureFSync
+	featureStatisticsEnvINCompressor => featureINCompressor
+	featureStatisticsTransaction => featureTransaction
+	featureStatisticsDatabase => featureTreeVisitor
+	featureTransaction => dummyFeatureLocking & featureDeleteDb & featureTruncateDb
+	featureTruncateDb => featureDeleteDb
+	featureVerifier => featureINCompressor & featureTreeVisitor

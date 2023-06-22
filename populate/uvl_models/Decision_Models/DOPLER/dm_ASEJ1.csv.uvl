@@ -1,0 +1,213 @@
+namespace VIRTUAL_ROOT
+
+features
+	VIRTUAL_ROOT {abstract}	
+		or
+			Strands	
+				alternative
+					Strands_7.0
+					Strands_6.0
+					Strands_5.0
+					Strands_4.0
+					Strands_3.0
+					Strands_2.0
+					Strands_31.0
+					Strands_30.0
+					Strands_29.0
+					Strands_28.0
+					Strands_27.0
+					Strands_26.0
+					Strands_25.0
+					Strands_24.0
+					Strands_23.0
+					Strands_22.0
+					Strands_21.0
+					Strands_20.0
+					Strands_19.0
+					Strands_18.0
+					Strands_17.0
+					Strands_16.0
+					Strands_15.0
+					Strands_14.0
+					Strands_13.0
+					Strands_12.0
+					Strands_11.0
+					Strands_10.0
+					Strands_9.0
+					Strands_8.0
+					Strands_100.0
+					Strands_96.0
+					Strands_97.0
+					Strands_98.0
+					Strands_99.0
+					Strands_92.0
+					Strands_93.0
+					Strands_94.0
+					Strands_95.0
+					Strands_88.0
+					Strands_89.0
+					Strands_90.0
+					Strands_91.0
+					Strands_84.0
+					Strands_85.0
+					Strands_86.0
+					Strands_87.0
+					Strands_80.0
+					Strands_81.0
+					Strands_82.0
+					Strands_83.0
+					Strands_76.0
+					Strands_77.0
+					Strands_78.0
+					Strands_79.0
+					Strands_72.0
+					Strands_73.0
+					Strands_74.0
+					Strands_75.0
+					Strands_68.0
+					Strands_69.0
+					Strands_70.0
+					Strands_71.0
+					Strands_64.0
+					Strands_65.0
+					Strands_66.0
+					Strands_67.0
+					Strands_62.0
+					Strands_63.0
+					Strands_60.0
+					Strands_61.0
+					Strands_58.0
+					Strands_59.0
+					Strands_56.0
+					Strands_57.0
+					Strands_54.0
+					Strands_55.0
+					Strands_52.0
+					Strands_53.0
+					Strands_50.0
+					Strands_51.0
+					Strands_48.0
+					Strands_49.0
+					Strands_46.0
+					Strands_47.0
+					Strands_44.0
+					Strands_45.0
+					Strands_42.0
+					Strands_43.0
+					Strands_40.0
+					Strands_41.0
+					Strands_38.0
+					Strands_39.0
+					Strands_36.0
+					Strands_37.0
+					Strands_34.0
+					Strands_35.0
+					Strands_32.0
+					Strands_33.0
+					Strands_1.0
+			Modes	
+				or
+					top
+					horizontal
+					bottom
+					vertical
+			UI
+			TopFeeding3D
+
+constraints
+	Strands_7.0 => !top
+	Strands_6.0 => !top
+	Strands_5.0 => !top
+	Strands_31.0 => !top
+	Strands_30.0 => !top
+	Strands_29.0 => !top
+	Strands_28.0 => !top
+	Strands_27.0 => !top
+	Strands_26.0 => !top
+	Strands_25.0 => !top
+	Strands_24.0 => !top
+	Strands_23.0 => !top
+	Strands_22.0 => !top
+	Strands_21.0 => !top
+	Strands_20.0 => !top
+	Strands_19.0 => !top
+	Strands_18.0 => !top
+	Strands_17.0 => !top
+	Strands_16.0 => !top
+	Strands_15.0 => !top
+	Strands_14.0 => !top
+	Strands_13.0 => !top
+	Strands_12.0 => !top
+	Strands_11.0 => !top
+	Strands_10.0 => !top
+	Strands_9.0 => !top
+	Strands_8.0 => !top
+	Strands_100.0 => !top
+	Strands_96.0 => !top
+	Strands_97.0 => !top
+	Strands_98.0 => !top
+	Strands_99.0 => !top
+	Strands_92.0 => !top
+	Strands_93.0 => !top
+	Strands_94.0 => !top
+	Strands_95.0 => !top
+	Strands_88.0 => !top
+	Strands_89.0 => !top
+	Strands_90.0 => !top
+	Strands_91.0 => !top
+	Strands_84.0 => !top
+	Strands_85.0 => !top
+	Strands_86.0 => !top
+	Strands_87.0 => !top
+	Strands_80.0 => !top
+	Strands_81.0 => !top
+	Strands_82.0 => !top
+	Strands_83.0 => !top
+	Strands_76.0 => !top
+	Strands_77.0 => !top
+	Strands_78.0 => !top
+	Strands_79.0 => !top
+	Strands_72.0 => !top
+	Strands_73.0 => !top
+	Strands_74.0 => !top
+	Strands_75.0 => !top
+	Strands_68.0 => !top
+	Strands_69.0 => !top
+	Strands_70.0 => !top
+	Strands_71.0 => !top
+	Strands_64.0 => !top
+	Strands_65.0 => !top
+	Strands_66.0 => !top
+	Strands_67.0 => !top
+	Strands_62.0 => !top
+	Strands_63.0 => !top
+	Strands_60.0 => !top
+	Strands_61.0 => !top
+	Strands_58.0 => !top
+	Strands_59.0 => !top
+	Strands_56.0 => !top
+	Strands_57.0 => !top
+	Strands_54.0 => !top
+	Strands_55.0 => !top
+	Strands_52.0 => !top
+	Strands_53.0 => !top
+	Strands_50.0 => !top
+	Strands_51.0 => !top
+	Strands_48.0 => !top
+	Strands_49.0 => !top
+	Strands_46.0 => !top
+	Strands_47.0 => !top
+	Strands_44.0 => !top
+	Strands_45.0 => !top
+	Strands_42.0 => !top
+	Strands_43.0 => !top
+	Strands_40.0 => !top
+	Strands_41.0 => !top
+	Strands_38.0 => !top
+	Strands_39.0 => !top
+	Strands_36.0 => !top
+	Strands_37.0 => !top
+	Strands_34.0 => !top
+	Strands_35.0 => !top
+	Strands_32.0 => !top
+	Strands_33.0 => !top

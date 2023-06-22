@@ -1,0 +1,7 @@
+ID;Question;Type;Range;Cardinality;Constraint/Rule;"Visible/relevant if"
+Strands;How many strands shall the caster have?;Double;1 - 100;;"if (getValue(Strands) >= 4) { disAllow(Modes.top) }
+if (getValue(Strands) < 4) { allow(Modes.top) }";true
+Modes;Which feeding modes shall be supported?;Enumeration;top | bottom | horizontal | vertical ;1:4;;
+UI;Shall the standard UI be deployed?;Boolean;true | false;;;true;;"
+Thermal3D;Shall data for thermal tracking be displayed in 3D?;Boolean;true | false;;;UI;;"
+TopFeeding3D;Do you require 3D visualization of Top Feeding?;Boolean;true | false;;;Modes == top || Thermal3D

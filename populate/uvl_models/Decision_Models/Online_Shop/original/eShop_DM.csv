@@ -1,0 +1,11 @@
+ID;Question;Type;Range;Cardinality;Constraint/Rule;"Visible/relevant if"
+OnlineShop;Do you want to create an Onlineshop?;Boolean;true | false;;;
+Payment;Which payment methods should be supported?;Enumeration;DebitCard | CreditCard;01:01;;
+Search;Should a search function be suppoted?;Boolean;true | false;;"if (Search) { UserManagement = Security; }
+if (!Search) { Sort = true }";
+Categories;Split products into categories?;Boolean;true | false;;;
+Sort;Should products be sortable?;Boolean;true | false;;if (!Sort) { Search = true; };
+UserManagement;Which user management enhancements should be supported?;Enumeration;Orders | Security | Payments | Wishlist;01:04;"if Security { disAllow(UserManagement.Payments); }
+if !Security { allow(UserManagement.Payments); }
+if Payments { disAllow(UserManagement.Security); }
+if !Payments { allow(UserManagement.Security); }";

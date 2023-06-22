@@ -18,6 +18,6 @@ def flamapy_valid_model(uvl_filename: str, user=None) -> bool:
 
     response = requests.post(publish_url, files=files)
     if response.status_code != 200:
-        error_message = 'Failed to send UVL file. Error details: {}'.format(response.json())
+        error_message = 'FlamaPy Error! Failed to send UVL file. Error details: {}'.format(response.json())
         raise Exception(error_message)
     return response.json()
