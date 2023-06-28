@@ -46,6 +46,7 @@ def create_app(config_name=None):
     from .dataset import dataset_bp
     from .explore import explore_bp
     from .profile import profile_bp
+    from .team import team_bp
     from .public import public_bp
 
     # Register blueprints
@@ -54,6 +55,7 @@ def create_app(config_name=None):
     app.register_blueprint(dataset_bp)
     app.register_blueprint(explore_bp)
     app.register_blueprint(profile_bp)
+    app.register_blueprint(team_bp)
     app.register_blueprint(public_bp)
 
     from flask_login import LoginManager

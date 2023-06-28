@@ -6,10 +6,12 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="description"
-          content="Repository of feature models in UVL format integrated with Zenodo and FlamaPy - DiversoLab">
-    <meta name="author" content="DiversoLab">
+          content="Repository of feature models in UVL format integrated with Zenodo and FlamaPy">
+    <meta name="author" content="University of Seville">
     <meta name="keywords"
-          content="diversolab, uvl, feature models, software product line, university of seville, david benavides, david romero">
+          content="diversolab, uvl, feature models, software product line, university of seville,
+           university of malaga, university of ulm, david romero, david benavides, jose a galindo, jose miguel horcas,
+chico sundermann">
 
     <link rel="preconnect" href="https://fonts.gstatic.com">
     <link rel="shortcut icon" href="{{ url_for("static", filename="img/icons/icon-250x250.png") }}"/>
@@ -17,7 +19,7 @@
 
     <link rel="canonical" href="https://www.uvlhub.io"/>
 
-    <title>{{ FLASK_APP_NAME }} - DiversoLab</title>
+    <title>{{ FLASK_APP_NAME }} - Repository of feature models in UVL </title>
 
     <link rel="stylesheet" href="{{ url_for("static", filename="css/app.css") }}">
 
@@ -59,6 +61,13 @@
                 <li class="sidebar-item {{ 'active' if request.endpoint == 'explore.index' else '' }}">
                     <a class="sidebar-link" href="{{ url_for('explore.index') }}">
                         <i class="align-middle" data-feather="search"></i> <span class="align-middle">Explore</span>
+                    </a>
+                </li>
+
+                <li class="sidebar-item {{ 'active' if request.endpoint == 'team.index' else '' }}">
+                    <a class="sidebar-link" href="{{ url_for('team.index') }}">
+                        <i class="align-middle" data-feather="users"></i> <span
+                            class="align-middle">Team</span>
                     </a>
                 </li>
 
@@ -123,18 +132,6 @@
 
             </ul>
 
-            <div class="sidebar-cta">
-                <div class="sidebar-cta-content">
-                    <strong class="d-inline-block mb-2">Proof of concept</strong>
-                    <div class="mb-3 text-sm">
-                        This application should only be used for research purposes
-                    </div>
-                    <div class="d-grid">
-                        <a href="https://github.com/diverso-lab/{{ FLASK_APP_NAME }}" class="btn btn-primary">View
-                            GitHub</a>
-                    </div>
-                </div>
-            </div>
         </div>
     </nav>
 
@@ -196,18 +193,17 @@
                 <div class="row text-muted">
                     <div class="col-6 text-start">
                         <p class="mb-0">
-                            <strong>{{ FLASK_APP_NAME }} </strong> &copy; DiversoLab
+                            <strong>{{ FLASK_APP_NAME }} </strong> University of Seville · University of Malaga ·
+                            University of Ulm
                         </p>
                     </div>
                     <div class="col-6 text-end">
                         <ul class="list-inline">
                             <li class="list-inline-item">
-                                <a class="text-muted" href="https://github.com/diverso-lab/flipa"
-                                   target="_blank">GitHub</a>
-                            </li>
-                            <li class="list-inline-item">
-                                <a class="text-muted" href="https://grupo.us.es/diversolab/" target="_blank">Diverso
-                                    Lab</a>
+                                <a class="text-muted" href="https://github.com/diverso-lab/uvlhub"
+                                   target="_blank">
+                                    <i class="align-middle" data-feather="github"></i>
+                                    Repository on GitHub</a>
                             </li>
                         </ul>
                     </div>

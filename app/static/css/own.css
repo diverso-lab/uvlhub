@@ -80,3 +80,14 @@
     color: white;
     font-size: 17px;
 }
+
+.custom-card-body {
+    height: 150px;
+}
+
+.custom-img {
+    padding: 0px 20px;
+    max-height: 200px;
+    min-height: 200px;
+}
+
