@@ -32,10 +32,15 @@
                     </div>
                     <p class="text-secondary">{{ dataset.created_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
 
-                    <div class="row mb-2">
+                    <div class="row mb-4">
 
-                        <div class="col-12">
-                            <p class="card-text">{{ dataset.ds_meta_data.description }}</p>
+                        <div class="col-md-4 col-12">
+                            <span class=" text-secondary">
+                                Description
+                            </span>
+                        </div>
+                        <div class="col-md-8 col-12">
+                             <p class="card-text">{{ dataset.ds_meta_data.description }}</p>
                         </div>
 
                     </div>
@@ -48,7 +53,7 @@
                             </span>
                         </div>
                         <div class="col-md-8 col-12">
-                            <a href="#">{{ dataset.user.name }}</a>
+                            <a href="#">{{ dataset.user.profile.surname }}, {{ dataset.user.profile.name }}</a>
                         </div>
 
                     </div>
@@ -85,7 +90,9 @@
                             </span>
                         </div>
                         <div class="col-md-8 col-12">
-                            {{ dataset.ds_meta_data.publication_doi }}
+                            <a href="{{ dataset.ds_meta_data.publication_doi }}">
+                                {{ dataset.ds_meta_data.publication_doi }}
+                            </a>
                         </div>
 
                     </div>
@@ -109,19 +116,6 @@
                             <i data-feather="clipboard" class="center-button-icon"
                                style="cursor: pointer"
                                onclick="copyText('dataset_doi')"></i>
-                        </div>
-
-                    </div>
-
-                    <div class="row mb-2">
-
-                        <div class="col-md-4 col-12">
-                            <span class=" text-secondary">
-                                Zenodo URL
-                            </span>
-                        </div>
-                        <div class="col-md-8 col-12">
-                            <a href="{{ dataset.get_zenodo_url()}}" target="_blank">{{ dataset.get_zenodo_url()}}</a>
                         </div>
 
                     </div>
