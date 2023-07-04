@@ -25,7 +25,6 @@ def create_dataset_endpoint(form_data: json, filenames: List[str]):
 
 
 def uvl_models_populate():
-
     main_directory = "uvl_models"
     number_of_datasets = 0
 
@@ -46,7 +45,7 @@ def uvl_models_populate():
                     # Checks if there are any uvl files in the current directory
                     uvl_files = glob.glob(subroot + "/*.uvl")
 
-                    if uvl_files: # We found a dataset
+                    if uvl_files:  # We found a dataset
 
                         # Since we do recursive scraping, we avoid going through the same directory twice,
                         # to avoid duplicating datasets.
@@ -56,59 +55,82 @@ def uvl_models_populate():
                             number_of_datasets = number_of_datasets + 1
 
                             # Get basic data
+                            subroot = subroot.replace("\\", "/")
+                            print(f"subroot: {subroot}")
                             main_name = subroot.split("/")[2].replace("_", " ")
-                            category_name = subroot.split("/")[3].replace("_", " ") if len(subroot.split("/")) > 3 else ""
+                            category_name = subroot.split("/")[3].replace("_", " ") if len(
+                                subroot.split("/")) > 3 else ""
                             dataset_name = f"{main_name} ({category_name})" if category_name != "" else f"{main_name}"
 
-                            # print(f"#{number_of_datasets} Dataset name: {dataset_name}, #uvls: {len(uvl_files)}")
-                            # print(f"Full path: {subroot}")
-                            # print("\n")
+                            print(f"#{number_of_datasets} Dataset name: {dataset_name}, #uvls: {len(uvl_files)}")
+                            print(f"Full path: {subroot}")
+                            print("\n")
 
-                            # Scrapping for each README.md
-                            readme_path = os.path.join(subroot, "README.md")
-                            publication_doi = ""
-                            if os.path.exists(readme_path):
-                                try:
-                                    with open(readme_path, "r") as readme_file:
-                                        first_line = readme_file.readline().strip()
+                            # Scrapping dataset metadata
+                            dataset = {}
 
-                                    if first_line.startswith("Reference: "):
-                                        publication_doi = first_line[len("Reference: "):].replace("-", "")
-                                except:
-                                    pass
+                            json_files = glob.glob(os.path.join(subroot, "*.json"))
+                            if json_files:
+                                json_file = json_files[0]
+                                json_filename = os.path.basename(json_file)
 
-                            # We build basic JSON
-                            dataset = {
-                                "info": {
-                                    "title": dataset_name,
-                                    "description": dataset_name,
-                                    "publication_type": "none",
-                                    "publication_doi": publication_doi,
-                                    "tags": [main_name.lower(), category_name.lower(), directory.replace("_", " ").lower()],
-                                    "authors": [
-                                        {
-                                            "name": "Sundermann, Chico",
-                                            "affiliation": "Institute of Software Engineering and Programming Languages (Universität ULM",
-                                            "orcid": "0000-0002-5239-3307"
-                                        },
-                                        {
-                                            "name": "DiversoLab",
-                                            "affiliation": "University of Seville"
-                                        }
-                                    ]
-                                },
-                                "models": []
-                            }
+                                print(f"Nombre del archivo JSON encontrado: {json_filename}")
 
+                                with open(json_file, "r", encoding="utf-8") as f:
+                                    json_data = f.read()
+
+                                dataset = json.loads(json_data)
+                                dataset["models"] = []
+
+                            else:
+                                # Scrapping for each README.md
+                                readme_path = os.path.join(subroot, "README.md")
+                                publication_doi = ""
+                                if os.path.exists(readme_path):
+                                    try:
+                                        with open(readme_path, "r") as readme_file:
+                                            first_line = readme_file.readline().strip()
+
+                                        if first_line.startswith("Reference: "):
+                                            publication_doi = first_line[len("Reference: "):].replace("-", "")
+                                    except:
+                                        pass
+
+                                # We build basic metadata
+                                dataset = {
+                                    "info": {
+                                        "title": dataset_name,
+                                        "description": dataset_name,
+                                        "publication_type": "none",
+                                        "publication_doi": publication_doi,
+                                        "tags": [main_name.lower(), category_name.lower(),
+                                                 directory.replace("_", " ").lower()],
+                                        "authors": [
+                                            {
+                                                "name": "Sundermann, Chico",
+                                                "affiliation": "Institute of Software Engineering and Programming Languages - Universität ULM",
+                                                "orcid": "0000-0002-5239-3307"
+                                            },
+                                            {
+                                                "name": "DiversoLab",
+                                                "affiliation": "University of Seville"
+                                            }
+                                        ]
+                                    },
+                                    "models": []
+                                }
+
+                            # Scrapping for models
                             for uvl_file in uvl_files:
+                                # uvl_file = uvl_file.replace("\\", "/")
                                 model = {
                                     "filename": uvl_file
                                 }
 
                                 dataset["models"].append(model)
 
-                                # json_data = json.dumps(dataset, indent=4, ensure_ascii=False, sort_keys=True)
-                                # print(json_data)
+                                json_data = json.dumps(dataset, indent=4, ensure_ascii=False, sort_keys=True)
+                                print(json_data)
 
                             # Create dataset in UVLHUB
                             response = create_dataset_endpoint(form_data=dataset, filenames=uvl_files)
@@ -119,5 +141,3 @@ def uvl_models_populate():
 
 
 uvl_models_populate()
-
-
