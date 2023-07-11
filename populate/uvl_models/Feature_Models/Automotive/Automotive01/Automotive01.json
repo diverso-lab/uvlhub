@@ -2,7 +2,7 @@
     "info": {
         "title": "Automotive01",
         "description": "Translated from FeatureIDE.xml, original publication https://doi.org/10.1145/3093335.2993248",
-        "publication_type": "Conference Proceedings",
+        "publication_type": "conferencepaper",
         "publication_doi": "https://doi.org/10.1145/3461001.3471145",
         "tags": [
             "Automotive",
