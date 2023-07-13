@@ -128,4 +128,16 @@ def get_authenticated_user_profile():
     return None
 
 
+def datasets_counter() -> int:
+    from app.dataset.models import DataSet
+    count = DataSet.query.count()
+    return count
+
+
+def feature_models_counter() -> int:
+    from app.dataset.models import FeatureModel
+    count = FeatureModel.query.count()
+    return count
+
+
 app = create_app()

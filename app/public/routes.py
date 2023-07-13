@@ -1,4 +1,5 @@
 import logging
+import app
 
 from flask import request, current_app, render_template
 
@@ -16,4 +17,10 @@ def index():
         DSMetaData.dataset_doi.isnot(None)
     ).order_by(DataSet.created_at.desc()).limit(5).all()
 
-    return render_template("public/index.html", datasets=latest_datasets)
+    datasets_counter = app.datasets_counter()
+    feature_models_counter = app.feature_models_counter()
+
+    return render_template("public/index.html",
+                           datasets=latest_datasets,
+                           datasets_counter=datasets_counter,
+                           feature_models_counter=feature_models_counter)

@@ -23,7 +23,7 @@
                                     {{ dataset.ds_meta_data.title }}
                                 </a>
 
-                                </h2>
+                            </h2>
                             <div>
                                 <span class="badge bg-secondary">{{ dataset.get_cleaned_publication_type() }}</span>
                             </div>
@@ -107,6 +107,14 @@
         <div class="col-xl-4 col-lg-12 col-md-12 col-sm-12">
 
             <div class="row">
+                <div class="col-12">
+
+                    <h1 class="h2 mb-3">
+                        <span class="badge bg-primary">{{ datasets_counter }} datasets</span>
+                        <span class="badge bg-dark">{{ feature_models_counter }} feature models</span>
+                    </h1>
+
+                </div>
 
                 {% if current_user.is_anonymous %}
 
