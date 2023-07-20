@@ -69,7 +69,8 @@ def create_app(config_name=None):
         return User.query.get(int(user_id))
 
     # Logging
-    logging.basicConfig(filename='app.log', level=logging.DEBUG)
+    logging.basicConfig(filename='app.log', level=logging.ERROR,
+                        format='%(asctime)s:%(levelname)s:%(message)s')
 
     # Custom error handlers
     register_error_handlers(app)

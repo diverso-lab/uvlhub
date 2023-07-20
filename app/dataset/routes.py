@@ -556,6 +556,7 @@ def api_create_dataset():
             dataset.ds_meta_data.dataset_doi = deposition_doi
             app.db.session.commit()
         except Exception as e:
+            logging.error("Exception occurred", exc_info=True)
             return jsonify({'exception': str(e)}), 500
 
     """
