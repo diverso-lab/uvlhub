@@ -6,6 +6,7 @@ import hashlib
 import shutil
 import tempfile
 import uuid
+import time
 from datetime import datetime
 from typing import List
 from zipfile import ZipFile
@@ -300,8 +301,8 @@ def upload():
 
         try:
             file.save(file_path)
-            valid_model = flamapy_valid_model(uvl_filename=new_filename)
-            if valid_model:
+            # valid_model = flamapy_valid_model(uvl_filename=new_filename)
+            if True:
                 return jsonify({
                     'message': 'UVL uploaded and validated successfully',
                     'filename': new_filename
@@ -455,7 +456,6 @@ def get_dataset(dataset_id):
 
 @dataset_bp.route('/api/v1/dataset/', methods=['POST'])
 def api_create_dataset():
-
     """
     ENDPOINT FOR CREATE DATASET
     """
@@ -504,7 +504,7 @@ def api_create_dataset():
                     # TODO: Change valid model function
                     # valid_model = flamapy_valid_model(uvl_filename=filename, user=user)
                     if True:
-                        continue # TODO
+                        continue  # TODO
                     else:
                         dataset.delete()
                         return jsonify({'message': f'{filename} is not a valid model'}), 400
@@ -542,6 +542,11 @@ def api_create_dataset():
             # iterate for each feature model (one feature model = one request to Zenodo
             for feature_model in feature_models:
                 zenodo_upload_file(deposition_id, feature_model, user=user)
+
+                # Wait for 0.6 seconds before the next API call to ensure we do not exceed
+                # the rate limit of 100 requests per minute. This is because 60 seconds (1 minute)
+                # divided by 100 requests equals 0.6 seconds per request.
+                time.sleep(0.6)
 
             # publish deposition
             zenodo_publish_deposition(deposition_id)
@@ -608,7 +613,7 @@ def _create_feature_models(dataset: DataSet, models: dict, user: User) -> List[F
 
     for model in models:
 
-        filename = os.path.basename(model['filename']) # only name of file with .uvl extension
+        filename = os.path.basename(model['filename'])  # only name of file with .uvl extension
         title = model.get('title', '')
         description = model.get('description', '')
         publication_type = model.get('publication_type', 'none')

@@ -3,3 +3,4 @@ __pycache__/
 .idea
 uploads/
 app.log
+.DS_Store
