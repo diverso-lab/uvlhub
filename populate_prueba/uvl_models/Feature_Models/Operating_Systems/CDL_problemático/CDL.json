@@ -1,0 +1,38 @@
+{
+    "info": {
+        "title": "CDL problemático",
+        "description": "Translated from FeatureIDE.xml, original publication in https://doi.org/10.1145/3106237.3106252",
+        "publication_type": "conferencepaper",
+        "publication_doi": "https://doi.org/10.1145/3461001.3471145",
+        "tags": [
+            "Systems Software"
+        ],
+        "authors": [
+            {
+                "name": "Chico Sundermann",
+                "affiliation": "University of Ulm",
+                "orcid": "0000-0002-5239-3307"
+            },
+            {
+                "name": "Kevin Feichtinger",
+                "affiliation": "Johannes Kepler University Linz",
+                "orcid": "0000-0003-1182-5377"
+            },
+            {
+                "name": "Dominik Engelhardt",
+                "affiliation": "TU Braunschweig",
+                "orcid": ""  
+            },
+            {
+                "name": "Rick Rabiser",
+                "affiliation": "Johannes Kepler University Linz",
+                "orcid": "0000-0003-3862-1112"
+            },
+            {
+                "name": "Thomas Thüm",
+                "affiliation": "University of Ulm",
+                "orcid": "0000-0001-8069-9584"
+            }
+        ]
+    }
+}

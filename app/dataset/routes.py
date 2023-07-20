@@ -540,21 +540,39 @@ def api_create_dataset():
         """
         try:
             # iterate for each feature model (one feature model = one request to Zenodo
-            for feature_model in feature_models:
-                zenodo_upload_file(deposition_id, feature_model, user=user)
+            try:
+                for feature_model in feature_models:
+                    zenodo_upload_file(deposition_id, feature_model, user=user)
+            except Exception as e:
+                logging.error("Exception occurred during file upload", exc_info=True)
+                return jsonify({'exception': str(e)}), 500
 
+            # delay
+            try:
                 # Wait for 0.6 seconds before the next API call to ensure we do not exceed
                 # the rate limit of 100 requests per minute. This is because 60 seconds (1 minute)
                 # divided by 100 requests equals 0.6 seconds per request.
                 time.sleep(0.6)
+            except Exception as e:
+                logging.error("Exception occurred during sleep", exc_info=True)
+                return jsonify({'exception': str(e)}), 500
 
             # publish deposition
-            zenodo_publish_deposition(deposition_id)
+            try:
+                zenodo_publish_deposition(deposition_id)
+            except Exception as e:
+                logging.error("Exception occurred during publish deposition", exc_info=True)
+                return jsonify({'exception': str(e)}), 500
 
             # update DOI
-            deposition_doi = zenodo_get_doi(deposition_id)
-            dataset.ds_meta_data.dataset_doi = deposition_doi
-            app.db.session.commit()
+            try:
+                deposition_doi = zenodo_get_doi(deposition_id)
+                dataset.ds_meta_data.dataset_doi = deposition_doi
+                app.db.session.commit()
+            except Exception as e:
+                logging.error("Exception occurred during update DOI", exc_info=True)
+                return jsonify({'exception': str(e)}), 500
+
         except Exception as e:
             logging.error("Exception occurred", exc_info=True)
             return jsonify({'exception': str(e)}), 500
