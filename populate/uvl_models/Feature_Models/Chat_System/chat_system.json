@@ -1,0 +1,38 @@
+{
+    "info": {
+        "title": "Chat System",
+        "description": "Example of a chat system",
+        "publication_type": "conferencepaper",
+        "publication_doi": "",
+        "tags": [
+            "chat system"
+        ],
+        "authors": [
+            {
+                "name": "David Romero-Organvidez",
+                "affiliation": "University of Seville",
+                "orcid": "0000-0002-8228-3483"
+            },
+            {
+                "name": "José A. Galindo",
+                "affiliation": "University of Seville",
+                "orcid": "0000-0001-9293-9784"
+            },
+            {
+                "name": "Chico Sundermann",
+                "affiliation": "University of Ulm",
+                "orcid": "0000-0002-5239-3307"
+            },
+            {
+                "name": "Jose-Miguel Horcas",
+                "affiliation": "University of Malaga",
+                "orcid": "0000-0002-7771-0575"
+            },
+            {
+                "name": "David Benavides",
+                "affiliation": "University of Seville",
+                "orcid": "0000-0002-8449-3273"
+            }
+        ]
+    }
+}
