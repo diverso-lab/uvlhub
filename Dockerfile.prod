@@ -23,6 +23,4 @@ COPY migrations/ ./migrations
 EXPOSE 5000
 
 # Run the database migrations and then start the application with Gunicorn
-CMD flask db upgrade && gunicorn --bind 0.0.0.0:5000 app:app
-
-
+CMD flask db upgrade && gunicorn --bind 0.0.0.0:5000 app:app --log-level debug
