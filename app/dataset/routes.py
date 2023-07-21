@@ -542,19 +542,16 @@ def api_create_dataset():
             # iterate for each feature model (one feature model = one request to Zenodo
             try:
                 for feature_model in feature_models:
+
                     zenodo_upload_file(deposition_id, feature_model, user=user)
+
+                    # Wait for 0.6 seconds before the next API call to ensure we do not exceed
+                    # the rate limit of 100 requests per minute. This is because 60 seconds (1 minute)
+                    # divided by 100 requests equals 0.6 seconds per request.
+                    time.sleep(0.6)
+
             except Exception as e:
                 logging.error("Exception occurred during file upload", exc_info=True)
-                return jsonify({'exception': str(e)}), 500
-
-            # delay
-            try:
-                # Wait for 0.6 seconds before the next API call to ensure we do not exceed
-                # the rate limit of 100 requests per minute. This is because 60 seconds (1 minute)
-                # divided by 100 requests equals 0.6 seconds per request.
-                time.sleep(0.6)
-            except Exception as e:
-                logging.error("Exception occurred during sleep", exc_info=True)
                 return jsonify({'exception': str(e)}), 500
 
             # publish deposition
