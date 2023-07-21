@@ -9,7 +9,7 @@ import json
 
 def create_dataset_endpoint(form_data: json, filenames: List[str]):
     # Endpoint URL
-    url = "http://localhost/api/v1/dataset/"
+    url = "https://www.uvlhub.io/api/v1/dataset/"
 
     # Basic data
     form_data = json.dumps(form_data)
