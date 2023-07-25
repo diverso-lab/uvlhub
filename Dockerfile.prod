@@ -23,4 +23,4 @@ COPY migrations/ ./migrations
 EXPOSE 5000
 
 # Run the database migrations and then start the application with Gunicorn
-CMD flask db upgrade && gunicorn --bind 0.0.0.0:5000 app:app --log-level debug --timeout 300 --workers 4 --threads 2
+CMD flask db upgrade && gunicorn --bind 0.0.0.0:5000 app:app --log-level debug --timeout 3600 --workers 4 --threads 2

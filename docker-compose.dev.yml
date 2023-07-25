@@ -7,8 +7,8 @@ services:
       dockerfile: Dockerfile.dev
     volumes:
       - .:/app
-    ports:
-      - "80:5000"
+    expose:
+      - "5000"
     environment:
       FLASK_ENV: development
     depends_on:
@@ -28,8 +28,10 @@ services:
     volumes:
       - ./nginx/nginx.dev.conf:/etc/nginx/nginx.conf
     ports:
+      - "80:80"
       - "8000:8000"
     depends_on:
+      - web
       - flamapyapi
 
   db:
