@@ -102,4 +102,12 @@ To renew a certificate that is less than 60 days from expiry, execute:
 chmod +x ssl_renew.sh && ./ssl_renew.sh
 ```
 
+## Update dependencies
 
+To update all project dependencies automatically, run:
+
+```
+chmod +x update_dependencies.sh && ./update_dependencies.sh
+```
+
+Note: it is the responsibility of the developer to check that the update of the dependencies has not broken any functionality and each dependency maintains backwards compatibility. Use the script with care!
