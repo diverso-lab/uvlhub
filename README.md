@@ -11,7 +11,7 @@
 
 # uvlhub.io
 
-Repository of feature models in UVL format integrated with Zenodo and FlamaPy - DiversoLab
+Repository of feature models in UVL format integrated with Zenodo and FlamaPy - Developed by DiversoLab
 
 ## Clone repo
 
@@ -87,3 +87,19 @@ To stop the deployment:
 ```
 docker stack rm uvlhub
 ```
+
+## SSL certificates
+
+To generate a new certificate, run: 
+
+```
+chmod +x ssl_setup.sh && ./ssl_setup.sh
+```
+
+To renew a certificate that is less than 60 days from expiry, execute:
+
+```
+chmod +x ssl_renew.sh && ./ssl_renew.sh
+```
+
+
