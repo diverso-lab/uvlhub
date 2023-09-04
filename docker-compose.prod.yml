@@ -25,7 +25,8 @@ services:
     image: nginx:latest
     volumes:
       - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf
-      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - ./letsencrypt:/etc/letsencrypt:ro
+      - ./public:/var/www:rw
     ports:
       - "80:80"
       - "443:443"
@@ -53,6 +54,13 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     command: --cleanup --interval 120 uvlhub-web-1
     restart: always
+
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - ./public:/var/www:rw
+      - ./letsencrypt:/etc/letsencrypt
 
 volumes:
   db_data:
