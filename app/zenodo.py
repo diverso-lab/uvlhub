@@ -126,7 +126,7 @@ def zenodo_create_new_deposition(dataset: DataSet) -> dict:
             **({'affiliation': author.affiliation} if author.affiliation else {}),
             **({'orcid': author.orcid} if author.orcid else {})
         } for author in dataset.ds_meta_data.authors],
-        'keywords': dataset.ds_meta_data.tags.split(", "),
+        'keywords': ["uvlhub"] if not dataset.ds_meta_data.tags else dataset.ds_meta_data.tags.split(", ") + ["uvlhub"],
         'access_right': 'open',
         'license': 'CC-BY-4.0'
     }
