@@ -1,5 +1,5 @@
-from flask import request, render_template, flash, redirect, url_for
-from flask_login import login_required
+from flask import request, render_template, flash, redirect, url_for, Blueprint
+from flask_login import login_required, current_user
 
 from app.profile import profile_bp
 from app.profile.forms import UserProfileForm
@@ -32,3 +32,11 @@ def edit_profile():
 
     else:
         return render_template('profile/edit.html', form=form)
+
+
+@profile_bp.route('/myProfile')
+@login_required
+def my_profile():
+    user_datasets = current_user.data_sets
+    return render_template('profile/myProfile.html', user_profile=current_user.profile, user=current_user, datasets=user_datasets)
+

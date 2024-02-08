@@ -1,0 +1,71 @@
+{% extends "base_template.html" %}
+
+{% block title %}Perfil de Usuario{% endblock %}
+
+{% block content %}
+
+<div class="container mt-4">
+    <h1 class="h3 mb-3 text-center">Perfil de Usuario</h1>
+
+    <div class="row justify-content-center mb-5">
+        <div class="col-12 col-md-8 col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Información del Perfil</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text"><i class="bi bi-person-fill"></i> <strong>Nombre:</strong> {{ user_profile.name}}
+                    </p>
+                    <p class="card-text"><i class="bi bi-person-lines-fill"></i> <strong>Apellidos:</strong> {{
+                        user_profile.surname }}</p>
+                    <p class="card-text"><i class="bi bi-building"></i> <strong>Afiliación:</strong> {{
+                        user_profile.affiliation }}</p>
+                    <p class="card-text"><i class="bi bi-qr-code"></i> <strong>Orcid:</strong> {{ user_profile.orcid }}
+                    </p>
+                    <p class="card-text"><i class="bi bi-envelope-fill"></i> <strong>Email:</strong> {{ user.email }}
+                    </p>
+                    <p class="card-text"><i class="bi bi-archive-fill"></i> <strong>Datasets subidos:</strong> {{ datasets|length }} datasets
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h2 class="h3 mb-3 mt-5">Datasets Subidos</h2>
+    {% if datasets %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Título</th>
+                                <th>Tipo de Publicación</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for dataset in datasets %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('dataset.view_dataset', dataset_id=dataset.id) }}">
+                                        {{ dataset.ds_meta_data.title }}
+                                    </a>
+                                </td>
+                                <td>{{ dataset.ds_meta_data.publication_type.name.replace('_', ' ').title() }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info" role="alert">
+        No hay datasets subidos.
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}
