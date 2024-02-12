@@ -21,7 +21,7 @@ git clone https://github.com/diverso-lab/uvlhub.git
 
 ## Set `.env` file in root with:
 
-Create an `.env` file in the root of the project with this information. It is important to obtain a token in Zenodo first.
+Create an `.env` file in the root of the project with this information. It is important to obtain a token in Zenodo first. **We recommend creating the token in the Sandbox version of Zenodo, in order to generate fictitious DOIs and not make intensive use of the real Zenodo SLA.**
 
 ```
 FLASK_APP_NAME=UVLHUB.IO
