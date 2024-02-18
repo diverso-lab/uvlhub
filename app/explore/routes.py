@@ -5,9 +5,9 @@ import unidecode
 from flask import render_template, request, abort, jsonify
 from sqlalchemy import or_, desc, asc, any_
 
-from . import explore_bp
-from .forms import ExploreForm
-from ..dataset.models import DataSet, DSMetaData, Author, FeatureModel, FMMetaData, PublicationType
+from app.explore import explore_bp
+from app.explore.forms import ExploreForm
+from app.dataset.models import DataSet, DSMetaData, Author, FeatureModel, FMMetaData, PublicationType
 
 
 @explore_bp.route('/explore', methods=['GET', 'POST'])

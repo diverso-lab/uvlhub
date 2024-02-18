@@ -3,8 +3,8 @@ import app
 
 from flask import request, current_app, render_template
 
-from . import public_bp
-from ..dataset.models import DataSet, DSMetaData
+from app.public import public_bp
+from app.dataset.models import DataSet, DSMetaData
 
 logger = logging.getLogger(__name__)
 

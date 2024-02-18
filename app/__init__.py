@@ -1,8 +1,9 @@
 import os
 import secrets
 import logging
+import importlib.util
 
-from flask import Flask, render_template
+from flask import Flask, render_template, Blueprint
 from flask_login import current_user
 from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
@@ -40,23 +41,24 @@ def create_app(config_name=None):
     db.init_app(app)
     migrate.init_app(app, db)
 
-    # Import blueprints
-    from app.tests.routes import test_routes
-    from .auth import auth_bp
-    from .dataset import dataset_bp
-    from .explore import explore_bp
-    from .profile import profile_bp
-    from .team import team_bp
-    from .public import public_bp
+    # Automatically scan and register blueprints
+    blueprints_directory = app.root_path
+    excluded_folders = {'static', 'templates', 'tests'}
 
-    # Register blueprints
-    app.register_blueprint(test_routes)
-    app.register_blueprint(auth_bp)
-    app.register_blueprint(dataset_bp)
-    app.register_blueprint(explore_bp)
-    app.register_blueprint(profile_bp)
-    app.register_blueprint(team_bp)
-    app.register_blueprint(public_bp)
+    for folder_name in os.listdir(blueprints_directory):
+        folder_path = os.path.join(blueprints_directory, folder_name)
+        if os.path.isdir(folder_path) and folder_name not in excluded_folders:
+            for filename in os.listdir(folder_path):
+                if filename.endswith('.py') and not filename.startswith('__'):
+                    module_name = filename[:-3]
+                    module_path = os.path.join(folder_path, filename)
+                    spec = importlib.util.spec_from_file_location(module_name, module_path)
+                    module = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(module)
+                    for item_name in dir(module):
+                        item = getattr(module, item_name)
+                        if isinstance(item, Blueprint):
+                            app.register_blueprint(item)
 
     from flask_login import LoginManager
     login_manager = LoginManager()

@@ -2,10 +2,10 @@ from flask import (render_template, redirect, url_for,
                    request, current_app)
 from flask_login import current_user, login_user, logout_user
 
-from . import auth_bp
-from .forms import SignupForm, LoginForm
-from .models import User
-from ..profile.models import UserProfile
+from app.auth import auth_bp
+from app.auth.forms import SignupForm, LoginForm
+
+from app.profile.models import UserProfile
 
 
 @auth_bp.route("/signup/", methods=["GET", "POST"])
@@ -20,6 +20,7 @@ def show_signup_form():
         email = form.email.data
         password = form.password.data
 
+        from app.auth.models import User
         user = User.get_by_email(email)
         if user is not None:
             error = f'Email {email} in use'
@@ -46,6 +47,7 @@ def login():
         return redirect(url_for('public.index'))
     form = LoginForm()
     if form.validate_on_submit():
+        from app.auth.models import User
         user = User.get_by_email(form.email.data)
 
         if user is not None and user.check_password(form.password.data):

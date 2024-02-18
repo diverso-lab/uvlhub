@@ -3,7 +3,7 @@ from wtforms import StringField, SelectField, FieldList, FormField, SubmitField,
 from wtforms.validators import DataRequired, URL, Optional
 from enum import Enum
 
-from .models import PublicationType
+from app.dataset.models import PublicationType
 
 
 class AuthorForm(FlaskForm):

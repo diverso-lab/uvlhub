@@ -4,8 +4,8 @@ from flask_login import login_required
 from app.profile import profile_bp
 from app.profile.forms import UserProfileForm
 
-from .models import UserProfile
-from .. import get_authenticated_user_profile
+from app.profile.models import UserProfile
+from app import get_authenticated_user_profile
 
 
 @profile_bp.route('/profile/edit', methods=['GET', 'POST'])

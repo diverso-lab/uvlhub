@@ -31,6 +31,7 @@ class PublicationType(Enum):
 
 
 class Author(db.Model):
+    __table_args__ = {'extend_existing': True}
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), nullable=False)
     affiliation = db.Column(db.String(120))
@@ -47,6 +48,7 @@ class Author(db.Model):
 
 
 class DSMetrics(db.Model):
+    __table_args__ = {'extend_existing': True}
     id = db.Column(db.Integer, primary_key=True)
     number_of_models = db.Column(db.String(120))
     number_of_features = db.Column(db.String(120))
@@ -56,6 +58,7 @@ class DSMetrics(db.Model):
 
 
 class DSMetaData(db.Model):
+    __table_args__ = {'extend_existing': True}
     id = db.Column(db.Integer, primary_key=True)
     deposition_id = db.Column(db.Integer)
     title = db.Column(db.String(120), nullable=False)
@@ -70,6 +73,7 @@ class DSMetaData(db.Model):
 
 
 class DataSet(db.Model):
+    __table_args__ = {'extend_existing': True}
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
@@ -77,7 +81,7 @@ class DataSet(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
     ds_meta_data = db.relationship('DSMetaData', backref='data_set', lazy=True, cascade="all, delete")
-    feature_models = db.relationship('FeatureModel', backref='data_set', lazy=True, cascade="all, delete")
+    feature_models = db.relationship('FeatureModel', backref='data_set_ref', lazy=True, cascade="all, delete")
 
     def delete(self):
         db.session.delete(self)
@@ -124,6 +128,7 @@ class DataSet(db.Model):
 
 
 class FeatureModel(db.Model):
+    __table_args__ = {'extend_existing': True}
     id = db.Column(db.Integer, primary_key=True)
     data_set_id = db.Column(db.Integer, db.ForeignKey('data_set.id'), nullable=False)
     fm_meta_data_id = db.Column(db.Integer, db.ForeignKey('fm_meta_data.id'))
@@ -135,6 +140,7 @@ class FeatureModel(db.Model):
 
 
 class File(db.Model):
+    __table_args__ = {'extend_existing': True}
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), nullable=False)
     checksum = db.Column(db.String(120), nullable=False)
@@ -159,6 +165,7 @@ class File(db.Model):
 
 
 class FMMetaData(db.Model):
+    __table_args__ = {'extend_existing': True}
     id = db.Column(db.Integer, primary_key=True)
     uvl_filename = db.Column(db.String(120), nullable=False)
     title = db.Column(db.String(120), nullable=False)
@@ -177,6 +184,7 @@ class FMMetaData(db.Model):
 
 
 class FMMetrics(db.Model):
+    __table_args__ = {'extend_existing': True}
     id = db.Column(db.Integer, primary_key=True)
     solver = db.Column(db.Text)
     not_solver = db.Column(db.Text)
@@ -186,6 +194,7 @@ class FMMetrics(db.Model):
 
 
 class DSDownloadRecord(db.Model):
+    __table_args__ = {'extend_existing': True}
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     dataset_id = db.Column(db.Integer, db.ForeignKey('data_set.id'))
@@ -197,6 +206,7 @@ class DSDownloadRecord(db.Model):
 
 
 class DSViewRecord(db.Model):
+    __table_args__ = {'extend_existing': True}
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     dataset_id = db.Column(db.Integer, db.ForeignKey('data_set.id'))
@@ -208,6 +218,7 @@ class DSViewRecord(db.Model):
 
 
 class FileDownloadRecord(db.Model):
+    __table_args__ = {'extend_existing': True}
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     file_id = db.Column(db.Integer, db.ForeignKey('file.id'))

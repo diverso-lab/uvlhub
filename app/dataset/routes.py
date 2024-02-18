@@ -17,13 +17,13 @@ from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 
 import app
-from .forms import DataSetForm
-from .models import DataSet, DSMetrics, FeatureModel, File, FMMetaData, FMMetrics, DSMetaData, Author, PublicationType, \
-    DSDownloadRecord, DSViewRecord, FileDownloadRecord
-from . import dataset_bp
-from ..auth.models import User
-from ..flama import flamapy_valid_model
-from ..zenodo import zenodo_create_new_deposition, test_zenodo_connection, zenodo_upload_file, \
+from app.dataset.forms import DataSetForm
+from app.dataset.models import DataSet, DSMetrics, FeatureModel, File, FMMetaData, FMMetrics, DSMetaData, Author, \
+    PublicationType, DSDownloadRecord, DSViewRecord, FileDownloadRecord
+from app.dataset import dataset_bp
+from app.auth.models import User
+from app.flama import flamapy_valid_model
+from app.zenodo import zenodo_create_new_deposition, test_zenodo_connection, zenodo_upload_file, \
     zenodo_publish_deposition, zenodo_get_doi, test_full_zenodo_connection
 
 
@@ -542,7 +542,6 @@ def api_create_dataset():
             # iterate for each feature model (one feature model = one request to Zenodo
             try:
                 for feature_model in feature_models:
-
                     zenodo_upload_file(deposition_id, feature_model, user=user)
 
                     # Wait for 0.6 seconds before the next API call to ensure we do not exceed
