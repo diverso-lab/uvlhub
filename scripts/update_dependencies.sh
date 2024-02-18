@@ -9,4 +9,4 @@ pip freeze | cut -d = -f 1 | xargs -n1 pip install --upgrade
 # Update requirements.txt
 pip freeze > ../requirements.txt
 
-echo "Update completed!"º
+echo "Update completed!"
