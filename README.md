@@ -11,7 +11,7 @@
 
 # uvlhub.io
 
-Repository of feature models in UVL format integrated with Zenodo and FlamaPy - DiversoLab
+Repository of feature models in UVL format integrated with Zenodo and FlamaPy - Developed by DiversoLab
 
 ## Clone repo
 
@@ -21,7 +21,7 @@ git clone https://github.com/diverso-lab/uvlhub.git
 
 ## Set `.env` file in root with:
 
-Create an `.env` file in the root of the project with this information. It is important to obtain a token in Zenodo first.
+Create an `.env` file in the root of the project with this information. It is important to obtain a token in Zenodo first. **We recommend creating the token in the Sandbox version of Zenodo, in order to generate fictitious DOIs and not make intensive use of the real Zenodo SLA.**
 
 ```
 FLASK_APP_NAME=UVLHUB.IO
@@ -42,6 +42,8 @@ docker compose -f docker-compose.dev.yml up -d
 ```
 
 This will apply the migrations to the database and run the Flask application. 
+
+**If everything worked correctly, you should see the deployed version of UVLHub in development at `http://localhost`.**
 
 ### Migrations
 
@@ -87,16 +89,17 @@ To stop the deployment:
 ```
 docker stack rm uvlhub
 ```
+
 ## SSL certificates
 
-To generate a new certificate, run in deploy server: 
+To generate a new certificate, run: 
 
 ```
 cd scripts
 chmod +x ssl_setup.sh && ./ssl_setup.sh
 ```
 
-To renew a certificate that is less than 60 days from expiry, execute in deploy server:
+To renew a certificate that is less than 60 days from expiry, execute:
 
 ```
 cd scripts
@@ -113,3 +116,4 @@ chmod +x update_dependencies.sh && ./update_dependencies.sh
 ```
 
 Note: it is the responsibility of the developer to check that the update of the dependencies has not broken any functionality and each dependency maintains backwards compatibility. Use the script with care!
+

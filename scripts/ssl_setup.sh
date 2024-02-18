@@ -24,5 +24,15 @@ while true; do
     fi
 done
 
-# Generate the certificate
+# Replace the placeholder domain in the configuration file
+sed -i "s/www.domain.com/$domain/g" ./nginx/nginx.dev.conf
+sed -i "s/www.domain.com/$domain/g" ./nginx/nginx.prod.conf
+
+# Run Nginx container in dev mode (only for generate SSL)
+docker compose -f docker-compose.dev.yml up -d nginx
+
+# Generate the certificate with Certbot
 docker compose -f docker-compose.prod.yml run certbot certonly --webroot --webroot-path=/var/www -d $domain --email $email --agree-tos --no-eff-email --force-renewal
+
+# Configure Nginx to use the new certificate
+docker compose -f docker-compose.dev.yml down && docker compose -f docker-compose.prod.yml up -d --build
