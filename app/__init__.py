@@ -66,18 +66,6 @@ def create_app(config_name=None):
     def inject_flask_app_name():
         return dict(FLASK_APP_NAME=os.getenv('FLASK_APP_NAME'))
 
-    # Injecting methods
-    @app.context_processor
-    def handle_service_response(result, errors, success_url, success_msg, error_template, form):
-        if result:
-            flash(success_msg, 'success')
-            return redirect(url_for(success_url))
-        else:
-            for error_field, error_messages in errors.items():
-                for error_message in error_messages:
-                    flash(f'{error_field}: {error_message}', 'error')
-            return render_template(error_template, form=form)
-
     return app
 
 

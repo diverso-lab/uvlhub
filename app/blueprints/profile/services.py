@@ -1,6 +1,8 @@
 from app.blueprints.profile.repositories import UserProfileRepository
 from app.services.BaseService import BaseService
 
+from flask import current_app
+
 
 class UserProfileService(BaseService):
     def __init__(self):
