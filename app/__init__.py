@@ -51,7 +51,7 @@ def create_app(config_name=None):
 
     @login_manager.user_loader
     def load_user(user_id):
-        from app.blueprints.auth import User
+        from app.blueprints.auth.models import User
         return User.query.get(int(user_id))
 
     # Logging
@@ -105,7 +105,7 @@ def upload_folder_name():
 
 def get_user_by_token(token):
     # TODO
-    from app.blueprints.auth import User
+    from app.blueprints.auth.models import User
     return User.query.first()
 
 
@@ -139,9 +139,7 @@ def register_blueprints(app):
                 for item in dir(routes_module):
                     if isinstance(getattr(routes_module, item), Blueprint):
                         blueprint = getattr(routes_module, item)
-                        url_prefix = f'/{blueprint_name if blueprint_name != "public" else ""}'
-                        app.register_blueprint(blueprint, url_prefix=url_prefix)
-                        app.blueprint_url_prefixes[blueprint.name] = url_prefix
+                        app.register_blueprint(blueprint)
             except ModuleNotFoundError as e:
                 print(f"Could not load the module for Blueprint '{blueprint_name}': {e}")
 
