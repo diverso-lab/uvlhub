@@ -3,7 +3,7 @@ import secrets
 import logging
 import importlib.util
 
-from flask import Flask, render_template, Blueprint
+from flask import Flask, render_template, Blueprint, flash, redirect, url_for
 from flask_login import current_user
 from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
@@ -66,6 +66,18 @@ def create_app(config_name=None):
     def inject_flask_app_name():
         return dict(FLASK_APP_NAME=os.getenv('FLASK_APP_NAME'))
 
+    # Injecting methods
+    @app.context_processor
+    def handle_service_response(result, errors, success_url, success_msg, error_template, form):
+        if result:
+            flash(success_msg, 'success')
+            return redirect(url_for(success_url))
+        else:
+            for error_field, error_messages in errors.items():
+                for error_message in error_messages:
+                    flash(f'{error_field}: {error_message}', 'error')
+            return render_template(error_template, form=form)
+
     return app
 
 
@@ -112,6 +124,12 @@ def get_user_by_token(token):
 def get_authenticated_user_profile():
     if current_user.is_authenticated:
         return current_user.profile
+    return None
+
+
+def get_authenticated_user():
+    if current_user.is_authenticated:
+        return current_user
     return None
 
 
