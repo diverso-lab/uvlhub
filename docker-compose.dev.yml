@@ -1,6 +1,7 @@
 version: '3.8'
 
 services:
+
   web:
     build:
       context: .
@@ -11,28 +12,10 @@ services:
       - "5000"
     environment:
       FLASK_ENV: development
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     depends_on:
       - db
-
-  flamapyapi:
-    image: flamapy/flamapy-fm-dist:v1.5.3
-    deploy:
-      replicas: 3
-      restart_policy:
-        condition: on-failure
-    expose:
-      - 8000
-
-  nginx:
-    image: nginx:latest
-    volumes:
-      - ./nginx/nginx.dev.conf:/etc/nginx/nginx.conf
-    ports:
-      - "80:80"
-      - "8000:8000"
-    depends_on:
-      - web
-      - flamapyapi
 
   db:
     image: mysql:latest
@@ -47,6 +30,15 @@ services:
       - "3306:3306"
     volumes:
       - db_data:/var/lib/mysql
+
+  nginx:
+    image: nginx:latest
+    volumes:
+      - ./nginx/nginx.dev.conf:/etc/nginx/nginx.conf
+    ports:
+      - "80:80"
+    depends_on:
+      - web
 
 volumes:
   db_data:
