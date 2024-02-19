@@ -8,7 +8,6 @@ from flask_login import current_user
 from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
 from flask_migrate import Migrate
-from flask_wtf import CSRFProtect
 
 # Load environment variables
 load_dotenv()
@@ -41,24 +40,9 @@ def create_app(config_name=None):
     db.init_app(app)
     migrate.init_app(app, db)
 
-    # Automatically scan and register blueprints
-    blueprints_directory = app.root_path
-    excluded_folders = {'static', 'templates', 'tests'}
-
-    for folder_name in os.listdir(blueprints_directory):
-        folder_path = os.path.join(blueprints_directory, folder_name)
-        if os.path.isdir(folder_path) and folder_name not in excluded_folders:
-            for filename in os.listdir(folder_path):
-                if filename.endswith('.py') and not filename.startswith('__'):
-                    module_name = filename[:-3]
-                    module_path = os.path.join(folder_path, filename)
-                    spec = importlib.util.spec_from_file_location(module_name, module_path)
-                    module = importlib.util.module_from_spec(spec)
-                    spec.loader.exec_module(module)
-                    for item_name in dir(module):
-                        item = getattr(module, item_name)
-                        if isinstance(item, Blueprint):
-                            app.register_blueprint(item)
+    # Register blueprints
+    register_blueprints(app)
+    print_registered_blueprints(app)
 
     from flask_login import LoginManager
     login_manager = LoginManager()
@@ -67,7 +51,7 @@ def create_app(config_name=None):
 
     @login_manager.user_loader
     def load_user(user_id):
-        from app.auth.models import User
+        from app.blueprints.auth import User
         return User.query.get(int(user_id))
 
     # Logging
@@ -121,7 +105,7 @@ def upload_folder_name():
 
 def get_user_by_token(token):
     # TODO
-    from app.auth.models import User
+    from app.blueprints.auth import User
     return User.query.first()
 
 
@@ -132,15 +116,41 @@ def get_authenticated_user_profile():
 
 
 def datasets_counter() -> int:
-    from app.dataset.models import DataSet
+    from app.blueprints.dataset.models import DataSet
     count = DataSet.query.count()
     return count
 
 
 def feature_models_counter() -> int:
-    from app.dataset.models import FeatureModel
+    from app.blueprints.dataset.models import FeatureModel
     count = FeatureModel.query.count()
     return count
+
+
+def register_blueprints(app):
+    app.blueprint_url_prefixes = {}
+    base_dir = os.path.abspath(os.path.dirname(__file__))
+    blueprints_dir = os.path.join(base_dir, 'blueprints')
+    for blueprint_name in os.listdir(blueprints_dir):
+        blueprint_path = os.path.join(blueprints_dir, blueprint_name)
+        if os.path.isdir(blueprint_path) and not blueprint_name.startswith('__'):
+            try:
+                routes_module = importlib.import_module(f'app.blueprints.{blueprint_name}.routes')
+                for item in dir(routes_module):
+                    if isinstance(getattr(routes_module, item), Blueprint):
+                        blueprint = getattr(routes_module, item)
+                        url_prefix = f'/{blueprint_name if blueprint_name != "public" else ""}'
+                        app.register_blueprint(blueprint, url_prefix=url_prefix)
+                        app.blueprint_url_prefixes[blueprint.name] = url_prefix
+            except ModuleNotFoundError as e:
+                print(f"Could not load the module for Blueprint '{blueprint_name}': {e}")
+
+
+def print_registered_blueprints(app):
+    print("Registered blueprints")
+    for name, blueprint in app.blueprints.items():
+        url_prefix = app.blueprint_url_prefixes.get(name, 'No URL prefix set')
+        print(f"Name: {name}, URL prefix: {url_prefix}")
 
 
 app = create_app()

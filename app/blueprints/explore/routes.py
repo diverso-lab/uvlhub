@@ -2,12 +2,12 @@ import re
 
 import unidecode
 
-from flask import render_template, request, abort, jsonify
-from sqlalchemy import or_, desc, asc, any_
+from flask import render_template, request, jsonify
+from sqlalchemy import or_, any_
 
-from app.explore import explore_bp
-from app.explore.forms import ExploreForm
-from app.dataset.models import DataSet, DSMetaData, Author, FeatureModel, FMMetaData, PublicationType
+from app.blueprints.explore import explore_bp
+from app.blueprints.explore.forms import ExploreForm
+from app.blueprints.dataset.models import DataSet, DSMetaData, Author, FeatureModel, FMMetaData, PublicationType
 
 
 @explore_bp.route('/explore', methods=['GET', 'POST'])

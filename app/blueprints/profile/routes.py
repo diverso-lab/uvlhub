@@ -1,10 +1,9 @@
-from flask import request, render_template, flash, redirect, url_for
+from flask import request, render_template, flash
 from flask_login import login_required
 
-from app.profile import profile_bp
-from app.profile.forms import UserProfileForm
+from app.blueprints.profile import profile_bp
+from app.blueprints.profile.forms import UserProfileForm
 
-from app.profile.models import UserProfile
 from app import get_authenticated_user_profile
 
 

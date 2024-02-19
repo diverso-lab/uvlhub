@@ -1,10 +1,9 @@
 import logging
 import app
 
-from flask import request, current_app, render_template
-
-from app.public import public_bp
-from app.dataset.models import DataSet, DSMetaData
+from flask import request, current_app, render_template, Blueprint
+from app.blueprints.public import public_bp
+from ..dataset.models import DataSet, DSMetaData
 
 logger = logging.getLogger(__name__)
 

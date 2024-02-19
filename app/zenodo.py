@@ -3,7 +3,6 @@ This module contains functions to interact with Zenodo and perform operations re
 """
 
 import os
-from typing import Tuple, List
 
 import requests
 
@@ -12,7 +11,7 @@ from flask import current_app, jsonify, Response
 from flask_login import current_user
 
 import app
-from app.dataset.models import DataSet, FeatureModel
+from app.blueprints.dataset.models import DataSet, FeatureModel
 
 load_dotenv()
 
@@ -156,7 +155,6 @@ def zenodo_upload_file(deposition_id: int, feature_model: FeatureModel, user=Non
     Returns:
         dict: The response in JSON format with the details of the uploaded file.
     """
-    from app.auth.models import User
     uvl_filename = feature_model.fm_meta_data.uvl_filename
     data = {'name': uvl_filename}
     user_id = current_user.id if user is None else user.id
