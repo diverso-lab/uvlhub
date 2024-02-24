@@ -1,10 +1,12 @@
 #!/bin/sh
 
-until mysql -h db -P 3306 -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" -e 'SELECT 1' &> /dev/null
+echo "Hostname: $MARIADB_HOSTNAME, Port: $MARIADB_PORT, User: $MARIADB_USER"
+
+until mysql -h "$MARIADB_HOSTNAME" -P "$MARIADB_PORT" -u"$MARIADB_USER" -p"$MARIADB_PASSWORD" -e 'SELECT 1' &> /dev/null
 do
-  echo "MySQL is unavailable - sleeping"
+  echo "MariaDB is unavailable - sleeping"
   sleep 1
 done
 
-echo "MySQL is up - executing command"
+echo "MariaDB is up - executing command"
 exec "$@"

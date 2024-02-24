@@ -23,8 +23,11 @@ def create_app(config_name=None):
 
     # Database configuration
     app.config['SQLALCHEMY_DATABASE_URI'] = (
-        f"mysql+pymysql://{os.getenv('MYSQL_USER', 'default_user')}:{os.getenv('MYSQL_PASSWORD', 'default_password')}"
-        f"@{os.getenv('MYSQL_HOSTNAME', 'localhost')}:3306/{os.getenv('MYSQL_DATABASE', 'default_db')}"
+        f"mysql+pymysql://{os.getenv('MARIADB_USER', 'default_user')}:"
+        f"{os.getenv('MARIADB_PASSWORD', 'default_password')}@"
+        f"{os.getenv('MARIADB_HOSTNAME', 'localhost')}:"
+        f"{os.getenv('MARIADB_PORT', '3306')}/"
+        f"{os.getenv('MARIADB_DATABASE', 'default_db')}"
     )
 
     # Timezone

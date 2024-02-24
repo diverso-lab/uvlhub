@@ -25,11 +25,12 @@ Create an `.env` file in the root of the project with this information. It is im
 
 ```
 FLASK_APP_NAME=UVLHUB.IO
-MYSQL_HOSTNAME=db
-MYSQL_DATABASE=uvlhubdb
-MYSQL_USER=uvlhubuser
-MYSQL_PASSWORD=uvlhubpass
-MYSQL_ROOT_PASSWORD=uvlhubrootpass
+MARIADB_HOSTNAME=db
+MARIADB_PORT=3306
+MARIADB_DATABASE=uvlhubdb
+MARIADB_USER=uvlhubuser
+MARIADB_PASSWORD=uvlhubpass
+MARIADB_ROOT_PASSWORD=uvlhubrootpass
 ZENODO_ACCESS_TOKEN=<GET_ACCESS_TOKEN_IN_ZENODO>
 ```
 
