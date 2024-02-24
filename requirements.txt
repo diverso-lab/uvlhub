@@ -4,8 +4,8 @@ certifi==2024.2.2
 cffi==1.16.0
 charset-normalizer==3.3.2
 click==8.1.7
-cryptography==42.0.3
-dnspython==2.6.0
+cryptography==42.0.5
+dnspython==2.6.1
 email-validator==2.1.0.post1
 flake8==7.0.0
 Flask==3.0.2
