@@ -1,13 +1,13 @@
 import os
 import secrets
 import logging
+import importlib.util
 
-from flask import Flask, render_template
+from flask import Flask, render_template, Blueprint, flash, redirect, url_for
 from flask_login import current_user
 from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
 from flask_migrate import Migrate
-from flask_wtf import CSRFProtect
 
 # Load environment variables
 load_dotenv()
@@ -23,8 +23,11 @@ def create_app(config_name=None):
 
     # Database configuration
     app.config['SQLALCHEMY_DATABASE_URI'] = (
-        f"mysql+pymysql://{os.getenv('MYSQL_USER', 'default_user')}:{os.getenv('MYSQL_PASSWORD', 'default_password')}"
-        f"@{os.getenv('MYSQL_HOSTNAME', 'localhost')}:3306/{os.getenv('MYSQL_DATABASE', 'default_db')}"
+        f"mysql+pymysql://{os.getenv('MARIADB_USER', 'default_user')}:"
+        f"{os.getenv('MARIADB_PASSWORD', 'default_password')}@"
+        f"{os.getenv('MARIADB_HOSTNAME', 'localhost')}:"
+        f"{os.getenv('MARIADB_PORT', '3306')}/"
+        f"{os.getenv('MARIADB_DATABASE', 'default_db')}"
     )
 
     # Timezone
@@ -40,23 +43,9 @@ def create_app(config_name=None):
     db.init_app(app)
     migrate.init_app(app, db)
 
-    # Import blueprints
-    from app.tests.routes import test_routes
-    from .auth import auth_bp
-    from .dataset import dataset_bp
-    from .explore import explore_bp
-    from .profile import profile_bp
-    from .team import team_bp
-    from .public import public_bp
-
     # Register blueprints
-    app.register_blueprint(test_routes)
-    app.register_blueprint(auth_bp)
-    app.register_blueprint(dataset_bp)
-    app.register_blueprint(explore_bp)
-    app.register_blueprint(profile_bp)
-    app.register_blueprint(team_bp)
-    app.register_blueprint(public_bp)
+    register_blueprints(app)
+    print_registered_blueprints(app)
 
     from flask_login import LoginManager
     login_manager = LoginManager()
@@ -65,7 +54,7 @@ def create_app(config_name=None):
 
     @login_manager.user_loader
     def load_user(user_id):
-        from app.auth.models import User
+        from app.blueprints.auth.models import User
         return User.query.get(int(user_id))
 
     # Logging
@@ -119,7 +108,7 @@ def upload_folder_name():
 
 def get_user_by_token(token):
     # TODO
-    from app.auth.models import User
+    from app.blueprints.auth.models import User
     return User.query.first()
 
 
@@ -129,16 +118,46 @@ def get_authenticated_user_profile():
     return None
 
 
+def get_authenticated_user():
+    if current_user.is_authenticated:
+        return current_user
+    return None
+
+
 def datasets_counter() -> int:
-    from app.dataset.models import DataSet
+    from app.blueprints.dataset.models import DataSet
     count = DataSet.query.count()
     return count
 
 
 def feature_models_counter() -> int:
-    from app.dataset.models import FeatureModel
+    from app.blueprints.dataset.models import FeatureModel
     count = FeatureModel.query.count()
     return count
+
+
+def register_blueprints(app):
+    app.blueprint_url_prefixes = {}
+    base_dir = os.path.abspath(os.path.dirname(__file__))
+    blueprints_dir = os.path.join(base_dir, 'blueprints')
+    for blueprint_name in os.listdir(blueprints_dir):
+        blueprint_path = os.path.join(blueprints_dir, blueprint_name)
+        if os.path.isdir(blueprint_path) and not blueprint_name.startswith('__'):
+            try:
+                routes_module = importlib.import_module(f'app.blueprints.{blueprint_name}.routes')
+                for item in dir(routes_module):
+                    if isinstance(getattr(routes_module, item), Blueprint):
+                        blueprint = getattr(routes_module, item)
+                        app.register_blueprint(blueprint)
+            except ModuleNotFoundError as e:
+                print(f"Could not load the module for Blueprint '{blueprint_name}': {e}")
+
+
+def print_registered_blueprints(app):
+    print("Registered blueprints")
+    for name, blueprint in app.blueprints.items():
+        url_prefix = app.blueprint_url_prefixes.get(name, 'No URL prefix set')
+        print(f"Name: {name}, URL prefix: {url_prefix}")
 
 
 app = create_app()

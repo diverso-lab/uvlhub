@@ -218,7 +218,6 @@ class FileDownloadRecord(db.Model):
         return f'<FileDownload id={self.id} file_id={self.file_id} date={self.download_date} cookie={self.download_cookie}>'
 
 
-
 def get_human_readable_size(size):
     if size < 1024:
         return f'{size} bytes'

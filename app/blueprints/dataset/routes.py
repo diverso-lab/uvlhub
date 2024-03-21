@@ -1,4 +1,3 @@
-import io
 import logging
 import os
 import json
@@ -11,19 +10,16 @@ from datetime import datetime
 from typing import List
 from zipfile import ZipFile
 
-from flask import flash, redirect, render_template, url_for, request, jsonify, send_file, send_from_directory, abort, \
-    current_app, make_response
+from flask import render_template, request, jsonify, send_from_directory, current_app, make_response
 from flask_login import login_required, current_user
-from werkzeug.utils import secure_filename
 
 import app
-from .forms import DataSetForm
-from .models import DataSet, DSMetrics, FeatureModel, File, FMMetaData, FMMetrics, DSMetaData, Author, PublicationType, \
-    DSDownloadRecord, DSViewRecord, FileDownloadRecord
-from . import dataset_bp
-from ..auth.models import User
-from ..flama import flamapy_valid_model
-from ..zenodo import zenodo_create_new_deposition, test_zenodo_connection, zenodo_upload_file, \
+from app.blueprints.dataset.forms import DataSetForm
+from app.blueprints.dataset.models import DataSet, FeatureModel, File, FMMetaData, DSMetaData, Author, \
+    PublicationType, DSDownloadRecord, DSViewRecord, FileDownloadRecord
+from app.blueprints.dataset import dataset_bp
+from app.blueprints.auth.models import User
+from app.zenodo import zenodo_create_new_deposition, zenodo_upload_file, \
     zenodo_publish_deposition, zenodo_get_doi, test_full_zenodo_connection
 
 
@@ -542,7 +538,6 @@ def api_create_dataset():
             # iterate for each feature model (one feature model = one request to Zenodo
             try:
                 for feature_model in feature_models:
-
                     zenodo_upload_file(deposition_id, feature_model, user=user)
 
                     # Wait for 0.6 seconds before the next API call to ensure we do not exceed

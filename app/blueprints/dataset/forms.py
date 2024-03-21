@@ -1,9 +1,8 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, SelectField, FieldList, FormField, SubmitField, TextAreaField
 from wtforms.validators import DataRequired, URL, Optional
-from enum import Enum
 
-from .models import PublicationType
+from app.blueprints.dataset.models import PublicationType
 
 
 class AuthorForm(FlaskForm):
