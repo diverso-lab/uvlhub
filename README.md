@@ -25,6 +25,8 @@ Create an `.env` file in the root of the project with this information. It is im
 
 ```
 FLASK_APP_NAME=UVLHUB.IO
+FLASK_SERVER_NAME=localhost
+DOMAIN=localhost
 MARIADB_HOSTNAME=db
 MARIADB_PORT=3306
 MARIADB_DATABASE=uvlhubdb

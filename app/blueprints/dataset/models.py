@@ -7,7 +7,7 @@ from app import db
 from enum import Enum
 from sqlalchemy import Enum as SQLAlchemyEnum, inspect
 
-
+import os
 class PublicationType(Enum):
     NONE = 'none'
     ANNOTATION_COLLECTION = 'annotationcollection'
@@ -76,7 +76,7 @@ class DataSet(db.Model):
     ds_meta_data_id = db.Column(db.Integer, db.ForeignKey('ds_meta_data.id'), nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
-    ds_meta_data = db.relationship('DSMetaData', backref='data_set', lazy=True, cascade="all, delete")
+    ds_meta_data = db.relationship('DSMetaData', backref=db.backref('data_set', uselist=False))
     feature_models = db.relationship('FeatureModel', backref='data_set', lazy=True, cascade="all, delete")
 
     def delete(self):
@@ -97,6 +97,10 @@ class DataSet(db.Model):
 
     def get_file_total_size_for_human(self):
         return get_human_readable_size(self.get_file_total_size())
+
+    def get_uvlhub_doi(self):
+        domain = os.getenv('DOMAIN', 'localhost')
+        return f'http://doi.{domain}/{self.ds_meta_data.dataset_doi}'
 
     def to_dict(self):
         return {

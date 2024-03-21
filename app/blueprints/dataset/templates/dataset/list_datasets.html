@@ -31,8 +31,8 @@
                                 </td>
                                 <td>{{ dataset.ds_meta_data.description }}</td>
                                 <td>{{ dataset.ds_meta_data.publication_type.name.replace('_', ' ').title() }}</td>
-                                <td><a href="https://www.doi.org/{{ dataset.ds_meta_data.dataset_doi }}"
-                                       target="_blank">{{ dataset.ds_meta_data.dataset_doi }}</a></td>
+                                <td><a href="{{ dataset.get_uvlhub_doi() }}"
+                                       target="_blank">{{ dataset.get_uvlhub_doi() }}</a></td>
                                 <td>
                                     <a href="{{ url_for('dataset.view_dataset', dataset_id=dataset.id) }}">
                                         <i data-feather="eye"></i>

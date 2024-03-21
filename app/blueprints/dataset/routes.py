@@ -10,7 +10,7 @@ from datetime import datetime
 from typing import List
 from zipfile import ZipFile
 
-from flask import render_template, request, jsonify, send_from_directory, current_app, make_response
+from flask import render_template, request, jsonify, send_from_directory, current_app, make_response, abort
 from flask_login import login_required, current_user
 
 import app
@@ -680,3 +680,37 @@ def _create_feature_models(dataset: DataSet, models: dict, user: User) -> List[F
         feature_models.append(feature_model)
 
     return feature_models
+
+
+@dataset_bp.route('/<path:doi>/', subdomain='doi', methods=['GET'])
+def subdomain_index(doi):
+    # Busca el dataset por DOI
+    ds_meta_data = DSMetaData.query.filter_by(dataset_doi=doi).first()
+    if ds_meta_data:
+        dataset = ds_meta_data.data_set
+
+        if dataset:
+            dataset_id = dataset.id
+            user_cookie = request.cookies.get('view_cookie', str(uuid.uuid4()))
+
+            # Registra la vista del dataset
+            view_record = DSViewRecord(
+                user_id=current_user.id if current_user.is_authenticated else None,
+                dataset_id=dataset_id,
+                view_date=datetime.utcnow(),
+                view_cookie=user_cookie
+            )
+            app.db.session.add(view_record)
+            app.db.session.commit()
+
+            # Prepara la respuesta y establece la cookie
+            resp = make_response(render_template('dataset/view_dataset.html', dataset=dataset))
+            resp.set_cookie('view_cookie', user_cookie, max_age=30 * 24 * 60 * 60)  # Ejemplo: cookie expira en 30 días
+
+            return resp
+        else:
+            # Aquí puedes manejar el caso de que el DOI no corresponda a un dataset existente
+            # Por ejemplo, mostrar un error 404 o redirigir a una página de error
+            return "Dataset no encontrado", 404
+
+    abort(404)
