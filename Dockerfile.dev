@@ -1,29 +1,29 @@
 # Use an official Python runtime as a parent image
 FROM python:3.11-alpine
 
-# Instala el cliente de MySQL para poder usarlo en el script de espera
+# Install the MySQL client to be able to use it in the standby script.
 RUN apk add --no-cache mysql-client
 
-# Establece el directorio de trabajo en el contenedor en /app
+# Set the working directory in the container to /app
 WORKDIR /app
 
-# Copia el contenido del directorio local app/ al directorio /app en el contenedor
+# Copy the contents of the local app/ directory to the /app directory in the container
 COPY app/ ./app
 
-# Copia requirements.txt en el directorio de trabajo /app
+# Copy requirements.txt at the /app working directory
 COPY requirements.txt .
 
-# Copia el script wait-for-db.sh y establece los permisos de ejecución
+# Copy the wait-for-db.sh script and set execution permissions
 COPY --chmod=+x scripts/wait-for-db.sh ./scripts/
 
-# Instala los paquetes necesarios especificados en requirements.txt
+# Install any needed packages specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Actualiza pip
+# Update pip
 RUN pip install --no-cache-dir --upgrade pip
 
-# Expone el puerto 5000
+# Expose port 5000
 EXPOSE 5000
 
-# Ajusta el comando CMD para ejecutar correctamente el script wait-for-db.sh
+# Sets the CMD command to correctly execute the wait-for-db.sh script
 CMD sh ./scripts/wait-for-db.sh && flask db upgrade && flask run --host=0.0.0.0 --port=5000 --reload --debug
