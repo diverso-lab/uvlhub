@@ -24,6 +24,8 @@ while true; do
     fi
 done
 
+cd .. # go to parent folder
+
 # Replace the placeholder domain in the configuration file
 sed -i "s/www.domain.com/$domain/g" ./nginx/nginx.dev.conf
 sed -i "s/www.domain.com/$domain/g" ./nginx/nginx.prod.conf
