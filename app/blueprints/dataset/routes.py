@@ -682,7 +682,7 @@ def _create_feature_models(dataset: DataSet, models: dict, user: User) -> List[F
     return feature_models
 
 
-@dataset_bp.route('/<path:doi>/', subdomain='doi', methods=['GET'])
+@dataset_bp.route('/doi/<path:doi>/', methods=['GET'])
 def subdomain_index(doi):
     # Busca el dataset por DOI
     ds_meta_data = DSMetaData.query.filter_by(dataset_doi=doi).first()

@@ -39,9 +39,6 @@ def create_app(config_name=None):
     # Uploads feature models configuration
     app.config['UPLOAD_FOLDER'] = os.path.join(app.root_path, 'uploads')
 
-    # Server name
-    app.config['SERVER_NAME'] = os.getenv('FLASK_SERVER_NAME', 'localhost')
-
     # Initialize SQLAlchemy and Migrate with the app
     db.init_app(app)
     migrate.init_app(app, db)

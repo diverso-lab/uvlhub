@@ -100,7 +100,7 @@ class DataSet(db.Model):
 
     def get_uvlhub_doi(self):
         domain = os.getenv('DOMAIN', 'localhost')
-        return f'http://doi.{domain}/{self.ds_meta_data.dataset_doi}'
+        return f'http://{domain}/doi/{self.ds_meta_data.dataset_doi}'
 
     def to_dict(self):
         return {
