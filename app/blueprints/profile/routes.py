@@ -1,4 +1,4 @@
-from flask import request, render_template, flash, redirect, url_for, current_app
+from flask import request, render_template
 from flask_login import login_required
 
 from app.blueprints.profile import profile_bp

@@ -53,7 +53,7 @@ def login():
             login_user(user, remember=form.remember_me.data)
             return redirect(url_for('public.index'))
         else:
-            error = f'Invalid credentials'
+            error = 'Invalid credentials'
             return render_template("auth/login_form.html", form=form, error=error)
 
     return render_template('auth/login_form.html', form=form)

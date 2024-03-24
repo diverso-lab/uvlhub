@@ -44,7 +44,7 @@ def test_full_zenodo_connection() -> Response:
 
     # Create an empty file
     file_path = os.path.join(current_app.root_path, "test_file.txt")
-    with open(file_path, 'w') as file:
+    with open(file_path, 'w'):
         pass
 
     messages = []  # List to store messages

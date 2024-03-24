@@ -1,7 +1,7 @@
 import logging
 import app
 
-from flask import request, current_app, render_template, Blueprint
+from flask import render_template
 from app.blueprints.public import public_bp
 from ..dataset.models import DataSet, DSMetaData
 

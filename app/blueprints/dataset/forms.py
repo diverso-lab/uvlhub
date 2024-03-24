@@ -23,4 +23,3 @@ class DataSetForm(FlaskForm):
     tags = StringField('Tags (separated by commas)')
     authors = FieldList(FormField(AuthorForm))
     submit = SubmitField('Submit')
-

@@ -75,7 +75,7 @@ def create_dataset():
                     deposition_doi = zenodo_get_doi(deposition_id)
                     dataset.ds_meta_data.dataset_doi = deposition_doi
                     app.db.session.commit()
-                except Exception as e:
+                except Exception:
                     pass
 
                 # move feature models permanently
@@ -478,7 +478,7 @@ def api_create_dataset():
     PART 2: SAVE BASIC DATA
     """
     ds_meta_data = _create_ds_meta_data(info=info)
-    authors = _create_authors(info=info, ds_meta_data=ds_meta_data)
+    _create_authors(info=info, ds_meta_data=ds_meta_data)
     dataset = _create_dataset(user=user, ds_meta_data=ds_meta_data)
 
     """

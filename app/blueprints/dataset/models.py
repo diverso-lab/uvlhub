@@ -1,13 +1,14 @@
-from collections import OrderedDict
 from datetime import datetime
 
 from flask import request
 
 from app import db
 from enum import Enum
-from sqlalchemy import Enum as SQLAlchemyEnum, inspect
+from sqlalchemy import Enum as SQLAlchemyEnum
 
 import os
+
+
 class PublicationType(Enum):
     NONE = 'none'
     ANNOTATION_COLLECTION = 'annotationcollection'
@@ -197,7 +198,12 @@ class DSDownloadRecord(db.Model):
     download_cookie = db.Column(db.String(36), nullable=False)  # Assuming UUID4 strings
 
     def __repr__(self):
-        return f'<Download id={self.id} dataset_id={self.dataset_id} date={self.download_date} cookie={self.download_cookie}>'
+        return (
+            f'<Download id={self.id} '
+            f'dataset_id={self.dataset_id} '
+            f'date={self.download_date} '
+            f'cookie={self.download_cookie}>'
+        )
 
 
 class DSViewRecord(db.Model):
@@ -219,7 +225,12 @@ class FileDownloadRecord(db.Model):
     download_cookie = db.Column(db.String(36), nullable=False)  # Assuming UUID4 strings
 
     def __repr__(self):
-        return f'<FileDownload id={self.id} file_id={self.file_id} date={self.download_date} cookie={self.download_cookie}>'
+        return (
+            f'<FileDownload id={self.id} '
+            f'file_id={self.file_id} '
+            f'date={self.download_date} '
+            f'cookie={self.download_cookie}>'
+        )
 
 
 def get_human_readable_size(size):

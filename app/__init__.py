@@ -3,7 +3,7 @@ import secrets
 import logging
 import importlib.util
 
-from flask import Flask, render_template, Blueprint, flash, redirect, url_for
+from flask import Flask, render_template, Blueprint
 from flask_login import current_user
 from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
