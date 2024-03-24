@@ -89,17 +89,39 @@ rosemary update
 Note: it is the responsibility of the developer to check that the update of the dependencies has not broken any 
 functionality and each dependency maintains backwards compatibility. Use the script with care!
 
-### Viewing Environment Variables
+### Extending the Project with New Modules
 
-To view the current `.env` file settings, use:
+To quickly generate a new module within the project, including necessary boilerplate files 
+like `__init__.py`, `routes.py`, `models.py`, `repositories.py`, `services.py`, `forms.py`,
+and a basic `index.html` template, you can use the `rosemary` CLI tool's `make:module` 
+command. This command will create a new blueprint structure ready for development.
+
+To create a new module, run the following command from the root of the project:
 
 ```
-rosemary env
+rosemary make:module <module_name>
 ```
+
+Replace `<module_name>` with the desired name of your module. For example, to create a 
+module named "zenodo", you would run:
+
+```
+rosemary make:module zenodo
+```
+
+
+This command creates a new directory under `app/blueprints/` with the name of your module and sets up the initial files and directories needed to get started, including a dedicated `templates` directory for your module's templates.
+
+**Note:** If the module already exists, `rosemary` will simply notify you and not overwrite any existing files.
+
+This feature is designed to streamline the development process, making it easy to add new features to the project.
+
+
 ### Available Commands
 
 - `rosemary update`: Updates all project dependencies and the `requirements.txt` file.
 - `rosemary info`: Displays information about the Rosemary CLI, including version and author.
+- `rosemary make:module <module_name>`: Generates a new module with the specified name.
 - `rosemary env`: Displays the current environment variables from the `.env` file.
 
 ## Deploy in production (Docker Compose)
