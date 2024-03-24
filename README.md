@@ -64,6 +64,44 @@ To run unit test, please enter inside `web` container:
 pytest app/tests/units.py
 ```
 
+## Using Rosemary CLI
+
+`Rosemary` is a CLI tool developed to facilitate project management and development tasks.
+
+To use the Rosemary CLI, you need to be inside the `web_app_container` Docker container. This ensures that Rosemary operates in the correct environment and has access to all necessary files and settings.
+
+First, make sure your Docker environment is running. Then, access the `web_app_container` using the following command:
+
+```
+docker exec -it web_app_container /bin/sh
+```
+
+In the terminal, you should see the prefix `/app #`. You are now ready to use Rosemary's commands.
+
+### Update Project Dependencies
+
+To update all project dependencies, run:
+
+```
+rosemary update
+```
+
+Note: it is the responsibility of the developer to check that the update of the dependencies has not broken any 
+functionality and each dependency maintains backwards compatibility. Use the script with care!
+
+### Viewing Environment Variables
+
+To view the current `.env` file settings, use:
+
+```
+rosemary env
+```
+### Available Commands
+
+- `rosemary update`: Updates all project dependencies and the `requirements.txt` file.
+- `rosemary info`: Displays information about the Rosemary CLI, including version and author.
+- `rosemary env`: Displays the current environment variables from the `.env` file.
+
 ## Deploy in production (Docker Compose)
 
 ```
@@ -107,15 +145,3 @@ To renew a certificate that is less than 60 days from expiry, execute:
 cd scripts
 chmod +x ssl_renew.sh && ./ssl_renew.sh
 ```
-
-## Update dependencies
-
-To update all project dependencies automatically, run:
-
-```
-cd scripts
-chmod +x update_dependencies.sh && ./update_dependencies.sh
-```
-
-Note: it is the responsibility of the developer to check that the update of the dependencies has not broken any functionality and each dependency maintains backwards compatibility. Use the script with care!
-

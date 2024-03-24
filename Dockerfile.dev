@@ -1,14 +1,17 @@
 # Use an official Python runtime as a parent image
 FROM python:3.11-alpine
 
+# Set this environment variable to suppress the "Running as root" warning from pip
+ENV PIP_ROOT_USER_ACTION=ignore
+
 # Install the MySQL client to be able to use it in the standby script.
 RUN apk add --no-cache mysql-client
 
 # Set the working directory in the container to /app
 WORKDIR /app
 
-# Copy the contents of the local app/ directory to the /app directory in the container
-COPY app/ ./app
+# Copy the entire project into the container
+COPY . .
 
 # Copy requirements.txt at the /app working directory
 COPY requirements.txt .
@@ -18,6 +21,9 @@ COPY --chmod=+x scripts/wait-for-db.sh ./scripts/
 
 # Install any needed packages specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Install rosemary CLI tool
+RUN pip install --no-cache-dir .
 
 # Update pip
 RUN pip install --no-cache-dir --upgrade pip
