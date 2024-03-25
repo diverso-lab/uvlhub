@@ -2,26 +2,29 @@ name: Flask CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, develop ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, develop ]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     services:
-      mysql:
-        image: mysql:5.7
+      mariadb:
+        image: mariadb:latest
         env:
-          MYSQL_ROOT_PASSWORD: fmlibrootpass
-          MYSQL_DATABASE: fmlibdb
-          MYSQL_USER: fmlibuser
-          MYSQL_PASSWORD: fmlibpass
+          MARIADB_DATABASE: uvlhubdb_test
+          MARIADB_USER: uvlhub
+          MARIADB_PASSWORD: uvlhub_password
+          MARIADB_ROOT_PASSWORD: uvlhub_root_password
         ports:
           - 3306:3306
-        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -u root --password=vRwgXWu0ns" 
+          --health-interval=10s 
+          --health-timeout=5s 
+          --health-retries=5
 
     steps:
     - uses: actions/checkout@v2
@@ -37,10 +40,12 @@ jobs:
         pip install -r requirements.txt
 
     - name: Run Tests
+      env:
+        FLASK_ENV: testing
+        MARIADB_HOSTNAME: 127.0.0.1
+        MARIADB_PORT: 3306
+        MARIADB_DATABASE: uvlhubdb_test
+        MARIADB_USER: uvlhub_user
+        MARIADB_PASSWORD: uvlhub_password
       run: |
-        export MYSQL_HOSTNAME=127.0.0.1
-        export MYSQL_PORT=3306
-        export MYSQL_DATABASE=fmlibdb
-        export MYSQL_USER=fmlibuser
-        export MYSQL_PASSWORD=fmlibpass
-        pytest app/blueprints/
+        rosemary test

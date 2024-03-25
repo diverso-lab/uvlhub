@@ -56,14 +56,6 @@ flask db migrate
 flask db upgrade
 ```
 
-### Tests
-
-To run unit test, please enter inside `web` container:
-
-```
-pytest app/tests/units.py
-```
-
 ## Using Rosemary CLI
 
 `Rosemary` is a CLI tool developed to facilitate project management and development tasks.
@@ -116,13 +108,25 @@ This command creates a new directory under `app/blueprints/` with the name of yo
 
 This feature is designed to streamline the development process, making it easy to add new features to the project.
 
+### Testing All Modules
 
-### Available Commands
+To run tests across all modules in the project, you can use the following command:
 
-- `rosemary update`: Updates all project dependencies and the `requirements.txt` file.
-- `rosemary info`: Displays information about the Rosemary CLI, including version and author.
-- `rosemary make:module <module_name>`: Generates a new module with the specified name.
-- `rosemary env`: Displays the current environment variables from the `.env` file.
+```
+rosemary test
+```
+
+This command will execute all tests found within the app/blueprints directory, covering all the modules of the project.
+
+### Testing a Specific Module
+
+If you're focusing on a particular module and want to run tests only for that module, you can specify the module
+name as an argument to the rosemary test command. For example, to run tests only for the zenodo module, you would 
+use:
+
+```
+rosemary test zenodo
+```
 
 ## Deploy in production (Docker Compose)
 

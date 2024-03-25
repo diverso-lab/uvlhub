@@ -56,6 +56,10 @@ class ProductionConfig(Config):
 def create_app(config_name='development'):
     app = Flask(__name__)
 
+    # If config_name is not provided, use the environment variable FLASK_ENV
+    if config_name is None:
+        config_name = os.getenv('FLASK_ENV', 'development')
+
     # Load configuration
     if config_name == 'testing':
         app.config.from_object(TestingConfig)
