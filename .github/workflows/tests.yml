@@ -20,8 +20,12 @@ jobs:
           MYSQL_ROOT_PASSWORD: uvlhub_root_password
           MYSQL_DATABASE: uvlhubdb_test
         ports:
-          - 3305:3306
-        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost"
+          --health-interval=10s
+          --health-timeout=10s
+          --health-retries=6
 
     steps:
     - uses: actions/checkout@v4
@@ -42,7 +46,7 @@ jobs:
     - name: Run Tests
       env:
         FLASK_ENV: testing
-        MARIADB_HOSTNAME: 127.0.0.1
+        MARIADB_HOSTNAME: mariadb
         MARIADB_PORT: 3306
         MARIADB_DATABASE: uvlhubdb_test
         MARIADB_USER: uvlhub_user
