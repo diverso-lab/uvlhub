@@ -12,7 +12,7 @@ def test(module_name):
     if module_name:
         test_path = os.path.join(base_path, module_name)
         if not os.path.exists(test_path):
-            click.echo(f"Module '{module_name}' does not exist.")
+            click.echo(click.style(f"Module '{module_name}' does not exist.", fg='red'))
             return
         click.echo(f"Running tests for the '{module_name}' module...")
     else:
@@ -21,4 +21,4 @@ def test(module_name):
     try:
         subprocess.run(['pytest', '-v', test_path], check=True)
     except subprocess.CalledProcessError as e:
-        click.echo(f"Error running tests: {e}")
+        click.echo(click.style(f"Error running tests: {e}", fg='red'))

@@ -32,7 +32,7 @@ def make_module(name):
     blueprint_path = f'app/blueprints/{name}'
 
     if os.path.exists(blueprint_path):
-        click.echo(f"The module '{name}' already exists.")
+        click.echo(click.style(f"The module '{name}' already exists.", fg='red'))
         return
 
     env = setup_jinja_env()
@@ -54,4 +54,4 @@ def make_module(name):
     for filename, template_name in files_and_templates.items():
         render_and_write_file(env, template_name, os.path.join(blueprint_path, filename), {'blueprint_name': name})
 
-    click.echo(f"Module '{name}' created successfully.")
+    click.echo(click.style(f"Module '{name}' created successfully.", fg='green'))

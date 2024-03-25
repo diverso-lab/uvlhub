@@ -24,6 +24,6 @@ def update():
         with open(requirements_path, 'w') as f:
             subprocess.check_call(['pip', 'freeze'], stdout=f)
 
-        click.echo('Update completed!')
+        click.echo(click.style('Update completed!', fg='green'))
     except subprocess.CalledProcessError as e:
-        click.echo(f'Error during the update: {e}')
+        click.echo(click.style(f'Error during the update: {e}', fg='red'))

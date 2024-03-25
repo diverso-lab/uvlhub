@@ -1,4 +1,6 @@
 import click
+
+from rosemary.commands.linter import linter
 from rosemary.commands.update import update
 from rosemary.commands.info import info
 from rosemary.commands.make_module import make_module
@@ -18,7 +20,7 @@ class RosemaryCLI(click.Group):
 
 @click.group(cls=RosemaryCLI)
 def cli():
-    """A CLI tool to help with project management."""
+    """A CLI tool to help with project development."""
     pass
 
 
@@ -27,6 +29,7 @@ cli.add_command(info)
 cli.add_command(make_module)
 cli.add_command(env)
 cli.add_command(test)
+cli.add_command(linter)
 
 if __name__ == '__main__':
     cli()
