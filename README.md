@@ -24,7 +24,8 @@ git clone https://github.com/diverso-lab/uvlhub.git
 Create an `.env` file in the root of the project with this information. It is important to obtain a token in Zenodo first. **We recommend creating the token in the Sandbox version of Zenodo, in order to generate fictitious DOIs and not make intensive use of the real Zenodo SLA.**
 
 ```
-FLASK_APP_NAME=UVLHUB.IO
+FLASK_APP_NAME="UVLHUB.IO (dev)"
+FLASK_ENV=development
 DOMAIN=localhost
 MARIADB_HOSTNAME=db
 MARIADB_PORT=3306

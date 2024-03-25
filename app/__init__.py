@@ -29,6 +29,7 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     TIMEZONE = 'Europe/Madrid'
     TEMPLATES_AUTO_RELOAD = True
+    UPLOAD_FOLDER = 'uploads'
 
 
 class DevelopmentConfig(Config):
@@ -37,7 +38,6 @@ class DevelopmentConfig(Config):
 
 class TestingConfig(Config):
     TESTING = True
-    SECRET_KEY = os.getenv('SECRET_KEY', 'secret_test_key')
     SQLALCHEMY_DATABASE_URI = (
         f"mysql+pymysql://{os.getenv('MARIADB_USER', 'default_user')}:"
         f"{os.getenv('MARIADB_PASSWORD', 'default_password')}@"
@@ -45,7 +45,6 @@ class TestingConfig(Config):
         f"{os.getenv('MARIADB_PORT', '3306')}/"
         f"{os.getenv('MARIADB_TEST_DATABASE', 'default_db')}"
     )
-    UPLOAD_FOLDER = 'uploads'
     WTF_CSRF_ENABLED = False
 
 
@@ -99,7 +98,7 @@ def create_app(config_name='development'):
     def inject_vars_into_jinja():
         return {
             'FLASK_APP_NAME': os.getenv('FLASK_APP_NAME'),
-            'FLASK_SERVER_NAME': os.getenv('FLASK_SERVER_NAME'),
+            'FLASK_ENV': os.getenv('FLASK_ENV'),
             'DOMAIN': os.getenv('DOMAIN', 'localhost')
         }
 
