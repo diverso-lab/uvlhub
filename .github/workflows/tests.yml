@@ -10,29 +10,25 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    services:
-      mariadb:
-        image: mariadb:latest
-        env:
-          MARIADB_DATABASE: uvlhubdb_test
-          MARIADB_USER: uvlhub_user
-          MARIADB_PASSWORD: uvlhub_password
-          MARIADB_ROOT_PASSWORD: uvlhub_root_password
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping -h localhost -u root --password=uvlhub_root_password" 
-          --health-interval=10s 
-          --health-timeout=5s 
-          --health-retries=5
-
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
-    - name: Set up Python 3.9
-      uses: actions/setup-python@v2
+    - name: Set up MariaDB
+      uses: getong/mariadb-action@v1.1
       with:
-        python-version: 3.9
+        host port: 3600
+        container port: 3600
+        character set server: 'utf8'
+        collation server: 'utf8_general_ci'
+        mariadb version: 'latest'
+        mysql database: 'uvlhubdb_test'
+        mysql root password: 'uvlhub_root_password'
+        mysql user: 'uvlhub_user'
+        mysql password: 'uvlhub_password'
+
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
 
     - name: Install dependencies
       run: |
