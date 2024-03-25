@@ -1,5 +1,6 @@
 import click
 
+from rosemary.commands.clear import clear
 from rosemary.commands.coverage import coverage
 from rosemary.commands.linter import linter
 from rosemary.commands.update import update
@@ -32,6 +33,7 @@ cli.add_command(env)
 cli.add_command(test)
 cli.add_command(linter)
 cli.add_command(coverage)
+cli.add_command(clear)
 
 if __name__ == '__main__':
     cli()
