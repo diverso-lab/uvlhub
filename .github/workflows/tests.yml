@@ -7,25 +7,20 @@ on:
     branches: [ main, develop ]
 
 jobs:
-  build:
+  pytest:
     runs-on: ubuntu-latest
 
     services:
       mariadb:
         image: mariadb:latest
         env:
-          MYSQL_ALLOW_EMPTY_PASSWORD: false
           MYSQL_USER: uvlhub_user
           MYSQL_PASSWORD: uvlhub_password
           MYSQL_ROOT_PASSWORD: uvlhub_root_password
           MYSQL_DATABASE: uvlhubdb_test
         ports:
           - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping -h localhost"
-          --health-interval=10s
-          --health-timeout=10s
-          --health-retries=6
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
 
     steps:
     - uses: actions/checkout@v4
@@ -46,7 +41,7 @@ jobs:
     - name: Run Tests
       env:
         FLASK_ENV: testing
-        MARIADB_HOSTNAME: mariadb
+        MARIADB_HOSTNAME: 127.0.0.1
         MARIADB_PORT: 3306
         MARIADB_DATABASE: uvlhubdb_test
         MARIADB_USER: uvlhub_user
