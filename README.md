@@ -129,6 +129,31 @@ use:
 rosemary test zenodo
 ```
 
+### Code Coverage
+
+The `rosemary coverage` command facilitates running code coverage analysis for your Flask project using `pytest-cov`. 
+This command simplifies the process of assessing test coverage.
+
+#### Command Usage
+
+- **All Modules**: To run coverage analysis for all modules within the `app/blueprints` directory and generate an HTML report, use:
+
+  ```
+  rosemary coverage
+  ```
+  
+- **Specific Module**: If you wish to run coverage analysis for a specific module, include the 
+module name:
+
+  ```
+  rosemary coverage <module_name> 
+  ```
+
+#### Command Options
+
+- **--html**: Generates an HTML coverage report. The report is saved in the `htmlcov` directory
+at the root of your project. Example: `rosemary coverage --html`
+
 ## Deploy in production (Docker Compose)
 
 ```

@@ -6,3 +6,5 @@ app.log
 .DS_Store
 rosemary.egg-info/
 build/
+.coverage
+htmlcov/
