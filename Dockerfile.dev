@@ -4,8 +4,8 @@ FROM python:3.11-alpine
 # Set this environment variable to suppress the "Running as root" warning from pip
 ENV PIP_ROOT_USER_ACTION=ignore
 
-# Install the MySQL client to be able to use it in the standby script.
-RUN apk add --no-cache mysql-client
+# Install the MariaDB client to be able to use it in the standby script.
+RUN apk add --no-cache mariadb-client
 
 # Set the working directory in the container to /app
 WORKDIR /app
@@ -18,6 +18,9 @@ COPY requirements.txt .
 
 # Copy the wait-for-db.sh script and set execution permissions
 COPY --chmod=+x scripts/wait-for-db.sh ./scripts/
+
+# Copy the init-db.sh script and set execution permissions
+COPY --chmod=+x scripts/init-db.sh ./scripts/
 
 # Install any needed packages specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
@@ -32,4 +35,4 @@ RUN pip install --no-cache-dir --upgrade pip
 EXPOSE 5000
 
 # Sets the CMD command to correctly execute the wait-for-db.sh script
-CMD sh ./scripts/wait-for-db.sh && flask db upgrade && flask run --host=0.0.0.0 --port=5000 --reload --debug
+CMD sh ./scripts/wait-for-db.sh && sh ./scripts/init-db.sh && flask db upgrade && flask run --host=0.0.0.0 --port=5000 --reload --debug

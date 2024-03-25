@@ -16,6 +16,11 @@ class User(db.Model, UserMixin):
     data_sets = db.relationship('DataSet', backref='user', lazy=True)
     profile = db.relationship('UserProfile', backref='user', uselist=False)
 
+    def __init__(self, **kwargs):
+        super(User, self).__init__(**kwargs)
+        if 'password' in kwargs:
+            self.set_password(kwargs['password'])
+
     def __repr__(self):
         return f'<User {self.email}>'
 

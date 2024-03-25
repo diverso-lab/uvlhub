@@ -17,27 +17,52 @@ db = SQLAlchemy()
 migrate = Migrate()
 
 
-def create_app(config_name=None):
-    app = Flask(__name__)
-    app.secret_key = secrets.token_bytes()
-
-    # Database configuration
-    app.config['SQLALCHEMY_DATABASE_URI'] = (
+class Config:
+    SECRET_KEY = os.getenv('SECRET_KEY', secrets.token_bytes())
+    SQLALCHEMY_DATABASE_URI = (
         f"mysql+pymysql://{os.getenv('MARIADB_USER', 'default_user')}:"
         f"{os.getenv('MARIADB_PASSWORD', 'default_password')}@"
         f"{os.getenv('MARIADB_HOSTNAME', 'localhost')}:"
         f"{os.getenv('MARIADB_PORT', '3306')}/"
         f"{os.getenv('MARIADB_DATABASE', 'default_db')}"
     )
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    TIMEZONE = 'Europe/Madrid'
+    TEMPLATES_AUTO_RELOAD = True
 
-    # Timezone
-    app.config['TIMEZONE'] = 'Europe/Madrid'
 
-    # Templates configuration
-    app.config['TEMPLATES_AUTO_RELOAD'] = True
+class DevelopmentConfig(Config):
+    DEBUG = True
 
-    # Uploads feature models configuration
-    app.config['UPLOAD_FOLDER'] = os.path.join(app.root_path, 'uploads')
+
+class TestingConfig(Config):
+    TESTING = True
+    SECRET_KEY = os.getenv('SECRET_KEY', 'secret_test_key')
+    SQLALCHEMY_DATABASE_URI = (
+        f"mysql+pymysql://{os.getenv('MARIADB_USER', 'default_user')}:"
+        f"{os.getenv('MARIADB_PASSWORD', 'default_password')}@"
+        f"{os.getenv('MARIADB_HOSTNAME', 'localhost')}:"
+        f"{os.getenv('MARIADB_PORT', '3306')}/"
+        f"{os.getenv('MARIADB_TEST_DATABASE', 'default_db')}"
+    )
+    UPLOAD_FOLDER = 'uploads'
+    WTF_CSRF_ENABLED = False
+
+
+class ProductionConfig(Config):
+    pass
+
+
+def create_app(config_name='development'):
+    app = Flask(__name__)
+
+    # Load configuration
+    if config_name == 'testing':
+        app.config.from_object(TestingConfig)
+    elif config_name == 'production':
+        app.config.from_object(ProductionConfig)
+    else:
+        app.config.from_object(DevelopmentConfig)
 
     # Initialize SQLAlchemy and Migrate with the app
     db.init_app(app)
@@ -45,7 +70,8 @@ def create_app(config_name=None):
 
     # Register blueprints
     register_blueprints(app)
-    print_registered_blueprints(app)
+    if config_name == 'development':
+        print_registered_blueprints(app)
 
     from flask_login import LoginManager
     login_manager = LoginManager()
