@@ -3,8 +3,8 @@ import shutil
 import os
 
 
-@click.command('clear', help="Clears the 'uploads' directory.")
-def clear():
+@click.command('clear:uploads', help="Clears the 'uploads' directory.")
+def clear_uploads():
     uploads_dir = 'uploads'
 
     # Verify if the 'uploads' folder exists
