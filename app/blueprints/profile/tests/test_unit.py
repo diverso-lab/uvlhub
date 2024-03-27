@@ -1,58 +1,21 @@
 import pytest
 from flask import url_for
-from app import create_app, db
-from app.blueprints.auth.models import User
+
+from app.blueprints.conftest import login, logout
 
 
 @pytest.fixture(scope='module')
-def test_client():
-    flask_app = create_app('testing')
-
-    with flask_app.test_client() as testing_client:
-        with flask_app.app_context():
-            db.create_all()
-
-            user_test = User(email='test@example.com')
-            user_test.set_password('test1234')
-            db.session.add(user_test)
-            db.session.commit()
-
-            yield testing_client
-
-            db.session.remove()
-            db.drop_all()
-
-
-def login(test_client, email, password):
+def test_client(test_client):
     """
-    Authenticates the user with the credentials provided.
-
-    Args:
-        test_client: Flask test client.
-        email (str): User's email address.
-        password (str): User's password.
-
-    Returns:
-        response: POST login request response.
+    Extends the test_client fixture to add additional specific data for module testing.
+    for module testing (por example, new users)
     """
-    response = test_client.post('/login', data=dict(
-        email=email,
-        password=password
-    ), follow_redirects=True)
-    return response
+    with test_client.application.app_context():
+        # Add HERE new elements to the database that you want to exist in the test context.
+        # DO NOT FORGET to use db.session.add(<element>) and db.session.commit() to save the data.
+        pass
 
-
-def logout(test_client):
-    """
-    Logs out the user.
-
-    Args:
-        test_client: Flask test client.
-
-    Returns:
-        response: Response to GET request to log out.
-    """
-    return test_client.get('/logout', follow_redirects=True)
+    yield test_client
 
 
 def test_login_success(test_client):

@@ -23,7 +23,7 @@ class BlueprintManager:
                             blueprint = getattr(routes_module, item)
                             self.app.register_blueprint(blueprint)
                 except ModuleNotFoundError as e:
-                    print(f"Could not load the module for Blueprint '{blueprint_name}': {e}")
+                    print(f"Error registering blueprints: Could not load the module for Blueprint '{blueprint_name}': {e}")
 
     def register_blueprint(self, blueprint_name):
         blueprint_path = os.path.join(self.blueprints_dir, blueprint_name)

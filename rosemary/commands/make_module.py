@@ -70,8 +70,4 @@ def make_module(name):
         else:
             open(os.path.join(blueprint_path, filename), 'a').close()  # Create empty file if there is no template.
 
-    # Reload blueprints
-    blueprint_manager = BlueprintManager(app)
-    blueprint_manager.register_blueprint(blueprint_name=name)
-
     click.echo(click.style(f"Module '{name}' created successfully.", fg='green'))
