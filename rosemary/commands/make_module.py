@@ -39,6 +39,9 @@ def make_module(name):
 
     env = setup_jinja_env()
 
+    # Defines the directories to create. 'tests' is handled separately to avoid subfolders.
+    directories = {'templates'}
+
     files_and_templates = {
         '__init__.py': 'blueprint_init.py.j2',
         'routes.py': 'blueprint_routes.py.j2',
@@ -46,15 +49,26 @@ def make_module(name):
         'repositories.py': 'blueprint_repositories.py.j2',
         'services.py': 'blueprint_services.py.j2',
         'forms.py': 'blueprint_forms.py.j2',
-        os.path.join('templates', name, 'index.html'): 'blueprint_templates_index.html.j2'
+        os.path.join('templates', name, 'index.html'): 'blueprint_templates_index.html.j2',
+        'tests/test_unit.py': 'blueprint_tests_test_unit.py.j2'
     }
 
-    # Create necessary directories
-    os.makedirs(os.path.join(blueprint_path, 'templates', name), exist_ok=True)
+    # Create the necessary directories, explicitly excluding 'tests' from the creation of subfolders.
+    for directory in directories:
+        os.makedirs(os.path.join(blueprint_path, directory, name), exist_ok=True)
 
-    # Render and write files
+    # Create 'tests' directory directly under blueprint_path, without additional subfolders.
+    os.makedirs(os.path.join(blueprint_path, 'tests'), exist_ok=True)
+
+    # Create empty __init__.py file directly in the 'tests' directory.
+    open(os.path.join(blueprint_path, 'tests', '__init__.py'), 'a').close()
+
+    # Render and write files, including 'test_unit.py' directly in 'tests'.
     for filename, template_name in files_and_templates.items():
-        render_and_write_file(env, template_name, os.path.join(blueprint_path, filename), {'blueprint_name': name})
+        if template_name:  # Check if there is a defined template.
+            render_and_write_file(env, template_name, os.path.join(blueprint_path, filename), {'blueprint_name': name})
+        else:
+            open(os.path.join(blueprint_path, filename), 'a').close()  # Create empty file if there is no template.
 
     # Reload blueprints
     blueprint_manager = BlueprintManager(app)

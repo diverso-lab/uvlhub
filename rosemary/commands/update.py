@@ -2,7 +2,6 @@
 
 import click
 import subprocess
-import os
 
 
 @click.command()
