@@ -2,8 +2,6 @@ import click
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 import os
 
-from app import BlueprintManager, app
-
 
 def pascalcase(s):
     """Converts string to PascalCase."""
