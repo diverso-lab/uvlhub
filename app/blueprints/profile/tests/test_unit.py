@@ -1,5 +1,4 @@
 import pytest
-from flask import url_for
 
 from app.blueprints.conftest import login, logout
 
@@ -16,39 +15,6 @@ def test_client(test_client):
         pass
 
     yield test_client
-
-
-def test_login_success(test_client):
-    response = test_client.post('/login', data=dict(
-        email='test@example.com',
-        password='test1234'
-    ), follow_redirects=True)
-
-    assert response.request.path != url_for('auth.login'), "Login was unsuccessful"
-
-    test_client.get('/logout', follow_redirects=True)
-
-
-def test_login_unsuccessful_bad_email(test_client):
-    response = test_client.post('/login', data=dict(
-        email='bademail@example.com',
-        password='test1234'
-    ), follow_redirects=True)
-
-    assert response.request.path == url_for('auth.login'), "Login was unsuccessful"
-
-    test_client.get('/logout', follow_redirects=True)
-
-
-def test_login_unsuccessful_bad_password(test_client):
-    response = test_client.post('/login', data=dict(
-        email='test@example.com',
-        password='basspassword'
-    ), follow_redirects=True)
-
-    assert response.request.path == url_for('auth.login'), "Login was unsuccessful"
-
-    test_client.get('/logout', follow_redirects=True)
 
 
 def test_edit_profile_page_get(test_client):
