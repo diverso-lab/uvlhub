@@ -8,14 +8,13 @@ class BlueprintManager:
     def __init__(self, app):
         self.app = app
         self.base_dir = os.path.abspath(os.path.dirname(__file__))
-        self.blueprints_dir = os.path.join(self.base_dir, 'blueprints')
+        self.blueprints_dir = os.getenv('BLUEPRINTS_DIR', '/app/app/blueprints')
 
     def register_blueprints(self):
         self.app.blueprints = {}
         self.app.blueprint_url_prefixes = {}
-        blueprints_dir = '/app/app/blueprints'
-        for blueprint_name in os.listdir(blueprints_dir):
-            blueprint_path = os.path.join(blueprints_dir, blueprint_name)
+        for blueprint_name in os.listdir(self.blueprints_dir):
+            blueprint_path = os.path.join(self.blueprints_dir, blueprint_name)
             if os.path.isdir(blueprint_path) and not blueprint_name.startswith('__'):
                 try:
                     routes_module = importlib.import_module(f'app.blueprints.{blueprint_name}.routes')
@@ -27,8 +26,7 @@ class BlueprintManager:
                     print(f"Could not load the module for Blueprint '{blueprint_name}': {e}")
 
     def register_blueprint(self, blueprint_name):
-        blueprints_dir = '/app/app/blueprints'
-        blueprint_path = os.path.join(blueprints_dir, blueprint_name)
+        blueprint_path = os.path.join(self.blueprints_dir, blueprint_name)
         if os.path.isdir(blueprint_path) and not blueprint_name.startswith('__'):
             try:
                 routes_module = importlib.import_module(f'app.blueprints.{blueprint_name}.routes')
