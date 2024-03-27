@@ -9,6 +9,8 @@ from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
 from flask_migrate import Migrate
 
+from app.blueprint_manager import BlueprintManager
+
 # Load environment variables
 load_dotenv()
 
@@ -72,9 +74,10 @@ def create_app(config_name='development'):
     migrate.init_app(app, db)
 
     # Register blueprints
-    register_blueprints(app)
+    blueprint_manager = BlueprintManager(app)
+    blueprint_manager.register_blueprints()
     if config_name == 'development':
-        print_registered_blueprints(app)
+        blueprint_manager.print_registered_blueprints()
 
     from flask_login import LoginManager
     login_manager = LoginManager()
@@ -167,30 +170,6 @@ def feature_models_counter() -> int:
     from app.blueprints.dataset.models import FeatureModel
     count = FeatureModel.query.count()
     return count
-
-
-def register_blueprints(app):
-    app.blueprint_url_prefixes = {}
-    base_dir = os.path.abspath(os.path.dirname(__file__))
-    blueprints_dir = os.path.join(base_dir, 'blueprints')
-    for blueprint_name in os.listdir(blueprints_dir):
-        blueprint_path = os.path.join(blueprints_dir, blueprint_name)
-        if os.path.isdir(blueprint_path) and not blueprint_name.startswith('__'):
-            try:
-                routes_module = importlib.import_module(f'app.blueprints.{blueprint_name}.routes')
-                for item in dir(routes_module):
-                    if isinstance(getattr(routes_module, item), Blueprint):
-                        blueprint = getattr(routes_module, item)
-                        app.register_blueprint(blueprint)
-            except ModuleNotFoundError as e:
-                print(f"Could not load the module for Blueprint '{blueprint_name}': {e}")
-
-
-def print_registered_blueprints(app):
-    print("Registered blueprints")
-    for name, blueprint in app.blueprints.items():
-        url_prefix = app.blueprint_url_prefixes.get(name, 'No URL prefix set')
-        print(f"Name: {name}, URL prefix: {url_prefix}")
 
 
 app = create_app()

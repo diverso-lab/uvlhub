@@ -2,6 +2,8 @@ import click
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 import os
 
+from app import BlueprintManager, app
+
 
 def pascalcase(s):
     """Converts string to PascalCase."""
@@ -29,7 +31,7 @@ def render_and_write_file(env, template_name, filename, context):
 @click.command('make:module', help="Creates a new module with a given name.")
 @click.argument('name')
 def make_module(name):
-    blueprint_path = f'app/blueprints/{name}'
+    blueprint_path = f'/app/app/blueprints/{name}'
 
     if os.path.exists(blueprint_path):
         click.echo(click.style(f"The module '{name}' already exists.", fg='red'))
@@ -53,5 +55,9 @@ def make_module(name):
     # Render and write files
     for filename, template_name in files_and_templates.items():
         render_and_write_file(env, template_name, os.path.join(blueprint_path, filename), {'blueprint_name': name})
+
+    # Reload blueprints
+    blueprint_manager = BlueprintManager(app)
+    blueprint_manager.register_blueprint(blueprint_name=name)
 
     click.echo(click.style(f"Module '{name}' created successfully.", fg='green'))

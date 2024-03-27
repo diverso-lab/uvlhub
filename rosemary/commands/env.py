@@ -8,7 +8,7 @@ from dotenv import dotenv_values
 def env():
     """Displays the current .env file values."""
     # Load the .env file
-    env_values = dotenv_values(".env")
+    env_values = dotenv_values("/app/.env")
 
     # Display keys and values
     for key, value in env_values.items():

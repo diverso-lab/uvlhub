@@ -6,7 +6,7 @@ import subprocess
 def linter():
 
     # Define the directories to be checked with flake8
-    directories = ["app", "rosemary"]
+    directories = ["/app/app", "/app/rosemary"]
 
     # Run flake8 in each directory
     for directory in directories:

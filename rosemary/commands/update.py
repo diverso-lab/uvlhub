@@ -20,7 +20,7 @@ def update():
                 subprocess.check_call(['pip', 'install', '--upgrade', package_name])
 
         # Update requirements.txt
-        requirements_path = os.path.join(os.getcwd(), 'requirements.txt')
+        requirements_path = '/app/requirements.txt'
         with open(requirements_path, 'w') as f:
             subprocess.check_call(['pip', 'freeze'], stdout=f)
 
