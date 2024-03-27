@@ -19,14 +19,13 @@ from app.blueprints.dataset.models import DataSet, FeatureModel, File, FMMetaDat
     PublicationType, DSDownloadRecord, DSViewRecord, FileDownloadRecord
 from app.blueprints.dataset import dataset_bp
 from app.blueprints.auth.models import User
-from app.zenodo import zenodo_create_new_deposition, zenodo_upload_file, \
-    zenodo_publish_deposition, zenodo_get_doi, test_full_zenodo_connection
+from app.blueprints.zenodo.services import test_full_zenodo_connection, zenodo_create_new_deposition, \
+    zenodo_upload_file, zenodo_publish_deposition, zenodo_get_doi
 
 
 @dataset_bp.route('/zenodo/test', methods=['GET'])
 def zenodo_test() -> dict:
     return test_full_zenodo_connection()
-
 
 
 @dataset_bp.route('/dataset/upload', methods=['GET', 'POST'])
@@ -298,7 +297,6 @@ def upload():
 
         try:
             file.save(file_path)
-            # valid_model = flamapy_valid_model(uvl_filename=new_filename)
             if True:
                 return jsonify({
                     'message': 'UVL uploaded and validated successfully',
@@ -499,7 +497,6 @@ def api_create_dataset():
                     filename = os.path.basename(file.filename)
                     file.save(os.path.join(temp_folder, filename))
                     # TODO: Change valid model function
-                    # valid_model = flamapy_valid_model(uvl_filename=filename, user=user)
                     if True:
                         continue  # TODO
                     else:

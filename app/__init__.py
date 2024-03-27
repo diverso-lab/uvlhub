@@ -1,15 +1,14 @@
 import os
-import secrets
 import logging
-import importlib.util
 
-from flask import Flask, render_template, Blueprint
+from flask import Flask, render_template
 from flask_login import current_user
 from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
 from flask_migrate import Migrate
 
-from app.blueprint_manager import BlueprintManager
+from app.managers.blueprint_manager import BlueprintManager
+from app.managers.config_manager import ConfigManager
 
 # Load environment variables
 load_dotenv()
@@ -19,55 +18,12 @@ db = SQLAlchemy()
 migrate = Migrate()
 
 
-class Config:
-    SECRET_KEY = os.getenv('SECRET_KEY', secrets.token_bytes())
-    SQLALCHEMY_DATABASE_URI = (
-        f"mysql+pymysql://{os.getenv('MARIADB_USER', 'default_user')}:"
-        f"{os.getenv('MARIADB_PASSWORD', 'default_password')}@"
-        f"{os.getenv('MARIADB_HOSTNAME', 'localhost')}:"
-        f"{os.getenv('MARIADB_PORT', '3306')}/"
-        f"{os.getenv('MARIADB_DATABASE', 'default_db')}"
-    )
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
-    TIMEZONE = 'Europe/Madrid'
-    TEMPLATES_AUTO_RELOAD = True
-    UPLOAD_FOLDER = 'uploads'
-
-
-class DevelopmentConfig(Config):
-    DEBUG = True
-
-
-class TestingConfig(Config):
-    TESTING = True
-    SQLALCHEMY_DATABASE_URI = (
-        f"mysql+pymysql://{os.getenv('MARIADB_USER', 'default_user')}:"
-        f"{os.getenv('MARIADB_PASSWORD', 'default_password')}@"
-        f"{os.getenv('MARIADB_HOSTNAME', 'localhost')}:"
-        f"{os.getenv('MARIADB_PORT', '3306')}/"
-        f"{os.getenv('MARIADB_TEST_DATABASE', 'default_db')}"
-    )
-    WTF_CSRF_ENABLED = False
-
-
-class ProductionConfig(Config):
-    pass
-
-
 def create_app(config_name='development'):
     app = Flask(__name__)
 
-    # If config_name is not provided, use the environment variable FLASK_ENV
-    if config_name is None:
-        config_name = os.getenv('FLASK_ENV', 'development')
-
-    # Load configuration
-    if config_name == 'testing':
-        app.config.from_object(TestingConfig)
-    elif config_name == 'production':
-        app.config.from_object(ProductionConfig)
-    else:
-        app.config.from_object(DevelopmentConfig)
+    # Load configuration according to environment
+    config_manager = ConfigManager(app)
+    config_manager.load_config(config_name=config_name)
 
     # Initialize SQLAlchemy and Migrate with the app
     db.init_app(app)
@@ -76,8 +32,6 @@ def create_app(config_name='development'):
     # Register blueprints
     blueprint_manager = BlueprintManager(app)
     blueprint_manager.register_blueprints()
-    if config_name == 'development':
-        blueprint_manager.print_registered_blueprints()
 
     from flask_login import LoginManager
     login_manager = LoginManager()

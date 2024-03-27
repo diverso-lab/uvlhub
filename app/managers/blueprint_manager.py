@@ -14,7 +14,7 @@ class BlueprintManager:
         self.app.blueprints = {}
         self.app.blueprint_url_prefixes = {}
         base_dir = os.path.abspath(os.path.dirname(__file__))
-        blueprints_dir = os.path.join(base_dir, 'blueprints')
+        blueprints_dir = '/app/app/blueprints'
         for blueprint_name in os.listdir(blueprints_dir):
             blueprint_path = os.path.join(blueprints_dir, blueprint_name)
             if os.path.isdir(blueprint_path) and not blueprint_name.startswith('__'):
@@ -24,13 +24,12 @@ class BlueprintManager:
                         if isinstance(getattr(routes_module, item), Blueprint):
                             blueprint = getattr(routes_module, item)
                             self.app.register_blueprint(blueprint)
-                            print(f"Blueprint '{blueprint_name}' registered successfully.")
                 except ModuleNotFoundError as e:
                     print(f"Could not load the module for Blueprint '{blueprint_name}': {e}")
 
     def register_blueprint(self, blueprint_name):
         base_dir = os.path.abspath(os.path.dirname(__file__))
-        blueprints_dir = os.path.join(base_dir, 'blueprints')
+        blueprints_dir = '/app/app/blueprints'
         blueprint_path = os.path.join(blueprints_dir, blueprint_name)
         if os.path.isdir(blueprint_path) and not blueprint_name.startswith('__'):
             try:
@@ -39,7 +38,6 @@ class BlueprintManager:
                     if isinstance(getattr(routes_module, item), Blueprint):
                         blueprint = getattr(routes_module, item)
                         self.app.register_blueprint(blueprint)
-                        print(f"Blueprint '{blueprint_name}' registered successfully.")
                 return
             except ModuleNotFoundError as e:
                 print(f"Could not load the module for Blueprint '{blueprint_name}': {e}")
