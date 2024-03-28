@@ -48,15 +48,6 @@ This will apply the migrations to the database and run the Flask application.
 
 **If everything worked correctly, you should see the deployed version of UVLHub in development at `http://localhost`.**
 
-### Migrations
-
-However, if during development there are new changes in the model, run inside the `web` container:
-
-```
-flask db migrate
-flask db upgrade
-```
-
 ## Using Rosemary CLI
 
 `Rosemary` is a CLI tool developed to facilitate project management and development tasks.
@@ -81,6 +72,17 @@ rosemary update
 
 Note: it is the responsibility of the developer to check that the update of the dependencies has not broken any 
 functionality and each dependency maintains backwards compatibility. Use the script with care!
+
+### Migrations
+
+If during development there are new changes in the model, run:
+
+```
+rosemary db:migrate
+```
+
+This command will detect all changes in the model (new tables, modified fields, etc.) and apply those changes to the database.
+those changes to the database.
 
 ### Resetting the Database
 
