@@ -8,3 +8,4 @@ rosemary.egg-info/
 build/
 .coverage
 htmlcov/
+.pytest_cache

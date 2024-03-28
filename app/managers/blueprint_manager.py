@@ -15,7 +15,9 @@ class BlueprintManager:
         self.app.blueprint_url_prefixes = {}
         for blueprint_name in os.listdir(self.blueprints_dir):
             blueprint_path = os.path.join(self.blueprints_dir, blueprint_name)
-            if os.path.isdir(blueprint_path) and not blueprint_name.startswith('__'):
+            if (os.path.isdir(blueprint_path) and not blueprint_name.startswith('__') and
+                    os.path.exists(os.path.join(blueprint_path, '__init__.py')) and
+                    blueprint_name != '.pytest_cache'):
                 try:
                     routes_module = importlib.import_module(f'app.blueprints.{blueprint_name}.routes')
                     for item in dir(routes_module):
@@ -25,8 +27,7 @@ class BlueprintManager:
                 except ModuleNotFoundError as e:
                     print(
                         f"Error registering blueprints: Could not load the module "
-                        f"for Blueprint '{blueprint_name}': {e}"
-                    )
+                        f"for Blueprint '{blueprint_name}': {e}")
 
     def register_blueprint(self, blueprint_name):
         blueprint_path = os.path.join(self.blueprints_dir, blueprint_name)
