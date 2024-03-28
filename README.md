@@ -82,6 +82,37 @@ rosemary update
 Note: it is the responsibility of the developer to check that the update of the dependencies has not broken any 
 functionality and each dependency maintains backwards compatibility. Use the script with care!
 
+### Resetting the Database
+
+The `rosemary db:reset` command is a powerful tool for resetting your project's database to its 
+initial state. This command deletes all the data in your database, making it ideal for fixing any inconsistencies 
+we may have created during development.
+
+#### Basic Usage
+
+To reset your database and clear all table data except for migration records, run:
+
+```
+rosemary db:reset
+```
+
+The `rosemary db:reset` command also clears the uploads directory as part of the reset process, ensuring that any files 
+uploaded during development or testing are removed.
+
+#### Clearing Migrations with --clear-migrations
+
+If you need to completely rebuild your database from scratch, including removing all migration history and starting
+fresh, you can use the `--clear-migrations` option:
+
+``` 
+rosemary db:reset --clear-migrations
+```
+
+- Delete all data from the database, including the migration history.
+- Clear the migrations directory.
+- Initialize a new set of migrations.
+- Apply the migrations to rebuild the database schema.
+
 ### Extending the Project with New Modules
 
 To quickly generate a new module within the project, including necessary boilerplate files 

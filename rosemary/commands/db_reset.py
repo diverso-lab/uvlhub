@@ -1,42 +1,60 @@
 import click
+import shutil
+import os
+import subprocess
 from flask.cli import with_appcontext
-from app import db
+from app import create_app, db
 from sqlalchemy import MetaData
-from flask_migrate import upgrade
+
 from rosemary.commands.clear_uploads import clear_uploads
 
 
-@click.command('db:reset', help="Drops all tables except 'alembic_version', then recreates them from migrations, "
-                                "and clears the uploads directory.")
+@click.command('db:reset', help="Resets the database, optionally clears migrations and recreates them.")
+@click.option('--clear-migrations', is_flag=True,
+              help="Remove all tables including 'alembic_version', clear migrations folder, and recreate migrations.")
 @with_appcontext
-def db_reset():
-    if not click.confirm('WARNING: This will delete all data except migration data and clear uploads. Are you sure?',
-                         abort=True):
-        return
+def db_reset(clear_migrations):
+    app = create_app()
+    with app.app_context():
+        if not click.confirm('WARNING: This will delete all data and clear uploads. Are you sure?', abort=True):
+            return
 
-    try:
-        meta = MetaData()
-        meta.reflect(bind=db.engine)
-        with db.engine.connect() as conn:
-            trans = conn.begin()  # Initiate a transaction
-            for table in reversed(meta.sorted_tables):
-                if table.name != 'alembic_version':
-                    conn.execute(table.delete())
-            trans.commit()  # Transaction Commit
-        click.echo(click.style("All table data cleared except 'alembic_version'.", fg='yellow'))
-    except Exception as e:
-        click.echo(click.style(f"Error clearing table data: {e}", fg='red'))
-        if trans:
-            trans.rollback()
-        return
+        # Deletes data from all tables
+        try:
+            meta = MetaData()
+            meta.reflect(bind=db.engine)
+            with db.engine.connect() as conn:
+                trans = conn.begin()  # Begin transaction
+                for table in reversed(meta.sorted_tables):
+                    if not clear_migrations or table.name != 'alembic_version':
+                        conn.execute(table.delete())
+                trans.commit()  # End transaction
+            click.echo(click.style("All table data cleared.", fg='yellow'))
+        except Exception as e:
+            click.echo(click.style(f"Error clearing table data: {e}", fg='red'))
+            if trans:
+                trans.rollback()
+            return
 
-    # Invoke the clear:uploads command
-    ctx = click.get_current_context()
-    ctx.invoke(clear_uploads)
+        # Delete the uploads folder
+        ctx = click.get_current_context()
+        ctx.invoke(clear_uploads)
 
-    # Recreate the tables and execute the migrations
-    try:
-        upgrade()
-        click.echo(click.style("Tables recreated from migrations.", fg='green'))
-    except Exception as e:
-        click.echo(click.style(f"Error recreating tables from migrations: {e}", fg='red'))
+        if clear_migrations:
+            # Delete the migration folder if it exists.
+            migrations_dir = '/app/migrations'
+            if os.path.isdir(migrations_dir):
+                shutil.rmtree(migrations_dir)
+                click.echo(click.style("Migrations directory cleared.", fg='yellow'))
+
+            # Run flask db init, migrate and upgrade
+            try:
+                subprocess.run(['flask', 'db', 'init'], check=True)
+                subprocess.run(['flask', 'db', 'migrate'], check=True)
+                subprocess.run(['flask', 'db', 'upgrade'], check=True)
+                click.echo(click.style("Database recreated from new migrations.", fg='green'))
+            except subprocess.CalledProcessError as e:
+                click.echo(click.style(f"Error during migrations reset: {e}", fg='red'))
+                return
+
+        click.echo(click.style("Database reset successfully.", fg='green'))
