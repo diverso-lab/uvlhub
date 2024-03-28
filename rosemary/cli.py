@@ -1,5 +1,6 @@
 import click
 
+from rosemary.commands.db_reset import db_reset
 from rosemary.commands.clear_log import clear_log
 from rosemary.commands.clear_uploads import clear_uploads
 from rosemary.commands.coverage import coverage
@@ -36,6 +37,7 @@ cli.add_command(linter)
 cli.add_command(coverage)
 cli.add_command(clear_uploads)
 cli.add_command(clear_log)
+cli.add_command(db_reset)
 
 if __name__ == '__main__':
     cli()
