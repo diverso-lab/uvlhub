@@ -1,5 +1,6 @@
 import click
 
+from rosemary.commands.db_console import db_console
 from rosemary.commands.db_migrate import db_migrate
 from rosemary.commands.db_reset import db_reset
 from rosemary.commands.clear_log import clear_log
@@ -40,6 +41,7 @@ cli.add_command(clear_uploads)
 cli.add_command(clear_log)
 cli.add_command(db_reset)
 cli.add_command(db_migrate)
+cli.add_command(db_console)
 
 if __name__ == '__main__':
     cli()

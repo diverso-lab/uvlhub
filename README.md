@@ -115,6 +115,18 @@ rosemary db:reset --clear-migrations
 - Initialize a new set of migrations.
 - Apply the migrations to rebuild the database schema.
 
+### MariaDB Console
+
+To directly use the MariaDB console to execute native SQL statements, use:
+
+```
+rosemary db:console
+```
+
+This command connects to the MariaDB container using the credentials defined in the `.env` file.
+
+To exit the MariaDB console, type `exit;`.
+
 ### Extending the Project with New Modules
 
 To quickly generate a new module within the project, including necessary boilerplate files 
