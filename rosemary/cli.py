@@ -1,5 +1,6 @@
 import click
 
+from rosemary.commands.clear_cache import clear_cache
 from rosemary.commands.db_console import db_console
 from rosemary.commands.db_migrate import db_migrate
 from rosemary.commands.db_reset import db_reset
@@ -39,6 +40,7 @@ cli.add_command(linter)
 cli.add_command(coverage)
 cli.add_command(clear_uploads)
 cli.add_command(clear_log)
+cli.add_command(clear_cache)
 cli.add_command(db_reset)
 cli.add_command(db_migrate)
 cli.add_command(db_console)

@@ -3,6 +3,7 @@ import subprocess
 from dotenv import load_dotenv
 import os
 
+
 @click.command('db:console', help="Opens a MariaDB console with credentials from .env.")
 def db_console():
     load_dotenv()
