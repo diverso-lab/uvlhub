@@ -47,6 +47,7 @@ def make_module(name):
         'repositories.py': 'blueprint_repositories.py.j2',
         'services.py': 'blueprint_services.py.j2',
         'forms.py': 'blueprint_forms.py.j2',
+        'seeders.py': 'blueprint_seeders.py.j2',
         os.path.join('templates', name, 'index.html'): 'blueprint_templates_index.html.j2',
         'tests/test_unit.py': 'blueprint_tests_test_unit.py.j2'
     }

@@ -1,3 +1,4 @@
+import inspect
 import os
 import importlib
 import click
@@ -10,10 +11,10 @@ from rosemary.commands.db_reset import db_reset
 def get_module_seeders(module_path, specific_module=None):
     seeders = []
     for root, dirs, files in os.walk(module_path):
-        if 'seeder.py' in files:
+        if 'seeders.py' in files:
             relative_path = os.path.relpath(root, module_path)
             module_name = relative_path.replace(os.path.sep, '.')
-            full_module_name = f'app.blueprints.{module_name}.seeder'
+            full_module_name = f'app.blueprints.{module_name}.seeders'
 
             # Si se especificó un módulo y no coincide con el actual, continúa con el siguiente
             if specific_module and specific_module != module_name.split('.')[0]:
@@ -23,10 +24,11 @@ def get_module_seeders(module_path, specific_module=None):
             importlib.reload(seeder_module)  # Recargar el módulo
 
             for attr in dir(seeder_module):
-                if attr.endswith('Seeder'):
-                    seeder_class = getattr(seeder_module, attr)
-                    if issubclass(seeder_class, BaseSeeder) and seeder_class is not BaseSeeder:
-                        seeders.append(seeder_class())
+                potential_seeder_class = getattr(seeder_module, attr)
+                if (inspect.isclass(potential_seeder_class) and
+                        issubclass(potential_seeder_class, BaseSeeder) and
+                        potential_seeder_class is not BaseSeeder):
+                    seeders.append(potential_seeder_class())
     return seeders
 
 
@@ -41,7 +43,6 @@ def db_seed(reset, module):
             click.echo(click.style("Resetting the database...", fg='yellow'))
             ctx = click.get_current_context()
             ctx.invoke(db_reset, clear_migrations=False, yes=True)
-            click.echo(click.style("Database reset successfully.", fg='green'))
         else:
             click.echo(click.style("Database reset cancelled.", fg='yellow'))
             return
