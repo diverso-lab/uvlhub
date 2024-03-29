@@ -20,10 +20,10 @@ class AuthSeeder(BaseSeeder):
         for user in seeded_users:
             profile_data = {
                 "user_id": user.id,
-                "orcid": "0000-000X-XXXX-XXXX",
+                "orcid": "",
                 "affiliation": "Some University",
-                "name": "User",
-                "surname": "Surname",
+                "name": "John",
+                "surname": "Doe",
             }
             user_profile = UserProfile(**profile_data)
             user_profiles.append(user_profile)
