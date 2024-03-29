@@ -34,12 +34,13 @@ def get_module_seeders(module_path, specific_module=None):
 
 @click.command('db:seed', help="Populates the database with the seeders defined in each module.")
 @click.option('--reset', is_flag=True, help="Reset the database before seeding.")
+@click.option('-y', '--yes', is_flag=True, help="Confirm the operation without prompting.")
 @click.argument('module', required=False)
 @with_appcontext
-def db_seed(reset, module):
+def db_seed(reset, yes, module):
 
     if reset:
-        if click.confirm(click.style('This will reset the database, do you want to continue?', fg='red'), abort=True):
+        if yes or click.confirm(click.style('This will reset the database, do you want to continue?', fg='red'), abort=True):
             click.echo(click.style("Resetting the database...", fg='yellow'))
             ctx = click.get_current_context()
             ctx.invoke(db_reset, clear_migrations=False, yes=True)

@@ -1,5 +1,6 @@
 import click
 
+from rosemary.commands.compose_env import compose_env
 from rosemary.commands.route_list import route_list
 from rosemary.commands.db_seed import db_seed
 from rosemary.commands.clear_cache import clear_cache
@@ -48,6 +49,7 @@ cli.add_command(db_migrate)
 cli.add_command(db_console)
 cli.add_command(db_seed)
 cli.add_command(route_list)
+cli.add_command(compose_env)
 
 if __name__ == '__main__':
     cli()

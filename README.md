@@ -19,22 +19,25 @@ Repository of feature models in UVL format integrated with Zenodo and FlamaPy - 
 git clone https://github.com/diverso-lab/uvlhub.git
 ```
 
-## Set `.env` file in root with:
+## Preparing environment:
 
-Create an `.env` file in the root of the project with this information. It is important to obtain a token in Zenodo first. **We recommend creating the token in the Sandbox version of Zenodo, in order to generate fictitious DOIs and not make intensive use of the real Zenodo SLA.**
+To create an `.env` file according to a basic template, run:
 
 ```
-FLASK_APP_NAME="UVLHUB.IO (dev)"
-FLASK_ENV=development
-DOMAIN=localhost
-MARIADB_HOSTNAME=db
-MARIADB_PORT=3306
-MARIADB_DATABASE=uvlhubdb
-MARIADB_USER=uvlhubuser
-MARIADB_PASSWORD=uvlhubpass
-MARIADB_ROOT_PASSWORD=uvlhubrootpass
-ZENODO_ACCESS_TOKEN=<GET_ACCESS_TOKEN_IN_ZENODO>
+cp .env.example .env
 ```
+
+To use Zenodo, it is important to obtain a token in Zenodo first.
+**We recommend creating the token in the Sandbox version of Zenodo, in order to generate fictitious DOIs 
+and not make intensive use of the real Zenodo SLA.**
+
+To generate the Zenodo `.env` file, run:
+
+```
+cp app/blueprints/zenodo/.env.example app/blueprints/zenodo/.env
+```
+
+To perform the composition of all environment variables, refer to section [Composing Environment Variables](#composing-environment-variables).
 
 ## Deploy in develop
 
@@ -61,6 +64,18 @@ docker exec -it web_app_container /bin/sh
 ```
 
 In the terminal, you should see the prefix `/app #`. You are now ready to use Rosemary's commands.
+
+### Composing Environment Variables
+
+It is possible to make a final composition of the `.env` file based on the individual `.env` files of each module.
+
+To execute this command and automatically combine the environment variables:
+
+```
+rosemary compose:env
+```
+**Note: it is important to restart our Docker container for any changes to `.env` to take effect.**
+
 
 ### Update Project Dependencies
 
@@ -272,6 +287,7 @@ rosemary route:list <module_name>
 ```
 
 Replace `<module_name>` with the actual name of the module for which you want to see the paths.
+
 
 ## Deploy in production (Docker Compose)
 
