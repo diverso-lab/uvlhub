@@ -12,11 +12,13 @@ from rosemary.commands.clear_uploads import clear_uploads
 @click.command('db:reset', help="Resets the database, optionally clears migrations and recreates them.")
 @click.option('--clear-migrations', is_flag=True,
               help="Remove all tables including 'alembic_version', clear migrations folder, and recreate migrations.")
+@click.option('-y', '--yes', is_flag=True, help="Confirm the operation without prompting.")
 @with_appcontext
-def db_reset(clear_migrations):
+def db_reset(clear_migrations, yes):
     app = create_app()
     with app.app_context():
-        if not click.confirm('WARNING: This will delete all data and clear uploads. Are you sure?', abort=True):
+        if not yes and not click.confirm('WARNING: This will delete all data and clear uploads. Are you sure?',
+                                         abort=True):
             return
 
         # Deletes data from all tables

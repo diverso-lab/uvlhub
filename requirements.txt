@@ -33,7 +33,6 @@ pytest==8.1.1
 pytest-cov==5.0.0
 python-dotenv==1.0.1
 requests==2.31.0
-rosemary @ file:///app
 SQLAlchemy==2.0.29
 SQLAlchemy-Utils==0.41.2
 typing_extensions==4.10.0

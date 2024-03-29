@@ -1,5 +1,6 @@
 import click
 
+from rosemary.commands.db_seed import db_seed
 from rosemary.commands.clear_cache import clear_cache
 from rosemary.commands.db_console import db_console
 from rosemary.commands.db_migrate import db_migrate
@@ -44,6 +45,7 @@ cli.add_command(clear_cache)
 cli.add_command(db_reset)
 cli.add_command(db_migrate)
 cli.add_command(db_console)
+cli.add_command(db_seed)
 
 if __name__ == '__main__':
     cli()

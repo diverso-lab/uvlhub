@@ -10,9 +10,6 @@ RUN apk add --no-cache mariadb-client
 # Set the working directory in the container to /app
 WORKDIR /app
 
-# Copy the entire project into the container
-COPY . .
-
 # Copy requirements.txt at the /app working directory
 COPY requirements.txt .
 
@@ -23,10 +20,11 @@ COPY --chmod=+x scripts/wait-for-db.sh ./scripts/
 COPY --chmod=+x scripts/init-db.sh ./scripts/
 
 # Install any needed packages specified in requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install -r requirements.txt
 
-# Install rosemary CLI tool
-RUN pip install --no-cache-dir .
+# Install rosemary CLI package in editable mode
+COPY setup.py ./
+RUN pip install -e ./
 
 # Update pip
 RUN pip install --no-cache-dir --upgrade pip
@@ -35,4 +33,4 @@ RUN pip install --no-cache-dir --upgrade pip
 EXPOSE 5000
 
 # Sets the CMD command to correctly execute the wait-for-db.sh script
-CMD sh ./scripts/wait-for-db.sh && sh ./scripts/init-db.sh && flask db upgrade && flask run --host=0.0.0.0 --port=5000 --reload --debug
+CMD sh ./scripts/wait-for-db.sh && sh ./scripts/init-db.sh && rosemary db:migrate && rosemary db:reset -y && rosemary db:seed && flask run --host=0.0.0.0 --port=5000 --reload --debug

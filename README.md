@@ -84,6 +84,45 @@ rosemary db:migrate
 This command will detect all changes in the model (new tables, modified fields, etc.) and apply those changes to the database.
 those changes to the database.
 
+### Seeders
+
+#### Basic Usage
+
+It is possible to populate the database with predefined test data. It is very useful for testing certain
+that require existing data.
+
+To popularize all test data of all modules, run:
+
+```
+rosemary db:seed
+```
+
+If we only want to popularize the test data of a specific module, run:
+
+```
+rosemary db:seed <module_name>
+```
+
+Replace `<module_name>` with the name of the module you want to populate 
+(for example, `auth` for the authentication module).
+
+#### Reset database before populating
+
+If you want to make sure that the database is in a clean state before populating it with test data, you can use the --reset flag. 
+populating it with test data, you can use the `--reset` flag. 
+This will reset the database to its initial state before running the seeders:
+
+```
+rosemary db:seed --reset
+```
+
+You can also combine the `--reset` flag with a module specification if you want to reset the database before populating 
+only the test data of a specific module:
+
+```
+rosemary db:seed <module_name> --reset
+```
+
 ### Resetting the Database
 
 The `rosemary db:reset` command is a powerful tool for resetting your project's database to its 

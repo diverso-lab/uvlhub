@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import click
 import shutil
 import os
@@ -8,6 +10,7 @@ def clear_cache():
 
     if click.confirm('Are you sure you want to clear the pytest cache and the build directory?'):
 
+        project_root = Path('/app')
         pytest_cache_dir = '/app/app/blueprints/.pytest_cache'
         build_dir = '/app/build'
 
@@ -28,7 +31,23 @@ def clear_cache():
                 click.echo(click.style(f"Failed to clear build directory: {e}", fg='red'))
         else:
             click.echo(click.style("No cache or build directory found. Nothing to clear.", fg='yellow'))
+
+        pycache_dirs = project_root.rglob('__pycache__')
+        for dir in pycache_dirs:
+            try:
+                shutil.rmtree(dir)
+            except Exception as e:
+                click.echo(click.style(f"Failed to clear __pycache__ directory {dir}: {e}", fg='red'))
+        click.echo(click.style("All __pycache__ directories cleared.", fg='green'))
+
+        pyc_files = project_root.rglob('*.pyc')
+        for file in pyc_files:
+            try:
+                file.unlink()
+            except Exception as e:
+                click.echo(click.style(f"Failed to clear .pyc file {file}: {e}", fg='red'))
+
+        click.echo(click.style("All cache cleared.", fg='green'))
+
     else:
         click.echo(click.style("Clear operation cancelled.", fg='yellow'))
-
-# No olvides registrar este comando en tu CLI, como lo has hecho con los otros comandos.

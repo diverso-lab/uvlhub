@@ -9,9 +9,7 @@ services:
       context: .
       dockerfile: Dockerfile.dev
     volumes:
-      - type: bind
-        source: .
-        target: /app
+      - .:/app
     expose:
       - "5000"
     environment:
