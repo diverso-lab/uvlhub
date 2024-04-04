@@ -1,5 +1,5 @@
-import click
 import subprocess
+import click
 from flask.cli import with_appcontext
 
 
@@ -7,19 +7,17 @@ from flask.cli import with_appcontext
 @with_appcontext
 def db_migrate():
     # Generates migrations
-    try:
-        click.echo("Generating database migrations...")
-        subprocess.run(['flask', 'db', 'migrate'], check=True)
+    click.echo("Generating database migrations...")
+    result_migrate = subprocess.run(['flask', 'db', 'migrate'])
+    if result_migrate.returncode == 0:
         click.echo(click.style("Migrations generated successfully.", fg='green'))
-    except subprocess.CalledProcessError as e:
-        click.echo(click.style(f"Error generating migrations: {e}", fg='red'))
-        return
+    else:
+        click.echo(click.style("Note: No new migrations needed or an error occurred while generating migrations.", fg='yellow'))
 
     # Applies to migrations
-    try:
-        click.echo("Applying database migrations...")
-        subprocess.run(['flask', 'db', 'upgrade'], check=True)
+    click.echo("Applying database migrations...")
+    result_upgrade = subprocess.run(['flask', 'db', 'upgrade'])
+    if result_upgrade.returncode == 0:
         click.echo(click.style("Migrations applied successfully.", fg='green'))
-    except subprocess.CalledProcessError as e:
-        click.echo(click.style(f"Error applying migrations: {e}", fg='red'))
-        return
+    else:
+        click.echo(click.style("Error applying migrations. This may be due to the database being already up-to-date.", fg='yellow'))

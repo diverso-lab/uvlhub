@@ -20,19 +20,27 @@ COPY --chmod=+x scripts/wait-for-db.sh ./scripts/
 # Copy the init-db.sh script and set execution permissions
 COPY --chmod=+x scripts/init-db.sh ./scripts/
 
-# Update pip
-RUN pip install --no-cache-dir --upgrade pip setuptools
-
-# Install rosemary CLI package in editable mode
+# Copy files
 COPY rosemary/ ./rosemary
 COPY setup.py ./
-RUN pip install -e ./
+
+# Copy the entrypoint script
+COPY scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
+
+# Update pip
+RUN pip install --no-cache-dir --upgrade pip
 
 # Install any needed packages specified in requirements.txt
 RUN pip install -r requirements.txt
 
+# Make the entrypoint script executable
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
 # Expose port 5000
 EXPOSE 5000
 
-# Sets the CMD command to correctly execute the wait-for-db.sh script
-CMD sh ./scripts/wait-for-db.sh && sh ./scripts/init-db.sh && rosemary db:migrate && rosemary db:seed -y --reset && flask run --host=0.0.0.0 --port=5000 --reload --debug
+# Set the entrypoint to run the entrypoint script
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+
+# Sets the default command to start the Flask application
+CMD sh /app/scripts/wait-for-db.sh && sh /app/scripts/init-db.sh && rosemary db:migrate && rosemary db:seed -y --reset && flask run --host=0.0.0.0 --port=5000 --reload --debug
