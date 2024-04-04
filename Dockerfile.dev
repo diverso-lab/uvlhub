@@ -5,7 +5,8 @@ FROM python:3.12-alpine
 ENV PIP_ROOT_USER_ACTION=ignore
 
 # Install the MariaDB client to be able to use it in the standby script.
-RUN apk add --no-cache mariadb-client
+RUN apk add --no-cache mariadb-client \
+    && apk add --no-cache --virtual .build-deps gcc musl-dev python3-dev libffi-dev
 
 # Set the working directory in the container to /app
 WORKDIR /app
@@ -19,15 +20,16 @@ COPY --chmod=+x scripts/wait-for-db.sh ./scripts/
 # Copy the init-db.sh script and set execution permissions
 COPY --chmod=+x scripts/init-db.sh ./scripts/
 
-# Install any needed packages specified in requirements.txt
-RUN pip install -r requirements.txt
+# Update pip
+RUN pip install --no-cache-dir --upgrade pip setuptools
 
 # Install rosemary CLI package in editable mode
+COPY rosemary/ ./rosemary
 COPY setup.py ./
 RUN pip install -e ./
 
-# Update pip
-RUN pip install --no-cache-dir --upgrade pip
+# Install any needed packages specified in requirements.txt
+RUN pip install -r requirements.txt
 
 # Expose port 5000
 EXPOSE 5000
