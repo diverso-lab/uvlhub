@@ -12,7 +12,8 @@ def db_migrate():
     if result_migrate.returncode == 0:
         click.echo(click.style("Migrations generated successfully.", fg='green'))
     else:
-        click.echo(click.style("Note: No new migrations needed or an error occurred while generating migrations.", fg='yellow'))
+        click.echo(click.style("Note: No new migrations needed or an error occurred "
+                               "while generating migrations.", fg='yellow'))
 
     # Applies to migrations
     click.echo("Applying database migrations...")
@@ -20,4 +21,5 @@ def db_migrate():
     if result_upgrade.returncode == 0:
         click.echo(click.style("Migrations applied successfully.", fg='green'))
     else:
-        click.echo(click.style("Error applying migrations. This may be due to the database being already up-to-date.", fg='yellow'))
+        click.echo(click.style("Error applying migrations. This may be due to the database "
+                               "being already up-to-date.", fg='yellow'))

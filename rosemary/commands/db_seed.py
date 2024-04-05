@@ -40,7 +40,8 @@ def get_module_seeders(module_path, specific_module=None):
 def db_seed(reset, yes, module):
 
     if reset:
-        if yes or click.confirm(click.style('This will reset the database, do you want to continue?', fg='red'), abort=True):
+        if yes or click.confirm(click.style('This will reset the database, do you want '
+                                            'to continue?', fg='red'), abort=True):
             click.echo(click.style("Resetting the database...", fg='yellow'))
             ctx = click.get_current_context()
             ctx.invoke(db_reset, clear_migrations=False, yes=True)
