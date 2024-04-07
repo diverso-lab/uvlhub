@@ -1,0 +1,6 @@
+from flask_wtf import FlaskForm
+from wtforms import SubmitField
+
+
+class {{ blueprint_name | pascalcase }}Form(FlaskForm):
+    submit = SubmitField('Save {{ blueprint_name }}')

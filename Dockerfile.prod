@@ -1,8 +1,9 @@
-# Use an official Python runtime as a parent image
-FROM python:3.11-alpine
+# Use an official Python runtime as a parent image, Alpine version for a lighter footprint
+FROM python:3.12-alpine
 
-# Install the MySQL client to be able to use it in the standby script.
-RUN apk add --no-cache mysql-client
+# Install MySQL client and temporary build dependencies
+RUN apk add --no-cache mysql-client \
+    && apk add --no-cache --virtual .build-deps gcc musl-dev python3-dev libffi-dev openssl-dev
 
 # Set the working directory in the container to /app
 WORKDIR /app
@@ -10,17 +11,16 @@ WORKDIR /app
 # Copy the contents of the local app/ directory to the /app directory in the container
 COPY app/ ./app
 
-# Copy requirements.txt at the /app working directory
+# Copy requirements.txt into the working directory /app
 COPY requirements.txt .
 
 # Copy the wait-for-db.sh script and set execution permissions
 COPY --chmod=+x scripts/wait-for-db.sh ./scripts/
 
-# Install any needed packages specified in requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Update pip
-RUN pip install --no-cache-dir --upgrade pip
+# Install any needed packages specified in requirements.txt and upgrade pip
+RUN pip install --no-cache-dir -r requirements.txt \
+    && pip install --no-cache-dir --upgrade pip \
+    && apk del .build-deps
 
 # Copy the migration scripts to the /app directory in the container
 COPY migrations/ ./migrations
@@ -28,5 +28,8 @@ COPY migrations/ ./migrations
 # Expose port 5000
 EXPOSE 5000
 
+# Set environment variables for production
+ENV FLASK_ENV=production
+
 # Run the database migrations and then start the application with Gunicorn
-CMD sh ./scripts/wait-for-db.sh && flask db upgrade && gunicorn --bind 0.0.0.0:5000 app:app --log-level debug --timeout 3600
+CMD sh ./scripts/wait-for-db.sh && flask db upgrade && gunicorn --bind 0.0.0.0:5000 app:app --log-level info --timeout 3600

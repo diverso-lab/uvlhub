@@ -1,8 +1,9 @@
-from flask import (render_template, redirect, url_for)
+from flask import (render_template, redirect, url_for, request)
 from flask_login import current_user, login_user, logout_user
 
 from app.blueprints.auth import auth_bp
 from app.blueprints.auth.forms import SignupForm, LoginForm
+from app.blueprints.auth.services import AuthenticationService
 
 from app.blueprints.profile.models import UserProfile
 
@@ -45,16 +46,15 @@ def login():
     if current_user.is_authenticated:
         return redirect(url_for('public.index'))
     form = LoginForm()
-    if form.validate_on_submit():
-        from app.blueprints.auth.models import User
-        user = User.get_by_email(form.email.data)
-
-        if user is not None and user.check_password(form.password.data):
-            login_user(user, remember=form.remember_me.data)
-            return redirect(url_for('public.index'))
-        else:
-            error = 'Invalid credentials'
-            return render_template("auth/login_form.html", form=form, error=error)
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            email = form.email.data
+            password = form.password.data
+            if AuthenticationService.login(email, password):
+                return redirect(url_for('public.index'))
+            else:
+                error = 'Invalid credentials'
+                return render_template("auth/login_form.html", form=form, error=error)
 
     return render_template('auth/login_form.html', form=form)
 

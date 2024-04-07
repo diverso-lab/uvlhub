@@ -1,6 +1,5 @@
-"""
-This module contains functions to interact with Zenodo and perform operations related to depositions
-"""
+from app.blueprints.zenodo.repositories import ZenodoRepository
+from app.services.BaseService import BaseService
 
 import os
 
@@ -219,3 +218,8 @@ def zenodo_get_doi(deposition_id: int) -> str:
         str: The DOI of the deposition.
     """
     return zenodo_get_deposition(deposition_id).get('doi')
+
+
+class Zenodo(BaseService):
+    def __init__(self):
+        super().__init__(ZenodoRepository())

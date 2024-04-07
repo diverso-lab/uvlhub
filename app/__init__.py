@@ -1,13 +1,14 @@
 import os
-import secrets
 import logging
-import importlib.util
 
-from flask import Flask, render_template, Blueprint
+from flask import Flask, render_template
 from flask_login import current_user
 from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
 from flask_migrate import Migrate
+
+from app.managers.blueprint_manager import BlueprintManager
+from app.managers.config_manager import ConfigManager
 
 # Load environment variables
 load_dotenv()
@@ -17,35 +18,20 @@ db = SQLAlchemy()
 migrate = Migrate()
 
 
-def create_app(config_name=None):
+def create_app(config_name='development'):
     app = Flask(__name__)
-    app.secret_key = secrets.token_bytes()
 
-    # Database configuration
-    app.config['SQLALCHEMY_DATABASE_URI'] = (
-        f"mysql+pymysql://{os.getenv('MARIADB_USER', 'default_user')}:"
-        f"{os.getenv('MARIADB_PASSWORD', 'default_password')}@"
-        f"{os.getenv('MARIADB_HOSTNAME', 'localhost')}:"
-        f"{os.getenv('MARIADB_PORT', '3306')}/"
-        f"{os.getenv('MARIADB_DATABASE', 'default_db')}"
-    )
-
-    # Timezone
-    app.config['TIMEZONE'] = 'Europe/Madrid'
-
-    # Templates configuration
-    app.config['TEMPLATES_AUTO_RELOAD'] = True
-
-    # Uploads feature models configuration
-    app.config['UPLOAD_FOLDER'] = os.path.join(app.root_path, 'uploads')
+    # Load configuration according to environment
+    config_manager = ConfigManager(app)
+    config_manager.load_config(config_name=config_name)
 
     # Initialize SQLAlchemy and Migrate with the app
     db.init_app(app)
     migrate.init_app(app, db)
 
     # Register blueprints
-    register_blueprints(app)
-    print_registered_blueprints(app)
+    blueprint_manager = BlueprintManager(app)
+    blueprint_manager.register_blueprints()
 
     from flask_login import LoginManager
     login_manager = LoginManager()
@@ -69,7 +55,7 @@ def create_app(config_name=None):
     def inject_vars_into_jinja():
         return {
             'FLASK_APP_NAME': os.getenv('FLASK_APP_NAME'),
-            'FLASK_SERVER_NAME': os.getenv('FLASK_SERVER_NAME'),
+            'FLASK_ENV': os.getenv('FLASK_ENV'),
             'DOMAIN': os.getenv('DOMAIN', 'localhost')
         }
 
@@ -138,30 +124,6 @@ def feature_models_counter() -> int:
     from app.blueprints.dataset.models import FeatureModel
     count = FeatureModel.query.count()
     return count
-
-
-def register_blueprints(app):
-    app.blueprint_url_prefixes = {}
-    base_dir = os.path.abspath(os.path.dirname(__file__))
-    blueprints_dir = os.path.join(base_dir, 'blueprints')
-    for blueprint_name in os.listdir(blueprints_dir):
-        blueprint_path = os.path.join(blueprints_dir, blueprint_name)
-        if os.path.isdir(blueprint_path) and not blueprint_name.startswith('__'):
-            try:
-                routes_module = importlib.import_module(f'app.blueprints.{blueprint_name}.routes')
-                for item in dir(routes_module):
-                    if isinstance(getattr(routes_module, item), Blueprint):
-                        blueprint = getattr(routes_module, item)
-                        app.register_blueprint(blueprint)
-            except ModuleNotFoundError as e:
-                print(f"Could not load the module for Blueprint '{blueprint_name}': {e}")
-
-
-def print_registered_blueprints(app):
-    print("Registered blueprints")
-    for name, blueprint in app.blueprints.items():
-        url_prefix = app.blueprint_url_prefixes.get(name, 'No URL prefix set')
-        print(f"Name: {name}, URL prefix: {url_prefix}")
 
 
 app = create_app()

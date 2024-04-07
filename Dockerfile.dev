@@ -1,14 +1,15 @@
 # Use an official Python runtime as a parent image
-FROM python:3.11-alpine
+FROM python:3.12-alpine
 
-# Install the MySQL client to be able to use it in the standby script.
-RUN apk add --no-cache mysql-client
+# Set this environment variable to suppress the "Running as root" warning from pip
+ENV PIP_ROOT_USER_ACTION=ignore
+
+# Install the MariaDB client to be able to use it in the standby script.
+RUN apk add --no-cache mariadb-client \
+    && apk add --no-cache --virtual .build-deps gcc musl-dev python3-dev libffi-dev
 
 # Set the working directory in the container to /app
 WORKDIR /app
-
-# Copy the contents of the local app/ directory to the /app directory in the container
-COPY app/ ./app
 
 # Copy requirements.txt at the /app working directory
 COPY requirements.txt .
@@ -16,14 +17,30 @@ COPY requirements.txt .
 # Copy the wait-for-db.sh script and set execution permissions
 COPY --chmod=+x scripts/wait-for-db.sh ./scripts/
 
-# Install any needed packages specified in requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy the init-db.sh script and set execution permissions
+COPY --chmod=+x scripts/init-db.sh ./scripts/
+
+# Copy files
+COPY rosemary/ ./rosemary
+COPY setup.py ./
+
+# Copy the entrypoint script
+COPY scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
 
 # Update pip
 RUN pip install --no-cache-dir --upgrade pip
 
+# Install any needed packages specified in requirements.txt
+RUN pip install -r requirements.txt
+
+# Make the entrypoint script executable
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
 # Expose port 5000
 EXPOSE 5000
 
-# Sets the CMD command to correctly execute the wait-for-db.sh script
-CMD sh ./scripts/wait-for-db.sh && flask db upgrade && flask run --host=0.0.0.0 --port=5000 --reload --debug
+# Set the entrypoint to run the entrypoint script
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+
+# Sets the default command to start the Flask application
+CMD sh /app/scripts/wait-for-db.sh && sh /app/scripts/init-db.sh && rosemary db:migrate && rosemary db:seed -y --reset && flask run --host=0.0.0.0 --port=5000 --reload --debug

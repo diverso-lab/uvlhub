@@ -1,4 +1,7 @@
 import logging
+
+from flask_login import login_required
+
 import app
 
 from flask import render_template
@@ -23,3 +26,9 @@ def index():
                            datasets=latest_datasets,
                            datasets_counter=datasets_counter,
                            feature_models_counter=feature_models_counter)
+
+
+@public_bp.route('/secret')
+@login_required
+def secret():
+    return "Esto es secreto!"

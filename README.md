@@ -19,21 +19,25 @@ Repository of feature models in UVL format integrated with Zenodo and FlamaPy - 
 git clone https://github.com/diverso-lab/uvlhub.git
 ```
 
-## Set `.env` file in root with:
+## Preparing environment:
 
-Create an `.env` file in the root of the project with this information. It is important to obtain a token in Zenodo first. **We recommend creating the token in the Sandbox version of Zenodo, in order to generate fictitious DOIs and not make intensive use of the real Zenodo SLA.**
+To create an `.env` file according to a basic template, run:
 
 ```
-FLASK_APP_NAME=UVLHUB.IO
-DOMAIN=localhost
-MARIADB_HOSTNAME=db
-MARIADB_PORT=3306
-MARIADB_DATABASE=uvlhubdb
-MARIADB_USER=uvlhubuser
-MARIADB_PASSWORD=uvlhubpass
-MARIADB_ROOT_PASSWORD=uvlhubrootpass
-ZENODO_ACCESS_TOKEN=<GET_ACCESS_TOKEN_IN_ZENODO>
+cp .env.example .env
 ```
+
+To use Zenodo, it is important to obtain a token in Zenodo first.
+**We recommend creating the token in the Sandbox version of Zenodo, in order to generate fictitious DOIs 
+and not make intensive use of the real Zenodo SLA.**
+
+To generate the Zenodo `.env` file, run:
+
+```
+cp app/blueprints/zenodo/.env.example app/blueprints/zenodo/.env
+```
+
+To perform the composition of all environment variables, refer to section [Composing Environment Variables](#composing-environment-variables).
 
 ## Deploy in develop
 
@@ -47,22 +51,243 @@ This will apply the migrations to the database and run the Flask application.
 
 **If everything worked correctly, you should see the deployed version of UVLHub in development at `http://localhost`.**
 
+## Using Rosemary CLI
+
+`Rosemary` is a CLI tool developed to facilitate project management and development tasks.
+
+To use the Rosemary CLI, you need to be inside the `web_app_container` Docker container. This ensures that Rosemary operates in the correct environment and has access to all necessary files and settings.
+
+First, make sure your Docker environment is running. Then, access the `web_app_container` using the following command:
+
+```
+docker exec -it web_app_container /bin/sh
+```
+
+In the terminal, you should see the prefix `/app #`. You are now ready to use Rosemary's commands.
+
+### Composing Environment Variables
+
+It is possible to make a final composition of the `.env` file based on the individual `.env` files of each module.
+
+To execute this command and automatically combine the environment variables:
+
+```
+rosemary compose:env
+```
+**Note: it is important to restart our Docker container for any changes to `.env` to take effect.**
+
+
+### Update Project Dependencies
+
+To update all project dependencies, run:
+
+```
+rosemary update
+```
+
+Note: it is the responsibility of the developer to check that the update of the dependencies has not broken any 
+functionality and each dependency maintains backwards compatibility. Use the script with care!
+
 ### Migrations
 
-However, if during development there are new changes in the model, run inside the `web` container:
+If during development there are new changes in the model, run:
 
 ```
-flask db migrate
-flask db upgrade
+rosemary db:migrate
 ```
 
-### Tests
+This command will detect all changes in the model (new tables, modified fields, etc.) and apply those changes to the database.
+those changes to the database.
 
-To run unit test, please enter inside `web` container:
+### Seeders
+
+#### Basic Usage
+
+It is possible to populate the database with predefined test data. It is very useful for testing certain
+that require existing data.
+
+To popularize all test data of all modules, run:
 
 ```
-pytest app/tests/units.py
+rosemary db:seed
 ```
+
+If we only want to popularize the test data of a specific module, run:
+
+```
+rosemary db:seed <module_name>
+```
+
+Replace `<module_name>` with the name of the module you want to populate 
+(for example, `auth` for the authentication module).
+
+#### Reset database before populating
+
+If you want to make sure that the database is in a clean state before populating it with test data, you can use the --reset flag. 
+populating it with test data, you can use the `--reset` flag. 
+This will reset the database to its initial state before running the seeders:
+
+```
+rosemary db:seed --reset
+```
+
+You can also combine the `--reset` flag with a module specification if you want to reset the database before populating 
+only the test data of a specific module:
+
+```
+rosemary db:seed <module_name> --reset
+```
+
+### Resetting the Database
+
+The `rosemary db:reset` command is a powerful tool for resetting your project's database to its 
+initial state. This command deletes all the data in your database, making it ideal for fixing any inconsistencies 
+we may have created during development.
+
+#### Basic Usage
+
+To reset your database and clear all table data except for migration records, run:
+
+```
+rosemary db:reset
+```
+
+The `rosemary db:reset` command also clears the uploads directory as part of the reset process, ensuring that any files 
+uploaded during development or testing are removed.
+
+#### Clearing Migrations with --clear-migrations
+
+If you need to completely rebuild your database from scratch, including removing all migration history and starting
+fresh, you can use the `--clear-migrations` option:
+
+``` 
+rosemary db:reset --clear-migrations
+```
+
+- Delete all data from the database, including the migration history.
+- Clear the migrations directory.
+- Initialize a new set of migrations.
+- Apply the migrations to rebuild the database schema.
+
+### MariaDB Console
+
+To directly use the MariaDB console to execute native SQL statements, use:
+
+```
+rosemary db:console
+```
+
+This command connects to the MariaDB container using the credentials defined in the `.env` file.
+
+To exit the MariaDB console, type `exit;`.
+
+### Extending the Project with New Modules
+
+To quickly generate a new module within the project, including necessary boilerplate files 
+like `__init__.py`, `routes.py`, `models.py`, `repositories.py`, `services.py`, `forms.py`,
+and a basic `index.html` template, you can use the `rosemary` CLI tool's `make:module` 
+command. This command will create a new blueprint structure ready for development.
+
+To create a new module, run the following command from the root of the project:
+
+```
+rosemary make:module <module_name>
+```
+
+Replace `<module_name>` with the desired name of your module. For example, to create a 
+module named "zenodo", you would run:
+
+```
+rosemary make:module zenodo
+```
+
+
+This command creates a new directory under `app/blueprints/` with the name of your module and sets up the initial files and directories needed to get started, including a dedicated `templates` directory for your module's templates.
+
+**Note:** If the module already exists, `rosemary` will simply notify you and not overwrite any existing files.
+
+This feature is designed to streamline the development process, making it easy to add new features to the project.
+
+### Testing All Modules
+
+To run tests across all modules in the project, you can use the following command:
+
+```
+rosemary test
+```
+
+This command will execute all tests found within the app/blueprints directory, covering all the modules of the project.
+
+### Testing a Specific Module
+
+If you're focusing on a particular module and want to run tests only for that module, you can specify the module
+name as an argument to the rosemary test command. For example, to run tests only for the zenodo module, you would 
+use:
+
+```
+rosemary test zenodo
+```
+
+### Code Coverage
+
+The `rosemary coverage` command facilitates running code coverage analysis for your Flask project using `pytest-cov`. 
+This command simplifies the process of assessing test coverage.
+
+#### Command Usage
+
+- **All Modules**: To run coverage analysis for all modules within the `app/blueprints` directory and generate an HTML report, use:
+
+  ```
+  rosemary coverage
+  ```
+  
+- **Specific Module**: If you wish to run coverage analysis for a specific module, include the 
+module name:
+
+  ```
+  rosemary coverage <module_name> 
+  ```
+
+#### Command Options
+
+- **--html**: Generates an HTML coverage report. The report is saved in the `htmlcov` directory
+at the root of your project. Example: `rosemary coverage --html`
+
+
+### Listing Application Routes
+
+The rosemary command `route:list` allows you to list all the routes available in your application. 
+Flask application. This command is useful for getting a quick overview of available endpoints 
+and their corresponding HTTP methods.
+
+#### Basic Usage
+
+To list all routes:
+
+```
+rosemary route:list
+```
+
+#### Group routes by module
+
+To get a grouped view of the paths by module, you can use the `--group` option. This is especially useful 
+for applications with a complex modular structure, as it allows you to quickly see how the paths are organized within different parts of your application.
+
+```
+rosemary route:list --group
+```
+
+#### List routes of a specific module
+
+It may be useful to see the paths associated with a specific module. To do this, simply provide the module 
+name as an argument:
+
+```
+rosemary route:list <module_name>
+```
+
+Replace `<module_name>` with the actual name of the module for which you want to see the paths.
+
 
 ## Deploy in production (Docker Compose)
 
@@ -107,15 +332,3 @@ To renew a certificate that is less than 60 days from expiry, execute:
 cd scripts
 chmod +x ssl_renew.sh && ./ssl_renew.sh
 ```
-
-## Update dependencies
-
-To update all project dependencies automatically, run:
-
-```
-cd scripts
-chmod +x update_dependencies.sh && ./update_dependencies.sh
-```
-
-Note: it is the responsibility of the developer to check that the update of the dependencies has not broken any functionality and each dependency maintains backwards compatibility. Use the script with care!
-
