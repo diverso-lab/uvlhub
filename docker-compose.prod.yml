@@ -1,6 +1,5 @@
-version: '3.8'
-
 services:
+
   web:
     container_name: web_app_container
     image: drorganvidez/uvlhub:latest
@@ -55,7 +54,7 @@ services:
     image: containrrr/watchtower
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-    command: --cleanup --interval 120 uvlhub-web-1
+    command: --cleanup --interval 120 web_app_container
     restart: always
 
   certbot:
