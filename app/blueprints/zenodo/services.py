@@ -1,5 +1,5 @@
 from app.blueprints.zenodo.repositories import ZenodoRepository
-from app.services.BaseService import BaseService
+from core.services.BaseService import BaseService
 
 import os
 

@@ -1,5 +1,5 @@
 from app.blueprints.profile.models import UserProfile
-from app.repositories.BaseRepository import BaseRepository
+from core.repositories.BaseRepository import BaseRepository
 
 
 class UserProfileRepository(BaseRepository):

@@ -1,5 +1,5 @@
 from app.blueprints.{{ blueprint_name }}.repositories import {{ blueprint_name | pascalcase }}Repository
-from app.services.BaseService import BaseService
+from core.services.BaseService import BaseService
 
 
 class {{ blueprint_name | pascalcase }}(BaseService):
