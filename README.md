@@ -123,9 +123,8 @@ Replace `<module_name>` with the name of the module you want to populate
 
 #### Reset database before populating
 
-If you want to make sure that the database is in a clean state before populating it with test data, you can use the --reset flag. 
-populating it with test data, you can use the `--reset` flag. 
-This will reset the database to its initial state before running the seeders:
+If you want to make sure that the database is in a clean state before populating it with test data, 
+you can use the `--reset` flag. This will reset the database to its initial state before running the seeders:
 
 ```
 rosemary db:seed --reset
