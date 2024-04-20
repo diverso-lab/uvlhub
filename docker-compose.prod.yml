@@ -4,7 +4,7 @@ services:
     container_name: web_app_container
     image: drorganvidez/uvlhub:latest
     volumes:
-      - .:/app
+      - ./.env:/app/.env
     ports:
       - "5000:5000"
     environment:
