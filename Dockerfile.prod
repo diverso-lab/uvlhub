@@ -28,8 +28,5 @@ COPY migrations/ ./migrations
 # Expose port 5000
 EXPOSE 5000
 
-# Set environment variables for production
-ENV FLASK_ENV=production
-
 # Run the database migrations and then start the application with Gunicorn
 CMD sh ./scripts/wait-for-db.sh && flask db upgrade && gunicorn --bind 0.0.0.0:5000 app:app --log-level info --timeout 3600
