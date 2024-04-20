@@ -1,6 +1,6 @@
 from app.blueprints.auth.models import User
 from app.blueprints.profile.models import UserProfile
-from app.seeders.BaseSeeder import BaseSeeder
+from core.seeders.BaseSeeder import BaseSeeder
 
 
 class AuthSeeder(BaseSeeder):

@@ -1,5 +1,5 @@
 from app.blueprints.profile.repositories import UserProfileRepository
-from app.services.BaseService import BaseService
+from core.services.BaseService import BaseService
 
 
 class UserProfileService(BaseService):

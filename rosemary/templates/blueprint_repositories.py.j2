@@ -1,5 +1,5 @@
 from app.blueprints.{{ blueprint_name }}.models import {{ blueprint_name | pascalcase }}
-from app.repositories.BaseRepository import BaseRepository
+from core.repositories.BaseRepository import BaseRepository
 
 
 class {{ blueprint_name | pascalcase }}Repository(BaseRepository):

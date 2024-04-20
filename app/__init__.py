@@ -1,14 +1,15 @@
 import os
-import logging
 
-from flask import Flask, render_template
+from flask import Flask
 from flask_login import current_user
 from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
 from flask_migrate import Migrate
 
-from app.managers.blueprint_manager import BlueprintManager
-from app.managers.config_manager import ConfigManager
+from core.managers.blueprint_manager import BlueprintManager
+from core.managers.config_manager import ConfigManager
+from core.managers.error_handler_manager import ErrorHandlerManager
+from core.managers.logging_manager import LoggingManager
 
 # Load environment variables
 load_dotenv()
@@ -43,12 +44,13 @@ def create_app(config_name='development'):
         from app.blueprints.auth.models import User
         return User.query.get(int(user_id))
 
-    # Logging
-    logging.basicConfig(filename='app.log', level=logging.ERROR,
-                        format='%(asctime)s:%(levelname)s:%(message)s')
+    # Set up logging
+    logging_manager = LoggingManager(app)
+    logging_manager.setup_logging()
 
-    # Custom error handlers
-    register_error_handlers(app)
+    # Initialize error handler manager
+    error_handler_manager = ErrorHandlerManager(app)
+    error_handler_manager.register_error_handlers()
 
     # Injecting environment variables into jinja context
     @app.context_processor
@@ -60,28 +62,6 @@ def create_app(config_name='development'):
         }
 
     return app
-
-
-def register_error_handlers(app):
-    @app.errorhandler(500)
-    def base_error_handler(e):
-        app.logger.error('Internal Server Error: %s', str(e))  # Error logging
-        return render_template('500.html'), 500
-
-    @app.errorhandler(404)
-    def error_404_handler(e):
-        app.logger.warning('Page Not Found: %s', str(e))  # Warning logging
-        return render_template('404.html'), 404
-
-    @app.errorhandler(401)
-    def error_401_handler(e):
-        app.logger.warning('Unauthorized Access: %s', str(e))  # Warning logging
-        return render_template('401.html'), 401
-
-    @app.errorhandler(400)
-    def error_400_handler(e):
-        app.logger.warning('Bad Request: %s', str(e))  # Warning logging
-        return render_template('400.html'), 400
 
 
 def get_test_client():

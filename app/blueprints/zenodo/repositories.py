@@ -1,5 +1,5 @@
 from app.blueprints.zenodo.models import Zenodo
-from app.repositories.BaseRepository import BaseRepository
+from core.repositories.BaseRepository import BaseRepository
 
 
 class ZenodoRepository(BaseRepository):

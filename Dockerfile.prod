@@ -8,8 +8,9 @@ RUN apk add --no-cache mysql-client \
 # Set the working directory in the container to /app
 WORKDIR /app
 
-# Copy the contents of the local app/ directory to the /app directory in the container
+# Copy files
 COPY app/ ./app
+COPY core/ ./core
 
 # Copy requirements.txt into the working directory /app
 COPY requirements.txt .
