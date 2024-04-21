@@ -1,12 +1,25 @@
 from app.blueprints.dataset.models import DataSet
 from core.resources.generic_resource import create_resource
+from core.serialisers.serializer import Serializer
 
-# Define fields and create the resource class
-fields = {
-    'dataset_id': 'id',
-    'created': 'created_at'
+file_fields = {
+    'file_id': 'id',
+    'file_name': 'name',
+    'size': 'get_formatted_size'
 }
-DataSetResource = create_resource(DataSet, serialization_fields=fields)
+file_serializer = Serializer(file_fields)
+
+dataset_fields = {
+    'dataset_id': 'id',
+    'created': 'created_at',
+    'name': 'name',
+    'doi': 'get_uvlhub_doi',
+    'files': 'files'
+}
+
+dataset_serializer = Serializer(dataset_fields, related_serializers={'files': file_serializer})
+
+DataSetResource = create_resource(DataSet, dataset_serializer)
 
 
 def init_blueprint_api(api):
