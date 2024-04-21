@@ -435,7 +435,7 @@ def download_file(file_id):
     API ENDPOINTS FOR DATASET MODEL
 '''
 
-
+'''
 @dataset_bp.route('/api/v1/dataset/', methods=['GET'])
 def get_all_dataset():
     datasets = DataSet.query.order_by(DataSet.created_at.desc()).all()
@@ -679,6 +679,7 @@ def _create_feature_models(dataset: DataSet, models: dict, user: User) -> List[F
 
     return feature_models
 
+'''
 
 @dataset_bp.route('/doi/<path:doi>/', methods=['GET'])
 def subdomain_index(doi):
