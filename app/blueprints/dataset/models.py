@@ -80,6 +80,12 @@ class DataSet(db.Model):
     ds_meta_data = db.relationship('DSMetaData', backref=db.backref('data_set', uselist=False))
     feature_models = db.relationship('FeatureModel', backref='data_set', lazy=True, cascade="all, delete")
 
+    def name(self):
+        return self.ds_meta_data.title
+
+    def files(self):
+        return [file for fm in self.feature_models for file in fm.files]
+
     def delete(self):
         db.session.delete(self)
         db.session.commit()

@@ -1,13 +1,10 @@
-import logging
 import os
 import json
 import hashlib
 import shutil
 import tempfile
 import uuid
-import time
 from datetime import datetime
-from typing import List
 from zipfile import ZipFile
 
 from flask import render_template, request, jsonify, send_from_directory, current_app, make_response, abort
@@ -18,7 +15,6 @@ from app.blueprints.dataset.forms import DataSetForm
 from app.blueprints.dataset.models import DataSet, FeatureModel, File, FMMetaData, DSMetaData, Author, \
     PublicationType, DSDownloadRecord, DSViewRecord, FileDownloadRecord
 from app.blueprints.dataset import dataset_bp
-from app.blueprints.auth.models import User
 from app.blueprints.zenodo.services import test_full_zenodo_connection, zenodo_create_new_deposition, \
     zenodo_upload_file, zenodo_publish_deposition, zenodo_get_doi
 
@@ -435,7 +431,7 @@ def download_file(file_id):
     API ENDPOINTS FOR DATASET MODEL
 '''
 
-
+'''
 @dataset_bp.route('/api/v1/dataset/', methods=['GET'])
 def get_all_dataset():
     datasets = DataSet.query.order_by(DataSet.created_at.desc()).all()
@@ -678,6 +674,8 @@ def _create_feature_models(dataset: DataSet, models: dict, user: User) -> List[F
         feature_models.append(feature_model)
 
     return feature_models
+
+'''
 
 
 @dataset_bp.route('/doi/<path:doi>/', methods=['GET'])
