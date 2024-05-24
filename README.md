@@ -15,4 +15,4 @@ Repository of feature models in UVL format integrated with Zenodo and FlamaPy - 
 
 ## Official documentation
 
-You can consult the official documentation of the project at [docs.uvlhub.io](docs.uvlhub.io)
+You can consult the official documentation of the project at [docs.uvlhub.io](https://docs.uvlhub.io/)
