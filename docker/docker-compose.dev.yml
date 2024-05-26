@@ -1,0 +1,43 @@
+services:
+  web:
+    container_name: web_app_container
+    env_file:
+      - ../.env
+    image: drorganvidez/uvlhub:dev
+    build:
+      context: ../
+      dockerfile: docker/images/Dockerfile.dev
+    volumes:
+      - ../:/app
+    expose:
+      - "5000"
+    depends_on:
+      - db
+
+  db:
+    container_name: mariadb_container
+    env_file:
+      - ../.env
+    build:
+      context: ../
+      dockerfile: docker/images/Dockerfile.mariadb
+    restart: always
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+  nginx:
+    container_name: nginx_web_server
+    image: nginx:latest
+    volumes:
+      - type: bind
+        source: nginx/nginx.dev.conf
+        target: /etc/nginx/nginx.conf
+    ports:
+      - "80:80"
+    depends_on:
+      - web
+
+volumes:
+  db_data:

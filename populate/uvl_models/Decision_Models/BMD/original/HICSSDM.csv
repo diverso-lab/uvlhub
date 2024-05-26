@@ -1,8 +1,0 @@
-ID;Question;Type;Range;Cardinality;Constraint/Rule;"Visible/relevant if"
-SV;Do you want to derive a full solution or choose particular packages?;Enumeration;Solution | Particular Packages;1:1;;true
-SV_Solution;Which solution do you want to derive?;Enumeration;BMDCRM | BMD¦;1:1;; getValue(SV) == SV.Solution
-SV_Particular_Package;Which of the following packages do you want?;Enumeration;"Label Printing | Standard Letter | Organizer | Docs | Else";1:5;; getValue(SV) == SV.Particular Packages
-CV;What are your tasks?;Enumeration;"Document Management | Customer Management | Claims Management";1:3;; getValue(SV) == SV.Particular Packages
-CV_Documents;How do you manage documents?;Enumeration;"archive | scan new | read existing | import external";1:4;; getValue(CV) == SV.Document Management &&  getValue(SV) == SV.Particular Packages
-CV_Customer;How are you communicating with customers?;Enumeration;phone | mail;1:2;; getValue(CV) == SV.Customer Management && getValue(SV) == SV.Particular Packages
-CV_Claims;Which additional capabilities do you need?;Enumeration;journal | task manager;1:2;;getValue(CV) == CV.Claims Management &&  getValue(SV) == SV.Particular Packages
