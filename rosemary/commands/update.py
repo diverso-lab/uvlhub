@@ -1,4 +1,5 @@
 import click
+import os
 import subprocess
 
 
@@ -6,7 +7,7 @@ import subprocess
 def update():
     """This command updates all packages based on the requirements.txt, excluding editable installations, and updates
     the file with concrete versions."""
-    requirements_path = '/app/requirements.txt'
+    requirements_path = os.path.join(os.getenv('WORKING_DIR', ''), 'requirements.txt')
     try:
         # Update pip first
         subprocess.check_call(['pip', 'install', '--upgrade', 'pip'])

@@ -6,7 +6,7 @@ import os
 @click.command('test', help="Runs pytest on the blueprints directory or a specific module.")
 @click.argument('module_name', required=False)
 def test(module_name):
-    base_path = '/app/app/blueprints'
+    base_path = os.path.join(os.getenv('WORKING_DIR', ''), 'app/blueprints')
     test_path = base_path
 
     if module_name:

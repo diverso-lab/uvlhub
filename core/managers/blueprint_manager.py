@@ -8,7 +8,8 @@ class BlueprintManager:
     def __init__(self, app):
         self.app = app
         self.base_dir = os.path.abspath(os.path.dirname(__file__))
-        self.blueprints_dir = os.getenv('BLUEPRINTS_DIR', '/app/app/blueprints')
+        working_dir = os.getenv('WORKING_DIR', '')
+        self.blueprints_dir = os.path.join(working_dir, 'app/blueprints')
 
     def register_blueprints(self):
         self.app.blueprints = {}

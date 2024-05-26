@@ -4,7 +4,7 @@ import os
 
 @click.command('clear:log', help="Clears the 'app.log' file.")
 def clear_log():
-    log_file_path = '/app/app.log'
+    log_file_path = os.path.join(os.getenv('WORKING_DIR', ''), 'app.log')
 
     # Check if the log file exists
     if os.path.exists(log_file_path):

@@ -49,7 +49,7 @@ def db_seed(reset, yes, module):
             click.echo(click.style("Database reset cancelled.", fg='yellow'))
             return
 
-    blueprints_module_path = '/app/app/blueprints'
+    blueprints_module_path = os.path.join(os.getenv('WORKING_DIR', ''), 'app/blueprints')
     seeders = get_module_seeders(blueprints_module_path, specific_module=module)
     success = True  # Flag to control the successful flow of the operation
 

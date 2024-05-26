@@ -8,8 +8,8 @@ from flask.cli import with_appcontext
 @with_appcontext
 def compose_env():
 
-    base_path = '/app/app/blueprints'
-    root_env_path = '/app/.env'
+    base_path = os.path.join(os.getenv('WORKING_DIR', ''), 'app/blueprints')
+    root_env_path = os.path.join(os.getenv('WORKING_DIR', ''), '.env')
 
     # Loads the current root .env variables into a dictionary
     root_env_vars = dotenv_values(root_env_path)

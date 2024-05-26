@@ -44,7 +44,7 @@ def db_reset(clear_migrations, yes):
 
         if clear_migrations:
             # Delete the migration folder if it exists.
-            migrations_dir = '/app/migrations'
+            migrations_dir = os.path.join(os.getenv('WORKING_DIR', ''), 'migrations')
             if os.path.isdir(migrations_dir):
                 shutil.rmtree(migrations_dir)
                 click.echo(click.style("Migrations directory cleared.", fg='yellow'))

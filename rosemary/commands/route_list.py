@@ -10,7 +10,7 @@ from collections import defaultdict
 @click.option('--group', is_flag=True, help="Group routes by module when no specific module is provided.")
 @with_appcontext
 def route_list(module_name, group):
-    base_path = '/app/app/blueprints'
+    base_path = os.path.join(os.getenv('WORKING_DIR', ''), 'app/blueprints')
 
     # Checks if a module was specified and if it exists
     if module_name:
