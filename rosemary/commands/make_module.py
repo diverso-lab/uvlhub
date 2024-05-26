@@ -29,7 +29,8 @@ def render_and_write_file(env, template_name, filename, context):
 @click.command('make:module', help="Creates a new module with a given name.")
 @click.argument('name')
 def make_module(name):
-    blueprint_path = f'/app/app/blueprints/{name}'
+    blueprints_root_path = os.path.join(os.getenv('WORKING_DIR', ''), 'app/blueprints')
+    blueprint_path = f'{blueprints_root_path}/{name}'
 
     if os.path.exists(blueprint_path):
         click.echo(click.style(f"The module '{name}' already exists.", fg='red'))

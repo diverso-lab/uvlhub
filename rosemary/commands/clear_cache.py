@@ -12,7 +12,6 @@ def clear_cache():
 
         project_root = Path(os.getenv('WORKING_DIR', ''))
         pytest_cache_dir = os.path.join(os.getenv('WORKING_DIR', ''), 'app/blueprints/.pytest_cache')
-        pytest_cache_dir = '/app/app/blueprints/.pytest_cache'
         build_dir = os.path.join(os.getenv('WORKING_DIR', ''), 'build')
 
         if os.path.exists(pytest_cache_dir):
