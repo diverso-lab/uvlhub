@@ -1,0 +1,91 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+require 'pathname'
+require 'fileutils'
+
+# Method to load environment variables from an .env file
+def load_env(file)
+  if File.exist?(file)
+    File.readlines(file).each do |line|
+      key, value = line.strip.split('=', 2)
+      ENV[key] = value if key && value
+    end
+  else
+    raise "Env file not found: #{file}"
+  end
+end
+
+# Load .env file from the top level
+env_file_path = File.expand_path("../../.env", __FILE__)
+puts "Loading .env file from: #{env_file_path}"
+load_env(env_file_path)
+puts "FLASK_APP_NAME: #{ENV['FLASK_APP_NAME']}"
+puts "FLASK_ENV: #{ENV['FLASK_ENV']}"
+puts "DOMAIN: #{ENV['DOMAIN']}"
+puts "MARIADB_HOSTNAME: #{ENV['MARIADB_HOSTNAME']}"
+puts "MARIADB_PORT: #{ENV['MARIADB_PORT']}"
+puts "MARIADB_DATABASE: #{ENV['MARIADB_DATABASE']}"
+puts "MARIADB_TEST_DATABASE: #{ENV['MARIADB_TEST_DATABASE']}"
+puts "MARIADB_USER: #{ENV['MARIADB_USER']}"
+puts "MARIADB_PASSWORD: #{ENV['MARIADB_PASSWORD']}"
+puts "MARIADB_ROOT_PASSWORD: #{ENV['MARIADB_ROOT_PASSWORD']}"
+puts "WORKING_DIR: #{ENV['WORKING_DIR']}"
+
+
+Vagrant.configure("2") do |config|
+
+  # Choose a base box
+  config.vm.box = "ubuntu/mantic64"
+
+  # Network configuration
+  config.vm.network "forwarded_port", guest: 5000, host: 5000
+
+  # Synced folders
+  config.vm.synced_folder "../", "/vagrant"
+
+  # Use Ansible for provisioning
+  config.vm.provision "ansible" do |ansible|
+    ansible.playbook = "00_main.yml"
+    ansible.extra_vars = {
+      flask_app_name: ENV['FLASK_APP_NAME'],
+      flask_env: ENV['FLASK_ENV'],
+      domain: ENV['DOMAIN'],
+      mariadb_hostname: ENV['MARIADB_HOSTNAME'],
+      mariadb_port: ENV['MARIADB_PORT'],
+      mariadb_database: ENV['MARIADB_DATABASE'],
+      mariadb_test_database: ENV['MARIADB_TEST_DATABASE'],
+      mariadb_user: ENV['MARIADB_USER'],
+      mariadb_password: ENV['MARIADB_PASSWORD'],
+      mariadb_root_password: ENV['MARIADB_ROOT_PASSWORD'],
+      working_dir: ENV['WORKING_DIR']
+    }
+  end
+
+  # Load environment variables on vagrant ssh
+  config.vm.provision "shell", inline: <<-SHELL
+    echo 'export FLASK_APP_NAME="#{ENV['FLASK_APP_NAME'].gsub('"', '\"')}"' >> /etc/profile.d/vagrant_env.sh
+    echo 'export FLASK_ENV="#{ENV['FLASK_ENV'].gsub('"', '\"')}"' >> /etc/profile.d/vagrant_env.sh
+    echo 'export DOMAIN="#{ENV['DOMAIN'].gsub('"', '\"')}"' >> /etc/profile.d/vagrant_env.sh
+    echo 'export MARIADB_HOSTNAME="#{ENV['MARIADB_HOSTNAME'].gsub('"', '\"')}"' >> /etc/profile.d/vagrant_env.sh
+    echo 'export MARIADB_PORT="#{ENV['MARIADB_PORT'].gsub('"', '\"')}"' >> /etc/profile.d/vagrant_env.sh
+    echo 'export MARIADB_DATABASE="#{ENV['MARIADB_DATABASE'].gsub('"', '\"')}"' >> /etc/profile.d/vagrant_env.sh
+    echo 'export MARIADB_TEST_DATABASE="#{ENV['MARIADB_TEST_DATABASE'].gsub('"', '\"')}"' >> /etc/profile.d/vagrant_env.sh
+    echo 'export MARIADB_USER="#{ENV['MARIADB_USER'].gsub('"', '\"')}"' >> /etc/profile.d/vagrant_env.sh
+    echo 'export MARIADB_PASSWORD="#{ENV['MARIADB_PASSWORD'].gsub('"', '\"')}"' >> /etc/profile.d/vagrant_env.sh
+    echo 'export MARIADB_ROOT_PASSWORD="#{ENV['MARIADB_ROOT_PASSWORD'].gsub('"', '\"')}"' >> /etc/profile.d/vagrant_env.sh
+    echo 'export WORKING_DIR="#{ENV['WORKING_DIR'].gsub('"', '\"')}"' >> /etc/profile.d/vagrant_env.sh
+    source /etc/profile.d/vagrant_env.sh
+  SHELL
+
+  config.vm.provision "shell", run: "always", inline: <<-SHELL
+    echo 'source /etc/profile.d/vagrant_env.sh' >> /home/vagrant/.bashrc
+  SHELL
+
+
+  # Provider configuration
+  config.vm.provider "virtualbox" do |vb|
+    vb.memory = "2048"
+    vb.cpus = 2
+  end
+end

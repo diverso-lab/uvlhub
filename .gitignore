@@ -10,3 +10,5 @@ build/
 htmlcov/
 .pytest_cache
 venv/
+ubuntu-bionic-18.04-cloudimg-console.log
+.vagrant/
