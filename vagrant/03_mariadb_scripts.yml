@@ -15,33 +15,32 @@
       MARIADB_PASSWORD: "{{ mariadb_password }}"
       MARIADB_ROOT_PASSWORD: "{{ mariadb_root_password }}"
       WORKING_DIR: "{{ working_dir }}"
-    clean_working_dir: "{{ working_dir | regex_replace('^\"|\"$', '') }}"
 
   tasks:
     - name: Set permissions for wait-for-db.sh
       file:
-        path: "{{ clean_working_dir }}scripts/wait-for-db.sh"
+        path: "{{ working_dir }}scripts/wait-for-db.sh"
         mode: '0755'
         state: file
       environment: "{{ common_environment }}"
 
     - name: Set permissions for init-db.sh
       file:
-        path: "{{ clean_working_dir }}scripts/init-db.sh"
+        path: "{{ working_dir }}scripts/init-db.sh"
         mode: '0755'
         state: file
       environment: "{{ common_environment }}"
 
     - name: Wait for MariaDB to be ready
       shell: |
-        {{ clean_working_dir }}scripts/wait-for-db.sh
+        {{ working_dir }}scripts/wait-for-db.sh
       args:
         executable: /bin/bash
       environment: "{{ common_environment }}"
 
     - name: Initialize the database
       shell: |
-        {{ clean_working_dir }}scripts/init-db.sh
+        {{ working_dir }}scripts/init-db.sh
       args:
         executable: /bin/bash
       environment: "{{ common_environment }}"

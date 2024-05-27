@@ -1,9 +1,6 @@
 - hosts: all
   become: true
 
-  vars:
-    working_dir: "{{ working_dir | regex_replace('^\"|\"$', '') }}"
-
   tasks:
     - name: Update the system and install Python and dependencies
       apt:
