@@ -9,6 +9,7 @@ services:
       dockerfile: docker/images/Dockerfile.dev
     volumes:
       - ../:/app
+      - /var/run/docker.sock:/var/run/docker.sock
     expose:
       - "5000"
     depends_on:
@@ -38,6 +39,21 @@ services:
       - "80:80"
     depends_on:
       - web
+
+  locust:
+    container_name: locust_container
+    env_file:
+      - ../.env
+    build:
+      context: ../
+      dockerfile: docker/images/Dockerfile.locust
+    ports:
+      - "8089:8089"
+    volumes:
+      - ../:/app
+    depends_on:
+      - web
+
 
 volumes:
   db_data:

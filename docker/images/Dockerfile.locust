@@ -1,0 +1,7 @@
+FROM locustio/locust
+
+RUN pip install python-dotenv
+RUN pip install faker
+RUN pip install bs4
+
+CMD ["-f", "/app/core/bootstraps/locustfile_bootstrap.py"]
