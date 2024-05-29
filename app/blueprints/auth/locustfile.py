@@ -1,80 +1,88 @@
 from locust import HttpUser, TaskSet, task, between
-import re
-import json
 from faker import Faker
+import os
+from dotenv import load_dotenv
+from bs4 import BeautifulSoup
 
 fake = Faker()
 
-class UserBehavior(TaskSet):
-    def on_start(self):
-        """ on_start is called when a Locust start before any task is scheduled """
-        self.client.verify = False
-        self.token = None
-        self.signup()
-        self.login()
+# Load environment variables
+load_dotenv()
 
-    def get_token(self, response):
-        # Extraer el token CSRF del HTML de la respuesta usando una expresión regular
-        match = re.search('name="csrf_token" .* value="(.+?)"', response.text)
-        if match:
-            self.csrftoken = match.group(1)
-            print(f"DEBUG: self.csrftoken = {self.csrftoken}")
+def get_host():
+    working_dir = os.getenv('WORKING_DIR', "")
+    
+    if working_dir == "":
+        return "http://localhost:5000"
+    elif working_dir == "/app/":
+        return "http://nginx_web_server"
+    elif working_dir == "/vagrant/":
+        return "http://localhost:5000"
+    else:
+        raise ValueError("Unknown WORKING_DIR value")
+    
+def get_csrf_token(response):
+        soup = BeautifulSoup(response.text, 'html.parser')
+        token_tag = soup.find('input', {'name': 'csrf_token'})
+        if token_tag:
+            return token_tag['value']
         else:
-            self.csrftoken = None
-            print("DEBUG: CSRF token not found")
+            print("Response HTML:", response.text)
+            raise ValueError("CSRF token not found in the response")
+
+class SignupBehavior(TaskSet):
+    def on_start(self):
+        self.signup()
+
     @task
     def signup(self):
-        response = self.client.get("/signup/")
-        self.get_token(f"response: {response.text}")
-        if not self.csrftoken:
-            print("DEBUG: CSRF token not found during signup")
-            return
-        signup_data = {
-            'name': fake.first_name(),
-            'surname': fake.last_name(),
-            'email': fake.email(),
-            'password': 'password123',
-            'csrf_token': self.csrftoken
-        }
-        headers = {
-            'X-CSRFToken': self.csrftoken,
-            'content-type': 'application/x-www-form-urlencoded'
-        }
-        response = self.client.post("/signup/", data=signup_data, headers=headers)
-        print(f"DEBUG: signup response.status_code = {response.status_code}")
+        response = self.client.get("/signup")
+        csrf_token = get_csrf_token(response)
+        print(f"csrf_token signup: {csrf_token}")
+
+        response = self.client.post("/signup", data={
+            "email": fake.email(),
+            "password": fake.password(),
+            "csrf_token": csrf_token
+        })
+        if response.status_code != 200:
+            print(f"Signup failed: {response.status_code}")
+
+class LoginBehavior(TaskSet):
+    def on_start(self):
+        self.ensure_logged_out()
+        self.login()
+
+    @task
+    def ensure_logged_out(self):
+        # Intentar cerrar sesión si hay un usuario logueado
+        response = self.client.get("/logout")
+        if response.status_code != 200:
+            print(f"Logout failed or no active session: {response.status_code}")
 
     @task
     def login(self):
         response = self.client.get("/login")
-        print(response)
-        self.get_token(response)
-        if not self.csrftoken:
-            print("DEBUG: CSRF token not found during login")
-            return
-        login_data = {
-            'email': fake.email(),
-            'password': 'password123',
-            'csrf_token': self.csrftoken
-        }
-        headers = {
-            'X-CSRFToken': self.csrftoken,
-            'content-type': 'application/x-www-form-urlencoded'
-        }
-        response = self.client.post("/login", data=login_data, headers=headers)
-        if response.status_code == 200:
-            self.token = response.cookies.get('session')
-        print(f"DEBUG: login response.status_code = {response.status_code}")
+        if response.status_code != 200 or "Login" not in response.text:
+            print("Already logged in or unexpected response, redirecting to logout")
+            self.ensure_logged_out()
+            response = self.client.get("/login")
+        
+        csrf_token = get_csrf_token(response)
+        print(f"csrf_token login: {csrf_token}")
 
-    @task
-    def logout(self):
-        headers = {
-            'Authorization': 'Token ' + self.token if self.token else '',
-        }
-        response = self.client.get("/logout", headers=headers)
-        print(f"DEBUG: logout response.status_code = {response.status_code}")
+        email = fake.email()
+        password = fake.password()
 
+        response = self.client.post("/login", data={
+            "email": 'user1@example.com',
+            "password": '1234',
+            "csrf_token": csrf_token
+        })
+        if response.status_code != 200:
+            print(f"Login failed: {response.status_code}")
 
 class WebsiteUser(HttpUser):
-    tasks = [UserBehavior]
+    tasks = [SignupBehavior, LoginBehavior]
     wait_time = between(5, 9)
-    host = "http://localhost"
+    host = get_host()
