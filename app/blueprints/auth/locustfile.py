@@ -55,7 +55,6 @@ class LoginBehavior(TaskSet):
 
     @task
     def ensure_logged_out(self):
-        # Intentar cerrar sesión si hay un usuario logueado
         response = self.client.get("/logout")
         if response.status_code != 200:
             print(f"Logout failed or no active session: {response.status_code}")
