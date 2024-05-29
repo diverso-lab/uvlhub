@@ -1,5 +1,5 @@
 from locust import HttpUser, TaskSet, task
-from core.locust.common import get_csrf_token, fake
+from core.locust.common import get_csrf_token, fake, get_host
 
 
 class SignupBehavior(TaskSet):
@@ -10,7 +10,6 @@ class SignupBehavior(TaskSet):
     def signup(self):
         response = self.client.get("/signup")
         csrf_token = get_csrf_token(response)
-        print(f"csrf_token signup: {csrf_token}")
 
         response = self.client.post("/signup", data={
             "email": fake.email(),
@@ -41,10 +40,6 @@ class LoginBehavior(TaskSet):
             response = self.client.get("/login")
 
         csrf_token = get_csrf_token(response)
-        print(f"csrf_token login: {csrf_token}")
-
-        email = fake.email()
-        password = fake.password()
 
         response = self.client.post("/login", data={
             "email": 'user1@example.com',
@@ -59,3 +54,4 @@ class WebsiteUser(HttpUser):
     tasks = [SignupBehavior, LoginBehavior]
     min_wait = 5000
     max_wait = 9000
+    host = get_host()
