@@ -1,5 +1,5 @@
 from locust import HttpUser, TaskSet, task
-from core.locust.common import get_csrf_token, fake, get_host
+from core.locust.common import get_csrf_token, get_host
 
 
 class DatasetBehavior(TaskSet):
@@ -9,7 +9,7 @@ class DatasetBehavior(TaskSet):
     @task
     def dataset(self):
         response = self.client.get("/dataset/upload")
-        csrf_token = get_csrf_token(response)
+        get_csrf_token(response)
 
 
 class DatasetUser(HttpUser):

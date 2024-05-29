@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
 class BlueprintManager:
     def __init__(self, app):
         self.app = app

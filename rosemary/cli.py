@@ -1,6 +1,6 @@
 import click
 
-from rosemary.commands.locust import locust
+from rosemary.commands.locust import locust, stop
 from rosemary.commands.compose_env import compose_env
 from rosemary.commands.route_list import route_list
 from rosemary.commands.db_seed import db_seed
@@ -52,6 +52,8 @@ cli.add_command(db_seed)
 cli.add_command(route_list)
 cli.add_command(compose_env)
 cli.add_command(locust)
+cli.add_command(stop)
+
 
 if __name__ == '__main__':
     cli()
