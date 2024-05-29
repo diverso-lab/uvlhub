@@ -1,7 +1,9 @@
 alembic==1.13.1
 aniso8601==9.0.1
+beautifulsoup4==4.12.3
 blinker==1.8.2
 Brotli==1.1.0
+bs4==0.0.2
 certifi==2024.2.2
 cffi==1.16.0
 charset-normalizer==3.3.2
@@ -49,6 +51,7 @@ pyzmq==26.0.3
 requests==2.32.2
 setuptools==70.0.0
 six==1.16.0
+soupsieve==2.5
 SQLAlchemy==2.0.30
 SQLAlchemy-Utils==0.41.2
 typing_extensions==4.12.0

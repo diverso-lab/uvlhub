@@ -1,34 +1,6 @@
-from locust import HttpUser, TaskSet, task, between
-from faker import Faker
-import os
-from dotenv import load_dotenv
-from bs4 import BeautifulSoup
+from locust import HttpUser, TaskSet, task
+from core.locust.common import get_csrf_token, fake
 
-fake = Faker()
-
-# Load environment variables
-load_dotenv()
-
-def get_host():
-    working_dir = os.getenv('WORKING_DIR', "")
-    
-    if working_dir == "":
-        return "http://localhost:5000"
-    elif working_dir == "/app/":
-        return "http://nginx_web_server"
-    elif working_dir == "/vagrant/":
-        return "http://localhost:5000"
-    else:
-        raise ValueError("Unknown WORKING_DIR value")
-    
-def get_csrf_token(response):
-        soup = BeautifulSoup(response.text, 'html.parser')
-        token_tag = soup.find('input', {'name': 'csrf_token'})
-        if token_tag:
-            return token_tag['value']
-        else:
-            print("Response HTML:", response.text)
-            raise ValueError("CSRF token not found in the response")
 
 class SignupBehavior(TaskSet):
     def on_start(self):
@@ -48,6 +20,7 @@ class SignupBehavior(TaskSet):
         if response.status_code != 200:
             print(f"Signup failed: {response.status_code}")
 
+
 class LoginBehavior(TaskSet):
     def on_start(self):
         self.ensure_logged_out()
@@ -66,7 +39,7 @@ class LoginBehavior(TaskSet):
             print("Already logged in or unexpected response, redirecting to logout")
             self.ensure_logged_out()
             response = self.client.get("/login")
-        
+
         csrf_token = get_csrf_token(response)
         print(f"csrf_token login: {csrf_token}")
 
@@ -81,7 +54,8 @@ class LoginBehavior(TaskSet):
         if response.status_code != 200:
             print(f"Login failed: {response.status_code}")
 
+
 class WebsiteUser(HttpUser):
     tasks = [SignupBehavior, LoginBehavior]
-    wait_time = between(5, 9)
-    host = get_host()
+    min_wait = 5000
+    max_wait = 9000
