@@ -50,7 +50,7 @@ class LoginBehavior(TaskSet):
             print(f"Login failed: {response.status_code}")
 
 
-class WebsiteUser(HttpUser):
+class AuthUser(HttpUser):
     tasks = [SignupBehavior, LoginBehavior]
     min_wait = 5000
     max_wait = 9000
