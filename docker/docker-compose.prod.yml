@@ -24,7 +24,7 @@ services:
       - db_data:/var/lib/mysql
 
   nginx:
-    container_name: nginx_web_server
+    container_name: nginx_web_server_container
     image: nginx:latest
     volumes:
       - nginx/nginx.prod.conf:/etc/nginx/nginx.conf

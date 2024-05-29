@@ -15,7 +15,7 @@ def get_host():
     if working_dir == "":
         return "http://localhost:5000"
     elif working_dir == "/app/":
-        return "http://nginx_web_server"
+        return "http://nginx_web_server_container"
     elif working_dir == "/vagrant/":
         return "http://localhost:5000"
     else:

@@ -2,7 +2,9 @@
 import os
 import importlib.util
 from flask import Blueprint
+from dotenv import load_dotenv
 
+load_dotenv()
 
 class BlueprintManager:
     def __init__(self, app):
