@@ -22,7 +22,7 @@ def locust(blueprint):
             blueprint_path = os.path.join(blueprints_dir, blueprint)
             if not os.path.exists(blueprint_path):
                 raise click.UsageError(f"Blueprint '{blueprint}' does not exist.")
-            locustfile_path = os.path.join(blueprint_path, 'locustfile.py')
+            locustfile_path = os.path.join(blueprint_path, 'tests', 'locustfile.py')
             if not os.path.exists(locustfile_path):
                 raise click.UsageError(
                     f"Locustfile for blueprint '{blueprint}' does not exist at path "
@@ -53,7 +53,7 @@ def locust(blueprint):
         # Define the locustfile path
         locustfile_path = os.path.join(core_dir, 'bootstraps/locustfile_bootstrap.py')
         if blueprint:
-            locustfile_path = f"{blueprints_dir}/{blueprint}/locustfile.py"
+            locustfile_path = f"{blueprints_dir}/{blueprint}/tests/locustfile.py"
 
         # Run the Locust container
         up_command = [
@@ -81,7 +81,7 @@ def locust(blueprint):
 
         locustfile_path = os.path.join(core_dir, 'bootstraps/locustfile_bootstrap.py')
         if blueprint:
-            locustfile_path = os.path.join(blueprints_dir, blueprint, 'locustfile.py')
+            locustfile_path = os.path.join(blueprints_dir, blueprint, 'tests', 'locustfile.py')
         locust_command = ['locust', '-f', locustfile_path]
         click.echo(f"Locust command: {' '.join(locust_command)}")
         subprocess.Popen(locust_command, stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)

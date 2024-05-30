@@ -14,7 +14,7 @@ def load_locustfiles():
     blueprint_dir = os.path.join(working_dir, 'app', 'blueprints')
     print(f"Blueprint directory: {blueprint_dir}")
 
-    locustfile_paths = glob.glob(os.path.join(blueprint_dir, '*', 'locustfile.py'))
+    locustfile_paths = glob.glob(os.path.join(blueprint_dir, '*', 'tests', 'locustfile.py'))
     print(f"Found locustfiles: {locustfile_paths}")
 
     found_user_classes = []
