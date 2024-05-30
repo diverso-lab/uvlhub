@@ -9,10 +9,22 @@ import psutil
 @click.command('locust', help="Launches Locust for load testing based on the environment.")
 @click.argument('blueprint', required=False)
 def locust(blueprint):
+
+    # Absolute paths
     working_dir = os.getenv('WORKING_DIR', '')
     core_dir = os.path.join(working_dir, 'core')
     docker_dir = os.path.join(working_dir, 'docker/')
     blueprints_dir = os.path.join(working_dir, 'app/blueprints')
+
+    def validate_blueprint(blueprint):
+        """Check if the blueprint exists."""
+        if blueprint:
+            blueprint_path = os.path.join(blueprints_dir, blueprint)
+            if not os.path.exists(blueprint_path):
+                raise click.UsageError(f"Blueprint '{blueprint}' does not exist.")
+            locustfile_path = os.path.join(blueprint_path, 'locustfile.py')
+            if not os.path.exists(locustfile_path):
+                raise click.UsageError(f"Locustfile for blueprint '{blueprint}' does not exist at path '{locustfile_path}'.")
 
     def run_docker_locust(volume_name, blueprint):
         """Build and run the Locust container with the specified volume."""
@@ -51,27 +63,41 @@ def locust(blueprint):
         subprocess.run(up_command, check=True)
         click.echo(click.style("Locust is running at http://localhost:8089", fg='green'))
 
-    def run_local_locust(blueprint):
-        """Run Locust in the local environment."""
-        click.echo("Starting Locust in local environment on port 8089...")
+    def is_locust_running():
+        """Check if Locust is already running."""
+        for proc in psutil.process_iter(['pid', 'name']):
+            if proc.info['name'] == 'locust':
+                return True
+        return False
+
+    def run_in_console(blueprint):
+
+        if is_locust_running():
+            click.echo("Locust is already running.")
+            return
+
         locustfile_path = os.path.join(core_dir, 'bootstraps/locustfile_bootstrap.py')
         if blueprint:
             locustfile_path = os.path.join(blueprints_dir, blueprint, 'locustfile.py')
         locust_command = ['locust', '-f', locustfile_path]
         click.echo(f"Locust command: {' '.join(locust_command)}")
-        subprocess.Popen(locust_command)
+        subprocess.Popen(locust_command, stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         click.echo(click.style("Locust is running at http://localhost:8089", fg='green'))
+
+    def run_local_locust(blueprint):
+        """Run Locust in the local environment."""
+        click.echo("Starting Locust in local environment on port 8089...")
+        run_in_console(blueprint)
+        
 
     def run_vagrant_locust(blueprint):
         """Run Locust in the Vagrant environment."""
         click.echo("Starting Locust in Vagrant environment on port 8089...")
-        locustfile_path = os.path.join(core_dir, 'bootstraps', 'locustfile_bootstrap.py')
-        if blueprint:
-            locustfile_path = os.path.join(blueprints_dir, blueprint, 'locustfile.py')
-        locust_command = ['locust', '-f', locustfile_path]
-        click.echo(f"Locust command: {' '.join(locust_command)}")
-        subprocess.Popen(locust_command)
-        click.echo(click.style("Locust is running at http://localhost:8089", fg='green'))
+        run_in_console(blueprint)
+
+    # Validate blueprint if provided
+    if blueprint:
+        validate_blueprint(blueprint)
 
     if working_dir == '/app/':
         client = docker.from_env()
