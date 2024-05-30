@@ -24,8 +24,11 @@ def locust(blueprint):
                 raise click.UsageError(f"Blueprint '{blueprint}' does not exist.")
             locustfile_path = os.path.join(blueprint_path, 'locustfile.py')
             if not os.path.exists(locustfile_path):
-                raise click.UsageError(f"Locustfile for blueprint '{blueprint}' does not exist at path '{locustfile_path}'.")
-
+                raise click.UsageError(
+                    f"Locustfile for blueprint '{blueprint}' does not exist at path "
+                    f"'{locustfile_path}'."
+                )
+            
     def run_docker_locust(volume_name, blueprint):
         """Build and run the Locust container with the specified volume."""
 
@@ -88,7 +91,6 @@ def locust(blueprint):
         """Run Locust in the local environment."""
         click.echo("Starting Locust in local environment on port 8089...")
         run_in_console(blueprint)
-        
 
     def run_vagrant_locust(blueprint):
         """Run Locust in the Vagrant environment."""
