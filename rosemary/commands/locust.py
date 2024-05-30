@@ -143,15 +143,19 @@ def stop():
                 click.echo(f"Stopping Locust process with PID {proc.info['pid']}...")
                 os.kill(proc.info['pid'], signal.SIGTERM)
 
-    if working_dir == '/app/':
+    def stop_docker_locust():
         click.echo("Stopping Locust container if it is running...")
         stop_command = ['docker', 'stop', 'locust_container']
         rm_command = ['docker', 'rm', 'locust_container']
 
         # Stop the Locust container if it is running
         subprocess.run(stop_command)
+
         # Remove the Locust container
         subprocess.run(rm_command)
+
+    if working_dir == '/app/':
+        stop_docker_locust()
 
     elif working_dir == '' or working_dir == '/vagrant/':
         stop_local_locust()
