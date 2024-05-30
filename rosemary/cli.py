@@ -12,6 +12,7 @@ from rosemary.commands.clear_log import clear_log
 from rosemary.commands.clear_uploads import clear_uploads
 from rosemary.commands.coverage import coverage
 from rosemary.commands.linter import linter
+from rosemary.commands.selenium import selenium
 from rosemary.commands.update import update
 from rosemary.commands.info import info
 from rosemary.commands.make_module import make_module
@@ -53,6 +54,7 @@ cli.add_command(route_list)
 cli.add_command(compose_env)
 cli.add_command(locust)
 cli.add_command(stop)
+cli.add_command(selenium)
 
 
 if __name__ == '__main__':

@@ -28,7 +28,7 @@ def locust(blueprint):
                     f"Locustfile for blueprint '{blueprint}' does not exist at path "
                     f"'{locustfile_path}'."
                 )
-            
+
     def run_docker_locust(volume_name, blueprint):
         """Build and run the Locust container with the specified volume."""
 

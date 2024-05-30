@@ -1,49 +1,46 @@
-from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
+from selenium.common.exceptions import NoSuchElementException
 import time
 
 from core.environment.host import get_host_for_selenium_testing
+from core.selenium.common import initialize_driver, close_driver
 
 
-# Initializes the browser options
-options = webdriver.ChromeOptions()
+def test_login_and_check_element():
+    driver = initialize_driver()
+    try:
+        host = get_host_for_selenium_testing()
 
-# Inicializa el navegador utilizando WebDriver Manager
-service = Service(ChromeDriverManager().install())
-driver = webdriver.Chrome(service=service, options=options)
+        # Open the login page
+        driver.get(f'{host}/login')
 
-try:
+        # Wait a little while to make sure the page has loaded completely.
+        time.sleep(4)
 
-    host = get_host_for_selenium_testing()
+        # Find the username and password field and enter the values.
+        email_field = driver.find_element(By.NAME, 'email')
+        password_field = driver.find_element(By.NAME, 'password')
 
-    # Abre la página de login
-    driver.get(f'{host}/login')
+        email_field.send_keys('user1@example.com')
+        password_field.send_keys('1234')
 
-    # Espera un poco para asegurar que la página se ha cargado completamente
-    time.sleep(2)
+        # Send the form
+        password_field.send_keys(Keys.RETURN)
 
-    # Encuentra el campo de usuario y contraseña e ingresa los valores
-    email_field = driver.find_element(By.NAME, 'email')
-    password_field = driver.find_element(By.NAME, 'password')
+        # Wait a little while to ensure that the action has been completed.
+        time.sleep(4)
 
-    email_field.send_keys('user1@example.com')
-    password_field.send_keys('1234')
+        try:
+            driver.find_element(By.XPATH, "//h1[contains(@class, 'h2 mb-3') and contains(., 'Latest datasets')]")
+            print('Test passed!')
+        except NoSuchElementException:
+            raise AssertionError('Test failed!')
 
-    # Envía el formulario
-    password_field.send_keys(Keys.RETURN)
+    finally:
+        # Close the browser
+        close_driver(driver)
 
-    # Espera un poco para asegurar que la acción se ha completado
-    time.sleep(4)
 
-    # Verifica el resultado
-    if 'Login successful!' in driver.page_source:
-        print('Test passed!')
-    else:
-        print('Test failed!')
-
-finally:
-    # Cierra el navegador
-    driver.quit()
+# Call the test function
+test_login_and_check_element()
