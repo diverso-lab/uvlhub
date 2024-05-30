@@ -1,5 +1,6 @@
 from locust import HttpUser, TaskSet, task
-from core.locust.common import get_csrf_token, get_host
+from core.locust.common import get_csrf_token
+from core.environment.host import get_host
 
 
 class DatasetBehavior(TaskSet):

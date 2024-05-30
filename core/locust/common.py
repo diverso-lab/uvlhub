@@ -1,25 +1,7 @@
 from faker import Faker
-import os
-from dotenv import load_dotenv
 from bs4 import BeautifulSoup
 
 fake = Faker()
-
-# Load environment variables
-load_dotenv()
-
-
-def get_host():
-    working_dir = os.getenv('WORKING_DIR', "")
-
-    if working_dir == "":
-        return "http://localhost:5000"
-    elif working_dir == "/app/":
-        return "http://nginx_web_server_container"
-    elif working_dir == "/vagrant/":
-        return "http://localhost:5000"
-    else:
-        raise ValueError("Unknown WORKING_DIR value")
 
 
 def get_csrf_token(response):

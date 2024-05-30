@@ -1,5 +1,6 @@
 from locust import HttpUser, TaskSet, task
-from core.locust.common import get_csrf_token, fake, get_host
+from core.locust.common import get_csrf_token, fake
+from core.environment.host import get_host
 
 
 class SignupBehavior(TaskSet):
