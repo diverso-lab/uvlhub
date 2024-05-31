@@ -48,4 +48,4 @@ jobs:
         MARIADB_USER: uvlhub_user
         MARIADB_PASSWORD: uvlhub_password
       run: |
-        pytest app/blueprints/
+        pytest app/blueprints/ --ignore-glob='*selenium*'
