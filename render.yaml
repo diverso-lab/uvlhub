@@ -1,64 +1,58 @@
 services:
+
   - type: pserv
     name: web-app
-    env: docker
-    plan: standard
-    dockerfilePath: docker/images/Dockerfile.render
-    startCommand: "sh -c 'sh /app/entrypoint.sh'"
+    plan: free
+    dockerfilePath: ./docker/images/Dockerfile.render
+    dockerCommand: ./docker/entrypoints/render_entrypoint.sh
     envVars:
-      - key: ENV_FILE
-        value: ./.env
-    mounts:
-      - type: volume
-        name: entrypoint/production_entrypoint.sh
-        path: /app/entrypoint.sh
-      - type: volume
-        name: scripts
-        path: /app/scripts
-      - type: volume
-        name: migrations
-        path: /app/migrations
-    healthCheckPath: /
+      - key: FLASK_APP_NAME
+        value: "UVLHUB.IO"
+      - key: FLASK_ENV
+        value: production
+      - key: DOMAIN
+        value: "render.com"
+      - key: MARIADB_HOSTNAME
+        value: db
+      - key: MARIADB_PORT
+        value: "3306"
+      - key: MARIADB_DATABASE
+        value: uvlhubdb
+      - key: MARIADB_USER
+        generateValue: true
+      - key: MARIADB_PASSWORD
+        generateValue: true
+      - key: MARIADB_ROOT_PASSWORD
+        generateValue: true
+      - key: WORKING_DIR
+        value: /app/
+    runtime: docker
 
   - type: pserv
     name: db
-    env: docker
-    plan: standard
+    plan: free
     image:
       url: docker.io/mariadb:latest
     startCommand: "mysqld --default-authentication-plugin=mysql_native_password"
     envVars:
-      - key: ENV_FILE
-        value: ./.env
-    disk:
-      sizeGB: 10
-    mounts:
-      - type: volume
-        name: db_data
-        path: /var/lib/mysql
+      - key: MARIADB_HOSTNAME
+        value: db
+      - key: MARIADB_PORT
+        value: "3306"
+      - key: MARIADB_DATABASE
+        value: uvlhubdb
+      - key: MARIADB_USER
+        generateValue: true
+      - key: MARIADB_PASSWORD
+        generateValue: true
+      - key: MARIADB_ROOT_PASSWORD
+        generateValue: true
+    runtime: docker
 
   - type: web
     name: nginx
-    env: docker
-    plan: standard
-    dockerfilePath: Dockerfile.nginx
+    plan: free
+    dockerfilePath: ./docker/images/Dockerfile.nginx
     startCommand: ""
-    mounts:
-      - type: bind
-        source: nginx/nginx.prod.conf
-        target: /etc/nginx/nginx.conf
-    ports:
-      - "80:80"
+    runtime: docker
     healthCheckPath: /
-
-disk:
-  - name: entrypoint
-    persistent: true
-  - name: scripts
-    persistent: true
-  - name: migrations
-    persistent: true
-  - name: db_data
-    persistent: true
-  - name: docker_sock
-    persistent: true
