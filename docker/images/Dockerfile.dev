@@ -39,26 +39,17 @@ COPY rosemary/ ./rosemary
 COPY setup.py ./
 COPY docker/ ./docker
 
-# Copy the entrypoint script
-COPY scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
-
 # Update pip
 RUN pip install --no-cache-dir --upgrade pip
 
 # Install any needed packages specified in requirements.txt
 RUN pip install -r requirements.txt
 
-# Make the entrypoint script executable
-RUN chmod +x /usr/local/bin/entrypoint.sh
+# Install Rosemary
+RUN pip install -e ./
 
 # Expose port 5000 for the Flask app
 EXPOSE 5000
 
 # Expose port 8989 for Locust
 EXPOSE 8989
-
-# Set the entrypoint to run the entrypoint script
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-
-# Sets the default command to start the Flask application
-CMD sh /app/scripts/wait-for-db.sh && sh /app/scripts/init-db.sh && rosemary db:migrate && rosemary db:seed -y --reset && flask run --host=0.0.0.0 --port=5000 --reload --debug

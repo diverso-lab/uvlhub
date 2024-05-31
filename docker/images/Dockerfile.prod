@@ -11,6 +11,7 @@ WORKDIR /app
 # Copy files
 COPY app/ ./app
 COPY core/ ./core
+COPY migrations/ ./migrations
 
 # Copy requirements.txt into the working directory /app
 COPY requirements.txt .
@@ -23,8 +24,6 @@ RUN pip install --no-cache-dir -r requirements.txt \
     && pip install --no-cache-dir --upgrade pip \
     && apk del .build-deps
 
-# Copy the migration scripts to the /app directory in the container
-COPY migrations/ ./migrations
 
 # Expose port 5000
 EXPOSE 5000

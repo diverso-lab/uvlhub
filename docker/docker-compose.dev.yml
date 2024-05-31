@@ -1,19 +1,21 @@
 services:
   web:
     container_name: web_app_container
+    image: drorganvidez/uvlhub:dev
     env_file:
       - ../.env
-    image: drorganvidez/uvlhub:dev
-    build:
-      context: ../
-      dockerfile: docker/images/Dockerfile.dev
-    volumes:
-      - ../:/app
-      - /var/run/docker.sock:/var/run/docker.sock
     expose:
       - "5000"
     depends_on:
       - db
+    build:
+      context: ../
+      dockerfile: docker/images/Dockerfile.dev
+    volumes:
+      - ./entrypoints/development_entrypoint.sh:/app/entrypoint.sh
+      - ../:/app
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: [ "sh", "-c", "sh /app/entrypoint.sh" ]
     networks:
       - uvlhub_network
 

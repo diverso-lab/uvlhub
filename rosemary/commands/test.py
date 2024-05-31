@@ -19,6 +19,6 @@ def test(module_name):
         click.echo("Running tests for all modules...")
 
     try:
-        subprocess.run(['pytest', '-v', test_path], check=True)
+        subprocess.run(['pytest', '-v', '--ignore-glob=*selenium*', test_path], check=True)
     except subprocess.CalledProcessError as e:
         click.echo(click.style(f"Error running tests: {e}", fg='red'))

@@ -13,6 +13,7 @@ services:
     volumes:
       - ./entrypoints/production_entrypoint.sh:/app/entrypoint.sh
       - ../scripts:/app/scripts
+      - ../migrations:/app/migrations
     command: [ "sh", "-c", "sh /app/entrypoint.sh" ]
 
   db:
