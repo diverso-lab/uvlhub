@@ -10,6 +10,10 @@ services:
     depends_on:
       - db
     restart: always
+    volumes:
+      - ./entrypoints/production_entrypoint.sh:/app/entrypoint.sh
+      - ../scripts:/app/scripts
+    command: [ "sh", "-c", "sh /app/entrypoint.sh" ]
 
   db:
     container_name: mariadb_container
