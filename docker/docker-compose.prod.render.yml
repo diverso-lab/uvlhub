@@ -1,0 +1,40 @@
+services:
+
+  web:
+    container_name: web_app_container
+    image: drorganvidez/uvlhub:latest
+    build:
+      context: ../
+      dockerfile: docker/images/Dockerfile.render
+    ports:
+      - "5000:5000"
+    restart: always
+    volumes:
+      - ./entrypoints/production_entrypoint.sh:/app/entrypoint.sh
+      - ../scripts:/app/scripts
+      - ../migrations:/app/migrations
+    command: [ "sh", "-c", "sh /app/entrypoint.sh" ]
+
+  db:
+    container_name: mariadb_container
+    image: mariadb:latest
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+  nginx:
+    container_name: nginx_web_server_container
+    image: nginx:latest
+    volumes:
+      - type: bind
+        source: nginx/nginx.prod.conf
+        target: /etc/nginx/nginx.conf
+    ports:
+      - "80:80"
+    restart: always
+
+volumes:
+  db_data:

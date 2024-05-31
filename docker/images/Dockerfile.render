@@ -1,0 +1,29 @@
+# Use an official Python runtime as a parent image, Alpine version for a lighter footprint
+FROM python:3.12-alpine
+
+# Install MySQL client and temporary build dependencies
+RUN apk add --no-cache mysql-client \
+    && apk add --no-cache --virtual .build-deps gcc musl-dev python3-dev libffi-dev openssl-dev
+
+# Set the working directory in the container to /app
+WORKDIR /app
+
+# Copy files
+COPY app/ ./app
+COPY core/ ./core
+COPY migrations/ ./migrations
+
+# Copy requirements.txt into the working directory /app
+COPY requirements.txt .
+
+# Copy the wait-for-db.sh script and set execution permissions
+COPY --chmod=+x scripts/wait-for-db.sh ./scripts/
+
+# Install any needed packages specified in requirements.txt and upgrade pip
+RUN pip install --no-cache-dir -r requirements.txt \
+    && pip install --no-cache-dir --upgrade pip \
+    && apk del .build-deps
+
+
+# Expose port 5000
+EXPOSE 5000
