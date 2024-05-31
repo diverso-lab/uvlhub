@@ -3,8 +3,8 @@ services:
   web:
     container_name: web_app_container
     image: drorganvidez/uvlhub:latest
-    env_file:
-      - ../.env
+    volumes:
+      - ../.env:/app/.env
     ports:
       - "5000:5000"
     depends_on:
@@ -27,11 +27,12 @@ services:
     container_name: nginx_web_server_container
     image: nginx:latest
     volumes:
-      - type: bind
-        source: nginx/nginx.prod.conf
-        target: /etc/nginx/nginx.conf
+      - nginx/nginx.prod.conf:/etc/nginx/nginx.conf
+      - letsencrypt:/etc/letsencrypt:ro
+      - public:/var/www:rw
     ports:
       - "80:80"
+      - "443:443"
     depends_on:
       - web
     restart: always
@@ -43,6 +44,13 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     command: --cleanup --interval 120 web_app_container
     restart: always
+
+  certbot:
+    image: certbot/certbot
+    container_name: certbot_container
+    volumes:
+      - public:/var/www:rw
+      - letsencrypt:/etc/letsencrypt
 
 volumes:
   db_data:
