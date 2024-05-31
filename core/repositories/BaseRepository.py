@@ -1,4 +1,4 @@
-from typing import TypeVar, Generic, Optional
+from typing import Generic, NoReturn, Optional, TypeVar, Union
 
 import app
 
@@ -18,6 +18,9 @@ class BaseRepository(Generic[T]):
     def get_by_id(self, id: int) -> Optional[T]:
         instance: Optional[T] = self.model.query.get(id)
         return instance
+
+    def get_or_404(self, id: int) -> Union[T, NoReturn]:
+        return self.model.query.get_or_404(id)
 
     def update(self, id: int, **kwargs) -> Optional[T]:
         instance: Optional[T] = self.get_by_id(id)

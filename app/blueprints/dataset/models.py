@@ -1,12 +1,11 @@
+import os
 from datetime import datetime
+from enum import Enum
 
 from flask import request
-
-from app import db
-from enum import Enum
 from sqlalchemy import Enum as SQLAlchemyEnum
 
-import os
+from app import db
 
 
 class PublicationType(Enum):
