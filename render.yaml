@@ -1,0 +1,64 @@
+services:
+  - type: pserv
+    name: web-app
+    env: docker
+    plan: standard
+    dockerfilePath: docker/images/Dockerfile.render
+    startCommand: "sh -c 'sh /app/entrypoint.sh'"
+    envVars:
+      - key: ENV_FILE
+        value: ./.env
+    mounts:
+      - type: volume
+        name: entrypoint/production_entrypoint.sh
+        path: /app/entrypoint.sh
+      - type: volume
+        name: scripts
+        path: /app/scripts
+      - type: volume
+        name: migrations
+        path: /app/migrations
+    healthCheckPath: /
+
+  - type: pserv
+    name: db
+    env: docker
+    plan: standard
+    image:
+      url: docker.io/mariadb:latest
+    startCommand: "mysqld --default-authentication-plugin=mysql_native_password"
+    envVars:
+      - key: ENV_FILE
+        value: ./.env
+    disk:
+      sizeGB: 10
+    mounts:
+      - type: volume
+        name: db_data
+        path: /var/lib/mysql
+
+  - type: web
+    name: nginx
+    env: docker
+    plan: standard
+    dockerfilePath: Dockerfile.nginx
+    startCommand: ""
+    mounts:
+      - type: bind
+        source: nginx/nginx.prod.conf
+        target: /etc/nginx/nginx.conf
+    ports:
+      - "80:80"
+    healthCheckPath: /
+
+disk:
+  - name: entrypoint
+    persistent: true
+  - name: scripts
+    persistent: true
+  - name: migrations
+    persistent: true
+  - name: db_data
+    persistent: true
+  - name: docker_sock
+    persistent: true
