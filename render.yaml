@@ -33,7 +33,7 @@ services:
     plan: free
     image:
       url: docker.io/mariadb:latest
-    startCommand: "mysqld --default-authentication-plugin=mysql_native_password"
+    dockerCommand: "mysqld --default-authentication-plugin=mysql_native_password"
     envVars:
       - key: MARIADB_HOSTNAME
         value: db
@@ -53,6 +53,5 @@ services:
     name: nginx
     plan: free
     dockerfilePath: ./docker/images/Dockerfile.nginx
-    startCommand: ""
     runtime: docker
     healthCheckPath: /
