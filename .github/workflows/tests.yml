@@ -1,4 +1,4 @@
-name: Flask CI
+name: Run tests
 
 on:
   push:
@@ -41,7 +41,6 @@ jobs:
     - name: Run Tests
       env:
         FLASK_ENV: testing
-        BLUEPRINTS_DIR: app/blueprints
         MARIADB_HOSTNAME: 127.0.0.1
         MARIADB_PORT: 3306
         MARIADB_TEST_DATABASE: uvlhubdb_test
