@@ -50,7 +50,8 @@ def make_module(name):
         'forms.py': 'blueprint_forms.py.j2',
         'seeders.py': 'blueprint_seeders.py.j2',
         os.path.join('templates', name, 'index.html'): 'blueprint_templates_index.html.j2',
-        'tests/test_unit.py': 'blueprint_tests_test_unit.py.j2'
+        'tests/test_unit.py': 'blueprint_tests_test_unit.py.j2',
+        'tests/locustfile.py': 'blueprint_tests_locustfile.py.j2'
     }
 
     # Create the necessary directories, explicitly excluding 'tests' from the creation of subfolders.

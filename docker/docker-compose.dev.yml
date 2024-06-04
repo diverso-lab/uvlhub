@@ -12,10 +12,9 @@ services:
       context: ../
       dockerfile: docker/images/Dockerfile.dev
     volumes:
-      - ./entrypoints/development_entrypoint.sh:/app/entrypoint.sh
       - ../:/app
       - /var/run/docker.sock:/var/run/docker.sock
-    command: [ "sh", "-c", "sh /app/entrypoint.sh" ]
+    command: [ "sh", "-c", "sh /app/docker/entrypoints/development_entrypoint.sh" ]
     networks:
       - uvlhub_network
 
