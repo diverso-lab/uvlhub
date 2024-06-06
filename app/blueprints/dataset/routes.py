@@ -62,6 +62,7 @@ def create_dataset():
                 data = json.loads(response_data)
             except Exception:
                 data = {}
+                zenodo_response_json = {}
 
             if data.get("conceptrecid"):
                 deposition_id = data.get("id")

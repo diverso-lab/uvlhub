@@ -38,3 +38,6 @@ class BaseRepository(Generic[T]):
             app.db.session.commit()
             return True
         return False
+
+    def count(self) -> int:
+        return self.model.query.count()

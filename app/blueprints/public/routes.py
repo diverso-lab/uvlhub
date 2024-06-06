@@ -1,34 +1,28 @@
 import logging
 
+from flask import render_template
 from flask_login import login_required
 
-import app
-
-from flask import render_template
 from app.blueprints.public import public_bp
-from ..dataset.models import DataSet, DSMetaData
+from app.blueprints.dataset.repositories import DataSetRepository, FeatureModelRepository
 
 logger = logging.getLogger(__name__)
+dataset_repository = DataSetRepository()
 
 
 @public_bp.route("/")
 def index():
-    logger.info('Access index')
+    logger.info("Access index")
 
-    latest_datasets = DataSet.query.join(DSMetaData).filter(
-        DSMetaData.dataset_doi.isnot(None)
-    ).order_by(DataSet.created_at.desc()).limit(5).all()
-
-    datasets_counter = app.datasets_counter()
-    feature_models_counter = app.feature_models_counter()
-
-    return render_template("public/index.html",
-                           datasets=latest_datasets,
-                           datasets_counter=datasets_counter,
-                           feature_models_counter=feature_models_counter)
+    return render_template(
+        "public/index.html",
+        datasets=dataset_repository.latest_synchronized(),
+        datasets_counter=dataset_repository.count(),
+        feature_models_counter=FeatureModelRepository().count(),
+    )
 
 
-@public_bp.route('/secret')
+@public_bp.route("/secret")
 @login_required
 def secret():
     return "Esto es secreto!"
