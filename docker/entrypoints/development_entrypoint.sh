@@ -9,7 +9,7 @@ pip install -e ./
 sh ./scripts/wait-for-db.sh
 
 # Create a specific database for testing by running a script
-sh ./scripts/init-db.sh
+sh ./scripts/init-testing-db.sh
 
 # Initialize migrations only if the migrations directory doesn't exist
 if [ ! -d "migrations" ]; then

@@ -24,9 +24,9 @@
         state: file
       environment: "{{ common_environment }}"
 
-    - name: Set permissions for init-db.sh
+    - name: Set permissions for init-testing-db.sh
       file:
-        path: "{{ working_dir }}scripts/init-db.sh"
+        path: "{{ working_dir }}scripts/init-testing-db.sh"
         mode: '0755'
         state: file
       environment: "{{ common_environment }}"
@@ -40,7 +40,7 @@
 
     - name: Initialize the database
       shell: |
-        {{ working_dir }}scripts/init-db.sh
+        {{ working_dir }}scripts/init-testing-db.sh
       args:
         executable: /bin/bash
       environment: "{{ common_environment }}"

@@ -31,8 +31,8 @@ COPY requirements.txt .
 # Copy the wait-for-db.sh script and set execution permissions
 COPY --chmod=+x scripts/wait-for-db.sh ./scripts/
 
-# Copy the init-db.sh script and set execution permissions
-COPY --chmod=+x scripts/init-db.sh ./scripts/
+# Copy the init-testing-db.sh script and set execution permissions
+COPY --chmod=+x scripts/init-testing-db.sh ./scripts/
 
 # Copy files
 COPY rosemary/ ./rosemary
