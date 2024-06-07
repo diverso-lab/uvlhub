@@ -50,6 +50,3 @@ RUN pip install -e ./
 
 # Expose port 5000 for the Flask app
 EXPOSE 5000
-
-# Expose port 8989 for Locust
-EXPOSE 8989
