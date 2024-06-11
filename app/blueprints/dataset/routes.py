@@ -1,20 +1,14 @@
-import io
-import logging
 import os
 import json
 import hashlib
 import shutil
 import tempfile
 import uuid
-import time
 from datetime import datetime
-from typing import List
 from zipfile import ZipFile
 
-from flask import flash, redirect, render_template, url_for, request, jsonify, send_file, send_from_directory, abort, \
-    current_app, make_response
+from flask import render_template, request, jsonify, send_from_directory, current_app, make_response, abort
 from flask_login import login_required, current_user
-from werkzeug.utils import secure_filename
 
 import app
 from app.blueprints.dataset.forms import DataSetForm
@@ -434,16 +428,13 @@ def download_file(file_id):
 
 
 @dataset_bp.route('/file/view/<int:file_id>', methods=['GET'])
-def view_file(file_id):
-    
+def view_file(file_id):    
     file = File.query.get_or_404(file_id)
     filename = file.name
 
-  
     directory_path = f"uploads/user_{file.feature_model.data_set.user_id}/dataset_{file.feature_model.data_set_id}/"
     parent_directory_path = os.path.dirname(current_app.root_path)
     file_path = os.path.join(parent_directory_path, directory_path, filename)
-
     try:
         if os.path.exists(file_path):
             with open(file_path, 'r') as f:
