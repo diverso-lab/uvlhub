@@ -428,7 +428,7 @@ def download_file(file_id):
 
 
 @dataset_bp.route('/file/view/<int:file_id>', methods=['GET'])
-def view_file(file_id):    
+def view_file(file_id):
     file = File.query.get_or_404(file_id)
     filename = file.name
 
@@ -444,7 +444,8 @@ def view_file(file_id):
             return jsonify({'success': False, 'error': 'File not found'}), 404
     except Exception:
         return jsonify({'success': False, 'error': 'Error processing request'}), 500
-      
+
+
 '''
     API ENDPOINTS FOR DATASET MODEL
 '''
@@ -692,7 +693,7 @@ def _create_feature_models(dataset: DataSet, models: dict, user: User) -> List[F
         feature_models.append(feature_model)
 
     return feature_models
- 
+
 '''
 
 
