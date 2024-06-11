@@ -4,16 +4,15 @@
 
 {% block head_extra %}
 <style>
- .option-button {
-    display: block; 
-    width: 100%; 
-    margin-bottom: 5px; 
-}
+    .option-button {
+        display: block;
+        width: 100%;
+        margin-bottom: 5px;
+    }
 
-.option-button:last-child {
-    margin-bottom: 0; 
-}
-
+    .option-button:last-child {
+        margin-bottom: 0;
+    }
 </style>
 {% endblock %}
 
@@ -177,8 +176,8 @@
                             class="btn btn-outline-primary btn-sm option-button" style="border-radius: 5px;">
                             <i data-feather="download"></i>
                         </a>
-                        <button onclick="viewFile('{{ file.id }}')" class="btn btn-outline-secondary btn-sm option-button"
-                            style="border-radius: 5px;">
+                        <button onclick="viewFile('{{ file.id }}')"
+                            class="btn btn-outline-secondary btn-sm option-button" style="border-radius: 5px;">
                             <i data-feather="eye"></i>
                         </button>
                     </td>
@@ -199,32 +198,54 @@
 <div class="modal fade" id="fileViewerModal" tabindex="-1" aria-labelledby="fileViewerModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
                 <h5 class="modal-title" id="fileViewerModalLabel">Feature model view</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div>
+                    <a href="#" class="btn btn-outline-primary btn-sm" id="downloadButton" style="margin-right: 5px; margin-bottom: 5px; border-radius: 5px;">
+                        <i data-feather="download"></i>
+                    </a>
+                    <button onclick="copyToClipboard()" class="btn btn-outline-secondary btn-sm" style="margin-right: 5px; margin-bottom: 5px; border-radius: 5px;">
+                        <i data-feather="copy"></i>
+                    </button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
             </div>
             <div class="modal-body" style="overflow-y: auto;">
                 <pre id="fileContent"
-                    style="max-height: 400px; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word; background-color: #f5f5f5; padding: 20px; border-radius: 5px; border: 1px solid #ccc;"></pre>
+                     style="max-height: 400px; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word; background-color: #f5f5f5; padding: 20px; border-radius: 5px; border: 1px solid #ccc;"></pre>
             </div>
         </div>
     </div>
 </div>
+
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         feather.replace();
     });
 
+    var currentFileId;
+
     function viewFile(fileId) {
         fetch(`/file/view/${fileId}`)
             .then(response => response.json())
             .then(data => {
                 document.getElementById('fileContent').textContent = data.content;
+                currentFileId = fileId;
+                document.getElementById('downloadButton').href = `/file/download/${fileId}`; 
                 var modal = new bootstrap.Modal(document.getElementById('fileViewerModal'));
                 modal.show();
             })
             .catch(error => console.error('Error loading file:', error));
+    }
+
+    function copyToClipboard() {
+        const text = document.getElementById('fileContent').textContent;
+        navigator.clipboard.writeText(text).then(() => {
+            console.log('Text copied to clipboard');
+        }).catch(err => {
+            console.error('Failed to copy text: ', err);
+        });
     }
 </script>
 
