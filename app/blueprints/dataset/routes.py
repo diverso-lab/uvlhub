@@ -442,9 +442,8 @@ def view_file(file_id):
             return jsonify({'success': True, 'content': content})
         else:
             return jsonify({'success': False, 'error': 'File not found'}), 404
-    except Exception as e:
+    except Exception:
         return jsonify({'success': False, 'error': 'Error processing request'}), 500
-
       
 '''
     API ENDPOINTS FOR DATASET MODEL
@@ -692,6 +691,8 @@ def _create_feature_models(dataset: DataSet, models: dict, user: User) -> List[F
 
         feature_models.append(feature_model)
 
+    return feature_models
+ 
 '''
 
 
