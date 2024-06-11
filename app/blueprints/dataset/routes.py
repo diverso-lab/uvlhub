@@ -427,6 +427,25 @@ def download_file(file_id):
     return resp
 
 
+@dataset_bp.route('/file/view/<int:file_id>', methods=['GET'])
+def view_file(file_id):
+    file = File.query.get_or_404(file_id)
+    filename = file.name
+
+    directory_path = f"uploads/user_{file.feature_model.data_set.user_id}/dataset_{file.feature_model.data_set_id}/"
+    parent_directory_path = os.path.dirname(current_app.root_path)
+    file_path = os.path.join(parent_directory_path, directory_path, filename)
+    try:
+        if os.path.exists(file_path):
+            with open(file_path, 'r') as f:
+                content = f.read()
+            return jsonify({'success': True, 'content': content})
+        else:
+            return jsonify({'success': False, 'error': 'File not found'}), 404
+    except Exception:
+        return jsonify({'success': False, 'error': 'Error processing request'}), 500
+
+
 '''
     API ENDPOINTS FOR DATASET MODEL
 '''
