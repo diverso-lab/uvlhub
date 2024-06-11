@@ -1,13 +1,15 @@
 import os
-import secrets
-import logging
 
-from flask import Flask, render_template
+from flask import Flask
 from flask_login import current_user
 from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
 from flask_migrate import Migrate
-from flask_wtf import CSRFProtect
+
+from core.managers.blueprint_manager import BlueprintManager
+from core.managers.config_manager import ConfigManager
+from core.managers.error_handler_manager import ErrorHandlerManager
+from core.managers.logging_manager import LoggingManager
 
 # Load environment variables
 load_dotenv()
@@ -17,46 +19,20 @@ db = SQLAlchemy()
 migrate = Migrate()
 
 
-def create_app(config_name=None):
+def create_app(config_name='development'):
     app = Flask(__name__)
-    app.secret_key = secrets.token_bytes()
 
-    # Database configuration
-    app.config['SQLALCHEMY_DATABASE_URI'] = (
-        f"mysql+pymysql://{os.getenv('MYSQL_USER', 'default_user')}:{os.getenv('MYSQL_PASSWORD', 'default_password')}"
-        f"@{os.getenv('MYSQL_HOSTNAME', 'localhost')}:3306/{os.getenv('MYSQL_DATABASE', 'default_db')}"
-    )
-
-    # Timezone
-    app.config['TIMEZONE'] = 'Europe/Madrid'
-
-    # Templates configuration
-    app.config['TEMPLATES_AUTO_RELOAD'] = True
-
-    # Uploads feature models configuration
-    app.config['UPLOAD_FOLDER'] = os.path.join(app.root_path, 'uploads')
+    # Load configuration according to environment
+    config_manager = ConfigManager(app)
+    config_manager.load_config(config_name=config_name)
 
     # Initialize SQLAlchemy and Migrate with the app
     db.init_app(app)
     migrate.init_app(app, db)
 
-    # Import blueprints
-    from app.tests.routes import test_routes
-    from .auth import auth_bp
-    from .dataset import dataset_bp
-    from .explore import explore_bp
-    from .profile import profile_bp
-    from .team import team_bp
-    from .public import public_bp
-
     # Register blueprints
-    app.register_blueprint(test_routes)
-    app.register_blueprint(auth_bp)
-    app.register_blueprint(dataset_bp)
-    app.register_blueprint(explore_bp)
-    app.register_blueprint(profile_bp)
-    app.register_blueprint(team_bp)
-    app.register_blueprint(public_bp)
+    blueprint_manager = BlueprintManager(app)
+    blueprint_manager.register_blueprints()
 
     from flask_login import LoginManager
     login_manager = LoginManager()
@@ -65,44 +41,27 @@ def create_app(config_name=None):
 
     @login_manager.user_loader
     def load_user(user_id):
-        from app.auth.models import User
+        from app.blueprints.auth.models import User
         return User.query.get(int(user_id))
 
-    # Logging
-    logging.basicConfig(filename='app.log', level=logging.ERROR,
-                        format='%(asctime)s:%(levelname)s:%(message)s')
+    # Set up logging
+    logging_manager = LoggingManager(app)
+    logging_manager.setup_logging()
 
-    # Custom error handlers
-    register_error_handlers(app)
+    # Initialize error handler manager
+    error_handler_manager = ErrorHandlerManager(app)
+    error_handler_manager.register_error_handlers()
 
-    # Injecting FLASK_APP_NAME environment variable into jinja context
+    # Injecting environment variables into jinja context
     @app.context_processor
-    def inject_flask_app_name():
-        return dict(FLASK_APP_NAME=os.getenv('FLASK_APP_NAME'))
+    def inject_vars_into_jinja():
+        return {
+            'FLASK_APP_NAME': os.getenv('FLASK_APP_NAME'),
+            'FLASK_ENV': os.getenv('FLASK_ENV'),
+            'DOMAIN': os.getenv('DOMAIN', 'localhost')
+        }
 
     return app
-
-
-def register_error_handlers(app):
-    @app.errorhandler(500)
-    def base_error_handler(e):
-        app.logger.error('Internal Server Error: %s', str(e))  # Error logging
-        return render_template('500.html'), 500
-
-    @app.errorhandler(404)
-    def error_404_handler(e):
-        app.logger.warning('Page Not Found: %s', str(e))  # Warning logging
-        return render_template('404.html'), 404
-
-    @app.errorhandler(401)
-    def error_401_handler(e):
-        app.logger.warning('Unauthorized Access: %s', str(e))  # Warning logging
-        return render_template('401.html'), 401
-
-    @app.errorhandler(400)
-    def error_400_handler(e):
-        app.logger.warning('Bad Request: %s', str(e))  # Warning logging
-        return render_template('400.html'), 400
 
 
 def get_test_client():
@@ -119,7 +78,7 @@ def upload_folder_name():
 
 def get_user_by_token(token):
     # TODO
-    from app.auth.models import User
+    from app.blueprints.auth.models import User
     return User.query.first()
 
 
@@ -129,14 +88,20 @@ def get_authenticated_user_profile():
     return None
 
 
+def get_authenticated_user():
+    if current_user.is_authenticated:
+        return current_user
+    return None
+
+
 def datasets_counter() -> int:
-    from app.dataset.models import DataSet
+    from app.blueprints.dataset.models import DataSet
     count = DataSet.query.count()
     return count
 
 
 def feature_models_counter() -> int:
-    from app.dataset.models import FeatureModel
+    from app.blueprints.dataset.models import FeatureModel
     count = FeatureModel.query.count()
     return count
 

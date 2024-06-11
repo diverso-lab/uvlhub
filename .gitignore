@@ -4,3 +4,11 @@ __pycache__/
 uploads/
 app.log
 .DS_Store
+rosemary.egg-info/
+build/
+.coverage
+htmlcov/
+.pytest_cache
+venv/
+ubuntu-bionic-18.04-cloudimg-console.log
+.vagrant/

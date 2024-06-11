@@ -17,14 +17,12 @@ from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 
 import app
-from .forms import DataSetForm
-from .models import DataSet, DSMetrics, FeatureModel, File, FMMetaData, FMMetrics, DSMetaData, Author, PublicationType, \
-    DSDownloadRecord, DSViewRecord, FileDownloadRecord
-from . import dataset_bp
-from ..auth.models import User
-from ..flama import flamapy_valid_model
-from ..zenodo import zenodo_create_new_deposition, test_zenodo_connection, zenodo_upload_file, \
-    zenodo_publish_deposition, zenodo_get_doi, test_full_zenodo_connection
+from app.blueprints.dataset.forms import DataSetForm
+from app.blueprints.dataset.models import DataSet, FeatureModel, File, FMMetaData, DSMetaData, Author, \
+    PublicationType, DSDownloadRecord, DSViewRecord, FileDownloadRecord
+from app.blueprints.dataset import dataset_bp
+from app.blueprints.zenodo.services import test_full_zenodo_connection, zenodo_create_new_deposition, \
+    zenodo_upload_file, zenodo_publish_deposition, zenodo_get_doi
 
 
 @dataset_bp.route('/zenodo/test', methods=['GET'])
@@ -79,7 +77,7 @@ def create_dataset():
                     deposition_doi = zenodo_get_doi(deposition_id)
                     dataset.ds_meta_data.dataset_doi = deposition_doi
                     app.db.session.commit()
-                except Exception as e:
+                except Exception:
                     pass
 
                 # move feature models permanently
@@ -301,7 +299,6 @@ def upload():
 
         try:
             file.save(file_path)
-            # valid_model = flamapy_valid_model(uvl_filename=new_filename)
             if True:
                 return jsonify({
                     'message': 'UVL uploaded and validated successfully',
@@ -457,12 +454,12 @@ def view_file(file_id):
     except Exception as e:
         return jsonify({'success': False, 'error': 'Error processing request'}), 500
 
-
+      
 '''
     API ENDPOINTS FOR DATASET MODEL
 '''
 
-
+'''
 @dataset_bp.route('/api/v1/dataset/', methods=['GET'])
 def get_all_dataset():
     datasets = DataSet.query.order_by(DataSet.created_at.desc()).all()
@@ -504,7 +501,7 @@ def api_create_dataset():
     PART 2: SAVE BASIC DATA
     """
     ds_meta_data = _create_ds_meta_data(info=info)
-    authors = _create_authors(info=info, ds_meta_data=ds_meta_data)
+    _create_authors(info=info, ds_meta_data=ds_meta_data)
     dataset = _create_dataset(user=user, ds_meta_data=ds_meta_data)
 
     """
@@ -524,7 +521,6 @@ def api_create_dataset():
                     filename = os.path.basename(file.filename)
                     file.save(os.path.join(temp_folder, filename))
                     # TODO: Change valid model function
-                    # valid_model = flamapy_valid_model(uvl_filename=filename, user=user)
                     if True:
                         continue  # TODO
                     else:
@@ -564,7 +560,6 @@ def api_create_dataset():
             # iterate for each feature model (one feature model = one request to Zenodo
             try:
                 for feature_model in feature_models:
-
                     zenodo_upload_file(deposition_id, feature_model, user=user)
 
                     # Wait for 0.6 seconds before the next API call to ensure we do not exceed
@@ -706,4 +701,38 @@ def _create_feature_models(dataset: DataSet, models: dict, user: User) -> List[F
 
         feature_models.append(feature_model)
 
-    return feature_models
+'''
+
+
+@dataset_bp.route('/doi/<path:doi>/', methods=['GET'])
+def subdomain_index(doi):
+    # Busca el dataset por DOI
+    ds_meta_data = DSMetaData.query.filter_by(dataset_doi=doi).first()
+    if ds_meta_data:
+        dataset = ds_meta_data.data_set
+
+        if dataset:
+            dataset_id = dataset.id
+            user_cookie = request.cookies.get('view_cookie', str(uuid.uuid4()))
+
+            # Registra la vista del dataset
+            view_record = DSViewRecord(
+                user_id=current_user.id if current_user.is_authenticated else None,
+                dataset_id=dataset_id,
+                view_date=datetime.utcnow(),
+                view_cookie=user_cookie
+            )
+            app.db.session.add(view_record)
+            app.db.session.commit()
+
+            # Prepara la respuesta y establece la cookie
+            resp = make_response(render_template('dataset/view_dataset.html', dataset=dataset))
+            resp.set_cookie('view_cookie', user_cookie, max_age=30 * 24 * 60 * 60)  # Ejemplo: cookie expira en 30 días
+
+            return resp
+        else:
+            # Aquí puedes manejar el caso de que el DOI no corresponda a un dataset existente
+            # Por ejemplo, mostrar un error 404 o redirigir a una página de error
+            return "Dataset no encontrado", 404
+
+    abort(404)
