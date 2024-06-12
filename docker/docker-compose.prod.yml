@@ -14,6 +14,7 @@ services:
       - ./entrypoints/production_entrypoint.sh:/app/entrypoint.sh
       - ../scripts:/app/scripts
       - ../migrations:/app/migrations
+      - ../uploads:/app/uploads
     command: [ "sh", "-c", "sh /app/entrypoint.sh" ]
 
   db:
