@@ -4,6 +4,7 @@ from flask import request
 
 from app import db
 from enum import Enum
+from sqlalchemy import Enum as SQLAlchemyEnum
 
 import os
 
