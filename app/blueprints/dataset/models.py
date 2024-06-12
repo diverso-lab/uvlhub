@@ -1,14 +1,11 @@
-from collections import OrderedDict
 from datetime import datetime
 
 from flask import request
 
 from app import db
 from enum import Enum
-from sqlalchemy import Enum as SQLAlchemyEnum, inspect
 
 import os
-
 
 
 class PublicationType(Enum):
@@ -223,7 +220,8 @@ class DSViewRecord(db.Model):
 
     def __repr__(self):
         return f'<View id={self.id} dataset_id={self.dataset_id} date={self.view_date} cookie={self.view_cookie}>'
-      
+
+
 class FileViewRecord(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
@@ -233,7 +231,8 @@ class FileViewRecord(db.Model):
 
     def __repr__(self):
         return '<FileViewRecord {}>'.format(self.id)
-        
+
+
 class FileDownloadRecord(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
