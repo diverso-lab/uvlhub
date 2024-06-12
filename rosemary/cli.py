@@ -14,7 +14,7 @@ from rosemary.commands.coverage import coverage
 from rosemary.commands.linter import linter
 from rosemary.commands.selenium import selenium
 from rosemary.commands.update import update
-from rosemary.commands.info import info
+from rosemary.commands.info import info, info2
 from rosemary.commands.make_module import make_module
 from rosemary.commands.env import env
 from rosemary.commands.test import test
@@ -38,6 +38,7 @@ def cli():
 
 cli.add_command(update)
 cli.add_command(info)
+cli.add_command(info2)
 cli.add_command(make_module)
 cli.add_command(env)
 cli.add_command(test)

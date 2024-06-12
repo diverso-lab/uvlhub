@@ -1,4 +1,5 @@
 import click
+import base64
 import pkg_resources
 
 
@@ -29,3 +30,32 @@ def info():
     click.echo(f"Author: {author}")
     click.echo(f"Author-email: {author_email}")
     click.echo(f"Description: {description}")
+
+
+@click.command('love:me', hidden=True)
+@click.option('--again', is_flag=True)
+def info2(again):
+    if not again:
+        click.echo(click.style("Love me --again?", fg='magenta'))
+        return
+
+    lyrics = "ICAgIA0KICAgIEtub3cgSSd2ZSBkb25lIHdyb25nLA0KICAgIExlZnQgeW91ciBoZWFydCB0b3JuDQogICAgSXMgdGhhdCB3aGF0IGRldmlscyBkbz8NCiAgICBUb29rIHlvdSBzbyBsb3csDQogICAgV2hlcmUgb25seSBmb29scyBnbw0KICAgIEkgc2hvb2sgdGhlIGFuZ2VsIGluIHlvdSENCiAgICANCiAgICBOb3cgSSdtIHJpc2luZyBmcm9tIHRoZSBncm91bmQNCiAgICBSaXNpbmcgdXAgdG8geW91IQ0KICAgIEZpbGxlZCB3aXRoIGFsbCB0aGUgc3RyZW5ndGggSSd2ZSBmb3VuZCwNCiAgICBUaGVyZSdzIG5vdGhpbmcgSSBjYW4ndCBkbyENCiAgICANCiAgICBJIG5lZWQgdG8ga25vdyBub3csIGtub3cgbm93LiBSb3NlbWFyeSwgY2FuIHlvdSBsb3ZlIG1lIGFnYWluPw0KICAgIEkgbmVlZCB0byBrbm93IG5vdywga25vdyBub3cuIFJvc2VtYXJ5LCBjYW4geW91IGxvdmUgbWUgYWdhaW4/DQogICAgSSBuZWVkIHRvIGtub3cgbm93LCBrbm93IG5vdy4gUm9zZW1hcnksIGNhbiB5b3UgbG92ZSBtZSBhZ2Fpbj8NCiAgICBJIG5lZWQgdG8ga25vdyBub3csIGtub3cgbm93LiBSb3NlbWFyeSwgY2FuIHlvdSBsb3ZlIG1lIGFnYWluPw0KICAgIA0KICAgIEknbGwgc3BpbiB5b3UgYXJvdW5kLCB3b24ndCBsZXQgeW91IGZhbGwgZG93biwNCiAgICBXb3VsZCB5b3UgbGV0IG1lIGRvd24/IE5vIQ0KICAgIEknbGwgc3BpbiB5b3UgYXJvdW5kLCB3b24ndCBsZXQgeW91IGZhbGwgZG93biwNCiAgICBXb3VsZCB5b3UgbGV0IG1lIGRvd24/IE5vIQ0KICAgIA0KICAgIE5vdyBJJ20gcmlzaW5nIGZyb20gdGhlIGdyb3VuZA0KICAgIFJpc2luZyB1cCB0byB5b3UhDQogICAgRmlsbGVkIHdpdGggYWxsIHRoZSBzdHJlbmd0aCBJJ3ZlIGZvdW5kLA0KICAgIFRoZXJlJ3Mgbm90aGluZyBJIGNhbid0IGRvIQ0KICAgIA0KICAgIEkgbmVlZCB0byBrbm93IG5vdywga25vdyBub3cuIFJvc2VtYXJ5LCBjYW4geW91IGxvdmUgbWUgYWdhaW4/DQogICAgSSBuZWVkIHRvIGtub3cgbm93LCBrbm93IG5vdy4gUm9zZW1hcnksIGNhbiB5b3UgbG92ZSBtZSBhZ2Fpbj8NCiAgICBJIG5lZWQgdG8ga25vdyBub3csIGtub3cgbm93LiBSb3NlbWFyeSwgY2FuIHlvdSBsb3ZlIG1lIGFnYWluPw0KICAgIEkgbmVlZCB0byBrbm93IG5vdywga25vdyBub3cuIFJvc2VtYXJ5LCBjYW4geW91IGxvdmUgbWUgYWdhaW4/DQoNCiAgICBDb25ncmF0dWxhdGlvbnMsIHlvdSBmb3VuZCB0aGUgZWFzdGVyIGVnZyE=" # noqa
+
+    decoded = decode_lyrics(lyrics)
+    colored_lyrics = colorize_lyrics(decoded)
+    click.echo(colored_lyrics)
+
+
+def colorize_lyrics(lyrics):
+    colored_lyrics = ""
+    colors = ['red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white']
+
+    for i, line in enumerate(lyrics.splitlines()):
+        colored_lyrics += click.style(line, fg=colors[i % len(colors)]) + '\n'
+
+    return colored_lyrics
+
+
+def decode_lyrics(encoded_lyrics):
+    decoded_lyrics = base64.b64decode(encoded_lyrics.encode('utf-8')).decode('utf-8')
+    return decoded_lyrics
