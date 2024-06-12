@@ -110,6 +110,31 @@
 
                 </div>
 
+                <!--
+                    <div class="row mb-2">
+
+                        <div class="col-md-4 col-12">
+                            <span class=" text-secondary">
+                                Dataset DOI (Zenodo)
+                            </span>
+                        </div>
+                        <div class="col-md-8 col-12">
+                            <a href="http://www.doi.org/{{ dataset.ds_meta_data.dataset_doi }}" target="_blank">
+                                https://www.doi.org/{{ dataset.ds_meta_data.dataset_doi }}
+                            </a>
+
+                            <div id="dataset_doi" style="display: none">
+                                https://www.doi.org/{{ dataset.ds_meta_data.dataset_doi }}
+                            </div>
+
+                            <i data-feather="clipboard" class="center-button-icon"
+                               style="cursor: pointer"
+                               onclick="copyText('dataset_doi')"></i>
+                        </div>
+
+                    </div>
+                    -->
+
                 <div class="row mb-2">
 
                     <div class="col-md-4 col-12">
@@ -118,16 +143,16 @@
                         </span>
                     </div>
                     <div class="col-md-8 col-12">
-                        <a href="http://www.doi.org/{{ dataset.ds_meta_data.dataset_doi }}" target="_blank">
-                            {{ dataset.ds_meta_data.dataset_doi }}
+                        <a href="{{ dataset.get_uvlhub_doi() }}">
+                            {{ dataset.get_uvlhub_doi() }}
                         </a>
 
-                        <div id="dataset_doi" style="display: none">
-                            https://www.doi.org/{{ dataset.ds_meta_data.dataset_doi }}
+                        <div id="dataset_doi_uvlhub" style="display: none">
+                            {{ dataset.get_uvlhub_doi() }}
                         </div>
 
                         <i data-feather="clipboard" class="center-button-icon" style="cursor: pointer"
-                            onclick="copyText('dataset_doi')"></i>
+                            onclick="copyText('dataset_doi_uvlhub')"></i>
                     </div>
 
                 </div>
@@ -201,10 +226,12 @@
             <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
                 <h5 class="modal-title" id="fileViewerModalLabel">Feature model view</h5>
                 <div>
-                    <a href="#" class="btn btn-outline-primary btn-sm" id="downloadButton" style="margin-right: 5px; margin-bottom: 5px; border-radius: 5px;">
+                    <a href="#" class="btn btn-outline-primary btn-sm" id="downloadButton"
+                        style="margin-right: 5px; margin-bottom: 5px; border-radius: 5px;">
                         <i data-feather="download"></i>
                     </a>
-                    <button onclick="copyToClipboard()" class="btn btn-outline-secondary btn-sm" style="margin-right: 5px; margin-bottom: 5px; border-radius: 5px;">
+                    <button onclick="copyToClipboard()" class="btn btn-outline-secondary btn-sm"
+                        style="margin-right: 5px; margin-bottom: 5px; border-radius: 5px;">
                         <i data-feather="copy"></i>
                     </button>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -212,7 +239,7 @@
             </div>
             <div class="modal-body" style="overflow-y: auto;">
                 <pre id="fileContent"
-                     style="max-height: 400px; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word; background-color: #f5f5f5; padding: 20px; border-radius: 5px; border: 1px solid #ccc;"></pre>
+                    style="max-height: 400px; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word; background-color: #f5f5f5; padding: 20px; border-radius: 5px; border: 1px solid #ccc;"></pre>
             </div>
         </div>
     </div>
@@ -232,7 +259,7 @@
             .then(data => {
                 document.getElementById('fileContent').textContent = data.content;
                 currentFileId = fileId;
-                document.getElementById('downloadButton').href = `/file/download/${fileId}`; 
+                document.getElementById('downloadButton').href = `/file/download/${fileId}`;
                 var modal = new bootstrap.Modal(document.getElementById('fileViewerModal'));
                 modal.show();
             })

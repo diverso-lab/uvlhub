@@ -1,35 +1,37 @@
-name: Flask CI
+name: Run tests
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, develop ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, develop ]
 
 jobs:
-  build:
-
+  pytest:
     runs-on: ubuntu-latest
 
     services:
       mysql:
         image: mysql:5.7
         env:
-          MYSQL_ROOT_PASSWORD: fmlibrootpass
-          MYSQL_DATABASE: fmlibdb
-          MYSQL_USER: fmlibuser
-          MYSQL_PASSWORD: fmlibpass
+          MYSQL_ROOT_PASSWORD: uvlhub_root_password
+          MYSQL_DATABASE: uvlhubdb_test
+          MYSQL_USER: uvlhub_user
+          MYSQL_PASSWORD: uvlhub_password
         ports:
           - 3306:3306
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
-    - name: Set up Python 3.9
-      uses: actions/setup-python@v2
+    - uses: actions/setup-python@v5
       with:
-        python-version: 3.9
+        python-version: '3.12'
+
+    - name: Prepare environment
+      run: |
+        sed -i '/rosemary @ file:\/\/\/app/d' requirements.txt
 
     - name: Install dependencies
       run: |
@@ -37,10 +39,12 @@ jobs:
         pip install -r requirements.txt
 
     - name: Run Tests
+      env:
+        FLASK_ENV: testing
+        MARIADB_HOSTNAME: 127.0.0.1
+        MARIADB_PORT: 3306
+        MARIADB_TEST_DATABASE: uvlhubdb_test
+        MARIADB_USER: uvlhub_user
+        MARIADB_PASSWORD: uvlhub_password
       run: |
-        export MYSQL_HOSTNAME=127.0.0.1
-        export MYSQL_PORT=3306
-        export MYSQL_DATABASE=fmlibdb
-        export MYSQL_USER=fmlibuser
-        export MYSQL_PASSWORD=fmlibpass
-        pytest app/tests/units.py
+        pytest app/blueprints/ --ignore-glob='*selenium*'

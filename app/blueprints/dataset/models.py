@@ -7,6 +7,9 @@ from app import db
 from enum import Enum
 from sqlalchemy import Enum as SQLAlchemyEnum, inspect
 
+import os
+
+
 
 class PublicationType(Enum):
     NONE = 'none'
@@ -76,8 +79,14 @@ class DataSet(db.Model):
     ds_meta_data_id = db.Column(db.Integer, db.ForeignKey('ds_meta_data.id'), nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
-    ds_meta_data = db.relationship('DSMetaData', backref='data_set', lazy=True, cascade="all, delete")
+    ds_meta_data = db.relationship('DSMetaData', backref=db.backref('data_set', uselist=False))
     feature_models = db.relationship('FeatureModel', backref='data_set', lazy=True, cascade="all, delete")
+
+    def name(self):
+        return self.ds_meta_data.title
+
+    def files(self):
+        return [file for fm in self.feature_models for file in fm.files]
 
     def delete(self):
         db.session.delete(self)
@@ -97,6 +106,10 @@ class DataSet(db.Model):
 
     def get_file_total_size_for_human(self):
         return get_human_readable_size(self.get_file_total_size())
+
+    def get_uvlhub_doi(self):
+        domain = os.getenv('DOMAIN', 'localhost')
+        return f'http://{domain}/doi/{self.ds_meta_data.dataset_doi}'
 
     def to_dict(self):
         return {
@@ -193,7 +206,12 @@ class DSDownloadRecord(db.Model):
     download_cookie = db.Column(db.String(36), nullable=False)  # Assuming UUID4 strings
 
     def __repr__(self):
-        return f'<Download id={self.id} dataset_id={self.dataset_id} date={self.download_date} cookie={self.download_cookie}>'
+        return (
+            f'<Download id={self.id} '
+            f'dataset_id={self.dataset_id} '
+            f'date={self.download_date} '
+            f'cookie={self.download_cookie}>'
+        )
 
 
 class DSViewRecord(db.Model):
@@ -205,7 +223,7 @@ class DSViewRecord(db.Model):
 
     def __repr__(self):
         return f'<View id={self.id} dataset_id={self.dataset_id} date={self.view_date} cookie={self.view_cookie}>'
-
+      
 class FileViewRecord(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
@@ -224,8 +242,12 @@ class FileDownloadRecord(db.Model):
     download_cookie = db.Column(db.String(36), nullable=False)  # Assuming UUID4 strings
 
     def __repr__(self):
-        return f'<FileDownload id={self.id} file_id={self.file_id} date={self.download_date} cookie={self.download_cookie}>'
-
+        return (
+            f'<FileDownload id={self.id} '
+            f'file_id={self.file_id} '
+            f'date={self.download_date} '
+            f'cookie={self.download_cookie}>'
+        )
 
 
 def get_human_readable_size(size):

@@ -1,9 +1,11 @@
 import logging
+
+from flask_login import login_required
+
 import app
 
 from flask import request, current_app, render_template
-
-from . import public_bp
+from app.blueprints.public import public_bp
 from ..dataset.models import DataSet, DSMetaData, DSDownloadRecord, DSViewRecord, FileDownloadRecord, FileViewRecord, FeatureModel
 from sqlalchemy import func
 from app import db
@@ -30,7 +32,6 @@ def index():
     total_dataset_views = DSViewRecord.query.count()
     total_feature_model_views = FileViewRecord.query.count()
 
-
     return render_template("public/index.html",
                            datasets=latest_datasets,
                            datasets_counter=datasets_counter,
@@ -39,3 +40,9 @@ def index():
                            total_feature_model_downloads=total_feature_model_downloads,
                            total_dataset_views=total_dataset_views,
                            total_feature_model_views=total_feature_model_views)
+
+  
+@public_bp.route('/secret')
+@login_required
+def secret():
+    return "Esto es secreto!"

@@ -1,0 +1,40 @@
+# Use an official Python runtime as a parent image, Alpine version for a lighter footprint
+FROM python:3.12-alpine
+
+# Install MySQL client and temporary build dependencies
+RUN apk add --no-cache mysql-client \
+    && apk add --no-cache --virtual .build-deps gcc musl-dev python3-dev libffi-dev openssl-dev
+
+# Set the working directory in the container to /app
+WORKDIR /app
+
+# Copy files
+COPY app/ ./app
+COPY core/ ./core
+COPY migrations/ ./migrations
+
+# Copy requirements.txt into the working directory /app
+COPY requirements.txt .
+
+# Removes cache at the build stage
+RUN find . -type d -name "__pycache__" -exec rm -r {} + && \
+    find . -type f -name "*.pyc" -exec rm -f {} +
+
+# Copy entrypoint and set execution permissions
+COPY docker/entrypoints/render_entrypoint.sh /app/render_entrypoint.sh
+RUN chmod +x /app/render_entrypoint.sh
+
+# Copy the wait-for-db.sh script and set execution permissions
+COPY scripts/wait-for-db.sh /app/scripts/wait-for-db.sh
+RUN chmod +x /app/scripts/wait-for-db.sh
+
+# Install any needed packages specified in requirements.txt and upgrade pip
+RUN pip install --no-cache-dir -r requirements.txt \
+    && pip install --no-cache-dir --upgrade pip \
+    && apk del .build-deps
+
+# Expose port 80
+EXPOSE 80
+
+# Command to run the application
+CMD ["./render_entrypoint.sh"]
