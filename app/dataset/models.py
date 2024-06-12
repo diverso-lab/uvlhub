@@ -206,7 +206,16 @@ class DSViewRecord(db.Model):
     def __repr__(self):
         return f'<View id={self.id} dataset_id={self.dataset_id} date={self.view_date} cookie={self.view_cookie}>'
 
+class FileViewRecord(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    file_id = db.Column(db.Integer, db.ForeignKey('file.id'), nullable=False)
+    view_date = db.Column(db.DateTime, default=datetime.utcnow)
+    view_cookie = db.Column(db.String(36))
 
+    def __repr__(self):
+        return '<FileViewRecord {}>'.format(self.id)
+        
 class FileDownloadRecord(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)

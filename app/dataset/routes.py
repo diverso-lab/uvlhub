@@ -10,6 +10,7 @@ import time
 from datetime import datetime
 from typing import List
 from zipfile import ZipFile
+from app import db
 
 from flask import flash, redirect, render_template, url_for, request, jsonify, send_file, send_from_directory, abort, \
     current_app, make_response
@@ -18,7 +19,7 @@ from werkzeug.utils import secure_filename
 
 import app
 from .forms import DataSetForm
-from .models import DataSet, DSMetrics, FeatureModel, File, FMMetaData, FMMetrics, DSMetaData, Author, PublicationType, \
+from .models import DataSet, DSMetrics, FileViewRecord, FeatureModel, File, FMMetaData, FMMetrics, DSMetaData, Author, PublicationType, \
     DSDownloadRecord, DSViewRecord, FileDownloadRecord
 from . import dataset_bp
 from ..auth.models import User
@@ -434,6 +435,47 @@ def download_file(file_id):
     resp.set_cookie('file_download_cookie', user_cookie)
 
     return resp
+
+
+@dataset_bp.route('/file/view/<int:file_id>', methods=['GET'])
+def view_file(file_id):
+    file = File.query.get_or_404(file_id)
+    filename = file.name
+
+    directory_path = f"uploads/user_{file.feature_model.data_set.user_id}/dataset_{file.feature_model.data_set_id}/"
+    parent_directory_path = os.path.dirname(current_app.root_path)
+    file_path = os.path.join(parent_directory_path, directory_path, filename)
+
+    try:
+        if os.path.exists(file_path):
+            with open(file_path, 'r') as f:
+                content = f.read()
+
+            user_cookie = request.cookies.get('view_cookie')
+            if not user_cookie:
+                user_cookie = str(uuid.uuid4())
+
+            #Register file view
+            new_view_record = FileViewRecord(
+                user_id=current_user.id if current_user.is_authenticated else None,
+                file_id=file_id,
+                view_date=datetime.utcnow(),
+                view_cookie=user_cookie
+            )
+            db.session.add(new_view_record)
+            db.session.commit()
+
+            #Prepare response
+            response = jsonify({'success': True, 'content': content})
+            if not request.cookies.get('view_cookie'):
+                response = make_response(response)
+                response.set_cookie('view_cookie', user_cookie, max_age=60*60*24*365*2)  
+
+            return response
+        else:
+            return jsonify({'success': False, 'error': 'File not found'}), 404
+    except Exception as e:
+        return jsonify({'success': False, 'error': 'Error processing request'}), 500
 
 
 '''
