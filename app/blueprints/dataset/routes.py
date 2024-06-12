@@ -1,5 +1,3 @@
-import io
-import logging
 import os
 import json
 import hashlib
@@ -7,26 +5,21 @@ import shutil
 import tempfile
 import uuid
 
-import time
 from datetime import datetime
-from typing import List
 from zipfile import ZipFile
 from app import db
 
-from flask import flash, redirect, render_template, url_for, request, jsonify, send_file, send_from_directory, abort, \
+from flask import render_template, request, jsonify, send_from_directory, abort, \
     current_app, make_response
 from flask_login import login_required, current_user
-from werkzeug.utils import secure_filename
 
 import app
 from app.blueprints.dataset.forms import DataSetForm
-from app.blueprints.dataset.models import DataSet, DSMetrics, FileViewRecord, FeatureModel, File, FMMetaData, FMMetrics, DSMetaData, Author, PublicationType, \
-    DSDownloadRecord, DSViewRecord, FileDownloadRecord
+from app.blueprints.dataset.models import DataSet, FileViewRecord, FeatureModel, File, FMMetaData, DSMetaData, Author, \
+     PublicationType, DSDownloadRecord, DSViewRecord, FileDownloadRecord
 from app.blueprints.dataset import dataset_bp
-from ..auth.models import User
 from app.blueprints.zenodo.services import test_full_zenodo_connection, zenodo_create_new_deposition, \
     zenodo_upload_file, zenodo_publish_deposition, zenodo_get_doi
-
 
 
 @dataset_bp.route('/zenodo/test', methods=['GET'])
@@ -455,7 +448,7 @@ def view_file(file_id):
             if not user_cookie:
                 user_cookie = str(uuid.uuid4())
 
-            #Register file view
+            # Register file view
             new_view_record = FileViewRecord(
                 user_id=current_user.id if current_user.is_authenticated else None,
                 file_id=file_id,
@@ -465,11 +458,11 @@ def view_file(file_id):
             db.session.add(new_view_record)
             db.session.commit()
 
-            #Prepare response
+            # Prepare response
             response = jsonify({'success': True, 'content': content})
             if not request.cookies.get('view_cookie'):
                 response = make_response(response)
-                response.set_cookie('view_cookie', user_cookie, max_age=60*60*24*365*2)  
+                response.set_cookie('view_cookie', user_cookie, max_age=60*60*24*365*2)
 
             return response
         else:
