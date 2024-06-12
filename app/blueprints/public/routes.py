@@ -44,4 +44,3 @@ def index():
 @login_required
 def secret():
     return "Esto es secreto!"
-    
