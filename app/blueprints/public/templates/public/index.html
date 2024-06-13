@@ -115,14 +115,49 @@
         <div class="col-xl-4 col-lg-12 col-md-12 col-sm-12">
 
             <div class="row">
-                <div class="col-12">
+                <div class="card">
+                <div class="card-body">
+                    <h2> <b>Hub statistics</b> </h2>
+                    <div class="col-12">
 
-                    <h1 class="h2 mb-3">
-                        <span class="badge bg-primary">{{ datasets_counter }} datasets</span>
-                        <span class="badge bg-dark">{{ feature_models_counter }} feature models</span>
-                    </h1>
+                        <h1 class="h2 mb-3">
 
+                            <h4 class="h4 mb-3" style="color: #006dad;">
+                                <i data-feather="database" class="align-middle mr-2" style="color: #006dad;"></i>
+                                    {{ datasets_counter }} Datasets
+                            </h4>
+
+                            <h4 class="h4 mb-3" style="color: #006dad;">
+                                <i data-feather="file" class="align-middle mr-2" style="color: #006dad;"></i>{{
+                                feature_models_counter }} Feature models
+                            </h4>
+
+                            <h4 class="h4 mb-3" style="color: #006dad;">
+                                <i data-feather="eye" class="align-middle mr-2" style="color: #006dad;"></i>{{
+                                    total_dataset_views
+                                }} Datasets views
+                            </h4>
+
+                            <h4 class="h4 mb-3" style="color: #006dad;">
+                                <i data-feather="eye" class="align-middle mr-2" style="color: #006dad;"></i>{{
+                                    total_feature_model_views
+                                }} Feature models views
+                            </h4>
+
+                            <h4 class="h4 mb-3" style="color: #006dad;">
+                                <i data-feather="download" class="align-middle mr-2" style="color: #006dad;"></i>{{
+                                    total_dataset_downloads }} Datasets downloads
+                            </h4>
+
+                            <h4 class="h4 mb-3" style="color: #006dad;">
+                                <i data-feather="download" class="align-middle mr-2" style="color: #006dad;"></i>{{
+                                    total_feature_model_downloads }} Feature models downloads
+                            </h4>
+                        </h1>
+
+                    </div>
                 </div>
+            </div>
 
                 <div class="col-12">
 
@@ -230,4 +265,3 @@
     </div>
 
 {% endblock %}
-
