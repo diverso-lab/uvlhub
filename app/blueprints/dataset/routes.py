@@ -380,7 +380,7 @@ def download_dataset(dataset_id):
 
         app.db.session.add(download_record)
         app.db.session.commit()
-        
+
     return resp
 
 
