@@ -1,21 +1,14 @@
-from .models import UserProfile
-from flask import flash, render_template
-from .. import get_authenticated_user_profile
+from app.blueprints.profile.repositories import UserProfileRepository
+from core.services.BaseService import BaseService
 
-def valid_edit_form(form):
-    orcid = form.orcid.data.strip()
-    name = form.name.data.strip()
-    surname = form.surname.data.strip()
-    affiliation = form.affiliation.data.strip()
 
-    profile = get_authenticated_user_profile()
-    profile.orcid = orcid
-    profile.name = name
-    profile.surname = surname
-    profile.affiliation = affiliation
-    profile.save()
+class UserProfileService(BaseService):
+    def __init__(self):
+        super().__init__(UserProfileRepository())
 
-    flash('Saved profile', 'success')
-    return render_template('profile/edit.html', form=form)
-
-    
+    def update_profile(self, user_profile_id, form):
+        if form.validate():
+            updated_instance = self.update(user_profile_id, **form.data)
+            return updated_instance, None
+        else:
+            return None, form.errors

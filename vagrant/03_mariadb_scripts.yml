@@ -1,0 +1,46 @@
+---
+- hosts: all
+  become: true
+
+  vars:
+    common_environment:
+      FLASK_APP_NAME: "{{ flask_app_name }}"
+      FLASK_ENV: "{{ flask_env }}"
+      DOMAIN: "{{ domain }}"
+      MARIADB_HOSTNAME: "{{ mariadb_hostname }}"
+      MARIADB_PORT: "{{ mariadb_port }}"
+      MARIADB_DATABASE: "{{ mariadb_database }}"
+      MARIADB_TEST_DATABASE: "{{ mariadb_test_database }}"
+      MARIADB_USER: "{{ mariadb_user }}"
+      MARIADB_PASSWORD: "{{ mariadb_password }}"
+      MARIADB_ROOT_PASSWORD: "{{ mariadb_root_password }}"
+      WORKING_DIR: "{{ working_dir }}"
+
+  tasks:
+    - name: Set permissions for wait-for-db.sh
+      file:
+        path: "{{ working_dir }}scripts/wait-for-db.sh"
+        mode: '0755'
+        state: file
+      environment: "{{ common_environment }}"
+
+    - name: Set permissions for init-testing-db.sh
+      file:
+        path: "{{ working_dir }}scripts/init-testing-db.sh"
+        mode: '0755'
+        state: file
+      environment: "{{ common_environment }}"
+
+    - name: Wait for MariaDB to be ready
+      shell: |
+        {{ working_dir }}scripts/wait-for-db.sh
+      args:
+        executable: /bin/bash
+      environment: "{{ common_environment }}"
+
+    - name: Initialize the database
+      shell: |
+        {{ working_dir }}scripts/init-testing-db.sh
+      args:
+        executable: /bin/bash
+      environment: "{{ common_environment }}"

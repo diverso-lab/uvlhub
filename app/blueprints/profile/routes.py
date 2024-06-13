@@ -1,27 +1,28 @@
 from flask import request, render_template, flash, redirect, url_for, Blueprint
 from flask_login import login_required, current_user
 from sqlalchemy.orm import joinedload
-from app import db
 
-from app.profile import profile_bp
-from app.profile.forms import UserProfileForm
-from app.dataset.models import DataSet
+from app.blueprints.profile import profile_bp
+from app.blueprints.profile.forms import UserProfileForm
+from app.blueprints.dataset.models import DataSet
 
-from .models import UserProfile
-from .. import get_authenticated_user_profile
-from .services import valid_edit_form  
+from app import get_authenticated_user_profile, db
+from app.blueprints.profile.models import UserProfile
+from app.blueprints.profile.services import UserProfileService
 
 
 @profile_bp.route('/profile/edit', methods=['GET', 'POST'])
 @login_required
 def edit_profile():
     form = UserProfileForm()
+    if request.method == 'POST':
 
-    if request.method == 'POST' and form.validate_on_submit():
-        return valid_edit_form(form)
+        service = UserProfileService()
+        result, errors = service.update_profile(get_authenticated_user_profile().id, form)
+        return service.handle_service_response(result, errors, 'profile.edit_profile', 'Profile updated successfully',
+                                               'profile/edit.html', form)
 
-    else:
-        return render_template('profile/edit.html', form=form)
+    return render_template('profile/edit.html', form=form)
 
 
 @profile_bp.route('/myProfile')
@@ -48,5 +49,3 @@ def my_profile():
         pagination=user_datasets_pagination,
         total_datasets=total_datasets_count  
     )
-
-

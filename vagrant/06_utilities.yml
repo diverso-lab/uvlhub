@@ -1,0 +1,15 @@
+---
+- hosts: all
+  become: true
+
+  tasks:
+
+    - name: Add commands to .bashrc
+      lineinfile:
+        path: /home/vagrant/.bashrc
+        line: '{{ item }}'
+        create: yes
+      with_items:
+        - 'source {{ working_dir }}venv/bin/activate'
+        - 'cd {{ working_dir }}'
+      when: ansible_user == 'vagrant'

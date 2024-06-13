@@ -69,6 +69,11 @@
     color: #ffffff;
 }
 
+.card-note{
+    background: #1ab7ea radial-gradient(circle at center right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.5));
+    color: #ffffff;
+}
+
 .card-header-welcome {
     background: inherit;
     color: inherit !important;
@@ -81,6 +86,13 @@
     font-size: 17px;
 }
 
+.card-title-note {
+    margin-left: 1.25rem;
+    margin-top: 0.5rem;
+    color: white;
+    font-size: 35px;
+}
+
 .custom-card-body {
     height: 150px;
 }
@@ -91,3 +103,6 @@
     min-height: 200px;
 }
 
+.stats-color {
+    color: #009688; 
+}

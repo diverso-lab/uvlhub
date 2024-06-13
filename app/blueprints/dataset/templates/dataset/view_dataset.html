@@ -1,0 +1,279 @@
+{% extends "base_template.html" %}
+
+{% block title %}View dataset{% endblock %}
+
+{% block head_extra %}
+<style>
+    .option-button {
+        display: block;
+        width: 100%;
+        margin-bottom: 5px;
+    }
+
+    .option-button:last-child {
+        margin-bottom: 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="row mb-3">
+
+    <div class="col-6">
+        <a href="/explore" class="btn btn-primary btn-sm" id="search" style="border-radius: 5px;">
+            <i data-feather="search" class="center-button-icon"></i>
+            Explore more datasets
+        </a>
+    </div>
+
+</div>
+
+<h1 class="h3 mb-3">View dataset: {{ dataset.ds_meta_data.title }}</h1>
+
+<div class="row">
+
+    <div class="col-xl-8 col-lg-12 col-md-12 col-sm-12">
+
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between">
+                    <h2>{{ dataset.ds_meta_data.title }}</h2>
+                    <div>
+                        <span class="badge bg-secondary">{{ dataset.get_cleaned_publication_type() }}</span>
+                    </div>
+                </div>
+                <p class="text-secondary">{{ dataset.created_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+
+                <div class="row mb-4">
+
+                    <div class="col-md-4 col-12">
+                        <span class=" text-secondary">
+                            Description
+                        </span>
+                    </div>
+                    <div class="col-md-8 col-12">
+                        <p class="card-text">{{ dataset.ds_meta_data.description }}</p>
+                    </div>
+
+                </div>
+
+                <div class="row mb-2">
+
+                    <div class="col-md-4 col-12">
+                        <span class=" text-secondary">
+                            Uploaded by
+                        </span>
+                    </div>
+                    <div class="col-md-8 col-12">
+                        <a href="#">{{ dataset.user.profile.surname }}, {{ dataset.user.profile.name }}</a>
+                    </div>
+
+                </div>
+
+                <div class="row mb-2">
+
+                    <div class="col-md-4 col-12">
+                        <span class=" text-secondary">
+                            Authors
+                        </span>
+                    </div>
+                    <div class="col-md-8 col-12">
+                        {% for author in dataset.ds_meta_data.authors %}
+                        <p class="p-0 m-0">
+                            {{ author.name }}
+                            {% if author.affiliation %}
+                            ({{ author.affiliation }})
+                            {% endif %}
+                            {% if author.orcid %}
+                            ({{ author.orcid }})
+                            {% endif %}
+                        </p>
+                        {% endfor %}
+                    </div>
+
+
+                </div>
+
+                <div class="row mb-2">
+
+                    <div class="col-md-4 col-12">
+                        <span class=" text-secondary">
+                            Publication DOI
+                        </span>
+                    </div>
+                    <div class="col-md-8 col-12">
+                        <a href="{{ dataset.ds_meta_data.publication_doi }}">
+                            {{ dataset.ds_meta_data.publication_doi }}
+                        </a>
+                    </div>
+
+                </div>
+
+                <!--
+                    <div class="row mb-2">
+
+                        <div class="col-md-4 col-12">
+                            <span class=" text-secondary">
+                                Dataset DOI (Zenodo)
+                            </span>
+                        </div>
+                        <div class="col-md-8 col-12">
+                            <a href="http://www.doi.org/{{ dataset.ds_meta_data.dataset_doi }}" target="_blank">
+                                https://www.doi.org/{{ dataset.ds_meta_data.dataset_doi }}
+                            </a>
+
+                            <div id="dataset_doi" style="display: none">
+                                https://www.doi.org/{{ dataset.ds_meta_data.dataset_doi }}
+                            </div>
+
+                            <i data-feather="clipboard" class="center-button-icon"
+                               style="cursor: pointer"
+                               onclick="copyText('dataset_doi')"></i>
+                        </div>
+
+                    </div>
+                    -->
+
+                <div class="row mb-2">
+
+                    <div class="col-md-4 col-12">
+                        <span class=" text-secondary">
+                            Dataset DOI
+                        </span>
+                    </div>
+                    <div class="col-md-8 col-12">
+                        <a href="{{ dataset.get_uvlhub_doi() }}">
+                            {{ dataset.get_uvlhub_doi() }}
+                        </a>
+
+                        <div id="dataset_doi_uvlhub" style="display: none">
+                            {{ dataset.get_uvlhub_doi() }}
+                        </div>
+
+                        <i data-feather="clipboard" class="center-button-icon" style="cursor: pointer"
+                            onclick="copyText('dataset_doi_uvlhub')"></i>
+                    </div>
+
+                </div>
+
+                <div class="row mb-2">
+
+                    <div class="col-md-4 col-12">
+                        <span class=" text-secondary">
+                            Tags
+                        </span>
+                    </div>
+                    <div class="col-md-8 col-12">
+                        {% for tag in dataset.ds_meta_data.tags.split(',') %}
+                        <span class="badge bg-secondary">{{ tag.strip() }}</span>
+                        {% endfor %}
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <div class="col-xl-4 col-lg-12 col-md-12 col-sm-12">
+
+        <h1 class="h3 mb-3">UVL models ({{ dataset.get_files_count() }})</h1>
+
+        <table class="table">
+            <thead>
+                <tr>
+                    <th style="width: 40%;">UVL title</th>
+                    <th style="width: 20%;">Size</th>
+                    <th style="width: 40%;">Options</th>
+                </tr>
+            </thead>
+            <tbody>
+
+                {% for feature_model in dataset.feature_models %}
+                {% for file in feature_model.files %}
+                <tr>
+                    <td>{{ file.name }}</td>
+                    <td>{{ file.get_formatted_size() }}</td>
+                    <td>
+                        <a href="{{ url_for('dataset.download_file', file_id=file.id) }}"
+                            class="btn btn-outline-primary btn-sm option-button" style="border-radius: 5px;">
+                            <i data-feather="download"></i>
+                        </a>
+                        <button onclick="viewFile('{{ file.id }}')"
+                            class="btn btn-outline-secondary btn-sm option-button" style="border-radius: 5px;">
+                            <i data-feather="eye"></i>
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <a href="/dataset/download/{{ dataset.id }}" class="btn btn-primary" style="border-radius: 5px;">
+            <i data-feather="download" class="center-button-icon"></i>
+            Download all ({{ dataset.get_file_total_size_for_human() }})
+        </a>
+    </div>
+</div>
+
+<!-- Modal-->
+<div class="modal fade" id="fileViewerModal" tabindex="-1" aria-labelledby="fileViewerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <h5 class="modal-title" id="fileViewerModalLabel">Feature model view</h5>
+                <div>
+                    <a href="#" class="btn btn-outline-primary btn-sm" id="downloadButton"
+                        style="margin-right: 5px; margin-bottom: 5px; border-radius: 5px;">
+                        <i data-feather="download"></i>
+                    </a>
+                    <button onclick="copyToClipboard()" class="btn btn-outline-secondary btn-sm"
+                        style="margin-right: 5px; margin-bottom: 5px; border-radius: 5px;">
+                        <i data-feather="copy"></i>
+                    </button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+            </div>
+            <div class="modal-body" style="overflow-y: auto;">
+                <pre id="fileContent"
+                    style="max-height: 400px; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word; background-color: #f5f5f5; padding: 20px; border-radius: 5px; border: 1px solid #ccc;"></pre>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        feather.replace();
+    });
+
+    var currentFileId;
+
+    function viewFile(fileId) {
+        fetch(`/file/view/${fileId}`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('fileContent').textContent = data.content;
+                currentFileId = fileId;
+                document.getElementById('downloadButton').href = `/file/download/${fileId}`;
+                var modal = new bootstrap.Modal(document.getElementById('fileViewerModal'));
+                modal.show();
+            })
+            .catch(error => console.error('Error loading file:', error));
+    }
+
+    function copyToClipboard() {
+        const text = document.getElementById('fileContent').textContent;
+        navigator.clipboard.writeText(text).then(() => {
+            console.log('Text copied to clipboard');
+        }).catch(err => {
+            console.error('Failed to copy text: ', err);
+        });
+    }
+</script>
+
+{% endblock %}
