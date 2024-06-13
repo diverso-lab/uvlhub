@@ -362,16 +362,25 @@ def download_dataset(dataset_id):
             mimetype='application/zip'
         )
 
-    # Record the download in your database
-    download_record = DSDownloadRecord(
+    # Check if the download record already exists for this cookie
+    existing_record = DSDownloadRecord.query.filter_by(
         user_id=current_user.id if current_user.is_authenticated else None,
         dataset_id=dataset_id,
-        download_date=datetime.utcnow(),
-        download_cookie=user_cookie)
+        download_cookie=user_cookie
+    ).first()
 
-    app.db.session.add(download_record)
-    app.db.session.commit()
+    if not existing_record:
+        # Record the download in your database
+        download_record = DSDownloadRecord(
+            user_id=current_user.id if current_user.is_authenticated else None,
+            dataset_id=dataset_id,
+            download_date=datetime.now(),
+            download_cookie=user_cookie
+        )
 
+        app.db.session.add(download_record)
+        app.db.session.commit()
+        
     return resp
 
 
@@ -384,14 +393,23 @@ def view_dataset(dataset_id):
     if not user_cookie:
         user_cookie = str(uuid.uuid4())
 
-    # Record the view in your database
-    view_record = DSViewRecord(
+    # Check if the view record already exists for this cookie
+    existing_record = DSViewRecord.query.filter_by(
         user_id=current_user.id if current_user.is_authenticated else None,
         dataset_id=dataset_id,
-        view_date=datetime.utcnow(),
-        view_cookie=user_cookie)
-    app.db.session.add(view_record)
-    app.db.session.commit()
+        view_cookie=user_cookie
+    ).first()
+
+    if not existing_record:
+        # Record the view in your database
+        view_record = DSViewRecord(
+            user_id=current_user.id if current_user.is_authenticated else None,
+            dataset_id=dataset_id,
+            view_date=datetime.now(),
+            view_cookie=user_cookie
+        )
+        app.db.session.add(view_record)
+        app.db.session.commit()
 
     # Save the cookie to the user's browser
     resp = make_response(render_template('dataset/view_dataset.html', dataset=dataset))
@@ -414,14 +432,23 @@ def download_file(file_id):
     if not user_cookie:
         user_cookie = str(uuid.uuid4())
 
-    # Record the download in your database
-    download_record = FileDownloadRecord(
+    # Check if the download record already exists for this cookie
+    existing_record = FileDownloadRecord.query.filter_by(
         user_id=current_user.id if current_user.is_authenticated else None,
         file_id=file_id,
-        download_date=datetime.utcnow(),
-        download_cookie=user_cookie)
-    app.db.session.add(download_record)
-    app.db.session.commit()
+        download_cookie=user_cookie
+    ).first()
+
+    if not existing_record:
+        # Record the download in your database
+        download_record = FileDownloadRecord(
+            user_id=current_user.id if current_user.is_authenticated else None,
+            file_id=file_id,
+            download_date=datetime.now(),
+            download_cookie=user_cookie
+        )
+        app.db.session.add(download_record)
+        app.db.session.commit()
 
     # Save the cookie to the user's browser
     resp = make_response(send_from_directory(directory=file_path, path=filename, as_attachment=True))
@@ -448,15 +475,23 @@ def view_file(file_id):
             if not user_cookie:
                 user_cookie = str(uuid.uuid4())
 
-            # Register file view
-            new_view_record = FileViewRecord(
+            # Check if the view record already exists for this cookie
+            existing_record = FileViewRecord.query.filter_by(
                 user_id=current_user.id if current_user.is_authenticated else None,
                 file_id=file_id,
-                view_date=datetime.utcnow(),
                 view_cookie=user_cookie
-            )
-            db.session.add(new_view_record)
-            db.session.commit()
+            ).first()
+
+            if not existing_record:
+                # Register file view
+                new_view_record = FileViewRecord(
+                    user_id=current_user.id if current_user.is_authenticated else None,
+                    file_id=file_id,
+                    view_date=datetime.now(),
+                    view_cookie=user_cookie
+                )
+                db.session.add(new_view_record)
+                db.session.commit()
 
             # Prepare response
             response = jsonify({'success': True, 'content': content})
@@ -467,8 +502,8 @@ def view_file(file_id):
             return response
         else:
             return jsonify({'success': False, 'error': 'File not found'}), 404
-    except Exception:
-        return jsonify({'success': False, 'error': 'Error processing request'}), 500
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 '''
@@ -737,7 +772,7 @@ def subdomain_index(doi):
             view_record = DSViewRecord(
                 user_id=current_user.id if current_user.is_authenticated else None,
                 dataset_id=dataset_id,
-                view_date=datetime.utcnow(),
+                view_date=datetime.now(),
                 view_cookie=user_cookie
             )
             app.db.session.add(view_record)
