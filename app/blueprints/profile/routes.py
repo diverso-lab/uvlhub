@@ -1,10 +1,11 @@
 from flask import request, render_template
-from flask_login import login_required
+from flask_login import login_required, current_user
 
 from app.blueprints.profile import profile_bp
 from app.blueprints.profile.forms import UserProfileForm
+from app.blueprints.dataset.models import DataSet
 
-from app import get_authenticated_user_profile
+from app import get_authenticated_user_profile, db
 from app.blueprints.profile.services import UserProfileService
 
 
@@ -20,3 +21,29 @@ def edit_profile():
                                                'profile/edit.html', form)
 
     return render_template('profile/edit.html', form=form)
+
+
+@profile_bp.route('/myProfile')
+@login_required
+def my_profile():
+    page = request.args.get('page', 1, type=int)
+    per_page = 5
+
+    user_datasets_pagination = db.session.query(DataSet) \
+        .filter(DataSet.user_id == current_user.id) \
+        .paginate(page=page, per_page=per_page, error_out=False)
+
+    total_datasets_count = db.session.query(DataSet) \
+        .filter(DataSet.user_id == current_user.id) \
+        .count()
+
+    print(user_datasets_pagination.items)
+
+    return render_template(
+        'profile/myProfile.html',
+        user_profile=current_user.profile,
+        user=current_user,
+        datasets=user_datasets_pagination.items,
+        pagination=user_datasets_pagination,
+        total_datasets=total_datasets_count
+    )

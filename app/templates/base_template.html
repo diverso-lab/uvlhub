@@ -162,15 +162,17 @@ chico sundermann">
 
                         {% else %}
 
-                            <a class="nav-link dropdown-toggle d-none d-sm-inline-block" href="#"
-                               data-bs-toggle="dropdown">
-                                <span class="text-dark">{{ current_user.profile.surname }}, {{ current_user.profile.name }}</span>
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-end">
-                                <a class="dropdown-item" href="{{ url_for('auth.logout') }}"> <i
-                                        class="align-middle me-1"
-                                        data-feather="log-out"></i>Log out</a>
-                            </div>
+                        <a class="nav-link dropdown-toggle d-none d-sm-inline-block" href="#" data-bs-toggle="dropdown">
+                            <span class="text-dark">{{ current_user.profile.surname }}, {{ current_user.profile.name }}</span>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end">
+                            <a class="dropdown-item" href="{{ url_for('profile.my_profile') }}">
+                                <i class="align-middle me-1" data-feather="user"></i> My profile</a>
+                            <a class="dropdown-item" href="{{ url_for('auth.logout') }}">
+                                <i class="align-middle me-1" data-feather="log-out"></i> Log out</a>
+                        </div>
+                        
+                        
 
                         {% endif %}
 

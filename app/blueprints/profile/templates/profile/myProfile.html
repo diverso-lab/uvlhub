@@ -1,0 +1,99 @@
+{% extends "base_template.html" %}
+
+
+{% block title %}User Profile{% endblock %}
+
+{% block content %}
+
+<div class="container mt-4">
+    <h1 class="h3 mb-3 text-center">User Profile</h1>
+    <div class="row justify-content-center mb-5">
+        <div class="col-12 col-md-8 col-lg-6"> 
+            <div class="card shadow-sm" > 
+                <div class="card-header" style="background-color: #007bff;"> 
+                    <h5 class="card-title mb-0" style="color: white; font-size: 15px;">Profile Information</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text h5"><i class="bi bi-person-fill"></i> <strong>Name:</strong> {{user_profile.name}}</p>
+                    <p class="card-text h5"><i class="bi bi-person-lines-fill"></i> <strong>Surname:</strong> {{user_profile.surname}}</p>
+                    <p class="card-text h5"><i class="bi bi-building"></i> <strong>Affiliation:</strong> {{user_profile.affiliation}}</p>
+                    <p class="card-text h5"><i class="bi bi-qr-code"></i> <strong>Orcid:</strong> {{user_profile.orcid}}</p>
+                    <p class="card-text h5"><i class="bi bi-envelope-fill"></i> <strong>Email:</strong> {{user.email}}</p>
+                    <p class="card-text h5"><i class="bi bi-archive-fill"></i> <strong>Uploaded datasets:</strong> {{ total_datasets }} datasets</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h2 class="h3 mb-3 mt-5 text-center">User datasets</h2>
+    
+    {% if datasets %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Title</th>
+                                <th>Publication type</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                          
+                            {% for dataset in datasets %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('dataset.view_dataset', dataset_id=dataset.id) }}">
+                                        {{ dataset.ds_meta_data.title }}
+                                    </a>
+                                </td>
+                                <td>{{ dataset.ds_meta_data.publication_type.name.replace('_', ' ').title() }}</td>
+                            </tr>
+                            {% else %}
+                          
+                            <tr>
+                                <td colspan="2">No datasets uploaded.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+   <div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-center mt-4">
+            <nav>
+                <ul class="pagination">
+                    <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                        <a class="page-link" href="{% if pagination.has_prev %}{{ url_for('profile.my_profile', page=pagination.prev_num) }}{% else %}# {% endif %}" aria-label="Previous">
+                            &laquo;
+                        </a>
+                    </li>
+                    {% for num in pagination.iter_pages() %}
+                    <li class="page-item {% if num == pagination.page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('profile.my_profile', page=num) }}">
+                            {{ num }}
+                        </a>
+                    </li>
+                    {% endfor %}
+                    <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                        <a class="page-link" href="{% if pagination.has_next %}{{ url_for('profile.my_profile', page=pagination.next_num) }}{% else %}# {% endif %}" aria-label="Next">
+                            &raquo;
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="alert alert-info" role="alert">
+    No se han cargado datasets.
+</div>
+{% endif %}
+</div>
+{% endblock %}
