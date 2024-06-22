@@ -15,6 +15,7 @@ services:
     restart: always
     volumes:
       - ../:/app
+      - /var/run/docker.sock:/var/run/docker.sock
     command: [ "sh", "-c", "sh /app/docker/entrypoints/production_entrypoint.sh:" ]
 
   db:
@@ -38,22 +39,6 @@ services:
       - "80:80"
     depends_on:
       - web
-    restart: always
-
-  deploy:
-    container_name: deploy_manager_container
-    build:
-      context: ../
-      dockerfile: Dockerfile.webhook
-    volumes:
-      - ../:/app
-      - /tmp:/tmp
-      - /var/run/docker.sock:/var/run/docker.sock
-    env_file:
-      - ../.env
-    depends_on:
-      - web
-      - db
     restart: always
 
 volumes:
