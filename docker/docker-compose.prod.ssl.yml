@@ -33,9 +33,9 @@ services:
     container_name: nginx_web_server_container
     image: nginx:latest
     volumes:
-      - nginx/nginx.prod.ssl.conf:/etc/nginx/nginx.conf
-      - letsencrypt:/etc/letsencrypt:ro
-      - public:/var/www:rw
+      - ./nginx/nginx.prod.ssl.conf:/etc/nginx/nginx.conf
+      - ./letsencrypt:/etc/letsencrypt:ro
+      - ./public:/var/www:rw
     ports:
       - "80:80"
       - "443:443"
@@ -55,8 +55,8 @@ services:
     image: certbot/certbot
     container_name: certbot_container
     volumes:
-      - public:/var/www:rw
-      - letsencrypt:/etc/letsencrypt
+      - ./public:/var/www:rw
+      - ./letsencrypt:/etc/letsencrypt
 
 volumes:
   db_data:
