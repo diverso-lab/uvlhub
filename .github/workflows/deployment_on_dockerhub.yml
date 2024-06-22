@@ -28,7 +28,7 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build and push Docker image
-        run: docker build -t drorganvidez/uvlhub:${{ github.event.release.tag_name }} -f docker/images/Dockerfile.prod .
+        run: docker build --build-arg VERSION_TAG=${{ github.event.release.tag_name }} -t drorganvidez/uvlhub:${{ github.event.release.tag_name }} -f docker/images/Dockerfile.prod .
         env:
           DOCKER_CLI_EXPERIMENTAL: enabled
 
@@ -36,7 +36,8 @@ jobs:
         run: docker push drorganvidez/uvlhub:${{ github.event.release.tag_name }}
 
       - name: Tag and push latest
-        run: docker tag drorganvidez/uvlhub:${{ github.event.release.tag_name }} drorganvidez/uvlhub:latest
+        run: |
+          docker tag drorganvidez/uvlhub:${{ github.event.release.tag_name }} drorganvidez/uvlhub:latest
+          docker push drorganvidez/uvlhub:latest
         env:
           DOCKER_CLI_EXPERIMENTAL: enabled
-      - run: docker push drorganvidez/uvlhub:latest

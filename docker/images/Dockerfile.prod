@@ -24,6 +24,11 @@ RUN pip install --no-cache-dir -r requirements.txt \
     && pip install --no-cache-dir --upgrade pip \
     && apk del .build-deps
 
+# Add an argument for version tag
+ARG VERSION_TAG
+
+# Create the .version file with the content of VERSION_TAG
+RUN echo $VERSION_TAG > /app/.version
 
 # Expose port 5000
 EXPOSE 5000

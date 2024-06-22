@@ -13,3 +13,4 @@ venv/
 ubuntu-bionic-18.04-cloudimg-console.log
 .vagrant/
 nginx.prod.ssl.conf
+.version
