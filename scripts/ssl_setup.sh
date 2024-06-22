@@ -2,7 +2,7 @@
 
 while true; do
     # Prompt for domain and email
-    echo "Enter your domain (including 'www' and '.com' or '.org' or whatever the extension). Example: www.exampledomain.com"
+    echo "Enter your domain (including 'www' and the extension, e.g., www.exampledomain.com):"
     read domain
 
     echo "Enter your email: "
@@ -26,15 +26,22 @@ done
 
 cd .. # go to parent folder
 
-# Replace the placeholder domain in the configuration file
-sed -i "s/www.domain.com/$domain/g" ./nginx/nginx.dev.conf
-sed -i "s/www.domain.com/$domain/g" ./nginx/nginx.prod.conf
+# Navigate to the docker folder
+cd docker
 
-# Run Nginx container in dev mode (only for generate SSL)
+# Create a new configuration file from the template
+cp ./nginx/nginx.prod.ssl.conf.template ./nginx/nginx.prod.ssl.conf
+
+# Replace the placeholder domain in the new configuration file
+sed -i "s/{{domain}}/$domain/g" ./nginx/nginx.prod.ssl.conf
+
+# Run Nginx container in dev mode (only to generate SSL)
 docker compose -f docker-compose.dev.yml up -d nginx
 
 # Generate the certificate with Certbot
-docker compose -f docker-compose.prod.yml run certbot certonly --webroot --webroot-path=/var/www -d $domain --email $email --agree-tos --no-eff-email --force-renewal
+docker compose -f docker-compose.prod.ssl.yml run certbot certonly --webroot --webroot-path=/var/www -d $domain --email $email --agree-tos --no-eff-email --force-renewal
 
 # Configure Nginx to use the new certificate
-docker compose -f docker-compose.dev.yml down && docker compose -f docker-compose.prod.yml up -d --build
+docker compose -f docker-compose.dev.yml down && docker compose -f docker-compose.prod.ssl.yml up -d --build
+
+cd .. # go to parent folder

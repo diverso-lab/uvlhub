@@ -3,13 +3,19 @@ services:
   web:
     container_name: web_app_container
     image: drorganvidez/uvlhub:latest
-    volumes:
-      - ../.env:/app/.env
+    env_file:
+      - ../.env
     ports:
       - "5000:5000"
     depends_on:
       - db
     restart: always
+    volumes:
+      - ./entrypoints/production_entrypoint.sh:/app/entrypoint.sh
+      - ../scripts:/app/scripts
+      - ../migrations:/app/migrations
+      - ../uploads:/app/uploads
+    command: [ "sh", "-c", "sh /app/entrypoint.sh" ]
 
   db:
     container_name: mariadb_container
@@ -27,7 +33,7 @@ services:
     container_name: nginx_web_server_container
     image: nginx:latest
     volumes:
-      - nginx/nginx.prod.conf:/etc/nginx/nginx.conf
+      - nginx/nginx.prod.ssl.conf:/etc/nginx/nginx.conf
       - letsencrypt:/etc/letsencrypt:ro
       - public:/var/www:rw
     ports:

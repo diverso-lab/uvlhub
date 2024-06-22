@@ -7,15 +7,15 @@ http {
 
     server {
         listen 80;
-        server_name uvlhub.io;
+        server_name {{domain}};
 
-	    location ~ /.well-known/acme-challenge/ {
+        location ~ /.well-known/acme-challenge/ {
             root /var/www;
             try_files $uri =404;
         }
 
         location / {
-            return 301 https://www.uvlhub.io$request_uri;
+            return 301 https://{{domain}}$request_uri;
         }
     }
 
@@ -24,10 +24,10 @@ http {
 
         client_max_body_size 10000M;
 
-        server_name www.uvlhub.io;
+        server_name {{domain}};
 
-        ssl_certificate /etc/letsencrypt/live/www.uvlhub.io/fullchain.pem;
-        ssl_certificate_key /etc/letsencrypt/live/www.uvlhub.io/privkey.pem;
+        ssl_certificate /etc/letsencrypt/live/{{domain}}/fullchain.pem;
+        ssl_certificate_key /etc/letsencrypt/live/{{domain}}/privkey.pem;
 
         location / {
 
@@ -44,5 +44,4 @@ http {
             proxy_read_timeout 3600;
         }
     }
-
 }
