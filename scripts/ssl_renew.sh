@@ -1,3 +1,7 @@
 #!/bin/bash
+
 cd .. # go to parent folder
-docker compose -f docker-compose.prod.yml run certbot renew --webroot --webroot-path=/var/www
+
+cd docker # go to docker folder
+
+docker compose -f docker-compose.prod.ssl.yml run certbot renew --webroot --webroot-path=/var/www
