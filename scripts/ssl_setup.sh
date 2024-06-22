@@ -26,7 +26,7 @@ cd .. # go to parent folder
 cd docker # go to docker folder
 
 # Create a new configuration file from the template
-cp ./nginx/nginx.prod.no-ssl.conf.template ./nginx/nginx.prod.no-ssl.conf
+cp ./nginx/nginx.prod.no-ssl.conf.template ./nginx/nginx.prod.ssl.conf
 sed -i "s/{{domain}}/$domain/g" ./nginx/nginx.prod.ssl.conf
 
 # Run Nginx container without SSL to obtain certificates
