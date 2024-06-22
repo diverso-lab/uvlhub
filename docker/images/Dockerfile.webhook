@@ -1,0 +1,18 @@
+# Use an official Python runtime as a parent image, Alpine version for a lighter footprint
+FROM python:3.12-alpine
+
+# Set the working directory in the container to /app
+WORKDIR /app
+
+# Install Git and Docker CLI
+RUN apk add --no-cache git
+
+# Copy the requirements file and install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the deploy_manager.py script
+COPY deploy_manager.py .
+
+# Run the deploy manager script
+CMD ["python", "deploy_manager.py"]

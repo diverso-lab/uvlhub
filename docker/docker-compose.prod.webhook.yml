@@ -9,13 +9,13 @@ services:
       - "5000:5000"
     depends_on:
       - db
+    build:
+      context: ../
+      dockerfile: docker/images/Dockerfile.prod
     restart: always
     volumes:
-      - ./entrypoints/production_entrypoint.sh:/app/entrypoint.sh
-      - ../scripts:/app/scripts
-      - ../migrations:/app/migrations
-      - ../uploads:/app/uploads
-    command: [ "sh", "-c", "sh /app/entrypoint.sh" ]
+      - ../:/app
+    command: [ "sh", "-c", "sh /app/docker/entrypoints/production_entrypoint.sh:" ]
 
   db:
     container_name: mariadb_container
@@ -40,12 +40,20 @@ services:
       - web
     restart: always
 
-  watchtower:
-    container_name: watchtower_container
-    image: containrrr/watchtower
+  deploy:
+    container_name: deploy_manager_container
+    build:
+      context: ../
+      dockerfile: Dockerfile.webhook
     volumes:
+      - ../:/app
+      - /tmp:/tmp
       - /var/run/docker.sock:/var/run/docker.sock
-    command: --cleanup --interval 120 web_app_container
+    env_file:
+      - ../.env
+    depends_on:
+      - web
+      - db
     restart: always
 
 volumes:

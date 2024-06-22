@@ -37,9 +37,7 @@ services:
     container_name: nginx_web_server_container
     image: nginx:latest
     volumes:
-      - type: bind
-        source: nginx/nginx.dev.conf
-        target: /etc/nginx/nginx.conf
+      - ./nginx/nginx.dev.conf:/etc/nginx/nginx.conf
     ports:
       - "80:80"
     depends_on:
