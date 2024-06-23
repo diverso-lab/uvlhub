@@ -1,6 +1,10 @@
 name: Python Lint
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
 
 jobs:
   lint:
@@ -22,12 +26,3 @@ jobs:
     - name: Lint with flake8
       run: |
         flake8 app
-
-    - name: Upload lint result
-      if: success()
-      run: echo "lint_success=1" > lint_result.txt
-
-    - uses: actions/upload-artifact@v2
-      with:
-        name: lint-result
-        path: lint_result.txt

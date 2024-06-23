@@ -9,49 +9,21 @@ on:
       - completed
 
 jobs:
-  prepare:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Create trigger file
-      run: echo "trigger_deploy" > trigger.txt
-    - uses: actions/upload-artifact@v2
-      with:
-        name: trigger-deploy
-        path: trigger.txt
-
   deploy:
     runs-on: ubuntu-latest
-    needs: prepare
+
     steps:
-    - name: Download trigger file
-      uses: actions/download-artifact@v2
-      with:
-        name: trigger-deploy
-        path: .
-
-    - name: Download lint result
-      uses: actions/download-artifact@v2
-      with:
-        name: lint-result
-        path: .
-
-    - name: Download test result
-      uses: actions/download-artifact@v2
-      with:
-        name: test-result
-        path: .
+    - name: Checkout code
+      uses: actions/checkout@v2
 
     - name: Check lint and test results
       run: |
-        if [[ -f lint_result.txt && -f test_result.txt ]]; then
-          echo "Both lint and test succeeded."
-        else
-          echo "Skipping deployment as either lint or test did not pass."
+        if [ "${{ github.event.workflow_run.conclusion }}" != "success" ]; then
+          echo "Lint or Test workflow did not succeed. Exiting."
           exit 1
         fi
 
     - name: Trigger Deployment Webhook
-      if: success()
       env:
         WEBHOOK_DOMAIN: ${{ secrets.WEBHOOK_DOMAIN }}
         WEBHOOK_TOKEN: ${{ secrets.WEBHOOK_TOKEN }}

@@ -48,12 +48,3 @@ jobs:
         MARIADB_PASSWORD: uvlhub_password
       run: |
         pytest app/blueprints/ --ignore-glob='*selenium*'
-
-    - name: Upload test result
-      if: success()
-      run: echo "test_success=1" > test_result.txt
-
-    - uses: actions/upload-artifact@v2
-      with:
-        name: test-result
-        path: test_result.txt
