@@ -3,8 +3,7 @@ name: Python Lint
 on: [push, pull_request]
 
 jobs:
-  build:
-
+  lint:
     runs-on: ubuntu-latest
 
     steps:
@@ -23,3 +22,13 @@ jobs:
     - name: Lint with flake8
       run: |
         flake8 app
+
+    - name: Upload lint result
+      if: success()
+      run: echo "lint_success=1" > lint_result.txt
+      continue-on-error: true
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: lint-result
+        path: lint_result.txt

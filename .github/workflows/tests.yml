@@ -2,9 +2,9 @@ name: Run tests
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
 
 jobs:
   pytest:
@@ -48,3 +48,13 @@ jobs:
         MARIADB_PASSWORD: uvlhub_password
       run: |
         pytest app/blueprints/ --ignore-glob='*selenium*'
+
+    - name: Upload test result
+      if: success()
+      run: echo "test_success=1" > test_result.txt
+      continue-on-error: true
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: test-result
+        path: test_result.txt
