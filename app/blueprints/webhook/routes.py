@@ -8,7 +8,7 @@ load_dotenv()
 WEBHOOK_TOKEN = os.getenv('WEBHOOK_TOKEN')
 
 
-@webhook_bp.route('/webhook/deploy', methods=['GET'])
+@webhook_bp.route('/webhook/deploy', methods=['POST'])
 def deploy():
 
     token = request.headers.get('Authorization')
