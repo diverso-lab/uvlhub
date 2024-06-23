@@ -1,0 +1,47 @@
+name: Deploy on Webhook
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_run:
+    workflows:
+      - "Python Lint"
+      - "Run tests"
+    types:
+      - completed
+
+jobs:
+  deploy:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      (github.event.workflow_run.name == 'Python Lint' || github.event.workflow_run.name == 'Run tests')
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Trigger Deployment Webhook
+      env:
+        DOMAIN: ${{ secrets.DOMAIN }}
+        WEBHOOK_TOKEN: ${{ secrets.WEBHOOK_TOKEN }}
+      run: |
+        # Check if both lint and test workflows succeeded
+        if [[ "${{ github.event.workflow_run.name }}" == "Python Lint" && "${{ github.event.workflow_run.conclusion }}" == "success" ]]; then
+          echo "Python Lint completed successfully."
+          echo "lint_success=1" >> $GITHUB_ENV
+        fi
+        if [[ "${{ github.event.workflow_run.name }}" == "Run tests" && "${{ github.event.workflow_run.conclusion }}" == "success" ]]; then
+          echo "Run tests completed successfully."
+          echo "test_success=1" >> $GITHUB_ENV
+        fi
+
+    - name: Deploy if both succeeded
+      if: env.lint_success == '1' && env.test_success == '1'
+      run: |
+        curl -X POST https://${{ secrets.DOMAIN }}/webhook/deploy -H "Authorization: Bearer ${{ secrets.WEBHOOK_TOKEN }}"

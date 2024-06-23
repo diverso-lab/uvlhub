@@ -1,4 +1,4 @@
-from flask import Flask, request, abort
+from flask import Flask
 import os
 import subprocess
 import docker
@@ -12,6 +12,7 @@ WEBHOOK_TOKEN = os.getenv('WEBHOOK_TOKEN')
 
 client = docker.from_env()
 
+
 @webhook_bp.route('/webhook/deploy', methods=['GET'])
 def deploy():
     '''
@@ -19,7 +20,7 @@ def deploy():
     if token != f"Bearer {WEBHOOK_TOKEN}":
         abort(403)
     '''
-        
+
     try:
         web_container = client.containers.get('web_app_container')
         volume_name = next(

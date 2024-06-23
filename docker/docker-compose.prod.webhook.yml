@@ -14,9 +14,13 @@ services:
       dockerfile: docker/images/Dockerfile.prod
     restart: always
     volumes:
+      - ./entrypoints/production_entrypoint.sh:/app/entrypoint.sh
+      - ../scripts:/app/scripts
+      - ../migrations:/app/migrations
+      - ../uploads:/app/uploads
       - ../:/app
       - /var/run/docker.sock:/var/run/docker.sock
-    command: [ "sh", "-c", "sh /app/docker/entrypoints/production_entrypoint.sh:" ]
+    command: [ "sh", "-c", "sh /app/entrypoint.sh" ]
 
   db:
     container_name: mariadb_container
