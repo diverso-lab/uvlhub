@@ -26,7 +26,6 @@ jobs:
     - name: Upload lint result
       if: success()
       run: echo "lint_success=1" > lint_result.txt
-      continue-on-error: true
 
     - uses: actions/upload-artifact@v2
       with:

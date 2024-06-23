@@ -52,7 +52,6 @@ jobs:
     - name: Upload test result
       if: success()
       run: echo "test_success=1" > test_result.txt
-      continue-on-error: true
 
     - uses: actions/upload-artifact@v2
       with:
