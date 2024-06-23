@@ -11,7 +11,7 @@ services:
       - db
     build:
       context: ../
-      dockerfile: docker/images/Dockerfile.prod
+      dockerfile: docker/images/Dockerfile.webhook
     restart: always
     volumes:
       - ./entrypoints/production_entrypoint.sh:/app/entrypoint.sh

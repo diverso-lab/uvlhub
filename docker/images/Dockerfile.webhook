@@ -7,14 +7,20 @@ RUN apk add --no-cache mariadb-client \
     && apk add --no-cache curl \
     && apk add --no-cache bash \
     && apk add --no-cache openrc
+    
+# Install Docker
+RUN apk add --no-cache \
+    device-mapper \
+    shadow \
+    && curl -fsSL https://download.docker.com/linux/static/stable/x86_64/docker-20.10.7.tgz | tar xzvf - --strip 1 -C /usr/local/bin docker/docker \
+    && curl -fsSL "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose \
+    && chmod +x /usr/local/bin/docker-compose \
+    && addgroup docker \
+    && adduser -S -G docker user \
+    && adduser user root
 
 # Set the working directory in the container to /app
 WORKDIR /app
-
-# Copy files
-COPY app/ ./app
-COPY core/ ./core
-COPY migrations/ ./migrations
 
 # Copy requirements.txt into the working directory /app
 COPY requirements.txt .
