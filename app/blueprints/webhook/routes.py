@@ -21,6 +21,7 @@ def deploy():
     volume_name = service.get_volume_name(web_container)
 
     # Pull the latest code on the host
+    service.execute_host_command(volume_name, ['alpine/git', 'config', '--global', '--add', 'safe.directory', '/app'])
     service.execute_host_command(volume_name, ['alpine/git', 'pull'])
 
     # Update dependencies in the container
