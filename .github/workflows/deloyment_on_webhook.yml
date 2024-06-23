@@ -2,7 +2,7 @@ name: Deploy on Webhook
 
 on:
   workflow_run:
-    workflows:
+    workflows: 
       - "Python Lint"
       - "Run tests"
     types:
@@ -10,9 +10,13 @@ on:
 
 jobs:
   deploy:
+    needs: ["Python Lint", "Run tests"]
     runs-on: ubuntu-latest
 
     steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
     - name: Download lint result
       uses: actions/download-artifact@v2
       with:
