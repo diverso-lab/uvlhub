@@ -28,7 +28,7 @@ jobs:
 
     - name: Trigger Deployment Webhook
       env:
-        DOMAIN: ${{ secrets.DOMAIN }}
+        WEBHOOK_DOMAIN: ${{ secrets.WEBHOOK_DOMAIN }}
         WEBHOOK_TOKEN: ${{ secrets.WEBHOOK_TOKEN }}
       run: |
         # Check if both lint and test workflows succeeded
@@ -44,4 +44,4 @@ jobs:
     - name: Deploy if both succeeded
       if: env.lint_success == '1' && env.test_success == '1'
       run: |
-        curl -X POST https://${{ secrets.DOMAIN }}/webhook/deploy -H "Authorization: Bearer ${{ secrets.WEBHOOK_TOKEN }}"
+        curl -X POST https://${{ secrets.WEBHOOK_DOMAIN }}/webhook/deploy -H "Authorization: Bearer ${{ secrets.WEBHOOK_TOKEN }}"
