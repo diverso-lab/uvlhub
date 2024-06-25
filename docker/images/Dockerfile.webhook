@@ -6,7 +6,8 @@ RUN apk add --no-cache mariadb-client \
     && apk add --no-cache --virtual .build-deps gcc musl-dev python3-dev libffi-dev \
     && apk add --no-cache curl \
     && apk add --no-cache bash \
-    && apk add --no-cache openrc
+    && apk add --no-cache openrc \
+    && apk add --no-cache git
     
 # Install Docker
 RUN apk add --no-cache \
@@ -33,11 +34,8 @@ RUN pip install --no-cache-dir -r requirements.txt \
     && pip install --no-cache-dir --upgrade pip \
     && apk del .build-deps
 
-# Add an argument for version tag
-ARG VERSION_TAG
-
-# Create the .version file with the content of VERSION_TAG
-RUN echo $VERSION_TAG > /app/.version
+# Configure git safe directory
+RUN git config --global --add safe.directory /app
 
 # Expose port 5000
 EXPOSE 5000
