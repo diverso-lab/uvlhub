@@ -8,14 +8,12 @@ load_dotenv()
 WEBHOOK_TOKEN = os.getenv('WEBHOOK_TOKEN')
 
 
-@webhook_bp.route('/webhook/deploy', methods=['GET'])
+@webhook_bp.route('/webhook/deploy', methods=['POST'])
 def deploy():
 
-    '''
     token = request.headers.get('Authorization')
     if token != f"Bearer {WEBHOOK_TOKEN}":
         abort(403, description="Unauthorized")
-    '''
 
     service = WebhookService()
 
@@ -32,7 +30,7 @@ def deploy():
 
     # Log the deployment
     service.log_deployment(web_container)
-    
+
     # Ejecutar el script de reinicio en segundo plano
     service.restart_container(web_container)
 
