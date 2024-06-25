@@ -56,3 +56,6 @@ class WebhookService(BaseService):
         log_entry = f"Deployment successful at {datetime.now(timezone.utc).isoformat()}\n"
         log_file_path = "/app/deployments.log"
         self.execute_container_command(container, f"sh -c 'echo \"{log_entry}\" >> {log_file_path}'")
+
+    def restart_container(self, container):
+        subprocess.Popen(["/bin/sh", "/app/scripts/restart_container.sh", container.id])

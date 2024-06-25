@@ -29,6 +29,12 @@ COPY requirements.txt .
 # Copy the wait-for-db.sh script and set execution permissions
 COPY --chmod=+x scripts/wait-for-db.sh ./scripts/
 
+# Copy the git_update.sh script and set execution permissions
+COPY --chmod=+x scripts/git_update.sh ./scripts/
+
+# Copy the restart_container.sh script and set execution permissions
+COPY --chmod=+x scripts/restart_container.sh ./scripts/
+
 # Install any needed packages specified in requirements.txt and upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt \
     && pip install --no-cache-dir --upgrade pip \
