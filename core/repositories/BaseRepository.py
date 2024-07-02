@@ -8,11 +8,15 @@ T = TypeVar('T')
 class BaseRepository(Generic[T]):
     def __init__(self, model: T):
         self.model = model
+        self.session = app.db.session
 
-    def create(self, **kwargs) -> T:
+    def create(self, commit: bool = True, **kwargs) -> T:
         instance: T = self.model(**kwargs)
-        app.db.session.add(instance)
-        app.db.session.commit()
+        self.session.add(instance)
+        if commit:
+            self.session.commit()
+        else:
+            self.session.flush()
         return instance
 
     def get_by_id(self, id: int) -> Optional[T]:
@@ -27,15 +31,15 @@ class BaseRepository(Generic[T]):
         if instance:
             for key, value in kwargs.items():
                 setattr(instance, key, value)
-            app.db.session.commit()
+            self.session.commit()
             return instance
         return None
 
     def delete(self, id: int) -> bool:
         instance: Optional[T] = self.get_by_id(id)
         if instance:
-            app.db.session.delete(instance)
-            app.db.session.commit()
+            self.session.delete(instance)
+            self.session.commit()
             return True
         return False
 

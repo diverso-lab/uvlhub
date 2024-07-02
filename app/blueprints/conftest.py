@@ -52,3 +52,17 @@ def logout(test_client):
         response: Response to GET request to log out.
     """
     return test_client.get('/logout', follow_redirects=True)
+
+
+@pytest.fixture(scope='function')
+def app():
+    flask_app = create_app('testing')
+    with flask_app.app_context():
+        db.create_all()
+        """
+        The test suite always includes the following user in order to avoid repetition
+        of its creation
+        """
+        yield app
+        db.session.remove()
+        db.drop_all()

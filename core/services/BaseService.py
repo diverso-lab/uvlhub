@@ -8,8 +8,14 @@ class BaseService:
     def create(self, **kwargs):
         return self.repository.create(**kwargs)
 
+    def count(self) -> int:
+        return self.repository.count()
+
     def get_by_id(self, id):
         return self.repository.get_by_id(id)
+
+    def get_or_404(self, id):
+        return self.repository.get_or_404(id)
 
     def update(self, id, **kwargs):
         return self.repository.update(id, **kwargs)

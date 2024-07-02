@@ -22,8 +22,10 @@ def show_signup_form():
         if not authentication_service.is_email_available(email):
             return render_template("auth/signup_form.html", form=form, error=f'Email {email} in use')
 
-        user = authentication_service.create(email=email, password=form.password.data)
-        user_profile_service.create(name=form.name.data, surname=form.surname.data, user_id=user.id)
+        try:
+            user = authentication_service.create_with_profile(**form.data)
+        except Exception as exc:
+            return render_template("auth/signup_form.html", form=form, error=f'Error creating user: {exc}')
 
         # Log user
         login_user(user, remember=True)

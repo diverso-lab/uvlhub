@@ -1,6 +1,10 @@
 import pytest
 from flask import url_for
 
+from app.blueprints.auth.services import AuthenticationService
+from app.blueprints.auth.repositories import UserRepository
+from app.blueprints.profile.repositories import UserProfileRepository
+
 
 @pytest.fixture(scope="module")
 def test_client(test_client):
@@ -70,3 +74,35 @@ def test_signup_user_successful(test_client):
         follow_redirects=True,
     )
     assert response.request.path == url_for("public.index"), "Signup was unsuccessful"
+
+
+def test_create_user_success(app):
+    data = {
+        "name": "Test",
+        "surname": "Foo",
+        "email": "test@example.com",
+        "password": "test1234",
+        "orcid": "0000000000000000",
+        "affiliation": "Example"
+    }
+    AuthenticationService().create_with_profile(**data)
+    assert UserRepository().count() == 1
+    assert UserProfileRepository().count() == 1
+
+
+def test_create_user_fail_profile(app):
+    data = {
+        "name": None,
+        "surname": "Foo",
+        "email": "test@example.com",
+        "password": "test1234",
+        "orcid": "0000000000000000",
+        "affiliation": "Example",
+    }
+    try:
+        AuthenticationService().create_with_profile(**data)
+    except Exception:
+        pass
+
+    assert UserProfileRepository().count() == 0
+    assert UserRepository().count() == 0
