@@ -22,20 +22,23 @@ import app
 from app.blueprints.dataset.forms import DataSetForm
 from app.blueprints.dataset.models import DataSet, PublicationType
 from app.blueprints.dataset import dataset_bp
-from app.blueprints.dataset.repositories import (
-    AuthorRepository,
-    DSDownloadRecordRepository,
-    DSMetaDataRepository,
-    DSViewRecordRepository,
-    DataSetRepository,
-    FMMetaDataRepository,
-    FeatureModelRepository,
-    FileRepository,
-    FileDownloadRecordRepository,
+from app.blueprints.dataset.services import (
+    AuthorService,
+    DSDownloadRecordService,
+    DSMetaDataService,
+    DSViewRecordService,
+    DataSetService,
+    FMMetaDataService,
+    FeatureModelService,
+    FileService,
+    FileDownloadRecordService,
 )
 from app.blueprints.zenodo.services import ZenodoService
 
 
+dataset_service = DataSetService()
+author_service = AuthorService()
+dsmetadata_service = DSMetaDataService()
 zenodo_service = ZenodoService()
 
 
@@ -68,7 +71,7 @@ def create_dataset():
                 deposition_id = data.get("id")
 
                 # update dataset with deposition id in Zenodo
-                DSMetaDataRepository().update(
+                dsmetadata_service.update(
                     dataset.ds_meta_data_id, deposition_id=deposition_id
                 )
 
@@ -87,7 +90,7 @@ def create_dataset():
 
                     # update DOI
                     deposition_doi = zenodo_service.get_doi(deposition_id)
-                    DSMetaDataRepository().update(
+                    dsmetadata_service.update(
                         dataset.ds_meta_data_id, dataset_doi=deposition_doi
                     )
                 except Exception:
@@ -125,8 +128,8 @@ def create_dataset():
 def list_dataset():
     return render_template(
         "dataset/list_datasets.html",
-        datasets=DataSetRepository().get_synchronized(current_user.id),
-        local_datasets=DataSetRepository().get_unsynchronized(current_user.id),
+        datasets=dataset_service.get_synchronized(current_user.id),
+        local_datasets=dataset_service.get_unsynchronized(current_user.id),
     )
 
 
@@ -138,7 +141,7 @@ def create_dataset_in_db(basic_info_data):
         "publication_doi": basic_info_data["publication_doi"][0],
         "tags": basic_info_data["tags"][0],
     }
-    ds_meta_data = DSMetaDataRepository().create(**ds_data)
+    ds_meta_data = dsmetadata_service.create(**ds_data)
 
     # create dataset metadata authors
     # I always add myself
@@ -152,7 +155,7 @@ def create_dataset_in_db(basic_info_data):
         else None,
         "ds_meta_data_id": ds_meta_data.id,
     }
-    AuthorRepository().create(**author_data)
+    author_service.create(**author_data)
 
     # how many authors are there?
     if "author_name" in basic_info_data:
@@ -164,10 +167,10 @@ def create_dataset_in_db(basic_info_data):
                 "orcid": basic_info_data["author_orcid"][i],
                 "ds_meta_data_id": ds_meta_data.id,
             }
-            AuthorRepository().create(**extra_author)
+            author_service.create(**extra_author)
 
     # create dataset
-    return DataSetRepository().create(
+    return dataset_service.create(
         user_id=current_user.id, ds_meta_data_id=ds_meta_data.id
     )
 
@@ -179,7 +182,7 @@ def create_feature_models_in_db(dataset: DataSet, uploaded_models_data: dict):
         uvl_filename = uploaded_models_data["uvl_filename"][i]
 
         # create feature model metadata
-        feature_model_metadata = FMMetaDataRepository().create(
+        feature_model_metadata = FMMetaDataService().create(
             uvl_filename=uvl_filename,
             title=uploaded_models_data["title"][i],
             description=uploaded_models_data["description"][i],
@@ -192,7 +195,7 @@ def create_feature_models_in_db(dataset: DataSet, uploaded_models_data: dict):
         )
 
         # create feature model
-        feature_model = FeatureModelRepository().create(
+        feature_model = FeatureModelService().create(
             data_set_id=dataset.id,
             fm_meta_data_id=feature_model_metadata.id,
         )
@@ -201,7 +204,7 @@ def create_feature_models_in_db(dataset: DataSet, uploaded_models_data: dict):
         for idx, author_name in enumerate(
             uploaded_models_data.get(f"author_name_{uvl_identifier}", [])
         ):
-            AuthorRepository().create(
+            author_service.create(
                 name=author_name,
                 affiliation=uploaded_models_data[
                     f"author_affiliation_{uvl_identifier}"
@@ -217,7 +220,7 @@ def create_feature_models_in_db(dataset: DataSet, uploaded_models_data: dict):
         )
         checksum, size = calculate_checksum_and_size(file_path)
 
-        FileRepository().create(
+        FileService().create(
             name=uvl_filename,
             checksum=checksum,
             size=size,
@@ -237,8 +240,8 @@ def calculate_checksum_and_size(file_path):
         return hash_md5, file_size
 
 
-def move_feature_models(dataset_id, feature_models, user=None):
-    user_id = current_user.id if user is None else user.id
+def move_feature_models(dataset_id, feature_models):
+    user_id = current_user.id
     source_dir = f"uploads/temp/{user_id}/"
     dest_dir = f"uploads/user_{user_id}/dataset_{dataset_id}/"
 
@@ -313,7 +316,7 @@ def delete():
 
 @dataset_bp.route("/dataset/download/<int:dataset_id>", methods=["GET"])
 def download_dataset(dataset_id):
-    dataset = DataSetRepository().get_or_404(dataset_id)
+    dataset = dataset_service.get_or_404(dataset_id)
 
     file_path = f"uploads/user_{dataset.user_id}/dataset_{dataset.id}/"
 
@@ -358,7 +361,7 @@ def download_dataset(dataset_id):
         )
 
     # Record the download in your database
-    DSDownloadRecordRepository().create(
+    DSDownloadRecordService().create(
         user_id=current_user.id if current_user.is_authenticated else None,
         dataset_id=dataset_id,
         download_date=datetime.utcnow(),
@@ -370,7 +373,7 @@ def download_dataset(dataset_id):
 
 @dataset_bp.route("/dataset/view/<int:dataset_id>", methods=["GET"])
 def view_dataset(dataset_id):
-    dataset = DataSetRepository().get_or_404(dataset_id)
+    dataset = dataset_service.get_or_404(dataset_id)
 
     # Get the cookie from the request or generate a new one if it does not exist
     user_cookie = request.cookies.get("view_cookie")
@@ -378,7 +381,7 @@ def view_dataset(dataset_id):
         user_cookie = str(uuid.uuid4())
 
     # Record the view in your database
-    DSViewRecordRepository().create(
+    DSViewRecordService().create(
         user_id=current_user.id if current_user.is_authenticated else None,
         dataset_id=dataset_id,
         view_date=datetime.utcnow(),
@@ -394,7 +397,7 @@ def view_dataset(dataset_id):
 
 @dataset_bp.route("/file/download/<int:file_id>", methods=["GET"])
 def download_file(file_id):
-    file = FileRepository().get_or_404(file_id)
+    file = FileService().get_or_404(file_id)
     filename = file.name
 
     directory_path = f"uploads/user_{file.feature_model.data_set.user_id}/dataset_{file.feature_model.data_set_id}/"
@@ -407,7 +410,7 @@ def download_file(file_id):
         user_cookie = str(uuid.uuid4())
 
     # Record the download in your database
-    FileDownloadRecordRepository().create(
+    FileDownloadRecordService().create(
         user_id=current_user.id if current_user.is_authenticated else None,
         file_id=file_id,
         download_date=datetime.utcnow(),
@@ -426,7 +429,7 @@ def download_file(file_id):
 @dataset_bp.route("/doi/<path:doi>/", methods=["GET"])
 def subdomain_index(doi):
     # Busca el dataset por DOI
-    ds_meta_data = DSMetaDataRepository().filter_by_doi(doi)
+    ds_meta_data = dsmetadata_service.filter_by_doi(doi)
     if not ds_meta_data:
         abort(404)
 
@@ -436,7 +439,7 @@ def subdomain_index(doi):
         user_cookie = request.cookies.get("view_cookie", str(uuid.uuid4()))
 
         # Registra la vista del dataset
-        DSViewRecordRepository().create(
+        DSViewRecordService().create(
             user_id=current_user.id if current_user.is_authenticated else None,
             dataset_id=dataset_id,
             view_date=datetime.utcnow(),
