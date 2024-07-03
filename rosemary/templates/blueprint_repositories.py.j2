@@ -1,7 +1,0 @@
-from app.blueprints.{{ blueprint_name }}.models import {{ blueprint_name | pascalcase }}
-from core.repositories.BaseRepository import BaseRepository
-
-
-class {{ blueprint_name | pascalcase }}Repository(BaseRepository):
-    def __init__(self):
-        super().__init__({{ blueprint_name | pascalcase }})

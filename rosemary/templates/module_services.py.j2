@@ -1,0 +1,7 @@
+from app.modules.{{ module_name }}.repositories import {{ module_name | pascalcase }}Repository
+from core.services.BaseService import BaseService
+
+
+class {{ module_name | pascalcase }}Service(BaseService):
+    def __init__(self):
+        super().__init__({{ module_name | pascalcase }}Repository())

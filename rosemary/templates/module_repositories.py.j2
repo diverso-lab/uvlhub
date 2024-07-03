@@ -1,0 +1,7 @@
+from app.modules.{{ module_name }}.models import {{ module_name | pascalcase }}
+from core.repositories.BaseRepository import BaseRepository
+
+
+class {{ module_name | pascalcase }}Repository(BaseRepository):
+    def __init__(self):
+        super().__init__({{ module_name | pascalcase }})

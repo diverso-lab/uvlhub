@@ -7,29 +7,29 @@ import psutil
 
 
 @click.command('locust', help="Launches Locust for load testing based on the environment.")
-@click.argument('blueprint', required=False)
-def locust(blueprint):
+@click.argument('module', required=False)
+def locust(module):
 
     # Absolute paths
     working_dir = os.getenv('WORKING_DIR', '')
     core_dir = os.path.join(working_dir, 'core')
     docker_dir = os.path.join(working_dir, 'docker/')
-    blueprints_dir = os.path.join(working_dir, 'app/blueprints')
+    modules_dir = os.path.join(working_dir, 'app/modules')
 
-    def validate_blueprint(blueprint):
-        """Check if the blueprint exists."""
-        if blueprint:
-            blueprint_path = os.path.join(blueprints_dir, blueprint)
-            if not os.path.exists(blueprint_path):
-                raise click.UsageError(f"Blueprint '{blueprint}' does not exist.")
-            locustfile_path = os.path.join(blueprint_path, 'tests', 'locustfile.py')
+    def validate_module(module):
+        """Check if the module exists."""
+        if module:
+            module_path = os.path.join(modules_dir, module)
+            if not os.path.exists(module_path):
+                raise click.UsageError(f"module '{module}' does not exist.")
+            locustfile_path = os.path.join(module_path, 'tests', 'locustfile.py')
             if not os.path.exists(locustfile_path):
                 raise click.UsageError(
-                    f"Locustfile for blueprint '{blueprint}' does not exist at path "
+                    f"Locustfile for module '{module}' does not exist at path "
                     f"'{locustfile_path}'."
                 )
 
-    def run_docker_locust(volume_name, blueprint):
+    def run_docker_locust(volume_name, module):
         """Build and run the Locust container with the specified volume."""
 
         try:
@@ -52,8 +52,8 @@ def locust(blueprint):
 
         # Define the locustfile path
         locustfile_path = os.path.join(core_dir, 'bootstraps/locustfile_bootstrap.py')
-        if blueprint:
-            locustfile_path = f"{blueprints_dir}/{blueprint}/tests/locustfile.py"
+        if module:
+            locustfile_path = f"{modules_dir}/{module}/tests/locustfile.py"
 
         # Run the Locust container
         up_command = [
@@ -73,33 +73,33 @@ def locust(blueprint):
                 return True
         return False
 
-    def run_in_console(blueprint):
+    def run_in_console(module):
 
         if is_locust_running():
             click.echo("Locust is already running.")
             return
 
         locustfile_path = os.path.join(core_dir, 'bootstraps/locustfile_bootstrap.py')
-        if blueprint:
-            locustfile_path = os.path.join(blueprints_dir, blueprint, 'tests', 'locustfile.py')
+        if module:
+            locustfile_path = os.path.join(modules_dir, module, 'tests', 'locustfile.py')
         locust_command = ['locust', '-f', locustfile_path]
         click.echo(f"Locust command: {' '.join(locust_command)}")
         subprocess.Popen(locust_command, stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         click.echo(click.style("Locust is running at http://localhost:8089", fg='green'))
 
-    def run_local_locust(blueprint):
+    def run_local_locust(module):
         """Run Locust in the local environment."""
         click.echo("Starting Locust in local environment on port 8089...")
-        run_in_console(blueprint)
+        run_in_console(module)
 
-    def run_vagrant_locust(blueprint):
+    def run_vagrant_locust(module):
         """Run Locust in the Vagrant environment."""
         click.echo("Starting Locust in Vagrant environment on port 8089...")
-        run_in_console(blueprint)
+        run_in_console(module)
 
-    # Validate blueprint if provided
-    if blueprint:
-        validate_blueprint(blueprint)
+    # Validate module if provided
+    if module:
+        validate_module(module)
 
     if working_dir == '/app/':
         client = docker.from_env()
@@ -114,7 +114,7 @@ def locust(blueprint):
             if not volume_name:
                 raise ValueError("No volume or bind mount found mounted on /app")
 
-            run_docker_locust(volume_name, blueprint)
+            run_docker_locust(volume_name, module)
 
         except docker.errors.NotFound:
             click.echo(click.style("Web container not found.", fg='red'))
@@ -122,10 +122,10 @@ def locust(blueprint):
             click.echo(click.style(f"An error occurred: {str(e)}", fg='red'))
 
     elif working_dir == '':
-        run_local_locust(blueprint)
+        run_local_locust(module)
 
     elif working_dir == '/vagrant/':
-        run_vagrant_locust(blueprint)
+        run_vagrant_locust(module)
 
     else:
         click.echo(click.style(f"Unrecognized WORKING_DIR: {working_dir}", fg='red'))

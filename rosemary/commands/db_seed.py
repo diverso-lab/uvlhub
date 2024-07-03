@@ -14,14 +14,14 @@ def get_module_seeders(module_path, specific_module=None):
         if 'seeders.py' in files:
             relative_path = os.path.relpath(root, module_path)
             module_name = relative_path.replace(os.path.sep, '.')
-            full_module_name = f'app.blueprints.{module_name}.seeders'
+            full_module_name = f'app.modules.{module_name}.seeders'
 
-            # Si se especificó un módulo y no coincide con el actual, continúa con el siguiente
+            # If a module was specified and does not match the current one, continue with the next one
             if specific_module and specific_module != module_name.split('.')[0]:
                 continue
 
             seeder_module = importlib.import_module(full_module_name)
-            importlib.reload(seeder_module)  # Recargar el módulo
+            importlib.reload(seeder_module)  # Reload the module
 
             for attr in dir(seeder_module):
                 potential_seeder_class = getattr(seeder_module, attr)
@@ -49,7 +49,7 @@ def db_seed(reset, yes, module):
             click.echo(click.style("Database reset cancelled.", fg='yellow'))
             return
 
-    blueprints_module_path = os.path.join(os.getenv('WORKING_DIR', ''), 'app/blueprints')
+    blueprints_module_path = os.path.join(os.getenv('WORKING_DIR', ''), 'app/modules')
     seeders = get_module_seeders(blueprints_module_path, specific_module=module)
     success = True  # Flag to control the successful flow of the operation
 

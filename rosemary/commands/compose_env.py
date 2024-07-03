@@ -8,15 +8,15 @@ from flask.cli import with_appcontext
 @with_appcontext
 def compose_env():
 
-    base_path = os.path.join(os.getenv('WORKING_DIR', ''), 'app/blueprints')
+    base_path = os.path.join(os.getenv('WORKING_DIR', ''), 'app/modules')
     root_env_path = os.path.join(os.getenv('WORKING_DIR', ''), '.env')
 
     # Loads the current root .env variables into a dictionary
     root_env_vars = dotenv_values(root_env_path)
 
     # Finds and processes all blueprints .env files
-    blueprint_env_paths = [os.path.join(root, '.env') for root, dirs, files in os.walk(base_path) if '.env' in files]
-    for env_path in blueprint_env_paths:
+    module_env_paths = [os.path.join(root, '.env') for root, dirs, files in os.walk(base_path) if '.env' in files]
+    for env_path in module_env_paths:
         blueprint_env_vars = dotenv_values(env_path)
         # Add or update the blueprint variables in the root .env dictionary
         for key, value in blueprint_env_vars.items():

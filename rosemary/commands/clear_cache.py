@@ -5,13 +5,13 @@ import shutil
 import os
 
 
-@click.command('clear:cache', help="Clears pytest cache in app/blueprints and the build directory at the root.")
+@click.command('clear:cache', help="Clears pytest cache in app/modules and the build directory at the root.")
 def clear_cache():
 
     if click.confirm('Are you sure you want to clear the pytest cache and the build directory?'):
 
         project_root = Path(os.getenv('WORKING_DIR', ''))
-        pytest_cache_dir = os.path.join(os.getenv('WORKING_DIR', ''), 'app/blueprints/.pytest_cache')
+        pytest_cache_dir = os.path.join(os.getenv('WORKING_DIR', ''), 'app/modules/.pytest_cache')
         build_dir = os.path.join(os.getenv('WORKING_DIR', ''), 'build')
 
         if os.path.exists(pytest_cache_dir):

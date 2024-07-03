@@ -6,7 +6,7 @@ from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
 from flask_migrate import Migrate
 
-from core.managers.blueprint_manager import BlueprintManager
+from core.managers.module_manager import ModuleManager
 from core.managers.config_manager import ConfigManager
 from core.managers.error_handler_manager import ErrorHandlerManager
 from core.managers.logging_manager import LoggingManager
@@ -30,9 +30,9 @@ def create_app(config_name='development'):
     db.init_app(app)
     migrate.init_app(app, db)
 
-    # Register blueprints
-    blueprint_manager = BlueprintManager(app)
-    blueprint_manager.register_blueprints()
+    # Register modules
+    module_manager = ModuleManager(app)
+    module_manager.register_modules()
 
     from flask_login import LoginManager
     login_manager = LoginManager()
@@ -41,7 +41,7 @@ def create_app(config_name='development'):
 
     @login_manager.user_loader
     def load_user(user_id):
-        from app.blueprints.auth.models import User
+        from app.modules.auth.models import User
         return User.query.get(int(user_id))
 
     # Set up logging
@@ -78,7 +78,7 @@ def upload_folder_name():
 
 def get_user_by_token(token):
     # TODO
-    from app.blueprints.auth.models import User
+    from app.modules.auth.models import User
     return User.query.first()
 
 

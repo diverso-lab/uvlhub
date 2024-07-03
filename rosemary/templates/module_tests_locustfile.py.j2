@@ -1,0 +1,21 @@
+from locust import HttpUser, TaskSet, task
+from core.environment.host import get_host_for_locust_testing
+
+
+class {{ module_name | pascalcase }}Behavior(TaskSet):
+    def on_start(self):
+        self.index()
+
+    @task
+    def index(self):
+        response = self.client.get("/{{ module_name }}")
+
+        if response.status_code != 200:
+            print(f"{{ module_name | pascalcase }} index failed: {response.status_code}")
+
+
+class {{ module_name | pascalcase }}User(HttpUser):
+    tasks = [{{ module_name | pascalcase }}Behavior]
+    min_wait = 5000
+    max_wait = 9000
+    host = get_host_for_locust_testing()

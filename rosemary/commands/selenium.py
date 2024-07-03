@@ -4,34 +4,34 @@ import click
 
 
 @click.command('selenium', help="Executes Selenium tests based on the environment.")
-@click.argument('blueprint', required=False)
-def selenium(blueprint):
+@click.argument('module', required=False)
+def selenium(module):
     # Absolute paths
     working_dir = os.getenv('WORKING_DIR', '')
-    blueprints_dir = os.path.join(working_dir, 'app/blueprints')
+    modules_dir = os.path.join(working_dir, 'app/modules')
 
-    def validate_blueprint(blueprint):
-        """Check if the blueprint exists."""
-        if blueprint:
-            blueprint_path = os.path.join(blueprints_dir, blueprint)
-            if not os.path.exists(blueprint_path):
-                raise click.UsageError(f"Blueprint '{blueprint}' does not exist.")
-            selenium_test_path = os.path.join(blueprint_path, 'tests', 'test_selenium.py')
+    def validate_module(module):
+        """Check if the module exists."""
+        if module:
+            module_path = os.path.join(modules_dir, module)
+            if not os.path.exists(module_path):
+                raise click.UsageError(f"Module '{module}' does not exist.")
+            selenium_test_path = os.path.join(module_path, 'tests', 'test_selenium.py')
             if not os.path.exists(selenium_test_path):
                 raise click.UsageError(
-                    f"Selenium test for blueprint '{blueprint}' does not exist at path "
+                    f"Selenium test for module '{module}' does not exist at path "
                     f"'{selenium_test_path}'."
                 )
 
-    def run_selenium_tests_in_local(blueprint):
+    def run_selenium_tests_in_local(module):
         """Run the Selenium tests."""
-        if blueprint:
-            selenium_test_path = os.path.join(blueprints_dir, blueprint, 'tests', 'test_selenium.py')
+        if module:
+            selenium_test_path = os.path.join(modules_dir, module, 'tests', 'test_selenium.py')
             test_command = ['python', selenium_test_path]
         else:
             selenium_test_paths = []
-            for module in os.listdir(blueprints_dir):
-                tests_dir = os.path.join(blueprints_dir, module, 'tests')
+            for module in os.listdir(modules_dir):
+                tests_dir = os.path.join(modules_dir, module, 'tests')
                 selenium_test_path = os.path.join(tests_dir, 'test_selenium.py')
                 if os.path.exists(selenium_test_path):
                     selenium_test_paths.append(selenium_test_path)
@@ -40,9 +40,9 @@ def selenium(blueprint):
         click.echo(f"Running Selenium tests with command: {' '.join(test_command)}")
         subprocess.run(test_command, check=True)
 
-    # Validate blueprint if provided
-    if blueprint:
-        validate_blueprint(blueprint)
+    # Validate module if provided
+    if module:
+        validate_module(module)
 
     if working_dir == '/app/':
 
@@ -53,7 +53,7 @@ def selenium(blueprint):
         ))
 
     elif working_dir == '':
-        run_selenium_tests_in_local(blueprint)
+        run_selenium_tests_in_local(module)
 
     elif working_dir == '/vagrant/':
 

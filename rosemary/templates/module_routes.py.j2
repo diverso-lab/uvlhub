@@ -1,0 +1,7 @@
+from flask import render_template
+from app.modules.{{ module_name }} import {{ module_name }}_bp
+
+
+@{{ module_name }}_bp.route('/{{ module_name }}', methods=['GET'])
+def index():
+    return render_template('{{ module_name }}/index.html')
