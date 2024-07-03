@@ -19,7 +19,7 @@ def coverage(module_name, html):
     else:
         click.echo("Running coverage for all modules...")
 
-    coverage_cmd = ['pytest', '--cov=' + test_path, test_path]
+    coverage_cmd = ['pytest', '--ignore-glob=*selenium*', '--cov=' + test_path, test_path]
 
     if html:
         coverage_cmd.extend(['--cov-report', 'html'])

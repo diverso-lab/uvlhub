@@ -10,5 +10,5 @@ class UserProfileService(BaseService):
         if form.validate():
             updated_instance = self.update(user_profile_id, **form.data)
             return updated_instance, None
-        else:
-            return None, form.errors
+
+        return None, form.errors

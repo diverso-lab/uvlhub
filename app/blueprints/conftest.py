@@ -1,4 +1,5 @@
 import pytest
+
 from app import create_app, db
 from app.blueprints.auth.models import User
 
@@ -8,6 +9,7 @@ def test_client():
     flask_app = create_app('testing')
     with flask_app.test_client() as testing_client:
         with flask_app.app_context():
+            db.drop_all()
             db.create_all()
             """
             The test suite always includes the following user in order to avoid repetition
@@ -19,6 +21,17 @@ def test_client():
             yield testing_client
             db.session.remove()
             db.drop_all()
+
+
+@pytest.fixture(scope='function')
+def clean_database():
+    db.session.remove()
+    db.drop_all()
+    db.create_all()
+    yield
+    db.session.remove()
+    db.drop_all()
+    db.create_all()
 
 
 def login(test_client, email, password):
