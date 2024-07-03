@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -11,7 +11,7 @@ class User(db.Model, UserMixin):
 
     email = db.Column(db.String(256), unique=True, nullable=False)
     password = db.Column(db.String(256), nullable=False)
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
 
     data_sets = db.relationship('DataSet', backref='user', lazy=True)
     profile = db.relationship('UserProfile', backref='user', uselist=False)
@@ -38,15 +38,3 @@ class User(db.Model, UserMixin):
     def delete(self):
         db.session.delete(self)
         db.session.commit()
-
-    @staticmethod
-    def get_by_id(user_id):
-        return User.query.get(user_id)
-
-    @staticmethod
-    def get_by_email(email):
-        return User.query.filter_by(email=email).first()
-
-    @staticmethod
-    def get_all():
-        return User.query.all()

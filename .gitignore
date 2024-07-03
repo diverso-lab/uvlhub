@@ -16,3 +16,4 @@ nginx.prod.ssl.conf
 .version
 entrypoint.sh
 deployments.log
+test_file.txt

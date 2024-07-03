@@ -94,16 +94,4 @@ def get_authenticated_user():
     return None
 
 
-def datasets_counter() -> int:
-    from app.blueprints.dataset.models import DataSet
-    count = DataSet.query.count()
-    return count
-
-
-def feature_models_counter() -> int:
-    from app.blueprints.dataset.models import FeatureModel
-    count = FeatureModel.query.count()
-    return count
-
-
 app = create_app()
