@@ -4,8 +4,10 @@ import hashlib
 import shutil
 import tempfile
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from zipfile import ZipFile
+
+from app import db
 
 from flask import (
     render_template,
@@ -20,7 +22,15 @@ from flask_login import login_required, current_user
 
 import app
 from app.blueprints.dataset.forms import DataSetForm
-from app.blueprints.dataset.models import DataSet, PublicationType
+from app.blueprints.dataset.models import (
+    DSDownloadRecord,
+    DSViewRecord,
+    DataSet,
+    File,
+    FileDownloadRecord,
+    FileViewRecord,
+    PublicationType
+)
 from app.blueprints.dataset import dataset_bp
 from app.blueprints.dataset.services import (
     AuthorService,
@@ -360,13 +370,21 @@ def download_dataset(dataset_id):
             mimetype="application/zip",
         )
 
-    # Record the download in your database
-    DSDownloadRecordService().create(
+    # Check if the download record already exists for this cookie
+    existing_record = DSDownloadRecord.query.filter_by(
         user_id=current_user.id if current_user.is_authenticated else None,
         dataset_id=dataset_id,
-        download_date=datetime.now(datetime.UTC),
-        download_cookie=user_cookie,
-    )
+        download_cookie=user_cookie
+    ).first()
+
+    if not existing_record:
+        # Record the download in your database
+        DSDownloadRecordService().create(
+            user_id=current_user.id if current_user.is_authenticated else None,
+            dataset_id=dataset_id,
+            download_date=datetime.now(timezone.utc),
+            download_cookie=user_cookie,
+        )
 
     return resp
 
@@ -380,13 +398,21 @@ def view_dataset(dataset_id):
     if not user_cookie:
         user_cookie = str(uuid.uuid4())
 
-    # Record the view in your database
-    DSViewRecordService().create(
+    # Check if the view record already exists for this cookie
+    existing_record = DSViewRecord.query.filter_by(
         user_id=current_user.id if current_user.is_authenticated else None,
         dataset_id=dataset_id,
-        view_date=datetime.now(datetime.UTC),
-        view_cookie=user_cookie,
-    )
+        view_cookie=user_cookie
+    ).first()
+
+    if not existing_record:
+        # Record the view in your database
+        DSViewRecordService().create(
+            user_id=current_user.id if current_user.is_authenticated else None,
+            dataset_id=dataset_id,
+            view_date=datetime.now(timezone.utc),
+            view_cookie=user_cookie,
+        )
 
     # Save the cookie to the user's browser
     resp = make_response(render_template("dataset/view_dataset.html", dataset=dataset))
@@ -409,13 +435,21 @@ def download_file(file_id):
     if not user_cookie:
         user_cookie = str(uuid.uuid4())
 
-    # Record the download in your database
-    FileDownloadRecordService().create(
+    # Check if the download record already exists for this cookie
+    existing_record = FileDownloadRecord.query.filter_by(
         user_id=current_user.id if current_user.is_authenticated else None,
         file_id=file_id,
-        download_date=datetime.now(datetime.UTC),
-        download_cookie=user_cookie,
-    )
+        download_cookie=user_cookie
+    ).first()
+
+    if not existing_record:
+        # Record the download in your database
+        FileDownloadRecordService().create(
+            user_id=current_user.id if current_user.is_authenticated else None,
+            file_id=file_id,
+            download_date=datetime.now(timezone.utc),
+            download_cookie=user_cookie,
+        )
 
     # Save the cookie to the user's browser
     resp = make_response(
@@ -424,6 +458,55 @@ def download_file(file_id):
     resp.set_cookie("file_download_cookie", user_cookie)
 
     return resp
+
+
+@dataset_bp.route('/file/view/<int:file_id>', methods=['GET'])
+def view_file(file_id):
+    file = File.query.get_or_404(file_id)
+    filename = file.name
+
+    directory_path = f"uploads/user_{file.feature_model.data_set.user_id}/dataset_{file.feature_model.data_set_id}/"
+    parent_directory_path = os.path.dirname(current_app.root_path)
+    file_path = os.path.join(parent_directory_path, directory_path, filename)
+
+    try:
+        if os.path.exists(file_path):
+            with open(file_path, 'r') as f:
+                content = f.read()
+
+            user_cookie = request.cookies.get('view_cookie')
+            if not user_cookie:
+                user_cookie = str(uuid.uuid4())
+
+            # Check if the view record already exists for this cookie
+            existing_record = FileViewRecord.query.filter_by(
+                user_id=current_user.id if current_user.is_authenticated else None,
+                file_id=file_id,
+                view_cookie=user_cookie
+            ).first()
+
+            if not existing_record:
+                # Register file view
+                new_view_record = FileViewRecord(
+                    user_id=current_user.id if current_user.is_authenticated else None,
+                    file_id=file_id,
+                    view_date=datetime.now(),
+                    view_cookie=user_cookie
+                )
+                db.session.add(new_view_record)
+                db.session.commit()
+
+            # Prepare response
+            response = jsonify({'success': True, 'content': content})
+            if not request.cookies.get('view_cookie'):
+                response = make_response(response)
+                response.set_cookie('view_cookie', user_cookie, max_age=60*60*24*365*2)
+
+            return response
+        else:
+            return jsonify({'success': False, 'error': 'File not found'}), 404
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 @dataset_bp.route("/doi/<path:doi>/", methods=["GET"])
@@ -442,7 +525,7 @@ def subdomain_index(doi):
         DSViewRecordService().create(
             user_id=current_user.id if current_user.is_authenticated else None,
             dataset_id=dataset_id,
-            view_date=datetime.now(datetime.UTC),
+            view_date=datetime.now(timezone.utc),
             view_cookie=user_cookie,
         )
 
