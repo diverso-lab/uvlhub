@@ -1,4 +1,5 @@
 from flask_login import login_user
+from flask_login import current_user
 
 from app.modules.auth.repositories import UserRepository
 from app.modules.profile.repositories import UserProfileRepository
@@ -61,3 +62,13 @@ class AuthenticationService(BaseService):
             return updated_instance, None
 
         return None, form.errors
+
+    def get_authenticated_user_profile():
+        if current_user.is_authenticated:
+            return current_user.profile
+        return None
+
+    def get_authenticated_user():
+        if current_user.is_authenticated:
+            return current_user
+        return None

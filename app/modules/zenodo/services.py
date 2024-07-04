@@ -1,11 +1,11 @@
 import os
 import requests
 
+from core.configuration.configuration import uploads_folder_name
 from dotenv import load_dotenv
 from flask import current_app, jsonify, Response
 from flask_login import current_user
 
-import app
 from app.modules.dataset.models import DataSet, FeatureModel
 from app.modules.zenodo.repositories import ZenodoRepository
 from core.services.BaseService import BaseService
@@ -161,7 +161,7 @@ class ZenodoService(BaseService):
         uvl_filename = feature_model.fm_meta_data.uvl_filename
         data = {"name": uvl_filename}
         user_id = current_user.id if user is None else user.id
-        file_path = os.path.join(app.upload_folder_name(), "temp", str(user_id), uvl_filename)
+        file_path = os.path.join(uploads_folder_name(), "temp", str(user_id), uvl_filename)
         files = {"file": open(file_path, "rb")}
 
         publish_url = f"{self.ZENODO_API_URL}/{deposition_id}/files"
