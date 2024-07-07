@@ -1,5 +1,6 @@
 import click
 
+from rosemary.commands.module_list import module_list
 from rosemary.commands.locust import locust, stop
 from rosemary.commands.compose_env import compose_env
 from rosemary.commands.route_list import route_list
@@ -56,6 +57,7 @@ cli.add_command(compose_env)
 cli.add_command(locust)
 cli.add_command(stop)
 cli.add_command(selenium)
+cli.add_command(module_list)
 
 
 if __name__ == '__main__':

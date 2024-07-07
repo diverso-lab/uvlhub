@@ -13,12 +13,12 @@ class ModuleManager:
         self.base_dir = os.path.abspath(os.path.dirname(__file__))
         working_dir = os.getenv('WORKING_DIR', '')
         self.modules_dir = os.path.join(working_dir, 'app/modules')
-        self.ignored_modules_file = os.path.join(working_dir, 'app/.moduleignore')
+        self.ignored_modules_file = os.path.join(working_dir, '.moduleignore')
         self.ignored_modules = self._load_ignored_modules()
 
     def _load_ignored_modules(self):
         ignored_modules = []
-        if os.path.exists(self.ignore_file):
+        if os.path.exists(self.ignored_modules_file):
             with open(self.ignored_modules_file, 'r') as f:
                 ignored_modules = [line.strip() for line in f.readlines()]
         return ignored_modules
@@ -26,7 +26,7 @@ class ModuleManager:
     def register_modules(self):
         self.app.modules = {}
         self.app.blueprint_url_prefixes = {}
-        
+
         for module_name in os.listdir(self.modules_dir):
 
             if module_name in self.ignored_modules:
@@ -74,3 +74,14 @@ class ModuleManager:
         for name, blueprint in self.app.modules.items():
             url_prefix = self.app.blueprint_url_prefixes.get(name, 'No URL prefix set')
             print(f"Name: {name}, URL prefix: {url_prefix}")
+
+    def get_modules(self):
+        all_modules = []
+        for module_name in os.listdir(self.modules_dir):
+            module_path = os.path.join(self.modules_dir, module_name)
+            if (os.path.isdir(module_path) and not module_name.startswith('__') and
+                    os.path.exists(os.path.join(module_path, '__init__.py')) and
+                    module_name != '.pytest_cache'):
+                all_modules.append(module_name)
+        loaded_modules = [m for m in all_modules if m not in self.ignored_modules]
+        return loaded_modules, self.ignored_modules
