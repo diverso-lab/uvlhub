@@ -28,6 +28,9 @@ RUN chmod +x /app/render_entrypoint.sh
 COPY scripts/wait-for-db.sh /app/scripts/wait-for-db.sh
 RUN chmod +x /app/scripts/wait-for-db.sh
 
+# Create the .moduleignore file with the module 'webhook' inside
+RUN echo "webhook" > /app/.moduleignore
+
 # Install any needed packages specified in requirements.txt and upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt \
     && pip install --no-cache-dir --upgrade pip \
