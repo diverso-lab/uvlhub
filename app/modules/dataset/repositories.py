@@ -2,7 +2,7 @@ import re
 import unidecode
 from typing import Optional
 
-from sqlalchemy import or_, any_
+from sqlalchemy import func, or_, any_
 
 from app.modules.dataset.models import (
     Author,
@@ -30,7 +30,8 @@ class DSDownloadRecordRepository(BaseRepository):
         super().__init__(DSDownloadRecord)
 
     def total_dataset_downloads(self) -> int:
-        return self.count()
+        max_id = self.model.query.with_entities(func.max(self.model.id)).scalar()
+        return max_id if max_id is not None else 0
 
 
 class DSMetaDataRepository(BaseRepository):
@@ -46,7 +47,8 @@ class DSViewRecordRepository(BaseRepository):
         super().__init__(DSViewRecord)
 
     def total_dataset_views(self) -> int:
-        return self.count()
+        max_id = self.model.query.with_entities(func.max(self.model.id)).scalar()
+        return max_id if max_id is not None else 0
 
 
 class DataSetRepository(BaseRepository):
@@ -114,6 +116,20 @@ class DataSetRepository(BaseRepository):
 
         return datasets.all()
 
+    def count_synchronized_datasets(self):
+        return (
+            self.model.query.join(DSMetaData)
+            .filter(DSMetaData.dataset_doi.isnot(None))
+            .count()
+        )
+
+    def count_unsynchronized_datasets(self):
+        return (
+            self.model.query.join(DSMetaData)
+            .filter(DSMetaData.dataset_doi.is_(None))
+            .count()
+        )
+
     def latest_synchronized(self):
         return (
             self.model.query.join(DSMetaData)
@@ -144,7 +160,8 @@ class FileDownloadRecordRepository(BaseRepository):
         super().__init__(FileDownloadRecord)
 
     def total_feature_model_downloads(self) -> int:
-        return self.count()
+        max_id = self.model.query.with_entities(func.max(self.model.id)).scalar()
+        return max_id if max_id is not None else 0
 
 
 class FileViewRecordRepository(BaseRepository):
@@ -152,4 +169,5 @@ class FileViewRecordRepository(BaseRepository):
         super().__init__(FileViewRecord)
 
     def total_feature_model_views(self) -> int:
-        return self.count()
+        max_id = self.model.query.with_entities(func.max(self.model.id)).scalar()
+        return max_id if max_id is not None else 0

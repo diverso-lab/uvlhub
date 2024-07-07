@@ -39,6 +39,9 @@ class DataSetService(BaseService):
     def filter(self, query="", sorting="newest", publication_type="any", tags=[], **kwargs):
         return self.repository.filter(query, sorting, publication_type, tags, **kwargs)
 
+    def count_synchronized_datasets(self):
+        return self.repository.count_synchronized_datasets()
+
     def count_feature_models(self):
         return self.feature_model_service.count()
 
