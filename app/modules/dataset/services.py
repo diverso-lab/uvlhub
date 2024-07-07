@@ -43,7 +43,7 @@ class DataSetService(BaseService):
         return self.repository.count_synchronized_datasets()
 
     def count_feature_models(self):
-        return self.feature_model_service.count()
+        return self.feature_model_service.count_feature_models()
 
     def count_authors(self) -> int:
         return self.author_repository.count()
@@ -67,6 +67,9 @@ class DataSetService(BaseService):
 class FeatureModelService(BaseService):
     def __init__(self):
         super().__init__(FeatureModelRepository())
+
+    def count_feature_models(self):
+        return self.repository.count_feature_models()
 
 
 class AuthorService(BaseService):
