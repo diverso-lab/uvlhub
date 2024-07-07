@@ -9,6 +9,7 @@ from zipfile import ZipFile
 
 from app import db
 
+from core.configuration.configuration import uploads_folder_name
 from flask import (
     render_template,
     request,
@@ -20,7 +21,6 @@ from flask import (
 )
 from flask_login import login_required, current_user
 
-import app
 from app.modules.dataset.forms import DataSetForm
 from app.modules.dataset.models import (
     DSDownloadRecord,
@@ -126,7 +126,7 @@ def create_dataset():
             return jsonify({"message": str(e)}), 500
 
     # Delete temp folder
-    file_path = os.path.join(app.upload_folder_name(), "temp", str(current_user.id))
+    file_path = os.path.join(uploads_folder_name(), "temp", str(current_user.id))
     if os.path.exists(file_path) and os.path.isdir(file_path):
         shutil.rmtree(file_path)
 
@@ -226,7 +226,7 @@ def create_feature_models_in_db(dataset: DataSet, uploaded_models_data: dict):
         # associated files in feature model
         user_id = current_user.id
         file_path = os.path.join(
-            app.upload_folder_name(), "temp", str(user_id), uvl_filename
+            uploads_folder_name(), "temp", str(user_id), uvl_filename
         )
         checksum, size = calculate_checksum_and_size(file_path)
 
@@ -267,7 +267,7 @@ def move_feature_models(dataset_id, feature_models):
 def upload():
     file = request.files["file"]
     user_id = current_user.id
-    temp_folder = os.path.join(app.upload_folder_name(), "temp", str(user_id))
+    temp_folder = os.path.join(uploads_folder_name(), "temp", str(user_id))
 
     if not file or not file.filename.endswith(".uvl"):
         return jsonify({"message": "No valid file"}), 400
@@ -314,7 +314,7 @@ def delete():
     data = request.get_json()
     filename = data.get("file")
     user_id = current_user.id
-    temp_folder = os.path.join(app.upload_folder_name(), "temp", str(user_id))
+    temp_folder = os.path.join(uploads_folder_name(), "temp", str(user_id))
     filepath = os.path.join(temp_folder, filename)
 
     if os.path.exists(filepath):
