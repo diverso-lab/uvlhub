@@ -15,6 +15,7 @@ services:
       - ../scripts:/app/scripts
       - ../migrations:/app/migrations
       - ../uploads:/app/uploads
+      - ../.moduleignore:/app/.moduleignore
     command: [ "sh", "-c", "sh /app/entrypoint.sh" ]
 
   db:

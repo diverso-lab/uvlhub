@@ -13,11 +13,25 @@ class ModuleManager:
         self.base_dir = os.path.abspath(os.path.dirname(__file__))
         working_dir = os.getenv('WORKING_DIR', '')
         self.modules_dir = os.path.join(working_dir, 'app/modules')
+        self.ignored_modules_file = os.path.join(working_dir, 'app/.moduleignore')
+        self.ignored_modules = self._load_ignored_modules()
+
+    def _load_ignored_modules(self):
+        ignored_modules = []
+        if os.path.exists(self.ignore_file):
+            with open(self.ignored_modules_file, 'r') as f:
+                ignored_modules = [line.strip() for line in f.readlines()]
+        return ignored_modules
 
     def register_modules(self):
         self.app.modules = {}
         self.app.blueprint_url_prefixes = {}
+        
         for module_name in os.listdir(self.modules_dir):
+
+            if module_name in self.ignored_modules:
+                continue
+
             module_path = os.path.join(self.modules_dir, module_name)
             if (os.path.isdir(module_path) and not module_name.startswith('__') and
                     os.path.exists(os.path.join(module_path, '__init__.py')) and
