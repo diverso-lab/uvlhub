@@ -2,7 +2,7 @@ import re
 import unidecode
 from typing import Optional
 
-from sqlalchemy import func, or_, any_
+from sqlalchemy import desc, func, or_, any_
 
 from app.modules.dataset.models import (
     Author,
@@ -134,7 +134,7 @@ class DataSetRepository(BaseRepository):
         return (
             self.model.query.join(DSMetaData)
             .filter(DSMetaData.dataset_doi.isnot(None))
-            .order_by(self.model.created_at.desc())
+            .order_by(desc(self.model.id))
             .limit(5)
             .all()
         )
