@@ -132,6 +132,17 @@ chico sundermann">
 
             </ul>
 
+            {% if APP_VERSION != 'unknown' and APP_VERSION != '' %}
+            <div class="sidebar-cta text-center">
+                <div class="sidebar-cta-content">
+                    <div class="text">
+                        Compilation build <a href="https://github.com/diverso-lab/uvlhub/releases/tag/{{ APP_VERSION }}" target="_blank">{{ APP_VERSION }}</a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+
         </div>
     </nav>
 
