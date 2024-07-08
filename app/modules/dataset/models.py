@@ -1,4 +1,3 @@
-import os
 from datetime import datetime
 from enum import Enum
 
@@ -105,8 +104,8 @@ class DataSet(db.Model):
         return get_human_readable_size(self.get_file_total_size())
 
     def get_uvlhub_doi(self):
-        domain = os.getenv('DOMAIN', 'localhost')
-        return f'http://{domain}/doi/{self.ds_meta_data.dataset_doi}'
+        from app.modules.dataset.services import DataSetService
+        return DataSetService().get_uvlhub_doi(self)
 
     def to_dict(self):
         return {
@@ -120,7 +119,7 @@ class DataSet(db.Model):
             'publication_doi': self.ds_meta_data.publication_doi,
             'dataset_doi': self.ds_meta_data.dataset_doi,
             'tags': self.ds_meta_data.tags.split(",") if self.ds_meta_data.tags else [],
-            'url': f'{request.host_url.rstrip("/")}/dataset/view/{self.id}',
+            'url': self.get_uvlhub_doi(),
             'download': f'{request.host_url.rstrip("/")}/dataset/download/{self.id}',
             'zenodo': self.get_zenodo_url(),
             'files': [file.to_dict() for fm in self.feature_models for file in fm.files],

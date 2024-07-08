@@ -211,7 +211,7 @@
                                         <div class="card">
                                             <div class="card-body">
                                                 <div class="d-flex align-items-center justify-content-between">
-                                                    <h3><a href="/dataset/view/${dataset.id}">${dataset.title}</a></h3>
+                                                    <h3><a href="${dataset.url}">${dataset.title}</a></h3>
                                                     <div>
                                                         <span class="badge bg-primary" style="cursor: pointer;" onclick="set_publication_type_as_query('${dataset.publication_type}')">${dataset.publication_type}</span>
                                                     </div>
@@ -265,7 +265,7 @@
 
                                                     </div>
                                                     <div class="col-md-8 col-12">
-                                                        <a href="/dataset/view/${dataset.id}" class="btn btn-outline-primary btn-sm" id="search" style="border-radius: 5px;">
+                                                        <a href="${dataset.url}" class="btn btn-outline-primary btn-sm" id="search" style="border-radius: 5px;">
                                                             View dataset
                                                         </a>
                                                         <a href="/dataset/download/${dataset.id}" class="btn btn-outline-primary btn-sm" id="search" style="border-radius: 5px;">

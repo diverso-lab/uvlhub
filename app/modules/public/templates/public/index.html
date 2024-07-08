@@ -19,7 +19,7 @@
                         <div class="d-flex align-items-center justify-content-between">
                             <h2>
 
-                                <a href="/dataset/view/{{ dataset.id }}">
+                                <a href="{{ dataset.get_uvlhub_doi() }}">
                                     {{ dataset.ds_meta_data.title }}
                                 </a>
 
@@ -86,7 +86,7 @@
 
                         <div class="row  mt-4">
                             <div class="col-12">
-                                <a href="/dataset/view/{{ dataset.id }}" class="btn btn-outline-primary btn-sm"
+                                <a href="{{ dataset.get_uvlhub_doi() }}" class="btn btn-outline-primary btn-sm"
                                    style="border-radius: 5px;">
                                     <i data-feather="eye" class="center-button-icon"></i>
                                     View dataset

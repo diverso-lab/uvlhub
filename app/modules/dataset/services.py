@@ -1,3 +1,4 @@
+import os
 from typing import Optional
 
 from app.modules.dataset.models import DataSet, DSMetaData
@@ -62,6 +63,10 @@ class DataSetService(BaseService):
 
     def total_feature_model_views(self) -> int:
         return self.fileviewrecord_repository.total_feature_model_views()
+
+    def get_uvlhub_doi(self, dataset: DataSet) -> str:
+        domain = os.getenv('DOMAIN', 'localhost')
+        return f'http://{domain}/doi/{dataset.ds_meta_data.dataset_doi}'
 
 
 class FeatureModelService(BaseService):

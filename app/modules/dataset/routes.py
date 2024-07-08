@@ -389,38 +389,6 @@ def download_dataset(dataset_id):
     return resp
 
 
-@dataset_bp.route("/dataset/view/<int:dataset_id>", methods=["GET"])
-def view_dataset(dataset_id):
-    dataset = dataset_service.get_or_404(dataset_id)
-
-    # Get the cookie from the request or generate a new one if it does not exist
-    user_cookie = request.cookies.get("view_cookie")
-    if not user_cookie:
-        user_cookie = str(uuid.uuid4())
-
-    # Check if the view record already exists for this cookie
-    existing_record = DSViewRecord.query.filter_by(
-        user_id=current_user.id if current_user.is_authenticated else None,
-        dataset_id=dataset_id,
-        view_cookie=user_cookie
-    ).first()
-
-    if not existing_record:
-        # Record the view in your database
-        DSViewRecordService().create(
-            user_id=current_user.id if current_user.is_authenticated else None,
-            dataset_id=dataset_id,
-            view_date=datetime.now(timezone.utc),
-            view_cookie=user_cookie,
-        )
-
-    # Save the cookie to the user's browser
-    resp = make_response(render_template("dataset/view_dataset.html", dataset=dataset))
-    resp.set_cookie("view_cookie", user_cookie)
-
-    return resp
-
-
 @dataset_bp.route("/file/download/<int:file_id>", methods=["GET"])
 def download_file(file_id):
     file = FileService().get_or_404(file_id)
@@ -511,34 +479,37 @@ def view_file(file_id):
 
 @dataset_bp.route("/doi/<path:doi>/", methods=["GET"])
 def subdomain_index(doi):
-    # Busca el dataset por DOI
+
     ds_meta_data = dsmetadata_service.filter_by_doi(doi)
+
     if not ds_meta_data:
         abort(404)
 
     dataset = ds_meta_data.data_set
-    if dataset:
-        dataset_id = dataset.id
-        user_cookie = request.cookies.get("view_cookie", str(uuid.uuid4()))
 
-        # Registra la vista del dataset
+    # Get the cookie from the request or generate a new one if it does not exist
+    user_cookie = request.cookies.get("view_cookie")
+    if not user_cookie:
+        user_cookie = str(uuid.uuid4())
+
+    # Check if the view record already exists for this cookie
+    existing_record = DSViewRecord.query.filter_by(
+        user_id=current_user.id if current_user.is_authenticated else None,
+        dataset_id=dataset.id,
+        view_cookie=user_cookie
+    ).first()
+
+    if not existing_record:
+        # Record the view in your database
         DSViewRecordService().create(
             user_id=current_user.id if current_user.is_authenticated else None,
-            dataset_id=dataset_id,
+            dataset_id=dataset.id,
             view_date=datetime.now(timezone.utc),
             view_cookie=user_cookie,
         )
 
-        # Prepara la respuesta y establece la cookie
-        resp = make_response(
-            render_template("dataset/view_dataset.html", dataset=dataset)
-        )
-        resp.set_cookie(
-            "view_cookie", user_cookie, max_age=30 * 24 * 60 * 60
-        )  # Ejemplo: cookie expira en 30 días
+    # Save the cookie to the user's browser
+    resp = make_response(render_template("dataset/view_dataset.html", dataset=dataset))
+    resp.set_cookie("view_cookie", user_cookie)
 
-        return resp
-    else:
-        # Aquí puedes manejar el caso de que el DOI no corresponda a un dataset existente
-        # Por ejemplo, mostrar un error 404 o redirigir a una página de error
-        return "Dataset not found", 404
+    return resp

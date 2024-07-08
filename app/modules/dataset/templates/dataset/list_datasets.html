@@ -25,7 +25,7 @@
                         {% for dataset in datasets %}
                             <tr>
                                 <td>
-                                    <a href="{{ url_for('dataset.view_dataset', dataset_id=dataset.id) }}">
+                                    <a href="{{ dataset.get_uvlhub_doi() }}">
                                         {{ dataset.ds_meta_data.title }}
                                     </a>
                                 </td>
@@ -34,7 +34,7 @@
                                 <td><a href="{{ dataset.get_uvlhub_doi() }}"
                                        target="_blank">{{ dataset.get_uvlhub_doi() }}</a></td>
                                 <td>
-                                    <a href="{{ url_for('dataset.view_dataset', dataset_id=dataset.id) }}">
+                                    <a href="{{ dataset.get_uvlhub_doi() }}">
                                         <i data-feather="eye"></i>
                                     </a>
                                     <a href="{{ url_for('dataset.download_dataset', dataset_id=dataset.id) }}">
