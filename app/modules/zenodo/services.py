@@ -1,3 +1,4 @@
+import logging
 import os
 import requests
 
@@ -10,27 +11,38 @@ from app.modules.dataset.models import DataSet, FeatureModel
 from app.modules.zenodo.repositories import ZenodoRepository
 from core.services.BaseService import BaseService
 
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
 
 class ZenodoService(BaseService):
 
-    FLASK_ENV = os.getenv("FLASK_ENV", "development")
+    def get_zenodo_url(self):
 
-    if FLASK_ENV == "development":
-        ZENODO_API_URL = os.getenv("ZENODO_API_URL", "https://sandbox.zenodo.org/api/deposit/depositions")
-    elif FLASK_ENV == "production":
-        ZENODO_API_URL = os.getenv("ZENODO_API_URL", "https://zenodo.org/api/deposit/depositions")
-    else:
-        ZENODO_API_URL = os.getenv("ZENODO_API_URL", "https://sandbox.zenodo.org/api/deposit/depositions")
+        FLASK_ENV = os.getenv("FLASK_ENV", "development")
+        ZENODO_API_URL = ""
 
-    ZENODO_ACCESS_TOKEN = os.getenv("ZENODO_ACCESS_TOKEN")
+        if FLASK_ENV == "development":
+            ZENODO_API_URL = os.getenv("ZENODO_API_URL", "https://sandbox.zenodo.org/api/deposit/depositions")
+        elif FLASK_ENV == "production":
+            ZENODO_API_URL = os.getenv("ZENODO_API_URL", "https://zenodo.org/api/deposit/depositions")
+        else:
+            ZENODO_API_URL = os.getenv("ZENODO_API_URL", "https://sandbox.zenodo.org/api/deposit/depositions")
+
+        return ZENODO_API_URL
+    
+
+    def get_zenodo_access_token(self):
+        return os.getenv("ZENODO_ACCESS_TOKEN")
 
     def __init__(self):
         super().__init__(ZenodoRepository())
+        self.ZENODO_ACCESS_TOKEN = self.get_zenodo_access_token()
+        self.ZENODO_API_URL = self.get_zenodo_url()
         self.headers = {"Content-Type": "application/json"}
         self.params = {"access_token": self.ZENODO_ACCESS_TOKEN}
+        
 
     def test_connection(self) -> bool:
         """
@@ -53,13 +65,15 @@ class ZenodoService(BaseService):
 
         success = True
 
-        # Create an empty file
-        file_path = os.path.join(current_app.root_path, "test_file.txt")
-        with open(file_path, "w"):
-            pass
+        # Create a test file
+        working_dir = os.getenv('WORKING_DIR', "")
+        file_path = os.path.join(working_dir, "test_file.txt")
+        with open(file_path, "w") as f:
+            f.write("This is a test file with some content.")
 
+        
         messages = []  # List to store messages
-
+        
         # Step 1: Create a deposition on Zenodo
         data = {
             "metadata": {
@@ -71,7 +85,7 @@ class ZenodoService(BaseService):
         }
 
         response = requests.post(self.ZENODO_API_URL, json=data, params=self.params, headers=self.headers)
-
+        
         if response.status_code != 201:
             return jsonify(
                 {
@@ -80,14 +94,22 @@ class ZenodoService(BaseService):
                 }
             )
 
+
         deposition_id = response.json()["id"]
 
         # Step 2: Upload an empty file to the deposition
         data = {"name": "test_file.txt"}
-        file_path = os.path.join(current_app.root_path, "test_file.txt")
         files = {"file": open(file_path, "rb")}
         publish_url = f"{self.ZENODO_API_URL}/{deposition_id}/files"
         response = requests.post(publish_url, params=self.params, data=data, files=files)
+        files["file"].close()  # Close the file after uploading
+
+        logger.info(f"Publish URL: {publish_url}")
+        logger.info(f"Params: {self.params}")
+        logger.info(f"Data: {data}")
+        logger.info(f"Files: {files}")
+        logger.info(f"Response Status Code: {response.status_code}")
+        logger.info(f"Response Content: {response.content}")
 
         if response.status_code != 201:
             messages.append(f"Failed to upload test file to Zenodo. Response code: {response.status_code}")
@@ -99,6 +121,7 @@ class ZenodoService(BaseService):
         if os.path.exists(file_path):
             os.remove(file_path)
 
+        
         return jsonify({"success": success, "messages": messages})
 
     def get_all_depositions(self) -> dict:
