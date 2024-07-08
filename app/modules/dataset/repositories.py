@@ -1,4 +1,6 @@
+from datetime import datetime, timezone
 import re
+from flask_login import current_user
 import unidecode
 from typing import Optional
 
@@ -6,6 +8,7 @@ from sqlalchemy import desc, func, or_, any_
 
 from app.modules.dataset.models import (
     Author,
+    DOIMapping,
     DSDownloadRecord,
     DSMetaData,
     DSViewRecord,
@@ -49,6 +52,21 @@ class DSViewRecordRepository(BaseRepository):
     def total_dataset_views(self) -> int:
         max_id = self.model.query.with_entities(func.max(self.model.id)).scalar()
         return max_id if max_id is not None else 0
+
+    def the_record_exists(self, dataset: DataSet, user_cookie: str):
+        return self.model.query.filter_by(
+            user_id=current_user.id if current_user.is_authenticated else None,
+            dataset_id=dataset.id,
+            view_cookie=user_cookie
+        ).first()
+
+    def create_new_record(self, dataset: DataSet, user_cookie: str) -> DSViewRecord:
+        return self.create(
+                user_id=current_user.id if current_user.is_authenticated else None,
+                dataset_id=dataset.id,
+                view_date=datetime.now(timezone.utc),
+                view_cookie=user_cookie,
+            )
 
 
 class DataSetRepository(BaseRepository):
@@ -175,3 +193,11 @@ class FileViewRecordRepository(BaseRepository):
     def total_feature_model_views(self) -> int:
         max_id = self.model.query.with_entities(func.max(self.model.id)).scalar()
         return max_id if max_id is not None else 0
+
+
+class DOIMappingRepository(BaseRepository):
+    def __init__(self):
+        super().__init__(DOIMapping)
+
+    def get_new_doi(self, old_doi: str) -> str:
+        return self.model.query.filter_by(dataset_doi_old=old_doi).first()

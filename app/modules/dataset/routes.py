@@ -11,6 +11,7 @@ from app import db
 
 from core.configuration.configuration import uploads_folder_name
 from flask import (
+    redirect,
     render_template,
     request,
     jsonify,
@@ -18,13 +19,13 @@ from flask import (
     current_app,
     make_response,
     abort,
+    url_for,
 )
 from flask_login import login_required, current_user
 
 from app.modules.dataset.forms import DataSetForm
 from app.modules.dataset.models import (
     DSDownloadRecord,
-    DSViewRecord,
     DataSet,
     File,
     FileDownloadRecord,
@@ -42,6 +43,7 @@ from app.modules.dataset.services import (
     FeatureModelService,
     FileService,
     FileDownloadRecordService,
+    DOIMappingService
 )
 from app.modules.zenodo.services import ZenodoService
 
@@ -50,6 +52,8 @@ dataset_service = DataSetService()
 author_service = AuthorService()
 dsmetadata_service = DSMetaDataService()
 zenodo_service = ZenodoService()
+doi_mapping_service = DOIMappingService()
+ds_view_record_service = DSViewRecordService()
 
 
 @dataset_bp.route("/dataset/upload", methods=["GET", "POST"])
@@ -480,35 +484,23 @@ def view_file(file_id):
 @dataset_bp.route("/doi/<path:doi>/", methods=["GET"])
 def subdomain_index(doi):
 
+    # Check if the DOI is an old DOI
+    new_doi = doi_mapping_service.get_new_doi(doi)
+    if new_doi:
+        # Redirect to the same path with the new DOI
+        return redirect(url_for('dataset.subdomain_index', doi=new_doi), code=302)
+
+    # Try to search the dataset by the provided DOI (which should already be the new one)
     ds_meta_data = dsmetadata_service.filter_by_doi(doi)
 
     if not ds_meta_data:
         abort(404)
 
+    # Get dataset
     dataset = ds_meta_data.data_set
 
-    # Get the cookie from the request or generate a new one if it does not exist
-    user_cookie = request.cookies.get("view_cookie")
-    if not user_cookie:
-        user_cookie = str(uuid.uuid4())
-
-    # Check if the view record already exists for this cookie
-    existing_record = DSViewRecord.query.filter_by(
-        user_id=current_user.id if current_user.is_authenticated else None,
-        dataset_id=dataset.id,
-        view_cookie=user_cookie
-    ).first()
-
-    if not existing_record:
-        # Record the view in your database
-        DSViewRecordService().create(
-            user_id=current_user.id if current_user.is_authenticated else None,
-            dataset_id=dataset.id,
-            view_date=datetime.now(timezone.utc),
-            view_cookie=user_cookie,
-        )
-
     # Save the cookie to the user's browser
+    user_cookie = ds_view_record_service.create_cookie(dataset=dataset)
     resp = make_response(render_template("dataset/view_dataset.html", dataset=dataset))
     resp.set_cookie("view_cookie", user_cookie)
 

@@ -101,7 +101,8 @@ class DataSet(db.Model):
         return sum(file.size for fm in self.feature_models for file in fm.files)
 
     def get_file_total_size_for_human(self):
-        return get_human_readable_size(self.get_file_total_size())
+        from app.modules.dataset.services import SizeService
+        return SizeService().get_human_readable_size(self.get_file_total_size())
 
     def get_uvlhub_doi(self):
         from app.modules.dataset.services import DataSetService
@@ -151,7 +152,8 @@ class File(db.Model):
     feature_model_id = db.Column(db.Integer, db.ForeignKey('feature_model.id'), nullable=False)
 
     def get_formatted_size(self):
-        return get_human_readable_size(self.size)
+        from app.modules.dataset.services import SizeService
+        return SizeService().get_human_readable_size(self.size)
 
     def to_dict(self):
         return {
@@ -159,7 +161,7 @@ class File(db.Model):
             'name': self.name,
             'checksum': self.checksum,
             'size_in_bytes': self.size,
-            'size_in_human_format': get_human_readable_size(self.size),
+            'size_in_human_format': self.get_formatted_size(),
             'url': f'{request.host_url.rstrip("/")}/file/download/{self.id}',
         }
 
@@ -248,12 +250,7 @@ class FileDownloadRecord(db.Model):
         )
 
 
-def get_human_readable_size(size):
-    if size < 1024:
-        return f'{size} bytes'
-    elif size < 1024 ** 2:
-        return f'{round(size / 1024, 2)} KB'
-    elif size < 1024 ** 3:
-        return f'{round(size / (1024 ** 2), 2)} MB'
-    else:
-        return f'{round(size / (1024 ** 3), 2)} GB'
+class DOIMapping(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    dataset_doi_old = db.Column(db.String(120))
+    dataset_doi_new = db.Column(db.String(120))
