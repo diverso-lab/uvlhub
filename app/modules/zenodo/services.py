@@ -4,7 +4,7 @@ import requests
 
 from core.configuration.configuration import uploads_folder_name
 from dotenv import load_dotenv
-from flask import current_app, jsonify, Response
+from flask import jsonify, Response
 from flask_login import current_user
 
 from app.modules.dataset.models import DataSet, FeatureModel
@@ -31,7 +31,6 @@ class ZenodoService(BaseService):
             ZENODO_API_URL = os.getenv("ZENODO_API_URL", "https://sandbox.zenodo.org/api/deposit/depositions")
 
         return ZENODO_API_URL
-    
 
     def get_zenodo_access_token(self):
         return os.getenv("ZENODO_ACCESS_TOKEN")
@@ -42,7 +41,6 @@ class ZenodoService(BaseService):
         self.ZENODO_API_URL = self.get_zenodo_url()
         self.headers = {"Content-Type": "application/json"}
         self.params = {"access_token": self.ZENODO_ACCESS_TOKEN}
-        
 
     def test_connection(self) -> bool:
         """
@@ -71,9 +69,8 @@ class ZenodoService(BaseService):
         with open(file_path, "w") as f:
             f.write("This is a test file with some content.")
 
-        
         messages = []  # List to store messages
-        
+
         # Step 1: Create a deposition on Zenodo
         data = {
             "metadata": {
@@ -85,7 +82,7 @@ class ZenodoService(BaseService):
         }
 
         response = requests.post(self.ZENODO_API_URL, json=data, params=self.params, headers=self.headers)
-        
+
         if response.status_code != 201:
             return jsonify(
                 {
@@ -93,7 +90,6 @@ class ZenodoService(BaseService):
                     "messages": f"Failed to create test deposition on Zenodo. Response code: {response.status_code}",
                 }
             )
-
 
         deposition_id = response.json()["id"]
 
@@ -121,7 +117,6 @@ class ZenodoService(BaseService):
         if os.path.exists(file_path):
             os.remove(file_path)
 
-        
         return jsonify({"success": success, "messages": messages})
 
     def get_all_depositions(self) -> dict:
