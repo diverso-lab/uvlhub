@@ -17,7 +17,7 @@ load_dotenv()
 class ZenodoService(BaseService):
 
     FLASK_ENV = os.getenv("FLASK_ENV", "development")
-    
+
     if FLASK_ENV == "development":
         ZENODO_API_URL = os.getenv("ZENODO_API_URL", "https://sandbox.zenodo.org/api/deposit/depositions")
     elif FLASK_ENV == "production":
