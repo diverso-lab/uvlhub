@@ -1,9 +1,10 @@
+import os
 from datetime import datetime, timezone
 
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from app import db
+from app import db, upload_folder_name
 
 
 class User(db.Model, UserMixin):
@@ -29,6 +30,9 @@ class User(db.Model, UserMixin):
 
     def check_password(self, password):
         return check_password_hash(self.password, password)
+
+    def temp_folder(self):
+        return os.path.join(upload_folder_name(), "temp", str(self.id))
 
     def save(self):
         if not self.id:

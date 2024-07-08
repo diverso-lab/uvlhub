@@ -1,13 +1,10 @@
 import os
 import json
-import hashlib
 import shutil
 import tempfile
 import uuid
 from datetime import datetime, timezone
 from zipfile import ZipFile
-
-from app import db
 
 from flask import (
     render_template,
@@ -20,26 +17,21 @@ from flask import (
 )
 from flask_login import login_required, current_user
 
-import app
+from app import db
 from app.modules.dataset.forms import DataSetForm
 from app.modules.dataset.models import (
     DSDownloadRecord,
     DSViewRecord,
-    DataSet,
     File,
     FileDownloadRecord,
     FileViewRecord,
-    PublicationType
 )
 from app.modules.dataset import dataset_bp
 from app.modules.dataset.services import (
-    AuthorService,
     DSDownloadRecordService,
     DSMetaDataService,
     DSViewRecordService,
     DataSetService,
-    FMMetaDataService,
-    FeatureModelService,
     FileService,
     FileDownloadRecordService,
 )
@@ -47,7 +39,6 @@ from app.modules.zenodo.services import ZenodoService
 
 
 dataset_service = DataSetService()
-author_service = AuthorService()
 dsmetadata_service = DSMetaDataService()
 zenodo_service = ZenodoService()
 
@@ -57,78 +48,52 @@ zenodo_service = ZenodoService()
 def create_dataset():
     form = DataSetForm()
     if request.method == "POST":
+        if not form.validate_on_submit():
+            return jsonify({"message": form.errors}), 400
+
         try:
-            # get JSON from frontend
-            form_data_json = request.form.get("formData")
-            form_data_dict = json.loads(form_data_json)
+            dataset = dataset_service.create_from_form(form=form, current_user=current_user)
+            move_feature_models(dataset)
+        except Exception as exc:
+            return jsonify({"message": str(exc)}), 400
 
-            # get dicts
-            uploaded_models_data = form_data_dict["uploaded_models_form"]
+        # send dataset as deposition to Zenodo
+        try:
+            zenodo_response_json = zenodo_service.create_new_deposition(dataset)
+            response_data = json.dumps(zenodo_response_json)
+            data = json.loads(response_data)
+        except Exception:
+            data = {}
+            zenodo_response_json = {}
 
-            # create dataset
-            dataset = create_dataset_in_db(form_data_dict["basic_info_form"])
+        if not data.get("conceptrecid"):
+            msg = "it has not been possible to create the deposition in Zenodo, so we save everything locally"
+            return jsonify({"message": msg}), 200
 
-            # send dataset as deposition to Zenodo
-            try:
-                zenodo_response_json = zenodo_service.create_new_deposition(dataset)
-                response_data = json.dumps(zenodo_response_json)
-                data = json.loads(response_data)
-            except Exception:
-                data = {}
-                zenodo_response_json = {}
+        deposition_id = data.get("id")
 
-            if data.get("conceptrecid"):
-                deposition_id = data.get("id")
+        # update dataset with deposition id in Zenodo
+        dataset_service.update_dsmetadata(dataset.ds_meta_data_id, deposition_id=deposition_id)
 
-                # update dataset with deposition id in Zenodo
-                dsmetadata_service.update(
-                    dataset.ds_meta_data_id, deposition_id=deposition_id
-                )
+        try:
+            # iterate for each feature model (one feature model = one request to Zenodo
+            for feature_model in dataset.feature_models:
+                zenodo_service.upload_file(deposition_id, feature_model)
 
-                # create feature models
-                feature_models = create_feature_models_in_db(
-                    dataset, uploaded_models_data
-                )
+            # publish deposition
+            zenodo_service.publish_deposition(deposition_id)
 
-                try:
-                    # iterate for each feature model (one feature model = one request to Zenodo
-                    for feature_model in feature_models:
-                        zenodo_service.upload_file(deposition_id, feature_model)
+            # update DOI
+            deposition_doi = zenodo_service.get_doi(deposition_id)
+            dataset_service.update_dsmetadata(dataset.ds_meta_data_id, dataset_doi=deposition_doi)
+        except Exception:
+            msg = "it has not been possible upload feature models in Zenodo and update the DOI"
+            return jsonify({"message": msg}), 200
 
-                    # publish deposition
-                    zenodo_service.publish_deposition(deposition_id)
-
-                    # update DOI
-                    deposition_doi = zenodo_service.get_doi(deposition_id)
-                    dsmetadata_service.update(
-                        dataset.ds_meta_data_id, dataset_doi=deposition_doi
-                    )
-                except Exception:
-                    pass
-
-                # move feature models permanently
-                move_feature_models(dataset.id, feature_models)
-
-            else:
-                # it has not been possible to create the deposition in Zenodo, so we save everything locally
-
-                # create feature models
-                feature_models = create_feature_models_in_db(
-                    dataset, uploaded_models_data
-                )
-
-                # move feature models permanently
-                move_feature_models(dataset.id, feature_models)
-
-            return jsonify({"message": zenodo_response_json}), 200
-
-        except Exception as e:
-            return jsonify({"message": str(e)}), 500
-
-    # Delete temp folder
-    file_path = os.path.join(app.upload_folder_name(), "temp", str(current_user.id))
-    if os.path.exists(file_path) and os.path.isdir(file_path):
-        shutil.rmtree(file_path)
+        # Delete temp folder
+        file_path = current_user.temp_folder()
+        if os.path.exists(file_path) and os.path.isdir(file_path):
+            shutil.rmtree(file_path)
 
     return render_template("dataset/upload_dataset.html", form=form)
 
@@ -143,121 +108,13 @@ def list_dataset():
     )
 
 
-def create_dataset_in_db(basic_info_data):
-    ds_data = {
-        "title": basic_info_data["title"][0],
-        "description": basic_info_data["description"][0],
-        "publication_type": PublicationType(basic_info_data["publication_type"][0]),
-        "publication_doi": basic_info_data["publication_doi"][0],
-        "tags": basic_info_data["tags"][0],
-    }
-    ds_meta_data = dsmetadata_service.create(**ds_data)
-
-    # create dataset metadata authors
-    # I always add myself
-    author_data = {
-        "name": f"{current_user.profile.surname}, {current_user.profile.name}",
-        "affiliation": current_user.profile.affiliation
-        if hasattr(current_user.profile, "affiliation")
-        else None,
-        "orcid": current_user.profile.orcid
-        if hasattr(current_user.profile, "orcid")
-        else None,
-        "ds_meta_data_id": ds_meta_data.id,
-    }
-    author_service.create(**author_data)
-
-    # how many authors are there?
-    if "author_name" in basic_info_data:
-        number_of_authors = len(basic_info_data["author_name"])
-        for i in range(number_of_authors):
-            extra_author = {
-                "name": basic_info_data["author_name"][i],
-                "affiliation": basic_info_data["author_affiliation"][i],
-                "orcid": basic_info_data["author_orcid"][i],
-                "ds_meta_data_id": ds_meta_data.id,
-            }
-            author_service.create(**extra_author)
-
-    # create dataset
-    return dataset_service.create(
-        user_id=current_user.id, ds_meta_data_id=ds_meta_data.id
-    )
-
-
-def create_feature_models_in_db(dataset: DataSet, uploaded_models_data: dict):
-    feature_models = []
-
-    for i, uvl_identifier in enumerate(uploaded_models_data.get("uvl_identifier", [])):
-        uvl_filename = uploaded_models_data["uvl_filename"][i]
-
-        # create feature model metadata
-        feature_model_metadata = FMMetaDataService().create(
-            uvl_filename=uvl_filename,
-            title=uploaded_models_data["title"][i],
-            description=uploaded_models_data["description"][i],
-            publication_type=PublicationType(
-                uploaded_models_data["uvl_publication_type"][i]
-            ),
-            publication_doi=uploaded_models_data["publication_doi"][i],
-            tags=uploaded_models_data["tags"][i],
-            uvl_version=uploaded_models_data["uvl_version"][i],
-        )
-
-        # create feature model
-        feature_model = FeatureModelService().create(
-            data_set_id=dataset.id,
-            fm_meta_data_id=feature_model_metadata.id,
-        )
-
-        # associated authors in feature model
-        for idx, author_name in enumerate(
-            uploaded_models_data.get(f"author_name_{uvl_identifier}", [])
-        ):
-            author_service.create(
-                name=author_name,
-                affiliation=uploaded_models_data[
-                    f"author_affiliation_{uvl_identifier}"
-                ][idx],
-                orcid=uploaded_models_data[f"author_orcid_{uvl_identifier}"][idx],
-                fm_meta_data_id=feature_model_metadata.id,
-            )
-
-        # associated files in feature model
-        user_id = current_user.id
-        file_path = os.path.join(
-            app.upload_folder_name(), "temp", str(user_id), uvl_filename
-        )
-        checksum, size = calculate_checksum_and_size(file_path)
-
-        FileService().create(
-            name=uvl_filename,
-            checksum=checksum,
-            size=size,
-            feature_model_id=feature_model.id,
-        )
-
-        feature_models.append(feature_model)
-
-    return feature_models
-
-
-def calculate_checksum_and_size(file_path):
-    file_size = os.path.getsize(file_path)
-    with open(file_path, "rb") as file:
-        content = file.read()
-        hash_md5 = hashlib.md5(content).hexdigest()
-        return hash_md5, file_size
-
-
-def move_feature_models(dataset_id, feature_models):
-    user_id = current_user.id
-    source_dir = f"uploads/temp/{user_id}/"
-    dest_dir = f"uploads/user_{user_id}/dataset_{dataset_id}/"
+def move_feature_models(dataset):
+    source_dir = current_user.temp_folder()
+    dest_dir = f"uploads/user_{current_user.id}/dataset_{dataset.id}/"
 
     os.makedirs(dest_dir, exist_ok=True)
 
-    for feature_model in feature_models:
+    for feature_model in dataset.feature_models:
         uvl_filename = feature_model.fm_meta_data.uvl_filename
         shutil.move(os.path.join(source_dir, uvl_filename), dest_dir)
 
@@ -266,8 +123,7 @@ def move_feature_models(dataset_id, feature_models):
 @login_required
 def upload():
     file = request.files["file"]
-    user_id = current_user.id
-    temp_folder = os.path.join(app.upload_folder_name(), "temp", str(user_id))
+    temp_folder = current_user.temp_folder()
 
     if not file or not file.filename.endswith(".uvl"):
         return jsonify({"message": "No valid file"}), 400
@@ -293,28 +149,25 @@ def upload():
 
     try:
         file.save(file_path)
-        if True:
-            return (
-                jsonify(
-                    {
-                        "message": "UVL uploaded and validated successfully",
-                        "filename": new_filename,
-                    }
-                ),
-                200,
-            )
-        else:
-            return jsonify({"message": "No valid model"}), 400
     except Exception as e:
         return jsonify({"message": str(e)}), 500
+
+    return (
+        jsonify(
+            {
+                "message": "UVL uploaded and validated successfully",
+                "filename": new_filename,
+            }
+        ),
+        200,
+    )
 
 
 @dataset_bp.route("/dataset/file/delete", methods=["POST"])
 def delete():
     data = request.get_json()
     filename = data.get("file")
-    user_id = current_user.id
-    temp_folder = os.path.join(app.upload_folder_name(), "temp", str(user_id))
+    temp_folder = current_user.temp_folder()
     filepath = os.path.join(temp_folder, filename)
 
     if os.path.exists(filepath):
