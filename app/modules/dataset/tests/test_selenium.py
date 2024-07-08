@@ -1,29 +1,28 @@
-from flask_login import login_user
-from selenium import webdriver
+import time
+
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.remote.webelement import WebElement
-from selenium.common.exceptions import NoSuchElementException
 
 from core.environment.host import get_host_for_selenium_testing
 from core.selenium.common import initialize_driver, close_driver
 
 
-import os.path
-
-
-# JavaScript: HTML5 File drop
-# source            : https://gist.github.com/florentbr/0eff8b785e85e93ecc3ce500169bd676
-# param1 WebElement : Drop area element
-# param2 Double     : Optional - Drop offset x relative to the top/left corner of the drop area. Center if 0.
-# param3 Double     : Optional - Drop offset y relative to the top/left corner of the drop area. Center if 0.
-# return WebElement : File input
-
 def wait_for_page_to_load(driver, timeout=4):
     WebDriverWait(driver, timeout).until(
         lambda driver: driver.execute_script("return document.readyState") == "complete"
     )
+
+
+def count_datasets(driver, host):
+    driver.get(f"{host}/dataset/list")
+    wait_for_page_to_load(driver)
+
+    try:
+        amount_datasets = len(driver.find_elements(By.XPATH, "//table//tbody//tr"))
+    except Exception:
+        amount_datasets = 0
+    return amount_datasets
 
 
 def test_upload_dataset():
@@ -46,6 +45,9 @@ def test_upload_dataset():
         # Send the form
         password_field.send_keys(Keys.RETURN)
         wait_for_page_to_load(driver)
+
+        # Count initial datasets
+        initial_datasets = count_datasets(driver, host)
 
         # Open the upload dataset
         driver.get(f"{host}/dataset/upload")
@@ -107,13 +109,15 @@ def test_upload_dataset():
         upload_btn = driver.find_element(By.ID, "upload_button")
         upload_btn.send_keys(Keys.RETURN)
         wait_for_page_to_load(driver)
-        import ipdb; ipdb.set_trace()
+        time.sleep(2)  # Force wait time
 
-        try:
-            driver.find_element(By.XPATH, "//h1[contains(@class, 'h2 mb-3') and contains(., 'Latest datasets')]")
-            print("Test passed!")
-        except NoSuchElementException:
-            raise AssertionError("Test failed!")
+        assert driver.current_url == f"{host}/dataset/list", "Test failed!"
+
+        # Count final datasets
+        final_datasets = count_datasets(driver, host)
+        assert final_datasets == initial_datasets + 1, "Test failed!"
+
+        print("Test passed!")
 
     finally:
 
