@@ -141,11 +141,16 @@ class ZenodoService(BaseService):
         Returns:
             dict: The response in JSON format with the details of the created deposition.
         """
+
+        logger.info(f"Dataset sending to Zenodo...")
+        logger.info(f"Publication type...{dataset.ds_meta_data.publication_type.value}")
+
         metadata = {
             "title": dataset.ds_meta_data.title,
             "upload_type": "dataset" if dataset.ds_meta_data.publication_type.value == "none" else "publication",
             "publication_type": (
                 dataset.ds_meta_data.publication_type.value
+                
                 if dataset.ds_meta_data.publication_type.value != "none"
                 else None
             ),

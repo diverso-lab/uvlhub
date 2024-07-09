@@ -1,3 +1,4 @@
+import logging
 import os
 import json
 import shutil
@@ -5,6 +6,8 @@ import tempfile
 import uuid
 from datetime import datetime, timezone
 from zipfile import ZipFile
+
+logger = logging.getLogger(__name__)
 
 from flask import (
     redirect,
@@ -61,19 +64,22 @@ def create_dataset():
             return jsonify({"message": form.errors}), 400
 
         try:
+            logger.info(f"Creating dataset...")
             dataset = dataset_service.create_from_form(form=form, current_user=current_user)
+            logger.info(f"Created dataset: {dataset}")
             move_feature_models(dataset)
         except Exception as exc:
-            return jsonify({"message": str(exc)}), 400
+            return jsonify({"Exception while create dataset data in local: ": str(exc)}), 400
 
         # send dataset as deposition to Zenodo
         try:
             zenodo_response_json = zenodo_service.create_new_deposition(dataset)
             response_data = json.dumps(zenodo_response_json)
             data = json.loads(response_data)
-        except Exception:
+        except Exception as exc:
             data = {}
             zenodo_response_json = {}
+            return jsonify({"Exception while create dataset data in Zenodo: ": str(exc)}), 400
 
         if not data.get("conceptrecid"):
             msg = "it has not been possible to create the deposition in Zenodo, so we save everything locally"

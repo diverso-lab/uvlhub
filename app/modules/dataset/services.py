@@ -1,9 +1,11 @@
+import logging
 import os
 import hashlib
 from typing import Optional
 import uuid
 
 from flask import request
+logger = logging.getLogger(__name__)
 
 from app.modules.dataset.models import DSViewRecord, DataSet, DSMetaData
 from app.modules.dataset.repositories import (
@@ -86,6 +88,7 @@ class DataSetService(BaseService):
             "orcid": current_user.profile.orcid,
         }
         try:
+            logger.info(f"Creating dsmetadata...: {form.get_dsmetadata()}")
             dsmetadata = self.dsmetadata_repository.create(**form.get_dsmetadata())
             for author_data in [main_author] + form.get_authors():
                 author = self.author_repository.create(commit=False, ds_meta_data_id=dsmetadata.id, **author_data)
@@ -114,6 +117,7 @@ class DataSetService(BaseService):
                 fm.files.append(file)
             self.repository.session.commit()
         except Exception as exc:
+            logger.info(f"Exception creating dataset from form...: {exc}")
             self.repository.session.rollback()
             raise exc
         return dataset

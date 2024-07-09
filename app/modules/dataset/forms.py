@@ -71,14 +71,24 @@ class DataSetForm(FlaskForm):
     submit = SubmitField("Submit")
 
     def get_dsmetadata(self):
+
+        publication_type_converted = self.convert_publication_type(self.publication_type.data)
+
         return {
             "title": self.title.data,
             "description": self.desc.data,
-            "publication_type": self.publication_type.data,
+            "publication_type": publication_type_converted,
             "publication_doi": self.publication_doi.data,
             "dataset_doi": self.dataset_doi.data,
             "tags": self.tags.data,
         }
+    
+    def convert_publication_type(self, value):
+        for pt in PublicationType:
+            if pt.value == value:
+                return pt.name
+        return "NONE"
+
 
     def get_authors(self):
         return [author.get_author() for author in self.authors]
