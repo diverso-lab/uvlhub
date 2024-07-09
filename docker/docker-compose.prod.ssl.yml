@@ -35,6 +35,7 @@ services:
     image: nginx:latest
     volumes:
       - ./nginx/nginx.prod.ssl.conf:/etc/nginx/nginx.conf
+      - ./nginx/html:/usr/share/nginx/html
       - ./letsencrypt:/etc/letsencrypt:ro
       - ./public:/var/www:rw
     ports:
