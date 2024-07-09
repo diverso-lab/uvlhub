@@ -265,8 +265,8 @@
 
 <!-- Modal-->
 <div class="modal fade" id="fileViewerModal" tabindex="-1" aria-labelledby="fileViewerModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
+    <div class="modal-dialog modal-lg" style="height: 80vh; display: flex; align-items: center;">
+        <div class="modal-content" style="height: 80vh;">
             <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
                 <h5 class="modal-title" id="fileViewerModalLabel">Feature model view</h5>
                 <div>
@@ -281,13 +281,15 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
             </div>
-            <div class="modal-body" style="overflow-y: auto;">
-                <pre id="fileContent"
-                    style="max-height: 400px; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word; background-color: #f5f5f5; padding: 20px; border-radius: 5px; border: 1px solid #ccc;"></pre>
+            <div class="modal-body" style="overflow-y: auto; height: calc(100vh - 50px);">
+                <pre id="fileContent" style="height: 100%; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word; background-color: #f5f5f5; padding: 20px; border-radius: 5px; border: 1px solid #ccc;"></pre>
+
             </div>
         </div>
     </div>
 </div>
+
+
 
 
 <script>
