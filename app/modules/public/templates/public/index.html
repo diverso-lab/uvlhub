@@ -19,7 +19,7 @@
                         <div class="d-flex align-items-center justify-content-between">
                             <h2>
 
-                                <a href="/dataset/view/{{ dataset.id }}">
+                                <a href="{{ dataset.get_uvlhub_doi() }}">
                                     {{ dataset.ds_meta_data.title }}
                                 </a>
 
@@ -86,7 +86,7 @@
 
                         <div class="row  mt-4">
                             <div class="col-12">
-                                <a href="/dataset/view/{{ dataset.id }}" class="btn btn-outline-primary btn-sm"
+                                <a href="{{ dataset.get_uvlhub_doi() }}" class="btn btn-outline-primary btn-sm"
                                    style="border-radius: 5px;">
                                     <i data-feather="eye" class="center-button-icon"></i>
                                     View dataset
@@ -159,23 +159,40 @@
 
                 <div class="col-12">
 
-                    <div class="card card-note">
+                    <div class="card">
 
-                        <h2 class="card-title card-title-note">
-                            <code>&lt;/dev mode&gt;</code>
-                        </h2>
+                        <div class="card-body">
+                    
 
-                        <div class="card-body card-body-slim">
-
-                            <b>Important note</b>: UVLHub is currently waiting to publish the paper associated with the tool.
-                                All datasets are temporarily uploaded to a Zenodo sandbox mode. Once the paper is
-                                published, all datasets will be permanently uploaded to Zenodo. This is transparent to
-                                the user, he/she does not have to do  anything. The DOI of the UVLHub dataset will
-                                also be redirected and can be used without any inconvenience.
-
+                    
+                            <h2> <b>Related publication</b> </h2>
+                            
+                            David Romero-Organvidez, José A. Galindo, Chico Sundermann, Jose-Miguel Horcas, David Benavides. 
+                            <i>UVLHub: A feature model data repository using UVL and open science principles</i>,
+                            Journal of Systems and Software,
+                            2024,
+                            112150,
+                            ISSN 0164-1212,
+                            <a href="https://doi.org/10.1016/j.jss.2024.112150" target="_blank">https://doi.org/10.1016/j.jss.2024.112150</a>
+                    
                         </div>
-
+                    
+                        <div class="card-body mt-0 pt-0">
+                    
+                            <button onclick="copyText('bibtex_cite')" class="btn btn-light" style="border-radius: 5px; margin-right: 10px">
+                                <i data-feather="clipboard" class="center-button-icon"></i>
+                                Copy in BibTex
+                            </button>
+                    
+                            <button onclick="copyText('ris_cite')" class="btn btn-light" style="border-radius: 5px;">
+                                <i data-feather="clipboard" class="center-button-icon"></i>
+                                Copy in RIS
+                            </button>
+                    
+                        </div>
+                    
                     </div>
+                    
 
                 </div>
 

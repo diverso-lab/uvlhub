@@ -1,11 +1,12 @@
 import os
 
 from flask import Flask
-from flask_login import current_user
+
 from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
 from flask_migrate import Migrate
 
+from core.configuration.configuration import get_app_version
 from core.managers.module_manager import ModuleManager
 from core.managers.config_manager import ConfigManager
 from core.managers.error_handler_manager import ErrorHandlerManager
@@ -34,6 +35,7 @@ def create_app(config_name='development'):
     module_manager = ModuleManager(app)
     module_manager.register_modules()
 
+    # Register login manager
     from flask_login import LoginManager
     login_manager = LoginManager()
     login_manager.init_app(app)
@@ -58,40 +60,11 @@ def create_app(config_name='development'):
         return {
             'FLASK_APP_NAME': os.getenv('FLASK_APP_NAME'),
             'FLASK_ENV': os.getenv('FLASK_ENV'),
-            'DOMAIN': os.getenv('DOMAIN', 'localhost')
+            'DOMAIN': os.getenv('DOMAIN', 'localhost'),
+            'APP_VERSION': get_app_version()
         }
 
     return app
-
-
-def get_test_client():
-    """
-    Function to get the test client of the application.
-    :return: A Flask application test client.
-    """
-    return create_app().test_client()
-
-
-def upload_folder_name():
-    return 'uploads'
-
-
-def get_user_by_token(token):
-    # TODO
-    from app.modules.auth.models import User
-    return User.query.first()
-
-
-def get_authenticated_user_profile():
-    if current_user.is_authenticated:
-        return current_user.profile
-    return None
-
-
-def get_authenticated_user():
-    if current_user.is_authenticated:
-        return current_user
-    return None
 
 
 app = create_app()

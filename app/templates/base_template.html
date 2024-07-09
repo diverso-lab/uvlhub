@@ -132,6 +132,17 @@ chico sundermann">
 
             </ul>
 
+            {% if APP_VERSION != 'unknown' and APP_VERSION != '' %}
+            <div class="sidebar-cta text-center">
+                <div class="sidebar-cta-content">
+                    <div class="text">
+                        Compilation build <a href="https://github.com/diverso-lab/uvlhub/releases/tag/{{ APP_VERSION }}" target="_blank">{{ APP_VERSION }}</a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+
         </div>
     </nav>
 
@@ -214,6 +225,62 @@ chico sundermann">
         </footer>
     </div>
 </div>
+
+<pre id="bibtex_cite" style="display: none">
+@article{romero2024_uvlhub_open_science,
+    title = {UVLHub: A feature model data repository using UVL and open science principles},
+    journal = {Journal of Systems and Software},
+    pages = {112150},
+    year = {2024},
+    issn = {0164-1212},
+    doi = {https://doi.org/10.1016/j.jss.2024.112150},
+    url = {https://www.sciencedirect.com/science/article/pii/S016412122400195X},
+    author = {David Romero-Organvidez and José A. Galindo and Chico Sundermann and Jose-Miguel Horcas and David Benavides},
+    keywords = {Feature models, Software product line, Variability, Dataset, Uvl},
+    abstract = {Feature models are the de facto standard for modelling variabilities and commonalities in features and relationships in software product lines. They are the base artefacts in many engineering activities, such as product configuration, derivation, or testing. Concrete models in different domains exist; however, many are in private or sparse repositories or belong to discontinued projects. The dispersion of knowledge of feature models hinders the study and reuse of these artefacts in different studies. The Universal Variability Language (UVL) is a community effort textual feature model language that promotes a common way of serialising feature models independently of concrete tools. Open science principles promote transparency, accessibility, and collaboration in scientific research. Although some attempts exist to promote feature model sharing, the existing solutions lack open science principles by design. In addition, existing and public feature models are described using formats not always supported by current tools. This paper presents , a repository of feature models in UVL format. provides a front end that facilitates the search, upload, storage, and management of feature model datasets, improving the capabilities of discontinued proposals. Furthermore, the tool communicates with Zenodo –one of the most well-known open science repositories– providing a permanent save of datasets and following open science principles. includes existing datasets and is readily available to include new data and functionalities in the future. It is maintained by three active universities in variability modelling.}
+}
+</pre>
+                        
+<pre id="ris_cite" style="display: none">
+TY  - JOUR
+T1  - UVLHub: A feature model data repository using UVL and open science principles
+AU  - Romero-Organvidez, David
+AU  - Galindo, José A.
+AU  - Sundermann, Chico
+AU  - Horcas, Jose-Miguel
+AU  - Benavides, David
+JO  - Journal of Systems and Software
+SP  - 112150
+PY  - 2024
+DA  - 2024/07/01/
+SN  - 0164-1212
+DO  - https://doi.org/10.1016/j.jss.2024.112150
+UR  - https://www.sciencedirect.com/science/article/pii/S016412122400195X
+KW  - Feature models
+KW  - Software product line
+KW  - Variability
+KW  - Dataset
+KW  - Uvl
+AB  - Feature models are the de facto standard for modelling variabilities and commonalities in features and relationships in software product lines. They are the base artefacts in many engineering activities, such as product configuration, derivation, or testing. Concrete models in different domains exist; however, many are in private or sparse repositories or belong to discontinued projects. The dispersion of knowledge of feature models hinders the study and reuse of these artefacts in different studies. The Universal Variability Language (UVL) is a community effort textual feature model language that promotes a common way of serialising feature models independently of concrete tools. Open science principles promote transparency, accessibility, and collaboration in scientific research. Although some attempts exist to promote feature model sharing, the existing solutions lack open science principles by design. In addition, existing and public feature models are described using formats not always supported by current tools. This paper presents , a repository of feature models in UVL format. provides a front end that facilitates the search, upload, storage, and management of feature model datasets, improving the capabilities of discontinued proposals. Furthermore, the tool communicates with Zenodo –one of the most well-known open science repositories– providing a permanent save of datasets and following open science principles. includes existing datasets and is readily available to include new data and functionalities in the future. It is maintained by three active universities in variability modelling.
+ER  - 
+</pre>
+
+<pre id="text_cite" style="display: none;">
+David Romero-Organvidez, José A. Galindo, Chico Sundermann, Jose-Miguel Horcas, David Benavides,
+UVLHub: A feature model data repository using UVL and open science principles,
+Journal of Systems and Software,
+2024,
+112150,
+ISSN 0164-1212,
+https://doi.org/10.1016/j.jss.2024.112150.
+(https://www.sciencedirect.com/science/article/pii/S016412122400195X)
+Abstract: Feature models are the de facto standard for modelling variabilities and commonalities in features and relationships in software product lines. They are the base artefacts in many engineering activities, such as product configuration, derivation, or testing. Concrete models in different domains exist; however, many are in private or sparse repositories or belong to discontinued projects. The dispersion of knowledge of feature models hinders the study and reuse of these artefacts in different studies. The Universal Variability Language (UVL) is a community effort textual feature model language that promotes a common way of serialising feature models independently of concrete tools. Open science principles promote transparency, accessibility, and collaboration in scientific research. Although some attempts exist to promote feature model sharing, the existing solutions lack open science principles by design. In addition, existing and public feature models are described using formats not always supported by current tools. This paper presents , a repository of feature models in UVL format. provides a front end that facilitates the search, upload, storage, and management of feature model datasets, improving the capabilities of discontinued proposals. Furthermore, the tool communicates with Zenodo –one of the most well-known open science repositories– providing a permanent save of datasets and following open science principles. includes existing datasets and is readily available to include new data and functionalities in the future. It is maintained by three active universities in variability modelling.
+Keywords: Feature models; Software product line; Variability; Dataset; Uvl
+</pre>
+
+<pre id="apa_cite" style="display: none;">
+Romero-Organvidez, D., Galindo, J. A., Sundermann, C., Horcas, J.-M., & Benavides, D. (2024). UVLHub: A feature model data repository using UVL and open science principles. Journal of Systems and Software, 2024, 112150. https://doi.org/10.1016/j.jss.2024.112150
+</pre>
 
 <script src="{{ url_for("static", filename="js/app.js") }}"></script>
 

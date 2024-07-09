@@ -1,11 +1,14 @@
+from datetime import datetime, timezone
 import re
+from flask_login import current_user
 import unidecode
 from typing import Optional
 
-from sqlalchemy import or_, any_
+from sqlalchemy import desc, func, or_, any_
 
 from app.modules.dataset.models import (
     Author,
+    DOIMapping,
     DSDownloadRecord,
     DSMetaData,
     DSViewRecord,
@@ -30,7 +33,8 @@ class DSDownloadRecordRepository(BaseRepository):
         super().__init__(DSDownloadRecord)
 
     def total_dataset_downloads(self) -> int:
-        return self.count()
+        max_id = self.model.query.with_entities(func.max(self.model.id)).scalar()
+        return max_id if max_id is not None else 0
 
 
 class DSMetaDataRepository(BaseRepository):
@@ -46,7 +50,23 @@ class DSViewRecordRepository(BaseRepository):
         super().__init__(DSViewRecord)
 
     def total_dataset_views(self) -> int:
-        return self.count()
+        max_id = self.model.query.with_entities(func.max(self.model.id)).scalar()
+        return max_id if max_id is not None else 0
+
+    def the_record_exists(self, dataset: DataSet, user_cookie: str):
+        return self.model.query.filter_by(
+            user_id=current_user.id if current_user.is_authenticated else None,
+            dataset_id=dataset.id,
+            view_cookie=user_cookie
+        ).first()
+
+    def create_new_record(self, dataset: DataSet, user_cookie: str) -> DSViewRecord:
+        return self.create(
+                user_id=current_user.id if current_user.is_authenticated else None,
+                dataset_id=dataset.id,
+                view_date=datetime.now(timezone.utc),
+                view_cookie=user_cookie,
+            )
 
 
 class DataSetRepository(BaseRepository):
@@ -114,11 +134,25 @@ class DataSetRepository(BaseRepository):
 
         return datasets.all()
 
+    def count_synchronized_datasets(self):
+        return (
+            self.model.query.join(DSMetaData)
+            .filter(DSMetaData.dataset_doi.isnot(None))
+            .count()
+        )
+
+    def count_unsynchronized_datasets(self):
+        return (
+            self.model.query.join(DSMetaData)
+            .filter(DSMetaData.dataset_doi.is_(None))
+            .count()
+        )
+
     def latest_synchronized(self):
         return (
             self.model.query.join(DSMetaData)
             .filter(DSMetaData.dataset_doi.isnot(None))
-            .order_by(self.model.created_at.desc())
+            .order_by(desc(self.model.id))
             .limit(5)
             .all()
         )
@@ -133,6 +167,10 @@ class FeatureModelRepository(BaseRepository):
     def __init__(self):
         super().__init__(FeatureModel)
 
+    def count_feature_models(self) -> int:
+        max_id = self.model.query.with_entities(func.max(self.model.id)).scalar()
+        return max_id if max_id is not None else 0
+
 
 class FileRepository(BaseRepository):
     def __init__(self):
@@ -144,7 +182,8 @@ class FileDownloadRecordRepository(BaseRepository):
         super().__init__(FileDownloadRecord)
 
     def total_feature_model_downloads(self) -> int:
-        return self.count()
+        max_id = self.model.query.with_entities(func.max(self.model.id)).scalar()
+        return max_id if max_id is not None else 0
 
 
 class FileViewRecordRepository(BaseRepository):
@@ -152,4 +191,13 @@ class FileViewRecordRepository(BaseRepository):
         super().__init__(FileViewRecord)
 
     def total_feature_model_views(self) -> int:
-        return self.count()
+        max_id = self.model.query.with_entities(func.max(self.model.id)).scalar()
+        return max_id if max_id is not None else 0
+
+
+class DOIMappingRepository(BaseRepository):
+    def __init__(self):
+        super().__init__(DOIMapping)
+
+    def get_new_doi(self, old_doi: str) -> str:
+        return self.model.query.filter_by(dataset_doi_old=old_doi).first()

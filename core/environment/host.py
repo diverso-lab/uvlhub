@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-def get_host_for_testing(test_type):
+def get_host_for_testing(test_type: str) -> str:
     """
     Get the host URL for testing based on the test type and the working directory.
 
@@ -45,7 +45,7 @@ def get_host_for_testing(test_type):
         raise ValueError(f"Unknown WORKING_DIR value: {working_dir}")
 
 
-def get_host_for_locust_testing():
+def get_host_for_locust_testing() -> str:
     """
     Get the host URL for locust testing.
 
@@ -55,7 +55,7 @@ def get_host_for_locust_testing():
     return get_host_for_testing("locust")
 
 
-def get_host_for_selenium_testing():
+def get_host_for_selenium_testing() -> str:
     """
     Get the host URL for selenium testing.
 

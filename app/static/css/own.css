@@ -106,3 +106,62 @@
 .stats-color {
     color: #009688; 
 }
+
+.doi_button {
+    background-color: #147ABB;
+    border-color: #147ABB;
+    color: white;
+    display: flex;
+    align-items: center;
+    padding: 0;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.doi_button:hover {
+    background-color: #075585;
+    border-color: #075585;
+}
+
+.button_doi_id {
+    background-color: #5C5C5C;
+    padding: 10px;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.doi_button:hover .button_doi_id {
+    background-color: #075585;
+    color: white;
+}
+
+.doi_text {
+    background-color: #147ABB;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    transition: background-color 0.3s ease;
+}
+
+.doi_button:hover .doi_text {
+    background-color: #4ebbff;
+    color: white;
+}
+
+.doi_button:active .doi_text {
+    background-color: #4ebbff;
+    color: white;
+}
+
+.doi_button:active .button_doi_id {
+    background-color: #075585;
+    color: white;
+}
+
+.center-button-icon {
+    margin-right: 5px;
+}
+

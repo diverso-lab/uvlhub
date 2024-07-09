@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from zipfile import ZipFile
 
 from flask import (
+    redirect,
     render_template,
     request,
     jsonify,
@@ -14,6 +15,7 @@ from flask import (
     current_app,
     make_response,
     abort,
+    url_for,
 )
 from flask_login import login_required, current_user
 
@@ -21,26 +23,30 @@ from app import db
 from app.modules.dataset.forms import DataSetForm
 from app.modules.dataset.models import (
     DSDownloadRecord,
-    DSViewRecord,
     File,
     FileDownloadRecord,
     FileViewRecord,
 )
 from app.modules.dataset import dataset_bp
 from app.modules.dataset.services import (
+    AuthorService,
     DSDownloadRecordService,
     DSMetaDataService,
     DSViewRecordService,
     DataSetService,
     FileService,
     FileDownloadRecordService,
+    DOIMappingService
 )
 from app.modules.zenodo.services import ZenodoService
 
 
 dataset_service = DataSetService()
+author_service = AuthorService()
 dsmetadata_service = DSMetaDataService()
 zenodo_service = ZenodoService()
+doi_mapping_service = DOIMappingService()
+ds_view_record_service = DSViewRecordService()
 
 
 @dataset_bp.route("/dataset/upload", methods=["GET", "POST"])
@@ -48,6 +54,9 @@ zenodo_service = ZenodoService()
 def create_dataset():
     form = DataSetForm()
     if request.method == "POST":
+
+        dataset = None
+
         if not form.validate_on_submit():
             return jsonify({"message": form.errors}), 400
 
@@ -76,9 +85,9 @@ def create_dataset():
         dataset_service.update_dsmetadata(dataset.ds_meta_data_id, deposition_id=deposition_id)
 
         try:
-            # iterate for each feature model (one feature model = one request to Zenodo
+            # iterate for each feature model (one feature model = one request to Zenodo)
             for feature_model in dataset.feature_models:
-                zenodo_service.upload_file(deposition_id, feature_model)
+                zenodo_service.upload_file(dataset, deposition_id, feature_model)
 
             # publish deposition
             zenodo_service.publish_deposition(deposition_id)
@@ -86,14 +95,17 @@ def create_dataset():
             # update DOI
             deposition_doi = zenodo_service.get_doi(deposition_id)
             dataset_service.update_dsmetadata(dataset.ds_meta_data_id, dataset_doi=deposition_doi)
-        except Exception:
-            msg = "it has not been possible upload feature models in Zenodo and update the DOI"
+        except Exception as e:
+            msg = f"it has not been possible upload feature models in Zenodo and update the DOI: {e}"
             return jsonify({"message": msg}), 200
 
         # Delete temp folder
         file_path = current_user.temp_folder()
         if os.path.exists(file_path) and os.path.isdir(file_path):
             shutil.rmtree(file_path)
+
+        msg = "Everything works!"
+        return jsonify({"message": msg}), 200
 
     return render_template("dataset/upload_dataset.html", form=form)
 
@@ -242,38 +254,6 @@ def download_dataset(dataset_id):
     return resp
 
 
-@dataset_bp.route("/dataset/view/<int:dataset_id>", methods=["GET"])
-def view_dataset(dataset_id):
-    dataset = dataset_service.get_or_404(dataset_id)
-
-    # Get the cookie from the request or generate a new one if it does not exist
-    user_cookie = request.cookies.get("view_cookie")
-    if not user_cookie:
-        user_cookie = str(uuid.uuid4())
-
-    # Check if the view record already exists for this cookie
-    existing_record = DSViewRecord.query.filter_by(
-        user_id=current_user.id if current_user.is_authenticated else None,
-        dataset_id=dataset_id,
-        view_cookie=user_cookie
-    ).first()
-
-    if not existing_record:
-        # Record the view in your database
-        DSViewRecordService().create(
-            user_id=current_user.id if current_user.is_authenticated else None,
-            dataset_id=dataset_id,
-            view_date=datetime.now(timezone.utc),
-            view_cookie=user_cookie,
-        )
-
-    # Save the cookie to the user's browser
-    resp = make_response(render_template("dataset/view_dataset.html", dataset=dataset))
-    resp.set_cookie("view_cookie", user_cookie)
-
-    return resp
-
-
 @dataset_bp.route("/file/download/<int:file_id>", methods=["GET"])
 def download_file(file_id):
     file = FileService().get_or_404(file_id)
@@ -364,34 +344,25 @@ def view_file(file_id):
 
 @dataset_bp.route("/doi/<path:doi>/", methods=["GET"])
 def subdomain_index(doi):
-    # Busca el dataset por DOI
+
+    # Check if the DOI is an old DOI
+    new_doi = doi_mapping_service.get_new_doi(doi)
+    if new_doi:
+        # Redirect to the same path with the new DOI
+        return redirect(url_for('dataset.subdomain_index', doi=new_doi), code=302)
+
+    # Try to search the dataset by the provided DOI (which should already be the new one)
     ds_meta_data = dsmetadata_service.filter_by_doi(doi)
+
     if not ds_meta_data:
         abort(404)
 
+    # Get dataset
     dataset = ds_meta_data.data_set
-    if dataset:
-        dataset_id = dataset.id
-        user_cookie = request.cookies.get("view_cookie", str(uuid.uuid4()))
 
-        # Registra la vista del dataset
-        DSViewRecordService().create(
-            user_id=current_user.id if current_user.is_authenticated else None,
-            dataset_id=dataset_id,
-            view_date=datetime.now(timezone.utc),
-            view_cookie=user_cookie,
-        )
+    # Save the cookie to the user's browser
+    user_cookie = ds_view_record_service.create_cookie(dataset=dataset)
+    resp = make_response(render_template("dataset/view_dataset.html", dataset=dataset))
+    resp.set_cookie("view_cookie", user_cookie)
 
-        # Prepara la respuesta y establece la cookie
-        resp = make_response(
-            render_template("dataset/view_dataset.html", dataset=dataset)
-        )
-        resp.set_cookie(
-            "view_cookie", user_cookie, max_age=30 * 24 * 60 * 60
-        )  # Ejemplo: cookie expira en 30 días
-
-        return resp
-    else:
-        # Aquí puedes manejar el caso de que el DOI no corresponda a un dataset existente
-        # Por ejemplo, mostrar un error 404 o redirigir a una página de error
-        return "Dataset not found", 404
+    return resp
