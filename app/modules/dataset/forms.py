@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, SelectField, FieldList, FormField, SubmitField, TextAreaField, FileField
-from wtforms.validators import DataRequired, URL, Optional, Regexp
+from wtforms import StringField, SelectField, FieldList, FormField, SubmitField, TextAreaField
+from wtforms.validators import DataRequired, URL, Optional
 
 from app.modules.dataset.models import PublicationType
 
@@ -82,13 +82,12 @@ class DataSetForm(FlaskForm):
             "dataset_doi": self.dataset_doi.data,
             "tags": self.tags.data,
         }
-    
+
     def convert_publication_type(self, value):
         for pt in PublicationType:
             if pt.value == value:
                 return pt.name
         return "NONE"
-
 
     def get_authors(self):
         return [author.get_author() for author in self.authors]

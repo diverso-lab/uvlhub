@@ -5,7 +5,6 @@ from typing import Optional
 import uuid
 
 from flask import request
-logger = logging.getLogger(__name__)
 
 from app.modules.dataset.models import DSViewRecord, DataSet, DSMetaData
 from app.modules.dataset.repositories import (
@@ -22,6 +21,8 @@ from app.modules.dataset.repositories import (
     FileViewRecordRepository,
 )
 from core.services.BaseService import BaseService
+
+logger = logging.getLogger(__name__)
 
 
 def calculate_checksum_and_size(file_path):
@@ -124,7 +125,7 @@ class DataSetService(BaseService):
 
     def update_dsmetadata(self, id, **kwargs):
         return self.dsmetadata_repository.update(id, **kwargs)
-    
+
     def get_uvlhub_doi(self, dataset: DataSet) -> str:
         domain = os.getenv('DOMAIN', 'localhost')
         return f'http://{domain}/doi/{dataset.ds_meta_data.dataset_doi}'

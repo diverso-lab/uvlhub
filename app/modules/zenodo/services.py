@@ -2,13 +2,15 @@ import logging
 import os
 import requests
 
+from app.modules.dataset.models import DataSet, FeatureModel
+from app.modules.zenodo.repositories import ZenodoRepository
+
 from core.configuration.configuration import uploads_folder_name
 from dotenv import load_dotenv
 from flask import jsonify, Response
 from flask_login import current_user
 
-from app.modules.dataset.models import DataSet, FeatureModel
-from app.modules.zenodo.repositories import ZenodoRepository
+
 from core.services.BaseService import BaseService
 
 logger = logging.getLogger(__name__)
@@ -142,7 +144,7 @@ class ZenodoService(BaseService):
             dict: The response in JSON format with the details of the created deposition.
         """
 
-        logger.info(f"Dataset sending to Zenodo...")
+        logger.info("Dataset sending to Zenodo...")
         logger.info(f"Publication type...{dataset.ds_meta_data.publication_type.value}")
 
         metadata = {
@@ -150,7 +152,6 @@ class ZenodoService(BaseService):
             "upload_type": "dataset" if dataset.ds_meta_data.publication_type.value == "none" else "publication",
             "publication_type": (
                 dataset.ds_meta_data.publication_type.value
-                
                 if dataset.ds_meta_data.publication_type.value != "none"
                 else None
             ),

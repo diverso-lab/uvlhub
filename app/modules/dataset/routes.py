@@ -7,8 +7,6 @@ import uuid
 from datetime import datetime, timezone
 from zipfile import ZipFile
 
-logger = logging.getLogger(__name__)
-
 from flask import (
     redirect,
     render_template,
@@ -43,6 +41,8 @@ from app.modules.dataset.services import (
 )
 from app.modules.zenodo.services import ZenodoService
 
+logger = logging.getLogger(__name__)
+
 
 dataset_service = DataSetService()
 author_service = AuthorService()
@@ -64,7 +64,7 @@ def create_dataset():
             return jsonify({"message": form.errors}), 400
 
         try:
-            logger.info(f"Creating dataset...")
+            logger.info("Creating dataset...")
             dataset = dataset_service.create_from_form(form=form, current_user=current_user)
             logger.info(f"Created dataset: {dataset}")
             move_feature_models(dataset)
