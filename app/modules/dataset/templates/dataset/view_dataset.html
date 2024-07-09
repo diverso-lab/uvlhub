@@ -29,8 +29,6 @@
 
 </div>
 
-<h1 class="h3 mb-3">View dataset: {{ dataset.ds_meta_data.title }}</h1>
-
 <div class="row">
 
     <div class="col-xl-8 col-lg-12 col-md-12 col-sm-12">
@@ -38,7 +36,7 @@
         <div class="card">
             <div class="card-body">
                 <div class="d-flex align-items-center justify-content-between">
-                    <h2>{{ dataset.ds_meta_data.title }}</h2>
+                    <h1><b>{{ dataset.ds_meta_data.title }}</b></h1>
                     <div>
                         <span class="badge bg-secondary">{{ dataset.get_cleaned_publication_type() }}</span>
                     </div>
@@ -95,10 +93,10 @@
 
                 </div>
 
+                {% if dataset.ds_meta_data.publication_doi %}
                 <div class="row mb-2">
-
                     <div class="col-md-4 col-12">
-                        <span class=" text-secondary">
+                        <span class="text-secondary">
                             Publication DOI
                         </span>
                     </div>
@@ -107,53 +105,37 @@
                             {{ dataset.ds_meta_data.publication_doi }}
                         </a>
                     </div>
-
                 </div>
-
-                <!--
-                    <div class="row mb-2">
-
-                        <div class="col-md-4 col-12">
-                            <span class=" text-secondary">
-                                Dataset DOI (Zenodo)
-                            </span>
-                        </div>
-                        <div class="col-md-8 col-12">
-                            <a href="http://www.doi.org/{{ dataset.ds_meta_data.dataset_doi }}" target="_blank">
-                                https://www.doi.org/{{ dataset.ds_meta_data.dataset_doi }}
-                            </a>
-
-                            <div id="dataset_doi" style="display: none">
-                                https://www.doi.org/{{ dataset.ds_meta_data.dataset_doi }}
-                            </div>
-
-                            <i data-feather="clipboard" class="center-button-icon"
-                               style="cursor: pointer"
-                               onclick="copyText('dataset_doi')"></i>
-                        </div>
-
-                    </div>
-                    -->
+                {% endif %}
 
                 <div class="row mb-2">
 
                     <div class="col-md-4 col-12">
                         <span class=" text-secondary">
-                            Dataset DOI
+                            Zenodo record
                         </span>
                     </div>
-                    <div class="col-md-8 col-12">
-                        <a href="{{ dataset.get_uvlhub_doi() }}">
-                            {{ dataset.get_uvlhub_doi() }}
-                        </a>
 
-                        <div id="dataset_doi_uvlhub" style="display: none">
-                            {{ dataset.get_uvlhub_doi() }}
+                    {% if FLASK_ENV == 'production' %}
+                        <div class="col-md-8 col-12">
+                            <a href="https://zenodo.org/records/{{ dataset.ds_meta_data.deposition_id }}" target="_blank">
+                                https://zenodo.org/records/{{ dataset.ds_meta_data.deposition_id }}
+                            </a>
                         </div>
+                    {% elif FLASK_ENV == 'development' %}
+                        <div class="col-md-8 col-12">
+                            <a href="https://sandbox.zenodo.org/records/{{ dataset.ds_meta_data.deposition_id }}" target="_blank">
+                                https://sandbox.zenodo.org/records/{{ dataset.ds_meta_data.deposition_id }}
+                            </a>
+                        </div>
+                    {% else %}
+                        <div class="col-md-8 col-12">
+                            <a href="https://zenodo.org/records/{{ dataset.ds_meta_data.deposition_id }}" target="_blank">
+                                https://sandbox.zenodo.org/records/{{ dataset.ds_meta_data.deposition_id }}
+                            </a>
+                        </div>
+                    {% endif %}
 
-                        <i data-feather="clipboard" class="center-button-icon" style="cursor: pointer"
-                            onclick="copyText('dataset_doi_uvlhub')"></i>
-                    </div>
 
                 </div>
 
@@ -172,51 +154,111 @@
 
                 </div>
 
+                
+
             </div>
+
+            <div class="card-body" style="padding-top: 0px">
+
+                <div id="dataset_doi_uvlhub" style="display: none">
+                    {{ dataset.get_uvlhub_doi() }}
+                </div>
+
+                <button type="button" class="btn doi_button btn-sm" onclick="copyText('dataset_doi_uvlhub')">
+                    <span class="button_doi_id">
+                        <i data-feather="clipboard" class="center-button-icon" style="cursor: pointer"></i>
+                        <b>DOI</b>
+                    </span>
+                    <span class="doi_text">
+                        {{ dataset.get_uvlhub_doi() }}
+                    </span>
+                </button>
+                
+                <div id="dataset_doi_uvlhub" style="display: none">
+                    {{ dataset.get_uvlhub_doi() }}
+                </div>
+                
+            </div>
+
         </div>
+
+        <div class="card">
+
+            <div class="card-body">
+
+                <h3> Related publication </h3>
+                
+                David Romero-Organvidez, José A. Galindo, Chico Sundermann, Jose-Miguel Horcas, David Benavides,
+                <i>UVLHub: A feature model data repository using UVL and open science principles</i>,
+                Journal of Systems and Software,
+                2024,
+                112150,
+                ISSN 0164-1212,
+                <a href="https://doi.org/10.1016/j.jss.2024.112150" target="_blank">https://doi.org/10.1016/j.jss.2024.112150</a>
+
+            </div>
+
+            <div class="card-body mt-0 pt-0">
+
+                <button onclick="copyText('bibtex_cite')" class="btn btn-light btn-sm" style="border-radius: 5px; margin-right: 10px">
+                    <i data-feather="clipboard" class="center-button-icon"></i>
+                    Copy in BibTex
+                </button>
+
+                <button onclick="copyText('ris_cite')" class="btn btn-light btn-sm" style="border-radius: 5px;">
+                    <i data-feather="clipboard" class="center-button-icon"></i>
+                    Copy in RIS
+                </button>
+
+                <button onclick="copyText('apa_cite')" class="btn btn-light btn-sm" style="border-radius: 5px;">
+                    <i data-feather="clipboard" class="center-button-icon"></i>
+                    Copy in APA
+                </button>
+
+                <button onclick="copyText('text_cite')" class="btn btn-light btn-sm" style="border-radius: 5px;">
+                    <i data-feather="clipboard" class="center-button-icon"></i>
+                    Copy in text
+                </button>
+
+            </div>
+
+        </div>
+
 
     </div>
 
     <div class="col-xl-4 col-lg-12 col-md-12 col-sm-12">
-
-        <h1 class="h3 mb-3">UVL models ({{ dataset.get_files_count() }})</h1>
-
-        <table class="table">
-            <thead>
-                <tr>
-                    <th style="width: 40%;">UVL title</th>
-                    <th style="width: 20%;">Size</th>
-                    <th style="width: 40%;">Options</th>
-                </tr>
-            </thead>
-            <tbody>
-
-                {% for feature_model in dataset.feature_models %}
+        
+        <h3 class="mb-3">UVL models ({{ dataset.get_files_count() }})</h3>
+    
+        <div class="list-group">
+            {% for feature_model in dataset.feature_models %}
                 {% for file in feature_model.files %}
-                <tr>
-                    <td>{{ file.name }}</td>
-                    <td>{{ file.get_formatted_size() }}</td>
-                    <td>
-                        <a href="{{ url_for('dataset.download_file', file_id=file.id) }}"
-                            class="btn btn-outline-primary btn-sm option-button" style="border-radius: 5px;">
-                            <i data-feather="download"></i>
-                        </a>
-                        <button onclick="viewFile('{{ file.id }}')"
-                            class="btn btn-outline-secondary btn-sm option-button" style="border-radius: 5px;">
-                            <i data-feather="eye"></i>
-                        </button>
-                    </td>
-                </tr>
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <i data-feather="file"></i> {{ file.name }}
+                            <br>
+                            <small class="text-muted">({{ file.get_formatted_size() }})</small>
+                        </div>
+                        <div>
+                            <a href="{{ url_for('dataset.download_file', file_id=file.id) }}" class="btn btn-outline-primary btn-sm" style="border-radius: 5px;">
+                                <i data-feather="download"></i>
+                            </a>
+                            <button onclick="viewFile('{{ file.id }}')" class="btn btn-outline-secondary btn-sm" style="border-radius: 5px;">
+                                <i data-feather="eye"></i>
+                            </button>
+                        </div>
+                    </div>
                 {% endfor %}
-                {% endfor %}
-            </tbody>
-        </table>
-
-        <a href="/dataset/download/{{ dataset.id }}" class="btn btn-primary" style="border-radius: 5px;">
+            {% endfor %}
+        </div>
+    
+        <a href="/dataset/download/{{ dataset.id }}" class="btn btn-primary mt-3" style="border-radius: 5px;">
             <i data-feather="download" class="center-button-icon"></i>
             Download all ({{ dataset.get_file_total_size_for_human() }})
         </a>
     </div>
+    
 </div>
 
 <!-- Modal-->
