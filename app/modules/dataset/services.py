@@ -52,6 +52,9 @@ class DataSetService(BaseService):
     def get_unsynchronized(self, current_user_id: int) -> DataSet:
         return self.repository.get_unsynchronized(current_user_id)
 
+    def get_unsynchronized_dataset(self, current_user_id: int, dataset_id: int) -> DataSet:
+        return self.repository.get_unsynchronized_dataset(current_user_id, dataset_id)
+
     def latest_synchronized(self):
         return self.repository.latest_synchronized()
 

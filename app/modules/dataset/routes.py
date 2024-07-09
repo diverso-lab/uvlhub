@@ -372,3 +372,15 @@ def subdomain_index(doi):
     resp.set_cookie("view_cookie", user_cookie)
 
     return resp
+
+@dataset_bp.route("/dataset/unsynchronized/<int:dataset_id>/", methods=["GET"])
+@login_required
+def get_unsynchronized_dataset(dataset_id):
+    
+    # Get dataset
+    dataset = dataset_service.get_unsynchronized_dataset(current_user.id, dataset_id)
+
+    if not dataset:
+        abort(404)
+
+    return render_template("dataset/view_dataset.html", dataset=dataset)

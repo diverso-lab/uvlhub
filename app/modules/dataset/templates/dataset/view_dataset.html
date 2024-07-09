@@ -108,37 +108,37 @@
                 </div>
                 {% endif %}
 
+                {% if dataset.ds_meta_data.dataset_doi %}
                 <div class="row mb-2">
-
-                    <div class="col-md-4 col-12">
-                        <span class=" text-secondary">
-                            Zenodo record
-                        </span>
-                    </div>
-
-                    {% if FLASK_ENV == 'production' %}
-                        <div class="col-md-8 col-12">
-                            <a href="https://zenodo.org/records/{{ dataset.ds_meta_data.deposition_id }}" target="_blank">
-                                https://zenodo.org/records/{{ dataset.ds_meta_data.deposition_id }}
-                            </a>
+                    
+                        <div class="col-md-4 col-12">
+                            <span class=" text-secondary">
+                                Zenodo record
+                            </span>
                         </div>
-                    {% elif FLASK_ENV == 'development' %}
-                        <div class="col-md-8 col-12">
-                            <a href="https://sandbox.zenodo.org/records/{{ dataset.ds_meta_data.deposition_id }}" target="_blank">
-                                https://sandbox.zenodo.org/records/{{ dataset.ds_meta_data.deposition_id }}
-                            </a>
-                        </div>
-                    {% else %}
-                        <div class="col-md-8 col-12">
-                            <a href="https://zenodo.org/records/{{ dataset.ds_meta_data.deposition_id }}" target="_blank">
-                                https://sandbox.zenodo.org/records/{{ dataset.ds_meta_data.deposition_id }}
-                            </a>
-                        </div>
-                    {% endif %}
 
+                        {% if FLASK_ENV == 'production' %}
+                            <div class="col-md-8 col-12">
+                                <a href="https://zenodo.org/records/{{ dataset.ds_meta_data.deposition_id }}" target="_blank">
+                                    https://zenodo.org/records/{{ dataset.ds_meta_data.deposition_id }}
+                                </a>
+                            </div>
+                        {% elif FLASK_ENV == 'development' %}
+                            <div class="col-md-8 col-12">
+                                <a href="https://sandbox.zenodo.org/records/{{ dataset.ds_meta_data.deposition_id }}" target="_blank">
+                                    https://sandbox.zenodo.org/records/{{ dataset.ds_meta_data.deposition_id }}
+                                </a>
+                            </div>
+                        {% else %}
+                            <div class="col-md-8 col-12">
+                                <a href="https://zenodo.org/records/{{ dataset.ds_meta_data.deposition_id }}" target="_blank">
+                                    https://sandbox.zenodo.org/records/{{ dataset.ds_meta_data.deposition_id }}
+                                </a>
+                            </div>
+                        {% endif %}
 
                 </div>
-
+                {% endif %}
                 <div class="row mb-2">
 
                     <div class="col-md-4 col-12">
@@ -158,6 +158,7 @@
 
             </div>
 
+            {% if dataset.ds_meta_data.dataset_doi %}
             <div class="card-body" style="padding-top: 0px">
 
                 <div id="dataset_doi_uvlhub" style="display: none">
@@ -179,6 +180,7 @@
                 </div>
                 
             </div>
+            {% endif %}
 
         </div>
 
