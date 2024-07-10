@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+import logging
 import re
 from flask_login import current_user
 import unidecode
@@ -21,6 +22,8 @@ from app.modules.dataset.models import (
     PublicationType,
 )
 from core.repositories.BaseRepository import BaseRepository
+
+logger = logging.getLogger(__name__)
 
 
 class AuthorRepository(BaseRepository):
@@ -100,6 +103,7 @@ class DataSetRepository(BaseRepository):
         # Normalize and remove unwanted characters
         normalized_query = unidecode.unidecode(query).lower()
         cleaned_query = re.sub(r'[,.":\'()\[\]^;!¡¿?]', "", normalized_query)
+        logger.info(f"Cleaned query: {cleaned_query}")
 
         filters = []
         for word in cleaned_query.split():
@@ -111,14 +115,19 @@ class DataSetRepository(BaseRepository):
             filters.append(FMMetaData.uvl_filename.ilike(f"%{word}%"))
             filters.append(FMMetaData.title.ilike(f"%{word}%"))
             filters.append(FMMetaData.description.ilike(f"%{word}%"))
-            filters.append(FMMetaData.publication_type.ilike(f"%{word}%"))
             filters.append(FMMetaData.publication_doi.ilike(f"%{word}%"))
             filters.append(FMMetaData.tags.ilike(f"%{word}%"))
             filters.append(DSMetaData.tags.ilike(f"%{word}%"))
 
         datasets = (
-            self.model.query.join(DSMetaData).join(Author).join(FeatureModel).join(FMMetaData).filter(or_(*filters))
+            self.model.query
+            .join(DataSet.ds_meta_data)
+            .join(DSMetaData.authors)
+            .join(DataSet.feature_models)
+            .join(FeatureModel.fm_meta_data)
+            .filter(or_(*filters))
         )
+        logger.info(f"Found datasets with {cleaned_query}: {datasets.all()}")
 
         if publication_type != "any":
             matching_type = None

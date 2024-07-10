@@ -1,6 +1,7 @@
 from sqlalchemy.exc import IntegrityError
 from app import db
 
+
 class BaseSeeder:
     priority = 10  # Default priority
 

@@ -2,9 +2,10 @@ import os
 import shutil
 from app.modules.auth.models import User
 from core.seeders.BaseSeeder import BaseSeeder
-from app.modules.dataset.models import DataSet, DSMetaData, PublicationType, Author, DSMetrics, File, FeatureModel, FMMetaData
+from app.modules.dataset.models import DataSet, DSMetaData, PublicationType, DSMetrics, File, FeatureModel, FMMetaData
 from datetime import datetime
 from dotenv import load_dotenv
+
 
 class DataSetSeeder(BaseSeeder):
 
@@ -72,7 +73,7 @@ class DataSetSeeder(BaseSeeder):
         # Create files, associate them with FeatureModels and copy files
         load_dotenv()
         working_dir = os.getenv('WORKING_DIR', '')
-        src_folder = os.path.join(working_dir, 'uvl_examples')
+        src_folder = os.path.join(working_dir, 'app', 'modules', 'dataset', 'uvl_examples')
         for i in range(12):
             file_name = f'file{i+1}.uvl'
             feature_model = seeded_feature_models[i]
