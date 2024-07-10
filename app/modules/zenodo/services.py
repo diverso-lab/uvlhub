@@ -1,25 +1,46 @@
+import logging
 import os
 import requests
 
-from core.configuration.configuration import uploads_folder_name
-from dotenv import load_dotenv
-from flask import current_app, jsonify, Response
-from flask_login import current_user
-
 from app.modules.dataset.models import DataSet, FeatureModel
 from app.modules.zenodo.repositories import ZenodoRepository
+
+from core.configuration.configuration import uploads_folder_name
+from dotenv import load_dotenv
+from flask import jsonify, Response
+from flask_login import current_user
+
+
 from core.services.BaseService import BaseService
 
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
 
 class ZenodoService(BaseService):
-    ZENODO_API_URL = os.getenv("ZENODO_API_URL", "https://sandbox.zenodo.org/api/deposit/depositions")
-    ZENODO_ACCESS_TOKEN = os.getenv("ZENODO_ACCESS_TOKEN")
+
+    def get_zenodo_url(self):
+
+        FLASK_ENV = os.getenv("FLASK_ENV", "development")
+        ZENODO_API_URL = ""
+
+        if FLASK_ENV == "development":
+            ZENODO_API_URL = os.getenv("ZENODO_API_URL", "https://sandbox.zenodo.org/api/deposit/depositions")
+        elif FLASK_ENV == "production":
+            ZENODO_API_URL = os.getenv("ZENODO_API_URL", "https://zenodo.org/api/deposit/depositions")
+        else:
+            ZENODO_API_URL = os.getenv("ZENODO_API_URL", "https://sandbox.zenodo.org/api/deposit/depositions")
+
+        return ZENODO_API_URL
+
+    def get_zenodo_access_token(self):
+        return os.getenv("ZENODO_ACCESS_TOKEN")
 
     def __init__(self):
         super().__init__(ZenodoRepository())
+        self.ZENODO_ACCESS_TOKEN = self.get_zenodo_access_token()
+        self.ZENODO_API_URL = self.get_zenodo_url()
         self.headers = {"Content-Type": "application/json"}
         self.params = {"access_token": self.ZENODO_ACCESS_TOKEN}
 
@@ -44,10 +65,11 @@ class ZenodoService(BaseService):
 
         success = True
 
-        # Create an empty file
-        file_path = os.path.join(current_app.root_path, "test_file.txt")
-        with open(file_path, "w"):
-            pass
+        # Create a test file
+        working_dir = os.getenv('WORKING_DIR', "")
+        file_path = os.path.join(working_dir, "test_file.txt")
+        with open(file_path, "w") as f:
+            f.write("This is a test file with some content.")
 
         messages = []  # List to store messages
 
@@ -75,10 +97,17 @@ class ZenodoService(BaseService):
 
         # Step 2: Upload an empty file to the deposition
         data = {"name": "test_file.txt"}
-        file_path = os.path.join(current_app.root_path, "test_file.txt")
         files = {"file": open(file_path, "rb")}
         publish_url = f"{self.ZENODO_API_URL}/{deposition_id}/files"
         response = requests.post(publish_url, params=self.params, data=data, files=files)
+        files["file"].close()  # Close the file after uploading
+
+        logger.info(f"Publish URL: {publish_url}")
+        logger.info(f"Params: {self.params}")
+        logger.info(f"Data: {data}")
+        logger.info(f"Files: {files}")
+        logger.info(f"Response Status Code: {response.status_code}")
+        logger.info(f"Response Content: {response.content}")
 
         if response.status_code != 201:
             messages.append(f"Failed to upload test file to Zenodo. Response code: {response.status_code}")
@@ -114,6 +143,10 @@ class ZenodoService(BaseService):
         Returns:
             dict: The response in JSON format with the details of the created deposition.
         """
+
+        logger.info("Dataset sending to Zenodo...")
+        logger.info(f"Publication type...{dataset.ds_meta_data.publication_type.value}")
+
         metadata = {
             "title": dataset.ds_meta_data.title,
             "upload_type": "dataset" if dataset.ds_meta_data.publication_type.value == "none" else "publication",
@@ -146,7 +179,7 @@ class ZenodoService(BaseService):
             raise Exception(error_message)
         return response.json()
 
-    def upload_file(self, deposition_id: int, feature_model: FeatureModel, user=None) -> dict:
+    def upload_file(self, dataset: DataSet, deposition_id: int, feature_model: FeatureModel, user=None) -> dict:
         """
         Upload a file to a deposition in Zenodo.
 
@@ -161,7 +194,7 @@ class ZenodoService(BaseService):
         uvl_filename = feature_model.fm_meta_data.uvl_filename
         data = {"name": uvl_filename}
         user_id = current_user.id if user is None else user.id
-        file_path = os.path.join(uploads_folder_name(), "temp", str(user_id), uvl_filename)
+        file_path = os.path.join(uploads_folder_name(), f"user_{str(user_id)}", f"dataset_{dataset.id}/", uvl_filename)
         files = {"file": open(file_path, "rb")}
 
         publish_url = f"{self.ZENODO_API_URL}/{deposition_id}/files"

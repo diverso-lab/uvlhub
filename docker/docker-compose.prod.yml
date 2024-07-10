@@ -35,6 +35,7 @@ services:
     image: nginx:latest
     volumes:
       - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf
+      - ./nginx/html:/usr/share/nginx/html
     ports:
       - "80:80"
     depends_on:

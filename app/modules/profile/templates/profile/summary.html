@@ -49,7 +49,7 @@
                             {% for dataset in datasets %}
                             <tr>
                                 <td>
-                                    <a href="{{ url_for('dataset.view_dataset', dataset_id=dataset.id) }}">
+                                    <a href="{{ dataset.get_uvlhub_doi() }}">
                                         {{ dataset.ds_meta_data.title }}
                                     </a>
                                 </td>

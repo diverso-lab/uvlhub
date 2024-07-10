@@ -1,3 +1,4 @@
+import logging
 from app.modules.dataset.services import FileService
 from flask import render_template, send_file, jsonify
 from app.modules.flamapy import flamapy_bp
@@ -6,6 +7,7 @@ from flamapy.metamodels.pysat_metamodel.transformations import FmToPysat, Dimacs
 import tempfile
 import os 
 
+logger = logging.getLogger(__name__)
 
 from antlr4 import CommonTokenStream, FileStream
 from uvl.UVLCustomLexer import UVLCustomLexer
@@ -76,8 +78,11 @@ def valid(file_id):
 def to_glencoe(file_id):
     temp_file = tempfile.NamedTemporaryFile(suffix='.json', delete=False)
     try:
-        file = FileService().get_by_id(file_id)
-        fm = UVLReader(file.name).transform()
+        file = FileService().get_or_404(file_id)
+        logger.info(f"file: {file}")
+        working_dir = os.getenv('WORKING_DIR')
+        path = os.path.join(working_dir, 'uploads', f'{file.name}', f'{file.feature_model_id.data_set_id.user_id}')
+        fm = UVLReader(path).transform()
         GlencoeWriter(temp_file.name,fm).transform()
 
         # Return the file in the response

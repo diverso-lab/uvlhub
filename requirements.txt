@@ -85,3 +85,4 @@ zope.event==5.0
 zope.interface==6.4.post2
 zstandard==0.22.0
 
+flamapy==2.0.0.dev1

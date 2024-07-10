@@ -60,9 +60,9 @@
 
                             <div class="col-12">
                                 <div class="mb-3">
-                                    {{ form.description.label(class="form-label") }} *
-                                    {{ form.description(rows=4, class="form-control") }}
-                                    {% for error in form.description.errors %}
+                                    {{ form.desc.label(class="form-label") }} *
+                                    {{ form.desc(rows=4, class="form-control") }}
+                                    {% for error in form.desc.errors %}
                                         <span style="color: red;">{{ error }}</span>
                                     {% endfor %}
                                 </div>
@@ -151,15 +151,36 @@
                                 <div class="mb-3">
 
                                     <div id="authors">
-
-                                        {% for author in form.authors.entries %}
-                                            <div class="author row">
-                                                {{ author.name.label }} {{ author.name() }}
-                                                {{ author.affiliation.label }} {{ author.affiliation() }}
-                                                {{ author.orcid.label }} {{ author.orcid() }}
+                                        {% for subform in form.authors %}
+                                        <div class="row author" {% if not loop.first %}
+                                            style="border:2px dotted #ccc;border-radius:10px;padding:10px;margin:10px 0; background-color: white"
+                                            {% endif %}
+                                        >
+                                            <div class="col-lg-6 col-12 mb-3">
+                                                {{ subform.form.name.label(class="form-label") }}
+                                                {{ subform.form.name(class="form-control", disabled=loop.first) }}
+                                                {% for error in subform.name.errors %}
+                                                    <span style="color: red;">{{ error }}</span>
+                                                {% endfor %}
                                             </div>
-                                        {% endfor %}
 
+                                            <div class="col-lg-6 col-12 mb-3">
+                                                {{ subform.form.affiliation.label(class="form-label") }}
+                                                {{ subform.form.affiliation(class="form-control", disabled=loop.first) }}
+                                                {% for error in subform.name.errors %}
+                                                    <span style="color: red;">{{ error }}</span>
+                                                {% endfor %}
+                                            </div>
+
+                                            <div class="col-lg-6 col-12 mb-3">
+                                                {{ subform.orcid.label(class="form-label") }}
+                                                {{ subform.orcid(class="form-control", disabled=loop.first) }}
+                                                {% for error in subform.orcid.errors %}
+                                                    <span style="color: red;">{{ error }}</span>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                        {% endfor %}
                                     </div>
                                     <button type="button" class="btn btn-secondary" id="add_author">Add author
                                     </button>
@@ -228,9 +249,7 @@
                                     alert.textContent = 'Invalid file extension: ' + file.name;
                                     alerts.appendChild(alert);
                                     alerts.style.display = 'block';
-
                                 }
-
 
                             });
 
@@ -247,8 +266,8 @@
                                 h4Element.textContent = response.filename;
                                 listItem.appendChild(h4Element);
 
-                                // generate unique identifier for UVL form
-                                let formUniqueId = generateUniqueId();
+                                // generate incremental id for form
+                                let formUniqueId = generateIncrementalId();
 
                                 /*
                                     ##########################################
@@ -335,26 +354,25 @@
 
                                 formContainer.innerHTML = `
                                     <div class="row">
-                                        <input type="hidden" value="` + formUniqueId + `" name="uvl_identifier">
-                                        <input type="hidden" value="` + response.filename + `" name="uvl_filename">
+                                        <input type="hidden" value="${response.filename}" name="feature_models-${formUniqueId}-uvl_filename">
                                         <div class="col-12">
                                             <div class="row">
                                                 <div class="col-12">
                                                     <div class="mb-3">
                                                         <label class="form-label">Title</label>
-                                                        <input type="text" class="form-control" name="title">
+                                                        <input type="text" class="form-control" name="feature_models-${formUniqueId}-title">
                                                     </div>
                                                 </div>
                                                 <div class="col-12">
                                                     <div class="mb-3">
                                                         <label class="form-label">Description</label>
-                                                        <textarea rows="4" class="form-control" name="description"></textarea>
+                                                        <textarea rows="4" class="form-control" name="feature_models-${formUniqueId}-desc"></textarea>
                                                     </div>
                                                 </div>
                                                 <div class="col-lg-6 col-12">
                                                     <div class="mb-3">
                                                         <label class="form-label" for="publication_type">Publication type</label>
-                                                        <select class="form-control" name="uvl_publication_type">
+                                                        <select class="form-control" name="feature_models-${formUniqueId}-publication_type">
                                                             <option value="none">None</option>
                                                             <option value="annotationcollection">Annotation Collection</option>
                                                             <option value="book">Book</option>
@@ -380,19 +398,19 @@
                                                 <div class="col-lg-6 col-6">
                                                     <div class="mb-3">
                                                         <label class="form-label" for="publication_doi">Publication DOI</label>
-                                                        <input class="form-control" name="publication_doi" type="text" value="">
+                                                        <input class="form-control" name="feature_models-${formUniqueId}-publication_doi" type="text" value="">
                                                     </div>
                                                 </div>
                                                 <div class="col-6">
                                                     <div class="mb-3">
                                                         <label class="form-label">Tags (separated by commas)</label>
-                                                        <input type="text" class="form-control" name="tags">
+                                                        <input type="text" class="form-control" name="feature_models-${formUniqueId}-tags">
                                                     </div>
                                                 </div>
                                                 <div class="col-6">
                                                     <div class="mb-3">
                                                         <label class="form-label">UVL version</label>
-                                                        <input type="text" class="form-control" name="uvl_version">
+                                                        <input type="text" class="form-control" name="feature_models-${formUniqueId}-uvl_version">
                                                     </div>
                                                 </div>
                                                 <div class="col-12">
@@ -439,17 +457,6 @@
             <hr>
 
             <h1 class="h3 mb-3 mt-2">Upload dataset</h1>
-
-                <div style="border: 2px solid #007bff; background-color: #e9ecef; padding: 20px; margin: 20px 0;">
-                  <p style="font-weight: bold; margin: 0;">
-                    IMPORTANT: UVLHub is currently waiting to publish the paper associated with the tool. All datasets are
-                    temporarily uploaded to a Zenodo sandbox mode. Once the paper is published, all datasets will be
-                    permanently uploaded to Zenodo. This is transparent to the user, he/she does not have to do
-                    anything. The DOI of the UVLHub dataset will also be redirected and can be used
-                    without any inconvenience.
-                  </p>
-                </div>
-
 
             <div style="padding-left: 2rem">
 
@@ -520,13 +527,15 @@
     {% block scripts %}
 
         <script>
+            var currentId = 0;
+            var amount_authors = 0;
 
             function show_upload_dataset() {
                 document.getElementById("upload_dataset").style.display = "block";
             }
 
-            function generateUniqueId() {
-                return Math.random().toString(36).substr(2, 9);
+            function generateIncrementalId() {
+                return currentId++;
             }
 
             function addField(newAuthor, name, text, className = 'col-lg-6 col-12 mb-3') {
@@ -564,16 +573,14 @@
                 newAuthor.appendChild(buttonWrapper);
             }
 
-            function createAuthorBlock(parameter) {
+            function createAuthorBlock(idx, suffix) {
                 let newAuthor = document.createElement('div');
                 newAuthor.className = 'author row';
                 newAuthor.style.cssText = "border:2px dotted #ccc;border-radius:10px;padding:10px;margin:10px 0; background-color: white";
 
-                let suffix = parameter ? '_' + parameter : '';
-
-                addField(newAuthor, 'author_name' + suffix, 'Name *');
-                addField(newAuthor, 'author_affiliation' + suffix, 'Affiliation');
-                addField(newAuthor, 'author_orcid' + suffix, 'ORCID');
+                addField(newAuthor, `${suffix}authors-${idx}-name`, 'Name *');
+                addField(newAuthor, `${suffix}authors-${idx}-affiliation`, 'Affiliation');
+                addField(newAuthor, `${suffix}authors-${idx}-orcid`, 'ORCID');
                 addRemoveButton(newAuthor);
 
                 return newAuthor;
@@ -581,7 +588,7 @@
 
             function check_title_and_description() {
                 let titleInput = document.querySelector('input[name="title"]');
-                let descriptionTextarea = document.querySelector('textarea[name="description"]');
+                let descriptionTextarea = document.querySelector('textarea[name="desc"]');
 
                 titleInput.classList.remove("error");
                 descriptionTextarea.classList.remove("error");
@@ -606,7 +613,7 @@
 
             document.getElementById('add_author').addEventListener('click', function () {
                 let authors = document.getElementById('authors');
-                let newAuthor = createAuthorBlock();
+                let newAuthor = createAuthorBlock(amount_authors++, "");
                 authors.appendChild(newAuthor);
             });
 
@@ -618,7 +625,7 @@
                     let authorsId = authorsButtonId.replace("_button", "");
                     let authors = document.getElementById(authorsId);
                     let id = authorsId.replace("_form_authors", "")
-                    let newAuthor = createAuthorBlock(id);
+                    let newAuthor = createAuthorBlock(amount_authors, `feature_models-${id}-`);
                     authors.appendChild(newAuthor);
 
                 }
@@ -664,15 +671,15 @@
 
                     if (check) {
                         // process data form
-                        const formData = {basic_info_form: {}, uploaded_models_form: {}};
+                        const formData = {};
 
                         ["basic_info_form", "uploaded_models_form"].forEach((formId) => {
                             const form = document.getElementById(formId);
                             const inputs = form.querySelectorAll('input, select, textarea');
                             inputs.forEach(input => {
                                 if (input.name) {
-                                    formData[formId][input.name] = formData[formId][input.name] || [];
-                                    formData[formId][input.name].push(input.value);
+                                    formData[input.name] = formData[input.name] || [];
+                                    formData[input.name].push(input.value);
                                 }
                             });
                         });
@@ -683,11 +690,16 @@
                         const csrfToken = document.getElementById('csrf_token').value;
                         const formUploadData = new FormData();
                         formUploadData.append('csrf_token', csrfToken);
-                        formUploadData.append('formData', formDataJson);
+
+                        for (let key in formData) {
+                            if (formData.hasOwnProperty(key)) {
+                                formUploadData.set(key, formData[key]);
+                            }
+                        }
 
                         let checked_orcid = true;
-                        if (Array.isArray(formData.basic_info_form.author_orcid)) {
-                            for (let orcid of formData.basic_info_form.author_orcid) {
+                        if (Array.isArray(formData.author_orcid)) {
+                            for (let orcid of formData.author_orcid) {
                                 orcid = orcid.trim();
                                 if (orcid !== '' && !isValidOrcid(orcid)) {
                                     hide_loading();
@@ -700,8 +712,8 @@
 
 
                         let checked_name = true;
-                        if (Array.isArray(formData.basic_info_form.author_name)) {
-                            for (let name of formData.basic_info_form.author_name) {
+                        if (Array.isArray(formData.author_name)) {
+                            for (let name of formData.author_name) {
                                 name = name.trim();
                                 if (name === '') {
                                     hide_loading();
