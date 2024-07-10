@@ -2,9 +2,18 @@ import os
 import shutil
 from app.modules.auth.models import User
 from core.seeders.BaseSeeder import BaseSeeder
-from app.modules.dataset.models import DataSet, DSMetaData, PublicationType, DSMetrics, File, FeatureModel, FMMetaData, Author
+from app.modules.dataset.models import (
+    DataSet,
+    DSMetaData,
+    PublicationType,
+    DSMetrics,
+    File,
+    FeatureModel,
+    FMMetaData,
+    Author)
 from datetime import datetime
 from dotenv import load_dotenv
+
 
 class DataSetSeeder(BaseSeeder):
 

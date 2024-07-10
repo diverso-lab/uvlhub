@@ -29,12 +29,11 @@ def get_module_seeders(module_path, specific_module=None):
                         issubclass(potential_seeder_class, BaseSeeder) and
                         potential_seeder_class is not BaseSeeder):
                     seeders.append(potential_seeder_class())
-    
+
     # Sort seeders by priority
     seeders.sort(key=lambda seeder: seeder.priority)
-    
-    return seeders
 
+    return seeders
 
 
 @click.command('db:seed', help="Populates the database with the seeders defined in each module.")
