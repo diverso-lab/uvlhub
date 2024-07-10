@@ -4,6 +4,9 @@ from core.seeders.BaseSeeder import BaseSeeder
 
 
 class AuthSeeder(BaseSeeder):
+
+    priority = 1  # Higher priority
+
     def run(self):
 
         # Seeding users

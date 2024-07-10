@@ -1,16 +1,14 @@
 from sqlalchemy.exc import IntegrityError
-
 from app import db
 
-
 class BaseSeeder:
+    priority = 10  # Default priority
+
     def __init__(self):
         self.db = db
 
     def run(self):
         raise NotImplementedError("The 'run' method must be implemented by the child class.")
-
-    from sqlalchemy.exc import IntegrityError
 
     def seed(self, data):
         """
