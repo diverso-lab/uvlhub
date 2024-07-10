@@ -2,10 +2,9 @@ import os
 import shutil
 from app.modules.auth.models import User
 from core.seeders.BaseSeeder import BaseSeeder
-from app.modules.dataset.models import DataSet, DSMetaData, PublicationType, DSMetrics, File, FeatureModel, FMMetaData
+from app.modules.dataset.models import DataSet, DSMetaData, PublicationType, DSMetrics, File, FeatureModel, FMMetaData, Author
 from datetime import datetime
 from dotenv import load_dotenv
-
 
 class DataSetSeeder(BaseSeeder):
 
@@ -38,6 +37,17 @@ class DataSetSeeder(BaseSeeder):
         ]
         seeded_ds_meta_data = self.seed(ds_meta_data_list)
 
+        # Create Author instances and associate with DSMetaData
+        authors = [
+            Author(
+                name=f'Author {i+1}',
+                affiliation=f'Affiliation {i+1}',
+                orcid=f'0000-0000-0000-000{i}',
+                ds_meta_data_id=seeded_ds_meta_data[i % 4].id
+            ) for i in range(4)
+        ]
+        self.seed(authors)
+
         # Create DataSet instances
         datasets = [
             DataSet(
@@ -62,6 +72,17 @@ class DataSetSeeder(BaseSeeder):
         ]
         seeded_fm_meta_data = self.seed(fm_meta_data_list)
 
+        # Create Author instances and associate with FMMetaData
+        fm_authors = [
+            Author(
+                name=f'Author {i+5}',
+                affiliation=f'Affiliation {i+5}',
+                orcid=f'0000-0000-0000-000{i+5}',
+                fm_meta_data_id=seeded_fm_meta_data[i].id
+            ) for i in range(12)
+        ]
+        self.seed(fm_authors)
+
         feature_models = [
             FeatureModel(
                 data_set_id=seeded_datasets[i // 3].id,
@@ -80,7 +101,6 @@ class DataSetSeeder(BaseSeeder):
             dataset = next(ds for ds in seeded_datasets if ds.id == feature_model.data_set_id)
             user_id = dataset.user_id
 
-            dest_folder = f'uploads/user_{user_id}/dataset_{dataset.id}'
             dest_folder = os.path.join(working_dir, 'uploads', f'user_{user_id}', f'dataset_{dataset.id}')
             os.makedirs(dest_folder, exist_ok=True)
             shutil.copy(os.path.join(src_folder, file_name), dest_folder)
