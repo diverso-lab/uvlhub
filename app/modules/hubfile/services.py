@@ -12,7 +12,7 @@ class HubfileService(BaseService):
 
     def get_owner_user_by_hubfile(self, hubfile: Hubfile) -> User:
         return self.repository.get_owner_user_by_hubfile(hubfile)
-    
+
     def get_dataset_by_hubfile(self, hubfile: Hubfile) -> DataSet:
         return self.repository.get_dataset_by_hubfile(hubfile)
 
@@ -27,7 +27,7 @@ class HubfileService(BaseService):
                             f'user_{hubfile_user.id}',
                             f'dataset_{hubfile_dataset.id}',
                             hubfile.name)
-        
+
         return path
 
 
