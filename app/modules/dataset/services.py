@@ -17,7 +17,7 @@ from app.modules.dataset.repositories import (
     FMMetaDataRepository,
     FeatureModelRepository
 )
-from app.modules.hubfile.repositories import HubfileDownloadRecordRepository, HubfileViewRecordRepository
+from app.modules.hubfile.repositories import HubfileDownloadRecordRepository, HubfileRepository, HubfileViewRecordRepository
 from core.services.BaseService import BaseService
 
 logger = logging.getLogger(__name__)
@@ -40,6 +40,7 @@ class DataSetService(BaseService):
         self.fmmetadata_repository = FMMetaDataRepository()
         self.dsdownloadrecord_repository = DSDownloadRecordRepository()
         self.hubfiledownloadrecord_repository = HubfileDownloadRecordRepository()
+        self.hubfilerepository = HubfileRepository()
         self.dsviewrecord_repostory = DSViewRecordRepository()
         self.hubfileviewrecord_repository = HubfileViewRecordRepository()
 
@@ -112,7 +113,7 @@ class DataSetService(BaseService):
                 file_path = os.path.join(current_user.temp_folder(), uvl_filename)
                 checksum, size = calculate_checksum_and_size(file_path)
 
-                file = self.file_repository.create(
+                file = self.hubfilerepository.create(
                     commit=False, name=uvl_filename, checksum=checksum, size=size, feature_model_id=fm.id
                 )
                 fm.files.append(file)
