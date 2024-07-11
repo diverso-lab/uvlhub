@@ -30,6 +30,10 @@ WORKDIR /app
 # Copy requirements.txt to the /app working directory
 COPY requirements.txt .
 
+# Removes cache at the build stage
+RUN find . -type d -name "__pycache__" -exec rm -r {} + && \
+    find . -type f -name "*.pyc" -exec rm -f {} +
+
 # Copy the wait-for-db.sh script and set execution permissions
 COPY --chmod=+x scripts/wait-for-db.sh ./scripts/
 
