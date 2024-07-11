@@ -137,36 +137,11 @@ class FeatureModel(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     data_set_id = db.Column(db.Integer, db.ForeignKey('data_set.id'), nullable=False)
     fm_meta_data_id = db.Column(db.Integer, db.ForeignKey('fm_meta_data.id'))
-    files = db.relationship('File', backref='feature_model', lazy=True, cascade="all, delete")
+    files = db.relationship('Hubfile', backref='feature_model', lazy=True, cascade="all, delete")
     fm_meta_data = db.relationship('FMMetaData', uselist=False, backref='feature_model', cascade="all, delete")
 
     def __repr__(self):
         return f'FeatureModel<{self.id}>'
-
-
-class File(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(120), nullable=False)
-    checksum = db.Column(db.String(120), nullable=False)
-    size = db.Column(db.Integer, nullable=False)
-    feature_model_id = db.Column(db.Integer, db.ForeignKey('feature_model.id'), nullable=False)
-
-    def get_formatted_size(self):
-        from app.modules.dataset.services import SizeService
-        return SizeService().get_human_readable_size(self.size)
-
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'name': self.name,
-            'checksum': self.checksum,
-            'size_in_bytes': self.size,
-            'size_in_human_format': self.get_formatted_size(),
-            'url': f'{request.host_url.rstrip("/")}/file/download/{self.id}',
-        }
-
-    def __repr__(self):
-        return f'File<{self.id}>'
 
 
 class FMMetaData(db.Model):
@@ -221,33 +196,6 @@ class DSViewRecord(db.Model):
 
     def __repr__(self):
         return f'<View id={self.id} dataset_id={self.dataset_id} date={self.view_date} cookie={self.view_cookie}>'
-
-
-class FileViewRecord(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
-    file_id = db.Column(db.Integer, db.ForeignKey('file.id'), nullable=False)
-    view_date = db.Column(db.DateTime, default=datetime.utcnow)
-    view_cookie = db.Column(db.String(36))
-
-    def __repr__(self):
-        return '<FileViewRecord {}>'.format(self.id)
-
-
-class FileDownloadRecord(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
-    file_id = db.Column(db.Integer, db.ForeignKey('file.id'))
-    download_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    download_cookie = db.Column(db.String(36), nullable=False)  # Assuming UUID4 strings
-
-    def __repr__(self):
-        return (
-            f'<FileDownload id={self.id} '
-            f'file_id={self.file_id} '
-            f'date={self.download_date} '
-            f'cookie={self.download_cookie}>'
-        )
 
 
 class DOIMapping(db.Model):

@@ -23,10 +23,7 @@ from flask_login import login_required, current_user
 from app import db
 from app.modules.dataset.forms import DataSetForm
 from app.modules.dataset.models import (
-    DSDownloadRecord,
-    File,
-    FileDownloadRecord,
-    FileViewRecord,
+    DSDownloadRecord
 )
 from app.modules.dataset import dataset_bp
 from app.modules.dataset.services import (
@@ -35,10 +32,10 @@ from app.modules.dataset.services import (
     DSMetaDataService,
     DSViewRecordService,
     DataSetService,
-    FileService,
-    FileDownloadRecordService,
     DOIMappingService
 )
+from app.modules.hubfile.models import Hubfile, HubfileDownloadRecord, HubfileViewRecord
+from app.modules.hubfile.services import HubfileDownloadRecordService, HubfileService
 from app.modules.zenodo.services import ZenodoService
 
 logger = logging.getLogger(__name__)
@@ -261,7 +258,7 @@ def download_dataset(dataset_id):
 
 @dataset_bp.route("/file/download/<int:file_id>", methods=["GET"])
 def download_file(file_id):
-    file = FileService().get_or_404(file_id)
+    file = HubfileService().get_or_404(file_id)
     filename = file.name
 
     directory_path = f"uploads/user_{file.feature_model.data_set.user_id}/dataset_{file.feature_model.data_set_id}/"
@@ -274,7 +271,7 @@ def download_file(file_id):
         user_cookie = str(uuid.uuid4())
 
     # Check if the download record already exists for this cookie
-    existing_record = FileDownloadRecord.query.filter_by(
+    existing_record = HubfileDownloadRecord.query.filter_by(
         user_id=current_user.id if current_user.is_authenticated else None,
         file_id=file_id,
         download_cookie=user_cookie
@@ -282,7 +279,7 @@ def download_file(file_id):
 
     if not existing_record:
         # Record the download in your database
-        FileDownloadRecordService().create(
+        HubfileDownloadRecordService().create(
             user_id=current_user.id if current_user.is_authenticated else None,
             file_id=file_id,
             download_date=datetime.now(timezone.utc),
@@ -300,7 +297,7 @@ def download_file(file_id):
 
 @dataset_bp.route('/file/view/<int:file_id>', methods=['GET'])
 def view_file(file_id):
-    file = File.query.get_or_404(file_id)
+    file = Hubfile.query.get_or_404(file_id)
     filename = file.name
 
     directory_path = f"uploads/user_{file.feature_model.data_set.user_id}/dataset_{file.feature_model.data_set_id}/"
@@ -317,7 +314,7 @@ def view_file(file_id):
                 user_cookie = str(uuid.uuid4())
 
             # Check if the view record already exists for this cookie
-            existing_record = FileViewRecord.query.filter_by(
+            existing_record = HubfileViewRecord.query.filter_by(
                 user_id=current_user.id if current_user.is_authenticated else None,
                 file_id=file_id,
                 view_cookie=user_cookie
@@ -325,7 +322,7 @@ def view_file(file_id):
 
             if not existing_record:
                 # Register file view
-                new_view_record = FileViewRecord(
+                new_view_record = HubfileViewRecord(
                     user_id=current_user.id if current_user.is_authenticated else None,
                     file_id=file_id,
                     view_date=datetime.now(),

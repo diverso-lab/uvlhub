@@ -1,5 +1,5 @@
 import logging
-from app.modules.dataset.services import FileService
+from app.modules.hubfile.services import HubfileService
 from flask import render_template, send_file, jsonify
 from app.modules.flamapy import flamapy_bp
 from flamapy.metamodels.fm_metamodel.transformations import UVLReader, GlencoeWriter, SPLOTWriter
@@ -36,7 +36,7 @@ def check_uvl(file_id):
                 self.errors.append(error_message)
     
     try:
-        file = FileService().get_by_id(file_id)
+        file = HubfileService().get_by_id(file_id)
         input_stream = FileStream(file.name)
         lexer = UVLCustomLexer(input_stream)
         
@@ -67,7 +67,7 @@ def check_uvl(file_id):
 
 @flamapy_bp.route('/flamapy/valid/<int:file_id>', methods=['GET'])
 def valid(file_id):
-    file = FileService().get_by_id(file_id)
+    file = HubfileService().get_by_id(file_id)
 
 #    uvlReader = UVLReader(file)
 
@@ -78,7 +78,7 @@ def valid(file_id):
 def to_glencoe(file_id):
     temp_file = tempfile.NamedTemporaryFile(suffix='.json', delete=False)
     try:
-        file = FileService().get_or_404(file_id)
+        file = HubfileService().get_or_404(file_id)
         logger.info(f"file: {file}")
         working_dir = os.getenv('WORKING_DIR')
         path = os.path.join(working_dir, 'uploads', f'{file.name}', f'{file.feature_model_id.data_set_id.user_id}')
@@ -95,7 +95,7 @@ def to_glencoe(file_id):
 def to_splot(file_id):
     temp_file = tempfile.NamedTemporaryFile(suffix='.splx', delete=False)
     try:
-        file = FileService().get_by_id(file_id)
+        file = HubfileService().get_by_id(file_id)
         fm = UVLReader(file.name).transform()
         SPLOTWriter(temp_file.name,fm).transform()
 
@@ -109,7 +109,7 @@ def to_splot(file_id):
 def to_cnf(file_id):
     temp_file = tempfile.NamedTemporaryFile(suffix='.cnf', delete=False)
     try:
-        file = FileService().get_by_id(file_id)
+        file = HubfileService().get_by_id(file_id)
         fm = UVLReader(file.name).transform()
         sat=FmToPysat(fm).transform()
         DimacsWriter(temp_file.name,sat).transform()
