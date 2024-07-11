@@ -21,7 +21,6 @@ def index():
 
 @flamapy_bp.route('/flamapy/check_uvl/<int:file_id>', methods=['GET'])
 def check_uvl(file_id):
-
     class CustomErrorListener(ErrorListener):
         def __init__(self):
             self.errors = []
@@ -59,10 +58,12 @@ def check_uvl(file_id):
         # Optional: Print the parse tree
         #print(tree.toStringTree(recog=parser))
         
-        return jsonify({"message": "Valid Model"}), 400
+        return jsonify({"message": "Valid Model"}), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
 
 
 @flamapy_bp.route('/flamapy/valid/<int:file_id>', methods=['GET'])
