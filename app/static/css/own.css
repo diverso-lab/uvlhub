@@ -165,3 +165,23 @@
     margin-right: 5px;
 }
 
+.badge-success {
+    background-color: green;
+    color: white;
+    padding: 5px;
+    border-radius: 3px;
+}
+
+.badge-danger {
+    background-color: red;
+    color: white;
+    padding: 5px;
+    border-radius: 3px;
+}
+
+.badge-warning {
+    background-color: orange;
+    color: white;
+    padding: 5px;
+    border-radius: 3px;
+}

@@ -1,20 +1,19 @@
-namespace VIRTUAL_ROOT
-
 features
-	VIRTUAL_ROOT {abstract}	
-		or
-			Messaging	
-				or
-					SMS
-					MMS
-			Utility Features	
-				optional
-					Calculator
-					Currency Exchange
-			OS	
-				alternative
-					Symbian
-					WinCE
+    Chat
+        mandatory
+            Connection
+                alternative
+                    "Peer 2 Peer"
+                    Server
+            Messages
+                or
+                    Text
+                    Video
+                    Audio
+        optional
+            "Data Storage"
+            "Media Player"
 
 constraints
-	Currency Exchange => Calculator
+    Server => "Data Storage"
+    Video | Audio => "Media Player"

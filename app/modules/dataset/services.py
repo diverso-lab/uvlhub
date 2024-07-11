@@ -15,11 +15,9 @@ from app.modules.dataset.repositories import (
     DSViewRecordRepository,
     DataSetRepository,
     FMMetaDataRepository,
-    FeatureModelRepository,
-    FileRepository,
-    FileDownloadRecordRepository,
-    FileViewRecordRepository,
+    FeatureModelRepository
 )
+from app.modules.hubfile.repositories import HubfileDownloadRecordRepository, HubfileViewRecordRepository
 from core.services.BaseService import BaseService
 
 logger = logging.getLogger(__name__)
@@ -41,10 +39,9 @@ class DataSetService(BaseService):
         self.dsmetadata_repository = DSMetaDataRepository()
         self.fmmetadata_repository = FMMetaDataRepository()
         self.dsdownloadrecord_repository = DSDownloadRecordRepository()
-        self.filedownloadrecord_repository = FileDownloadRecordRepository()
+        self.hubfiledownloadrecord_repository = HubfileDownloadRecordRepository()
         self.dsviewrecord_repostory = DSViewRecordRepository()
-        self.fileviewrecord_repository = FileViewRecordRepository()
-        self.file_repository = FileRepository()
+        self.hubfileviewrecord_repository = HubfileViewRecordRepository()
 
     def get_synchronized(self, current_user_id: int) -> DataSet:
         return self.repository.get_synchronized(current_user_id)
@@ -77,13 +74,13 @@ class DataSetService(BaseService):
         return self.dsdownloadrecord_repository.total_dataset_downloads()
 
     def total_feature_model_downloads(self) -> int:
-        return self.filedownloadrecord_repository.total_feature_model_downloads()
+        return self.hubfiledownloadrecord_repository.total_feature_model_downloads()
 
     def total_dataset_views(self) -> int:
         return self.dsviewrecord_repostory.total_dataset_views()
 
     def total_feature_model_views(self) -> int:
-        return self.fileviewrecord_repository.total_feature_model_views()
+        return self.hubfileviewrecord_repository.total_feature_model_views()
 
     def create_from_form(self, form, current_user) -> DataSet:
         main_author = {
@@ -166,16 +163,6 @@ class DSMetaDataService(BaseService):
 class FMMetaDataService(BaseService):
     def __init__(self):
         super().__init__(FMMetaDataRepository())
-
-
-class FileService(BaseService):
-    def __init__(self):
-        super().__init__(FileRepository())
-
-
-class FileDownloadRecordService(BaseService):
-    def __init__(self):
-        super().__init__(FileDownloadRecordRepository())
 
 
 class DOIMappingService(BaseService):

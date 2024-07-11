@@ -1,13 +1,13 @@
 import os
 import shutil
 from app.modules.auth.models import User
+from app.modules.hubfile.models import Hubfile
 from core.seeders.BaseSeeder import BaseSeeder
 from app.modules.dataset.models import (
     DataSet,
     DSMetaData,
     PublicationType,
     DSMetrics,
-    File,
     FeatureModel,
     FMMetaData,
     Author)
@@ -116,7 +116,7 @@ class DataSetSeeder(BaseSeeder):
 
             file_path = os.path.join(dest_folder, file_name)
 
-            uvl_file = File(
+            uvl_file = Hubfile(
                 name=file_name,
                 checksum=f'checksum{i+1}',
                 size=os.path.getsize(file_path),
