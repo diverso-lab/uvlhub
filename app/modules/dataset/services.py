@@ -17,7 +17,11 @@ from app.modules.dataset.repositories import (
     FMMetaDataRepository,
     FeatureModelRepository
 )
-from app.modules.hubfile.repositories import HubfileDownloadRecordRepository, HubfileRepository, HubfileViewRecordRepository
+from app.modules.hubfile.repositories import (
+    HubfileDownloadRecordRepository,
+    HubfileRepository,
+    HubfileViewRecordRepository
+)
 from core.services.BaseService import BaseService
 
 logger = logging.getLogger(__name__)
