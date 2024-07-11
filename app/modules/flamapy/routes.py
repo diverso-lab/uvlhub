@@ -36,8 +36,8 @@ def check_uvl(file_id):
                 self.errors.append(error_message)
     
     try:
-        file = HubfileService().get_by_id(file_id)
-        input_stream = FileStream(file.name)
+        hubfile = HubfileService().get_by_id(file_id)
+        input_stream = FileStream(hubfile.get_path())
         lexer = UVLCustomLexer(input_stream)
         
         error_listener = CustomErrorListener()
@@ -67,22 +67,14 @@ def check_uvl(file_id):
 
 @flamapy_bp.route('/flamapy/valid/<int:file_id>', methods=['GET'])
 def valid(file_id):
-    file = HubfileService().get_by_id(file_id)
-
-#    uvlReader = UVLReader(file)
-
-    print(file)
-    return True
+    return jsonify({"success": True, "file_id": file_id})
 
 @flamapy_bp.route('/flamapy/to_glencoe/<int:file_id>', methods=['GET'])
 def to_glencoe(file_id):
     temp_file = tempfile.NamedTemporaryFile(suffix='.json', delete=False)
     try:
-        file = HubfileService().get_or_404(file_id)
-        logger.info(f"file: {file}")
-        working_dir = os.getenv('WORKING_DIR')
-        path = os.path.join(working_dir, 'uploads', f'{file.name}', f'{file.feature_model_id.data_set_id.user_id}')
-        fm = UVLReader(path).transform()
+        hubfile = HubfileService().get_or_404(file_id)
+        fm = UVLReader(hubfile.get_path()).transform()
         GlencoeWriter(temp_file.name,fm).transform()
 
         # Return the file in the response
@@ -91,12 +83,13 @@ def to_glencoe(file_id):
         # Clean up the temporary file
         os.remove(temp_file.name)
 
+
 @flamapy_bp.route('/flamapy/to_splot/<int:file_id>', methods=['GET'])
 def to_splot(file_id):
     temp_file = tempfile.NamedTemporaryFile(suffix='.splx', delete=False)
     try:
-        file = HubfileService().get_by_id(file_id)
-        fm = UVLReader(file.name).transform()
+        hubfile = HubfileService().get_by_id(file_id)
+        fm = UVLReader(hubfile.get_path()).transform()
         SPLOTWriter(temp_file.name,fm).transform()
 
         # Return the file in the response
@@ -105,12 +98,13 @@ def to_splot(file_id):
         # Clean up the temporary file
         os.remove(temp_file.name)
 
+
 @flamapy_bp.route('/flamapy/to_cnf/<int:file_id>', methods=['GET'])
 def to_cnf(file_id):
     temp_file = tempfile.NamedTemporaryFile(suffix='.cnf', delete=False)
     try:
-        file = HubfileService().get_by_id(file_id)
-        fm = UVLReader(file.name).transform()
+        hubfile = HubfileService().get_by_id(file_id)
+        fm = UVLReader(hubfile.get_path()).transform()
         sat=FmToPysat(fm).transform()
         DimacsWriter(temp_file.name,sat).transform()
 
