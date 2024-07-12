@@ -1,6 +1,6 @@
 import logging
 from app.modules.hubfile.services import HubfileService
-from flask import render_template, send_file, jsonify
+from flask import send_file, jsonify
 from app.modules.flamapy import flamapy_bp
 from flamapy.metamodels.fm_metamodel.transformations import UVLReader, GlencoeWriter, SPLOTWriter
 from flamapy.metamodels.pysat_metamodel.transformations import FmToPysat, DimacsWriter
