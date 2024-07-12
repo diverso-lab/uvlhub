@@ -15,11 +15,6 @@ from antlr4.error.ErrorListener import ErrorListener
 logger = logging.getLogger(__name__)
 
 
-@flamapy_bp.route('/flamapy', methods=['GET'])
-def index():
-    return render_template('flamapy/index.html')
-
-
 @flamapy_bp.route('/flamapy/check_uvl/<int:file_id>', methods=['GET'])
 def check_uvl(file_id):
     class CustomErrorListener(ErrorListener):
