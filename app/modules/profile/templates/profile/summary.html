@@ -49,9 +49,18 @@
                             {% for dataset in datasets %}
                             <tr>
                                 <td>
-                                    <a href="{{ dataset.get_uvlhub_doi() }}">
-                                        {{ dataset.ds_meta_data.title }}
-                                    </a>
+
+                                    {% if dataset.ds_meta_data.dataset_doi %}
+                                        <a href="{{ dataset.get_uvlhub_doi() }}">
+                                            {{ dataset.ds_meta_data.title }}
+                                        </a>
+                                    {% else %}
+                                        <a href="{{ url_for('dataset.get_unsynchronized_dataset', dataset_id=dataset.id) }}">
+                                            {{ dataset.ds_meta_data.title }}
+                                        </a>                                    
+                                    {% endif %}
+
+                                    
                                 </td>
                                 <td>{{ dataset.ds_meta_data.publication_type.name.replace('_', ' ').title() }}</td>
                             </tr>

@@ -1,8 +1,12 @@
+import os
 from flask_login import login_user
 from flask_login import current_user
 
+from app.modules.auth.models import User
 from app.modules.auth.repositories import UserRepository
+from app.modules.profile.models import UserProfile
 from app.modules.profile.repositories import UserProfileRepository
+from core.configuration.configuration import uploads_folder_name
 from core.services.BaseService import BaseService
 
 
@@ -63,12 +67,15 @@ class AuthenticationService(BaseService):
 
         return None, form.errors
 
-    def get_authenticated_user_profile():
+    def get_authenticated_user(self) -> User | None:
+        if current_user.is_authenticated:
+            return current_user
+        return None
+
+    def get_authenticated_user_profile(self) -> UserProfile | None:
         if current_user.is_authenticated:
             return current_user.profile
         return None
 
-    def get_authenticated_user():
-        if current_user.is_authenticated:
-            return current_user
-        return None
+    def temp_folder_by_user(self, user: User) -> str:
+        return os.path.join(uploads_folder_name(), "temp", str(user.id))

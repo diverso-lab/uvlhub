@@ -2,13 +2,19 @@ import os
 from app.modules.auth.models import User
 from app.modules.dataset.models import DataSet
 from app.modules.hubfile.models import Hubfile
-from app.modules.hubfile.repositories import HubfileDownloadRecordRepository, HubfileRepository
+from app.modules.hubfile.repositories import (
+    HubfileDownloadRecordRepository,
+    HubfileRepository,
+    HubfileViewRecordRepository
+)
 from core.services.BaseService import BaseService
 
 
 class HubfileService(BaseService):
     def __init__(self):
         super().__init__(HubfileRepository())
+        self.hubfile_view_record_repository = HubfileViewRecordRepository()
+        self.hubfile_download_record_repository = HubfileDownloadRecordRepository()
 
     def get_owner_user_by_hubfile(self, hubfile: Hubfile) -> User:
         return self.repository.get_owner_user_by_hubfile(hubfile)
@@ -29,6 +35,13 @@ class HubfileService(BaseService):
                             hubfile.name)
 
         return path
+
+    def total_hubfile_views(self) -> int:
+        return self.hubfile_view_record_repository.total_hubfile_views()
+
+    def total_hubfile_downloads(self) -> int:
+        hubfile_download_record_repository = HubfileDownloadRecordRepository()
+        return hubfile_download_record_repository.total_hubfile_downloads()
 
 
 class HubfileDownloadRecordService(BaseService):

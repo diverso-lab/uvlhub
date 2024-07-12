@@ -1,11 +1,9 @@
 from datetime import datetime, timezone
 import logging
-import re
 from flask_login import current_user
-import unidecode
 from typing import Optional
 
-from sqlalchemy import desc, func, or_, any_
+from sqlalchemy import desc, func
 
 from app.modules.dataset.models import (
     Author,
@@ -13,10 +11,7 @@ from app.modules.dataset.models import (
     DSDownloadRecord,
     DSMetaData,
     DSViewRecord,
-    DataSet,
-    FMMetaData,
-    FeatureModel,
-    PublicationType,
+    DataSet
 )
 from core.repositories.BaseRepository import BaseRepository
 
@@ -96,57 +91,6 @@ class DataSetRepository(BaseRepository):
             .first()
         )
 
-    def filter(self, query="", sorting="newest", publication_type="any", tags=[], **kwargs):
-        # Normalize and remove unwanted characters
-        normalized_query = unidecode.unidecode(query).lower()
-        cleaned_query = re.sub(r'[,.":\'()\[\]^;!¡¿?]', "", normalized_query)
-        logger.info(f"Cleaned query: {cleaned_query}")
-
-        filters = []
-        for word in cleaned_query.split():
-            filters.append(DSMetaData.title.ilike(f"%{word}%"))
-            filters.append(DSMetaData.description.ilike(f"%{word}%"))
-            filters.append(Author.name.ilike(f"%{word}%"))
-            filters.append(Author.affiliation.ilike(f"%{word}%"))
-            filters.append(Author.orcid.ilike(f"%{word}%"))
-            filters.append(FMMetaData.uvl_filename.ilike(f"%{word}%"))
-            filters.append(FMMetaData.title.ilike(f"%{word}%"))
-            filters.append(FMMetaData.description.ilike(f"%{word}%"))
-            filters.append(FMMetaData.publication_doi.ilike(f"%{word}%"))
-            filters.append(FMMetaData.tags.ilike(f"%{word}%"))
-            filters.append(DSMetaData.tags.ilike(f"%{word}%"))
-
-        datasets = (
-            self.model.query
-            .join(DataSet.ds_meta_data)
-            .join(DSMetaData.authors)
-            .join(DataSet.feature_models)
-            .join(FeatureModel.fm_meta_data)
-            .filter(or_(*filters))
-        )
-        logger.info(f"Found datasets with {cleaned_query}: {datasets.all()}")
-
-        if publication_type != "any":
-            matching_type = None
-            for member in PublicationType:
-                if member.value.lower() == publication_type:
-                    matching_type = member
-                    break
-
-            if matching_type is not None:
-                datasets = datasets.filter(DSMetaData.publication_type == matching_type.name)
-
-        if tags:
-            datasets = datasets.filter(DSMetaData.tags.ilike(any_(f"%{tag}%" for tag in tags)))
-
-        # Order by created_at
-        if sorting == "oldest":
-            datasets = datasets.order_by(self.model.created_at.asc())
-        else:
-            datasets = datasets.order_by(self.model.created_at.desc())
-
-        return datasets.all()
-
     def count_synchronized_datasets(self):
         return (
             self.model.query.join(DSMetaData)
@@ -169,20 +113,6 @@ class DataSetRepository(BaseRepository):
             .limit(5)
             .all()
         )
-
-
-class FMMetaDataRepository(BaseRepository):
-    def __init__(self):
-        super().__init__(FMMetaData)
-
-
-class FeatureModelRepository(BaseRepository):
-    def __init__(self):
-        super().__init__(FeatureModel)
-
-    def count_feature_models(self) -> int:
-        max_id = self.model.query.with_entities(func.max(self.model.id)).scalar()
-        return max_id if max_id is not None else 0
 
 
 class DOIMappingRepository(BaseRepository):

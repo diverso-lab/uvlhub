@@ -13,14 +13,12 @@ from flask import (
     request,
     jsonify,
     send_from_directory,
-    current_app,
     make_response,
     abort,
     url_for,
 )
 from flask_login import login_required, current_user
 
-from app import db
 from app.modules.dataset.forms import DataSetForm
 from app.modules.dataset.models import (
     DSDownloadRecord
@@ -34,8 +32,6 @@ from app.modules.dataset.services import (
     DataSetService,
     DOIMappingService
 )
-from app.modules.hubfile.models import Hubfile, HubfileDownloadRecord, HubfileViewRecord
-from app.modules.hubfile.services import HubfileDownloadRecordService, HubfileService
 from app.modules.zenodo.services import ZenodoService
 
 logger = logging.getLogger(__name__)
@@ -64,7 +60,7 @@ def create_dataset():
             logger.info("Creating dataset...")
             dataset = dataset_service.create_from_form(form=form, current_user=current_user)
             logger.info(f"Created dataset: {dataset}")
-            move_feature_models(dataset)
+            dataset_service.move_feature_models(dataset)
         except Exception as exc:
             logger.exception(f"Exception while create dataset data in local {exc}")
             return jsonify({"Exception while create dataset data in local: ": str(exc)}), 400
@@ -120,17 +116,6 @@ def list_dataset():
         datasets=dataset_service.get_synchronized(current_user.id),
         local_datasets=dataset_service.get_unsynchronized(current_user.id),
     )
-
-
-def move_feature_models(dataset):
-    source_dir = current_user.temp_folder()
-    dest_dir = f"uploads/user_{current_user.id}/dataset_{dataset.id}/"
-
-    os.makedirs(dest_dir, exist_ok=True)
-
-    for feature_model in dataset.feature_models:
-        uvl_filename = feature_model.fm_meta_data.uvl_filename
-        shutil.move(os.path.join(source_dir, uvl_filename), dest_dir)
 
 
 @dataset_bp.route("/dataset/file/upload", methods=["POST"])
@@ -254,94 +239,6 @@ def download_dataset(dataset_id):
         )
 
     return resp
-
-
-@dataset_bp.route("/file/download/<int:file_id>", methods=["GET"])
-def download_file(file_id):
-    file = HubfileService().get_or_404(file_id)
-    filename = file.name
-
-    directory_path = f"uploads/user_{file.feature_model.data_set.user_id}/dataset_{file.feature_model.data_set_id}/"
-    parent_directory_path = os.path.dirname(current_app.root_path)
-    file_path = os.path.join(parent_directory_path, directory_path)
-
-    # Get the cookie from the request or generate a new one if it does not exist
-    user_cookie = request.cookies.get("file_download_cookie")
-    if not user_cookie:
-        user_cookie = str(uuid.uuid4())
-
-    # Check if the download record already exists for this cookie
-    existing_record = HubfileDownloadRecord.query.filter_by(
-        user_id=current_user.id if current_user.is_authenticated else None,
-        file_id=file_id,
-        download_cookie=user_cookie
-    ).first()
-
-    if not existing_record:
-        # Record the download in your database
-        HubfileDownloadRecordService().create(
-            user_id=current_user.id if current_user.is_authenticated else None,
-            file_id=file_id,
-            download_date=datetime.now(timezone.utc),
-            download_cookie=user_cookie,
-        )
-
-    # Save the cookie to the user's browser
-    resp = make_response(
-        send_from_directory(directory=file_path, path=filename, as_attachment=True)
-    )
-    resp.set_cookie("file_download_cookie", user_cookie)
-
-    return resp
-
-
-@dataset_bp.route('/file/view/<int:file_id>', methods=['GET'])
-def view_file(file_id):
-    file = Hubfile.query.get_or_404(file_id)
-    filename = file.name
-
-    directory_path = f"uploads/user_{file.feature_model.data_set.user_id}/dataset_{file.feature_model.data_set_id}/"
-    parent_directory_path = os.path.dirname(current_app.root_path)
-    file_path = os.path.join(parent_directory_path, directory_path, filename)
-
-    try:
-        if os.path.exists(file_path):
-            with open(file_path, 'r') as f:
-                content = f.read()
-
-            user_cookie = request.cookies.get('view_cookie')
-            if not user_cookie:
-                user_cookie = str(uuid.uuid4())
-
-            # Check if the view record already exists for this cookie
-            existing_record = HubfileViewRecord.query.filter_by(
-                user_id=current_user.id if current_user.is_authenticated else None,
-                file_id=file_id,
-                view_cookie=user_cookie
-            ).first()
-
-            if not existing_record:
-                # Register file view
-                new_view_record = HubfileViewRecord(
-                    user_id=current_user.id if current_user.is_authenticated else None,
-                    file_id=file_id,
-                    view_date=datetime.now(),
-                    view_cookie=user_cookie
-                )
-                db.session.add(new_view_record)
-                db.session.commit()
-
-            # Prepare response
-            response = jsonify({'success': True, 'content': content})
-            if not request.cookies.get('view_cookie'):
-                response = make_response(response)
-                response.set_cookie('view_cookie', user_cookie, max_age=60*60*24*365*2)
-
-            return response
-        else:
-            return jsonify({'success': False, 'error': 'File not found'}), 404
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 @dataset_bp.route("/doi/<path:doi>/", methods=["GET"])

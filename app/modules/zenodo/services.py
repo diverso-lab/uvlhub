@@ -2,7 +2,8 @@ import logging
 import os
 import requests
 
-from app.modules.dataset.models import DataSet, FeatureModel
+from app.modules.dataset.models import DataSet
+from app.modules.featuremodel.models import FeatureModel
 from app.modules.zenodo.repositories import ZenodoRepository
 
 from core.configuration.configuration import uploads_folder_name

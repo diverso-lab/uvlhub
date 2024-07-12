@@ -295,7 +295,7 @@
                                     </button>
                                     <ul class="dropdown-menu" aria-labelledby="btnGroupDropExport{{ file.id }}">
                                         <li>
-                                            <a class="dropdown-item" href="{{ url_for('dataset.download_file', file_id=file.id) }}">
+                                            <a class="dropdown-item" href="{{ url_for('hubfile.download_file', file_id=file.id) }}">
                                                 UVL
                                             </a>
                                             <a class="dropdown-item" href="{{ url_for('flamapy.to_glencoe', file_id=file.id) }}">

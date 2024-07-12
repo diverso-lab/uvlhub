@@ -1,11 +1,13 @@
 import logging
 import os
 import hashlib
+import shutil
 from typing import Optional
 import uuid
 
 from flask import request
 
+from app.modules.auth.services import AuthenticationService
 from app.modules.dataset.models import DSViewRecord, DataSet, DSMetaData
 from app.modules.dataset.repositories import (
     AuthorRepository,
@@ -13,10 +15,9 @@ from app.modules.dataset.repositories import (
     DSDownloadRecordRepository,
     DSMetaDataRepository,
     DSViewRecordRepository,
-    DataSetRepository,
-    FMMetaDataRepository,
-    FeatureModelRepository
+    DataSetRepository
 )
+from app.modules.featuremodel.repositories import FMMetaDataRepository, FeatureModelRepository
 from app.modules.hubfile.repositories import (
     HubfileDownloadRecordRepository,
     HubfileRepository,
@@ -48,6 +49,19 @@ class DataSetService(BaseService):
         self.dsviewrecord_repostory = DSViewRecordRepository()
         self.hubfileviewrecord_repository = HubfileViewRecordRepository()
 
+    def move_feature_models(self, dataset: DataSet):
+        current_user = AuthenticationService().get_authenticated_user()
+        source_dir = current_user.temp_folder()
+
+        working_dir = os.getenv("WORKING_DIR", "")
+        dest_dir = os.path.join(working_dir, "uploads", f"user_{current_user.id}", f"dataset_{dataset.id}")
+
+        os.makedirs(dest_dir, exist_ok=True)
+
+        for feature_model in dataset.feature_models:
+            uvl_filename = feature_model.fm_meta_data.uvl_filename
+            shutil.move(os.path.join(source_dir, uvl_filename), dest_dir)
+
     def get_synchronized(self, current_user_id: int) -> DataSet:
         return self.repository.get_synchronized(current_user_id)
 
@@ -59,9 +73,6 @@ class DataSetService(BaseService):
 
     def latest_synchronized(self):
         return self.repository.latest_synchronized()
-
-    def filter(self, query="", sorting="newest", publication_type="any", tags=[], **kwargs):
-        return self.repository.filter(query, sorting, publication_type, tags, **kwargs)
 
     def count_synchronized_datasets(self):
         return self.repository.count_synchronized_datasets()
@@ -78,14 +89,8 @@ class DataSetService(BaseService):
     def total_dataset_downloads(self) -> int:
         return self.dsdownloadrecord_repository.total_dataset_downloads()
 
-    def total_feature_model_downloads(self) -> int:
-        return self.hubfiledownloadrecord_repository.total_feature_model_downloads()
-
     def total_dataset_views(self) -> int:
         return self.dsviewrecord_repostory.total_dataset_views()
-
-    def total_feature_model_views(self) -> int:
-        return self.hubfileviewrecord_repository.total_feature_model_views()
 
     def create_from_form(self, form, current_user) -> DataSet:
         main_author = {
@@ -136,14 +141,6 @@ class DataSetService(BaseService):
         return f'http://{domain}/doi/{dataset.ds_meta_data.dataset_doi}'
 
 
-class FeatureModelService(BaseService):
-    def __init__(self):
-        super().__init__(FeatureModelRepository())
-
-    def count_feature_models(self):
-        return self.repository.count_feature_models()
-
-
 class AuthorService(BaseService):
     def __init__(self):
         super().__init__(AuthorRepository())
@@ -163,23 +160,6 @@ class DSMetaDataService(BaseService):
 
     def filter_by_doi(self, doi: str) -> Optional[DSMetaData]:
         return self.repository.filter_by_doi(doi)
-
-
-class FMMetaDataService(BaseService):
-    def __init__(self):
-        super().__init__(FMMetaDataRepository())
-
-
-class DOIMappingService(BaseService):
-    def __init__(self):
-        super().__init__(DOIMappingRepository())
-
-    def get_new_doi(self, old_doi: str) -> str:
-        doi_mapping = self.repository.get_new_doi(old_doi)
-        if doi_mapping:
-            return doi_mapping.dataset_doi_new
-        else:
-            return None
 
 
 class DSViewRecordService(BaseService):
@@ -204,6 +184,18 @@ class DSViewRecordService(BaseService):
             self.create_new_record(dataset=dataset, user_cookie=user_cookie)
 
         return user_cookie
+
+
+class DOIMappingService(BaseService):
+    def __init__(self):
+        super().__init__(DOIMappingRepository())
+
+    def get_new_doi(self, old_doi: str) -> str:
+        doi_mapping = self.repository.get_new_doi(old_doi)
+        if doi_mapping:
+            return doi_mapping.dataset_doi_new
+        else:
+            return None
 
 
 class SizeService():

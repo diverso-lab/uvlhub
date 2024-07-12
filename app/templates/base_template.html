@@ -162,9 +162,6 @@ chico sundermann">
             <div class="navbar-collapse collapse">
                 <ul class="navbar-nav navbar-align">
                     <li class="nav-item dropdown">
-                        <a class="nav-icon dropdown-toggle d-inline-block d-sm-none" href="#" data-bs-toggle="dropdown">
-                            <i class="align-middle" data-feather="user"></i>
-                        </a>
 
                         {% if current_user.is_anonymous %}
                             <a class="nav-link  d-none d-sm-inline-block" href="{{ url_for('auth.login') }}">Login</a>
@@ -172,6 +169,10 @@ chico sundermann">
                                 up</a>
 
                         {% else %}
+
+                        <a class="nav-icon dropdown-toggle d-inline-block d-sm-none" href="#" data-bs-toggle="dropdown">
+                            <i class="align-middle" data-feather="user"></i> 
+                        </a>
 
                         <a class="nav-link dropdown-toggle d-none d-sm-inline-block" href="#" data-bs-toggle="dropdown">
                             <span class="text-dark">{{ current_user.profile.surname }}, {{ current_user.profile.name }}</span>

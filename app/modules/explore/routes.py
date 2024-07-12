@@ -2,7 +2,7 @@ from flask import render_template, request, jsonify
 
 from app.modules.explore import explore_bp
 from app.modules.explore.forms import ExploreForm
-from app.modules.dataset.services import DataSetService
+from app.modules.explore.services import ExploreService
 
 
 @explore_bp.route('/explore', methods=['GET', 'POST'])
@@ -14,5 +14,5 @@ def index():
 
     if request.method == 'POST':
         criteria = request.get_json()
-        datasets = DataSetService().filter(**criteria)
+        datasets = ExploreService().filter(**criteria)
         return jsonify([dataset.to_dict() for dataset in datasets])
