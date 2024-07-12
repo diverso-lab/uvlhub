@@ -1,6 +1,7 @@
 import os
 import shutil
 from app.modules.auth.models import User
+from app.modules.featuremodel.models import FMMetaData, FeatureModel
 from app.modules.hubfile.models import Hubfile
 from core.seeders.BaseSeeder import BaseSeeder
 from app.modules.dataset.models import (
@@ -8,10 +9,8 @@ from app.modules.dataset.models import (
     DSMetaData,
     PublicationType,
     DSMetrics,
-    FeatureModel,
-    FMMetaData,
     Author)
-from datetime import datetime
+from datetime import datetime, timezone
 from dotenv import load_dotenv
 
 
@@ -62,7 +61,7 @@ class DataSetSeeder(BaseSeeder):
             DataSet(
                 user_id=user1.id if i % 2 == 0 else user2.id,
                 ds_meta_data_id=seeded_ds_meta_data[i].id,
-                created_at=datetime.utcnow()
+                created_at=datetime.now(timezone.utc)
             ) for i in range(4)
         ]
         seeded_datasets = self.seed(datasets)
