@@ -1,7 +1,7 @@
 # module_manager.py
 import os
 import importlib.util
-from flask import Blueprint
+from flask import Blueprint, send_from_directory
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -23,12 +23,20 @@ class ModuleManager:
                 ignored_modules = [line.strip() for line in f.readlines()]
         return ignored_modules
 
+    def configure_blueprint(self, module_name, blueprint, module_path):
+        # Verificar si el blueprint ya está registrado antes de agregar la regla
+        if blueprint not in self.app.blueprints.values():
+            # Agregar la regla del script si existe el archivo
+            script_path = os.path.join(module_path, 'scripts.js')
+            if os.path.exists(script_path):
+                blueprint.add_url_rule(f'/{module_name}/scripts.js', 'scripts',
+                                       lambda module_path=module_path: send_from_directory(module_path, 'scripts.js'))
+
     def register_modules(self):
         self.app.modules = {}
         self.app.blueprint_url_prefixes = {}
 
         for module_name in os.listdir(self.modules_dir):
-
             if module_name in self.ignored_modules:
                 continue
 
@@ -41,11 +49,14 @@ class ModuleManager:
                     for item in dir(routes_module):
                         if isinstance(getattr(routes_module, item), Blueprint):
                             blueprint = getattr(routes_module, item)
+                            self.configure_blueprint(module_name, blueprint, module_path)
                             self.app.register_blueprint(blueprint)
                 except ModuleNotFoundError as e:
                     print(
                         f"Error registering modules: Could not load the module "
                         f"for Module '{module_name}': {e}")
+                except AssertionError:
+                    pass
 
     def register_module(self, module_name):
         module_path = os.path.join(self.modules_dir, module_name)
