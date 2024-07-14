@@ -121,8 +121,10 @@
 
     </div>
 
-{% endblock %}
+    {% block scripts %}
 
-{% block scripts %}
-    <script src="{{ url_for('profile.scripts') }}"></script>
+
+
+    {% endblock %}
+
 {% endblock %}

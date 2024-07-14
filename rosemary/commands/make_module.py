@@ -49,7 +49,6 @@ def make_module(name):
         'services.py': 'module_services.py.j2',
         'forms.py': 'module_forms.py.j2',
         'seeders.py': 'module_seeders.py.j2',
-        'scripts.js': 'module_scripts.js.j2',
         os.path.join('templates', name, 'index.html'): 'module_templates_index.html.j2',
         'tests/test_unit.py': 'module_tests_test_unit.py.j2',
         'tests/locustfile.py': 'module_tests_locustfile.py.j2',
