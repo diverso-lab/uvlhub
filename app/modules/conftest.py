@@ -4,11 +4,24 @@ from app import create_app, db
 from app.modules.auth.models import User
 
 
+@pytest.fixture(scope='session')
+def test_app():
+    """ Create and configure a new app instance for each test session. """
+    test_app = create_app('testing')
+
+    with test_app.app_context():
+        # Imprimir los blueprints registrados
+        print("TESTING SUITE (1): Blueprints registrados:", test_app.blueprints)
+        yield test_app
+
+
 @pytest.fixture(scope='module')
-def test_client():
-    flask_app = create_app('testing')
-    with flask_app.test_client() as testing_client:
-        with flask_app.app_context():
+def test_client(test_app):
+
+    with test_app.test_client() as testing_client:
+        with test_app.app_context():
+            print("TESTING SUITE (2): Blueprints registrados:", test_app.blueprints)
+
             db.drop_all()
             db.create_all()
             """
@@ -18,7 +31,12 @@ def test_client():
             user_test = User(email='test@example.com', password='test1234')
             db.session.add(user_test)
             db.session.commit()
+
+            print("Rutas registradas:")
+            for rule in test_app.url_map.iter_rules():
+                print(rule)
             yield testing_client
+
             db.session.remove()
             db.drop_all()
 

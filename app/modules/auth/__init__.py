@@ -1,3 +1,3 @@
-from flask import Blueprint
+from core.blueprints.base_blueprint import BaseBlueprint
 
-auth_bp = Blueprint('auth', __name__, template_folder='templates')
+auth_bp = BaseBlueprint('auth', __name__, template_folder='templates')

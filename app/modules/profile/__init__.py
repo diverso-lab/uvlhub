@@ -1,3 +1,3 @@
-from flask import Blueprint
+from core.blueprints.base_blueprint import BaseBlueprint
 
-profile_bp = Blueprint('profile', __name__, template_folder='templates')
+profile_bp = BaseBlueprint('profile', __name__, template_folder='templates')

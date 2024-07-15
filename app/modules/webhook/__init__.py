@@ -1,3 +1,3 @@
-from flask import Blueprint
+from core.blueprints.base_blueprint import BaseBlueprint
 
-webhook_bp = Blueprint('webhook', __name__, template_folder='templates')
+webhook_bp = BaseBlueprint('webhook', __name__, template_folder='templates')
