@@ -2,7 +2,7 @@ from datetime import datetime
 from enum import Enum
 
 from flask import request
-from sqlalchemy import Enum as SQLAlchemyEnum
+from sqlalchemy import Boolean, Enum as SQLAlchemyEnum
 
 from app import db
 
@@ -66,6 +66,7 @@ class DSMetaData(db.Model):
     ds_metrics_id = db.Column(db.Integer, db.ForeignKey('ds_metrics.id'))
     ds_metrics = db.relationship('DSMetrics', uselist=False, backref='ds_meta_data', cascade="all, delete")
     authors = db.relationship('Author', backref='ds_meta_data', lazy=True, cascade="all, delete")
+    dataset_anonymous = db.Column(Boolean, default=False) 
 
 
 class DataSet(db.Model):

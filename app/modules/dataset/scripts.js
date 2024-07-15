@@ -196,6 +196,9 @@ var currentId = 0;
                     }
 
 
+                    const dataset_anonymous_checkbox_value = document.getElementById('dataset_anonymous').checked;
+                    formUploadData.append('dataset_anonymous', dataset_anonymous_checkbox_value);
+
                     if (checked_orcid && checked_name) {
                         fetch('/dataset/upload', {
                             method: 'POST',

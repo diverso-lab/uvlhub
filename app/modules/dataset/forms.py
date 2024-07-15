@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, SelectField, FieldList, FormField, SubmitField, TextAreaField
+from wtforms import BooleanField, StringField, SelectField, FieldList, FormField, SubmitField, TextAreaField
 from wtforms.validators import DataRequired, URL, Optional
 
 from app.modules.dataset.models import PublicationType
@@ -50,7 +50,7 @@ class FeatureModelForm(FlaskForm):
             "publication_type": self.publication_type.data,
             "publication_doi": self.publication_doi.data,
             "tags": self.tags.data,
-            "uvl_version": self.version.data,
+            "uvl_version": self.version.data
         }
 
 
@@ -67,6 +67,7 @@ class DataSetForm(FlaskForm):
     tags = StringField("Tags (separated by commas)")
     authors = FieldList(FormField(AuthorForm))
     feature_models = FieldList(FormField(FeatureModelForm), min_entries=1)
+    dataset_anonymous = BooleanField("Is the dataset anonymous?")
 
     submit = SubmitField("Submit")
 
@@ -81,6 +82,7 @@ class DataSetForm(FlaskForm):
             "publication_doi": self.publication_doi.data,
             "dataset_doi": self.dataset_doi.data,
             "tags": self.tags.data,
+            "dataset_anonymous": self.dataset_anonymous.data
         }
 
     def convert_publication_type(self, value):

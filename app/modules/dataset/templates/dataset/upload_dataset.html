@@ -125,7 +125,7 @@
                           </div>
                         </div>
 
-                        <div class="row" style="padding-left: 2rem">
+                        <div class="row" style="padding-left: 2rem" id="authors_form">
 
                             <div class="col-lg-6 col-12 mb-3">
                                 <label class="form-label">Author name</label>
@@ -189,8 +189,24 @@
 
                             </div>
 
+                    
 
                         </div>
+
+                        <div class="row" style="padding-left: 2rem">
+
+                            <div class="col-12">
+                                <label class="form-check">
+                                    <input id="dataset_anonymous" class="form-check-input" type="checkbox" value="">
+                                    <span class="form-check-label" style="font-size: 15px">
+                                        <b>Anonymize dataset</b> (this will cause the dataset in both UVLHub and Zenodo to appear as anonymized until it is changed)
+                                            </span>
+                                </label>
+                            </div>
+
+                        </div>
+
+                        
 
                     </div>
 
@@ -507,11 +523,29 @@
 
                 <script>
                     const checkbox = document.getElementById('agreeCheckbox');
+                    const dataset_anonymous_checkbox = document.getElementById('dataset_anonymous');
                     const upload_button = document.getElementById('upload_button');
+                    const authors_form = document.getElementById('authors_form');
 
                     checkbox.addEventListener('change', function () {
                         upload_button.disabled = !checkbox.checked;
                     });
+
+                    dataset_anonymous_checkbox.addEventListener('change', function () {
+                        if (dataset_anonymous_checkbox.checked) {
+                            authors_form.style.display = 'none';  // Oculta el formulario
+                        } else {
+                            authors_form.style.display = 'block'; // Muestra el formulario
+                        }
+                    });
+
+                    // Asegúrate de que el formulario de autores esté visible al cargar la página si el checkbox de anónimo no está marcado
+                    if (!dataset_anonymous_checkbox.checked) {
+                        authors_form.style.display = 'block';
+                    } else {
+                        authors_form.style.display = 'none';
+                    }
+
                 </script>
 
             </div>
