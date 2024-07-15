@@ -16,7 +16,7 @@ class BaseBlueprint(Blueprint):
     def add_script_route(self):
         script_path = os.path.join(self.module_path, 'scripts.js')
         if os.path.exists(script_path):
-            self.add_url_rule('/scripts.js', 'scripts', self.send_script)
+            self.add_url_rule(f'/{self.name}/scripts.js', 'scripts', self.send_script)
         else:
             print(f"(BaseBlueprint) -> {script_path} does not exist.")
 
