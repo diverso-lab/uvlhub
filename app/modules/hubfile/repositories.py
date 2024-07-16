@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+from flask_login import current_user
 from sqlalchemy import func
 from app.modules.auth.models import User
 from app.modules.dataset.models import DataSet
@@ -41,3 +43,18 @@ class HubfileDownloadRecordRepository(BaseRepository):
     def total_hubfile_downloads(self) -> int:
         max_id = self.model.query.with_entities(func.max(self.model.id)).scalar()
         return max_id if max_id is not None else 0
+
+    def the_record_exists(self, hubfile: Hubfile, user_cookie: str):
+        return self.model.query.filter_by(
+            user_id=current_user.id if current_user.is_authenticated else None,
+            file_id=hubfile.id,
+            download_cookie=user_cookie
+        ).first()
+
+    def create_new_record(self, hubfile: Hubfile, user_cookie: str) -> HubfileViewRecord:
+        return self.create(
+                user_id=current_user.id if current_user.is_authenticated else None,
+                file_id=hubfile.id,
+                view_date=datetime.now(timezone.utc),
+                view_download_cookiecookie=user_cookie,
+            )

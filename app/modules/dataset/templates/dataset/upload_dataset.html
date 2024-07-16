@@ -234,7 +234,7 @@
 
             <div id="uploaded_models_form" style="padding-left: 2rem">
 
-                <form action="{{ url_for('dataset.upload') }}" class="dropzone" id="myDropzone">
+                <form action="{{ url_for('hubfile.upload_file') }}" class="dropzone" id="myDropzone">
                     <div id="dropzone-text"></div>
                 </form>
 
@@ -245,7 +245,7 @@
 
                 <script>
                     let dropzone = Dropzone.options.myDropzone = {
-                        url: "/dataset/file/upload",
+                        url: "/hubfile/upload",
                         paramName: 'file',
                         maxFilesize: 10,
                         acceptedFiles: '.uvl',
@@ -332,7 +332,7 @@
 
                                     // Ajax request
                                     let xhr = new XMLHttpRequest();
-                                    xhr.open('POST', '/dataset/file/delete', true);
+                                    xhr.open('POST', '/hubfile/delete', true);
                                     xhr.setRequestHeader('Content-Type', 'application/json');
                                     xhr.onload = function () {
                                         if (xhr.status === 200) {

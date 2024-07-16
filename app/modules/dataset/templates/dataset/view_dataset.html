@@ -376,12 +376,12 @@
     var currentFileId;
 
     function viewFile(fileId) {
-        fetch(`/file/view/${fileId}`)
+        fetch(`/hubfile/view/${fileId}`)
             .then(response => response.json())
             .then(data => {
                 document.getElementById('fileContent').textContent = data.content;
                 currentFileId = fileId;
-                document.getElementById('downloadButton').href = `/file/download/${fileId}`;
+                document.getElementById('downloadButton').href = `/hubfile/download/${fileId}`;
                 var modal = new bootstrap.Modal(document.getElementById('fileViewerModal'));
                 modal.show();
             })

@@ -2,10 +2,6 @@ import logging
 import os
 import json
 import shutil
-import tempfile
-import uuid
-from datetime import datetime, timezone
-from zipfile import ZipFile
 
 from flask import (
     redirect,
@@ -20,9 +16,6 @@ from flask import (
 from flask_login import login_required, current_user
 
 from app.modules.dataset.forms import DataSetForm
-from app.modules.dataset.models import (
-    DSDownloadRecord
-)
 from app.modules.dataset import dataset_bp
 from app.modules.dataset.services import (
     AuthorService,
@@ -43,6 +36,7 @@ dsmetadata_service = DSMetaDataService()
 zenodo_service = ZenodoService()
 doi_mapping_service = DOIMappingService()
 ds_view_record_service = DSViewRecordService()
+ds_download_record_service = DSDownloadRecordService()
 
 
 @dataset_bp.route("/dataset/upload", methods=["GET", "POST"])
@@ -108,7 +102,7 @@ def create_dataset():
     return render_template("dataset/upload_dataset.html", form=form)
 
 
-@dataset_bp.route("/dataset/list", methods=["GET", "POST"])
+@dataset_bp.route("/dataset/list", methods=["GET"])
 @login_required
 def list_dataset():
     return render_template(
@@ -118,125 +112,25 @@ def list_dataset():
     )
 
 
-@dataset_bp.route("/dataset/file/upload", methods=["POST"])
-@login_required
-def upload():
-    file = request.files["file"]
-    temp_folder = current_user.temp_folder()
-
-    if not file or not file.filename.endswith(".uvl"):
-        return jsonify({"message": "No valid file"}), 400
-
-    # create temp folder
-    if not os.path.exists(temp_folder):
-        os.makedirs(temp_folder)
-
-    file_path = os.path.join(temp_folder, file.filename)
-
-    if os.path.exists(file_path):
-        # Generate unique filename (by recursion)
-        base_name, extension = os.path.splitext(file.filename)
-        i = 1
-        while os.path.exists(
-            os.path.join(temp_folder, f"{base_name} ({i}){extension}")
-        ):
-            i += 1
-        new_filename = f"{base_name} ({i}){extension}"
-        file_path = os.path.join(temp_folder, new_filename)
-    else:
-        new_filename = file.filename
-
-    try:
-        file.save(file_path)
-    except Exception as e:
-        return jsonify({"message": str(e)}), 500
-
-    return (
-        jsonify(
-            {
-                "message": "UVL uploaded and validated successfully",
-                "filename": new_filename,
-            }
-        ),
-        200,
-    )
-
-
-@dataset_bp.route("/dataset/file/delete", methods=["POST"])
-def delete():
-    data = request.get_json()
-    filename = data.get("file")
-    temp_folder = current_user.temp_folder()
-    filepath = os.path.join(temp_folder, filename)
-
-    if os.path.exists(filepath):
-        os.remove(filepath)
-        return jsonify({"message": "File deleted successfully"})
-
-    return jsonify({"error": "Error: File not found"})
-
-
 @dataset_bp.route("/dataset/download/<int:dataset_id>", methods=["GET"])
 def download_dataset(dataset_id):
+
     dataset = dataset_service.get_or_404(dataset_id)
 
-    file_path = f"uploads/user_{dataset.user_id}/dataset_{dataset.id}/"
+    temp_dir = dataset_service.zip_dataset(dataset)
 
-    temp_dir = tempfile.mkdtemp()
-    zip_path = os.path.join(temp_dir, f"dataset_{dataset_id}.zip")
+    user_cookie = ds_download_record_service.create_cookie(dataset)
 
-    with ZipFile(zip_path, "w") as zipf:
-        for subdir, dirs, files in os.walk(file_path):
-            for file in files:
-                full_path = os.path.join(subdir, file)
-
-                relative_path = os.path.relpath(full_path, file_path)
-
-                zipf.write(
-                    full_path,
-                    arcname=os.path.join(
-                        os.path.basename(zip_path[:-4]), relative_path
-                    ),
-                )
-
-    user_cookie = request.cookies.get("download_cookie")
-    if not user_cookie:
-        user_cookie = str(
-            uuid.uuid4()
-        )  # Generate a new unique identifier if it does not exist
-        # Save the cookie to the user's browser
-        resp = make_response(
-            send_from_directory(
-                temp_dir,
-                f"dataset_{dataset_id}.zip",
-                as_attachment=True,
-                mimetype="application/zip",
-            )
-        )
-        resp.set_cookie("download_cookie", user_cookie)
-    else:
-        resp = send_from_directory(
+    resp = make_response(
+        send_from_directory(
             temp_dir,
-            f"dataset_{dataset_id}.zip",
+            f"dataset_{dataset.id}.zip",
             as_attachment=True,
             mimetype="application/zip",
         )
+    )
 
-    # Check if the download record already exists for this cookie
-    existing_record = DSDownloadRecord.query.filter_by(
-        user_id=current_user.id if current_user.is_authenticated else None,
-        dataset_id=dataset_id,
-        download_cookie=user_cookie
-    ).first()
-
-    if not existing_record:
-        # Record the download in your database
-        DSDownloadRecordService().create(
-            user_id=current_user.id if current_user.is_authenticated else None,
-            dataset_id=dataset_id,
-            download_date=datetime.now(timezone.utc),
-            download_cookie=user_cookie,
-        )
+    resp.set_cookie("download_cookie", user_cookie)
 
     return resp
 

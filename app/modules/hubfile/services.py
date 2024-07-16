@@ -1,4 +1,7 @@
 import os
+import uuid
+
+from flask import request
 from app.modules.auth.models import User
 from app.modules.dataset.models import DataSet
 from app.modules.hubfile.models import Hubfile
@@ -47,3 +50,22 @@ class HubfileService(BaseService):
 class HubfileDownloadRecordService(BaseService):
     def __init__(self):
         super().__init__(HubfileDownloadRecordRepository())
+
+    def the_record_exists(self, hubfile: Hubfile, user_cookie: str):
+        return self.repository.the_record_exists(hubfile, user_cookie)
+
+    def create_new_record(self, hubfile: Hubfile,  user_cookie: str) -> Hubfile:
+        return self.repository.create_new_record(hubfile, user_cookie)
+
+    def create_cookie(self, hubfile: Hubfile):
+
+        user_cookie = request.cookies.get("file_download_cookie")
+        if not user_cookie:
+            user_cookie = str(uuid.uuid4())
+
+        existing_record = self.the_record_exists(hubfile=hubfile, user_cookie=user_cookie)
+
+        if not existing_record:
+            self.create_new_record(hubfile=hubfile, user_cookie=user_cookie)
+
+        return user_cookie

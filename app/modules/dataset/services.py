@@ -2,14 +2,16 @@ import logging
 import os
 import hashlib
 import shutil
+import tempfile
 from typing import Optional
 import uuid
+from zipfile import ZipFile
 
 from flask import request
 
 from app.modules.auth.services import AuthenticationService
 from app.modules.dataset.forms import DataSetForm
-from app.modules.dataset.models import DSViewRecord, DataSet, DSMetaData
+from app.modules.dataset.models import DSDownloadRecord, DSViewRecord, DataSet, DSMetaData
 from app.modules.dataset.repositories import (
     AuthorRepository,
     DOIMappingRepository,
@@ -150,6 +152,27 @@ class DataSetService(BaseService):
         domain = os.getenv('DOMAIN', 'localhost')
         return f'http://{domain}/doi/{dataset.ds_meta_data.dataset_doi}'
 
+    def zip_dataset(self, dataset: DataSet) -> str:
+        file_path = f"uploads/user_{dataset.user_id}/dataset_{dataset.id}/"
+        temp_dir = tempfile.mkdtemp()
+        zip_path = os.path.join(temp_dir, f"dataset_{dataset.id}.zip")
+
+        with ZipFile(zip_path, "w") as zipf:
+            for subdir, dirs, files in os.walk(file_path):
+                for file in files:
+                    full_path = os.path.join(subdir, file)
+
+                    relative_path = os.path.relpath(full_path, file_path)
+
+                    zipf.write(
+                        full_path,
+                        arcname=os.path.join(
+                            os.path.basename(zip_path[:-4]), relative_path
+                        ),
+                    )
+
+        return temp_dir
+
 
 class AuthorService(BaseService):
     def __init__(self):
@@ -159,6 +182,25 @@ class AuthorService(BaseService):
 class DSDownloadRecordService(BaseService):
     def __init__(self):
         super().__init__(DSDownloadRecordRepository())
+
+    def the_record_exists(self, dataset: DataSet, user_cookie: str):
+        return self.repository.the_record_exists(dataset, user_cookie)
+
+    def create_new_record(self, dataset: DataSet,  user_cookie: str) -> DSDownloadRecord:
+        return self.repository.create_new_record(dataset, user_cookie)
+
+    def create_cookie(self, dataset: DataSet) -> str:
+
+        user_cookie = request.cookies.get("download_cookie")
+        if not user_cookie:
+            user_cookie = str(uuid.uuid4())
+
+        existing_record = self.the_record_exists(dataset=dataset, user_cookie=user_cookie)
+
+        if not existing_record:
+            self.create_new_record(dataset=dataset, user_cookie=user_cookie)
+
+        return user_cookie
 
 
 class DSMetaDataService(BaseService):
