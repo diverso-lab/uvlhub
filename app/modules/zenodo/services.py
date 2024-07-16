@@ -90,7 +90,10 @@ class ZenodoService(BaseService):
             return jsonify(
                 {
                     "success": False,
-                    "messages": f"Failed to create test deposition on Zenodo. Response code: {response.status_code}",
+                    "messages": (
+                        f"Failed to create test deposition on Zenodo. "
+                        f"Response code: {response.status_code}, {response.json()}"
+                    ),
                 }
             )
 

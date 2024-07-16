@@ -94,5 +94,12 @@ class DataSetForm(FlaskForm):
     def get_authors(self):
         return [author.get_author() for author in self.authors]
 
+    def get_anonymous_authors(self):
+        return [{
+            "name": "Anonymous",
+            "affiliation": "Anonymous",
+            "orcid": ""
+        }]
+
     def get_feature_models(self):
         return [fm.get_feature_model() for fm in self.feature_models]

@@ -8,6 +8,7 @@ import uuid
 from flask import request
 
 from app.modules.auth.services import AuthenticationService
+from app.modules.dataset.forms import DataSetForm
 from app.modules.dataset.models import DSViewRecord, DataSet, DSMetaData
 from app.modules.dataset.repositories import (
     AuthorRepository,
@@ -92,7 +93,7 @@ class DataSetService(BaseService):
     def total_dataset_views(self) -> int:
         return self.dsviewrecord_repostory.total_dataset_views()
 
-    def create_from_form(self, form, current_user) -> DataSet:
+    def create_from_form(self, form: DataSetForm, current_user) -> DataSet:
         main_author = {
             "name": f"{current_user.profile.surname}, {current_user.profile.name}",
             "affiliation": current_user.profile.affiliation,
@@ -101,7 +102,16 @@ class DataSetService(BaseService):
         try:
             logger.info(f"Creating dsmetadata...: {form.get_dsmetadata()}")
             dsmetadata = self.dsmetadata_repository.create(**form.get_dsmetadata())
-            for author_data in [main_author] + form.get_authors():
+
+            dsmetadata_info = form.get_dsmetadata()
+            is_anonymous = dsmetadata_info.get('dataset_anonymous', False)
+
+            if is_anonymous:
+                author_list = form.get_anonymous_authors()
+            else:
+                author_list = [main_author] + form.get_authors()
+
+            for author_data in author_list:
                 author = self.author_repository.create(commit=False, ds_meta_data_id=dsmetadata.id, **author_data)
                 dsmetadata.authors.append(author)
 

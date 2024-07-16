@@ -1,5 +1,6 @@
 from datetime import datetime
 from enum import Enum
+from typing import List
 
 from flask import request
 from sqlalchemy import Boolean, Enum as SQLAlchemyEnum
@@ -66,7 +67,7 @@ class DSMetaData(db.Model):
     ds_metrics_id = db.Column(db.Integer, db.ForeignKey('ds_metrics.id'))
     ds_metrics = db.relationship('DSMetrics', uselist=False, backref='ds_meta_data', cascade="all, delete")
     authors = db.relationship('Author', backref='ds_meta_data', lazy=True, cascade="all, delete")
-    dataset_anonymous = db.Column(Boolean, default=False) 
+    dataset_anonymous = db.Column(Boolean, default=False)
 
 
 class DataSet(db.Model):
@@ -79,35 +80,34 @@ class DataSet(db.Model):
     ds_meta_data = db.relationship('DSMetaData', backref=db.backref('data_set', uselist=False))
     feature_models = db.relationship('FeatureModel', backref='data_set', lazy=True, cascade="all, delete")
 
-    def name(self):
+    def name(self) -> str:
         return self.ds_meta_data.title
 
-    def files(self):
+    def files(self) -> List[any]:
         return [file for fm in self.feature_models for file in fm.files]
 
-    def delete(self):
-        db.session.delete(self)
-        db.session.commit()
-
-    def get_cleaned_publication_type(self):
+    def get_cleaned_publication_type(self) -> str:
         return self.ds_meta_data.publication_type.name.replace('_', ' ').title()
 
-    def get_zenodo_url(self):
+    def get_zenodo_url(self) -> str:
         return f'https://zenodo.org/record/{self.ds_meta_data.deposition_id}' if self.ds_meta_data.dataset_doi else None
 
-    def get_files_count(self):
+    def get_files_count(self) -> int:
         return sum(len(fm.files) for fm in self.feature_models)
 
-    def get_file_total_size(self):
+    def get_file_total_size(self) -> int:
         return sum(file.size for fm in self.feature_models for file in fm.files)
 
-    def get_file_total_size_for_human(self):
+    def get_file_total_size_for_human(self) -> str:
         from app.modules.dataset.services import SizeService
         return SizeService().get_human_readable_size(self.get_file_total_size())
 
-    def get_uvlhub_doi(self):
+    def get_uvlhub_doi(self) -> str:
         from app.modules.dataset.services import DataSetService
         return DataSetService().get_uvlhub_doi(self)
+
+    def is_anonymous(self) -> bool:
+        return self.ds_meta_data.dataset_anonymous
 
     def to_dict(self):
         return {
