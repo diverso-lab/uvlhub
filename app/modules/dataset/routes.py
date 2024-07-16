@@ -99,8 +99,16 @@ def create_dataset():
         msg = "Everything works!"
         return jsonify({"message": msg}), 200
 
-    return render_template("dataset/upload_dataset.html", form=form)
+    return render_template("dataset/create_and_edit_dataset.html", form=form)
 
+@dataset_bp.route("/dataset/edit/<int:dataset_id>", methods=["GET", "POST"])
+@login_required
+def edit_dataset(dataset_id):
+    dataset = dataset_service.get_or_404(dataset_id)
+    form = DataSetForm(obj=dataset)
+    form = dataset_service.populate_form_from_dataset(form=form, dataset=dataset)
+    is_edit = True
+    return render_template("dataset/create_and_edit_dataset.html", form=form, is_edit=is_edit)
 
 @dataset_bp.route("/dataset/list", methods=["GET"])
 @login_required

@@ -6,7 +6,7 @@ from app.modules.dataset.models import PublicationType
 
 
 class AuthorForm(FlaskForm):
-    name = StringField("Name", validators=[DataRequired()])
+    name = StringField("Name *", validators=[DataRequired()])
     affiliation = StringField("Affiliation")
     orcid = StringField("ORCID")
     gnd = StringField("GND")

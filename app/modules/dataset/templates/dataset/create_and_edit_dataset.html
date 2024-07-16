@@ -4,7 +4,11 @@
 
 {% block content %}
 
+    {% if is_edit %}
+    <h1 class="h2 mb-3"><b>Edit</b> dataset: {{ form.title.data }}</h1>
+    {% else %}
     <h1 class="h2 mb-3"><b>Upload</b> dataset</h1>
+    {% endif %}
 
     <div class="row">
         <div class="col-12 mb-3">
@@ -100,30 +104,7 @@
 
                         <h1 class="h3 mb-3 mt-4">
                           Authors
-                          <a href="#" data-toggle="modal" data-target="#infoModal">
-                            <i data-feather="info"></i> <!-- Usamos "info" porque Feather no tiene un ícono específico llamado "feather" para más info -->
-                          </a>
                         </h1>
-
-                        <!-- Modal -->
-                        <div class="modal fade" id="infoModal" tabindex="-1" role="dialog" aria-labelledby="infoModalLabel" aria-hidden="true" style="display: none">
-                          <div class="modal-dialog" role="document">
-                            <div class="modal-content">
-                              <div class="modal-header">
-                                <h5 class="modal-title" id="infoModalLabel">Información Importante</h5>
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                  <span aria-hidden="true">&times;</span>
-                                </button>
-                              </div>
-                              <div class="modal-body">
-                                ¡Cuidado! Los autores no se pueden editar una vez que el dataset se haya subido a UVLHub. Esta funcionalidad estará disponible para futuras versiones.
-                              </div>
-                              <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
 
                         <div class="row" style="padding-left: 2rem" id="authors_form">
 
@@ -151,36 +132,67 @@
                                 <div class="mb-3">
 
                                     <div id="authors">
-                                        {% for subform in form.authors %}
-                                        <div class="row author" {% if not loop.first %}
-                                            style="border:2px dotted #ccc;border-radius:10px;padding:10px;margin:10px 0; background-color: white"
-                                            {% endif %}
-                                        >
-                                            <div class="col-lg-6 col-12 mb-3">
-                                                {{ subform.form.name.label(class="form-label") }}
-                                                {{ subform.form.name(class="form-control", disabled=loop.first) }}
-                                                {% for error in subform.name.errors %}
-                                                    <span style="color: red;">{{ error }}</span>
-                                                {% endfor %}
-                                            </div>
 
-                                            <div class="col-lg-6 col-12 mb-3">
-                                                {{ subform.form.affiliation.label(class="form-label") }}
-                                                {{ subform.form.affiliation(class="form-control", disabled=loop.first) }}
-                                                {% for error in subform.name.errors %}
-                                                    <span style="color: red;">{{ error }}</span>
-                                                {% endfor %}
-                                            </div>
+                                        {% if is_edit %}
 
-                                            <div class="col-lg-6 col-12 mb-3">
-                                                {{ subform.orcid.label(class="form-label") }}
-                                                {{ subform.orcid(class="form-control", disabled=loop.first) }}
-                                                {% for error in subform.orcid.errors %}
-                                                    <span style="color: red;">{{ error }}</span>
-                                                {% endfor %}
+                                            {% for subform in form.authors %}
+
+                                                <div class="author row" style="border: 2px dotted rgb(204, 204, 204); border-radius: 10px; padding: 10px; margin: 10px 0px; background-color: white;">
+                                                    <div class="col-lg-6 col-12 mb-3">
+                                                        {{ subform.form.name.label(class="form-label") }} 
+                                                        {{ subform.form.name.data(class="form-control" ) }}
+                                                    </div>
+                                                    <div class="col-lg-6 col-12 mb-3">
+                                                        {{ subform.form.affiliation.label(class="form-label") }} 
+                                                        {{ subform.form.affiliation.data(class="form-control" ) }}
+                                                    </div>
+                                                    <div class="col-lg-6 col-12 mb-3">
+                                                        {{ subform.form.orcid.label(class="form-label") }} 
+                                                        {{ subform.form.orcid.data(class="form-control") }}
+                                                    </div>
+                                                    <div class="col-12 mb-2">
+                                                        <button class="btn btn-danger btn-sm remove-author" type="button" onclick="removeAuthor(this)">Remove author</button>
+                                                    </div>
+                                                </div>
+
+                                            {% endfor %}
+
+                                        {% else %}
+
+                                            {% for subform in form.authors %}
+                                            <div class="row author" {% if not loop.first %}
+                                                style="border:2px dotted #ccc;border-radius:10px;padding:10px;margin:10px 0; background-color: white"
+                                                {% endif %}
+                                            >
+                                                <div class="col-lg-6 col-12 mb-3">
+                                                    {{ subform.form.name.label(class="form-label") }}
+                                                    {{ subform.form.name(class="form-control", disabled=loop.first) }}
+                                                    {% for error in subform.name.errors %}
+                                                        <span style="color: red;">{{ error }}</span>
+                                                    {% endfor %}
+                                                </div>
+
+                                                <div class="col-lg-6 col-12 mb-3">
+                                                    {{ subform.form.affiliation.label(class="form-label") }}
+                                                    {{ subform.form.affiliation(class="form-control", disabled=loop.first) }}
+                                                    {% for error in subform.name.errors %}
+                                                        <span style="color: red;">{{ error }}</span>
+                                                    {% endfor %}
+                                                </div>
+
+                                                <div class="col-lg-6 col-12 mb-3">
+                                                    {{ subform.orcid.label(class="form-label") }}
+                                                    {{ subform.orcid(class="form-control", disabled=loop.first) }}
+                                                    {% for error in subform.orcid.errors %}
+                                                        <span style="color: red;">{{ error }}</span>
+                                                    {% endfor %}
+                                                </div>
                                             </div>
-                                        </div>
-                                        {% endfor %}
+                                            {% endfor %}
+
+                                        {% endif %}
+
+                                        
                                     </div>
                                     <button type="button" class="btn btn-secondary" id="add_author">Add author
                                     </button>

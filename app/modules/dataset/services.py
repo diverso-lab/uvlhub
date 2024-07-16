@@ -9,8 +9,9 @@ from zipfile import ZipFile
 
 from flask import request
 
+from app.modules.auth.models import User
 from app.modules.auth.services import AuthenticationService
-from app.modules.dataset.forms import DataSetForm
+from app.modules.dataset.forms import AuthorForm, DataSetForm, FeatureModelForm
 from app.modules.dataset.models import DSDownloadRecord, DSViewRecord, DataSet, DSMetaData
 from app.modules.dataset.repositories import (
     AuthorRepository,
@@ -95,7 +96,7 @@ class DataSetService(BaseService):
     def total_dataset_views(self) -> int:
         return self.dsviewrecord_repostory.total_dataset_views()
 
-    def create_from_form(self, form: DataSetForm, current_user) -> DataSet:
+    def create_from_form(self, form: DataSetForm, current_user: User) -> DataSet:
         main_author = {
             "name": f"{current_user.profile.surname}, {current_user.profile.name}",
             "affiliation": current_user.profile.affiliation,
@@ -144,6 +145,53 @@ class DataSetService(BaseService):
             self.repository.session.rollback()
             raise exc
         return dataset
+
+    def populate_form_from_dataset(self, form: DataSetForm, dataset: DataSet):
+        ds_meta_data = dataset.ds_meta_data
+        
+        form.title.data = ds_meta_data.title
+        form.desc.data = ds_meta_data.description
+        form.publication_type.data = ds_meta_data.publication_type.value
+        form.publication_doi.data = ds_meta_data.publication_doi
+        form.dataset_doi.data = ds_meta_data.dataset_doi
+        form.tags.data = ds_meta_data.tags
+        form.dataset_anonymous.data = ds_meta_data.dataset_anonymous
+
+        # Populate authors
+        form.authors.entries = []  # Clear existing entries
+        for author in ds_meta_data.authors:
+            author_form = AuthorForm()
+            author_form.name.data = author.name
+            author_form.affiliation.data = author.affiliation
+            author_form.orcid.data = author.orcid
+            form.authors.append_entry(author_form)
+
+        # Populate feature models
+        form.feature_models.entries = []  # Clear existing entries
+        for fm in dataset.feature_models:
+            fm_meta_data = fm.fm_meta_data
+            fm_form = FeatureModelForm()
+            fm_form.uvl_filename.data = fm_meta_data.uvl_filename
+            fm_form.title.data = fm_meta_data.title
+            fm_form.desc.data = fm_meta_data.description
+            fm_form.publication_type.data = fm_meta_data.publication_type.value
+            fm_form.publication_doi.data = fm_meta_data.publication_doi
+            fm_form.tags.data = fm_meta_data.tags
+            fm_form.version.data = fm_meta_data.uvl_version
+            
+            # Populate authors for feature model
+            fm_form.authors.entries = []  # Clear existing entries
+            for author in fm_meta_data.authors:
+                author_form = AuthorForm()
+                author_form.name.data = author.name
+                author_form.affiliation.data = author.affiliation
+                author_form.orcid.data = author.orcid
+                fm_form.authors.append_entry(author_form)
+            
+            form.feature_models.append_entry(fm_form)
+
+
+        return form
 
     def update_dsmetadata(self, id, **kwargs):
         return self.dsmetadata_repository.update(id, **kwargs)
