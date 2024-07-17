@@ -1,150 +1,122 @@
-var currentId = 0;
-var amount_authors = 0;
+document.addEventListener('DOMContentLoaded', () => {
+    
+    /*
+        Selectable elements
+    */
+    const datasetAnonymousCheckbox = document.getElementById('dataset_anonymous');
+    const uploadButton = document.getElementById('uploadButton');
+    const upgradeButton = document.getElementById('upgradeButton');
+    const authorsForm = document.getElementById('authors_form');
+    const agreeCheckbox = document.getElementById('agreeCheckbox');
 
-function show_upload_dataset() {
-    document.getElementById("upload_dataset").style.display = "block";
-}
+    const addField = (newAuthor, name, text, className = 'col-lg-6 col-12 mb-3') => {
+        const fieldWrapper = document.createElement('div');
+        fieldWrapper.className = className;
 
-function generateIncrementalId() {
-    return currentId++;
-}
+        const label = document.createElement('label');
+        label.className = 'form-label';
+        label.for = name;
+        label.textContent = text;
 
-function addField(newAuthor, name, text, className = 'col-lg-6 col-12 mb-3') {
-    let fieldWrapper = document.createElement('div');
-    fieldWrapper.className = className;
+        const field = document.createElement('input');
+        field.name = name;
+        field.className = 'form-control';
 
-    let label = document.createElement('label');
-    label.className = 'form-label';
-    label.for = name;
-    label.textContent = text;
+        fieldWrapper.appendChild(label);
+        fieldWrapper.appendChild(field);
+        newAuthor.appendChild(fieldWrapper);
+    };
 
-    let field = document.createElement('input');
-    field.name = name;
-    field.className = 'form-control';
+    const addRemoveButton = (newAuthor) => {
+        const buttonWrapper = document.createElement('div');
+        buttonWrapper.className = 'col-12 mb-2';
 
-    fieldWrapper.appendChild(label);
-    fieldWrapper.appendChild(field);
-    newAuthor.appendChild(fieldWrapper);
-}
+        const button = document.createElement('button');
+        button.textContent = 'Remove author';
+        button.className = 'btn btn-danger btn-sm';
+        button.type = 'button';
+        button.addEventListener('click', (event) => {
+            event.preventDefault();
+            newAuthor.remove();
+        });
 
-function addRemoveButton(newAuthor) {
-    let buttonWrapper = document.createElement('div');
-    buttonWrapper.className = 'col-12 mb-2';
+        buttonWrapper.appendChild(button);
+        newAuthor.appendChild(buttonWrapper);
+    };
 
-    let button = document.createElement('button');
-    button.textContent = 'Remove author';
-    button.className = 'btn btn-danger btn-sm';
-    button.type = 'button';
-    button.addEventListener('click', function (event) {
-        event.preventDefault();
-        newAuthor.remove();
-    });
+    const createAuthorBlock = (idx, suffix) => {
+        const newAuthor = document.createElement('div');
+        newAuthor.className = 'author row';
+        newAuthor.style.cssText = "border:2px dotted #ccc;border-radius:10px;padding:10px;margin:10px 0; background-color: white";
 
-    buttonWrapper.appendChild(button);
-    newAuthor.appendChild(buttonWrapper);
-}
+        addField(newAuthor, `${suffix}authors-${idx}-name`, 'Name *');
+        addField(newAuthor, `${suffix}authors-${idx}-affiliation`, 'Affiliation');
+        addField(newAuthor, `${suffix}authors-${idx}-orcid`, 'ORCID');
+        addRemoveButton(newAuthor);
 
-function createAuthorBlock(idx, suffix) {
-    let newAuthor = document.createElement('div');
-    newAuthor.className = 'author row';
-    newAuthor.style.cssText = "border:2px dotted #ccc;border-radius:10px;padding:10px;margin:10px 0; background-color: white";
+        return newAuthor;
+    };
 
-    addField(newAuthor, `${suffix}authors-${idx}-name`, 'Name *');
-    addField(newAuthor, `${suffix}authors-${idx}-affiliation`, 'Affiliation');
-    addField(newAuthor, `${suffix}authors-${idx}-orcid`, 'ORCID');
-    addRemoveButton(newAuthor);
+    const checkTitleAndDescription = () => {
+        const titleInput = document.querySelector('input[name="title"]');
+        const descriptionTextarea = document.querySelector('textarea[name="desc"]');
 
-    return newAuthor;
-}
+        titleInput.classList.remove("error");
+        descriptionTextarea.classList.remove("error");
+        cleanUploadErrors();
 
-function check_title_and_description() {
-    let titleInput = document.querySelector('input[name="title"]');
-    let descriptionTextarea = document.querySelector('textarea[name="desc"]');
+        const titleLength = titleInput.value.trim().length;
+        const descriptionLength = descriptionTextarea.value.trim().length;
 
-    titleInput.classList.remove("error");
-    descriptionTextarea.classList.remove("error");
-    clean_upload_errors();
+        if (titleLength < 3) {
+            writeUploadError("Title must be of minimum length 3");
+            titleInput.classList.add("error");
+        }
 
-    let titleLength = titleInput.value.trim().length;
-    let descriptionLength = descriptionTextarea.value.trim().length;
+        if (descriptionLength < 3) {
+            writeUploadError("Description must be of minimum length 3");
+            descriptionTextarea.classList.add("error");
+        }
 
-    if (titleLength < 3) {
-        write_upload_error("title must be of minimum length 3");
-        titleInput.classList.add("error");
-    }
+        return (titleLength >= 3 && descriptionLength >= 3);
+    };
 
-    if (descriptionLength < 3) {
-        write_upload_error("description must be of minimum length 3");
-        descriptionTextarea.classList.add("error");
-    }
-
-    return (titleLength >= 3 && descriptionLength >= 3);
-}
-
-function add_author(){
-    let authors = document.getElementById('authors');
-    let newAuthor = createAuthorBlock(amount_authors++, "");
-    authors.appendChild(newAuthor);
-}
-
-document.getElementById('add_author').addEventListener('click', function () {
-    add_author();
-});
-
-
-document.addEventListener('click', function (event) {
-    if (event.target && event.target.classList.contains('add_author_to_uvl')) {
-
-        let authorsButtonId = event.target.id;
-        let authorsId = authorsButtonId.replace("_button", "");
-        let authors = document.getElementById(authorsId);
-        let id = authorsId.replace("_form_authors", "")
-        let newAuthor = createAuthorBlock(amount_authors, `feature_models-${id}-`);
+    const addAuthor = () => {
+        const authors = document.getElementById('authors');
+        const newAuthor = createAuthorBlock(amountAuthors++, "");
         authors.appendChild(newAuthor);
+    };
 
-    }
-});
+    const showLoading = () => {
+        document.querySelectorAll('.submitButton').forEach(button => {
+            button.style.display = "none";
+        });
+        document.getElementById("loading").style.display = "block";
+    };
+    
+    const hideLoading = () => {
+        document.querySelectorAll('.submitButton').forEach(button => {
+            button.style.display = "block";
+        });
+        document.getElementById("loading").style.display = "none";
+    };
+    
 
-function show_loading() {
-    document.getElementById("upload_button").style.display = "none";
-    document.getElementById("loading").style.display = "block";
-}
+    const writeUploadError = (errorMessage) => {
+        const uploadError = document.getElementById("upload_error");
+        const alert = document.createElement('p');
+        alert.style.margin = '0';
+        alert.style.padding = '0';
+        alert.textContent = 'Upload error: ' + errorMessage;
+        uploadError.appendChild(alert);
+        uploadError.style.display = 'block';
+    };
 
-function hide_loading() {
-    document.getElementById("upload_button").style.display = "block";
-    document.getElementById("loading").style.display = "none";
-}
+    const sendDatasetToEndpoint = (endpoint) => {
+        cleanUploadErrors();
+        showLoading();
 
-function clean_upload_errors() {
-    let upload_error = document.getElementById("upload_error");
-    upload_error.innerHTML = "";
-    upload_error.style.display = 'none';
-}
-
-function write_upload_error(error_message) {
-    let upload_error = document.getElementById("upload_error");
-    let alert = document.createElement('p');
-    alert.style.margin = '0';
-    alert.style.padding = '0';
-    alert.textContent = 'Upload error: ' + error_message;
-    upload_error.appendChild(alert);
-    upload_error.style.display = 'block';
-}
-
-window.onload = function () {
-
-    test_zenodo_connection();
-
-    document.getElementById('upload_button').addEventListener('click', function () {
-
-        clean_upload_errors();
-        show_loading();
-
-        // check title and description
-        let check = check_title_and_description();
-
-        if (check) {
-            // process data form
+        if (checkTitleAndDescription()) {
             const formData = {};
 
             ["basic_info_form", "uploaded_models_form"].forEach((formId) => {
@@ -158,95 +130,163 @@ window.onload = function () {
                 });
             });
 
-            let formDataJson = JSON.stringify(formData);
+            const formDataJson = JSON.stringify(formData);
             console.log(formDataJson);
 
             const csrfToken = document.getElementById('csrf_token').value;
             const formUploadData = new FormData();
             formUploadData.append('csrf_token', csrfToken);
 
-            for (let key in formData) {
+            for (const key in formData) {
                 if (formData.hasOwnProperty(key)) {
                     formUploadData.set(key, formData[key]);
                 }
             }
 
-            let checked_orcid = true;
+            let checkedOrcid = true;
             if (Array.isArray(formData.author_orcid)) {
                 for (let orcid of formData.author_orcid) {
                     orcid = orcid.trim();
                     if (orcid !== '' && !isValidOrcid(orcid)) {
-                        hide_loading();
-                        write_upload_error("ORCID value does not conform to valid format: " + orcid);
-                        checked_orcid = false;
+                        hideLoading();
+                        writeUploadError("ORCID value does not conform to valid format: " + orcid);
+                        checkedOrcid = false;
                         break;
                     }
                 }
             }
 
-
-            let checked_name = true;
+            let checkedName = true;
             if (Array.isArray(formData.author_name)) {
                 for (let name of formData.author_name) {
                     name = name.trim();
                     if (name === '') {
-                        hide_loading();
-                        write_upload_error("The author's name cannot be empty");
-                        checked_name = false;
+                        hideLoading();
+                        writeUploadError("The author's name cannot be empty");
+                        checkedName = false;
                         break;
                     }
                 }
             }
 
+            const datasetAnonymousCheckboxValue = datasetAnonymousCheckbox.checked;
+            formUploadData.append('dataset_anonymous', datasetAnonymousCheckboxValue);
 
-            const dataset_anonymous_checkbox_value = document.getElementById('dataset_anonymous').checked;
-            formUploadData.append('dataset_anonymous', dataset_anonymous_checkbox_value);
+            const datasetIdInput = document.getElementById('datasetId');
+            if (datasetIdInput) {
+                const datasetId = datasetIdInput.value;
+                formUploadData.append('datasetId', datasetId)
+            }
 
-            if (checked_orcid && checked_name) {
-                fetch('/dataset/upload', {
+            if (checkedOrcid && checkedName) {
+                fetch(endpoint, {
                     method: 'POST',
                     body: formUploadData
                 })
-                    .then(response => {
-                        if (response.ok) {
-                            console.log('Dataset sent successfully');
-                            response.json().then(data => {
-                                console.log(data.message);
-                                window.location.href = "/dataset/list";
-                            });
-                        } else {
-                            response.json().then(data => {
-                                console.error('Error: ' + data.message);
-                                hide_loading();
-
-                                write_upload_error(data.message);
-
-                            });
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error in POST request:', error);
-                    });
+                .then(response => {
+                    if (response.ok) {
+                        console.log('Dataset sent successfully');
+                        response.json().then(data => {
+                            console.log(data.message);
+                            window.location.href = "/dataset/list";
+                        });
+                    } else {
+                        response.json().then(data => {
+                            console.error('Error: ' + data.message);
+                            hideLoading();
+                            writeUploadError(data.message);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error in POST request:', error);
+                });
             }
-
-
         } else {
-            hide_loading();
+            hideLoading();
+        }
+    };
+
+    const isValidOrcid = (orcid) => {
+        const orcidRegex = /^\d{4}-\d{4}-\d{4}-\d{4}$/;
+        return orcidRegex.test(orcid);
+    };
+
+    const toggleUploadButton = () => {
+        if (agreeCheckbox && uploadButton) {
+            uploadButton.disabled = !agreeCheckbox.checked;
+        }
+    };
+
+    const toggleAuthorsForm = () => {
+        if (datasetAnonymousCheckbox && authorsForm) {
+            authorsForm.style.display = datasetAnonymousCheckbox.checked ? 'none' : 'block';
+        }
+    };
+
+    /*
+        Event listeners
+    */
+    document.getElementById('add_author').addEventListener('click', addAuthor);
+
+    document.addEventListener('click', (event) => {
+        if (event.target && event.target.classList.contains('add_author_to_uvl')) {
+            const authorsButtonId = event.target.id;
+            const authorsId = authorsButtonId.replace("_button", "");
+            const authors = document.getElementById(authorsId);
+            const id = authorsId.replace("_form_authors", "");
+            const newAuthor = createAuthorBlock(amountAuthors, `feature_models-${id}-`);
+            authors.appendChild(newAuthor);
+        }
+    });
+
+    if (agreeCheckbox) {
+        agreeCheckbox.addEventListener('change', toggleUploadButton);
+        toggleUploadButton();
+    }
+
+    if (datasetAnonymousCheckbox) {
+        datasetAnonymousCheckbox.addEventListener('change', toggleAuthorsForm);
+        toggleAuthorsForm();
+    }
+
+    window.onload = () => {
+
+        testZenodoConnection();
+
+        if (uploadButton) {
+            uploadButton.addEventListener('click', () => {
+                console.log("Sending data...")
+                sendDatasetToEndpoint('/dataset/upload');
+            });
         }
 
+        if (upgradeButton) {
+            upgradeButton.addEventListener('click', () => {
+                console.log("Sending data...")
+                sendDatasetToEndpoint('/dataset/edit');
+            });
+        }
+    };
+});
 
-    });
-};
+let currentId = 0;
+let amountAuthors = 0;
+const generateIncrementalId = () => currentId++;
 
-
-function isValidOrcid(orcid) {
-    let orcidRegex = /^\d{4}-\d{4}-\d{4}-\d{4}$/;
-    return orcidRegex.test(orcid);
-}
-
-function removeAuthor(button) {
-    let authorDiv = button.closest('.author');
+const removeAuthor = (button) => {
+    const authorDiv = button.closest('.author');
     if (authorDiv) {
         authorDiv.remove();
     }
-}
+};
+
+const cleanUploadErrors = () => {
+    const uploadError = document.getElementById("upload_error");
+    uploadError.innerHTML = "";
+    uploadError.style.display = 'none';
+};
+
+const showUploadDataset = () => {
+    document.getElementById("submit_dataset").style.display = "block";
+};

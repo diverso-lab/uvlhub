@@ -108,7 +108,7 @@ def edit_dataset(dataset_id):
     form = DataSetForm(obj=dataset)
     form = dataset_service.populate_form_from_dataset(form=form, dataset=dataset)
     is_edit = True
-    return render_template("dataset/create_and_edit_dataset.html", form=form, is_edit=is_edit)
+    return render_template("dataset/create_and_edit_dataset.html", form=form, is_edit=is_edit, dataset=dataset)
 
 @dataset_bp.route("/dataset/list", methods=["GET"])
 @login_required

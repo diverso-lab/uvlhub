@@ -1,19 +1,21 @@
-function test_zenodo_connection() {
-    var xhr = new XMLHttpRequest();
+const testZenodoConnection = () => {
+    console.log('Testing Zenodo connection...');
+    const xhr = new XMLHttpRequest();
     xhr.open('GET', '/zenodo/test', true);
     xhr.setRequestHeader('Content-Type', 'application/json');
-    xhr.onreadystatechange = function () {
+    xhr.onreadystatechange = () => {
         if (xhr.readyState === 4 && xhr.status === 200) {
-            var response = JSON.parse(xhr.responseText);
+            const response = JSON.parse(xhr.responseText);
             if (!response.success) {
                 document.getElementById("test_zenodo_connection_error").style.display = "block";
                 console.log(response);
                 console.log(response.success);
                 console.log(response.messages);
             }
+            console.log('Testing Zenodo connection... OK');
         } else if (xhr.readyState === 4 && xhr.status !== 200) {
             console.error('Error:', xhr.status);
         }
     };
     xhr.send();
-}
+};

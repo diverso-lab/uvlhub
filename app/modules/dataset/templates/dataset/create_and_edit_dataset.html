@@ -44,6 +44,10 @@
 
                 {{ form.hidden_tag() }}
 
+                {% if is_edit %}
+                    <input type="hidden" id="datasetId" value="{{dataset.id}}"/>
+                {% endif %}
+
                 <div class="row">
 
                     <div class="col-12">
@@ -206,17 +210,17 @@
                         </div>
 
                         <div class="row" style="padding-left: 2rem">
-
                             <div class="col-12">
                                 <label class="form-check">
-                                    <input id="dataset_anonymous" class="form-check-input" type="checkbox" value="">
+                                    <input id="dataset_anonymous" class="form-check-input" type="checkbox" value="" 
+                                           {% if form.dataset_anonymous.data %} checked {% endif %}>
                                     <span class="form-check-label" style="font-size: 15px">
                                         <b>Anonymize dataset</b> (this will cause the dataset in both UVLHub and Zenodo to appear as anonymized until it is changed)
-                                            </span>
+                                    </span>
                                 </label>
                             </div>
-
                         </div>
+                        
 
                         
 
@@ -243,6 +247,15 @@
         <div class="col-xl-6 col-lg-12 col-md-12 col-sm-12">
 
             <h1 class="h3 mb-3 mt-2">UVL models</h1>
+
+            {% if is_edit %}
+
+            <div id="uploaded_models_form" style="padding-left: 2rem; display: none;">
+            </div>
+
+            It is currently not possible to edit dataset models. This is a feature under development, it will be available in future versions.
+
+            {% else %}
 
             <div id="uploaded_models_form" style="padding-left: 2rem">
 
@@ -285,7 +298,7 @@
 
                                 let dropzone = this;
 
-                                show_upload_dataset();
+                                showUploadDataset();
 
                                 console.log("File uploaded: ", response);
                                 // actions when UVL model is uploaded
@@ -351,8 +364,8 @@
                                             console.log('Deleted file from server');
 
                                             if (dropzone.files.length === 0) {
-                                                document.getElementById("upload_dataset").style.display = "none";
-                                                clean_upload_errors();
+                                                document.getElementById("submit_dataset").style.display = "none";
+                                                cleanUploadErrors();
                                             }
 
                                         }
@@ -474,11 +487,71 @@
                 </script>
 
             </div>
+
+            {% endif %}
+
+            
         </div>
 
     </div>
 
-    <div class="row" id="upload_dataset" style="display: none">
+    {% if is_edit %}
+
+    <div class="row" id="submit_dataset">
+
+        <div class="col-12">
+
+            <hr>
+
+            <h1 class="h3 mb-3 mt-2">Save dataset</h1>
+
+            <div style="padding-left: 2rem">
+
+
+                <button id="upgradeButton" class="submitButton btn btn-primary mt-2">
+                    <i data-feather="save" class="center-button-icon"></i>
+                    Save dataset</button>
+
+                <div id="loading" style="display: none">
+                    <img width="40px" src="{{ url_for("static", filename="gifs/loading.svg") }}"/>
+                    Saving dataset, please wait...
+                </div>
+
+                <div class="row">
+                    <div class="col-12 mb-3">
+
+                    </div>
+                </div>
+
+                <div class="alert alert-error" role="alert" id="upload_error"
+                     style="display: none">
+                    <div class="alert-message">
+
+                        <h4 class="alert-heading"><i class="align-middle" data-feather="alert-triangle"></i> Limited
+                            connection to the Zenodo API</h4>
+                        <p class="p-0 m-0">
+                            There seems to be some kind of problem with the Zenodo API and synchronization of your
+                            dataset
+                            files may not be possible. We will save your files locally to eventually synchronize
+                            them with
+                            Zenodo. Sorry for the inconvenience, Zenodo is an external service and we can't do
+                            anything about it.
+                        </p>
+                    </div>
+                </div>
+
+                <span class="text-danger mt-2" id="upload_error" style="display: none"></span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    {% else %}
+
+    <div class="row" id="submit_dataset" style="display: none">
 
         <div class="col-12">
 
@@ -496,9 +569,10 @@
                             </span>
                 </label>
 
-                <button id="upload_button" class="btn btn-primary mt-2" disabled>
+                <button id="uploadButton" class="submitButton btn btn-primary mt-2" disabled>
                     <i data-feather="upload" class="center-button-icon"></i>
-                    Upload dataset</button>
+                    Upload dataset
+                </button>
 
                 <div id="loading" style="display: none">
                     <img width="40px" src="{{ url_for("static", filename="gifs/loading.svg") }}"/>
@@ -528,48 +602,17 @@
                     </div>
                 </div>
 
-
-                <span class="text-danger mt-2" id="upload_error" style="display: none">
-
-                    </span>
-
-                <script>
-                    const checkbox = document.getElementById('agreeCheckbox');
-                    const dataset_anonymous_checkbox = document.getElementById('dataset_anonymous');
-                    const upload_button = document.getElementById('upload_button');
-                    const authors_form = document.getElementById('authors_form');
-
-                    checkbox.addEventListener('change', function () {
-                        upload_button.disabled = !checkbox.checked;
-                    });
-
-                    dataset_anonymous_checkbox.addEventListener('change', function () {
-                        if (dataset_anonymous_checkbox.checked) {
-                            authors_form.style.display = 'none';  // Oculta el formulario
-                        } else {
-                            authors_form.style.display = 'block'; // Muestra el formulario
-                        }
-                    });
-
-                    // Asegúrate de que el formulario de autores esté visible al cargar la página si el checkbox de anónimo no está marcado
-                    if (!dataset_anonymous_checkbox.checked) {
-                        authors_form.style.display = 'block';
-                    } else {
-                        authors_form.style.display = 'none';
-                    }
-
-                </script>
+                <span class="text-danger mt-2" id="upload_error" style="display: none"></span>
 
             </div>
-
-
-
 
         </div>
 
     </div>
 
+    {% endif %}
 
+    
 {% endblock %}
 
 {% block scripts %}

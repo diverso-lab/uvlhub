@@ -108,6 +108,9 @@ class DataSet(db.Model):
 
     def is_anonymous(self) -> bool:
         return self.ds_meta_data.dataset_anonymous
+    
+    def get_publication(self) -> str:
+        return self.ds_meta_data.publication_type.name.replace('_', ' ').title()
 
     def to_dict(self):
         return {
