@@ -173,10 +173,12 @@ document.addEventListener('DOMContentLoaded', () => {
             formUploadData.append('dataset_anonymous', datasetAnonymousCheckboxValue);
 
             const datasetIdInput = document.getElementById('datasetId');
+            let datasetId = '';
             if (datasetIdInput) {
-                const datasetId = datasetIdInput.value;
-                formUploadData.append('datasetId', datasetId)
+                datasetId = datasetIdInput.value;
+                formUploadData.append('datasetId', datasetId);
             }
+            console.log("Dataset with ID: " + datasetId);
 
             if (checkedOrcid && checkedName) {
                 console.log("Sending this form data: ");
@@ -194,7 +196,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         console.log('Dataset sent successfully');
                         response.json().then(data => {
                             console.log(data.message);
-                            //window.location.href = "/dataset/list";
+                            window.location.href = "/dataset/list";
                         });
                     } else {
                         response.json().then(data => {
@@ -259,6 +261,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.onload = () => {
 
         testZenodoConnection();
+        updateAuthorInputs();
 
         if (uploadButton) {
             uploadButton.addEventListener('click', () => {
@@ -279,6 +282,7 @@ document.addEventListener('DOMContentLoaded', () => {
 let currentId = 0;
 let amountAuthors = 0;
 const generateIncrementalId = () => currentId++;
+const generateIncrementalAuthorsId = () => amountAuthors++;
 
 const removeAuthor = (button) => {
     const authorDiv = button.closest('.author');
@@ -296,3 +300,26 @@ const cleanUploadErrors = () => {
 const showUploadDataset = () => {
     document.getElementById("submit_dataset").style.display = "block";
 };
+
+function updateAuthorInputs() {
+    const authors = document.querySelectorAll('#authors .author');
+    authors.forEach((author, index) => {
+        const nameInput = author.querySelector('input[id$="name"]');
+        const affiliationInput = author.querySelector('input[id$="affiliation"]');
+        const orcidInput = author.querySelector('input[id$="orcid"]');
+
+        if (nameInput) {
+            nameInput.name = `authors-${index}-name`;
+            nameInput.id = `authors-${index}-name`;
+        }
+        if (affiliationInput) {
+            affiliationInput.name = `authors-${index}-affiliation`;
+            affiliationInput.id = `authors-${index}-affiliation`;
+        }
+        if (orcidInput) {
+            orcidInput.name = `authors-${index}-orcid`;
+            orcidInput.id = `authors-${index}-orcid`;
+        }
+        generateIncrementalAuthorsId();  
+    });
+}

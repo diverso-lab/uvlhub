@@ -108,7 +108,10 @@ def edit_dataset(dataset_id):
     form = DataSetForm(obj=dataset)
     form = dataset_service.populate_form_from_dataset(form=form, dataset=dataset)
     is_edit = True
-    return render_template("dataset/create_and_edit_dataset.html", form=form, is_edit=is_edit, dataset=dataset)
+    return render_template("dataset/create_and_edit_dataset.html", form=form,
+                           is_edit=is_edit,
+                           dataset=dataset,
+                           enumerate=enumerate)
 
 
 @dataset_bp.route("/dataset/update", methods=["POST"])
@@ -116,7 +119,9 @@ def edit_dataset(dataset_id):
 def update_dataset():
 
     form = DataSetForm()
-    dataset = None
+    dataset_id = request.form.get('datasetId')
+    dataset = dataset_service.get_by_id(dataset_id)
+    logger.info(f"[BACK] Dataset: {dataset.id}")
 
     if not form.validate_on_submit():
         logger.info(f"Form: {form.errors}")
@@ -124,10 +129,10 @@ def update_dataset():
 
     try:
         logger.info("Updating dataset...")
-        # dataset = dataset_service.update_from_form(form=form, current_user=current_user)
+        dataset = dataset_service.update_from_form(form=form, current_user=current_user, dataset=dataset)
     except Exception as exc:
-        logger.exception(f"Exception while create dataset data in local {exc}")
-        return jsonify({"Exception while create dataset data in local: ": str(exc)}), 400
+        logger.exception(f"Exception while saving dataset data in local {exc}")
+        return jsonify({"Exception while saving dataset data in local: ": str(exc)}), 400
     
     msg = "[Back] Everything works!"
     return jsonify({"message": msg}), 200

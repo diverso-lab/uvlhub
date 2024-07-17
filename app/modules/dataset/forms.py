@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import BooleanField, StringField, SelectField, FieldList, FormField, SubmitField, TextAreaField
+from wtforms import BooleanField, IntegerField, StringField, SelectField, FieldList, FormField, SubmitField, TextAreaField
 from wtforms.validators import DataRequired, URL, Optional
 
 from app.modules.dataset.models import PublicationType
@@ -80,7 +80,6 @@ class DataSetForm(FlaskForm):
             "description": self.desc.data,
             "publication_type": publication_type_converted,
             "publication_doi": self.publication_doi.data,
-            "dataset_doi": self.dataset_doi.data,
             "tags": self.tags.data,
             "dataset_anonymous": self.dataset_anonymous.data
         }

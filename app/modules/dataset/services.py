@@ -96,29 +96,43 @@ class DataSetService(BaseService):
     def total_dataset_views(self) -> int:
         return self.dsviewrecord_repostory.total_dataset_views()
     
-    def update_from_form(self, form: DataSetForm, current_user: User) -> DataSet:
+    def update_from_form(self, form: DataSetForm, current_user: User, dataset: DataSet) -> DataSet:
         main_author = {
             "name": f"{current_user.profile.surname}, {current_user.profile.name}",
             "affiliation": current_user.profile.affiliation,
             "orcid": current_user.profile.orcid,
         }
         try:
-            logger.info(f"Updating dsmetadata...: {form.get_dsmetadata()}")
-            dsmetadata = self.dsmetadata_repository.update(**form.get_dsmetadata())
 
+            # Update dataset metadata
+            logger.info(f"Updating dsmetadata...: {form.get_dsmetadata()}")
+            dsmetadata = self.dsmetadata_repository.update(id=dataset.ds_meta_data.id,
+                                                           **form.get_dsmetadata())
+
+            # Update authors
             dsmetadata_info = form.get_dsmetadata()
             is_anonymous = dsmetadata_info.get('dataset_anonymous', False)
+
+            self.author_repository.delete_by_column(column_name="ds_meta_data_id",
+                                                    value=dataset.ds_meta_data.id)
 
             if is_anonymous:
                 author_list = form.get_anonymous_authors()
             else:
-                author_list = [main_author] + form.get_authors()
+                other_authors = form.get_authors()
+                if other_authors:
+                    author_list = other_authors
+                else:
+                    author_list = [main_author]
+
 
             for author_data in author_list:
                 author = self.author_repository.create(commit=False, ds_meta_data_id=dsmetadata.id, **author_data)
                 dsmetadata.authors.append(author)
 
-            dataset = self.update(commit=False, user_id=current_user.id, ds_meta_data_id=dsmetadata.id)
+            # Save updated data
+            self.repository.session.commit()
+
         except Exception as exc:
             logger.info(f"Exception updating dataset from form...: {exc}")
             self.repository.session.rollback()
@@ -141,7 +155,11 @@ class DataSetService(BaseService):
             if is_anonymous:
                 author_list = form.get_anonymous_authors()
             else:
-                author_list = [main_author] + form.get_authors()
+                other_authors = form.get_authors()
+                if other_authors:
+                    author_list = other_authors
+                else:
+                    author_list = [main_author]
 
             for author_data in author_list:
                 author = self.author_repository.create(commit=False, ds_meta_data_id=dsmetadata.id, **author_data)

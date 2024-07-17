@@ -112,25 +112,6 @@
 
                         <div class="row" style="padding-left: 2rem" id="authors_form">
 
-                            <div class="col-lg-6 col-12 mb-3">
-                                <label class="form-label">Author name</label>
-                                <input class="form-control"
-                                       disabled
-                                       value="{{ current_user.profile.surname }}, {{ current_user.profile.name }}">
-                            </div>
-
-                            <div class="col-lg-6 col-12 mb-3">
-                                <label class="form-label">Author affiliation</label>
-                                <input class="form-control"
-                                       disabled value="{{ current_user.profile.affiliation }}">
-                            </div>
-
-                            <div class="col-lg-6 col-12 mb-3">
-                                <label class="form-label">Author ORCID</label>
-                                <input class="form-control"
-                                       disabled value="{{ current_user.profile.orcid }}">
-                            </div>
-
                             <div class="col-12">
 
                                 <div class="mb-3">
@@ -139,27 +120,31 @@
 
                                         {% if is_edit %}
 
-                                            {% for subform in form.authors %}
+                                            {% if not dataset.is_anonymous()%}
+                                                {% for subform in form.authors %}
 
-                                                <div class="author row" style="border: 2px dotted rgb(204, 204, 204); border-radius: 10px; padding: 10px; margin: 10px 0px; background-color: white;">
-                                                    <div class="col-lg-6 col-12 mb-3">
-                                                        {{ subform.form.name.label(class="form-label") }} 
-                                                        {{ subform.form.name.data(class="form-control" ) }}
+                                                    <div class="author row" style="border: 2px dotted rgb(204, 204, 204); border-radius: 10px; padding: 10px; margin: 10px 0px; background-color: white;">
+                                                        <div class="col-lg-6 col-12 mb-3">
+                                                            {{ subform.form.name.label(class="form-label") }} 
+                                                            {{ subform.form.name.data(class="form-control" ) }}
+                                                        </div>
+                                                        <div class="col-lg-6 col-12 mb-3">
+                                                            {{ subform.form.affiliation.label(class="form-label") }} 
+                                                            {{ subform.form.affiliation.data(class="form-control" ) }}
+                                                        </div>
+                                                        <div class="col-lg-6 col-12 mb-3">
+                                                            {{ subform.form.orcid.label(class="form-label") }} 
+                                                            {{ subform.form.orcid.data(class="form-control") }}
+                                                        </div>
+                                                        <div class="col-12 mb-2">
+                                                            <button class="btn btn-danger btn-sm remove-author" type="button" onclick="removeAuthor(this)">Remove author</button>
+                                                        </div>
                                                     </div>
-                                                    <div class="col-lg-6 col-12 mb-3">
-                                                        {{ subform.form.affiliation.label(class="form-label") }} 
-                                                        {{ subform.form.affiliation.data(class="form-control" ) }}
-                                                    </div>
-                                                    <div class="col-lg-6 col-12 mb-3">
-                                                        {{ subform.form.orcid.label(class="form-label") }} 
-                                                        {{ subform.form.orcid.data(class="form-control") }}
-                                                    </div>
-                                                    <div class="col-12 mb-2">
-                                                        <button class="btn btn-danger btn-sm remove-author" type="button" onclick="removeAuthor(this)">Remove author</button>
-                                                    </div>
-                                                </div>
 
-                                            {% endfor %}
+                                                {% endfor %}
+                                            {% endif %}
+
+                                            
 
                                         {% else %}
 
