@@ -55,6 +55,6 @@ class HubfileDownloadRecordRepository(BaseRepository):
         return self.create(
                 user_id=current_user.id if current_user.is_authenticated else None,
                 file_id=hubfile.id,
-                view_date=datetime.now(timezone.utc),
-                view_download_cookiecookie=user_cookie,
+                download_date=datetime.now(timezone.utc),
+                download_cookie=user_cookie,
             )
