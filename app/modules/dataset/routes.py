@@ -101,7 +101,7 @@ def create_dataset():
 
     return render_template("dataset/create_and_edit_dataset.html", form=form)
 
-@dataset_bp.route("/dataset/edit/<int:dataset_id>", methods=["GET", "POST"])
+@dataset_bp.route("/dataset/edit/<int:dataset_id>", methods=["GET"])
 @login_required
 def edit_dataset(dataset_id):
     dataset = dataset_service.get_or_404(dataset_id)
@@ -109,6 +109,28 @@ def edit_dataset(dataset_id):
     form = dataset_service.populate_form_from_dataset(form=form, dataset=dataset)
     is_edit = True
     return render_template("dataset/create_and_edit_dataset.html", form=form, is_edit=is_edit, dataset=dataset)
+
+
+@dataset_bp.route("/dataset/update", methods=["POST"])
+@login_required
+def update_dataset():
+
+    form = DataSetForm()
+    dataset = None
+
+    if not form.validate_on_submit():
+        logger.info(f"Form: {form.errors}")
+        return jsonify({"message": form.errors}), 400
+
+    try:
+        logger.info("Updating dataset...")
+        # dataset = dataset_service.update_from_form(form=form, current_user=current_user)
+    except Exception as exc:
+        logger.exception(f"Exception while create dataset data in local {exc}")
+        return jsonify({"Exception while create dataset data in local: ": str(exc)}), 400
+    
+    msg = "[Back] Everything works!"
+    return jsonify({"message": msg}), 200
 
 @dataset_bp.route("/dataset/list", methods=["GET"])
 @login_required

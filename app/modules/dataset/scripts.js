@@ -179,6 +179,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (checkedOrcid && checkedName) {
+                console.log("Sending this form data: ");
+
+                formUploadData.forEach((value, key) => {
+                    console.log(key, value);
+                  });
+
                 fetch(endpoint, {
                     method: 'POST',
                     body: formUploadData
@@ -188,7 +194,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         console.log('Dataset sent successfully');
                         response.json().then(data => {
                             console.log(data.message);
-                            window.location.href = "/dataset/list";
+                            //window.location.href = "/dataset/list";
                         });
                     } else {
                         response.json().then(data => {
@@ -264,7 +270,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (upgradeButton) {
             upgradeButton.addEventListener('click', () => {
                 console.log("Sending data...")
-                sendDatasetToEndpoint('/dataset/edit');
+                sendDatasetToEndpoint('/dataset/update');
             });
         }
     };
