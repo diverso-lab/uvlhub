@@ -13,7 +13,7 @@ def before_request():
 
 @orcid_bp.route('/orcid/login')
 def login():
-    redirect_uri = url_for('orcid.authorize', _external=True)
+    redirect_uri = url_for('orcid.authorize', _external=True, _scheme='https')
     return current_app.orcid_service.orcid_client.authorize_redirect(redirect_uri)
 
 @orcid_bp.route('/orcid/authorize')
