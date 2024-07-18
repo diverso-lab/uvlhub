@@ -15,6 +15,7 @@ from flask import (
 )
 from flask_login import login_required, current_user
 
+from app.modules.dataset.decorators import is_dataset_owner
 from app.modules.dataset.forms import DataSetForm
 from app.modules.dataset import dataset_bp
 from app.modules.dataset.services import (
@@ -103,6 +104,7 @@ def create_dataset():
 
 @dataset_bp.route("/dataset/edit/<int:dataset_id>", methods=["GET"])
 @login_required
+@is_dataset_owner
 def edit_dataset(dataset_id):
     dataset = dataset_service.get_or_404(dataset_id)
     form = DataSetForm(obj=dataset)
@@ -121,6 +123,10 @@ def update_dataset():
     form = DataSetForm()
     dataset_id = request.form.get('datasetId')
     dataset = dataset_service.get_by_id(dataset_id)
+
+    if dataset == None or dataset.user_id != current_user.id:
+        abort(404)
+
     logger.info(f"[BACK] Dataset: {dataset.id}")
 
     if not form.validate_on_submit():
