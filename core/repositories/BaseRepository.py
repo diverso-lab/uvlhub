@@ -22,7 +22,7 @@ class BaseRepository(Generic[T]):
     def get_by_id(self, id: int) -> Optional[T]:
         instance: Optional[T] = self.model.query.get(id)
         return instance
-    
+
     def get_by_column(self, column_name: str, value) -> List[T]:
         instances: List[T] = self.session.query(self.model).filter(getattr(self.model, column_name) == value).all()
         return instances
@@ -46,12 +46,12 @@ class BaseRepository(Generic[T]):
             self.session.commit()
             return True
         return False
-    
+
     def delete_by_column(self, column_name: str, value) -> bool:
         instances: List[T] = self.get_by_column(column_name, value)
         if not instances:
             return False
-        
+
         for instance in instances:
             self.session.delete(instance)
         self.session.commit()

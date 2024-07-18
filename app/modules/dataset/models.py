@@ -3,6 +3,7 @@ from enum import Enum
 from typing import List
 
 from flask import request
+from flask_login import current_user
 from sqlalchemy import Boolean, Enum as SQLAlchemyEnum
 
 from app import db
@@ -108,7 +109,7 @@ class DataSet(db.Model):
 
     def is_anonymous(self) -> bool:
         return self.ds_meta_data.dataset_anonymous
-    
+
     def get_publication(self) -> str:
         return self.ds_meta_data.publication_type.name.replace('_', ' ').title()
 
@@ -132,7 +133,7 @@ class DataSet(db.Model):
             'total_size_in_bytes': self.get_file_total_size(),
             'total_size_in_human_format': self.get_file_total_size_for_human(),
         }
-    
+
     def get_zenodo_deposition(self) -> int:
         return self.ds_meta_data.deposition_id
 
@@ -141,10 +142,15 @@ class DataSet(db.Model):
             'title': self.ds_meta_data.title,
             'description': self.ds_meta_data.description,
             'creators': [author.to_dict() for author in self.ds_meta_data.authors],
-            'upload_type' : "publication",
+            'upload_type': "publication",
             'publication_type': self.ds_meta_data.publication_type.value,
             'tags': self.ds_meta_data.tags.split(",") if self.ds_meta_data.tags else [],
         }
+
+    def is_mine(self):
+        if not current_user.is_authenticated:
+            return False
+        return self.user_id == current_user.id
 
     def __repr__(self):
         return f'DataSet<{self.id}>'

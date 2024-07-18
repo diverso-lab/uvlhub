@@ -102,6 +102,7 @@ def create_dataset():
 
     return render_template("dataset/create_and_edit_dataset.html", form=form)
 
+
 @dataset_bp.route("/dataset/edit/<int:dataset_id>", methods=["GET"])
 @login_required
 @is_dataset_owner
@@ -124,7 +125,10 @@ def update_dataset():
     dataset_id = request.form.get('datasetId')
     dataset = dataset_service.get_by_id(dataset_id)
 
-    if dataset == None or dataset.user_id != current_user.id:
+    if dataset is None:
+        abort(404)
+
+    if dataset.user_id != current_user.id:
         abort(404)
 
     logger.info(f"[BACK] Dataset: {dataset.id}")
@@ -142,9 +146,10 @@ def update_dataset():
     except Exception as exc:
         logger.exception(f"Exception while saving dataset data in local {exc}")
         return jsonify({"Exception while saving dataset data in local: ": str(exc)}), 400
-    
+
     msg = "[Back] Everything works!"
     return jsonify({"message": msg}), 200
+
 
 @dataset_bp.route("/dataset/list", methods=["GET"])
 @login_required

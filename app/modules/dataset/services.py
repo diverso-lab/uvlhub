@@ -95,7 +95,7 @@ class DataSetService(BaseService):
 
     def total_dataset_views(self) -> int:
         return self.dsviewrecord_repostory.total_dataset_views()
-    
+
     def update_from_form(self, form: DataSetForm, current_user: User, dataset: DataSet) -> DataSet:
         main_author = {
             "name": f"{current_user.profile.surname}, {current_user.profile.name}",
@@ -125,21 +125,19 @@ class DataSetService(BaseService):
                 else:
                     author_list = [main_author]
 
-
             for author_data in author_list:
                 author = self.author_repository.create(commit=False, ds_meta_data_id=dsmetadata.id, **author_data)
                 dsmetadata.authors.append(author)
 
-            # Save updated data in local
+            #   Save updated data in local
             self.repository.session.commit()
 
         except Exception as exc:
             logger.info(f"Exception updating dataset from form...: {exc}")
             self.repository.session.rollback()
             raise exc
-        
-        return self.get_by_id(dataset.id)
 
+        return self.get_by_id(dataset.id)
 
     def create_from_form(self, form: DataSetForm, current_user: User) -> DataSet:
 
@@ -196,12 +194,12 @@ class DataSetService(BaseService):
             logger.info(f"Exception creating dataset from form...: {exc}")
             self.repository.session.rollback()
             raise exc
-        
+
         return dataset
 
     def populate_form_from_dataset(self, form: DataSetForm, dataset: DataSet):
         ds_meta_data = dataset.ds_meta_data
-        
+
         form.title.data = ds_meta_data.title
         form.desc.data = ds_meta_data.description
         form.publication_type.data = ds_meta_data.publication_type.value
@@ -231,7 +229,7 @@ class DataSetService(BaseService):
             fm_form.publication_doi.data = fm_meta_data.publication_doi
             fm_form.tags.data = fm_meta_data.tags
             fm_form.version.data = fm_meta_data.uvl_version
-            
+
             # Populate authors for feature model
             fm_form.authors.entries = []  # Clear existing entries
             for author in fm_meta_data.authors:
@@ -240,9 +238,8 @@ class DataSetService(BaseService):
                 author_form.affiliation.data = author.affiliation
                 author_form.orcid.data = author.orcid
                 fm_form.authors.append_entry(author_form)
-            
-            form.feature_models.append_entry(fm_form)
 
+            form.feature_models.append_entry(fm_form)
 
         return form
 

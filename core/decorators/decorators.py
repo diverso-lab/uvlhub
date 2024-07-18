@@ -13,5 +13,5 @@ def pass_or_abort(condition):
                 abort(404)
             return f(*args, **kwargs)
         return decorated_function
-    
+
     return decorator
