@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import requests
@@ -21,6 +22,13 @@ load_dotenv()
 
 class ZenodoService(BaseService):
 
+    def __init__(self):
+        super().__init__(ZenodoRepository())
+        self.ZENODO_ACCESS_TOKEN = self.get_zenodo_access_token()
+        self.ZENODO_API_URL = self.get_zenodo_url()
+        self.headers = {"Content-Type": "application/json"}
+        self.params = {"access_token": self.ZENODO_ACCESS_TOKEN}
+
     def get_zenodo_url(self):
 
         FLASK_ENV = os.getenv("FLASK_ENV", "development")
@@ -37,13 +45,6 @@ class ZenodoService(BaseService):
 
     def get_zenodo_access_token(self):
         return os.getenv("ZENODO_ACCESS_TOKEN")
-
-    def __init__(self):
-        super().__init__(ZenodoRepository())
-        self.ZENODO_ACCESS_TOKEN = self.get_zenodo_access_token()
-        self.ZENODO_API_URL = self.get_zenodo_url()
-        self.headers = {"Content-Type": "application/json"}
-        self.params = {"access_token": self.ZENODO_ACCESS_TOKEN}
 
     def test_connection(self) -> bool:
         """
@@ -223,7 +224,43 @@ class ZenodoService(BaseService):
         if response.status_code != 202:
             raise Exception("Failed to publish deposition")
         return response.json()
+    
+    def update_deposition(self, deposition_id: int, metadata: dict) -> dict:
+        """
+        Update a deposition in Zenodo.
 
+        Args:
+            deposition_id (int): The ID of the deposition in Zenodo.
+            metadata (dict): The metadata to update the deposition with.
+
+        Returns:
+            dict: The response in JSON format with the details of the updated deposition.
+        """
+        
+        # Step 1: Change the deposition to an editable draft
+        edit_url = f"{self.ZENODO_API_URL}/{deposition_id}/actions/edit"
+        logger.info(f"Zenodo edit URL: {edit_url}")
+        edit_response = requests.post(edit_url, params=self.params, headers=self.headers)
+
+        if edit_response.status_code != 201:
+            error_message = f"Failed to change deposition to editable draft. Status code: {edit_response.status_code}. Error details: {edit_response.json()}"
+            raise Exception(error_message)
+        
+        # Step 2: Update the deposition metadata
+        data = {"metadata": metadata}
+        update_url = f"{self.ZENODO_API_URL}/{deposition_id}"
+        logger.info(f"Zenodo update URL: {update_url}")
+        update_response = requests.put(update_url, params=self.params, json=data, headers=self.headers)
+
+        if update_response.status_code != 200:
+            error_message = f"Failed to update deposition. Status code: {update_response.status_code}. Error details: {update_response.json()}"
+            raise Exception(error_message)
+        
+        # Step 3: Re-publish deposition
+        self.publish_deposition(deposition_id=deposition_id)
+        
+        return update_response.json()
+    
     def get_deposition(self, deposition_id: int) -> dict:
         """
         Get a deposition from Zenodo.

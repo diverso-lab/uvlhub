@@ -130,16 +130,21 @@ class DataSetService(BaseService):
                 author = self.author_repository.create(commit=False, ds_meta_data_id=dsmetadata.id, **author_data)
                 dsmetadata.authors.append(author)
 
-            # Save updated data
+            # Save updated data in local
             self.repository.session.commit()
 
         except Exception as exc:
             logger.info(f"Exception updating dataset from form...: {exc}")
             self.repository.session.rollback()
             raise exc
+        
+        return self.get_by_id(dataset.id)
 
 
     def create_from_form(self, form: DataSetForm, current_user: User) -> DataSet:
+
+        dataset = None
+
         main_author = {
             "name": f"{current_user.profile.surname}, {current_user.profile.name}",
             "affiliation": current_user.profile.affiliation,
@@ -191,6 +196,7 @@ class DataSetService(BaseService):
             logger.info(f"Exception creating dataset from form...: {exc}")
             self.repository.session.rollback()
             raise exc
+        
         return dataset
 
     def populate_form_from_dataset(self, form: DataSetForm, dataset: DataSet):
