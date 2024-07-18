@@ -141,11 +141,15 @@ def update_dataset():
         logger.info("Updating dataset...")
         dataset = dataset_service.update_from_form(form=form, current_user=current_user, dataset=dataset)
         logger.info(f"Updating deposition with id {dataset.get_zenodo_deposition()}")
-        zenodo_service.update_deposition(deposition_id=dataset.get_zenodo_deposition(),
-                                         metadata=dataset.get_zenodo_metadata())
     except Exception as exc:
         logger.exception(f"Exception while saving dataset data in local {exc}")
         return jsonify({"Exception while saving dataset data in local: ": str(exc)}), 400
+
+    try:
+        zenodo_service.update_deposition(deposition_id=dataset.get_zenodo_deposition(),
+                                         metadata=dataset.get_zenodo_metadata())
+    except Exception as exc:
+        logger.exception(f"Exception while update deposition in Zenodo: {exc}")
 
     msg = "[Back] Everything works!"
     return jsonify({"message": msg}), 200
