@@ -23,20 +23,29 @@ def authorize():
     user_info = resp.json()
     
     orcid_id = user_info['sub']
+    email = user_info.get('email')
+
+    if email is None:
+        return "Error: Registration cannot be completed without a valid email address."
+
+    name = user_info.get('name', '')
+    surname = user_info.get('surname', '')
+    affiliation = user_info.get('affiliation', '')
+
     user = User.query.join(UserProfile).filter(UserProfile.orcid == orcid_id).first()
     
     if not user:
         # Crear un nuevo usuario y perfil
-        user = User(email=user_info.get('email'))
+        user = User(email=email)
         db.session.add(user)
         db.session.commit()
         
         profile = UserProfile(
             user_id=user.id,
             orcid=orcid_id,
-            name=user_info.get('name', ''),
-            surname=user_info.get('surname', ''),
-            affiliation=user_info.get('affiliation', '')
+            name=name,
+            surname=surname,
+            affiliation=affiliation
         )
         profile.save()
     
