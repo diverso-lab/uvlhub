@@ -5,7 +5,7 @@ from flask import current_app
 from authlib.integrations.flask_client import OAuth
 
 class OrcidService(BaseService):
-    
+
     def __init__(self):
         super().__init__(OrcidRepository())
         self.client_id = self.get_orcid_client_id()
@@ -27,7 +27,7 @@ class OrcidService(BaseService):
             access_token_url='https://orcid.org/oauth/token',
             authorize_url='https://orcid.org/oauth/authorize',
             client_kwargs={
-                'scope': '/authenticate',
+                'scope': '/authenticate /read-limited',
                 'token_endpoint_auth_method': 'client_secret_post'
             }
         )
