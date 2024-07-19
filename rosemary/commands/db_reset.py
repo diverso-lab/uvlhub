@@ -32,6 +32,7 @@ def db_reset(clear_migrations, yes):
                         conn.execute(table.delete())
                 trans.commit()  # End transaction
             click.echo(click.style("All table data cleared.", fg='yellow'))
+            subprocess.run(['flask', 'db', 'stamp', 'head'], check=True)
         except Exception as e:
             click.echo(click.style(f"Error clearing table data: {e}", fg='red'))
             if trans:
