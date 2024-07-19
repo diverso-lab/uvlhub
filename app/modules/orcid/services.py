@@ -3,6 +3,10 @@ from app.modules.orcid.repositories import OrcidRepository
 from core.services.BaseService import BaseService
 from flask import current_app
 from authlib.integrations.flask_client import OAuth
+from app import db
+from app.modules.auth.models import User
+from app.modules.profile.models import UserProfile
+from app.modules.orcid.models import Orcid
 
 class OrcidService(BaseService):
 
@@ -33,3 +37,43 @@ class OrcidService(BaseService):
         )
         return oauth, orcid
 
+    def get_orcid_user_info(self, token):
+        resp = self.orcid_client.get('https://orcid.org/oauth/userinfo', token=token)
+        return resp.json()
+
+    def get_or_create_user(self, user_info):
+        orcid_id = user_info['sub']
+        given_name = user_info.get('given_name', '')
+        family_name = user_info.get('family_name', '')
+        affiliation = user_info.get('affiliation', '')
+
+        orcid_record = Orcid.query.filter_by(orcid_id=orcid_id).first()
+
+        if orcid_record:
+            profile = UserProfile.query.filter_by(id=orcid_record.profile_id).first()
+            if profile:
+                user = User.query.get(profile.user_id)
+                return user
+        else:
+            user = User()
+            user.set_password(orcid_id)  # Usar el ORCID como contraseña
+            db.session.add(user)
+            db.session.commit()
+
+            profile = UserProfile(
+                user_id=user.id,
+                name=given_name,
+                surname=family_name,
+                affiliation=affiliation
+            )
+            db.session.add(profile)
+            db.session.commit()
+
+            orcid_record = Orcid(
+                orcid_id=orcid_id,
+                profile_id=profile.id
+            )
+            db.session.add(orcid_record)
+            db.session.commit()
+
+            return user
