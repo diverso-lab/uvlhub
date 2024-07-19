@@ -1,4 +1,4 @@
-"""empty message
+"""relationship_between_orcid_and_user_profile
 
 Revision ID: 007
 Revises: 006
