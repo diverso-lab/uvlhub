@@ -27,8 +27,9 @@ class OrcidService(BaseService):
             access_token_url='https://orcid.org/oauth/token',
             authorize_url='https://orcid.org/oauth/authorize',
             client_kwargs={
-                'scope': '/authenticate%20/read-limited',
+                'scope': '/authenticate',
                 'token_endpoint_auth_method': 'client_secret_post'
             }
         )
         return oauth, orcid
+

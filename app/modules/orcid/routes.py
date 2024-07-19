@@ -3,6 +3,7 @@ from flask_login import login_user
 import app
 from app.modules.auth.models import User
 from app.modules.orcid import orcid_bp
+from app.modules.orcid.models import Orcid
 from app.modules.orcid.services import OrcidService
 from app.modules.profile.models import UserProfile
 from app import db
@@ -21,33 +22,60 @@ def authorize():
     token = current_app.orcid_service.orcid_client.authorize_access_token()
     resp = current_app.orcid_service.orcid_client.get('https://orcid.org/oauth/userinfo', token=token)
     user_info = resp.json()
-    
+
     orcid_id = user_info['sub']
-    email = user_info.get('email')
 
-    if email is None:
-        return "Error: Registration cannot be completed without a valid email address."
+    # Obtener información disponible del perfil público de ORCID
+    given_name = user_info.get('given_name', '')
+    family_name = user_info.get('family_name', '')
 
-    name = user_info.get('name', '')
-    surname = user_info.get('surname', '')
-    affiliation = user_info.get('affiliation', '')
-
-    user = User.query.join(UserProfile).filter(UserProfile.orcid == orcid_id).first()
+    # Verificar si el ORCID iD ya está registrado en la tabla Orcid
+    orcid_record = Orcid.query.filter_by(orcid_id=orcid_id).first()
     
-    if not user:
-        # Crear un nuevo usuario y perfil
-        user = User(email=email)
+    if orcid_record:
+        # Si el registro existe, obtener el perfil del usuario asociado
+        profile = UserProfile.query.filter_by(orcid=orcid_id).first()
+        if profile:
+            user = User.query.get(profile.user_id)
+            login_user(user)
+            return redirect('/')
+        else:
+            # Crear un nuevo usuario y perfil si no existe
+            user = User()
+            user.set_password(orcid_id)  # Usar el ORCID como contraseña
+            db.session.add(user)
+            db.session.commit()
+
+            profile = UserProfile(
+                user_id=user.id,
+                orcid=orcid_id,
+                name=given_name,
+                surname=family_name
+            )
+            db.session.add(profile)
+            db.session.commit()
+
+            login_user(user)
+            return redirect('/')
+    else:
+        # Registrar el ORCID iD en la tabla Orcid y crear usuario y perfil
+        orcid_record = Orcid(orcid_id=orcid_id)
+        db.session.add(orcid_record)
+        db.session.commit()
+
+        user = User()
+        user.set_password(orcid_id)  # Usar el ORCID como contraseña
         db.session.add(user)
         db.session.commit()
-        
+
         profile = UserProfile(
             user_id=user.id,
             orcid=orcid_id,
-            name=name,
-            surname=surname,
-            affiliation=affiliation
+            name=given_name,
+            surname=family_name
         )
-        profile.save()
-    
-    login_user(user)
-    return redirect('/')
+        db.session.add(profile)
+        db.session.commit()
+
+        login_user(user)
+        return redirect('/')
