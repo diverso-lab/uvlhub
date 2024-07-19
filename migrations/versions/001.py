@@ -1,4 +1,4 @@
-"""empty message
+"""setup
 
 Revision ID: 001
 Revises: 

@@ -1,4 +1,4 @@
-"""empty message
+"""add_orcid_table
 
 Revision ID: 004
 Revises: 003

@@ -1,4 +1,4 @@
-"""empty message
+"""add_doi_mapping_and_webhook
 
 Revision ID: 002
 Revises: 
