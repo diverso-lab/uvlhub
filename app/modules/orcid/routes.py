@@ -12,11 +12,6 @@ from app import db
 def before_request():
     current_app.orcid_service = OrcidService()
 
-@orcid_bp.route('/orcid/login')
-def login():
-    redirect_uri = url_for('orcid.authorize', _external=True, _scheme='https')
-    return current_app.orcid_service.orcid_client.authorize_redirect(redirect_uri)
-
 @orcid_bp.route('/orcid/authorize')
 def authorize():
     token = current_app.orcid_service.orcid_client.authorize_access_token()
@@ -34,35 +29,13 @@ def authorize():
     
     if orcid_record:
         # Si el registro existe, obtener el perfil del usuario asociado
-        profile = UserProfile.query.filter_by(orcid=orcid_id).first()
+        profile = UserProfile.query.filter_by(id=orcid_record.profile_id).first()
         if profile:
             user = User.query.get(profile.user_id)
             login_user(user)
             return redirect('/')
-        else:
-            # Crear un nuevo usuario y perfil si no existe
-            user = User()
-            user.set_password(orcid_id)  # Usar el ORCID como contraseña
-            db.session.add(user)
-            db.session.commit()
-
-            profile = UserProfile(
-                user_id=user.id,
-                orcid=orcid_id,
-                name=given_name,
-                surname=family_name
-            )
-            db.session.add(profile)
-            db.session.commit()
-
-            login_user(user)
-            return redirect('/')
     else:
         # Registrar el ORCID iD en la tabla Orcid y crear usuario y perfil
-        orcid_record = Orcid(orcid_id=orcid_id)
-        db.session.add(orcid_record)
-        db.session.commit()
-
         user = User()
         user.set_password(orcid_id)  # Usar el ORCID como contraseña
         db.session.add(user)
@@ -70,11 +43,17 @@ def authorize():
 
         profile = UserProfile(
             user_id=user.id,
-            orcid=orcid_id,
             name=given_name,
             surname=family_name
         )
         db.session.add(profile)
+        db.session.commit()
+
+        orcid_record = Orcid(
+            orcid_id=orcid_id,
+            profile_id=profile.id
+        )
+        db.session.add(orcid_record)
         db.session.commit()
 
         login_user(user)

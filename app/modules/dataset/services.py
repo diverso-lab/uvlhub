@@ -100,7 +100,7 @@ class DataSetService(BaseService):
         main_author = {
             "name": f"{current_user.profile.surname}, {current_user.profile.name}",
             "affiliation": current_user.profile.affiliation,
-            "orcid": current_user.profile.orcid,
+            "orcid": current_user.profile.get_orcid(),
         }
         try:
 
@@ -146,7 +146,7 @@ class DataSetService(BaseService):
         main_author = {
             "name": f"{current_user.profile.surname}, {current_user.profile.name}",
             "affiliation": current_user.profile.affiliation,
-            "orcid": current_user.profile.orcid,
+            "orcid": current_user.profile.get_orcid(),
         }
         try:
             logger.info(f"Creating dsmetadata...: {form.get_dsmetadata()}")

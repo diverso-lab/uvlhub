@@ -13,7 +13,7 @@ from app.modules.profile.services import UserProfileService
 @login_required
 def edit_profile():
     auth_service = AuthenticationService()
-    profile = auth_service.get_authenticated_user_profile
+    profile = auth_service.get_authenticated_user_profile()
     if not profile:
         return redirect(url_for("public.index"))
 
@@ -25,7 +25,7 @@ def edit_profile():
             result, errors, "profile.edit_profile", "Profile updated successfully", "profile/edit.html", form
         )
 
-    return render_template("profile/edit.html", form=form)
+    return render_template("profile/edit.html", form=form, profile=profile)
 
 
 @profile_bp.route('/profile/summary')
