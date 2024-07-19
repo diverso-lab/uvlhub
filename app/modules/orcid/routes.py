@@ -28,6 +28,7 @@ def authorize():
     # Obtener información disponible del perfil público de ORCID
     given_name = user_info.get('given_name', '')
     family_name = user_info.get('family_name', '')
+    affiliation = user_info.get('affiliation', '')
 
     # Verificar si el ORCID iD ya está registrado en la tabla Orcid
     orcid_record = Orcid.query.filter_by(orcid_id=orcid_id).first()
@@ -49,7 +50,8 @@ def authorize():
         profile = UserProfile(
             user_id=user.id,
             name=given_name,
-            surname=family_name
+            surname=family_name,
+            affiliation=affiliation
         )
         db.session.add(profile)
         db.session.commit()
