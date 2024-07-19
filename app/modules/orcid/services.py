@@ -8,6 +8,7 @@ from app.modules.auth.models import User
 from app.modules.profile.models import UserProfile
 from app.modules.orcid.models import Orcid
 
+
 class OrcidService(BaseService):
 
     def __init__(self):
