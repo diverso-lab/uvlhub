@@ -7,7 +7,7 @@
     <h1 class="h2 mb-3"><b>Sign</b> Up</h1>
 
     <div class="row">
-        <div class="col-5">
+        <div class="col-12">
 
             <form action="" method="post" novalidate>
                 {{ form.hidden_tag() }}
@@ -24,6 +24,10 @@
                         </div>
                     </div>
 
+                </div>
+
+                <div class="row">
+
                     <div class="col-md-6 col-lg-6 col-xs-12">
                         <div class="mb-3">
                             {{ form.surname.label(class="form-label") }} *
@@ -33,10 +37,6 @@
                             {% endfor %}
                         </div>
                     </div>
-
-                </div>
-
-                <div class="row">
 
 
                 </div>
@@ -72,8 +72,13 @@
 
                 <div class="row">
 
-                    <div class="col-lg-6 col-12">
-                        {{ form.submit(class="btn btn-primary") }}
+                    <div class="col-lg-6 col-12 d-flex justify-content-between align-items-center">
+                        {{ form.submit(class="btn btn-primary me-3") }} 
+                        <span class="mx-2">or</span>
+                        <a href="{{url_for('orcid.login')}}" class="btn btn-info" style="border-radius: 5px; display: flex; align-items: center;">
+                            <i data-feather="key" class="me-2"></i>
+                            Signup with ORCID
+                        </a>
                     </div>
 
                 </div>
