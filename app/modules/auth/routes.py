@@ -2,10 +2,10 @@ from flask import render_template, redirect, url_for, request
 from flask_login import current_user, login_user, logout_user
 
 from app.modules.auth import auth_bp
+from app.modules.auth.decorators import guest_required
 from app.modules.auth.forms import SignupForm, LoginForm
 from app.modules.auth.services import AuthenticationService
 from app.modules.profile.services import UserProfileService
-
 
 authentication_service = AuthenticationService()
 user_profile_service = UserProfileService()
@@ -35,6 +35,7 @@ def show_signup_form():
 
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
+@guest_required
 def login():
     if current_user.is_authenticated:
         return redirect(url_for('public.index'))

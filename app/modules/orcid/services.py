@@ -57,7 +57,7 @@ class OrcidService(BaseService):
                 return user
         else:
             user = User()
-            user.set_password(orcid_id)  # Usar el ORCID como contraseña
+            user.set_password(orcid_id)
             db.session.add(user)
             db.session.commit()
 

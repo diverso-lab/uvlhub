@@ -6,6 +6,7 @@ from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
 from flask_migrate import Migrate
 
+from app.modules.mail.services import MailService
 from core.configuration.configuration import get_app_version
 from core.managers.module_manager import ModuleManager
 from core.managers.config_manager import ConfigManager
@@ -18,6 +19,7 @@ load_dotenv()
 # Create the instances
 db = SQLAlchemy()
 migrate = Migrate()
+mail_service = MailService()
 
 
 def create_app(config_name='development'):
@@ -53,6 +55,8 @@ def create_app(config_name='development'):
     # Initialize error handler manager
     error_handler_manager = ErrorHandlerManager(app)
     error_handler_manager.register_error_handlers()
+
+    mail_service.init_app(app)
 
     # Injecting environment variables into jinja context
     @app.context_processor
