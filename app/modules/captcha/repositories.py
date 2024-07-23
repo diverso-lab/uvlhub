@@ -1,6 +1,6 @@
 from core.repositories.BaseRepository import BaseRepository
 
 
-class RecaptchaRepository(BaseRepository):
+class CaptchaRepository(BaseRepository):
     def __init__(self):
         pass

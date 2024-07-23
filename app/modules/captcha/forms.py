@@ -2,5 +2,5 @@ from flask_wtf import FlaskForm
 from wtforms import SubmitField
 
 
-class RecaptchaForm(FlaskForm):
+class CaptchaForm(FlaskForm):
     submit = SubmitField('Save recaptcha')

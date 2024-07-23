@@ -6,12 +6,12 @@ from app.modules.auth.decorators import guest_required
 from app.modules.auth.forms import SignupForm, LoginForm
 from app.modules.auth.services import AuthenticationService
 from app.modules.profile.services import UserProfileService
-from app.modules.recaptcha.services import RecaptchaService
-from core.configuration.configuration import is_production
+from app.modules.captcha.services import CaptchaService
 
 authentication_service = AuthenticationService()
 user_profile_service = UserProfileService()
-recaptcha_service = RecaptchaService()
+captcha_service = CaptchaService()
+
 
 @auth_bp.route("/signup/", methods=["GET", "POST"])
 def show_signup_form():
@@ -21,11 +21,10 @@ def show_signup_form():
     form = SignupForm()
     if form.validate_on_submit():
 
-        if(is_production()):
-            recaptcha_response = request.form.get('g-recaptcha-response')
-            if not recaptcha_service.validate_recaptcha(recaptcha_response):
-                flash('Please complete the reCAPTCHA', 'danger')
-                return render_template('auth/signup_form.html', form=form)
+        user_input = request.form['captcha']
+        if not captcha_service.validate_captcha(user_input):
+            flash('Please complete the reCAPTCHA', 'danger')
+            return render_template('auth/signup_form.html', form=form)
 
         email = form.email.data
         if not authentication_service.is_email_available(email):
@@ -51,12 +50,6 @@ def login():
 
     form = LoginForm()
     if request.method == 'POST' and form.validate_on_submit():
-
-        if(is_production()):
-            recaptcha_response = request.form.get('g-recaptcha-response')
-            if not recaptcha_service.validate_recaptcha(recaptcha_response):
-                flash('Please complete the reCAPTCHA', 'danger')
-                return render_template('auth/login_form.html', form=form)
 
         if authentication_service.login(form.email.data, form.password.data):
             return redirect(url_for('public.index'))
