@@ -1,3 +1,4 @@
+from unittest.mock import patch
 import pytest
 from flask import url_for
 
@@ -57,19 +58,23 @@ def test_signup_user_no_name(test_client):
     assert b"This field is required" in response.data, response.data
 
 
-def test_signup_user_unsuccessful(test_client):
+@patch('app.modules.captcha.services.CaptchaService.validate_captcha', return_value=True)
+def test_signup_user_unsuccessful(mock_captcha, test_client):
     email = "test@example.com"
     response = test_client.post(
-        "/signup", data=dict(name="Test", surname="Foo", email=email, password="test1234"), follow_redirects=True
+        "/signup/",
+        data=dict(name="Test", surname="Foo", email=email, password="test1234", captcha="dummy_captcha"),
+        follow_redirects=True
     )
     assert response.request.path == url_for("auth.show_signup_form"), "Signup was unsuccessful"
     assert f"Email {email} in use".encode("utf-8") in response.data
 
 
-def test_signup_user_successful(test_client):
+@patch('app.modules.captcha.services.CaptchaService.validate_captcha', return_value=True)
+def test_signup_user_successful(mock_captcha, test_client):
     response = test_client.post(
-        "/signup",
-        data=dict(name="Foo", surname="Example", email="foo@example.com", password="foo1234"),
+        "/signup/",
+        data=dict(name="Foo", surname="Example", email="foo@example.com", password="foo1234", captcha="dummy_captcha"),
         follow_redirects=True,
     )
     assert response.request.path == url_for("public.index"), "Signup was unsuccessful"
