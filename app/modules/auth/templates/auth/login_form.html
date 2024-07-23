@@ -54,13 +54,23 @@
                     <div class="row">
 
                         <div class="col-md-6 col-lg-6 col-xs-12">
-                            <div class="mb-3">
+                            <div class="mb-2">
                                 {{ form.remember_me(class="form-check-input") }}
                                 {{ form.remember_me.label(class="form-check-label") }}
                             </div>
                         </div>
 
                     </div>
+
+                    {% if PRODUCTION %}
+
+                    <div class="row mb-2">
+                        <div class="col-md-6 col-lg-6 col-xs-12">
+                            <div class="g-recaptcha" data-sitekey="{{ GOOGLE_RECAPTCHA_SITE_KEY }}"></div>
+                        </div>
+                    </div>
+
+                    {% endif %}
 
                     <div class="row">
 
@@ -103,7 +113,6 @@
                         </div>
 
                     </div>
-
                 </form>
 
     </div>
@@ -113,5 +122,6 @@
 {% endblock %}
 
 {% block scripts %}
+    <script src="https://www.google.com/recaptcha/api.js"></script>
     <script src="{{ url_for('auth.scripts') }}"></script>
 {% endblock %}

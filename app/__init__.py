@@ -61,12 +61,22 @@ def create_app(config_name='development'):
     # Injecting environment variables into jinja context
     @app.context_processor
     def inject_vars_into_jinja():
-        return {
-            'FLASK_APP_NAME': os.getenv('FLASK_APP_NAME'),
-            'FLASK_ENV': os.getenv('FLASK_ENV'),
-            'DOMAIN': os.getenv('DOMAIN', 'localhost'),
-            'APP_VERSION': get_app_version()
-        }
+        
+        # Get all the environment variables
+        env_vars = {key: os.getenv(key) for key in os.environ}
+        
+        # Add the application version manually
+        env_vars['APP_VERSION'] = get_app_version()
+        
+        # Ensure DOMAIN variable has a default value if not set
+        env_vars['DOMAIN'] = os.getenv('DOMAIN', 'localhost')
+
+        # Establecer variables booleanas para el entorno
+        flask_env = os.getenv('FLASK_ENV')
+        env_vars['DEVELOPMENT'] = flask_env == 'development'
+        env_vars['PRODUCTION'] = flask_env == 'production'
+        
+        return env_vars
 
     return app
 
