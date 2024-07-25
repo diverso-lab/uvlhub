@@ -83,7 +83,7 @@ class DataSet(db.Model):
 
     def name(self) -> str:
         return self.ds_meta_data.title
-    
+
     def description(self) -> str:
         return self.ds_meta_data.description
 
