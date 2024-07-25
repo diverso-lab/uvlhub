@@ -2,15 +2,18 @@ import logging
 import os
 import json
 import shutil
+import zipfile
+from io import BytesIO
 
 from flask import (
+    abort,
+    jsonify,
+    make_response,
     redirect,
     render_template,
     request,
-    jsonify,
+    send_file,
     send_from_directory,
-    make_response,
-    abort,
     url_for,
 )
 from flask_login import login_required, current_user
@@ -26,6 +29,7 @@ from app.modules.dataset.services import (
     DataSetService,
     DOIMappingService
 )
+from app.modules.hubfile.services import HubfileService
 from app.modules.zenodo.services import ZenodoService
 
 logger = logging.getLogger(__name__)
@@ -38,6 +42,7 @@ zenodo_service = ZenodoService()
 doi_mapping_service = DOIMappingService()
 ds_view_record_service = DSViewRecordService()
 ds_download_record_service = DSDownloadRecordService()
+hubfile_service = HubfileService()
 
 
 @dataset_bp.route("/dataset/upload", methods=["GET", "POST"])
@@ -100,7 +105,13 @@ def create_dataset():
         msg = "Everything works!"
         return jsonify({"message": msg}), 200
 
-    return render_template("dataset/create_and_edit_dataset.html", form=form)
+    with_hubfiles = request.args.get("with_hubfiles", "")
+    hubfiles_ids = [int(x) for x in with_hubfiles.split(",") if x]
+    hubfiles = hubfile_service.get_by_ids(hubfiles_ids)
+
+    return render_template(
+        "dataset/create_and_edit_dataset.html", form=form, hubfiles=[hub.to_dict() for hub in hubfiles]
+    )
 
 
 @dataset_bp.route("/dataset/edit/<int:dataset_id>", methods=["GET"])
@@ -225,3 +236,38 @@ def get_unsynchronized_dataset(dataset_id):
         abort(404)
 
     return render_template("dataset/view_dataset.html", dataset=dataset)
+
+
+@dataset_bp.route("/dataset/my-cart/", methods=["GET"])
+def my_cart():
+    param_files = request.args.get("files", "")
+    hubfiles_ids = [int(x) for x in param_files.split(",") if x]
+    hubfiles = hubfile_service.get_by_ids(hubfiles_ids)
+    return render_template("dataset/my_cart.html", hubfiles=hubfiles)
+
+
+@dataset_bp.route("/dataset/build/download/", methods=["GET"])
+def download_build_dataset():
+    param_files = request.args.get("files", "")
+    hubfiles_ids = [int(x) for x in param_files.split(",") if x]
+    hubfiles = hubfile_service.get_by_ids(hubfiles_ids)
+
+    # Create Zip
+    memory_file = BytesIO()
+    with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zf:
+        for hubfile in hubfiles:
+            file_path = hubfile.get_full_path()
+            if os.path.exists(file_path):
+                zf.write(file_path, os.path.basename(file_path))
+            else:
+                print(f"The file {file_path} does not exist.")
+
+    memory_file.seek(0)
+
+    # Send Zip to user
+    return send_file(
+        memory_file,
+        mimetype='application/zip',
+        as_attachment=True,
+        download_name='my_dataset.zip',
+    )

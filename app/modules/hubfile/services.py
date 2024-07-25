@@ -46,6 +46,9 @@ class HubfileService(BaseService):
         hubfile_download_record_repository = HubfileDownloadRecordRepository()
         return hubfile_download_record_repository.total_hubfile_downloads()
 
+    def get_by_ids(self, ids: list[int]) -> list[Hubfile]:
+        return self.repository.get_by_ids(ids)
+
 
 class HubfileDownloadRecordService(BaseService):
     def __init__(self):
