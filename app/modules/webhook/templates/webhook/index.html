@@ -7,5 +7,7 @@
 {% endblock %}
 
 {% block scripts %}
-    <script src="{{ url_for('webhook.scripts') }}"></script>
+    <script type="text/javascript">
+        {% include "webhook/scripts.js" %}
+    </script>
 {% endblock %}

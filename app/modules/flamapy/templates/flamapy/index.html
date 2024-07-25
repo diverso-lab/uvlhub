@@ -7,5 +7,7 @@
 {% endblock %}
 
 {% block scripts %}
-    <script src="{{ url_for('flamapy.scripts') }}"></script>
+    <script type="text/javascript">
+        {% include "flamapy/scripts.js" %}
+    </script>
 {% endblock %}
