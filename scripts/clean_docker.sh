@@ -48,7 +48,7 @@ fi
 read -p "Are you sure you want to remove all networks (except default ones)? (y/n) " remove_networks
 if [ "$remove_networks" = "y" ]; then
     echo "Removing all custom networks..."
-    docker network rm $(docker network ls | grep -v 'bridge\|host\|none' | awk '{if(NR>1) print $1}')
+    docker network prune
 else
     echo "Skipping removing networks."
 fi
