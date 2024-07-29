@@ -51,3 +51,5 @@ volumes:
 
 networks:
   uvlhub_network:
+    driver: bridge
+    name: uvlhub_network

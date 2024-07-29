@@ -21,6 +21,8 @@ services:
       - ../:/app
       - /var/run/docker.sock:/var/run/docker.sock
     command: [ "sh", "-c", "sh /app/entrypoint.sh" ]
+    networks:
+      - uvlhub_network
 
   db:
     container_name: mariadb_container
@@ -33,6 +35,8 @@ services:
       - "3306:3306"
     volumes:
       - db_data:/var/lib/mysql
+    networks:
+      - uvlhub_network
 
   nginx:
     container_name: nginx_web_server_container
@@ -45,6 +49,13 @@ services:
     depends_on:
       - web
     restart: always
+    networks:
+      - uvlhub_network
 
 volumes:
   db_data:
+
+networks:
+  uvlhub_network:
+    driver: bridge
+    name: uvlhub_network
