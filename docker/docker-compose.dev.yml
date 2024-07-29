@@ -1,4 +1,5 @@
 services:
+
   web:
     container_name: web_app_container
     image: drorganvidez/uvlhub:dev
@@ -6,6 +7,8 @@ services:
       - ../.env
     expose:
       - "5000"
+    ports:
+      - "5000:5000"
     depends_on:
       - db
     build:

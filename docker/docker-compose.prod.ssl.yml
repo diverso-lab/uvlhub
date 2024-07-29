@@ -5,6 +5,8 @@ services:
     image: drorganvidez/uvlhub:latest
     env_file:
       - ../.env
+    expose:
+      - "5000"
     ports:
       - "5000:5000"
     depends_on:
