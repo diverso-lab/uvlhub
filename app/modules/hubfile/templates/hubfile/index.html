@@ -7,5 +7,7 @@
 {% endblock %}
 
 {% block scripts %}
-    <script src="{{ url_for('hubfile.scripts') }}"></script>
+    <script type="text/javascript">
+        {% include "hubfile/scripts.js" %}
+    </script>
 {% endblock %}

@@ -39,7 +39,9 @@
 {% endblock %}
 
 {% block scripts %}
-    <script src="{{ url_for('reset.scripts') }}"></script>
+    <script type="text/javascript">
+        {% include "reset/scripts.js" %}
+    </script>
 {% endblock %}
 
 

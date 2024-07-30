@@ -113,5 +113,7 @@
 {% endblock %}
 
 {% block scripts %}
-    <script src="{{ url_for('profile.scripts') }}"></script>
+    <script type="text/javascript">
+        {% include "profile/scripts.js" %}
+    </script>
 {% endblock %}

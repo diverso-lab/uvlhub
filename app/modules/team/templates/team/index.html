@@ -70,5 +70,7 @@
 {% endblock %}
 
 {% block scripts %}
-    <script src="{{ url_for('team.scripts') }}"></script>
+    <script type="text/javascript">
+        {% include "team/scripts.js" %}
+    </script>
 {% endblock %}

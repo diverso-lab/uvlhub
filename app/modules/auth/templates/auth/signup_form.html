@@ -159,6 +159,8 @@
 {% endblock %}
 
 {% block scripts %}
-    <script src="{{ url_for('captcha.scripts') }}"></script>
-    <script src="{{ url_for('auth.scripts') }}"></script>
+    <script type="text/javascript">
+        {% include "captcha/scripts.js" %}
+        {% include "auth/scripts.js" %}
+    </script>
 {% endblock %}
