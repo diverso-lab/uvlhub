@@ -1,5 +1,6 @@
 import os
 import secrets
+import redis
 
 
 class ConfigManager:
@@ -33,6 +34,10 @@ class Config:
     TIMEZONE = 'Europe/Madrid'
     TEMPLATES_AUTO_RELOAD = True
     UPLOAD_FOLDER = 'uploads'
+    SESSION_TYPE = 'redis'
+    SESSION_PERMANENT = False
+    SESSION_USE_SIGNER = True
+    SESSION_REDIS = redis.from_url('redis://redis:6379')
 
 
 class DevelopmentConfig(Config):

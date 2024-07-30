@@ -11,6 +11,7 @@ services:
       - "5000:5000"
     depends_on:
       - db
+      - redis
     build:
       context: ../
       dockerfile: docker/images/Dockerfile.webhook
@@ -22,7 +23,7 @@ services:
       - ../uploads:/app/uploads
       - ../:/app
       - /var/run/docker.sock:/var/run/docker.sock
-    command: [ "sh", "-c", "sh /app/entrypoint.sh" ]
+    command: [ "bash", "-c", "bash /app/entrypoint.sh" ]
     networks:
       - uvlhub_network
 
@@ -51,6 +52,15 @@ services:
     depends_on:
       - web
     restart: always
+    networks:
+      - uvlhub_network
+
+  redis:
+    image: "redis:latest"
+    container_name: redis_container
+    restart: always
+    ports:
+      - "6379:6379"
     networks:
       - uvlhub_network
 
