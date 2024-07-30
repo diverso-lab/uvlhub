@@ -54,6 +54,8 @@ class TestingConfig(Config):
         f"{os.getenv('MARIADB_TEST_DATABASE', 'default_db')}"
     )
     WTF_CSRF_ENABLED = False
+    SESSION_TYPE = 'filesystem'
+    SESSION_FILE_DIR = '/tmp/flask_sessions'
 
 
 class ProductionConfig(Config):
