@@ -1,5 +1,8 @@
+import os
 from datetime import datetime, timezone
+
 from flask import request
+
 from app import db
 from app.modules.auth.models import User
 from app.modules.dataset.models import DataSet
@@ -31,13 +34,22 @@ class Hubfile(db.Model):
 
     def to_dict(self):
         return {
-            'id': self.id,
-            'name': self.name,
-            'checksum': self.checksum,
-            'size_in_bytes': self.size,
-            'size_in_human_format': self.get_formatted_size(),
-            'url': f'{request.host_url.rstrip("/")}/file/download/{self.id}',
+            "id": self.id,
+            "name": self.name,
+            "checksum": self.checksum,
+            "size_in_bytes": self.size,
+            "size_in_human_format": self.get_formatted_size(),
+            "url": f"{request.host_url.rstrip('/')}/hubfile/download/{self.id}",
         }
+
+    def get_full_path(self) -> str:
+        return os.path.join(
+            os.getenv("WORKING_DIR"),
+            "uploads",
+            f"user_{self.feature_model.data_set.user_id}",
+            f"dataset_{self.feature_model.data_set_id}",
+            self.name,
+        )
 
     def __repr__(self):
         return f'File<{self.id}>'

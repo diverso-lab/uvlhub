@@ -1,0 +1,76 @@
+{% extends "base_template.html" %}
+
+{% block title %}Build datasets{% endblock %}
+
+{% block content %}
+
+    <h1 class="h3 mb-3">Build datasets</h1>
+
+    {% if hubfiles %}
+        <div class="container col-12">
+            <div class="row">
+                <ul id="cart" class="list-group">
+                {% for file in hubfiles %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        {{ file.name }}
+                        <button class="btn btn-outline-danger btn-sm" onclick="removeElement(this, '{{ file.id }}')">
+                            <i data-feather="trash-2"></i>
+                        </button>
+                    </li>
+                {% endfor %}
+                </ul>
+            </div>
+
+            <div class="row mt-4">
+                <div class="d-flex flex-column align-content-center flex-wrap">
+                    <button class="btn btn-danger mb-2" onclick="clearAll()">
+                        <i data-feather="trash"></i>
+                        Clear All
+                    </button>
+                    <button class="btn btn-primary mb-2" onclick="downloadAll()">
+                        <i data-feather="download"></i>
+                        Download All
+                    </button>
+                    {% if current_user.is_authenticated %}
+                        <button class="btn btn-primary" onclick="buildDataset()">
+                            <i data-feather="upload"></i>
+                            Upload Dataset
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="col-12 col-md-6">
+            <p>There are no files added to the dataset.</p>
+        </div>
+    {% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+    <script type="text/javascript">
+        function removeElement(event, id) {
+            event.parentElement.remove();
+            rmFromCart(id);
+        }
+
+        function downloadAll() {
+          let baseUrl = "{{ url_for('dataset.download_build_dataset') }}";
+          let params = "?files=" + encodeURIComponent(getMyCart().toString());
+          window.location.href = baseUrl + params;
+        }
+
+        function clearAll() {
+          clearCart();
+          document.getElementById("cart").innerHTML = "";
+        }
+
+        function buildDataset() {
+          let baseUrl = "{{ url_for('dataset.create_dataset') }}";
+          let params = "?with_hubfiles=" + encodeURIComponent(getMyCart().toString());
+          window.location.href = baseUrl + params;
+        }
+
+    </script>
+{% endblock %}

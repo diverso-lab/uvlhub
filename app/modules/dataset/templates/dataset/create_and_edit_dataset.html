@@ -125,15 +125,15 @@
 
                                                     <div class="author row" style="border: 2px dotted rgb(204, 204, 204); border-radius: 10px; padding: 10px; margin: 10px 0px; background-color: white;">
                                                         <div class="col-lg-6 col-12 mb-3">
-                                                            {{ subform.form.name.label(class="form-label") }} 
+                                                            {{ subform.form.name.label(class="form-label") }}
                                                             {{ subform.form.name.data(class="form-control" ) }}
                                                         </div>
                                                         <div class="col-lg-6 col-12 mb-3">
-                                                            {{ subform.form.affiliation.label(class="form-label") }} 
+                                                            {{ subform.form.affiliation.label(class="form-label") }}
                                                             {{ subform.form.affiliation.data(class="form-control" ) }}
                                                         </div>
                                                         <div class="col-lg-6 col-12 mb-3">
-                                                            {{ subform.form.orcid.label(class="form-label") }} 
+                                                            {{ subform.form.orcid.label(class="form-label") }}
                                                             {{ subform.form.orcid.data(class="form-control") }}
                                                         </div>
                                                         <div class="col-12 mb-2">
@@ -144,7 +144,7 @@
                                                 {% endfor %}
                                             {% endif %}
 
-                                            
+
 
                                         {% else %}
 
@@ -181,7 +181,7 @@
 
                                         {% endif %}
 
-                                        
+
                                     </div>
                                     <button type="button" class="btn btn-secondary" id="add_author">Add author
                                     </button>
@@ -190,14 +190,14 @@
 
                             </div>
 
-                    
+
 
                         </div>
 
                         <div class="row" style="padding-left: 2rem">
                             <div class="col-12">
                                 <label class="form-check">
-                                    <input id="dataset_anonymous" class="form-check-input" type="checkbox" value="" 
+                                    <input id="dataset_anonymous" class="form-check-input" type="checkbox" value=""
                                            {% if form.dataset_anonymous.data %} checked {% endif %}>
                                     <span class="form-check-label" style="font-size: 15px">
                                         <b>Anonymize dataset</b> (this will cause the dataset in both UVLHub and Zenodo to appear as anonymized until it is changed)
@@ -205,9 +205,9 @@
                                 </label>
                             </div>
                         </div>
-                        
 
-                        
+
+
 
                     </div>
 
@@ -265,6 +265,8 @@
                 <ul class="mt-2" id="file-list"></ul>
 
                 <script>
+                    let hubfiles = {{ hubfiles|tojson|safe }};
+
                     let dropzone = Dropzone.options.myDropzone = {
                         url: "/hubfile/upload",
                         paramName: 'file',
@@ -275,6 +277,18 @@
                             let fileList = document.getElementById('file-list');
                             let dropzoneText = document.getElementById('dropzone-text');
                             let alerts = document.getElementById('alerts');
+
+                            if (hubfiles) {
+                                for (let i = 0; i < hubfiles.length; i++) {
+                                    let hubfile = hubfiles[i];
+                                    fetch(hubfile.url)
+                                    .then(response => response.blob())
+                                    .then(blob => {
+                                        let file = new File([blob], hubfile.name, {type: 'uvl'});
+                                        this.addFile(file);
+                                    })
+                                }
+                            }
 
                             this.on('addedfile', function (file) {
 
@@ -486,7 +500,7 @@
 
             {% endif %}
 
-            
+
         </div>
 
     </div>
@@ -608,7 +622,7 @@
 
     {% endif %}
 
-    
+
 {% endblock %}
 
 {% block scripts %}
