@@ -36,11 +36,15 @@ class Hubfile(db.Model):
         flask_env = os.getenv('FLASK_ENV', 'development')
         domain = os.getenv('DOMAIN', 'localhost')
 
+        # If the domain looks like a subdomain (contains more than one dot), do not add ‘www’.
+        if domain.count('.') == 1:
+            domain = f"www.{domain}"
+
         # If in production, use https, otherwise use http
         protocol = 'https' if flask_env == 'production' else 'http'
 
         # Construct the URL using the appropriate protocol and domain.
-        url = f"{protocol}://www.{domain}/hubfile/download/{self.id}"
+        url = f"{protocol}://{domain}/hubfile/download/{self.id}"
 
         return {
             "id": self.id,
