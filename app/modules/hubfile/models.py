@@ -40,7 +40,7 @@ class Hubfile(db.Model):
         protocol = 'https' if flask_env == 'production' else 'http'
 
         # Construct the URL using the appropriate protocol and domain.
-        url = f"{protocol}://{domain}/hubfile/download/{self.id}"
+        url = f"{protocol}://www.{domain}/hubfile/download/{self.id}"
 
         return {
             "id": self.id,
