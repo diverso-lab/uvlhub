@@ -151,7 +151,5 @@
 {% endblock %}
 
 {% block scripts %}
-    <script type="text/javascript">
-        {% include "explore/scripts.js" %}
-    </script>
+    <script src="{{ url_for('explore.scripts') }}"></script>
 {% endblock %}

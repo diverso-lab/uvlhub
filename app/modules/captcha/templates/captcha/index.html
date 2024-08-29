@@ -7,7 +7,5 @@
 {% endblock %}
 
 {% block scripts %}
-    <script type="text/javascript">
-        {% include "recaptcha/scripts.js" %}
-    </script>
+    <script src="{{ url_for('recaptcha.scripts') }}"></script>
 {% endblock %}

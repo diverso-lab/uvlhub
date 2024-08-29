@@ -1,10 +1,10 @@
 {% extends "base_template.html" %}
 
-{% block title %}Build datasets{% endblock %}
+{% block title %}Download queue{% endblock %}
 
 {% block content %}
 
-    <h1 class="h3 mb-3">Build datasets</h1>
+    <h1 class="h3 mb-3">Download queue</h1>
 
     {% if hubfiles %}
         <div class="container col-12">
@@ -49,28 +49,5 @@
 {% endblock %}
 
 {% block scripts %}
-    <script type="text/javascript">
-        function removeElement(event, id) {
-            event.parentElement.remove();
-            rmFromCart(id);
-        }
-
-        function downloadAll() {
-          let baseUrl = "{{ url_for('dataset.download_build_dataset') }}";
-          let params = "?files=" + encodeURIComponent(getMyCart().toString());
-          window.location.href = baseUrl + params;
-        }
-
-        function clearAll() {
-          clearCart();
-          document.getElementById("cart").innerHTML = "";
-        }
-
-        function buildDataset() {
-          let baseUrl = "{{ url_for('dataset.create_dataset') }}";
-          let params = "?with_hubfiles=" + encodeURIComponent(getMyCart().toString());
-          window.location.href = baseUrl + params;
-        }
-
-    </script>
+    <script src="{{ url_for('downloadqueue.scripts') }}"></script>
 {% endblock %}

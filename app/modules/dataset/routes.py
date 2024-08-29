@@ -2,8 +2,6 @@ import logging
 import os
 import json
 import shutil
-import zipfile
-from io import BytesIO
 
 from flask import (
     abort,
@@ -12,7 +10,6 @@ from flask import (
     redirect,
     render_template,
     request,
-    send_file,
     send_from_directory,
     url_for,
 )
@@ -236,38 +233,3 @@ def get_unsynchronized_dataset(dataset_id):
         abort(404)
 
     return render_template("dataset/view_dataset.html", dataset=dataset)
-
-
-@dataset_bp.route("/dataset/my-cart/", methods=["GET"])
-def my_cart():
-    param_files = request.args.get("files", "")
-    hubfiles_ids = [int(x) for x in param_files.split(",") if x]
-    hubfiles = hubfile_service.get_by_ids(hubfiles_ids)
-    return render_template("dataset/my_cart.html", hubfiles=hubfiles)
-
-
-@dataset_bp.route("/dataset/build/download/", methods=["GET"])
-def download_build_dataset():
-    param_files = request.args.get("files", "")
-    hubfiles_ids = [int(x) for x in param_files.split(",") if x]
-    hubfiles = hubfile_service.get_by_ids(hubfiles_ids)
-
-    # Create Zip
-    memory_file = BytesIO()
-    with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zf:
-        for hubfile in hubfiles:
-            file_path = hubfile.get_full_path()
-            if os.path.exists(file_path):
-                zf.write(file_path, os.path.basename(file_path))
-            else:
-                print(f"The file {file_path} does not exist.")
-
-    memory_file.seek(0)
-
-    # Send Zip to user
-    return send_file(
-        memory_file,
-        mimetype='application/zip',
-        as_attachment=True,
-        download_name='my_dataset.zip',
-    )

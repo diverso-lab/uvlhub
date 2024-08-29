@@ -7,7 +7,5 @@
 {% endblock %}
 
 {% block scripts %}
-    <script type="text/javascript">
-        {% include "featuremodel/scripts.js" %}
-    </script>
+    <script src="{{ url_for('featuremodel.scripts') }}"></script>
 {% endblock %}

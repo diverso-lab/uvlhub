@@ -38,7 +38,7 @@ def make_module(name):
 
     env = setup_jinja_env()
 
-    # Defines the directories to create. 'tests' is handled separately to avoid subfolders.
+    # Defines the directories to create.
     directories = {'templates'}
 
     files_and_templates = {
@@ -49,8 +49,8 @@ def make_module(name):
         'services.py': 'module_services.py.j2',
         'forms.py': 'module_forms.py.j2',
         'seeders.py': 'module_seeders.py.j2',
-        'scripts.js': 'module_scripts.js.j2',
         os.path.join('templates', name, 'index.html'): 'module_templates_index.html.j2',
+        os.path.join('assets', name, 'scripts.js'): 'module_scripts.js.j2',
         'tests/test_unit.py': 'module_tests_test_unit.py.j2',
         'tests/locustfile.py': 'module_tests_locustfile.py.j2',
         'tests/test_selenium.py': 'module_tests_test_selenium.py.j2'
@@ -62,6 +62,9 @@ def make_module(name):
 
     # Create 'tests' directory directly under module_path, without additional subfolders.
     os.makedirs(os.path.join(module_path, 'tests'), exist_ok=True)
+
+    # Create 'assets' directory directly under module_path, without additional subfolders.
+    os.makedirs(os.path.join(module_path, 'assets'), exist_ok=True)
 
     # Create empty __init__.py file directly in the 'tests' directory.
     open(os.path.join(module_path, 'tests', '__init__.py'), 'a').close()

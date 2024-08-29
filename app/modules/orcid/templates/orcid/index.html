@@ -7,7 +7,5 @@
 {% endblock %}
 
 {% block scripts %}
-    <script type="text/javascript">
-        {% include "orcid/scripts.js" %}
-    </script>
+    <script src="{{ url_for('orcid.scripts') }}"></script>
 {% endblock %}

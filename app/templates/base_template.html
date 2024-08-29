@@ -163,6 +163,10 @@ chico sundermann">
                 <ul class="navbar-nav navbar-align">
                     <li class="nav-item dropdown">
 
+                        <button onclick="goToMyCart()" class="nav-link d-none d-sm-inline-block" style="border-radius: 5px;">
+                            <i data-feather="download"></i> <span id="amount-cart" class="badge bg-dark">0</span>
+                          </button>
+
                         {% if current_user.is_anonymous %}
                             <a class="nav-link  d-none d-sm-inline-block" href="{{ url_for('auth.login') }}">Login</a>
                             <a class="nav-link  d-none d-sm-inline-block" href="{{ url_for('auth.show_signup_form') }}">Sign
@@ -186,9 +190,7 @@ chico sundermann">
 
                         {% endif %}
 
-                        <button onclick="goToMyCart()" class="nav-link d-none d-sm-inline-block" style="border-radius: 5px;">
-                          <i data-feather="shopping-cart"></i> <span id="amount-cart" class="badge bg-dark">0</span>
-                        </button>
+                        
 
                     </li>
                 </ul>
@@ -286,57 +288,7 @@ Romero-Organvidez, D., Galindo, J. A., Sundermann, C., Horcas, J.-M., & Benavide
 
 <script src="{{ url_for("static", filename="js/app.js") }}"></script>
 
-<script type="text/javascript">
-  function getMyCart() {
-    const myCart = localStorage.getItem('myCart');
-    if (myCart) {
-      return JSON.parse(myCart);
-    }
-    return [];
-  }
-
-  function addToCart(id) {
-    const myCart = getMyCart();
-    if (myCart.includes(id)) {
-      return;
-    }
-    myCart.push(id);
-    localStorage.setItem('myCart', JSON.stringify(myCart));
-    setCart();
-  }
-
-  function rmFromCart(id) {
-    const myCart = getMyCart();
-    const index = myCart.indexOf(id);
-    if (index > -1) {
-      myCart.splice(index, 1);
-      localStorage.setItem('myCart', JSON.stringify(myCart));
-    }
-    setCart();
-  }
-
-  function clearCart() {
-    localStorage.removeItem('myCart');
-    setCart();
-  }
-
-  function countCart() {
-    return getMyCart().length;
-  }
-
-  function setCart() {
-    document.getElementById('amount-cart').innerText = countCart();
-  }
-
-  function goToMyCart() {
-    let baseUrl = "{{ url_for('dataset.my_cart') }}";
-    let params = "?files=" + encodeURIComponent(getMyCart().toString());
-    window.location.href = baseUrl + params;
-  }
-
-  setCart()
-
-</script>
+<script src="{{ url_for('downloadqueue.scripts') }}"></script>
 
 <script>
 

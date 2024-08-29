@@ -112,7 +112,5 @@
 {% endblock %}
 
 {% block scripts %}
-    <script type="text/javascript">
-        {% include "auth/scripts.js" %}
-    </script>
+    <script src="{{ url_for('auth.scripts') }}"></script>
 {% endblock %}

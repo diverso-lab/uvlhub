@@ -624,10 +624,8 @@
 
 
 {% endblock %}
-
+    
 {% block scripts %}
-    <script type="text/javascript">
-        {% include "zenodo/scripts.js" %}
-        {% include "dataset/scripts.js" %}
-    </script>
+    <script src="{{ url_for('zenodo.scripts') }}"></script>
+    <script src="{{ url_for('dataset.scripts') }}"></script>
 {% endblock %}
