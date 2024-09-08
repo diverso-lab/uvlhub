@@ -17,11 +17,18 @@
       WORKING_DIR: "{{ working_dir }}"
 
   tasks:
+
+    - name: Add webhook to .moduleignore
+      shell: echo "webhook" > {{ working_dir }}.moduleignore
+      args:
+        executable: /bin/bash
+      environment: "{{ common_environment }}"
+
     - name: Set database with Rosemary
       shell: |
         source {{ working_dir }}venv/bin/activate
         cd {{ working_dir }}
-        rosemary db:migrate
+        flask db upgrade
         rosemary db:seed -y --reset
       args:
         executable: /bin/bash
