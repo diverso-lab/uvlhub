@@ -32,14 +32,27 @@ def show_signup_form():
 
         try:
             user = authentication_service.create_with_profile(**form.data)
+            authentication_service.send_confirmation_email(user.email)
+            flash("Please confirm your email", "info")
         except Exception as exc:
             return render_template("auth/signup_form.html", form=form, error=f'Error creating user: {exc}')
 
-        # Log user
-        login_user(user, remember=True)
-        return redirect(url_for('public.index'))
+        return redirect(url_for("public.index"))
 
     return render_template("auth/signup_form.html", form=form)
+
+
+@auth_bp.route("/confirm_user/<token>", methods=["GET"])
+def confirm_user(token):
+    try:
+        user = authentication_service.confirm_user_with_token(token)
+    except Exception as exc:
+        flash(exc.args[0], "danger")
+        return redirect(url_for("auth.show_signup_form"))
+
+    # Log user
+    login_user(user, remember=True)
+    return redirect(url_for("public.index"))
 
 
 @auth_bp.route('/login', methods=['GET', 'POST'])

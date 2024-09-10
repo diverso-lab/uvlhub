@@ -17,5 +17,5 @@ class UserRepository(BaseRepository):
             self.session.flush()
         return instance
 
-    def get_by_email(self, email: str):
-        return self.model.query.filter_by(email=email).first()
+    def get_by_email(self, email: str, active: bool = True):
+        return self.model.query.filter_by(email=email, active=active).first()
