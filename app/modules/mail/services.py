@@ -18,13 +18,17 @@ class MailService(BaseService):
         app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS', 'True') == 'True'
         app.config['MAIL_USE_SSL'] = os.getenv('MAIL_USE_SSL', 'False') == 'True'
         app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME', 'tu_correo@tudominio.com')
-        app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD', 'tu_contraseña')
+        app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD', 'tu_password')
         app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_USERNAME')
 
         self.mail = Mail(app)
         self.sender = app.config['MAIL_USERNAME']
 
-    def send_email(self, subject, recipients, body):
+    def send_email(self, subject, recipients, body, html_body=None):
         msg = Message(subject, sender=self.sender, recipients=recipients)
+        
         msg.body = body
+        if html_body:
+            msg.html = html_body
+
         self.mail.send(msg)

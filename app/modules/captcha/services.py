@@ -13,8 +13,8 @@ class CaptchaService:
         self.image_captcha = ImageCaptcha()
 
     def generate_captcha_text(self, length=6) -> str:
-        letters = string.ascii_uppercase + string.digits
-        return ''.join(random.choice(letters) for _ in range(length))
+        allowed_characters = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+        return ''.join(random.choice(allowed_characters) for _ in range(length))
 
     def generate_captcha(self):
         captcha_text = self.generate_captcha_text()

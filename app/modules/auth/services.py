@@ -77,11 +77,16 @@ class AuthenticationService(BaseService):
 
     def send_confirmation_email(self, user_email):
         token = self.get_token_from_email(user_email)
-        url = url_for("auth.confirm_user", token=token)
+        url = url_for("auth.confirm_user", token=token, _external=True)
+        
+        # Usamos UTF-8 para el contenido HTML
+        html_body = f"<a href='{url}'>Please confirm your email</a>"
+        
         mail_service.send_email(
             "Please confirm your email",
             recipients=[user_email],
-            body=f"<a href='{url}'>Please confirm your email</a>",
+            body="Please confirm your email by clicking the link below.",
+            html_body=html_body
         )
 
     def confirm_user_with_token(self, token):

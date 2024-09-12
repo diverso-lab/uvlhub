@@ -1,5 +1,6 @@
 from flask import flash, render_template, redirect, url_for, request
 from flask_login import current_user, login_user, logout_user
+from pymysql import IntegrityError
 
 from app.modules.auth import auth_bp
 from app.modules.auth.decorators import guest_required
@@ -7,6 +8,8 @@ from app.modules.auth.forms import SignupForm, LoginForm
 from app.modules.auth.services import AuthenticationService
 from app.modules.profile.services import UserProfileService
 from app.modules.captcha.services import CaptchaService
+
+from app import db
 
 authentication_service = AuthenticationService()
 user_profile_service = UserProfileService()
@@ -20,7 +23,6 @@ def show_signup_form():
 
     form = SignupForm()
     if form.validate_on_submit():
-
         user_input = request.form['captcha']
         if not captcha_service.validate_captcha(user_input):
             flash('Please complete the reCAPTCHA', 'danger')
@@ -28,14 +30,22 @@ def show_signup_form():
 
         email = form.email.data
         if not authentication_service.is_email_available(email):
-            return render_template("auth/signup_form.html", form=form, error=f'Email {email} in use')
+            flash(f'Email {email} is already in use', 'danger')
+            return render_template("auth/signup_form.html", form=form)
 
         try:
+            # Intentamos crear el usuario
             user = authentication_service.create_with_profile(**form.data)
             authentication_service.send_confirmation_email(user.email)
             flash("Please confirm your email", "info")
-        except Exception as exc:
-            return render_template("auth/signup_form.html", form=form, error=f'Error creating user: {exc}')
+        except IntegrityError as exc:
+            # Manejar el caso de duplicado en la base de datos
+            db.session.rollback()  # Hacer rollback para limpiar la sesión
+            if 'Duplicate entry' in str(exc):
+                flash(f'Email {email} is already in use', 'danger')
+            else:
+                flash(f'Error creating user: {exc}', 'danger')
+            return render_template("auth/signup_form.html", form=form)
 
         return redirect(url_for("public.index"))
 
