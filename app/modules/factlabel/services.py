@@ -22,7 +22,7 @@ class FactlabelService(BaseService):
         
         metadata = FMMetadata(name=hubfile.name, 
                               description=dataset_metadata.get('description', None),
-                              tags=','.join(dataset_metadata.get('tags'), None)).get_metadata()
+                              tags=','.join(dataset_metadata.get('tags', None))).get_metadata()
         metrics = FlamapyService().get_metrics(fm)
         analysis_results = FlamapyService().get_analysis_results(fm)
 
