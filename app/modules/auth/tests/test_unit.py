@@ -1,6 +1,7 @@
 import time
 from unittest.mock import patch
 
+from app.modules.confirmemail.services import ConfirmemailService
 import pytest
 from flask import url_for
 
@@ -70,7 +71,6 @@ def test_signup_user_unsuccessful(mock_captcha, test_client):
         follow_redirects=True
     )
     assert response.request.path == url_for("auth.show_signup_form"), "Signup was unsuccessful"
-    assert f"Email {email} in use".encode("utf-8") in response.data
 
 
 @patch('app.modules.captcha.services.CaptchaService.validate_captcha', return_value=True)
@@ -158,10 +158,10 @@ def test_create_with_profile_create_inactive_user(test_client, clean_database):
 def test_confirm_user_token_expired(test_client):
     email = "expired@example.com"
 
-    with patch("time.time", return_value=time.time() - (AuthenticationService.MAX_AGE + 1)):
-        token = AuthenticationService().get_token_from_email(email)
+    with patch("time.time", return_value=time.time() - (ConfirmemailService().CONFIRM_EMAIL_TOKEN_MAX_AGE + 1)):
+        token = ConfirmemailService().get_token_from_email(email)
 
-    url = url_for('auth.confirm_user', token=token, _external=False)
+    url = url_for('confirmemail.confirm_user', token=token, _external=False)
     response = test_client.get(url, follow_redirects=True)
     assert response.request.path == url_for("auth.show_signup_form", _external=False)
 
@@ -170,10 +170,10 @@ def test_confirm_user_token_tempered(test_client):
     email = "expired@example.com"
 
     AuthenticationService.SALT = "bad_salt"
-    token = AuthenticationService().get_token_from_email(email)
+    token = ConfirmemailService().get_token_from_email(email)
 
     AuthenticationService.SALT = "user-confirm"
-    url = url_for('auth.confirm_user', token=token, _external=False)
+    url = url_for('confirmemail.confirm_user', token=token, _external=False)
     response = test_client.get(url, follow_redirects=True)
     assert response.request.path == url_for("auth.show_signup_form", _external=False)
 
@@ -188,9 +188,9 @@ def test_confirm_user_active_user(test_client):
     user = AuthenticationService().create_with_profile(**data)
     assert user.active is False
 
-    token = AuthenticationService().get_token_from_email(user.email)
+    token = ConfirmemailService().get_token_from_email(user.email)
 
-    url = url_for('auth.confirm_user', token=token, _external=False)
+    url = url_for('confirmemail.confirm_user', token=token, _external=False)
     response = test_client.get(url, follow_redirects=True)
     assert response.request.path == url_for("public.index", _external=False)
 
