@@ -43,7 +43,7 @@ class FactlabelService(BaseService):
         ordered_analysis = [analysis_dict[name] for name in ANALYSIS_ORDER if name in analysis_dict]
 
         result = {}
-        result['metadata'] = []
+        result['metadata'] = metadata
         result['metrics'] = ordered_metrics
         result['analysis'] = ordered_analysis
         return result 
