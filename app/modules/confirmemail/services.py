@@ -1,4 +1,5 @@
 import os
+from app.modules.auth.services import AuthenticationService
 from flask import current_app, url_for
 from itsdangerous import BadTimeSignature, SignatureExpired, URLSafeTimedSerializer
 from dotenv import load_dotenv
@@ -10,6 +11,8 @@ from core.services.BaseService import BaseService
 
 # Load environment variables
 load_dotenv()
+
+authentication_service = AuthenticationService()
 
 
 class ConfirmemailService(BaseService):
@@ -27,7 +30,7 @@ class ConfirmemailService(BaseService):
 
     def send_confirmation_email(self, user_email):
         token = self.get_token_from_email(user_email)
-        url = url_for("auth.confirm_user", token=token, _external=True)
+        url = url_for("confirmemail.confirm_user", token=token, _external=True)
 
         html_body = f"<a href='{url}'>Please confirm your email</a>"
 
@@ -47,7 +50,7 @@ class ConfirmemailService(BaseService):
         except BadTimeSignature:
             raise Exception("The confirmation link has been tampered with.")
 
-        user = self.repository.get_by_email(email, active=False)
+        user = authentication_service.get_by_email(email, active=False)
         user.active = True
         self.repository.session.commit()
         return user

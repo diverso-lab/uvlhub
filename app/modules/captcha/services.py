@@ -1,7 +1,6 @@
 import base64
 from io import BytesIO
 import random
-import string
 from PIL import Image
 from captcha.image import ImageCaptcha
 

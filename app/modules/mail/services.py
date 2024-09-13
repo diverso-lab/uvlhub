@@ -26,7 +26,6 @@ class MailService(BaseService):
 
     def send_email(self, subject, recipients, body, html_body=None):
         msg = Message(subject, sender=self.sender, recipients=recipients)
-        
         msg.body = body
         if html_body:
             msg.html = html_body

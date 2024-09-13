@@ -1,5 +1,5 @@
 from flask import flash, render_template, redirect, url_for, request
-from flask_login import current_user, login_user, logout_user
+from flask_login import current_user, logout_user
 from pymysql import IntegrityError
 
 from app.modules.auth import auth_bp
@@ -50,9 +50,6 @@ def show_signup_form():
         return redirect(url_for("public.index"))
 
     return render_template("auth/signup_form.html", form=form)
-
-
-
 
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
