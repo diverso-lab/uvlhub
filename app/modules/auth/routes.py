@@ -6,6 +6,7 @@ from app.modules.auth import auth_bp
 from app.modules.auth.decorators import guest_required
 from app.modules.auth.forms import SignupForm, LoginForm
 from app.modules.auth.services import AuthenticationService
+from app.modules.confirmemail.services import ConfirmemailService
 from app.modules.profile.services import UserProfileService
 from app.modules.captcha.services import CaptchaService
 
@@ -14,6 +15,7 @@ from app import db
 authentication_service = AuthenticationService()
 user_profile_service = UserProfileService()
 captcha_service = CaptchaService()
+confirmemail_service = ConfirmemailService()
 
 
 @auth_bp.route("/signup/", methods=["GET", "POST"])
@@ -34,13 +36,11 @@ def show_signup_form():
             return render_template("auth/signup_form.html", form=form)
 
         try:
-            # Intentamos crear el usuario
+            # We try to create the user
             user = authentication_service.create_with_profile(**form.data)
-            authentication_service.send_confirmation_email(user.email)
-            flash("Please confirm your email", "info")
+            confirmemail_service.send_confirmation_email(user.email)
         except IntegrityError as exc:
-            # Manejar el caso de duplicado en la base de datos
-            db.session.rollback()  # Hacer rollback para limpiar la sesión
+            db.session.rollback()
             if 'Duplicate entry' in str(exc):
                 flash(f'Email {email} is already in use', 'danger')
             else:
@@ -52,17 +52,7 @@ def show_signup_form():
     return render_template("auth/signup_form.html", form=form)
 
 
-@auth_bp.route("/confirm_user/<token>", methods=["GET"])
-def confirm_user(token):
-    try:
-        user = authentication_service.confirm_user_with_token(token)
-    except Exception as exc:
-        flash(exc.args[0], "danger")
-        return redirect(url_for("auth.show_signup_form"))
 
-    # Log user
-    login_user(user, remember=True)
-    return redirect(url_for("public.index"))
 
 
 @auth_bp.route('/login', methods=['GET', 'POST'])

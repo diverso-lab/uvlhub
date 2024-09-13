@@ -1,11 +1,8 @@
 import os
 
-from flask import current_app, url_for
 from flask_login import login_user
 from flask_login import current_user
-from itsdangerous import BadTimeSignature, SignatureExpired, URLSafeTimedSerializer
 
-from app import mail_service
 from app.modules.auth.models import User
 from app.modules.auth.repositories import UserRepository
 from app.modules.profile.models import UserProfile
@@ -15,15 +12,10 @@ from core.services.BaseService import BaseService
 
 
 class AuthenticationService(BaseService):
-    SALT = "user-confirm"
-    MAX_AGE = 3600
 
     def __init__(self):
         super().__init__(UserRepository())
         self.user_profile_repository = UserProfileRepository()
-
-    def get_serializer(self):
-        return URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
 
     def login(self, email, password, remember=True):
         user = self.repository.get_by_email(email)
@@ -69,38 +61,6 @@ class AuthenticationService(BaseService):
         except Exception as exc:
             self.repository.session.rollback()
             raise exc
-        return user
-
-    def get_token_from_email(self, email):
-        s = self.get_serializer()
-        return s.dumps(email, salt=self.SALT)
-
-    def send_confirmation_email(self, user_email):
-        token = self.get_token_from_email(user_email)
-        url = url_for("auth.confirm_user", token=token, _external=True)
-        
-        # Usamos UTF-8 para el contenido HTML
-        html_body = f"<a href='{url}'>Please confirm your email</a>"
-        
-        mail_service.send_email(
-            "Please confirm your email",
-            recipients=[user_email],
-            body="Please confirm your email by clicking the link below.",
-            html_body=html_body
-        )
-
-    def confirm_user_with_token(self, token):
-        s = self.get_serializer()
-        try:
-            email = s.loads(token, salt=self.SALT, max_age=self.MAX_AGE)
-        except SignatureExpired:
-            raise Exception("The confirmation link has expired.")
-        except BadTimeSignature:
-            raise Exception("The confirmation link has been tampered with.")
-
-        user = self.repository.get_by_email(email, active=False)
-        user.active = True
-        self.repository.session.commit()
         return user
 
     def update_profile(self, user_profile_id, form):
