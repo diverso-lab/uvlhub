@@ -45,4 +45,12 @@ else
     echo "Skipping removing images."
 fi
 
+read -p "Are you sure you want to remove all networks (except default ones)? (y/n) " remove_networks
+if [ "$remove_networks" = "y" ]; then
+    echo "Removing all custom networks..."
+    docker network prune
+else
+    echo "Skipping removing networks."
+fi
+
 echo "All actions have been completed."

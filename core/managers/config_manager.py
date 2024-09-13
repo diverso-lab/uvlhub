@@ -1,5 +1,5 @@
 import os
-import secrets
+import redis
 
 
 class ConfigManager:
@@ -21,7 +21,7 @@ class ConfigManager:
 
 
 class Config:
-    SECRET_KEY = os.getenv('SECRET_KEY', secrets.token_bytes())
+    SECRET_KEY = os.getenv('SECRET_KEY', 'dev_test_key_1234567890abcdefghijklmnopqrstu')
     SQLALCHEMY_DATABASE_URI = (
         f"mysql+pymysql://{os.getenv('MARIADB_USER', 'default_user')}:"
         f"{os.getenv('MARIADB_PASSWORD', 'default_password')}@"
@@ -33,6 +33,10 @@ class Config:
     TIMEZONE = 'Europe/Madrid'
     TEMPLATES_AUTO_RELOAD = True
     UPLOAD_FOLDER = 'uploads'
+    SESSION_TYPE = 'redis'
+    SESSION_PERMANENT = False
+    SESSION_USE_SIGNER = True
+    SESSION_REDIS = redis.from_url('redis://redis:6379')
 
 
 class DevelopmentConfig(Config):
@@ -49,6 +53,8 @@ class TestingConfig(Config):
         f"{os.getenv('MARIADB_TEST_DATABASE', 'default_db')}"
     )
     WTF_CSRF_ENABLED = False
+    SESSION_TYPE = 'filesystem'
+    SESSION_FILE_DIR = '/tmp/flask_sessions'
 
 
 class ProductionConfig(Config):

@@ -2,20 +2,33 @@
   become: true
 
   tasks:
-    - name: Update the system and install Python and dependencies
-      apt:
+    - name: Add deadsnakes PPA (for installing Python 3.12)
+      apt_repository:
+        repo: ppa:deadsnakes/ppa
+        state: present
         update_cache: yes
+
+    - name: Update the system and install Python 3.12 and dependencies
+      apt:
         name:
-          - python3
-          - python3-pip
-          - python3-venv
+          - python3.12
+          - python3.12-venv
+          - python3.12-distutils
           - mariadb-client
         state: present
 
-    - name: Ensure venv module is installed
-      apt:
-        name: python3-venv
-        state: present
+    - name: Install pip and setuptools for Python 3.12 from source
+      shell: |
+        wget https://bootstrap.pypa.io/get-pip.py
+        python3.12 get-pip.py
+      args:
+        executable: /bin/bash
+
+    - name: Upgrade pip and setuptools for Python 3.12
+      shell: |
+        python3.12 -m pip install --upgrade pip setuptools
+      args:
+        executable: /bin/bash
 
     - name: Remove existing virtual environment if it exists
       file:
@@ -23,15 +36,17 @@
         state: absent
         force: yes
 
-    - name: Set up the Python virtual environment
-      command: python3 -m venv {{ working_dir }}venv
+    - name: Set up the Python 3.12 virtual environment
+      command: python3.12 -m venv {{ working_dir }}venv
       args:
         creates: "{{ working_dir }}venv/bin/activate"
 
     - name: Activate the virtual environment and install dependencies
       shell: |
         source {{ working_dir }}venv/bin/activate
-        pip install -r {{ working_dir }}requirements.txt
-        pip install -e {{ working_dir }}
+        pip install --upgrade pip
+        cd {{ working_dir }}
+        pip install -r requirements.txt
+        pip install -e ./
       args:
         executable: /bin/bash

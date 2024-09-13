@@ -15,3 +15,11 @@ def get_app_version():
             return file.readline().strip()
     except FileNotFoundError:
         return 'unknown'
+
+
+def is_develop():
+    return os.getenv('FLASK_ENV') == 'development'
+
+
+def is_production():
+    return os.getenv('FLASK_ENV') == 'production'

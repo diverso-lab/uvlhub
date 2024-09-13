@@ -5,10 +5,13 @@ services:
     image: drorganvidez/uvlhub:latest
     env_file:
       - ../.env
+    expose:
+      - "5000"
     ports:
       - "5000:5000"
     depends_on:
       - db
+      - redis
     restart: always
     volumes:
       - ./entrypoints/production_entrypoint.sh:/app/entrypoint.sh
@@ -16,7 +19,9 @@ services:
       - ../migrations:/app/migrations
       - ../uploads:/app/uploads
       - ../.moduleignore:/app/.moduleignore
-    command: [ "sh", "-c", "sh /app/entrypoint.sh" ]
+    command: [ "bash", "-c", "bash /app/entrypoint.sh" ]
+    networks:
+      - uvlhub_network
 
   db:
     container_name: mariadb_container
@@ -29,6 +34,8 @@ services:
       - "3306:3306"
     volumes:
       - db_data:/var/lib/mysql
+    networks:
+      - uvlhub_network
 
   nginx:
     container_name: nginx_web_server_container
@@ -41,6 +48,15 @@ services:
     depends_on:
       - web
     restart: always
+    networks:
+      - uvlhub_network
+
+  redis:
+    image: "redis:latest"
+    container_name: redis_container
+    restart: always
+    networks:
+      - uvlhub_network
 
   watchtower:
     container_name: watchtower_container
@@ -49,6 +65,13 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     command: --cleanup --interval 120 web_app_container
     restart: always
+    networks:
+      - uvlhub_network
 
 volumes:
   db_data:
+
+networks:
+  uvlhub_network:
+    driver: bridge
+    name: uvlhub_network

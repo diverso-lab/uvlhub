@@ -16,7 +16,7 @@ chico sundermann">
     <link rel="preconnect" href="https://fonts.gstatic.com">
     <link rel="shortcut icon" href="{{ url_for("static", filename="img/icons/icon-250x250.png") }}"/>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
-  
+
     <link rel="canonical" href="https://www.uvlhub.io"/>
 
     <title>{{ FLASK_APP_NAME }} - Repository of feature models in UVL </title>
@@ -141,7 +141,7 @@ chico sundermann">
                 </div>
             </div>
             {% endif %}
-            
+
 
         </div>
     </nav>
@@ -163,6 +163,10 @@ chico sundermann">
                 <ul class="navbar-nav navbar-align">
                     <li class="nav-item dropdown">
 
+                        <button onclick="goToMyCart()" class="nav-link d-none d-sm-inline-block" style="border-radius: 5px;">
+                            <i data-feather="download"></i> <span id="amount-cart" class="badge bg-dark">0</span>
+                          </button>
+
                         {% if current_user.is_anonymous %}
                             <a class="nav-link  d-none d-sm-inline-block" href="{{ url_for('auth.login') }}">Login</a>
                             <a class="nav-link  d-none d-sm-inline-block" href="{{ url_for('auth.show_signup_form') }}">Sign
@@ -171,7 +175,7 @@ chico sundermann">
                         {% else %}
 
                         <a class="nav-icon dropdown-toggle d-inline-block d-sm-none" href="#" data-bs-toggle="dropdown">
-                            <i class="align-middle" data-feather="user"></i> 
+                            <i class="align-middle" data-feather="user"></i>
                         </a>
 
                         <a class="nav-link dropdown-toggle d-none d-sm-inline-block" href="#" data-bs-toggle="dropdown">
@@ -183,11 +187,10 @@ chico sundermann">
                             <a class="dropdown-item" href="{{ url_for('auth.logout') }}">
                                 <i class="align-middle me-1" data-feather="log-out"></i> Log out</a>
                         </div>
-                        
-                        
 
                         {% endif %}
 
+                        
 
                     </li>
                 </ul>
@@ -241,7 +244,7 @@ chico sundermann">
     abstract = {Feature models are the de facto standard for modelling variabilities and commonalities in features and relationships in software product lines. They are the base artefacts in many engineering activities, such as product configuration, derivation, or testing. Concrete models in different domains exist; however, many are in private or sparse repositories or belong to discontinued projects. The dispersion of knowledge of feature models hinders the study and reuse of these artefacts in different studies. The Universal Variability Language (UVL) is a community effort textual feature model language that promotes a common way of serialising feature models independently of concrete tools. Open science principles promote transparency, accessibility, and collaboration in scientific research. Although some attempts exist to promote feature model sharing, the existing solutions lack open science principles by design. In addition, existing and public feature models are described using formats not always supported by current tools. This paper presents , a repository of feature models in UVL format. provides a front end that facilitates the search, upload, storage, and management of feature model datasets, improving the capabilities of discontinued proposals. Furthermore, the tool communicates with Zenodo –one of the most well-known open science repositories– providing a permanent save of datasets and following open science principles. includes existing datasets and is readily available to include new data and functionalities in the future. It is maintained by three active universities in variability modelling.}
 }
 </pre>
-                        
+
 <pre id="ris_cite" style="display: none">
 TY  - JOUR
 T1  - UVLHub: A feature model data repository using UVL and open science principles
@@ -263,7 +266,7 @@ KW  - Variability
 KW  - Dataset
 KW  - Uvl
 AB  - Feature models are the de facto standard for modelling variabilities and commonalities in features and relationships in software product lines. They are the base artefacts in many engineering activities, such as product configuration, derivation, or testing. Concrete models in different domains exist; however, many are in private or sparse repositories or belong to discontinued projects. The dispersion of knowledge of feature models hinders the study and reuse of these artefacts in different studies. The Universal Variability Language (UVL) is a community effort textual feature model language that promotes a common way of serialising feature models independently of concrete tools. Open science principles promote transparency, accessibility, and collaboration in scientific research. Although some attempts exist to promote feature model sharing, the existing solutions lack open science principles by design. In addition, existing and public feature models are described using formats not always supported by current tools. This paper presents , a repository of feature models in UVL format. provides a front end that facilitates the search, upload, storage, and management of feature model datasets, improving the capabilities of discontinued proposals. Furthermore, the tool communicates with Zenodo –one of the most well-known open science repositories– providing a permanent save of datasets and following open science principles. includes existing datasets and is readily available to include new data and functionalities in the future. It is maintained by three active universities in variability modelling.
-ER  - 
+ER  -
 </pre>
 
 <pre id="text_cite" style="display: none;">
@@ -284,6 +287,8 @@ Romero-Organvidez, D., Galindo, J. A., Sundermann, C., Horcas, J.-M., & Benavide
 </pre>
 
 <script src="{{ url_for("static", filename="js/app.js") }}"></script>
+
+<script src="{{ url_for('downloadqueue.scripts') }}"></script>
 
 <script>
 

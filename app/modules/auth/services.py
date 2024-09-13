@@ -1,4 +1,5 @@
 import os
+
 from flask_login import login_user
 from flask_login import current_user
 
@@ -11,6 +12,7 @@ from core.services.BaseService import BaseService
 
 
 class AuthenticationService(BaseService):
+
     def __init__(self):
         super().__init__(UserRepository())
         self.user_profile_repository = UserProfileRepository()
@@ -43,7 +45,8 @@ class AuthenticationService(BaseService):
 
             user_data = {
                 "email": email,
-                "password": password
+                "password": password,
+                "active": False,
             }
 
             profile_data = {
@@ -79,3 +82,6 @@ class AuthenticationService(BaseService):
 
     def temp_folder_by_user(self, user: User) -> str:
         return os.path.join(uploads_folder_name(), "temp", str(user.id))
+
+    def get_by_email(self, email: str, active: bool = True) -> User:
+        return self.repository.get_by_email(email, active)

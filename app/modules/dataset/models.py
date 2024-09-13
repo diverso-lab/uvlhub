@@ -84,6 +84,9 @@ class DataSet(db.Model):
     def name(self) -> str:
         return self.ds_meta_data.title
 
+    def description(self) -> str:
+        return self.ds_meta_data.description
+
     def files(self) -> List[any]:
         return [file for fm in self.feature_models for file in fm.files]
 

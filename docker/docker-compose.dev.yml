@@ -1,4 +1,5 @@
 services:
+
   web:
     container_name: web_app_container
     image: drorganvidez/uvlhub:dev
@@ -6,15 +7,18 @@ services:
       - ../.env
     expose:
       - "5000"
+    ports:
+      - "5000:5000"
     depends_on:
       - db
+      - redis
     build:
       context: ../
       dockerfile: docker/images/Dockerfile.dev
     volumes:
       - ../:/app
       - /var/run/docker.sock:/var/run/docker.sock
-    command: [ "sh", "-c", "sh /app/docker/entrypoints/development_entrypoint.sh" ]
+    command: [ "bash", "-c", "bash /app/docker/entrypoints/development_entrypoint.sh" ]
     networks:
       - uvlhub_network
 
@@ -25,7 +29,6 @@ services:
     build:
       context: ../
       dockerfile: docker/images/Dockerfile.mariadb
-    restart: always
     ports:
       - "3306:3306"
     volumes:
@@ -46,8 +49,17 @@ services:
     networks:
       - uvlhub_network
 
+  redis:
+    image: "redis:latest"
+    container_name: redis_container
+    restart: always
+    networks:
+      - uvlhub_network
+
 volumes:
   db_data:
 
 networks:
   uvlhub_network:
+    driver: bridge
+    name: uvlhub_network

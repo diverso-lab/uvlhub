@@ -4,13 +4,13 @@ import json
 import shutil
 
 from flask import (
+    abort,
+    jsonify,
+    make_response,
     redirect,
     render_template,
     request,
-    jsonify,
     send_from_directory,
-    make_response,
-    abort,
     url_for,
 )
 from flask_login import login_required, current_user
@@ -26,6 +26,7 @@ from app.modules.dataset.services import (
     DataSetService,
     DOIMappingService
 )
+from app.modules.hubfile.services import HubfileService
 from app.modules.zenodo.services import ZenodoService
 
 logger = logging.getLogger(__name__)
@@ -38,6 +39,7 @@ zenodo_service = ZenodoService()
 doi_mapping_service = DOIMappingService()
 ds_view_record_service = DSViewRecordService()
 ds_download_record_service = DSDownloadRecordService()
+hubfile_service = HubfileService()
 
 
 @dataset_bp.route("/dataset/upload", methods=["GET", "POST"])
@@ -100,7 +102,13 @@ def create_dataset():
         msg = "Everything works!"
         return jsonify({"message": msg}), 200
 
-    return render_template("dataset/create_and_edit_dataset.html", form=form)
+    with_hubfiles = request.args.get("with_hubfiles", "")
+    hubfiles_ids = [int(x) for x in with_hubfiles.split(",") if x]
+    hubfiles = hubfile_service.get_by_ids(hubfiles_ids)
+
+    return render_template(
+        "dataset/create_and_edit_dataset.html", form=form, hubfiles=[hub.to_dict() for hub in hubfiles]
+    )
 
 
 @dataset_bp.route("/dataset/edit/<int:dataset_id>", methods=["GET"])

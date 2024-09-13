@@ -1,5 +1,6 @@
+import os
 from datetime import datetime, timezone
-from flask import request
+
 from app import db
 from app.modules.auth.models import User
 from app.modules.dataset.models import DataSet
@@ -30,14 +31,38 @@ class Hubfile(db.Model):
         return HubfileService().get_path_by_hubfile(self)
 
     def to_dict(self):
+
+        # Get the current FLASK_ENV environment and the domain of the DOMAIN environment variable
+        flask_env = os.getenv('FLASK_ENV', 'development')
+        domain = os.getenv('DOMAIN', 'localhost')
+
+        # If the domain looks like a subdomain (contains more than one dot), do not add ‘www’.
+        if domain.count('.') == 1:
+            domain = f"www.{domain}"
+
+        # If in production, use https, otherwise use http
+        protocol = 'https' if flask_env == 'production' else 'http'
+
+        # Construct the URL using the appropriate protocol and domain.
+        url = f"{protocol}://{domain}/hubfile/download/{self.id}"
+
         return {
-            'id': self.id,
-            'name': self.name,
-            'checksum': self.checksum,
-            'size_in_bytes': self.size,
-            'size_in_human_format': self.get_formatted_size(),
-            'url': f'{request.host_url.rstrip("/")}/file/download/{self.id}',
+            "id": self.id,
+            "name": self.name,
+            "checksum": self.checksum,
+            "size_in_bytes": self.size,
+            "size_in_human_format": self.get_formatted_size(),
+            "url": url,
         }
+
+    def get_full_path(self) -> str:
+        return os.path.join(
+            os.getenv("WORKING_DIR"),
+            "uploads",
+            f"user_{self.feature_model.data_set.user_id}",
+            f"dataset_{self.feature_model.data_set_id}",
+            self.name,
+        )
 
     def __repr__(self):
         return f'File<{self.id}>'

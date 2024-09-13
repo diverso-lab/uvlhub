@@ -13,6 +13,7 @@ dataset_fields = {
     'dataset_id': 'id',
     'created': 'created_at',
     'name': 'name',
+    'description': 'description',
     'doi': 'get_uvlhub_doi',
     'files': 'files'
 }

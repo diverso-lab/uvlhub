@@ -15,6 +15,7 @@ class User(db.Model, UserMixin):
 
     data_sets = db.relationship('DataSet', backref='user', lazy=True)
     profile = db.relationship('UserProfile', backref='user', uselist=False)
+    active = db.Column(db.Boolean, default=True, nullable=False)
 
     def __init__(self, **kwargs):
         super(User, self).__init__(**kwargs)
