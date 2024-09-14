@@ -13,7 +13,7 @@ def test_reset_index():
         host = get_host_for_selenium_testing()
 
         # Open the index page
-        driver.get(f'{host}/reset')
+        driver.get(f"{host}/reset")
 
         # Wait a little while to make sure the page has loaded completely
         time.sleep(4)
@@ -23,7 +23,7 @@ def test_reset_index():
             pass
 
         except NoSuchElementException:
-            raise AssertionError('Test failed!')
+            raise AssertionError("Test failed!")
 
     finally:
 

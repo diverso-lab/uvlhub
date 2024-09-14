@@ -26,27 +26,27 @@ class OrcidService(BaseService):
     def configure_oauth(self, app):
         oauth = OAuth(app)
         orcid = oauth.register(
-            name='orcid',
+            name="orcid",
             client_id=self.client_id,
             client_secret=self.client_secret,
-            access_token_url='https://orcid.org/oauth/token',
-            authorize_url='https://orcid.org/oauth/authorize',
+            access_token_url="https://orcid.org/oauth/token",
+            authorize_url="https://orcid.org/oauth/authorize",
             client_kwargs={
-                'scope': '/authenticate',
-                'token_endpoint_auth_method': 'client_secret_post'
-            }
+                "scope": "/authenticate",
+                "token_endpoint_auth_method": "client_secret_post",
+            },
         )
         return oauth, orcid
 
     def get_orcid_user_info(self, token):
-        resp = self.orcid_client.get('https://orcid.org/oauth/userinfo', token=token)
+        resp = self.orcid_client.get("https://orcid.org/oauth/userinfo", token=token)
         return resp.json()
 
     def get_or_create_user(self, user_info):
-        orcid_id = user_info['sub']
-        given_name = user_info.get('given_name', '')
-        family_name = user_info.get('family_name', '')
-        affiliation = user_info.get('affiliation', '')
+        orcid_id = user_info["sub"]
+        given_name = user_info.get("given_name", "")
+        family_name = user_info.get("family_name", "")
+        affiliation = user_info.get("affiliation", "")
 
         orcid_record = Orcid.query.filter_by(orcid_id=orcid_id).first()
 
@@ -65,15 +65,12 @@ class OrcidService(BaseService):
                 user_id=user.id,
                 name=given_name,
                 surname=family_name,
-                affiliation=affiliation
+                affiliation=affiliation,
             )
             db.session.add(profile)
             db.session.commit()
 
-            orcid_record = Orcid(
-                orcid_id=orcid_id,
-                profile_id=profile.id
-            )
+            orcid_record = Orcid(orcid_id=orcid_id, profile_id=profile.id)
             db.session.add(orcid_record)
             db.session.commit()
 

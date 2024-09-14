@@ -3,4 +3,4 @@ from wtforms import SubmitField
 
 
 class DownloadqueueForm(FlaskForm):
-    submit = SubmitField('Save downloadqueue')
+    submit = SubmitField("Save downloadqueue")

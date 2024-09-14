@@ -4,10 +4,10 @@ from app import create_app, db
 from app.modules.auth.models import User
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def test_app():
-    """ Create and configure a new app instance for each test session. """
-    test_app = create_app('testing')
+    """Create and configure a new app instance for each test session."""
+    test_app = create_app("testing")
 
     with test_app.app_context():
         # Imprimir los blueprints registrados
@@ -15,7 +15,7 @@ def test_app():
         yield test_app
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def test_client(test_app):
 
     with test_app.test_client() as testing_client:
@@ -28,7 +28,7 @@ def test_client(test_app):
             The test suite always includes the following user in order to avoid repetition
             of its creation
             """
-            user_test = User(email='test@example.com', password='test1234')
+            user_test = User(email="test@example.com", password="test1234")
             db.session.add(user_test)
             db.session.commit()
 
@@ -41,7 +41,7 @@ def test_client(test_app):
             db.drop_all()
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def clean_database():
     db.session.remove()
     db.drop_all()
@@ -64,10 +64,9 @@ def login(test_client, email, password):
     Returns:
         response: POST login request response.
     """
-    response = test_client.post('/login', data=dict(
-        email=email,
-        password=password
-    ), follow_redirects=True)
+    response = test_client.post(
+        "/login", data=dict(email=email, password=password), follow_redirects=True
+    )
     return response
 
 
@@ -81,4 +80,4 @@ def logout(test_client):
     Returns:
         response: Response to GET request to log out.
     """
-    return test_client.get('/logout', follow_redirects=True)
+    return test_client.get("/logout", follow_redirects=True)

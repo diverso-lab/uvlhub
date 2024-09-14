@@ -3,4 +3,4 @@ from wtforms import SubmitField
 
 
 class MailForm(FlaskForm):
-    submit = SubmitField('Save mail')
+    submit = SubmitField("Save mail")

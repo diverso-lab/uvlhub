@@ -3,4 +3,4 @@ from wtforms import SubmitField
 
 
 class FeaturemodelForm(FlaskForm):
-    submit = SubmitField('Save featuremodel')
+    submit = SubmitField("Save featuremodel")

@@ -6,7 +6,7 @@ from wtforms import (
     FieldList,
     FormField,
     SubmitField,
-    TextAreaField
+    TextAreaField,
 )
 from wtforms.validators import DataRequired, URL, Optional
 
@@ -36,7 +36,9 @@ class FeatureModelForm(FlaskForm):
     desc = TextAreaField("Description", validators=[Optional()])
     publication_type = SelectField(
         "Publication type",
-        choices=[(pt.value, pt.name.replace("_", " ").title()) for pt in PublicationType],
+        choices=[
+            (pt.value, pt.name.replace("_", " ").title()) for pt in PublicationType
+        ],
         validators=[Optional()],
     )
     publication_doi = StringField("Publication DOI", validators=[Optional(), URL()])
@@ -58,7 +60,7 @@ class FeatureModelForm(FlaskForm):
             "publication_type": self.publication_type.data,
             "publication_doi": self.publication_doi.data,
             "tags": self.tags.data,
-            "uvl_version": self.version.data
+            "uvl_version": self.version.data,
         }
 
 
@@ -67,7 +69,9 @@ class DataSetForm(FlaskForm):
     desc = TextAreaField("Description", validators=[DataRequired()])
     publication_type = SelectField(
         "Publication type",
-        choices=[(pt.value, pt.name.replace("_", " ").title()) for pt in PublicationType],
+        choices=[
+            (pt.value, pt.name.replace("_", " ").title()) for pt in PublicationType
+        ],
         validators=[DataRequired()],
     )
     publication_doi = StringField("Publication DOI", validators=[Optional(), URL()])
@@ -81,7 +85,9 @@ class DataSetForm(FlaskForm):
 
     def get_dsmetadata(self):
 
-        publication_type_converted = self.convert_publication_type(self.publication_type.data)
+        publication_type_converted = self.convert_publication_type(
+            self.publication_type.data
+        )
 
         return {
             "title": self.title.data,
@@ -89,7 +95,7 @@ class DataSetForm(FlaskForm):
             "publication_type": publication_type_converted,
             "publication_doi": self.publication_doi.data,
             "tags": self.tags.data,
-            "dataset_anonymous": self.dataset_anonymous.data
+            "dataset_anonymous": self.dataset_anonymous.data,
         }
 
     def convert_publication_type(self, value):
@@ -102,11 +108,7 @@ class DataSetForm(FlaskForm):
         return [author.get_author() for author in self.authors]
 
     def get_anonymous_authors(self):
-        return [{
-            "name": "Anonymous",
-            "affiliation": "Anonymous",
-            "orcid": ""
-        }]
+        return [{"name": "Anonymous", "affiliation": "Anonymous", "orcid": ""}]
 
     def get_feature_models(self):
         return [fm.get_feature_model() for fm in self.feature_models]

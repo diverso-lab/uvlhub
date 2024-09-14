@@ -7,4 +7,4 @@ class ResetToken(db.Model):
     used_at = db.Column(db.DateTime, nullable=True)
 
     def __repr__(self):
-        return f'Reset<{self.id}>'
+        return f"Reset<{self.id}>"

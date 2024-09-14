@@ -3,4 +3,4 @@ from wtforms import SubmitField
 
 
 class ZenodoForm(FlaskForm):
-    submit = SubmitField('Save zenodo')
+    submit = SubmitField("Save zenodo")

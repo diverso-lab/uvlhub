@@ -24,7 +24,7 @@ mail_service = MailService()
 sess = Session()
 
 
-def create_app(config_name='development'):
+def create_app(config_name="development"):
     app = Flask(__name__)
 
     # Load configuration according to environment
@@ -44,6 +44,7 @@ def create_app(config_name='development'):
 
     # Register login manager
     from flask_login import LoginManager
+
     login_manager = LoginManager()
     login_manager.init_app(app)
     login_manager.login_view = "auth.login"
@@ -51,6 +52,7 @@ def create_app(config_name='development'):
     @login_manager.user_loader
     def load_user(user_id):
         from app.modules.auth.models import User
+
         return User.query.get(int(user_id))
 
     # Set up logging
@@ -71,15 +73,15 @@ def create_app(config_name='development'):
         env_vars = {key: os.getenv(key) for key in os.environ}
 
         # Add the application version manually
-        env_vars['APP_VERSION'] = get_app_version()
+        env_vars["APP_VERSION"] = get_app_version()
 
         # Ensure DOMAIN variable has a default value if not set
-        env_vars['DOMAIN'] = os.getenv('DOMAIN', 'localhost')
+        env_vars["DOMAIN"] = os.getenv("DOMAIN", "localhost")
 
         # Set Boolean variables for the environment
-        flask_env = os.getenv('FLASK_ENV')
-        env_vars['DEVELOPMENT'] = flask_env == 'development'
-        env_vars['PRODUCTION'] = flask_env == 'production'
+        flask_env = os.getenv("FLASK_ENV")
+        env_vars["DEVELOPMENT"] = flask_env == "development"
+        env_vars["PRODUCTION"] = flask_env == "production"
 
         return env_vars
 

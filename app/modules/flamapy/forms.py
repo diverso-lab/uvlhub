@@ -3,4 +3,4 @@ from wtforms import SubmitField
 
 
 class FlamapyForm(FlaskForm):
-    submit = SubmitField('Save flamapy')
+    submit = SubmitField("Save flamapy")

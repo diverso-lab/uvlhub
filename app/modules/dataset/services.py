@@ -12,20 +12,28 @@ from flask import request
 from app.modules.auth.models import User
 from app.modules.auth.services import AuthenticationService
 from app.modules.dataset.forms import AuthorForm, DataSetForm, FeatureModelForm
-from app.modules.dataset.models import DSDownloadRecord, DSViewRecord, DataSet, DSMetaData
+from app.modules.dataset.models import (
+    DSDownloadRecord,
+    DSViewRecord,
+    DataSet,
+    DSMetaData,
+)
 from app.modules.dataset.repositories import (
     AuthorRepository,
     DOIMappingRepository,
     DSDownloadRecordRepository,
     DSMetaDataRepository,
     DSViewRecordRepository,
-    DataSetRepository
+    DataSetRepository,
 )
-from app.modules.featuremodel.repositories import FMMetaDataRepository, FeatureModelRepository
+from app.modules.featuremodel.repositories import (
+    FMMetaDataRepository,
+    FeatureModelRepository,
+)
 from app.modules.hubfile.repositories import (
     HubfileDownloadRecordRepository,
     HubfileRepository,
-    HubfileViewRecordRepository
+    HubfileViewRecordRepository,
 )
 from core.services.BaseService import BaseService
 
@@ -58,7 +66,9 @@ class DataSetService(BaseService):
         source_dir = current_user.temp_folder()
 
         working_dir = os.getenv("WORKING_DIR", "")
-        dest_dir = os.path.join(working_dir, "uploads", f"user_{current_user.id}", f"dataset_{dataset.id}")
+        dest_dir = os.path.join(
+            working_dir, "uploads", f"user_{current_user.id}", f"dataset_{dataset.id}"
+        )
 
         os.makedirs(dest_dir, exist_ok=True)
 
@@ -72,7 +82,9 @@ class DataSetService(BaseService):
     def get_unsynchronized(self, current_user_id: int) -> DataSet:
         return self.repository.get_unsynchronized(current_user_id)
 
-    def get_unsynchronized_dataset(self, current_user_id: int, dataset_id: int) -> DataSet:
+    def get_unsynchronized_dataset(
+        self, current_user_id: int, dataset_id: int
+    ) -> DataSet:
         return self.repository.get_unsynchronized_dataset(current_user_id, dataset_id)
 
     def latest_synchronized(self):
@@ -96,7 +108,9 @@ class DataSetService(BaseService):
     def total_dataset_views(self) -> int:
         return self.dsviewrecord_repostory.total_dataset_views()
 
-    def update_from_form(self, form: DataSetForm, current_user: User, dataset: DataSet) -> DataSet:
+    def update_from_form(
+        self, form: DataSetForm, current_user: User, dataset: DataSet
+    ) -> DataSet:
         main_author = {
             "name": f"{current_user.profile.surname}, {current_user.profile.name}",
             "affiliation": current_user.profile.affiliation,
@@ -106,15 +120,17 @@ class DataSetService(BaseService):
 
             # Update dataset metadata
             logger.info(f"Updating dsmetadata...: {form.get_dsmetadata()}")
-            dsmetadata = self.dsmetadata_repository.update(id=dataset.ds_meta_data.id,
-                                                           **form.get_dsmetadata())
+            dsmetadata = self.dsmetadata_repository.update(
+                id=dataset.ds_meta_data.id, **form.get_dsmetadata()
+            )
 
             # Update authors
             dsmetadata_info = form.get_dsmetadata()
-            is_anonymous = dsmetadata_info.get('dataset_anonymous', False)
+            is_anonymous = dsmetadata_info.get("dataset_anonymous", False)
 
-            self.author_repository.delete_by_column(column_name="ds_meta_data_id",
-                                                    value=dataset.ds_meta_data.id)
+            self.author_repository.delete_by_column(
+                column_name="ds_meta_data_id", value=dataset.ds_meta_data.id
+            )
 
             if is_anonymous:
                 author_list = form.get_anonymous_authors()
@@ -126,7 +142,9 @@ class DataSetService(BaseService):
                     author_list = [main_author]
 
             for author_data in author_list:
-                author = self.author_repository.create(commit=False, ds_meta_data_id=dsmetadata.id, **author_data)
+                author = self.author_repository.create(
+                    commit=False, ds_meta_data_id=dsmetadata.id, **author_data
+                )
                 dsmetadata.authors.append(author)
 
             #   Save updated data in local
@@ -153,7 +171,7 @@ class DataSetService(BaseService):
             dsmetadata = self.dsmetadata_repository.create(**form.get_dsmetadata())
 
             dsmetadata_info = form.get_dsmetadata()
-            is_anonymous = dsmetadata_info.get('dataset_anonymous', False)
+            is_anonymous = dsmetadata_info.get("dataset_anonymous", False)
 
             if is_anonymous:
                 author_list = form.get_anonymous_authors()
@@ -165,16 +183,24 @@ class DataSetService(BaseService):
                     author_list = [main_author]
 
             for author_data in author_list:
-                author = self.author_repository.create(commit=False, ds_meta_data_id=dsmetadata.id, **author_data)
+                author = self.author_repository.create(
+                    commit=False, ds_meta_data_id=dsmetadata.id, **author_data
+                )
                 dsmetadata.authors.append(author)
 
-            dataset = self.create(commit=False, user_id=current_user.id, ds_meta_data_id=dsmetadata.id)
+            dataset = self.create(
+                commit=False, user_id=current_user.id, ds_meta_data_id=dsmetadata.id
+            )
 
             for feature_model in form.feature_models:
                 uvl_filename = feature_model.uvl_filename.data
-                fmmetadata = self.fmmetadata_repository.create(commit=False, **feature_model.get_fmmetadata())
+                fmmetadata = self.fmmetadata_repository.create(
+                    commit=False, **feature_model.get_fmmetadata()
+                )
                 for author_data in feature_model.get_authors():
-                    author = self.author_repository.create(commit=False, fm_meta_data_id=fmmetadata.id, **author_data)
+                    author = self.author_repository.create(
+                        commit=False, fm_meta_data_id=fmmetadata.id, **author_data
+                    )
                     fmmetadata.authors.append(author)
 
                 fm = self.feature_model_repository.create(
@@ -186,7 +212,11 @@ class DataSetService(BaseService):
                 checksum, size = calculate_checksum_and_size(file_path)
 
                 file = self.hubfilerepository.create(
-                    commit=False, name=uvl_filename, checksum=checksum, size=size, feature_model_id=fm.id
+                    commit=False,
+                    name=uvl_filename,
+                    checksum=checksum,
+                    size=size,
+                    feature_model_id=fm.id,
                 )
                 fm.files.append(file)
             self.repository.session.commit()
@@ -247,8 +277,8 @@ class DataSetService(BaseService):
         return self.dsmetadata_repository.update(id, **kwargs)
 
     def get_uvlhub_doi(self, dataset: DataSet) -> str:
-        domain = os.getenv('DOMAIN', 'localhost')
-        return f'http://{domain}/doi/{dataset.ds_meta_data.dataset_doi}'
+        domain = os.getenv("DOMAIN", "localhost")
+        return f"http://{domain}/doi/{dataset.ds_meta_data.dataset_doi}"
 
     def zip_dataset(self, dataset: DataSet) -> str:
         file_path = f"uploads/user_{dataset.user_id}/dataset_{dataset.id}/"
@@ -284,7 +314,7 @@ class DSDownloadRecordService(BaseService):
     def the_record_exists(self, dataset: DataSet, user_cookie: str):
         return self.repository.the_record_exists(dataset, user_cookie)
 
-    def create_new_record(self, dataset: DataSet,  user_cookie: str) -> DSDownloadRecord:
+    def create_new_record(self, dataset: DataSet, user_cookie: str) -> DSDownloadRecord:
         return self.repository.create_new_record(dataset, user_cookie)
 
     def create_cookie(self, dataset: DataSet) -> str:
@@ -293,7 +323,9 @@ class DSDownloadRecordService(BaseService):
         if not user_cookie:
             user_cookie = str(uuid.uuid4())
 
-        existing_record = self.the_record_exists(dataset=dataset, user_cookie=user_cookie)
+        existing_record = self.the_record_exists(
+            dataset=dataset, user_cookie=user_cookie
+        )
 
         if not existing_record:
             self.create_new_record(dataset=dataset, user_cookie=user_cookie)
@@ -319,7 +351,7 @@ class DSViewRecordService(BaseService):
     def the_record_exists(self, dataset: DataSet, user_cookie: str):
         return self.repository.the_record_exists(dataset, user_cookie)
 
-    def create_new_record(self, dataset: DataSet,  user_cookie: str) -> DSViewRecord:
+    def create_new_record(self, dataset: DataSet, user_cookie: str) -> DSViewRecord:
         return self.repository.create_new_record(dataset, user_cookie)
 
     def create_cookie(self, dataset: DataSet) -> str:
@@ -328,7 +360,9 @@ class DSViewRecordService(BaseService):
         if not user_cookie:
             user_cookie = str(uuid.uuid4())
 
-        existing_record = self.the_record_exists(dataset=dataset, user_cookie=user_cookie)
+        existing_record = self.the_record_exists(
+            dataset=dataset, user_cookie=user_cookie
+        )
 
         if not existing_record:
             self.create_new_record(dataset=dataset, user_cookie=user_cookie)
@@ -348,17 +382,17 @@ class DOIMappingService(BaseService):
             return None
 
 
-class SizeService():
+class SizeService:
 
     def __init__(self):
         pass
 
     def get_human_readable_size(self, size: int) -> str:
         if size < 1024:
-            return f'{size} bytes'
-        elif size < 1024 ** 2:
-            return f'{round(size / 1024, 2)} KB'
-        elif size < 1024 ** 3:
-            return f'{round(size / (1024 ** 2), 2)} MB'
+            return f"{size} bytes"
+        elif size < 1024**2:
+            return f"{round(size / 1024, 2)} KB"
+        elif size < 1024**3:
+            return f"{round(size / (1024 ** 2), 2)} MB"
         else:
-            return f'{round(size / (1024 ** 3), 2)} GB'
+            return f"{round(size / (1024 ** 3), 2)} GB"

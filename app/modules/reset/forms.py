@@ -3,4 +3,4 @@ from wtforms import SubmitField
 
 
 class ResetForm(FlaskForm):
-    submit = SubmitField('Save reset')
+    submit = SubmitField("Save reset")

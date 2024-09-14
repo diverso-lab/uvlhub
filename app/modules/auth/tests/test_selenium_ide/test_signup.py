@@ -5,7 +5,7 @@ from core.environment.host import get_host_for_selenium_testing
 from core.selenium.common import initialize_driver
 
 
-class TestSignup():
+class TestSignup:
     def setup_method(self, method):
         self.driver = initialize_driver()
         self.vars = {}

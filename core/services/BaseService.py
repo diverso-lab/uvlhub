@@ -23,12 +23,14 @@ class BaseService:
     def delete(self, id):
         return self.repository.delete(id)
 
-    def handle_service_response(self, result, errors, success_url_redirect, success_msg, error_template, form):
+    def handle_service_response(
+        self, result, errors, success_url_redirect, success_msg, error_template, form
+    ):
         if result:
-            flash(success_msg, 'success')
+            flash(success_msg, "success")
             return redirect(url_for(success_url_redirect))
         else:
             for error_field, error_messages in errors.items():
                 for error_message in error_messages:
-                    flash(f'{error_field}: {error_message}', 'error')
+                    flash(f"{error_field}: {error_message}", "error")
             return render_template(error_template, form=form)

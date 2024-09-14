@@ -3,4 +3,4 @@ from wtforms import SubmitField
 
 
 class OrcidForm(FlaskForm):
-    submit = SubmitField('Save orcid')
+    submit = SubmitField("Save orcid")

@@ -13,7 +13,7 @@ def test_mail_index():
         host = get_host_for_selenium_testing()
 
         # Open the index page
-        driver.get(f'{host}/mail')
+        driver.get(f"{host}/mail")
 
         # Wait a little while to make sure the page has loaded completely
         time.sleep(4)
@@ -23,7 +23,7 @@ def test_mail_index():
             pass
 
         except NoSuchElementException:
-            raise AssertionError('Test failed!')
+            raise AssertionError("Test failed!")
 
     finally:
 

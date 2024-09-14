@@ -24,7 +24,7 @@ from app.modules.dataset.services import (
     DSMetaDataService,
     DSViewRecordService,
     DataSetService,
-    DOIMappingService
+    DOIMappingService,
 )
 from app.modules.hubfile.services import HubfileService
 from app.modules.zenodo.services import ZenodoService
@@ -55,12 +55,17 @@ def create_dataset():
 
         try:
             logger.info("Creating dataset...")
-            dataset = dataset_service.create_from_form(form=form, current_user=current_user)
+            dataset = dataset_service.create_from_form(
+                form=form, current_user=current_user
+            )
             logger.info(f"Created dataset: {dataset}")
             dataset_service.move_feature_models(dataset)
         except Exception as exc:
             logger.exception(f"Exception while create dataset data in local {exc}")
-            return jsonify({"Exception while create dataset data in local: ": str(exc)}), 400
+            return (
+                jsonify({"Exception while create dataset data in local: ": str(exc)}),
+                400,
+            )
 
         # send dataset as deposition to Zenodo
         data = {}
@@ -77,7 +82,9 @@ def create_dataset():
             deposition_id = data.get("id")
 
             # update dataset with deposition id in Zenodo
-            dataset_service.update_dsmetadata(dataset.ds_meta_data_id, deposition_id=deposition_id)
+            dataset_service.update_dsmetadata(
+                dataset.ds_meta_data_id, deposition_id=deposition_id
+            )
 
             try:
                 # iterate for each feature model (one feature model = one request to Zenodo)
@@ -89,7 +96,9 @@ def create_dataset():
 
                 # update DOI
                 deposition_doi = zenodo_service.get_doi(deposition_id)
-                dataset_service.update_dsmetadata(dataset.ds_meta_data_id, dataset_doi=deposition_doi)
+                dataset_service.update_dsmetadata(
+                    dataset.ds_meta_data_id, dataset_doi=deposition_doi
+                )
             except Exception as e:
                 msg = f"it has not been possible upload feature models in Zenodo and update the DOI: {e}"
                 return jsonify({"message": msg}), 200
@@ -107,7 +116,9 @@ def create_dataset():
     hubfiles = hubfile_service.get_by_ids(hubfiles_ids)
 
     return render_template(
-        "dataset/create_and_edit_dataset.html", form=form, hubfiles=[hub.to_dict() for hub in hubfiles]
+        "dataset/create_and_edit_dataset.html",
+        form=form,
+        hubfiles=[hub.to_dict() for hub in hubfiles],
     )
 
 
@@ -119,10 +130,13 @@ def edit_dataset(dataset_id):
     form = DataSetForm(obj=dataset)
     form = dataset_service.populate_form_from_dataset(form=form, dataset=dataset)
     is_edit = True
-    return render_template("dataset/create_and_edit_dataset.html", form=form,
-                           is_edit=is_edit,
-                           dataset=dataset,
-                           enumerate=enumerate)
+    return render_template(
+        "dataset/create_and_edit_dataset.html",
+        form=form,
+        is_edit=is_edit,
+        dataset=dataset,
+        enumerate=enumerate,
+    )
 
 
 @dataset_bp.route("/dataset/update", methods=["POST"])
@@ -130,7 +144,7 @@ def edit_dataset(dataset_id):
 def update_dataset():
 
     form = DataSetForm()
-    dataset_id = request.form.get('datasetId')
+    dataset_id = request.form.get("datasetId")
     dataset = dataset_service.get_by_id(dataset_id)
 
     if dataset is None:
@@ -147,15 +161,22 @@ def update_dataset():
 
     try:
         logger.info("Updating dataset...")
-        dataset = dataset_service.update_from_form(form=form, current_user=current_user, dataset=dataset)
+        dataset = dataset_service.update_from_form(
+            form=form, current_user=current_user, dataset=dataset
+        )
         logger.info(f"Updating deposition with id {dataset.get_zenodo_deposition()}")
     except Exception as exc:
         logger.exception(f"Exception while saving dataset data in local {exc}")
-        return jsonify({"Exception while saving dataset data in local: ": str(exc)}), 400
+        return (
+            jsonify({"Exception while saving dataset data in local: ": str(exc)}),
+            400,
+        )
 
     try:
-        zenodo_service.update_deposition(deposition_id=dataset.get_zenodo_deposition(),
-                                         metadata=dataset.get_zenodo_metadata())
+        zenodo_service.update_deposition(
+            deposition_id=dataset.get_zenodo_deposition(),
+            metadata=dataset.get_zenodo_metadata(),
+        )
     except Exception as exc:
         logger.exception(f"Exception while update deposition in Zenodo: {exc}")
 
@@ -203,7 +224,7 @@ def subdomain_index(doi):
     new_doi = doi_mapping_service.get_new_doi(doi)
     if new_doi:
         # Redirect to the same path with the new DOI
-        return redirect(url_for('dataset.subdomain_index', doi=new_doi), code=302)
+        return redirect(url_for("dataset.subdomain_index", doi=new_doi), code=302)
 
     # Try to search the dataset by the provided DOI (which should already be the new one)
     ds_meta_data = dsmetadata_service.filter_by_doi(doi)

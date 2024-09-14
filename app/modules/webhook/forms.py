@@ -3,4 +3,4 @@ from wtforms import SubmitField
 
 
 class WebhookForm(FlaskForm):
-    submit = SubmitField('Save webhook')
+    submit = SubmitField("Save webhook")

@@ -12,6 +12,7 @@ def pass_or_abort(condition):
             if not condition(**kwargs):
                 abort(404)
             return f(*args, **kwargs)
+
         return decorated_function
 
     return decorator

@@ -6,9 +6,9 @@ from app.modules.confirmemail.services import ConfirmemailService
 confirmemail_service = ConfirmemailService()
 
 
-@confirmemail_bp.route('/confirmemail', methods=['GET'])
+@confirmemail_bp.route("/confirmemail", methods=["GET"])
 def index():
-    return render_template('confirmemail/index.html')
+    return render_template("confirmemail/index.html")
 
 
 @confirmemail_bp.route("/confirm_user/<token>", methods=["GET"])

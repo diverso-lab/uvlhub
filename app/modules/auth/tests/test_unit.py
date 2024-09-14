@@ -26,7 +26,9 @@ def test_client(test_client):
 
 def test_login_success(test_client):
     response = test_client.post(
-        "/login", data=dict(email="test@example.com", password="test1234"), follow_redirects=True
+        "/login",
+        data=dict(email="test@example.com", password="test1234"),
+        follow_redirects=True,
     )
 
     assert response.request.path != url_for("auth.login"), "Login was unsuccessful"
@@ -36,7 +38,9 @@ def test_login_success(test_client):
 
 def test_login_unsuccessful_bad_email(test_client):
     response = test_client.post(
-        "/login", data=dict(email="bademail@example.com", password="test1234"), follow_redirects=True
+        "/login",
+        data=dict(email="bademail@example.com", password="test1234"),
+        follow_redirects=True,
     )
 
     assert response.request.path == url_for("auth.login"), "Login was unsuccessful"
@@ -46,7 +50,9 @@ def test_login_unsuccessful_bad_email(test_client):
 
 def test_login_unsuccessful_bad_password(test_client):
     response = test_client.post(
-        "/login", data=dict(email="test@example.com", password="basspassword"), follow_redirects=True
+        "/login",
+        data=dict(email="test@example.com", password="basspassword"),
+        follow_redirects=True,
     )
 
     assert response.request.path == url_for("auth.login"), "Login was unsuccessful"
@@ -56,28 +62,50 @@ def test_login_unsuccessful_bad_password(test_client):
 
 def test_signup_user_no_name(test_client):
     response = test_client.post(
-        "/signup", data=dict(surname="Foo", email="test@example.com", password="test1234"), follow_redirects=True
+        "/signup",
+        data=dict(surname="Foo", email="test@example.com", password="test1234"),
+        follow_redirects=True,
     )
-    assert response.request.path == url_for("auth.show_signup_form"), "Signup was unsuccessful"
+    assert response.request.path == url_for(
+        "auth.show_signup_form"
+    ), "Signup was unsuccessful"
     assert b"This field is required" in response.data, response.data
 
 
-@patch('app.modules.captcha.services.CaptchaService.validate_captcha', return_value=True)
+@patch(
+    "app.modules.captcha.services.CaptchaService.validate_captcha", return_value=True
+)
 def test_signup_user_unsuccessful(mock_captcha, test_client):
     email = "test@example.com"
     response = test_client.post(
         "/signup/",
-        data=dict(name="Test", surname="Foo", email=email, password="test1234", captcha="dummy_captcha"),
-        follow_redirects=True
+        data=dict(
+            name="Test",
+            surname="Foo",
+            email=email,
+            password="test1234",
+            captcha="dummy_captcha",
+        ),
+        follow_redirects=True,
     )
-    assert response.request.path == url_for("auth.show_signup_form"), "Signup was unsuccessful"
+    assert response.request.path == url_for(
+        "auth.show_signup_form"
+    ), "Signup was unsuccessful"
 
 
-@patch('app.modules.captcha.services.CaptchaService.validate_captcha', return_value=True)
+@patch(
+    "app.modules.captcha.services.CaptchaService.validate_captcha", return_value=True
+)
 def test_signup_user_successful(mock_captcha, test_client):
     response = test_client.post(
         "/signup/",
-        data=dict(name="Foo", surname="Example", email="foo@example.com", password="foo1234", captcha="dummy_captcha"),
+        data=dict(
+            name="Foo",
+            surname="Example",
+            email="foo@example.com",
+            password="foo1234",
+            captcha="dummy_captcha",
+        ),
         follow_redirects=True,
     )
     assert response.request.path == url_for("public.index"), "Signup was unsuccessful"
@@ -88,7 +116,7 @@ def test_service_create_with_profie_success(clean_database):
         "name": "Test",
         "surname": "Foo",
         "email": "service_test@example.com",
-        "password": "test1234"
+        "password": "test1234",
     }
 
     AuthenticationService().create_with_profile(**data)
@@ -98,12 +126,7 @@ def test_service_create_with_profie_success(clean_database):
 
 
 def test_service_create_with_profile_fail_no_email(clean_database):
-    data = {
-        "name": "Test",
-        "surname": "Foo",
-        "email": "",
-        "password": "1234"
-    }
+    data = {"name": "Test", "surname": "Foo", "email": "", "password": "1234"}
 
     with pytest.raises(ValueError, match="Email is required."):
         AuthenticationService().create_with_profile(**data)
@@ -117,7 +140,7 @@ def test_service_create_with_profile_fail_no_password(clean_database):
         "name": "Test",
         "surname": "Foo",
         "email": "test@example.com",
-        "password": ""
+        "password": "",
     }
 
     with pytest.raises(ValueError, match="Password is required."):
@@ -127,14 +150,16 @@ def test_service_create_with_profile_fail_no_password(clean_database):
     assert UserProfileRepository().count() == 0
 
 
-@patch('app.modules.captcha.services.CaptchaService.validate_captcha', return_value=True)
+@patch(
+    "app.modules.captcha.services.CaptchaService.validate_captcha", return_value=True
+)
 def test_signup_send_confirmation_email(mock_captcha, test_client, clean_database):
     data = {
         "name": "Test",
         "surname": "Foo",
         "email": "test_confirmation@example.com",
         "password": "test1234",
-        "captcha": "dummy_captcha"
+        "captcha": "dummy_captcha",
     }
 
     with mail_service.mail.record_messages() as outbox:
@@ -147,7 +172,7 @@ def test_create_with_profile_create_inactive_user(test_client, clean_database):
         "name": "Test",
         "surname": "Foo",
         "email": "user@example.com",
-        "password": "test1234"
+        "password": "test1234",
     }
     user = AuthenticationService().create_with_profile(**data)
     assert UserRepository().count() == 1
@@ -158,10 +183,14 @@ def test_create_with_profile_create_inactive_user(test_client, clean_database):
 def test_confirm_user_token_expired(test_client):
     email = "expired@example.com"
 
-    with patch("time.time", return_value=time.time() - (ConfirmemailService().CONFIRM_EMAIL_TOKEN_MAX_AGE + 1)):
+    with patch(
+        "time.time",
+        return_value=time.time()
+        - (ConfirmemailService().CONFIRM_EMAIL_TOKEN_MAX_AGE + 1),
+    ):
         token = ConfirmemailService().get_token_from_email(email)
 
-    url = url_for('confirmemail.confirm_user', token=token, _external=False)
+    url = url_for("confirmemail.confirm_user", token=token, _external=False)
     response = test_client.get(url, follow_redirects=True)
     assert response.request.path == url_for("auth.show_signup_form", _external=False)
 
@@ -173,7 +202,7 @@ def test_confirm_user_token_tempered(test_client):
     token = ConfirmemailService().get_token_from_email(email)
 
     AuthenticationService.SALT = "user-confirm"
-    url = url_for('confirmemail.confirm_user', token=token, _external=False)
+    url = url_for("confirmemail.confirm_user", token=token, _external=False)
     response = test_client.get(url, follow_redirects=True)
     assert response.request.path == url_for("auth.show_signup_form", _external=False)
 
@@ -183,14 +212,14 @@ def test_confirm_user_active_user(test_client):
         "name": "Test",
         "surname": "Foo",
         "email": "user@example.com",
-        "password": "test1234"
+        "password": "test1234",
     }
     user = AuthenticationService().create_with_profile(**data)
     assert user.active is False
 
     token = ConfirmemailService().get_token_from_email(user.email)
 
-    url = url_for('confirmemail.confirm_user', token=token, _external=False)
+    url = url_for("confirmemail.confirm_user", token=token, _external=False)
     response = test_client.get(url, follow_redirects=True)
     assert response.request.path == url_for("public.index", _external=False)
 

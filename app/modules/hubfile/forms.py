@@ -3,4 +3,4 @@ from wtforms import SubmitField
 
 
 class HubfileForm(FlaskForm):
-    submit = SubmitField('Save hubfile')
+    submit = SubmitField("Save hubfile")

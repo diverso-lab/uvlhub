@@ -15,7 +15,7 @@ class ResetService(BaseService):
         super().__init__(ResetRepository())
 
     def get_serializer(self):
-        return URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
+        return URLSafeTimedSerializer(current_app.config["SECRET_KEY"])
 
     def send_reset_password_mail(self, email: str) -> str:
 
@@ -24,10 +24,10 @@ class ResetService(BaseService):
         user = User.query.filter_by(email=email).first()
         if user:
             s = self.get_serializer()
-            token = s.dumps(email, salt='email-confirm')
-            link = url_for('reset.reset_password', token=token, _external=True)
-            body = f'Your link to reset your password is {link}'
-            mail_service.send_email('Password Reset Request', [email], body)
+            token = s.dumps(email, salt="email-confirm")
+            link = url_for("reset.reset_password", token=token, _external=True)
+            body = f"Your link to reset your password is {link}"
+            mail_service.send_email("Password Reset Request", [email], body)
 
         return token
 
@@ -39,13 +39,13 @@ class ResetService(BaseService):
 
     def get_email_by_token(self, token: str) -> str:
         s = self.get_serializer()
-        email = s.loads(token, salt='email-confirm', max_age=3600)
+        email = s.loads(token, salt="email-confirm", max_age=3600)
         return email
 
     def check_valid_token(self, token: str):
         s = self.get_serializer()
         try:
-            s.loads(token, salt='email-confirm', max_age=3600)
+            s.loads(token, salt="email-confirm", max_age=3600)
         except SignatureExpired:
             abort(404)
         except BadTimeSignature:

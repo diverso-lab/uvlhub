@@ -3,4 +3,4 @@ from wtforms import SubmitField
 
 
 class ExploreForm(FlaskForm):
-    submit = SubmitField('Submit')
+    submit = SubmitField("Submit")

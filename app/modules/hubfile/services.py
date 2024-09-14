@@ -8,7 +8,7 @@ from app.modules.hubfile.models import Hubfile
 from app.modules.hubfile.repositories import (
     HubfileDownloadRecordRepository,
     HubfileRepository,
-    HubfileViewRecordRepository
+    HubfileViewRecordRepository,
 )
 from core.services.BaseService import BaseService
 
@@ -29,13 +29,15 @@ class HubfileService(BaseService):
 
         hubfile_user = self.get_owner_user_by_hubfile(hubfile)
         hubfile_dataset = self.get_dataset_by_hubfile(hubfile)
-        working_dir = os.getenv('WORKING_DIR')
+        working_dir = os.getenv("WORKING_DIR")
 
-        path = os.path.join(working_dir,
-                            'uploads',
-                            f'user_{hubfile_user.id}',
-                            f'dataset_{hubfile_dataset.id}',
-                            hubfile.name)
+        path = os.path.join(
+            working_dir,
+            "uploads",
+            f"user_{hubfile_user.id}",
+            f"dataset_{hubfile_dataset.id}",
+            hubfile.name,
+        )
 
         return path
 
@@ -57,7 +59,7 @@ class HubfileDownloadRecordService(BaseService):
     def the_record_exists(self, hubfile: Hubfile, user_cookie: str):
         return self.repository.the_record_exists(hubfile, user_cookie)
 
-    def create_new_record(self, hubfile: Hubfile,  user_cookie: str) -> Hubfile:
+    def create_new_record(self, hubfile: Hubfile, user_cookie: str) -> Hubfile:
         return self.repository.create_new_record(hubfile, user_cookie)
 
     def create_cookie(self, hubfile: Hubfile):
@@ -66,7 +68,9 @@ class HubfileDownloadRecordService(BaseService):
         if not user_cookie:
             user_cookie = str(uuid.uuid4())
 
-        existing_record = self.the_record_exists(hubfile=hubfile, user_cookie=user_cookie)
+        existing_record = self.the_record_exists(
+            hubfile=hubfile, user_cookie=user_cookie
+        )
 
         if not existing_record:
             self.create_new_record(hubfile=hubfile, user_cookie=user_cookie)

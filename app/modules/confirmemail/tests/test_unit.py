@@ -1,7 +1,7 @@
 import pytest
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def test_client(test_client):
     """
     Extends the test_client fixture to add additional specific data for module testing.
@@ -21,4 +21,6 @@ def test_sample_assertion(test_client):
     confirm that the tests in this module can be executed.
     """
     greeting = "Hello, World!"
-    assert greeting == "Hello, World!", "The greeting does not coincide with 'Hello, World!'"
+    assert (
+        greeting == "Hello, World!"
+    ), "The greeting does not coincide with 'Hello, World!'"

@@ -25,7 +25,7 @@ def download_build_dataset():
 
     # Create Zip
     memory_file = BytesIO()
-    with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zf:
+    with zipfile.ZipFile(memory_file, "w", zipfile.ZIP_DEFLATED) as zf:
         for hubfile in hubfiles:
             file_path = hubfile.get_full_path()
             if os.path.exists(file_path):
@@ -38,7 +38,7 @@ def download_build_dataset():
     # Send Zip to user
     return send_file(
         memory_file,
-        mimetype='application/zip',
+        mimetype="application/zip",
         as_attachment=True,
-        download_name='my_dataset.zip',
+        download_name="my_dataset.zip",
     )

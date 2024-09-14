@@ -1,4 +1,3 @@
-
 from sqlalchemy import func
 from app.modules.featuremodel.models import FMMetaData, FeatureModel
 from core.repositories.BaseRepository import BaseRepository

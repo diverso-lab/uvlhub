@@ -3,4 +3,4 @@ from wtforms import SubmitField
 
 
 class CaptchaForm(FlaskForm):
-    submit = SubmitField('Save recaptcha')
+    submit = SubmitField("Save recaptcha")

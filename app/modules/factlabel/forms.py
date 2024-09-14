@@ -3,4 +3,4 @@ from wtforms import SubmitField
 
 
 class FactlabelForm(FlaskForm):
-    submit = SubmitField('Save factlabel')
+    submit = SubmitField("Save factlabel")

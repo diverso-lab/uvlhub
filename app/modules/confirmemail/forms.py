@@ -3,4 +3,4 @@ from wtforms import SubmitField
 
 
 class ConfirmemailForm(FlaskForm):
-    submit = SubmitField('Save confirmemail')
+    submit = SubmitField("Save confirmemail")

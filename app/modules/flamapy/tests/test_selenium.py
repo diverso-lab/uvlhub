@@ -13,7 +13,7 @@ def test_flamapy_index():
         host = get_host_for_selenium_testing()
 
         # Open the index page
-        driver.get(f'{host}/flamapy')
+        driver.get(f"{host}/flamapy")
 
         # Wait a little while to make sure the page has loaded completely
         time.sleep(4)
@@ -23,7 +23,7 @@ def test_flamapy_index():
             pass
 
         except NoSuchElementException:
-            raise AssertionError('Test failed!')
+            raise AssertionError("Test failed!")
 
     finally:
 
