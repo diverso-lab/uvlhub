@@ -4,6 +4,8 @@ from flask import send_file, jsonify
 from app.modules.flamapy import flamapy_bp
 from flamapy.metamodels.fm_metamodel.transformations import UVLReader, GlencoeWriter, SPLOTWriter
 from flamapy.metamodels.pysat_metamodel.transformations import FmToPysat, DimacsWriter
+from flamapy.interfaces.python.flamapy_feature_model import FLAMAFeatureModel
+from flamapy.core.exceptions import FlamaException
 import tempfile
 import os
 
@@ -52,19 +54,25 @@ def check_uvl(file_id):
         parser.removeErrorListeners()
         parser.addErrorListener(error_listener)
 
+        # Optional: Commented out for now
         # tree = parser.featureModel()
 
         if error_listener.errors:
             return jsonify({"errors": error_listener.errors}), 400
 
-        # Optional: Print the parse tree
-        # print(tree.toStringTree(recog=parser))
+        # After parsing, try transforming the model
+        try:
+            # Assuming some logic here like loading and validating the model
+            # This part should contain your logic for using the Flamapy transformation
+            model = FLAMAFeatureModel(hubfile.get_path())  # Example usage
+            # You can optionally print or process the model here
+            return jsonify({"message": "Valid Model"}), 200
 
-        return jsonify({"message": "Valid Model"}), 200
+        except FlamaException as fe:
+            return jsonify({"error": f"Model transformation failed: {str(fe)}"}), 400
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 @flamapy_bp.route('/flamapy/valid/<int:file_id>', methods=['GET'])
 def valid(file_id):
