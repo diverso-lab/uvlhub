@@ -64,7 +64,7 @@ def check_uvl(file_id):
         try:
             # Assuming some logic here like loading and validating the model
             # This part should contain your logic for using the Flamapy transformation
-            model = FLAMAFeatureModel(hubfile.get_path())  # Example usage
+            FLAMAFeatureModel(hubfile.get_path())  # Example usage
             # You can optionally print or process the model here
             return jsonify({"message": "Valid Model"}), 200
 
@@ -73,6 +73,7 @@ def check_uvl(file_id):
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 @flamapy_bp.route('/flamapy/valid/<int:file_id>', methods=['GET'])
 def valid(file_id):
