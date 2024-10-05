@@ -1,7 +1,10 @@
 import os
 from datetime import datetime, timezone
 
+from sqlalchemy import event
+
 from app import db
+from app import event_service
 from app.modules.auth.models import User
 from app.modules.dataset.models import DataSet
 
@@ -95,3 +98,14 @@ class HubfileDownloadRecord(db.Model):
             f'date={self.download_date} '
             f'cookie={self.download_cookie}>'
         )
+
+
+@event.listens_for(Hubfile, "after_insert")
+def hubfile_aupdated_listener(mapper, connection, target):
+    event_service.publish(
+        "events",
+        "hubfile_created",
+        {
+            "path": target.get_full_path(),
+        },
+    )
