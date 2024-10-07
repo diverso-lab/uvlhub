@@ -23,7 +23,7 @@ if [ ! -d "migrations/versions" ]; then
 fi
 
 # Check if the database is empty
-if [ $(mariadb -u $MARIADB_USER -p$MARIADB_PASSWORD -h $MARIADB_HOSTNAME -D $MARIADB_DATABASE -sse "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '$MARIADB_DATABASE';") -eq 0 ]; then
+if [ $(mariadb -u $MARIADB_USER -p$MARIADB_PASSWORD -h $MARIADB_HOSTNAME -P $MARIADB_PORT -D $MARIADB_DATABASE -sse "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '$MARIADB_DATABASE';") -eq 0 ]; then
  
     echo "Empty database, migrating..."
 
@@ -40,7 +40,7 @@ else
     echo "Database already initialized, updating migrations..."
 
     # Get the current revision to avoid duplicate stamp
-    CURRENT_REVISION=$(mariadb -u $MARIADB_USER -p$MARIADB_PASSWORD -h $MARIADB_HOSTNAME -D $MARIADB_DATABASE -sse "SELECT version_num FROM alembic_version LIMIT 1;")
+    CURRENT_REVISION=$(mariadb -u $MARIADB_USER -p$MARIADB_PASSWORD -h $MARIADB_HOSTNAME -P $MARIADB_PORT -D $MARIADB_DATABASE -sse "SELECT version_num FROM alembic_version LIMIT 1;")
     
     if [ -z "$CURRENT_REVISION" ]; then
         # If no current revision, stamp with the latest revision

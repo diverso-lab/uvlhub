@@ -30,7 +30,7 @@ RUN find . -type d -name "__pycache__" -exec rm -r {} + && \
     find . -type f -name "*.pyc" -exec rm -f {} +
 
 # Copy the wait-for-db.sh script and set execution permissions
-COPY --chmod=+x scripts/wait-for-db.sh ./scripts/
+COPY --chmod=0755 scripts/wait-for-db.sh ./scripts/
 
 # Update pip
 RUN pip install --no-cache-dir --upgrade pip
