@@ -18,7 +18,7 @@ class EventService:
         event = {
             "event_type": event_type,
             "event_data": event_data,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(datetime.timezone.utc).isoformat(),
         }
         self.redis.publish(channel, json.dumps(event))
 

@@ -17,6 +17,8 @@ class Hubfile(db.Model):
     size = db.Column(db.Integer, nullable=False)
     feature_model_id = db.Column(db.Integer, db.ForeignKey('feature_model.id'), nullable=False)
 
+    feature_model = db.relationship('FeatureModel', back_populates='hubfiles')
+
     def get_formatted_size(self):
         from app.modules.dataset.services import SizeService
         return SizeService().get_human_readable_size(self.size)
@@ -29,7 +31,7 @@ class Hubfile(db.Model):
         from app.modules.hubfile.services import HubfileService
         return HubfileService().get_dataset_by_hubfile(self)
 
-    def get_path(self) -> DataSet:
+    def get_path(self) -> str:
         from app.modules.hubfile.services import HubfileService
         return HubfileService().get_path_by_hubfile(self)
 
