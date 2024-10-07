@@ -2,6 +2,7 @@ import os
 from datetime import datetime, timezone
 
 from sqlalchemy import event
+from sqlalchemy.orm import joinedload, object_session
 
 from app import db
 from app import event_service
@@ -70,44 +71,48 @@ class Hubfile(db.Model):
         )
 
     def __repr__(self):
-        return f'File<{self.id}>'
+        return f"File<{self.id}>"
 
 
 class HubfileViewRecord(db.Model):
-    __tablename__ = 'file_view_record'
+    __tablename__ = "file_view_record"
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
-    file_id = db.Column(db.Integer, db.ForeignKey('file.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
+    file_id = db.Column(db.Integer, db.ForeignKey("file.id"), nullable=False)
     view_date = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     view_cookie = db.Column(db.String(36))
 
     def __repr__(self):
-        return '<FileViewRecord {}>'.format(self.id)
+        return "<FileViewRecord {}>".format(self.id)
 
 
 class HubfileDownloadRecord(db.Model):
-    __tablename__ = 'file_download_record'
+    __tablename__ = "file_download_record"
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
-    file_id = db.Column(db.Integer, db.ForeignKey('file.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
+    file_id = db.Column(db.Integer, db.ForeignKey("file.id"))
     download_date = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
     download_cookie = db.Column(db.String(36), nullable=False)
 
     def __repr__(self):
         return (
-            f'<FileDownload id={self.id} '
-            f'file_id={self.file_id} '
-            f'date={self.download_date} '
-            f'cookie={self.download_cookie}>'
+            f"<FileDownload id={self.id} "
+            f"file_id={self.file_id} "
+            f"date={self.download_date} "
+            f"cookie={self.download_cookie}>"
         )
 
 
 @event.listens_for(Hubfile, "after_insert")
 def hubfile_aupdated_listener(mapper, connection, target):
+    session = object_session(target)
+    hubfile_with_fm = (
+        session.query(Hubfile).options(joinedload(Hubfile.feature_model)).filter(Hubfile.id == target.id).first()
+    )
     event_service.publish(
         "events",
         "hubfile_created",
         {
-            "path": target.get_full_path(),
+            "path": hubfile_with_fm.get_full_path(),
         },
     )
