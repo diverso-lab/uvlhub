@@ -7,9 +7,9 @@ from sqlalchemy import event
 from sqlalchemy.orm import joinedload, object_session
 
 from app import db
-from app import event_service
 from app.modules.auth.models import User
 from app.modules.dataset.models import DataSet
+from app.modules.event.services import EventService
 
 logger = logging.getLogger(__name__)
 
@@ -110,13 +110,19 @@ class HubfileDownloadRecord(db.Model):
 @event.listens_for(Hubfile, "after_insert")
 def hubfile_aupdated_listener(mapper, connection, target):
     session = object_session(target)
-    hubfile_with_fm = (
-        session.query(Hubfile).options(joinedload(Hubfile.feature_model)).filter(Hubfile.id == target.id).first()
-    )
+    
+    # Aquí solo extraemos el 'path' necesario, sin pasar el objeto completo
+    hubfile_with_fm = session.query(Hubfile).options(joinedload(Hubfile.feature_model)).filter(Hubfile.id == target.id).first()
+
+    # Pasar solo el atributo necesario
+    path = hubfile_with_fm.get_full_path()
+
+    # Llamada a publish con datos serializables
+    event_service = EventService()
     event_service.publish(
-        "events",
         "hubfile_created",
         {
-            "path": hubfile_with_fm.get_full_path(),
+            "path": path  # Pasamos solo el 'path' serializable
         },
     )
+

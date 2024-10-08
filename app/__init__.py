@@ -64,7 +64,7 @@ def create_app(config_name='development'):
     error_handler_manager.register_error_handlers()
 
     mail_service.init_app(app)
-    event_service.init_app(app)
+    # event_service.init_app(app)
 
     # Injecting environment variables into jinja context
     @app.context_processor
