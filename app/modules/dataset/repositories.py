@@ -1,8 +1,9 @@
-from datetime import datetime, timezone
+from datetime import datetime
 import logging
 from flask_login import current_user
 from typing import Optional
 
+import pytz
 from sqlalchemy import desc, func
 
 from app.modules.dataset.models import (
@@ -42,7 +43,7 @@ class DSDownloadRecordRepository(BaseRepository):
         return self.create(
                 user_id=current_user.id if current_user.is_authenticated else None,
                 dataset_id=dataset.id,
-                download_date=datetime.now(timezone.utc),
+                download_date=datetime.now(pytz.utc),
                 download_cookie=user_cookie,
             )
 
@@ -74,7 +75,7 @@ class DSViewRecordRepository(BaseRepository):
         return self.create(
                 user_id=current_user.id if current_user.is_authenticated else None,
                 dataset_id=dataset.id,
-                view_date=datetime.now(timezone.utc),
+                view_date=datetime.now(pytz.utc),
                 view_cookie=user_cookie,
             )
 

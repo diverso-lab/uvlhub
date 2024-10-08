@@ -1,6 +1,7 @@
-from datetime import datetime, timezone
+from datetime import datetime
 from flask import abort, current_app, url_for
 from itsdangerous import BadTimeSignature, SignatureExpired, URLSafeTimedSerializer
+import pytz
 from app.modules.auth.models import User
 from app.modules.reset.models import ResetToken
 from app.modules.reset.repositories import ResetRepository
@@ -63,6 +64,6 @@ class ResetService(BaseService):
 
     def mark_token_as_used(self, token: str):
         reset_token = ResetToken.query.filter_by(token=token).first()
-        reset_token.used_at = datetime.now(timezone.utc)
+        reset_token.used_at = datetime.now(pytz.utc)
         db.session.add(reset_token)
         db.session.commit()

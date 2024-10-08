@@ -188,7 +188,7 @@ class DataSetService(BaseService):
                 file = self.hubfilerepository.create(
                     commit=False, name=uvl_filename, checksum=checksum, size=size, feature_model_id=fm.id
                 )
-                fm.files.append(file)
+                fm.hubfiles.append(file)
             self.repository.session.commit()
         except Exception as exc:
             logger.info(f"Exception creating dataset from form...: {exc}")

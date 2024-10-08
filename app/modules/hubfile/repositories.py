@@ -1,5 +1,6 @@
-from datetime import datetime, timezone
+from datetime import datetime
 from flask_login import current_user
+import pytz
 from sqlalchemy import func
 from app.modules.auth.models import User
 from app.modules.dataset.models import DataSet
@@ -58,6 +59,6 @@ class HubfileDownloadRecordRepository(BaseRepository):
         return self.create(
                 user_id=current_user.id if current_user.is_authenticated else None,
                 file_id=hubfile.id,
-                download_date=datetime.now(timezone.utc),
+                download_date=datetime.now(pytz.utc),
                 download_cookie=user_cookie,
             )

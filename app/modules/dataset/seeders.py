@@ -10,7 +10,6 @@ from app.modules.dataset.models import (
     PublicationType,
     DSMetrics,
     Author)
-from datetime import datetime, timezone
 from dotenv import load_dotenv
 
 
@@ -60,8 +59,7 @@ class DataSetSeeder(BaseSeeder):
         datasets = [
             DataSet(
                 user_id=user1.id if i % 2 == 0 else user2.id,
-                ds_meta_data_id=seeded_ds_meta_data[i].id,
-                created_at=datetime.now(timezone.utc)
+                ds_meta_data_id=seeded_ds_meta_data[i].id
             ) for i in range(4)
         ]
         seeded_datasets = self.seed(datasets)
@@ -121,4 +119,5 @@ class DataSetSeeder(BaseSeeder):
                 size=os.path.getsize(file_path),
                 feature_model_id=feature_model.id
             )
+
             self.seed([uvl_file])

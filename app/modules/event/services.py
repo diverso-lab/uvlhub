@@ -1,6 +1,7 @@
 import json
 from datetime import datetime
 
+import pytz
 import redis
 
 from flamapy.metamodels.fm_metamodel.transformations import UVLReader, GlencoeWriter, SPLOTWriter
@@ -18,7 +19,7 @@ class EventService:
         event = {
             "event_type": event_type,
             "event_data": event_data,
-            "timestamp": datetime.now(datetime.timezone.utc).isoformat(),
+            "timestamp": datetime.now(pytz.utc).isoformat(),
         }
         self.redis.publish(channel, json.dumps(event))
 

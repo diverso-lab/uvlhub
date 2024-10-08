@@ -5,7 +5,6 @@ from itsdangerous import BadTimeSignature, SignatureExpired, URLSafeTimedSeriali
 from dotenv import load_dotenv
 
 from app import mail_service
-from app.modules.confirmemail.repositories import ConfirmemailRepository
 from core.services.BaseService import BaseService
 
 
@@ -17,7 +16,6 @@ authentication_service = AuthenticationService()
 
 class ConfirmemailService(BaseService):
     def __init__(self):
-        super().__init__(ConfirmemailRepository())
         self.CONFIRM_EMAIL_SALT = os.getenv('CONFIRM_EMAIL_SALT', 'sample_salt')
         self.CONFIRM_EMAIL_TOKEN_MAX_AGE = os.getenv('CONFIRM_EMAIL_TOKEN_MAX_AGE', 3600)
 

@@ -1,3 +1,4 @@
+import os
 from unittest.mock import patch
 
 from app.modules.featuremodel.repositories import FeatureModelRepository
@@ -6,6 +7,7 @@ from app.modules.dataset.repositories import DataSetRepository
 from app.modules.dataset.repositories import DSMetaDataRepository
 from app.modules.dataset.models import PublicationType
 from app.modules.auth.repositories import UserRepository
+from dotenv import load_dotenv
 
 
 def test_create_hubfile_call_publish_event(test_client):
@@ -24,8 +26,17 @@ def test_create_hubfile_call_publish_event(test_client):
             size=1234,
             feature_model_id=fm.id,
         )
+
+        load_dotenv()
+        working_dir = os.getenv('WORKING_DIR', '')
+
+        path = os.path.join(
+            working_dir,
+            f"uploads/user_{user.id}/dataset_{dataset.id}/test.uvl"
+        )
+
         mock_publish.assert_called_once_with(
             "events",
             "hubfile_created",
-            {"path": f"uploads/user_{user.id}/dataset_{dataset.id}/test.uvl"},
+            {"path": path},
         )

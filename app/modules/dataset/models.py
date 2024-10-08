@@ -1,4 +1,5 @@
-from datetime import datetime, timezone
+from datetime import datetime
+import pytz
 from enum import Enum
 from typing import List
 
@@ -76,7 +77,7 @@ class DataSet(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
     ds_meta_data_id = db.Column(db.Integer, db.ForeignKey('ds_meta_data.id'), nullable=False)
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc))
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.utc))
 
     ds_meta_data = db.relationship('DSMetaData', backref=db.backref('data_set', uselist=False))
     feature_models = db.relationship('FeatureModel', backref='data_set', lazy=True, cascade="all, delete")
@@ -88,7 +89,7 @@ class DataSet(db.Model):
         return self.ds_meta_data.description
 
     def files(self) -> List[any]:
-        return [file for fm in self.feature_models for file in fm.files]
+        return [file for fm in self.feature_models for file in fm.hubfiles]
 
     def get_cleaned_publication_type(self) -> str:
         return self.ds_meta_data.publication_type.name.replace('_', ' ').title()
@@ -97,10 +98,10 @@ class DataSet(db.Model):
         return f'https://zenodo.org/record/{self.ds_meta_data.deposition_id}' if self.ds_meta_data.dataset_doi else None
 
     def get_files_count(self) -> int:
-        return sum(len(fm.files) for fm in self.feature_models)
+        return sum(len(fm.hubfiles) for fm in self.feature_models)
 
     def get_file_total_size(self) -> int:
-        return sum(file.size for fm in self.feature_models for file in fm.files)
+        return sum(file.size for fm in self.feature_models for file in fm.hubfiles)
 
     def get_file_total_size_for_human(self) -> str:
         from app.modules.dataset.services import SizeService
@@ -120,7 +121,7 @@ class DataSet(db.Model):
         return {
             'title': self.ds_meta_data.title,
             'id': self.id,
-            'created_at': self.created_at,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
             'created_at_timestamp': int(self.created_at.timestamp()),
             'description': self.ds_meta_data.description,
             'authors': [author.to_dict() for author in self.ds_meta_data.authors],
@@ -131,7 +132,7 @@ class DataSet(db.Model):
             'url': self.get_uvlhub_doi(),
             'download': f'{request.host_url.rstrip("/")}/dataset/download/{self.id}',
             'zenodo': self.get_zenodo_url(),
-            'files': [file.to_dict() for fm in self.feature_models for file in fm.files],
+            'files': [file.to_dict() for fm in self.feature_models for file in fm.hubfiles],
             'files_count': self.get_files_count(),
             'total_size_in_bytes': self.get_file_total_size(),
             'total_size_in_human_format': self.get_file_total_size_for_human(),
@@ -163,7 +164,7 @@ class DSDownloadRecord(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     dataset_id = db.Column(db.Integer, db.ForeignKey('data_set.id'))
-    download_date = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc))
+    download_date = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.utc))
     download_cookie = db.Column(db.String(36), nullable=False)
 
     def __repr__(self):
@@ -179,7 +180,7 @@ class DSViewRecord(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     dataset_id = db.Column(db.Integer, db.ForeignKey('data_set.id'))
-    view_date = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc))
+    view_date = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.utc))
     view_cookie = db.Column(db.String(36), nullable=False)
 
     def __repr__(self):
