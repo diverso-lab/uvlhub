@@ -10,8 +10,10 @@ from app import db
 from app.modules.auth.models import User
 from app.modules.dataset.models import DataSet
 from core.managers.task_queue_manager import TaskQueueManager
+from dotenv import load_dotenv
 
 logger = logging.getLogger(__name__)
+load_dotenv()
 
 
 class Hubfile(db.Model):
