@@ -1,16 +1,10 @@
-import json
 from datetime import datetime
 import logging
 import pytz
 import redis
 from rq import Queue
 
-from flamapy.metamodels.fm_metamodel.transformations import UVLReader, GlencoeWriter, SPLOTWriter
-from flamapy.metamodels.pysat_metamodel.transformations import FmToPysat, DimacsWriter
-
 logger = logging.getLogger(__name__)
-
-# Definimos la función a nivel global en este archivo
 
 
 class EventService:

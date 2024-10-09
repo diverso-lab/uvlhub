@@ -110,7 +110,7 @@ class HubfileDownloadRecord(db.Model):
 @event.listens_for(Hubfile, "after_insert")
 def hubfile_aupdated_listener(mapper, connection, target):
     session = object_session(target)
-    
+
     # Aquí solo extraemos el 'path' necesario, sin pasar el objeto completo
     hubfile_with_fm = session.query(Hubfile).options(joinedload(Hubfile.feature_model)).filter(Hubfile.id == target.id).first()
 
@@ -125,4 +125,3 @@ def hubfile_aupdated_listener(mapper, connection, target):
             "path": path  # Pasamos solo el 'path' serializable
         },
     )
-
