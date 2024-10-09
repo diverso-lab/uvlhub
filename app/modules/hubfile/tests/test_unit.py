@@ -10,8 +10,8 @@ from app.modules.auth.repositories import UserRepository
 from dotenv import load_dotenv
 
 
-def test_create_hubfile_call_publish_event(test_client):
-    with patch("app.modules.event.services.EventService.publish") as mock_publish:
+def test_create_hubfile_calls_enqueue_task(test_client):
+    with patch("core.managers.task_queue_manager.TaskQueueManager.enqueue_task") as mock_enqueue_task:
         user = UserRepository().create(password="foo")
         dsmetadata = DSMetaDataRepository().create(
             title="test",
@@ -35,8 +35,8 @@ def test_create_hubfile_call_publish_event(test_client):
             f"uploads/user_{user.id}/dataset_{dataset.id}/test.uvl"
         )
 
-        mock_publish.assert_called_once_with(
-            "events",
-            "hubfile_created",
-            {"path": path},
+        # Verificar que enqueue_task fue llamado correctamente
+        mock_enqueue_task.assert_called_once_with(
+            "app.modules.hubfile.tasks.transform_uvl",  # Nombre de la tarea
+            path=path  # Parámetro que recibe la tarea
         )

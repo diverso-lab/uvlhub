@@ -8,7 +8,6 @@ from flask_migrate import Migrate
 from flask_session import Session
 
 from app.modules.mail.services import MailService
-from app.modules.event.services import EventService
 from core.configuration.configuration import get_app_version
 from core.managers.module_manager import ModuleManager
 from core.managers.config_manager import ConfigManager
@@ -23,7 +22,6 @@ db = SQLAlchemy()
 migrate = Migrate()
 mail_service = MailService()
 sess = Session()
-event_service = EventService()
 
 
 def create_app(config_name='development'):
@@ -64,7 +62,6 @@ def create_app(config_name='development'):
     error_handler_manager.register_error_handlers()
 
     mail_service.init_app(app)
-    # event_service.init_app(app)
 
     # Injecting environment variables into jinja context
     @app.context_processor
