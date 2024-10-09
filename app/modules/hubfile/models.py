@@ -10,6 +10,7 @@ from app import db
 from app.modules.auth.models import User
 from app.modules.dataset.models import DataSet
 from app.modules.event.services import EventService
+from core.managers.task_queue_manager import TaskQueueManager
 
 logger = logging.getLogger(__name__)
 
@@ -117,6 +118,7 @@ def hubfile_aupdated_listener(mapper, connection, target):
     # Pasar solo el atributo necesario
     path = hubfile_with_fm.get_full_path()
 
+    '''
     # Llamada a publish con datos serializables
     event_service = EventService()
     event_service.publish(
@@ -124,4 +126,11 @@ def hubfile_aupdated_listener(mapper, connection, target):
         {
             "path": path  # Pasamos solo el 'path' serializable
         },
+    )
+    '''
+
+    task_manager = TaskQueueManager()
+    task_manager.enqueue_task(
+        "app.modules.hubfile.tasks.transform_uvl",
+        path=path
     )
