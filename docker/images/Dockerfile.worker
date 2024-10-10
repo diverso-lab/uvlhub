@@ -44,7 +44,7 @@ COPY --chmod=0755 scripts/init-testing-db.sh ./scripts/
 COPY rosemary/ ./rosemary
 COPY setup.py ./
 COPY docker/ ./docker
-COPY worker.py ./
+COPY docker/redis/worker.py ./
 
 # Create the .moduleignore file with the module 'webhook' inside
 RUN echo "webhook" > /app/.moduleignore

@@ -58,6 +58,22 @@ services:
     networks:
       - uvlhub_network
 
+  worker:
+    container_name: rq_worker_container
+    env_file:
+      - ../.env
+    depends_on:
+      - redis
+    build:
+      context: ../
+      dockerfile: docker/images/Dockerfile.worker
+    volumes:
+      - ../app/:/app/app
+      - ../core/:/app/core
+      - ../uploads/:/app/uploads
+    networks:
+      - uvlhub_network
+
   watchtower:
     container_name: watchtower_container
     image: containrrr/watchtower
