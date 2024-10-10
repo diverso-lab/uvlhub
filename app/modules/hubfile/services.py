@@ -35,6 +35,7 @@ class HubfileService(BaseService):
                             'uploads',
                             f'user_{hubfile_user.id}',
                             f'dataset_{hubfile_dataset.id}',
+                            'uvl',
                             hubfile.name)
 
         return path

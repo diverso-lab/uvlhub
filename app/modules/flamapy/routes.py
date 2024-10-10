@@ -77,13 +77,17 @@ def valid(file_id):
     return jsonify({"success": True, "file_id": file_id})
 
 
-def download_transformed_file(file_id, extension):
+def download_transformed_file(file_id, extension, subdirectory):
     try:
         hubfile = HubfileService().get_or_404(file_id)
-        transformed_file_path = hubfile.get_path().replace('.uvl', extension)
+        # Obtener el directorio base del dataset, que es el padre de la carpeta 'uvl'
+        dataset_dir = os.path.dirname(os.path.dirname(hubfile.get_path()))
+        original_filename = os.path.basename(hubfile.get_path())
+        transformed_filename = original_filename.replace('.uvl', extension)
+        transformed_file_path = os.path.join(dataset_dir, subdirectory, transformed_filename)
 
         if not os.path.exists(transformed_file_path):
-            return jsonify({'error': 'Transformed file not found'}), 404
+            return jsonify({'error': f'Transformed file not found: {transformed_file_path}'}), 404
 
         return send_file(
             transformed_file_path,
@@ -95,16 +99,17 @@ def download_transformed_file(file_id, extension):
         return jsonify({'error': str(e)}), 500
 
 
+
 @flamapy_bp.route('/flamapy/to_glencoe/<int:file_id>', methods=['GET'])
 def to_glencoe(file_id):
-    return download_transformed_file(file_id, '.json')
+    return download_transformed_file(file_id, '.json', 'glencoe')
 
 
 @flamapy_bp.route('/flamapy/to_cnf/<int:file_id>', methods=['GET'])
 def to_cnf(file_id):
-    return download_transformed_file(file_id, '.cnf')
+    return download_transformed_file(file_id, '.cnf', 'dimacs')
 
 
 @flamapy_bp.route('/flamapy/to_splot/<int:file_id>', methods=['GET'])
 def to_splot(file_id):
-    return download_transformed_file(file_id, '.splx')
+    return download_transformed_file(file_id, '.splx', 'splot')

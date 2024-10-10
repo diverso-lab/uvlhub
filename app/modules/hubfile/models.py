@@ -73,6 +73,7 @@ class Hubfile(db.Model):
             "uploads",
             f"user_{self.feature_model.data_set.user_id}",
             f"dataset_{self.feature_model.data_set_id}",
+            'uvl',
             self.name,
         )
 

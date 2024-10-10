@@ -142,7 +142,7 @@ def update_dataset():
     logger.info(f"[BACK] Dataset: {dataset.id}")
 
     if not form.validate_on_submit():
-        logger.info(f"Form: {form.errors}")
+        logger.info(f"Form errors: {form.errors}")
         return jsonify({"message": form.errors}), 400
 
     try:

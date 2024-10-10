@@ -237,14 +237,16 @@
 
             It is currently not possible to edit dataset models. This is a feature under development, it will be available in future versions.
 
-            <div id="uploaded_models_form" style="display: none">
+            <div id="uploaded_models_form">
 
                 <ul class="mt-2" id="file-list">
 
                     {% for feature_model in dataset.feature_models %}
-                        {% for file in feature_model.files %}
-                        <input type="hidden" value="{{file.name}}" name="feature_models-0-uvl_filename">
+
+                        {% for hubfile in feature_model.hubfiles %}
+                            <input type="hidden" value="{{hubfile.name}}" name="feature_models-0-uvl_filename">
                         {% endfor %}
+                        
                     {% endfor %}
 
                 </ul>
