@@ -36,7 +36,7 @@ def transform_uvl(path, retries=5, delay=2):
     except Exception as e:
         logger.error(f"Error transforming UVL file: {e}")
 
-    # JSON Transformation
+    # Glencoe JSON Transformation
     json_path = path.replace(".uvl", ".json")
     try:
         GlencoeWriter(json_path, fm).transform()
@@ -44,7 +44,7 @@ def transform_uvl(path, retries=5, delay=2):
     except Exception as e:
         logger.error(f"Error in JSON transformation: {e}")
 
-    # CNF Transformation
+    # DIMACS CNF Transformation
     cnf_path = path.replace(".uvl", ".cnf")
     try:
         sat = FmToPysat(fm).transform()
@@ -53,7 +53,7 @@ def transform_uvl(path, retries=5, delay=2):
     except Exception as e:
         logger.error(f"Error in CNF transformation: {e}")
 
-    # SPLX Transformation
+    #SPLOT  SPLX Transformation
     splx_path = path.replace(".uvl", ".splx")
     try:
         SPLOTWriter(splx_path, fm).transform()
