@@ -99,7 +99,6 @@ def download_transformed_file(file_id, extension, subdirectory):
         return jsonify({'error': str(e)}), 500
 
 
-
 @flamapy_bp.route('/flamapy/to_glencoe/<int:file_id>', methods=['GET'])
 def to_glencoe(file_id):
     return download_transformed_file(file_id, '.json', 'glencoe')

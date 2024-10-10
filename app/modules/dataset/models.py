@@ -91,6 +91,10 @@ class DataSet(db.Model):
     def files(self) -> List[any]:
         return [file for fm in self.feature_models for file in fm.hubfiles]
 
+    def is_synchronized(self) -> bool:
+        from app.modules.dataset.services import DataSetService
+        return DataSetService.is_synchronized(self.id)
+
     def get_cleaned_publication_type(self) -> str:
         return self.ds_meta_data.publication_type.name.replace('_', ' ').title()
 

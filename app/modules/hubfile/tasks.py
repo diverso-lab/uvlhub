@@ -6,11 +6,13 @@ import time
 
 logger = logging.getLogger(__name__)
 
+
 def create_directory_if_not_exists(directory):
     """Helper function to create a directory if it doesn't exist."""
     if not os.path.exists(directory):
         os.makedirs(directory)
         logger.info(f"Directory created: {directory}")
+
 
 def transform_uvl(path, retries=5, delay=2):
     """

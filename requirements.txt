@@ -61,6 +61,7 @@ msgspec==0.18.6
 networkx==3.3
 outcome==1.3.0.post0
 packaging==24.1
+pathlib==1.0.1
 pillow==10.4.0
 pluggy==1.5.0
 ply==3.10

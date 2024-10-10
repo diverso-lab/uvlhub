@@ -84,6 +84,12 @@ class DataSetRepository(BaseRepository):
     def __init__(self):
         super().__init__(DataSet)
 
+    def is_synchronized(self, dataset_id: int) -> bool:
+        dataset = self.model.query.join(DSMetaData).filter(self.model.id == dataset_id).first()
+        if dataset and dataset.ds_meta_data.dataset_doi:
+            return True
+        return False
+
     def get_synchronized(self, current_user_id: int) -> DataSet:
         return (
             self.model.query.join(DSMetaData)

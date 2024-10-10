@@ -32,7 +32,11 @@ def test_create_hubfile_calls_enqueue_task(test_client):
 
         path = os.path.join(
             working_dir,
-            f"uploads/user_{user.id}/dataset_{dataset.id}/test.uvl"
+            "uploads",
+            f"user_{user.id}",
+            f"dataset_{dataset.id}",
+            "uvl",
+            "test.uvl"
         )
 
         # Verificar que enqueue_task fue llamado correctamente

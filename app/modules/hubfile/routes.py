@@ -78,9 +78,9 @@ def download_file(file_id):
     filename = hubfile.name
 
     directory_path = os.path.join(
-        "uploads", 
-        f"user_{user_owner.id}", 
-        f"dataset_{hubfile.feature_model.data_set_id}", 
+        "uploads",
+        f"user_{user_owner.id}",
+        f"dataset_{hubfile.feature_model.data_set_id}",
         "uvl"
     )
 
