@@ -1,6 +1,8 @@
 import os
 from unittest.mock import patch
 
+import pytest
+
 from app.modules.featuremodel.repositories import FeatureModelRepository
 from app.modules.hubfile.repositories import HubfileRepository
 from app.modules.dataset.repositories import DataSetRepository
@@ -8,6 +10,19 @@ from app.modules.dataset.repositories import DSMetaDataRepository
 from app.modules.dataset.models import PublicationType
 from app.modules.auth.repositories import UserRepository
 from dotenv import load_dotenv
+
+
+@pytest.fixture(scope="module")
+def test_client(test_client):
+    """
+    Extends the test_client fixture to add additional specific data for module testing.
+    """
+    with test_client.application.app_context():
+        # Add HERE new elements to the database that you want to exist in the test context.
+        # DO NOT FORGET to use db.session.add(<element>) and db.session.commit() to save the data.
+        pass
+
+    yield test_client
 
 
 def test_create_hubfile_calls_enqueue_task(test_client):
