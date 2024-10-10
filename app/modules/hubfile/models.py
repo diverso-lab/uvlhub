@@ -69,7 +69,7 @@ class Hubfile(db.Model):
 
     def get_full_path(self) -> str:
         return os.path.join(
-            os.getenv("WORKING_DIR"),
+            os.getenv("WORKING_DIR",""),
             "uploads",
             f"user_{self.feature_model.data_set.user_id}",
             f"dataset_{self.feature_model.data_set_id}",
