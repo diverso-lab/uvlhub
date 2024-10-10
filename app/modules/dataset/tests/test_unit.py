@@ -1,9 +1,8 @@
 import pytest
 from unittest.mock import patch, MagicMock
-from flask import Flask
-from werkzeug.exceptions import NotFound
 
 from app.modules.dataset.services import DataSetService
+
 
 @pytest.fixture(scope="module")
 def test_client(test_client):
@@ -24,11 +23,11 @@ def test_get_uvlhub_doi(mock_getenv):
 
     # Configurar el valor de retorno del mock para DOMAIN
     mock_getenv.return_value = 'uvlhub.io'
-    
+
     # Crear un mock del dataset y ds_meta_data
     mock_dataset = MagicMock()
     mock_dataset.ds_meta_data.dataset_doi = '10.1234/test_doi'
-    
+
     # Crear una instancia del servicio
     service = DataSetService()
 
@@ -37,7 +36,7 @@ def test_get_uvlhub_doi(mock_getenv):
 
     # Verificar que devuelve la URL esperada
     assert result == 'http://uvlhub.io/doi/10.1234/test_doi'
-    
+
     # Verificar que getenv fue llamado correctamente
     mock_getenv.assert_called_once_with('DOMAIN', 'localhost')
 
@@ -49,7 +48,7 @@ def test_subdomain_index_success(mock_create_cookie, mock_filter_by_doi, test_cl
     mock_dataset = MagicMock()
     mock_filter_by_doi.return_value = MagicMock(data_set=mock_dataset)
     mock_create_cookie.return_value = 'mock_cookie'
-    
+
     response = test_client.get('/doi/10.1234/datafset1/')
     # Verificamos que el dataset existe con ese DOI
     assert response.status_code == 200
@@ -64,6 +63,6 @@ def test_subdomain_index_success(mock_create_cookie, mock_filter_by_doi, test_cl
 # Test para cuando el DOI no se encuentra
 def test_subdomain_index_not_found(test_client):
     response = test_client.get('/doi/10.1234/non_existent_doi/')
-    
+
     # Verificar que devuelve 404 cuando no se encuentra el dataset
     assert response.status_code == 404

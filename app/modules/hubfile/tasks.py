@@ -1,6 +1,5 @@
 import logging
 import os
-import subprocess
 from flamapy.metamodels.fm_metamodel.transformations import UVLReader, GlencoeWriter, SPLOTWriter
 from flamapy.metamodels.pysat_metamodel.transformations import FmToPysat, DimacsWriter
 import time
@@ -10,7 +9,6 @@ logger = logging.getLogger(__name__)
 
 def transform_uvl(path, retries=5, delay=2):
 
-    
     """
     Tries to process a UVL file. If the file does not exist, it retries
     `retries` times with a delay of `delay` seconds between each attempt.
@@ -26,7 +24,6 @@ def transform_uvl(path, retries=5, delay=2):
     if not os.path.exists(path):
         logger.error(f"The file {path} was not found after {retries} attempts. Aborting transformation.")
         return
-    
 
     logger.info(f"Processing UVL file at: {path}")
 
@@ -53,7 +50,7 @@ def transform_uvl(path, retries=5, delay=2):
     except Exception as e:
         logger.error(f"Error in CNF transformation: {e}")
 
-    #SPLOT  SPLX Transformation
+    # SPLOT  SPLX Transformation
     splx_path = path.replace(".uvl", ".splx")
     try:
         SPLOTWriter(splx_path, fm).transform()

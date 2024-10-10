@@ -2,11 +2,8 @@ import logging
 from app.modules.hubfile.services import HubfileService
 from flask import send_file, jsonify
 from app.modules.flamapy import flamapy_bp
-from flamapy.metamodels.fm_metamodel.transformations import UVLReader, GlencoeWriter, SPLOTWriter
-from flamapy.metamodels.pysat_metamodel.transformations import FmToPysat, DimacsWriter
 from flamapy.interfaces.python.flamapy_feature_model import FLAMAFeatureModel
 from flamapy.core.exceptions import FlamaException
-import tempfile
 import os
 
 from antlr4 import CommonTokenStream, FileStream
@@ -80,49 +77,34 @@ def valid(file_id):
     return jsonify({"success": True, "file_id": file_id})
 
 
-@flamapy_bp.route('/flamapy/to_glencoe/<int:file_id>', methods=['GET'])
-def to_glencoe(file_id):
+def download_transformed_file(file_id, extension):
     try:
         hubfile = HubfileService().get_or_404(file_id)
-        transformed_file_path = hubfile.get_path().replace('.uvl', '.json')
+        transformed_file_path = hubfile.get_path().replace('.uvl', extension)
 
         if not os.path.exists(transformed_file_path):
             return jsonify({'error': 'Transformed file not found'}), 404
 
-        return send_file(transformed_file_path, as_attachment=True, download_name=os.path.basename(transformed_file_path))
+        return send_file(
+            transformed_file_path,
+            as_attachment=True,
+            download_name=os.path.basename(transformed_file_path)
+        )
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-    
+
+
+@flamapy_bp.route('/flamapy/to_glencoe/<int:file_id>', methods=['GET'])
+def to_glencoe(file_id):
+    return download_transformed_file(file_id, '.json')
+
 
 @flamapy_bp.route('/flamapy/to_cnf/<int:file_id>', methods=['GET'])
 def to_cnf(file_id):
-    try:
-        hubfile = HubfileService().get_or_404(file_id)
-        transformed_file_path = hubfile.get_path().replace('.uvl', '.cnf')
-
-        if not os.path.exists(transformed_file_path):
-            return jsonify({'error': 'Transformed file not found'}), 404
-
-        return send_file(transformed_file_path, as_attachment=True, download_name=os.path.basename(transformed_file_path))
-
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    return download_transformed_file(file_id, '.cnf')
 
 
 @flamapy_bp.route('/flamapy/to_splot/<int:file_id>', methods=['GET'])
 def to_splot(file_id):
-    try:
-        hubfile = HubfileService().get_or_404(file_id)
-        transformed_file_path = hubfile.get_path().replace('.uvl', '.splx')
-
-        if not os.path.exists(transformed_file_path):
-            return jsonify({'error': 'Transformed file not found'}), 404
-
-        return send_file(transformed_file_path, as_attachment=True, download_name=os.path.basename(transformed_file_path))
-
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-
-
+    return download_transformed_file(file_id, '.splx')
