@@ -38,6 +38,7 @@ class Config:
     SESSION_USE_SIGNER = True
     REDIS_URL = os.getenv("REDIS_URL", 'redis://redis:6379')
     SESSION_REDIS = redis.from_url(REDIS_URL)
+    REDIS_WORKER_TIMEOUT = os.getenv("REDIS_WORKER_TIMEOUT", 180)
 
 
 class DevelopmentConfig(Config):

@@ -52,6 +52,16 @@ def transform_uvl(path, retries=5, delay=2):
     except Exception as e:
         logger.error(f"Error in JSON transformation: {e}")
 
+    # SPLOT SPLX Transformation
+    splot_dir = os.path.join(base_dir, "splot")
+    create_directory_if_not_exists(splot_dir)
+    splx_path = os.path.join(splot_dir, os.path.basename(path).replace(".uvl", ".splx"))
+    try:
+        SPLOTWriter(splx_path, fm).transform()
+        logger.info(f"SPLX file created at: {splx_path}")
+    except Exception as e:
+        logger.error(f"Error in SPLX transformation: {e}")
+
     # DIMACS CNF Transformation
     dimacs_dir = os.path.join(base_dir, "dimacs")
     create_directory_if_not_exists(dimacs_dir)
@@ -62,13 +72,3 @@ def transform_uvl(path, retries=5, delay=2):
         logger.info(f"CNF file created at: {cnf_path}")
     except Exception as e:
         logger.error(f"Error in CNF transformation: {e}")
-
-    # SPLOT SPLX Transformation
-    splot_dir = os.path.join(base_dir, "splot")
-    create_directory_if_not_exists(splot_dir)
-    splx_path = os.path.join(splot_dir, os.path.basename(path).replace(".uvl", ".splx"))
-    try:
-        SPLOTWriter(splx_path, fm).transform()
-        logger.info(f"SPLX file created at: {splx_path}")
-    except Exception as e:
-        logger.error(f"Error in SPLX transformation: {e}")

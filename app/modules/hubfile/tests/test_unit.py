@@ -57,5 +57,6 @@ def test_create_hubfile_calls_enqueue_task(test_client):
         # Verificar que enqueue_task fue llamado correctamente
         mock_enqueue_task.assert_called_once_with(
             "app.modules.hubfile.tasks.transform_uvl",  # Nombre de la tarea
-            path=path  # Parámetro que recibe la tarea
+            path=path,  # Parámetro que recibe la tarea
+            timeout=300
         )

@@ -125,5 +125,6 @@ def hubfile_aupdated_listener(mapper, connection, target):
     task_manager = TaskQueueManager()
     task_manager.enqueue_task(
         "app.modules.hubfile.tasks.transform_uvl",
-        path=path
+        path=path,
+        timeout=300
     )
