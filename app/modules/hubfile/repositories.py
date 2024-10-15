@@ -1,7 +1,6 @@
 from datetime import datetime
 from flask_login import current_user
 import pytz
-from sqlalchemy import func
 from app.modules.auth.models import User
 from app.modules.dataset.models import DataSet
 from app.modules.featuremodel.models import FeatureModel
