@@ -242,7 +242,7 @@ def subdomain_index(doi):
 def get_unsynchronized_dataset(dataset_id):
 
     # Get dataset
-    dataset = dataset_service.get_unsynchronized_dataset(current_user.id, dataset_id)
+    dataset = dataset_service.get_unsynchronized_dataset_by_user(current_user.id, dataset_id)
 
     if not dataset:
         abort(404)

@@ -70,29 +70,45 @@ class DataSetService(BaseService):
     def is_synchronized(self, dataset_id: int) -> bool:
         return self.repository.is_synchronized(dataset_id)
 
+    '''
+        Synchronised dataset
+    '''
     def get_synchronized_datasets(self) -> List[DataSet]:
         return self.repository.get_synchronized_datasets()
-
-    def get_unsynchronized_datasets(self) -> List[DataSet]:
-        return self.repository.get_unsynchronized_datasets()
 
     def get_synchronized_datasets_by_user(self, current_user_id: int) -> List[DataSet]:
         return self.repository.get_synchronized_datasets_by_user(current_user_id)
 
+    def get_synchronized_dataset_by_user(self, current_user_id: int, dataset_id: int) -> DataSet:
+        return self.repository.get_synchronized_dataset_by_user(current_user_id, dataset_id)
+
+    def count_synchronized_datasets(self) -> int:
+        return self.repository.count_synchronized_datasets()
+
+    '''
+        Unsynchronised dataset
+    '''
+    def get_unsynchronized_datasets(self) -> List[DataSet]:
+        return self.repository.get_unsynchronized_datasets()
+
     def get_unsynchronized_datasets_by_user(self, current_user_id: int) -> List[DataSet]:
         return self.repository.get_unsynchronized_datasets_by_user(current_user_id)
 
-    def get_unsynchronized_dataset(self, current_user_id: int, dataset_id: int) -> DataSet:
-        return self.repository.get_unsynchronized_dataset(current_user_id, dataset_id)
+    def get_unsynchronized_dataset_by_user(self, current_user_id: int, dataset_id: int) -> DataSet:
+        return self.repository.get_unsynchronized_dataset_by_user(current_user_id, dataset_id)
+
+    def count_unsynchronized_datasets(self) -> int:
+        return self.repository.count_unsynchronized_datasets()
+
+    '''
+        Top X datasets...
+    '''
 
     def latest_synchronized(self) -> List[DataSet]:
         return self.repository.latest_synchronized()
 
     def get_top_5_datasets_by_feature_model_count(self) -> List[DataSet]:
         return self.repository.get_top_5_datasets_by_feature_model_count()
-
-    def count_synchronized_datasets(self) -> int:
-        return self.repository.count_synchronized_datasets()
 
     def count_feature_models(self, dataset_id: int) -> int:
         dataset = self.repository.get_by_id(dataset_id)
