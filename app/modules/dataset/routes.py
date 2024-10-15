@@ -170,8 +170,8 @@ def update_dataset():
 def list_dataset():
     return render_template(
         "dataset/list_datasets.html",
-        datasets=dataset_service.get_synchronized(current_user.id),
-        local_datasets=dataset_service.get_unsynchronized(current_user.id),
+        datasets=dataset_service.get_synchronized_datasets_by_user(current_user.id),
+        local_datasets=dataset_service.get_unsynchronized_datasets_by_user(current_user.id),
     )
 
 

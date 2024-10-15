@@ -1,7 +1,7 @@
 from datetime import datetime
 import logging
 from flask_login import current_user
-from typing import Optional
+from typing import List, Optional
 
 import pytz
 from sqlalchemy import desc, func
@@ -90,7 +90,23 @@ class DataSetRepository(BaseRepository):
             return True
         return False
 
-    def get_synchronized(self, current_user_id: int) -> DataSet:
+    def get_synchronized_datasets(self) -> List[DataSet]:
+        return (
+            self.model.query.join(DSMetaData)
+            .filter(DSMetaData.dataset_doi.isnot(None))
+            .order_by(self.model.created_at.desc())
+            .all()
+        )
+
+    def get_unsynchronized_datasets(self) -> List[DataSet]:
+        return (
+            self.model.query.join(DSMetaData)
+            .filter(DSMetaData.dataset_doi.is_(None))
+            .order_by(self.model.created_at.desc())
+            .all()
+        )
+
+    def get_synchronized_datasets_by_user(self, current_user_id: int) -> List[DataSet]:
         return (
             self.model.query.join(DSMetaData)
             .filter(DataSet.user_id == current_user_id, DSMetaData.dataset_doi.isnot(None))
@@ -98,7 +114,7 @@ class DataSetRepository(BaseRepository):
             .all()
         )
 
-    def get_unsynchronized(self, current_user_id: int) -> DataSet:
+    def get_unsynchronized_datasets_by_user(self, current_user_id: int) -> List[DataSet]:
         return (
             self.model.query.join(DSMetaData)
             .filter(DataSet.user_id == current_user_id, DSMetaData.dataset_doi.is_(None))
@@ -106,7 +122,7 @@ class DataSetRepository(BaseRepository):
             .all()
         )
 
-    def get_unsynchronized_dataset(self, current_user_id: int, dataset_id: int) -> DataSet:
+    def get_unsynchronized_dataset_by_user(self, current_user_id: int, dataset_id: int) -> DataSet:
         return (
             self.model.query.join(DSMetaData)
             .filter(DataSet.user_id == current_user_id, DataSet.id == dataset_id, DSMetaData.dataset_doi.is_(None))
@@ -127,11 +143,20 @@ class DataSetRepository(BaseRepository):
             .count()
         )
 
-    def latest_synchronized(self):
+    def latest_synchronized(self) -> List[DataSet]:
         return (
             self.model.query.join(DSMetaData)
             .filter(DSMetaData.dataset_doi.isnot(None))
             .order_by(desc(self.model.id))
+            .limit(5)
+            .all()
+        )
+
+    def get_top_5_datasets_by_feature_model_count(self) -> List[DataSet]:
+        return (
+            self.model.query
+            .order_by(self.model.feature_model_count.desc())
+            .order_by(desc(self.model.created_at))
             .limit(5)
             .all()
         )
