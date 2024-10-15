@@ -146,7 +146,8 @@ class DataSetRepository(BaseRepository):
 
     def get_top_5_datasets_by_feature_model_count(self) -> List[DataSet]:
         return (
-            self.model.query
+            self.model.query.join(DSMetaData)
+            .filter(DSMetaData.dataset_doi.isnot(None))
             .order_by(self.model.feature_model_count.desc())
             .order_by(desc(self.model.created_at))
             .limit(5)
