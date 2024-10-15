@@ -35,18 +35,10 @@ class HubfileViewRecordRepository(BaseRepository):
     def __init__(self):
         super().__init__(HubfileViewRecord)
 
-    def total_hubfile_views(self) -> int:
-        max_id = self.model.query.with_entities(func.max(self.model.id)).scalar()
-        return max_id if max_id is not None else 0
-
 
 class HubfileDownloadRecordRepository(BaseRepository):
     def __init__(self):
         super().__init__(HubfileDownloadRecord)
-
-    def total_hubfile_downloads(self) -> int:
-        max_id = self.model.query.with_entities(func.max(self.model.id)).scalar()
-        return max_id if max_id is not None else 0
 
     def the_record_exists(self, hubfile: Hubfile, user_cookie: str):
         return self.model.query.filter_by(
