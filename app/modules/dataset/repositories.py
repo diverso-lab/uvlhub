@@ -4,7 +4,7 @@ from flask_login import current_user
 from typing import List, Optional
 
 import pytz
-from sqlalchemy import desc, func
+from sqlalchemy import desc
 
 from app.modules.dataset.models import (
     Author,
@@ -27,10 +27,6 @@ class AuthorRepository(BaseRepository):
 class DSDownloadRecordRepository(BaseRepository):
     def __init__(self):
         super().__init__(DSDownloadRecord)
-
-    def total_dataset_downloads(self) -> int:
-        max_id = self.model.query.with_entities(func.max(self.model.id)).scalar()
-        return max_id if max_id is not None else 0
 
     def the_record_exists(self, dataset: DataSet, user_cookie: str):
         return self.model.query.filter_by(
@@ -59,10 +55,6 @@ class DSMetaDataRepository(BaseRepository):
 class DSViewRecordRepository(BaseRepository):
     def __init__(self):
         super().__init__(DSViewRecord)
-
-    def total_dataset_views(self) -> int:
-        max_id = self.model.query.with_entities(func.max(self.model.id)).scalar()
-        return max_id if max_id is not None else 0
 
     def the_record_exists(self, dataset: DataSet, user_cookie: str):
         return self.model.query.filter_by(

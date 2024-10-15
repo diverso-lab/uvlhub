@@ -8,6 +8,7 @@ from app.modules.hubfile.models import HubfileViewRecord
 from app.modules.hubfile.services import HubfileDownloadRecordService, HubfileService
 
 from app import db
+from app.modules.statistics.services import StatisticsService
 
 hubfile_download_record_service = HubfileDownloadRecordService()
 
@@ -138,6 +139,9 @@ def view_file(file_id):
                 )
                 db.session.add(new_view_record)
                 db.session.commit()
+
+                statistics_service = StatisticsService()
+                statistics_service.increment_feature_models_viewed()
 
             # Prepare response
             response = jsonify({'success': True, 'content': content})

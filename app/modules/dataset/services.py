@@ -27,6 +27,7 @@ from app.modules.hubfile.repositories import (
     HubfileRepository,
     HubfileViewRecordRepository
 )
+from app.modules.statistics.services import StatisticsService
 from core.services.BaseService import BaseService
 
 logger = logging.getLogger(__name__)
@@ -102,12 +103,6 @@ class DataSetService(BaseService):
 
     def count_dsmetadata(self) -> int:
         return self.dsmetadata_repository.count()
-
-    def total_dataset_downloads(self) -> int:
-        return self.dsdownloadrecord_repository.total_dataset_downloads()
-
-    def total_dataset_views(self) -> int:
-        return self.dsviewrecord_repostory.total_dataset_views()
 
     def update_from_form(self, form: DataSetForm, current_user: User, dataset: DataSet) -> DataSet:
         main_author = {
@@ -327,6 +322,7 @@ class AuthorService(BaseService):
 class DSDownloadRecordService(BaseService):
     def __init__(self):
         super().__init__(DSDownloadRecordRepository())
+        self.statistics_service = StatisticsService()
 
     def the_record_exists(self, dataset: DataSet, user_cookie: str):
         return self.repository.the_record_exists(dataset, user_cookie)
@@ -344,6 +340,7 @@ class DSDownloadRecordService(BaseService):
 
         if not existing_record:
             self.create_new_record(dataset=dataset, user_cookie=user_cookie)
+            self.statistics_service.increment_datasets_downloaded()
 
         return user_cookie
 
@@ -362,6 +359,7 @@ class DSMetaDataService(BaseService):
 class DSViewRecordService(BaseService):
     def __init__(self):
         super().__init__(DSViewRecordRepository())
+        self.statistics_service = StatisticsService()
 
     def the_record_exists(self, dataset: DataSet, user_cookie: str):
         return self.repository.the_record_exists(dataset, user_cookie)
@@ -379,6 +377,7 @@ class DSViewRecordService(BaseService):
 
         if not existing_record:
             self.create_new_record(dataset=dataset, user_cookie=user_cookie)
+            self.statistics_service.increment_datasets_viewed()
 
         return user_cookie
 

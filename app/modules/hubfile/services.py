@@ -10,6 +10,7 @@ from app.modules.hubfile.repositories import (
     HubfileRepository,
     HubfileViewRecordRepository
 )
+from app.modules.statistics.services import StatisticsService
 from core.services.BaseService import BaseService
 
 
@@ -40,13 +41,6 @@ class HubfileService(BaseService):
 
         return path
 
-    def total_hubfile_views(self) -> int:
-        return self.hubfile_view_record_repository.total_hubfile_views()
-
-    def total_hubfile_downloads(self) -> int:
-        hubfile_download_record_repository = HubfileDownloadRecordRepository()
-        return hubfile_download_record_repository.total_hubfile_downloads()
-
     def get_by_ids(self, ids: list[int]) -> list[Hubfile]:
         return self.repository.get_by_ids(ids)
 
@@ -54,6 +48,7 @@ class HubfileService(BaseService):
 class HubfileDownloadRecordService(BaseService):
     def __init__(self):
         super().__init__(HubfileDownloadRecordRepository())
+        self.statistics_service = StatisticsService()
 
     def the_record_exists(self, hubfile: Hubfile, user_cookie: str):
         return self.repository.the_record_exists(hubfile, user_cookie)
@@ -71,5 +66,6 @@ class HubfileDownloadRecordService(BaseService):
 
         if not existing_record:
             self.create_new_record(hubfile=hubfile, user_cookie=user_cookie)
+            self.statistics_service.increment_feature_models_downloaded()
 
         return user_cookie
