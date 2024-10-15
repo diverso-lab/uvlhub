@@ -82,6 +82,8 @@ class DataSet(db.Model):
     ds_meta_data = db.relationship('DSMetaData', backref=db.backref('data_set', uselist=False))
     feature_models = db.relationship('FeatureModel', backref='data_set', lazy=True, cascade="all, delete")
 
+    feature_model_count = db.Column(db.Integer, nullable=False, default=0)
+
     def name(self) -> str:
         return self.ds_meta_data.title
 
@@ -100,6 +102,11 @@ class DataSet(db.Model):
 
     def get_zenodo_url(self) -> str:
         return f'https://zenodo.org/record/{self.ds_meta_data.deposition_id}' if self.ds_meta_data.dataset_doi else None
+
+    def count_feature_models(self) -> int:
+        from app.modules.dataset.services import DataSetService
+        dataservice = DataSetService()
+        return dataservice.count_feature_models(self.id)
 
     def get_files_count(self) -> int:
         return sum(len(fm.hubfiles) for fm in self.feature_models)

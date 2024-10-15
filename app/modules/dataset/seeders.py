@@ -59,7 +59,8 @@ class DataSetSeeder(BaseSeeder):
         datasets = [
             DataSet(
                 user_id=user1.id if i % 2 == 0 else user2.id,
-                ds_meta_data_id=seeded_ds_meta_data[i].id
+                ds_meta_data_id=seeded_ds_meta_data[i].id,
+                feature_model_count=3
             ) for i in range(4)
         ]
         seeded_datasets = self.seed(datasets)

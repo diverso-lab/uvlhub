@@ -84,8 +84,9 @@ class DataSetService(BaseService):
     def count_synchronized_datasets(self):
         return self.repository.count_synchronized_datasets()
 
-    def count_feature_models(self):
-        return self.feature_model_service.count_feature_models()
+    def count_feature_models(self, dataset_id: int) -> int:
+        dataset = self.repository.get_by_id(dataset_id)
+        return dataset.feature_model_count
 
     def count_authors(self) -> int:
         return self.author_repository.count()
@@ -173,6 +174,7 @@ class DataSetService(BaseService):
 
             dataset = self.create(commit=False, user_id=current_user.id, ds_meta_data_id=dsmetadata.id)
 
+            feature_model_count = 0
             for feature_model in form.feature_models:
                 uvl_filename = feature_model.uvl_filename.data
                 fmmetadata = self.fmmetadata_repository.create(commit=False, **feature_model.get_fmmetadata())
@@ -184,6 +186,8 @@ class DataSetService(BaseService):
                     commit=False, data_set_id=dataset.id, fm_meta_data_id=fmmetadata.id
                 )
 
+                feature_model_count += 1
+
                 # associated files in feature model
                 file_path = os.path.join(current_user.temp_folder(), uvl_filename)
                 checksum, size = calculate_checksum_and_size(file_path)
@@ -192,6 +196,8 @@ class DataSetService(BaseService):
                     commit=False, name=uvl_filename, checksum=checksum, size=size, feature_model_id=fm.id
                 )
                 fm.hubfiles.append(file)
+
+            dataset.feature_model_count = feature_model_count
             self.repository.session.commit()
         except Exception as exc:
             logger.info(f"Exception creating dataset from form...: {exc}")
