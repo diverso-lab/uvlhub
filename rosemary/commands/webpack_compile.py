@@ -32,6 +32,7 @@ def webpack_compile(module_name):
             if os.path.isdir(module_path) and module not in EXCLUDED_DIRS:
                 compile_module(module)
 
+
 def compile_module(module):
     module_path = os.path.join(MODULES_DIR, module)
     webpack_file = os.path.join(module_path, 'assets', 'js', 'webpack.config.js')
@@ -39,10 +40,10 @@ def compile_module(module):
     # Check if the webpack.config.js file exists for this module
     if os.path.exists(webpack_file):
         click.echo(f"Compiling {module}...")
-        
+
         # Build the Webpack command
         webpack_command = f'npx webpack --config {webpack_file} --mode development'
-        
+
         # Run the command
         try:
             subprocess.run(webpack_command, shell=True, check=True)
