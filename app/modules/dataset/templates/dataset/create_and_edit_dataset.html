@@ -400,28 +400,12 @@
     
 {% block scripts %}
 
-
+    <script>
+        let hubfiles = {{ hubfiles|tojson|safe }};
+    </script>
 
     <script src="{{ url_for('zenodo.assets', subfolder='js', filename='scripts.js') }}"></script>
     <script src="{{ url_for('dataset.assets', subfolder='js', filename='scripts.js') }}"></script>
     <script src="{{ url_for('hubfile.assets', subfolder='dist', filename='hubfile.bundle.js') }}"></script>
 
-    <script>
-    Dropzone.options.myDropzone = {
-        init: function() {
-            let hubfiles = {{ hubfiles|tojson|safe }};
-            if (hubfiles) {
-                for (let i = 0; i < hubfiles.length; i++) {
-                    let hubfile = hubfiles[i];
-                    fetch(hubfile.url)
-                    .then(response => response.blob())
-                    .then(blob => {
-                        let file = new File([blob], hubfile.name, {type: 'uvl'});
-                        this.addFile(file);  // Ahora 'addFile' está disponible
-                    })
-                }
-            }
-        }
-    };
-    </script>
 {% endblock %}
