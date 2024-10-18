@@ -70,5 +70,5 @@
 {% endblock %}
 
 {% block scripts %}
-    <script src="{{ url_for('team.scripts') }}"></script>
+    <script src="{{ url_for('team.assets', subfolder='js', filename='scripts.js') }}"></script> 
 {% endblock %}

@@ -20,6 +20,11 @@ RUN apt-get install -y --no-install-recommends ca-certificates gnupg lsb-release
     && apt-get update \
     && apt-get install -y --no-install-recommends docker-ce-cli 
 
+# Install Node.js and NPM
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+    && apt-get install -y --no-install-recommends nodejs \
+    && npm install -g npm@latest
+
 # Clean up
 RUN apt-get clean \
     && rm -rf /var/lib/apt/lists/*
@@ -53,6 +58,10 @@ RUN pip install -r requirements.txt
 
 # Install Rosemary
 RUN pip install -e ./
+
+# Install npm dependencies
+COPY package.json .
+RUN npm install
 
 # Expose port 5000 for the Flask app
 EXPOSE 5000

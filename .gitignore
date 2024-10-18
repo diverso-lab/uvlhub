@@ -18,3 +18,4 @@ nginx.prod.ssl.conf
 entrypoint.sh
 deployments.log
 test_file.txt
+node_modules/

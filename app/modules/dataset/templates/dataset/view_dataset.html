@@ -467,6 +467,6 @@
 
 
 {% block scripts %}
-    <script src="{{ url_for('flamapy.scripts') }}"></script>
-    <script src="{{ url_for('downloadqueue.scripts') }}"></script>
+    <script src="{{ url_for('flamapy.assets', subfolder='js', filename='scripts.js') }}"></script>
+    <script src="{{ url_for('downloadqueue.assets', subfolder='js', filename='scripts.js') }}"></script>
 {% endblock %}

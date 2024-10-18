@@ -7,5 +7,5 @@
 {% endblock %}
 
 {% block scripts %}
-    <script src="{{ url_for('hubfile.scripts') }}"></script>
+    <script src="{{ url_for('hubfile.assets', subfolder='js', filename='scripts.js') }}"></script>
 {% endblock %}

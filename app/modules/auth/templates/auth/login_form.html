@@ -112,5 +112,5 @@
 {% endblock %}
 
 {% block scripts %}
-    <script src="{{ url_for('auth.scripts') }}"></script>
+    <script src="{{ url_for('auth.assets', subfolder='js', filename='scripts.js') }}"></script>
 {% endblock %}
