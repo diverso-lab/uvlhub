@@ -51,7 +51,8 @@ def make_module(name):
         'forms.py': 'module_forms.py.j2',
         'seeders.py': 'module_seeders.py.j2',
         os.path.join('templates', name, 'index.html'): 'module_templates_index.html.j2',
-        'assets/scripts.js': 'module_scripts.js.j2',
+        'assets/js/scripts.js': 'module_scripts.js.j2',
+        'assets/js/webpack.config.js': 'module_webpack.config.js.j2',
         'tests/test_unit.py': 'module_tests_test_unit.py.j2',
         'tests/locustfile.py': 'module_tests_locustfile.py.j2',
         'tests/test_selenium.py': 'module_tests_test_selenium.py.j2'
@@ -64,8 +65,10 @@ def make_module(name):
     # Create 'tests' directory directly under module_path, without additional subfolders.
     os.makedirs(os.path.join(module_path, 'tests'), exist_ok=True)
 
-    # Create 'assets' directory directly under module_path, without additional subfolders.
-    os.makedirs(os.path.join(module_path, 'assets'), exist_ok=True)
+    # Create 'assets' directory directly under module_path
+    os.makedirs(os.path.join(module_path, 'assets', 'css'), exist_ok=True)
+    os.makedirs(os.path.join(module_path, 'assets', 'js'), exist_ok=True)
+
 
     # Create empty __init__.py file directly in the 'tests' directory.
     open(os.path.join(module_path, 'tests', '__init__.py'), 'a').close()
