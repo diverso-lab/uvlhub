@@ -16,7 +16,6 @@ let dropzone = Dropzone.options.myDropzone = {
         let dropzoneText = document.getElementById('dropzone-text');
         let alerts = document.getElementById('alerts');
 
-        
         if (hubfiles) {
             for (let i = 0; i < hubfiles.length; i++) {
                 let hubfile = hubfiles[i];
@@ -29,7 +28,6 @@ let dropzone = Dropzone.options.myDropzone = {
             }
         }
             
-
         this.on('addedfile', function (file) {
 
             let ext = file.name.split('.').pop();

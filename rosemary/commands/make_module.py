@@ -69,7 +69,6 @@ def make_module(name):
     os.makedirs(os.path.join(module_path, 'assets', 'css'), exist_ok=True)
     os.makedirs(os.path.join(module_path, 'assets', 'js'), exist_ok=True)
 
-
     # Create empty __init__.py file directly in the 'tests' directory.
     open(os.path.join(module_path, 'tests', '__init__.py'), 'a').close()
 
