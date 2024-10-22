@@ -18,6 +18,9 @@ set -e
 # Install Rosemary
 pip install -e ./
 
+# Compile webpack files with hot reloading
+rosemary webpack:compile --watch
+
 # Wait for the database to be ready by running a script
 sh ./scripts/wait-for-db.sh
 

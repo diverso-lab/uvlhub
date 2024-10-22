@@ -8,8 +8,23 @@ logger = logging.getLogger(__name__)
 # Define the path where the modules are located
 MODULES_DIR = os.path.join(os.getenv('WORKING_DIR', ''), 'app', 'modules')
 
-# List of directories to exclude from iteration
-EXCLUDED_DIRS = {'.pytest_cache', '__pycache__'}
+
+# Function to load excluded directories from .moduleignore
+def load_excluded_modules():
+    # Start with a list of directories that should always be excluded
+    excluded_modules = ['.pytest_cache', '__pycache__', 'webhook']
+    moduleignore_path = os.path.join(os.getenv('WORKING_DIR', ''), '.moduleignore')
+
+    # Check if .moduleignore exists and load its content
+    if os.path.exists(moduleignore_path):
+        with open(moduleignore_path, 'r') as f:
+            # Add each non-empty line from .moduleignore to the excluded_modules list
+            excluded_modules.extend([line.strip() for line in f if line.strip()])
+
+    return excluded_modules
+
+
+EXCLUDED_MODULES = load_excluded_modules()
 
 
 @click.command('webpack:compile', help="Compile webpack for one or all modules.")
@@ -30,7 +45,7 @@ def webpack_compile(module_name, watch):
     else:
         for module in os.listdir(MODULES_DIR):
             module_path = os.path.join(MODULES_DIR, module)
-            if os.path.isdir(module_path) and module not in EXCLUDED_DIRS:
+            if os.path.isdir(module_path) and module not in EXCLUDED_MODULES:
                 compile_module(module, watch, production)
 
 

@@ -46,9 +46,12 @@ COPY --chmod=0755 scripts/wait-for-db.sh ./scripts/
 COPY --chmod=0755 scripts/init-testing-db.sh ./scripts/
 
 # Copy files
+COPY app ./app
+COPY core ./core
 COPY rosemary/ ./rosemary
 COPY setup.py ./
 COPY docker/ ./docker
+COPY .moduleignore ./
 
 # Update pip
 RUN pip install --no-cache-dir --upgrade pip
