@@ -4,7 +4,8 @@
     "description": "Repository of feature models in UVL format integrated with Zenodo and flamapy following Open Science principles - Developed by DiversoLab",
     "dependencies": {
         "fs": "^0.0.1-security",
-        "uvl-parser": "^0.0.3"
+        "uvl-parser": "^0.0.3",
+        "webpack-merge": "^6.0.1"
     },
     "devDependencies": {
         "@babel/core": "^7.25.8",
