@@ -15,6 +15,9 @@
 # Exit immediately if a command exits with a non-zero status
 set -e
 
+# Compile webpack files
+rosemary webpack:compile
+
 # Wait for the database to be ready by running a script
 sh ./scripts/wait-for-db.sh
 

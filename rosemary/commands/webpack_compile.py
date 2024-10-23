@@ -12,7 +12,7 @@ MODULES_DIR = os.path.join(os.getenv('WORKING_DIR', ''), 'app', 'modules')
 # Function to load excluded directories from .moduleignore
 def load_excluded_modules():
     # Start with a list of directories that should always be excluded
-    excluded_modules = ['.pytest_cache', '__pycache__', 'webhook']
+    excluded_modules = ['.pytest_cache', '__pycache__']
     moduleignore_path = os.path.join(os.getenv('WORKING_DIR', ''), '.moduleignore')
 
     # Check if .moduleignore exists and load its content

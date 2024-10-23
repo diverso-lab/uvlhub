@@ -62,9 +62,6 @@ RUN pip install -e ./
 COPY package.json .
 RUN npm install
 
-# Compile webpack files
-RUN rosemary webpack:compile
-
 # Configure git safe directory
 RUN git config --global --add safe.directory /app
 
