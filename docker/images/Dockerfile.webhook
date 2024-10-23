@@ -67,3 +67,6 @@ RUN git config --global --add safe.directory /app
 
 # Expose port 5000
 EXPOSE 5000
+
+# Compile webpack files
+CMD rosemary webpack:compile
