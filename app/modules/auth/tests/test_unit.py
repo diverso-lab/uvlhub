@@ -192,7 +192,7 @@ def test_confirm_user_active_user(test_client):
 
     url = url_for('confirmemail.confirm_user', token=token, _external=False)
     response = test_client.get(url, follow_redirects=True)
-    assert response.request.path == url_for("auth.show_signup_form", _external=False)
+    assert response.request.path == url_for("public.index", _external=False)
 
     user = UserRepository().get_by_email(user.email)
     assert user.active is True
