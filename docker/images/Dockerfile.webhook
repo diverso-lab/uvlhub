@@ -52,9 +52,6 @@ RUN pip install --no-cache-dir --upgrade pip
 RUN pip install -r requirements.txt
 
 # Install Rosemary
-COPY app ./app
-COPY core ./core
-COPY rosemary/ ./rosemary
 COPY setup.py ./
 RUN pip install -e ./
 
@@ -67,6 +64,3 @@ RUN git config --global --add safe.directory /app
 
 # Expose port 5000
 EXPOSE 5000
-
-# Compile webpack files
-CMD rosemary webpack:compile
