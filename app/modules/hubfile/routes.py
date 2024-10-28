@@ -1,8 +1,9 @@
 from datetime import datetime
 import os
 import uuid
-from flask import current_app, jsonify, make_response, request, send_from_directory
+from flask import current_app, jsonify, make_response, request, send_from_directory, url_for
 from flask_login import current_user, login_required
+import requests
 from app.modules.hubfile import hubfile_bp
 from app.modules.hubfile.models import HubfileViewRecord
 from app.modules.hubfile.services import HubfileDownloadRecordService, HubfileService
@@ -22,39 +23,38 @@ def upload_file():
     if not file or not file.filename.endswith(".uvl"):
         return jsonify({"message": "No valid file"}), 400
 
-    # create temp folder
+    # Crear carpeta temporal si no existe
     if not os.path.exists(temp_folder):
         os.makedirs(temp_folder)
 
-    file_path = os.path.join(temp_folder, file.filename)
+    # Ruta temporal para el archivo
+    temp_file_path = os.path.join(temp_folder, file.filename)
 
-    if os.path.exists(file_path):
-        # Generate unique filename (by recursion)
-        base_name, extension = os.path.splitext(file.filename)
-        i = 1
-        while os.path.exists(
-            os.path.join(temp_folder, f"{base_name} ({i}){extension}")
-        ):
-            i += 1
-        new_filename = f"{base_name} ({i}){extension}"
-        file_path = os.path.join(temp_folder, new_filename)
-    else:
-        new_filename = file.filename
-
+    # Guardar temporalmente el archivo
     try:
-        file.save(file_path)
+        file.save(temp_file_path)
     except Exception as e:
         return jsonify({"message": str(e)}), 500
 
-    return (
-        jsonify(
-            {
-                "message": "UVL uploaded and validated successfully",
-                "filename": new_filename,
-            }
-        ),
-        200,
-    )
+    # Llamar a la ruta de validación `check_uvl` con una petición interna
+    check_uvl_url = url_for('flamapy.check_uvl', _external=True)
+    try:
+        response = requests.post(check_uvl_url, json={"filepath": temp_file_path})
+        if response.status_code != 200:
+            # Si no es válido, eliminar el archivo temporal y retornar error
+            os.remove(temp_file_path)
+            return response.json(), response.status_code
+    except requests.RequestException as e:
+        return jsonify({"error": str(e)}), 500
+
+    # Si el archivo es válido, guardarlo permanentemente
+    new_filename = file.filename
+    return jsonify(
+        {
+            "message": "UVL uploaded and validated successfully",
+            "filename": new_filename,
+        }
+    ), 200
 
 
 @hubfile_bp.route("/hubfile/delete", methods=["POST"])

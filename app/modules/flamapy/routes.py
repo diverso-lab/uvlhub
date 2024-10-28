@@ -14,8 +14,12 @@ from antlr4.error.ErrorListener import ErrorListener
 logger = logging.getLogger(__name__)
 
 
-@flamapy_bp.route('/flamapy/check_uvl/<int:file_id>', methods=['GET'])
-def check_uvl(file_id):
+@flamapy_bp.route('/flamapy/check_uvl', methods=['POST'])
+def check_uvl():
+    # Obtener la ruta del archivo desde los datos de la solicitud
+    data = request.get_json()
+    filepath = data.get("filepath")
+
     class CustomErrorListener(ErrorListener):
         def __init__(self):
             self.errors = []
@@ -36,8 +40,7 @@ def check_uvl(file_id):
                 self.errors.append(error_message)
 
     try:
-        hubfile = HubfileService().get_by_id(file_id)
-        input_stream = FileStream(hubfile.get_path())
+        input_stream = FileStream(filepath)
         lexer = UVLCustomLexer(input_stream)
 
         error_listener = CustomErrorListener()
@@ -59,10 +62,7 @@ def check_uvl(file_id):
 
         # After parsing, try transforming the model
         try:
-            # Assuming some logic here like loading and validating the model
-            # This part should contain your logic for using the Flamapy transformation
-            FLAMAFeatureModel(hubfile.get_path())  # Example usage
-            # You can optionally print or process the model here
+            FLAMAFeatureModel(filepath)  # Example usage
             return jsonify({"message": "Valid Model"}), 200
 
         except FlamaException as fe:
