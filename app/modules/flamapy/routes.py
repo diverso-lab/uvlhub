@@ -2,74 +2,9 @@ import logging
 from app.modules.hubfile.services import HubfileService
 from flask import send_file, jsonify
 from app.modules.flamapy import flamapy_bp
-from flamapy.interfaces.python.flamapy_feature_model import FLAMAFeatureModel
-from flamapy.core.exceptions import FlamaException
 import os
 
-from antlr4 import CommonTokenStream, FileStream
-from uvl.UVLCustomLexer import UVLCustomLexer
-from uvl.UVLPythonParser import UVLPythonParser
-from antlr4.error.ErrorListener import ErrorListener
-
 logger = logging.getLogger(__name__)
-
-
-@flamapy_bp.route('/flamapy/check_uvl', methods=['POST'])
-def check_uvl():
-    # Obtener la ruta del archivo desde los datos de la solicitud
-    data = request.get_json()
-    filepath = data.get("filepath")
-
-    class CustomErrorListener(ErrorListener):
-        def __init__(self):
-            self.errors = []
-
-        def syntaxError(self, recognizer, offendingSymbol, line, column, msg, e):
-            if "\\t" in msg:
-                warning_message = (
-                    f"The UVL has the following warning that prevents reading it: "
-                    f"Line {line}:{column} - {msg}"
-                )
-                print(warning_message)
-                self.errors.append(warning_message)
-            else:
-                error_message = (
-                    f"The UVL has the following error that prevents reading it: "
-                    f"Line {line}:{column} - {msg}"
-                )
-                self.errors.append(error_message)
-
-    try:
-        input_stream = FileStream(filepath)
-        lexer = UVLCustomLexer(input_stream)
-
-        error_listener = CustomErrorListener()
-
-        lexer.removeErrorListeners()
-        lexer.addErrorListener(error_listener)
-
-        stream = CommonTokenStream(lexer)
-        parser = UVLPythonParser(stream)
-
-        parser.removeErrorListeners()
-        parser.addErrorListener(error_listener)
-
-        # Optional: Commented out for now
-        # tree = parser.featureModel()
-
-        if error_listener.errors:
-            return jsonify({"errors": error_listener.errors}), 400
-
-        # After parsing, try transforming the model
-        try:
-            FLAMAFeatureModel(filepath)  # Example usage
-            return jsonify({"message": "Valid Model"}), 200
-
-        except FlamaException as fe:
-            return jsonify({"error": f"Model transformation failed: {str(fe)}"}), 400
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
 
 
 @flamapy_bp.route('/flamapy/valid/<int:file_id>', methods=['GET'])

@@ -331,22 +331,6 @@
                                     <i data-feather="eye"></i> View
                                 </button>
 
-                                <div class="btn-group" role="group">
-                                    <button id="btnGroupDrop{{ file.id }}" type="button" class="btn btn-outline-primary btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" style=" border-radius: 5px;">
-                                        <i data-feather="check"></i> Check
-                                    </button>
-                                    <ul class="dropdown-menu" aria-labelledby="btnGroupDrop{{ file.id }}">
-                                        <li>
-                                            <a class="dropdown-item" onclick="checkUVL('{{ file.id }}')">Syntax check</a>
-                                        </li>
-                                        <!-- 
-                                        <li>
-                                            <a class="dropdown-item" onclick="checkSAT('{{ file.id }}')">SAT validity check</a>
-                                        </li>
-                                        -->
-                                    </ul>
-                                </div>
-
                                 <button onclick="addToCart('{{ file.id }}')" class="btn btn-outline-secondary btn-sm" style="border-radius: 5px;">
                                     <i data-feather="plus"></i> <i data-feather="download"></i> Add
                                 </button>

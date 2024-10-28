@@ -1,9 +1,9 @@
 from datetime import datetime
 import os
 import uuid
-from flask import current_app, jsonify, make_response, request, send_from_directory, url_for
+from app.modules.flamapy.services import FlamapyService
+from flask import current_app, jsonify, make_response, request, send_from_directory
 from flask_login import current_user, login_required
-import requests
 from app.modules.hubfile import hubfile_bp
 from app.modules.hubfile.models import HubfileViewRecord
 from app.modules.hubfile.services import HubfileDownloadRecordService, HubfileService
@@ -12,6 +12,8 @@ from app import db
 from app.modules.statistics.services import StatisticsService
 
 hubfile_download_record_service = HubfileDownloadRecordService()
+
+flamapy_service = FlamapyService()
 
 
 @hubfile_bp.route("/hubfile/upload", methods=["POST"])
@@ -36,16 +38,13 @@ def upload_file():
     except Exception as e:
         return jsonify({"message": str(e)}), 500
 
-    # Llamar a la ruta de validación `check_uvl` con una petición interna
-    check_uvl_url = url_for('flamapy.check_uvl', _external=True)
-    try:
-        response = requests.post(check_uvl_url, json={"filepath": temp_file_path})
-        if response.status_code != 200:
-            # Si no es válido, eliminar el archivo temporal y retornar error
-            os.remove(temp_file_path)
-            return response.json(), response.status_code
-    except requests.RequestException as e:
-        return jsonify({"error": str(e)}), 500
+    # Llamar directamente a `check_uvl` pasando la ruta temporal del archivo
+    validation_result, status_code = flamapy_service.check_uvl(temp_file_path)
+
+    if status_code != 200:
+        # Si no es válido, eliminar el archivo temporal y retornar error
+        os.remove(temp_file_path)
+        return jsonify(validation_result), status_code
 
     # Si el archivo es válido, guardarlo permanentemente
     new_filename = file.filename
