@@ -20,6 +20,7 @@ WORKDIR /app
 # Copy files
 COPY app/ ./app
 COPY core/ ./core
+COPY rosemary/ ./rosemary
 COPY migrations/ ./migrations
 
 # Copy requirements.txt into the working directory /app
@@ -45,6 +46,16 @@ RUN pip install --no-cache-dir --upgrade pip
 
 # Install any needed packages specified in requirements.txt
 RUN pip install -r requirements.txt
+
+# Install Rosemary
+RUN pip install -e ./
+
+# Install npm dependencies
+COPY package.json .
+RUN npm install
+
+# Compile webpack files
+RUN rosemary webpack:compile
 
 # Expose port 80
 EXPOSE 80

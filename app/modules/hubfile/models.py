@@ -1,9 +1,19 @@
+import logging
 import os
-from datetime import datetime, timezone
+from datetime import datetime
+
+import pytz
+from sqlalchemy import event
+from sqlalchemy.orm import joinedload, object_session
 
 from app import db
 from app.modules.auth.models import User
 from app.modules.dataset.models import DataSet
+from core.managers.task_queue_manager import TaskQueueManager
+from dotenv import load_dotenv
+
+logger = logging.getLogger(__name__)
+load_dotenv()
 
 
 class Hubfile(db.Model):
@@ -15,6 +25,8 @@ class Hubfile(db.Model):
     feature_model_id = db.Column(
         db.Integer, db.ForeignKey("feature_model.id"), nullable=False
     )
+
+    feature_model = db.relationship('FeatureModel', back_populates='hubfiles')
 
     def get_formatted_size(self):
         from app.modules.dataset.services import SizeService
@@ -31,7 +43,7 @@ class Hubfile(db.Model):
 
         return HubfileService().get_dataset_by_hubfile(self)
 
-    def get_path(self) -> DataSet:
+    def get_path(self) -> str:
         from app.modules.hubfile.services import HubfileService
 
         return HubfileService().get_path_by_hubfile(self)
@@ -63,10 +75,11 @@ class Hubfile(db.Model):
 
     def get_full_path(self) -> str:
         return os.path.join(
-            os.getenv("WORKING_DIR"),
+            os.getenv("WORKING_DIR", ""),
             "uploads",
             f"user_{self.feature_model.data_set.user_id}",
             f"dataset_{self.feature_model.data_set_id}",
+            'uvl',
             self.name,
         )
 
@@ -79,7 +92,7 @@ class HubfileViewRecord(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
     file_id = db.Column(db.Integer, db.ForeignKey("file.id"), nullable=False)
-    view_date = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    view_date = db.Column(db.DateTime, default=lambda: datetime.now(pytz.utc))
     view_cookie = db.Column(db.String(36))
 
     def __repr__(self):
@@ -91,9 +104,7 @@ class HubfileDownloadRecord(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
     file_id = db.Column(db.Integer, db.ForeignKey("file.id"))
-    download_date = db.Column(
-        db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc)
-    )
+    download_date = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.utc))
     download_cookie = db.Column(db.String(36), nullable=False)
 
     def __repr__(self):
@@ -103,3 +114,23 @@ class HubfileDownloadRecord(db.Model):
             f"date={self.download_date} "
             f"cookie={self.download_cookie}>"
         )
+
+
+@event.listens_for(Hubfile, "after_insert")
+def hubfile_aupdated_listener(mapper, connection, target):
+    session = object_session(target)
+
+    hubfile_with_fm = (
+        session.query(Hubfile)
+        .options(joinedload(Hubfile.feature_model))
+        .filter(Hubfile.id == target.id)
+        .first()
+    )
+    path = hubfile_with_fm.get_full_path()
+
+    task_manager = TaskQueueManager()
+    task_manager.enqueue_task(
+        "app.modules.hubfile.tasks.transform_uvl",
+        path=path,
+        timeout=300
+    )

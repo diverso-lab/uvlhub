@@ -2,15 +2,8 @@ import logging
 from app.modules.hubfile.services import HubfileService
 from flask import send_file, jsonify
 from app.modules.flamapy import flamapy_bp
-from flamapy.metamodels.fm_metamodel.transformations import (
-    UVLReader,
-    GlencoeWriter,
-    SPLOTWriter,
-)
-from flamapy.metamodels.pysat_metamodel.transformations import FmToPysat, DimacsWriter
 from flamapy.interfaces.python.flamapy_feature_model import FLAMAFeatureModel
 from flamapy.core.exceptions import FlamaException
-import tempfile
 import os
 
 from antlr4 import CommonTokenStream, FileStream
@@ -84,57 +77,38 @@ def valid(file_id):
     return jsonify({"success": True, "file_id": file_id})
 
 
-@flamapy_bp.route("/flamapy/to_glencoe/<int:file_id>", methods=["GET"])
-def to_glencoe(file_id):
-    temp_file = tempfile.NamedTemporaryFile(suffix=".json", delete=False)
+def download_transformed_file(file_id, extension, subdirectory):
     try:
         hubfile = HubfileService().get_or_404(file_id)
-        fm = UVLReader(hubfile.get_path()).transform()
-        GlencoeWriter(temp_file.name, fm).transform()
+        # Obtener el directorio base del dataset, que es el padre de la carpeta 'uvl'
+        dataset_dir = os.path.dirname(os.path.dirname(hubfile.get_path()))
+        original_filename = os.path.basename(hubfile.get_path())
+        transformed_filename = original_filename.replace('.uvl', extension)
+        transformed_file_path = os.path.join(dataset_dir, subdirectory, transformed_filename)
 
-        # Return the file in the response
+        if not os.path.exists(transformed_file_path):
+            return jsonify({'error': f'Transformed file not found: {transformed_file_path}'}), 404
+
         return send_file(
-            temp_file.name,
+            transformed_file_path,
             as_attachment=True,
-            download_name=f"{hubfile.name}_glencoe.txt",
+            download_name=os.path.basename(transformed_file_path)
         )
-    finally:
-        # Clean up the temporary file
-        os.remove(temp_file.name)
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
-@flamapy_bp.route("/flamapy/to_splot/<int:file_id>", methods=["GET"])
-def to_splot(file_id):
-    temp_file = tempfile.NamedTemporaryFile(suffix=".splx", delete=False)
-    try:
-        hubfile = HubfileService().get_by_id(file_id)
-        fm = UVLReader(hubfile.get_path()).transform()
-        SPLOTWriter(temp_file.name, fm).transform()
-
-        # Return the file in the response
-        return send_file(
-            temp_file.name,
-            as_attachment=True,
-            download_name=f"{hubfile.name}_splot.txt",
-        )
-    finally:
-        # Clean up the temporary file
-        os.remove(temp_file.name)
+@flamapy_bp.route('/flamapy/to_glencoe/<int:file_id>', methods=['GET'])
+def to_glencoe(file_id):
+    return download_transformed_file(file_id, '.json', 'glencoe')
 
 
 @flamapy_bp.route("/flamapy/to_cnf/<int:file_id>", methods=["GET"])
 def to_cnf(file_id):
-    temp_file = tempfile.NamedTemporaryFile(suffix=".cnf", delete=False)
-    try:
-        hubfile = HubfileService().get_by_id(file_id)
-        fm = UVLReader(hubfile.get_path()).transform()
-        sat = FmToPysat(fm).transform()
-        DimacsWriter(temp_file.name, sat).transform()
+    return download_transformed_file(file_id, '.cnf', 'dimacs')
 
-        # Return the file in the response
-        return send_file(
-            temp_file.name, as_attachment=True, download_name=f"{hubfile.name}_cnf.txt"
-        )
-    finally:
-        # Clean up the temporary file
-        os.remove(temp_file.name)
+
+@flamapy_bp.route('/flamapy/to_splot/<int:file_id>', methods=['GET'])
+def to_splot(file_id):
+    return download_transformed_file(file_id, '.splx', 'splot')

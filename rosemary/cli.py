@@ -1,5 +1,6 @@
 import click
 
+from rosemary.commands.webpack_compile import webpack_compile
 from rosemary.commands.module_list import module_list
 from rosemary.commands.locust import locust, stop
 from rosemary.commands.compose_env import compose_env
@@ -58,7 +59,7 @@ cli.add_command(locust)
 cli.add_command(stop)
 cli.add_command(selenium)
 cli.add_command(module_list)
-
+cli.add_command(webpack_compile)
 
 if __name__ == "__main__":
     cli()

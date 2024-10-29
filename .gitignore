@@ -1,20 +1,50 @@
+# Environment variables
 .env
+
+# Byte-compiled / optimized / DLL files
 __pycache__/
-.idea
-uploads/
+
+# PyCharm / JetBrains IDE files
+.idea/
+
+# Log files
 app.log
 app.log.*
+
+# macOS system files
 .DS_Store
-rosemary.egg-info/
+
+# Build artifacts and distribution directories
 build/
+dist/
+
+# Webpack bundles and source maps
+*.bundle.js
+*.bundle.js.map
+*.map
+
+# Python egg info
+rosemary.egg-info/
+
+# Coverage reports
 .coverage
 htmlcov/
-.pytest_cache
+
+# pytest cache
+.pytest_cache/
+
+# Virtual environments
 venv/
+
+# Temporary files for testing and deployment
+uploads/
+test_file.txt
 ubuntu-bionic-18.04-cloudimg-console.log
 .vagrant/
 nginx.prod.ssl.conf
 .version
 entrypoint.sh
 deployments.log
-test_file.txt
+
+# Node.js dependencies
+node_modules/

@@ -1,3 +1,4 @@
+from datetime import datetime
 import logging
 import os
 import json
@@ -10,6 +11,7 @@ from flask import (
     redirect,
     render_template,
     request,
+    send_file,
     send_from_directory,
     url_for,
 )
@@ -156,7 +158,7 @@ def update_dataset():
     logger.info(f"[BACK] Dataset: {dataset.id}")
 
     if not form.validate_on_submit():
-        logger.info(f"Form: {form.errors}")
+        logger.info(f"Form errors: {form.errors}")
         return jsonify({"message": form.errors}), 400
 
     try:
@@ -189,8 +191,8 @@ def update_dataset():
 def list_dataset():
     return render_template(
         "dataset/list_datasets.html",
-        datasets=dataset_service.get_synchronized(current_user.id),
-        local_datasets=dataset_service.get_unsynchronized(current_user.id),
+        datasets=dataset_service.get_synchronized_datasets_by_user(current_user.id),
+        local_datasets=dataset_service.get_unsynchronized_datasets_by_user(current_user.id),
     )
 
 
@@ -215,6 +217,19 @@ def download_dataset(dataset_id):
     resp.set_cookie("download_cookie", user_cookie)
 
     return resp
+
+
+@dataset_bp.route("/dataset/download/all", methods=["GET"])
+def download_all_dataset():
+    zip_path = dataset_service.zip_all_datasets()
+
+    # Obtener la fecha actual en el formato deseado (por ejemplo, YYYYMMDD)
+    current_date = datetime.now().strftime("%Y_%m_%d")
+
+    # Crear el nombre del archivo con la fecha
+    zip_filename = f"uvlhub_bulk_{current_date}.zip"
+
+    return send_file(zip_path, as_attachment=True, download_name=zip_filename)
 
 
 @dataset_bp.route("/doi/<path:doi>/", methods=["GET"])
@@ -248,7 +263,7 @@ def subdomain_index(doi):
 def get_unsynchronized_dataset(dataset_id):
 
     # Get dataset
-    dataset = dataset_service.get_unsynchronized_dataset(current_user.id, dataset_id)
+    dataset = dataset_service.get_unsynchronized_dataset_by_user(current_user.id, dataset_id)
 
     if not dataset:
         abort(404)

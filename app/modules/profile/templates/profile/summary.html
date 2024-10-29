@@ -113,5 +113,5 @@
 {% endblock %}
 
 {% block scripts %}
-    <script src="{{ url_for('profile.scripts') }}"></script>
+    <script src="{{ url_for('profile.assets', subfolder='js', filename='scripts.js') }}"></script>
 {% endblock %}

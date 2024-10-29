@@ -1,6 +1,6 @@
-from datetime import datetime, timezone
+from datetime import datetime
 from flask_login import current_user
-from sqlalchemy import func
+import pytz
 from app.modules.auth.models import User
 from app.modules.dataset.models import DataSet
 from app.modules.featuremodel.models import FeatureModel
@@ -40,18 +40,10 @@ class HubfileViewRecordRepository(BaseRepository):
     def __init__(self):
         super().__init__(HubfileViewRecord)
 
-    def total_hubfile_views(self) -> int:
-        max_id = self.model.query.with_entities(func.max(self.model.id)).scalar()
-        return max_id if max_id is not None else 0
-
 
 class HubfileDownloadRecordRepository(BaseRepository):
     def __init__(self):
         super().__init__(HubfileDownloadRecord)
-
-    def total_hubfile_downloads(self) -> int:
-        max_id = self.model.query.with_entities(func.max(self.model.id)).scalar()
-        return max_id if max_id is not None else 0
 
     def the_record_exists(self, hubfile: Hubfile, user_cookie: str):
         return self.model.query.filter_by(
@@ -64,8 +56,8 @@ class HubfileDownloadRecordRepository(BaseRepository):
         self, hubfile: Hubfile, user_cookie: str
     ) -> HubfileViewRecord:
         return self.create(
-            user_id=current_user.id if current_user.is_authenticated else None,
-            file_id=hubfile.id,
-            download_date=datetime.now(timezone.utc),
-            download_cookie=user_cookie,
-        )
+                user_id=current_user.id if current_user.is_authenticated else None,
+                file_id=hubfile.id,
+                download_date=datetime.now(pytz.utc),
+                download_cookie=user_cookie,
+            )

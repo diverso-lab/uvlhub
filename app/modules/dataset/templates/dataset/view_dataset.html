@@ -214,7 +214,7 @@
 
             <div class="card-body">
 
-                <h3> uvlhub related publication </h3>
+                <h2>Related publications </h3>
 
                 David Romero-Organvidez, José A. Galindo, Chico Sundermann, Jose-Miguel Horcas, David Benavides,
                 <i>UVLHub: A feature model data repository using UVL and open science principles</i>,
@@ -224,29 +224,56 @@
                 ISSN 0164-1212,
                 <a href="https://doi.org/10.1016/j.jss.2024.112150" target="_blank">https://doi.org/10.1016/j.jss.2024.112150</a>
 
-            </div>
+                <br>
 
-            <div class="card-body mt-0 pt-0">
-
-                <button onclick="copyText('bibtex_cite')" class="btn btn-light btn-sm" style="border-radius: 5px;">
+                <button onclick="copyText('bibtex_cite_uvlhub')" class="btn btn-light btn-sm" style="border-radius: 5px;">
                     <i data-feather="clipboard" class="center-button-icon"></i>
                     Copy in BibTex
                 </button>
 
-                <button onclick="copyText('ris_cite')" class="btn btn-light btn-sm" style="border-radius: 5px;">
+                <button onclick="copyText('ris_cite_uvlhub')" class="btn btn-light btn-sm" style="border-radius: 5px;">
                     <i data-feather="clipboard" class="center-button-icon"></i>
                     Copy in RIS
                 </button>
 
-                <button onclick="copyText('apa_cite')" class="btn btn-light btn-sm" style="border-radius: 5px;">
+                <button onclick="copyText('apa_cite_uvlhub')" class="btn btn-light btn-sm" style="border-radius: 5px;">
                     <i data-feather="clipboard" class="center-button-icon"></i>
                     Copy in APA
                 </button>
 
-                <button onclick="copyText('text_cite')" class="btn btn-light btn-sm" style="border-radius: 5px;">
+                <button onclick="copyText('text_cite_uvlhub')" class="btn btn-light btn-sm" style="border-radius: 5px;">
                     <i data-feather="clipboard" class="center-button-icon"></i>
                     Copy in text
                 </button>
+
+                <br><br>
+
+                David Benavides, Chico Sundermann, Kevin Feichtinger, José A. Galindo, Rick Rabiser and Thomas Thüm,
+                <i>Uvl: Feature Modelling with the Universal Variability Language.</i>
+                <a href="http://dx.doi.org/10.2139/ssrn.4764657" target="_blank">http://dx.doi.org/10.2139/ssrn.4764657</a>
+
+                <br>
+
+                <button onclick="copyText('bibtex_cite_uvl')" class="btn btn-light btn-sm" style="border-radius: 5px;">
+                    <i data-feather="clipboard" class="center-button-icon"></i>
+                    Copy in BibTex
+                </button>
+
+                <button onclick="copyText('ris_cite_uvl')" class="btn btn-light btn-sm" style="border-radius: 5px;">
+                    <i data-feather="clipboard" class="center-button-icon"></i>
+                    Copy in RIS
+                </button>
+
+                <button onclick="copyText('apa_cite_uvl')" class="btn btn-light btn-sm" style="border-radius: 5px;">
+                    <i data-feather="clipboard" class="center-button-icon"></i>
+                    Copy in APA
+                </button>
+
+                <button onclick="copyText('text_cite_uvl')" class="btn btn-light btn-sm" style="border-radius: 5px;">
+                    <i data-feather="clipboard" class="center-button-icon"></i>
+                    Copy in text
+                </button>
+
 
             </div>
 
@@ -264,7 +291,7 @@
                 <div class="row">
                     <div class="col-12 d-flex justify-content-between align-items-center">
                         <h4 style="margin-bottom: 0px">UVL models</h4>
-                        <h4 style="margin-bottom: 0px;"><span class="badge bg-dark">{{ dataset.get_files_count() }}</span></h4>
+                        <h4 style="margin-bottom: 0px;"><span class="badge bg-dark">{{ dataset.count_feature_models() }}</span></h4>
                     </div>
                 </div>
 
@@ -273,7 +300,7 @@
 
 
             {% for feature_model in dataset.feature_models %}
-                {% for file in feature_model.files %}
+                {% for file in feature_model.hubfiles %}
                     <div class="list-group-item">
 
                         <div class="row">
@@ -451,8 +478,7 @@
     <script src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
 
-    <script src="{{ url_for('flamapy.scripts') }}"></script>
-    <script src="{{ url_for('downloadqueue.scripts') }}"></script>
-    <script src="{{ url_for('factlabel.scripts') }}"></script>
-
+    <script src="{{ url_for('factlabel.assets', subfolder='js', filename='scripts.js') }}"></script>
+    <script src="{{ url_for('flamapy.assets', subfolder='js', filename='scripts.js') }}"></script>
+    <script src="{{ url_for('downloadqueue.assets', subfolder='js', filename='scripts.js') }}"></script>
 {% endblock %}

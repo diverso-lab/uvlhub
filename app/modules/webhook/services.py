@@ -1,10 +1,11 @@
+import pytz
 from app.modules.webhook.repositories import WebhookRepository
 from core.services.BaseService import BaseService
 
 from flask import abort
 import subprocess
 import docker
-from datetime import datetime, timezone
+from datetime import datetime
 
 client = docker.from_env()
 
@@ -63,9 +64,7 @@ class WebhookService(BaseService):
         return output.decode("utf-8")
 
     def log_deployment(self, container):
-        log_entry = (
-            f"Deployment successful at {datetime.now(timezone.utc).isoformat()}\n"
-        )
+        log_entry = f"Deployment successful at {datetime.now(pytz.utc)}\n"
         log_file_path = "/app/deployments.log"
         self.execute_container_command(
             container, f"sh -c 'echo \"{log_entry}\" >> {log_file_path}'"

@@ -46,6 +46,16 @@ RUN pip install --no-cache-dir --upgrade pip
 # Install any needed packages specified in requirements.txt
 RUN pip install -r requirements.txt
 
+# Install Rosemary
+RUN pip install -e ./
+
+# Install npm dependencies
+COPY package.json .
+RUN npm install
+
+# Compile webpack files
+RUN rosemary webpack:compile
+
 # Configure git safe directory
 RUN git config --global --add safe.directory /app
 

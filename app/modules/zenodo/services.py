@@ -239,9 +239,11 @@ class ZenodoService(BaseService):
         file_path = os.path.join(
             uploads_folder_name(),
             f"user_{str(user_id)}",
-            f"dataset_{dataset.id}/",
-            uvl_filename,
+            f"dataset_{dataset.id}",
+            "uvl",
+            uvl_filename
         )
+
         files = {"file": open(file_path, "rb")}
 
         publish_url = f"{self.ZENODO_API_URL}/{deposition_id}/files"
