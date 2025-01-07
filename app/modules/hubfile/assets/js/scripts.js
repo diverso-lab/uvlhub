@@ -33,46 +33,55 @@ let dropzone = Dropzone.options.myDropzone = {
             let ext = file.name.split('.').pop();
             if (ext !== 'uvl') {
                 this.removeFile(file);
-
+        
                 let alert = document.createElement('p');
                 alert.textContent = 'Invalid file extension: ' + file.name;
                 alerts.appendChild(alert);
                 alerts.style.display = 'block';
-            }  else {
+            } else {
                 // Read the file as text to pass it to the UVL parser
                 let reader = new FileReader();
                 reader.onload = function(event) {
                     const fileContent = event.target.result;  // This contains the UVL file content
-
+        
                     // Now, use uvl-parser to parse the content
                     try {
                         const featureModel = new FeatureModel(fileContent);
                         const tree = featureModel.getFeatureModel();  // This is your parsed UVL tree
-
+        
                         console.log("Parsed UVL Feature Model:", tree);
                         valid = true;
-
+        
+                        
                         // You can now manipulate `tree` or display it in the UI as needed
                     } catch (error) {
-                        if (error instanceof TypeError) {
-                            console.error("Caught a TypeError:", error.message);
+                        // Verificar si el error es debido a `Error.captureStackTrace`
+                        if (error.message.includes("Error.captureStackTrace is not a function")) {
+                            console.warn("Error.captureStackTrace is not supported in this environment.");
+                            valid = false;
+                            let alert = document.createElement('p');
+                            alert.innerHTML = 'Syntax error in <b>' + file.name + '</b>';
+                            alerts.appendChild(alert);
+                            alerts.style.display = 'block';
                         } else {
+                            // Si es un error de sintaxis en el UVL, mostrar mensaje personalizado
                             valid = false;
                             console.error("Error parsing UVL file:", error.message);
-                            invalid_uvl_message = error.message
+                            invalid_uvl_message = error.message;
+                            
+                            // Muestra el mensaje de error de sintaxis en el UI
                             let alert = document.createElement('p');
                             alert.innerHTML = 'Syntax error in <b>' + file.name + '</b><br>&nbsp;>&nbsp;>&nbsp;>&nbsp;' + error.message;
                             alerts.appendChild(alert);
                             alerts.style.display = 'block';
                         }
-
                     }
                 };
                 reader.readAsText(file);  // Read the file as text
             }
-
+        
         });
-
+        
         this.on('error', function (file, response) {
             console.error("Error uploading file: ", response);
             let alert = document.createElement('p');
@@ -80,7 +89,6 @@ let dropzone = Dropzone.options.myDropzone = {
             alerts.appendChild(alert);
             alerts.style.display = 'block';
         });
-
 
         this.on('success', function (file, response) {
 

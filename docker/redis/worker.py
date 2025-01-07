@@ -12,7 +12,7 @@ if __name__ == '__main__':
     app = create_app()
 
     with app.app_context():
-        
+
         # Connect to Redis and start listening to the queue
         listen = ['default']
         conn = app.config['SESSION_REDIS']

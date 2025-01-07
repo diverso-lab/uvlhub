@@ -3,6 +3,7 @@ import logging
 import os
 import json
 import shutil
+import tempfile
 
 from flask import (
     abort,
@@ -221,15 +222,24 @@ def download_dataset(dataset_id):
 
 @dataset_bp.route("/dataset/download/all", methods=["GET"])
 def download_all_dataset():
-    zip_path = dataset_service.zip_all_datasets()
+    # Crear un directorio temporal
+    temp_dir = tempfile.mkdtemp()
+    zip_path = os.path.join(temp_dir, "all_datasets.zip")
 
-    # Obtener la fecha actual en el formato deseado (por ejemplo, YYYYMMDD)
-    current_date = datetime.now().strftime("%Y_%m_%d")
+    try:
+        # Generar el archivo ZIP
+        dataset_service.zip_all_datasets(zip_path)
 
-    # Crear el nombre del archivo con la fecha
-    zip_filename = f"uvlhub_bulk_{current_date}.zip"
+        # Crear el nombre del archivo con la fecha
+        current_date = datetime.now().strftime("%Y_%m_%d")
+        zip_filename = f"uvlhub_bulk_{current_date}.zip"
 
-    return send_file(zip_path, as_attachment=True, download_name=zip_filename)
+        # Enviar el archivo como respuesta
+        return send_file(zip_path, as_attachment=True, download_name=zip_filename)
+    finally:
+        # Asegurar que la carpeta temporal se elimine después de que Flask sirva el archivo
+        if os.path.exists(temp_dir):
+            shutil.rmtree(temp_dir)
 
 
 @dataset_bp.route("/doi/<path:doi>/", methods=["GET"])

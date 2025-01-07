@@ -326,10 +326,7 @@ class DataSetService(BaseService):
 
         return temp_dir
 
-    def zip_all_datasets(self) -> str:
-        temp_dir = tempfile.mkdtemp()
-        zip_path = os.path.join(temp_dir, "all_datasets.zip")
-
+    def zip_all_datasets(self, zip_path: str):
         with ZipFile(zip_path, "w") as zipf:
             for user_dir in os.listdir("uploads"):
                 user_path = os.path.join("uploads", user_dir)
@@ -351,7 +348,6 @@ class DataSetService(BaseService):
                                             full_path,
                                             arcname=os.path.join(dataset_dir, relative_path),
                                         )
-        return zip_path
 
 
 class AuthorService(BaseService):
