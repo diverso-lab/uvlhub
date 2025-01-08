@@ -197,3 +197,11 @@
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
+a{
+    color: #147ABB;
+}
+
+.bg-primary{
+    background-color: #147ABB !important;
+}

@@ -400,9 +400,12 @@
     
 {% block scripts %}
 
+    {% if not is_edit %}
     <script>
         let hubfiles = {{ hubfiles|tojson|safe }};
     </script>
+    {% endif %}
+
 
     <script src="{{ url_for('zenodo.assets', subfolder='js', filename='scripts.js') }}"></script>
     <script src="{{ url_for('dataset.assets', subfolder='js', filename='scripts.js') }}"></script>
