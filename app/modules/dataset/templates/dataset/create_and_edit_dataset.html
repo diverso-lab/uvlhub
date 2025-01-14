@@ -1,414 +1,679 @@
 {% extends "base_template.html" %}
 
-{% block title %}Upload dataset{% endblock %}
+{% set title = "Upload dataset" %}
 
 {% block content %}
 
-    {% if is_edit %}
-    <h1 class="h2 mb-3"><b>Edit</b> dataset: {{ form.title.data }}</h1>
-    {% else %}
-    <h1 class="h2 mb-3"><b>Upload</b> dataset</h1>
-    {% endif %}
+<div class="stepper stepper-pills stepper-column d-flex flex-column flex-xl-row flex-row-fluid gap-10" id="stepper_upload_dataset">
+    <!--begin::Aside-->
+    <div class="card d-flex justify-content-center justify-content-xl-start flex-row-auto w-100 w-xl-300px w-xxl-400px">
+        <!--begin::Wrapper-->
+        <div class="card-body px-6 px-lg-10 px-xxl-15 py-20">
+            <!--begin::Nav-->
 
-    <div class="row">
-        <div class="col-12 mb-3">
-            <div class="alert alert-warning" role="alert" id="test_zenodo_connection_error" style="display: none">
-                <div class="alert-message">
+            <!-- Left menu-->
 
-                    <h4 class="alert-heading"><i class="align-middle" data-feather="alert-triangle"></i> Limited
-                        connection to the Zenodo API</h4>
-                    <p class="p-0 m-0">
-                        There seems to be some kind of problem with the Zenodo API and synchronization of your dataset
-                        files may not be possible. We will save your files locally to eventually synchronize them with
-                        Zenodo. Sorry for the inconvenience, Zenodo is an external service and we can't do
-                        anything about it.
-                    </p>
+            <div class="stepper-nav">
+                <!--begin::Step 1-->
+                <div class="stepper-item current" data-kt-stepper-element="nav">
+                    <!--begin::Wrapper-->
+                    <div class="stepper-wrapper">
+                        <!--begin::Icon-->
+                        <div class="stepper-icon w-40px h-40px">
+                            <i class="ki-duotone ki-check fs-2 stepper-check"></i>
+                            <span class="stepper-number">1</span>
+                        </div>
+                        <!--end::Icon-->
+                        <!--begin::Label-->
+                        <div class="stepper-label">
+                            <h3 class="stepper-title">Setup dataset type</h3>
+                        </div>
+                        <!--end::Label-->
+                    </div>
+                    <!--end::Wrapper-->
+                    <!--begin::Line-->
+                    <div class="stepper-line h-40px"></div>
+                    <!--end::Line-->
                 </div>
+                <!--end::Step 1-->
+                <!--begin::Step 2-->
+                <div class="stepper-item" data-kt-stepper-element="nav">
+                    <!--begin::Wrapper-->
+                    <div class="stepper-wrapper">
+                        <!--begin::Icon-->
+                        <div class="stepper-icon w-40px h-40px">
+                            <i class="ki-duotone ki-check fs-2 stepper-check"></i>
+                            <span class="stepper-number">2</span>
+                        </div>
+                        <!--end::Icon-->
+                        <!--begin::Label-->
+                        <div class="stepper-label">
+                            <h3 class="stepper-title">Upload UVL files</h3>
+                        </div>
+                        <!--end::Label-->
+                    </div>
+                    <!--end::Wrapper-->
+                    <!--begin::Line-->
+                    <div class="stepper-line h-40px"></div>
+                    <!--end::Line-->
+                </div>
+                <!--end::Step 2-->
+                <!--begin::Step 3-->
+                <div class="stepper-item" data-kt-stepper-element="nav">
+                    <!--begin::Wrapper-->
+                    <div class="stepper-wrapper">
+                        <!--begin::Icon-->
+                        <div class="stepper-icon w-40px h-40px">
+                            <i class="ki-duotone ki-check fs-2 stepper-check"></i>
+                            <span class="stepper-number">3</span>
+                        </div>
+                        <!--end::Icon-->
+                        <!--begin::Label-->
+                        <div class="stepper-label">
+                            <h3 class="stepper-title">Setup dataset info</h3>
+                        </div>
+                        <!--end::Label-->
+                    </div>
+                    <!--end::Wrapper-->
+                    <!--begin::Line-->
+                    <div class="stepper-line h-40px"></div>
+                    <!--end::Line-->
+                </div>
+                <!--end::Step 3-->
+                <!--begin::Step 4-->
+                <div class="stepper-item" data-kt-stepper-element="nav">
+                    <!--begin::Wrapper-->
+                    <div class="stepper-wrapper">
+                        <!--begin::Icon-->
+                        <div class="stepper-icon w-40px h-40px">
+                            <i class="ki-duotone ki-check fs-2 stepper-check"></i>
+                            <span class="stepper-number">4</span>
+                        </div>
+                        <!--end::Icon-->
+                        <!--begin::Label-->
+                        <div class="stepper-label">
+                            <h3 class="stepper-title">Setup authors</h3>
+                        </div>
+                        <!--end::Label-->
+                    </div>
+                    <!--end::Wrapper-->
+                    <!--begin::Line-->
+                    <div class="stepper-line h-40px"></div>
+                    <!--end::Line-->
+                </div>
+                <!--end::Step 4-->
+                <!--begin::Step 5-->
+                <div class="stepper-item mark-completed" data-kt-stepper-element="nav">
+                    <!--begin::Wrapper-->
+                    <div class="stepper-wrapper">
+                        <!--begin::Icon-->
+                        <div class="stepper-icon w-40px h-40px">
+                            <i class="ki-duotone ki-check fs-2 stepper-check"></i>
+                            <span class="stepper-number">5</span>
+                        </div>
+                        <!--end::Icon-->
+                        <!--begin::Label-->
+                        <div class="stepper-label">
+                            <h3 class="stepper-title">Upload dataset</h3>
+                        </div>
+                        <!--end::Label-->
+                    </div>
+                    <!--end::Wrapper-->
+                </div>
+                <!--end::Step 5-->
             </div>
+            <!--end::Nav-->
         </div>
-
+        <!--end::Wrapper-->
     </div>
+    <!--begin::Aside-->
+    <!--begin::Content-->
+    <div class="card d-flex flex-row-fluid flex-center">
+        <!--begin::Form-->
+        <div class="card-body py-20 w-100 mw-xl-700px px-9" novalidate="novalidate" id="kt_create_account_form">
 
-    {% if messages %}
-        <ul>
-            {% for message in messages %}
-                <li>{{ message }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
+            <div class="current" data-kt-stepper-element="content">
+                <!--begin::Wrapper-->
+                <div class="w-100">
+                    <!--begin::Heading-->
+                    <div class="pb-10 pb-lg-15">
+                        <h2 class="fw-bold d-flex align-items-center text-gray-900">Setup dataset type 
+                        <span class="ms-1" data-bs-toggle="tooltip" title="With this option you can control the visibility of your dataset. It is very useful if, for example, your dataset is not complete or your paper is in a double-blind review process.">
+                            <i class="ki-duotone ki-information-5 text-gray-500 fs-6">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                                <span class="path3"></span>
+                            </i>
+                        </span></h2>
+                        <div class="text-muted fw-semibold fs-6">If you need more info, please check out 
+                            <a href="#" class="link-primary fw-bold">Help Page</a>.</div>
+                    </div>
+                    <!--end::Heading-->
+                    <!--begin::Input group-->
+                    <div class="fv-row">
+                        <div class="row">
 
-    <div class="row">
-
-        <div class="col-xl-6 col-lg-12 col-md-12 col-sm-12">
-            <div id="basic_info_form">
-
-                {{ form.hidden_tag() }}
-
-                {% if is_edit %}
-                    <input type="hidden" id="datasetId" value="{{dataset.id}}"/>
-                {% endif %}
-
-                <div class="row">
-
-                    <div class="col-12">
-
-                        <h1 class="h3 mb-3">Basic info</h1>
-
-                        <div class="row" style="padding-left: 2rem">
-
-                            <div class="col-lg-6 col-xs-12 col-md-12">
-                                <div class="mb-3">
-                                    {{ form.title.label(class="form-label") }} *
-                                    {{ form.title(class="form-control") }}
-                                    {% for error in form.title.errors %}
-                                        <span style="color: red;">{{ error }}</span>
-                                    {% endfor %}
-                                </div>
-                            </div>
-
-                            <div class="col-12">
-                                <div class="mb-3">
-                                    {{ form.desc.label(class="form-label") }} *
-                                    {{ form.desc(rows=4, class="form-control") }}
-                                    {% for error in form.desc.errors %}
-                                        <span style="color: red;">{{ error }}</span>
-                                    {% endfor %}
-                                </div>
-                            </div>
-
-                            <div class="col-lg-6 col-6">
-                                <div class="mb-3">
-                                    {{ form.publication_type.label(class="form-label") }}
-                                    {{ form.publication_type(class="form-control") }}
-                                </div>
-
-                            </div>
-
-                            <div class="col-lg-6 col-6">
-                                <div class="mb-3">
-                                    {{ form.publication_doi.label(class="form-label") }}
-                                    {{ form.publication_doi(class="form-control") }}
-                                    {% for error in form.publication_doi.errors %}
-                                        <span style="color: red;">{{ error }}</span>
-                                    {% endfor %}
-                                </div>
-                            </div>
-
-                            <div class="col-6">
-                                <div class="mb-3">
-                                    {{ form.tags.label(class="form-label") }}
-                                    {{ form.tags(class="form-control") }}
-                                    {% for error in form.tags.errors %}
-                                        <span style="color: red;">{{ error }}</span>
-                                    {% endfor %}
-                                </div>
-                            </div>
-
-                        </div>
-
-                        <h1 class="h3 mb-3 mt-4">
-                          Authors
-                        </h1>
-
-                        <div class="row" style="padding-left: 2rem" id="authors_form">
-
-                            <div class="col-12">
-
-                                <div class="mb-3">
-
-                                    <div id="authors">
-
-                                        {% if is_edit %}
-
-                                            {% if not dataset.is_anonymous()%}
-                                                {% for subform in form.authors %}
-
-                                                    <div class="author row" style="border: 2px dotted rgb(204, 204, 204); border-radius: 10px; padding: 10px; margin: 10px 0px; background-color: white;">
-                                                        <div class="col-lg-6 col-12 mb-3">
-                                                            {{ subform.form.name.label(class="form-label") }}
-                                                            {{ subform.form.name.data(class="form-control" ) }}
-                                                        </div>
-                                                        <div class="col-lg-6 col-12 mb-3">
-                                                            {{ subform.form.affiliation.label(class="form-label") }}
-                                                            {{ subform.form.affiliation.data(class="form-control" ) }}
-                                                        </div>
-                                                        <div class="col-lg-6 col-12 mb-3">
-                                                            {{ subform.form.orcid.label(class="form-label") }}
-                                                            {{ subform.form.orcid.data(class="form-control") }}
-                                                        </div>
-                                                        <div class="col-12 mb-2">
-                                                            <button class="btn btn-danger btn-sm remove-author" type="button" onclick="removeAuthor(this)">Remove author</button>
-                                                        </div>
-                                                    </div>
-
-                                                {% endfor %}
-                                            {% endif %}
-
-
-
-                                        {% else %}
-
-                                            {% for subform in form.authors %}
-                                            <div class="row author" {% if not loop.first %}
-                                                style="border:2px dotted #ccc;border-radius:10px;padding:10px;margin:10px 0; background-color: white"
-                                                {% endif %}
-                                            >
-                                                <div class="col-lg-6 col-12 mb-3">
-                                                    {{ subform.form.name.label(class="form-label") }}
-                                                    {{ subform.form.name(class="form-control", disabled=loop.first) }}
-                                                    {% for error in subform.name.errors %}
-                                                        <span style="color: red;">{{ error }}</span>
-                                                    {% endfor %}
-                                                </div>
-
-                                                <div class="col-lg-6 col-12 mb-3">
-                                                    {{ subform.form.affiliation.label(class="form-label") }}
-                                                    {{ subform.form.affiliation(class="form-control", disabled=loop.first) }}
-                                                    {% for error in subform.name.errors %}
-                                                        <span style="color: red;">{{ error }}</span>
-                                                    {% endfor %}
-                                                </div>
-
-                                                <div class="col-lg-6 col-12 mb-3">
-                                                    {{ subform.orcid.label(class="form-label") }}
-                                                    {{ subform.orcid(class="form-control", disabled=loop.first) }}
-                                                    {% for error in subform.orcid.errors %}
-                                                        <span style="color: red;">{{ error }}</span>
-                                                    {% endfor %}
-                                                </div>
-                                            </div>
-                                            {% endfor %}
-
-                                        {% endif %}
-
-
-                                    </div>
-                                    <button type="button" class="btn btn-secondary" id="add_author">Add author
-                                    </button>
-
-                                </div>
-
-                            </div>
-
-
-
-                        </div>
-
-                        <div class="row" style="padding-left: 2rem">
-                            <div class="col-12">
-                                <label class="form-check">
-                                    <input id="dataset_anonymous" class="form-check-input" type="checkbox" value=""
-                                           {% if form.dataset_anonymous.data %} checked {% endif %}>
-                                    <span class="form-check-label" style="font-size: 15px">
-                                        <b>Anonymize dataset</b> (this will cause the dataset in both UVLHub and Zenodo to appear as anonymized until it is changed)
+                            <div class="col-lg-12">
+                                <input type="radio" class="btn-check" name="dataset_type" value="zenodo" checked="checked" id="zenodo" />
+                                <label class="btn btn-outline btn-outline-dashed btn-active-light-primary p-7 d-flex align-items-center mb-10" for="zenodo">
+                                    <i class="ki-duotone ki-check-circle fs-3x me-5">
+                                        <span class="path1"></span>
+                                        <span class="path2"></span>
+                                        <span class="path3"></span>
+                                        <span class="path4"></span>
+                                        <span class="path5"></span>
+                                    </i>
+                                    <span class="d-block fw-semibold text-start">
+                                        <span class="text-gray-900 fw-bold d-block fs-4 mb-2">Permanent upload to Zenodo</span>
+                                        <span class="text-muted fw-semibold fs-6">Your dataset is ready to be uploaded to Zenodo permanently</span>
                                     </span>
                                 </label>
                             </div>
+
+                            <div class="col-lg-12">
+                                <input type="radio" class="btn-check" name="dataset_type" value="zenodo_anonymous" id="zenodo_anonymous" />
+                                <label class="btn btn-outline btn-outline-dashed btn-active-light-primary p-7 d-flex align-items-center mb-10" for="zenodo_anonymous">
+                                    <i class="ki-duotone ki-eye-slash fs-3x me-5">
+                                        <span class="path1"></span>
+                                        <span class="path2"></span>
+                                        <span class="path3"></span>
+                                        <span class="path4"></span>
+                                    </i>
+                                    <span class="d-block fw-semibold text-start">
+                                        <span class="text-gray-900 fw-bold d-block fs-4 mb-2">Permanent (anonymous) upload to Zenodo</span>
+                                        <span class="text-muted fw-semibold fs-6">
+                                            Your dataset is ready to be uploaded to Zenodo permanently, but you are currently in a double-blind peer review process. Therefore, you need the dataset to remain anonymous until the paper is published.</span>
+                                    </span>
+                                </label>
+                            </div>
+
+                            <div class="col-lg-12">
+                                <input type="radio" class="btn-check" name="dataset_type" value="draft" id="draft" />
+                                <label class="btn btn-outline btn-outline-dashed btn-active-light-primary p-7 d-flex align-items-center mb-10" for="draft">
+                                    <i class="ki-duotone ki-pencil fs-3x me-5">
+                                        <span class="path1"></span>
+                                        <span class="path2"></span>
+                                    </i>
+                                    <span class="d-block fw-semibold text-start">
+                                        <span class="text-gray-900 fw-bold d-block fs-4 mb-2">Draft</span>
+                                        <span class="text-muted fw-semibold fs-6">
+                                            You want to start uploading the dataset but it's not ready yet - no problem! You can complete it later. Your dataset will not be uploaded to Zenodo, it will be saved locally and will not be visible to the public.                                    </span>
+                                </label>
+                            </div>
+
                         </div>
+                    </div>
+                </div>
+            </div>
+            <!--end::Step 1-->
+            <!--begin::Step 2-->
+            <div data-kt-stepper-element="content">
+                <!--begin::Wrapper-->
+                <div class="w-100">
+                    <!--begin::Heading-->
+                    <div class="pb-10 pb-lg-15">
+                        <!--begin::Title-->
+                        <h2 class="fw-bold text-gray-900">Upload UVL files</h2>
+                        <div class="text-muted fw-semibold fs-6">If you need more info, please check out 
+                        <a href="#" class="link-primary fw-bold">Help Page</a>.</div>
+                    </div>
 
+                    <div class="mb-0 fv-row">
 
-
+                        <div class="card bg-light-warning" style="background-color: #E9F3FF; padding: 10px">
+                            <div class="card-body">
+                                <form class="form" action="#" method="post">
+                                    <!--begin::Input group-->
+                    
+                                        <!--begin::Col-->
+                                            <!--begin::Dropzone-->
+                                            <div class="dropzone dropzone-queue mb-2" id="uvl_dropzone">
+                                                <!--begin::Controls-->
+                                                <div class="dropzone-panel mb-lg-0 mb-2">
+                                                    <h2 class="mb-10">Drag & drop your UVL files</h2>
+                                                    <a class="dropzone-select btn btn-sm btn-primary me-2">Attach files</a>
+                                                </div>
+                                                <!--end::Controls-->
+                    
+                                                <!--begin::Items-->
+                                                <div class="dropzone-items wm-200px">
+                                                    <div class="dropzone-item" style="display:none">
+                                                        <!--begin::File-->
+                                                        <div class="dropzone-file">
+                                                            <div class="dropzone-filename" title="some_image_file_name.jpg">
+                                                                <span data-dz-name>some_image_file_name.jpg</span>
+                                                                <strong>(<span data-dz-size>340kb</span>)</strong>
+                                                            </div>
+                    
+                                                            <div class="dropzone-error" data-dz-errormessage></div>
+                                                        </div>
+                                                        <!--end::File-->
+                    
+                                                        <!--begin::Progress-->
+                                                        <div class="dropzone-progress">
+                                                            <div class="progress">
+                                                                <div
+                                                                    class="progress-bar bg-primary"
+                                                                    role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" data-dz-uploadprogress>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <!--end::Progress-->
+                    
+                                                        <!--begin::Toolbar-->
+                                                        <div class="dropzone-toolbar">
+                                                            <span class="dropzone-delete" data-dz-remove><i class="bi bi-x fs-1"></i></span>
+                                                        </div>
+                                                        <!--end::Toolbar-->
+                                                    </div>
+                                                </div>
+                                                <!--end::Items-->
+                                            </div>
+                                            <!--end::Dropzone-->
+                    
+                                            <!--begin::Hint-->
+                                            <span class="form-text text-muted">Max file size is 1MB and max number of files is 100.</span>
+                                            <!--end::Hint-->
+                                        
+                                        <!--end::Col-->
+                                    
+                                    <!--end::Input group-->
+                                </form>
+                            </div>
+                        </div>
 
                     </div>
 
                 </div>
-
-                <div class="row">
-
-                    {% if error %}
-
-                        <div class="mt-3 col-lg-6 col-12">
-                            <span style="color: red;">{{ error }}</span>
-                        </div>
-
-                    {% endif %}
-
-                </div>
-
-
+                <!--end::Wrapper-->
             </div>
-        </div>
+            <!--end::Step 2-->
+            <!--begin::Step 3-->
+            <div data-kt-stepper-element="content">
+                <!--begin::Wrapper-->
+                <div class="w-100">
+                    <!--begin::Heading-->
+                    <div class="pb-10 pb-lg-12">
+                        <!--begin::Title-->
+                        <h2 class="fw-bold text-gray-900">Setup dataset info</h2>
+                        <!--end::Title-->
+                        <!--begin::Notice-->
+                        <div class="text-muted fw-semibold fs-6">If you need more info, please check out 
+                        <a href="#" class="link-primary fw-bold">Help Page</a>.</div>
+                        <!--end::Notice-->
+                    </div>
+                    <!--end::Heading-->
+                    <!--begin::Input group-->
 
-        <div class="col-xl-6 col-lg-12 col-md-12 col-sm-12">
 
-            <h1 class="h3 mb-3 mt-2">UVL models</h1>
+                    <div class="fv-row mb-10">
+                        <label class="form-label">Title</label>
+                        <input type="text" class="form-control mb-2" name="title" placeholder="Enter a title">
+                        <div class="text-muted fs-7">Set a dataset title. Recommended to be simple and precise keywords.</div>
+                    </div>
+        
+                    <div class="fv-row mb-10">
+                        <label class="form-label">Description</label>
+                        <div data-bs-theme="light">
+                            <textarea name="description" id="kt_docs_ckeditor_classic">
+                            </textarea>
+                        </div>
+                    </div>
 
-            {% if is_edit %}
-
-            It is currently not possible to edit dataset models. This is a feature under development, it will be available in future versions.
-
-            <div id="uploaded_models_form">
-
-                <ul class="mt-2" id="file-list">
-
-                    {% for feature_model in dataset.feature_models %}
-
-                        {% for hubfile in feature_model.hubfiles %}
-                            <input type="hidden" value="{{hubfile.name}}" name="feature_models-0-uvl_filename">
-                        {% endfor %}
+                    <div class="fv-row mb-10">
                         
-                    {% endfor %}
+                        <label class="form-label required">Publication type</label>
+                        <span class="ms-1" data-bs-toggle="tooltip" title="In Zenodo, it categorizes uploaded content (articles, datasets, software, presentations, etc.) to simplify organization and discovery">
+                            <i class="ki-duotone ki-information-5 text-gray-500 fs-6">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                                <span class="path3"></span>
+                            </i>
+                        </span>
 
-                </ul>
+                        <select name="{{ form.publication_type.name }}" 
+                                class="form-select form-select-lg form-select-solid" 
+                                data-control="select2" 
+                                data-placeholder="Select a publication type..." 
+                                data-allow-clear="false" 
+                                data-hide-search="false">
+                            <option></option>
+                            {% for value, label in form.publication_type.choices %}
+                                <option value="{{ value }}" 
+                                        {% if form.publication_type.data == value %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        
+                    </div>
 
+                    <div class="fv-row mb-10">
+                        <label class="form-label">Publication DOI</label>
+                        <span class="ms-1" data-bs-toggle="tooltip" title="If this dataset is already associated with a publication, enter the DOI resource so that it can be identified">
+                            <i class="ki-duotone ki-information-5 text-gray-500 fs-6">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                                <span class="path3"></span>
+                            </i>
+                        </span>
+                        <input name="publication_doi" class="form-control form-control-lg form-control-solid">
+                    </div>
+
+                    <div class="fv-row mb-10">
+                        <label class="form-label">Tags</label>
+                        <span class="ms-1" data-bs-toggle="tooltip" title="Define keywords that are representative of your dataset. This will help the search">
+                            <i class="ki-duotone ki-information-5 text-gray-500 fs-6">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                                <span class="path3"></span>
+                            </i>
+                        </span>
+                        <input class="form-control form-control-solid" placeholder="Separate tags by commas" id="tags"/>
+                    </div>
+
+                </div>
+                <!--end::Wrapper-->
             </div>
+            <!--end::Step 3-->
+            <!--begin::Step 4-->
+            <div data-kt-stepper-element="content">
+                <!--begin::Wrapper-->
+                <div class="w-100">
 
-            {% else %}
+                    <div class="pb-10 pb-lg-15">
+                        <h2 class="fw-bold text-gray-900">Setup authors</h2>
+                        <div class="text-muted fw-semibold fs-6">If you need more info, please check out 
+                        <a href="#" class="text-primary fw-bold">Help Page</a>.</div>
+                    </div>
 
-            <div id="uploaded_models_form" style="padding-left: 2rem">
+                    <div class="row draggable-zone" id="authors-container" tabindex="0">
+            
+                    </div>
 
-                <form action="{{ url_for('hubfile.upload_file') }}" class="dropzone" id="myDropzone">
-                    <div id="dropzone-text"></div>
-                </form>
+                    <div class="mb-0 fv-row">
+                        <button type="button" id="add-author-btn" class="btn btn-lg btn-light-primary me-3">
+                            <i class="ki-duotone ki-plus-square fs-4 me-1">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                                <span class="path3"></span>
+                            </i>Add author</button>
+                    </div>
 
-                <span class="text-danger" id="alerts" style="display: none">
-                    </span>
-
-                <ul class="mt-2" id="file-list"></ul>
-
-                
-                
-
+                </div>
+                <!--end::Wrapper-->
             </div>
-
-            {% endif %}
-
-
+            <!--end::Step 4-->
+            <!--begin::Step 5-->
+            <div data-kt-stepper-element="content">
+                <!--begin::Wrapper-->
+                <div class="w-100">
+                    <!--begin::Heading-->
+                    <div class="pb-8 pb-lg-10">
+                        <!--begin::Title-->
+                        <h2 class="fw-bold text-gray-900">Your Are Done!</h2>
+                        <!--end::Title-->
+                        <!--begin::Notice-->
+                        <div class="text-muted fw-semibold fs-6">If you need more info, please 
+                        <a href="authentication/layouts/corporate/sign-in.html" class="link-primary fw-bold">Sign In</a>.</div>
+                        <!--end::Notice-->
+                    </div>
+                    <!--end::Heading-->
+                    <!--begin::Body-->
+                    <div class="mb-0">
+                        <!--begin::Text-->
+                        <div class="fs-6 text-gray-600 mb-5">Writing headlines for blog posts is as much an art as it is a science and probably warrants its own post, but for all advise is with what works for your great & amazing audience.</div>
+                        <!--end::Text-->
+                        <!--begin::Alert-->
+                        <!--begin::Notice-->
+                        <div class="notice d-flex bg-light-warning rounded border-warning border border-dashed p-6">
+                            <!--begin::Icon-->
+                            <i class="ki-duotone ki-information fs-2tx text-warning me-4">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                                <span class="path3"></span>
+                            </i>
+                            <!--end::Icon-->
+                            <!--begin::Wrapper-->
+                            <div class="d-flex flex-stack flex-grow-1">
+                                <!--begin::Content-->
+                                <div class="fw-semibold">
+                                    <h4 class="text-gray-900 fw-bold">We need your attention!</h4>
+                                    <div class="fs-6 text-gray-700">To start using great tools, please, 
+                                    <a href="utilities/wizards/vertical.html" class="fw-bold">Create Team Platform</a></div>
+                                </div>
+                                <!--end::Content-->
+                            </div>
+                            <!--end::Wrapper-->
+                        </div>
+                        <!--end::Notice-->
+                        <!--end::Alert-->
+                    </div>
+                    <!--end::Body-->
+                </div>
+                <!--end::Wrapper-->
+            </div>
+            <!--end::Step 5-->
+            <!--begin::Actions-->
+            <div class="d-flex flex-stack pt-10">
+                <!--begin::Wrapper-->
+                <div class="mr-2">
+                    <button type="button" class="btn btn-lg btn-light-primary me-3" data-kt-stepper-action="previous">
+                    <i class="ki-duotone ki-arrow-left fs-4 me-1">
+                        <span class="path1"></span>
+                        <span class="path2"></span>
+                    </i>Back</button>
+                </div>
+                <!--end::Wrapper-->
+                <!--begin::Wrapper-->
+                <div>
+                    <button type="button" class="btn btn-lg btn-primary me-3" data-kt-stepper-action="submit">
+                        <span class="indicator-label">Submit 
+                        <i class="ki-duotone ki-arrow-right fs-3 ms-2 me-0">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                        </i></span>
+                        <span class="indicator-progress">Please wait... 
+                        <span class="spinner-border spinner-border-sm align-middle ms-2"></span></span>
+                    </button>
+                    <button type="button" class="btn btn-lg btn-primary" data-kt-stepper-action="next">Continue
+                    <i class="ki-duotone ki-arrow-right fs-4 ms-1 me-0">
+                        <span class="path1"></span>
+                        <span class="path2"></span>
+                    </i></button>
+                </div>
+                <!--end::Wrapper-->
+            </div>
+            <!--end::Actions-->
         </div>
-
+        <!--end::Form-->
     </div>
-
-    {% if is_edit %}
-
-    <div class="row" id="submit_dataset">
-
-        <div class="col-12">
-
-            <hr>
-
-            <h1 class="h3 mb-3 mt-2">Save dataset</h1>
-
-            <div style="padding-left: 2rem">
-
-
-                <button id="upgradeButton" class="submitButton btn btn-primary mt-2">
-                    <i data-feather="save" class="center-button-icon"></i>
-                    Save dataset</button>
-
-                <div id="loading" style="display: none">
-                    <img width="40px" src="{{ url_for("static", filename="gifs/loading.svg") }}"/>
-                    Saving dataset, please wait...
-                </div>
-
-                <div class="row">
-                    <div class="col-12 mb-3">
-
-                    </div>
-                </div>
-
-                <div class="alert alert-error" role="alert" id="upload_error"
-                     style="display: none">
-                    <div class="alert-message">
-
-                        <h4 class="alert-heading"><i class="align-middle" data-feather="alert-triangle"></i> Limited
-                            connection to the Zenodo API</h4>
-                        <p class="p-0 m-0">
-                            There seems to be some kind of problem with the Zenodo API and synchronization of your
-                            dataset
-                            files may not be possible. We will save your files locally to eventually synchronize
-                            them with
-                            Zenodo. Sorry for the inconvenience, Zenodo is an external service and we can't do
-                            anything about it.
-                        </p>
-                    </div>
-                </div>
-
-                <span class="text-danger mt-2" id="upload_error" style="display: none"></span>
-
-            </div>
-
-        </div>
-
-    </div>
-
-
-    {% else %}
-
-    <div class="row" id="submit_dataset" style="display: none">
-
-        <div class="col-12">
-
-            <hr>
-
-            <h1 class="h3 mb-3 mt-2">Upload dataset</h1>
-
-            <div style="padding-left: 2rem">
-
-                <label class="form-check">
-                    <input id="agreeCheckbox" class="form-check-input" type="checkbox" value="">
-                    <span class="form-check-label" style="font-size: 15px">
-                                I agree to have my feature models automatically uploaded to Zenodo and made available to the public according to the <a
-                            href="https://en.wikipedia.org/wiki/Open_science" target="_blank">Open Science</a> manifesto
-                            </span>
-                </label>
-
-                <button id="uploadButton" class="submitButton btn btn-primary mt-2" disabled>
-                    <i data-feather="upload" class="center-button-icon"></i>
-                    Upload dataset
-                </button>
-
-                <div id="loading" style="display: none">
-                    <img width="40px" src="{{ url_for("static", filename="gifs/loading.svg") }}"/>
-                    Uploading dataset, please wait...
-                </div>
-
-                <div class="row">
-                    <div class="col-12 mb-3">
-
-                    </div>
-                </div>
-
-                <div class="alert alert-error" role="alert" id="upload_error"
-                     style="display: none">
-                    <div class="alert-message">
-
-                        <h4 class="alert-heading"><i class="align-middle" data-feather="alert-triangle"></i> Limited
-                            connection to the Zenodo API</h4>
-                        <p class="p-0 m-0">
-                            There seems to be some kind of problem with the Zenodo API and synchronization of your
-                            dataset
-                            files may not be possible. We will save your files locally to eventually synchronize
-                            them with
-                            Zenodo. Sorry for the inconvenience, Zenodo is an external service and we can't do
-                            anything about it.
-                        </p>
-                    </div>
-                </div>
-
-                <span class="text-danger mt-2" id="upload_error" style="display: none"></span>
-
-            </div>
-
-        </div>
-
-    </div>
-
-    {% endif %}
-
+    <!--end::Content-->
+</div>
 
 {% endblock %}
     
 {% block scripts %}
 
-    {% if not is_edit %}
-    <script>
-        let hubfiles = {{ hubfiles|tojson|safe }};
-    </script>
-    {% endif %}
+<script src="{{ url_for('dataset.assets', subfolder='dist', filename='dataset.bundle.js') }}"></script>
+
+<script id="author-template" type="x-tmpl-mustache">
+    <div class="col-lg-12 draggable mb-10" tabindex="0" id="author-[[id]]">
+    <!--begin::Card-->
+    <div class="card card-bordered shadow">
+        <div class="card-header">
+            <div class="card-toolbar">
+                <a href="#" class="btn btn-icon btn-sm btn-hover-light-primary draggable-handle">
+                    <i class="ki-duotone ki-abstract-14 fs-2x"><span class="path1"></span><span class="path2"></span></i>
+                </a>
+            </div>
+            <div class="card-title">
+                <button type="button" class="btn btn-sm btn-light-danger me-3 remove-author" data-id="[[id]]">
+                    <i class="ki-duotone ki-minus-square fs-4 me-1">
+                        <span class="path1"></span>
+                        <span class="path2"></span>
+                        <span class="path3"></span>
+                    </i>Remove author
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <form>
+                <!-- Name and Affiliation -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="name_[[id]]" class="form-label">Name *</label>
+                        <input type="text" id="name_[[id]]" name="name_[[id]]" class="form-control" placeholder="Enter your name" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="affiliation_[[id]]" class="form-label">Affiliation</label>
+                        <input type="text" id="affiliation_[[id]]" name="affiliation_[[id]]" class="form-control" placeholder="Enter your affiliation">
+                    </div>
+                </div>
+                <!-- ORCID -->
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <label for="orcid_[[id]]" class="form-label">ORCID</label>
+                        <input type="text" id="orcid_[[id]]" name="orcid_[[id]]" class="form-control" placeholder="Enter your ORCID">
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!--end::Card-->
+</div>
+</script>
 
 
-    <script src="{{ url_for('zenodo.assets', subfolder='js', filename='scripts.js') }}"></script>
-    <script src="{{ url_for('dataset.assets', subfolder='js', filename='scripts.js') }}"></script>
-    <script src="{{ url_for('hubfile.assets', subfolder='dist', filename='hubfile.bundle.js') }}"></script>
+<script>
+
+// ---------------------------------------------
+// dataset.js
+// ---------------------------------------------
+
+
+
+document.addEventListener('DOMContentLoaded', function () {
+
+    /*
+        Stepper
+    */
+
+    // Stepper lement
+    var element = document.querySelector("#stepper_upload_dataset");
+
+    // Initialize Stepper
+    var stepper = new KTStepper(element);
+
+    // Handle next step
+    stepper.on("kt.stepper.next", function (stepper) {
+        stepper.goNext(); // go next step
+    });
+
+    // Handle previous step
+    stepper.on("kt.stepper.previous", function (stepper) {
+        stepper.goPrevious(); // go previous step
+    });
+
+    /*
+        Tagify
+    */
+    new Tagify( document.querySelector("#tags") );
+
+    /*
+        Editor
+    */
+    ClassicEditor
+        .create(document.querySelector('#kt_docs_ckeditor_classic'))
+        .then(editor => {
+            console.log(editor);
+        })
+        .catch(error => {
+            console.error(error);
+        });
+
+    /*
+        Authors
+    */
+
+    var containers = document.querySelectorAll(".draggable-zone");
+
+    var swappable = new Draggable.Sortable(containers, {
+        draggable: ".draggable",
+        handle: ".draggable .draggable-handle",
+        mirror: {
+            appendTo: "body",
+            constrainDimensions: true
+        }
+    });
+
+
+});
+
+
+// ---------------------------------------------
+// hubfile.js
+// ---------------------------------------------
+
+/*
+    Dropzone
+*/
+// set the dropzone container id
+const id = "#uvl_dropzone";
+const dropzone = document.querySelector(id);
+
+// set the preview element template
+var previewNode = dropzone.querySelector(".dropzone-item");
+previewNode.id = "";
+var previewTemplate = previewNode.parentNode.innerHTML;
+previewNode.parentNode.removeChild(previewNode);
+
+var myDropzone = new Dropzone(id, { // Make the whole body a dropzone
+    url: "https://keenthemes.com/scripts/void.php", // Set the url for your upload script location
+    parallelUploads: 20,
+    maxFilesize: 1, // Max filesize in MB
+    previewTemplate: previewTemplate,
+    previewsContainer: id + " .dropzone-items", // Define the container to display the previews
+    clickable: id + " .dropzone-select", // Define the element that should be used as click trigger to select files.
+    acceptedFiles: ".uvl" // Only accept files with .uvl extension
+});
+
+myDropzone.on("addedfile", function (file) {
+    // Hookup the start button
+    const dropzoneItems = dropzone.querySelectorAll('.dropzone-item');
+    dropzoneItems.forEach(dropzoneItem => {
+        dropzoneItem.style.display = '';
+    });
+});
+
+// Update the total progress bar
+myDropzone.on("totaluploadprogress", function (progress) {
+    const progressBars = dropzone.querySelectorAll('.progress-bar');
+    progressBars.forEach(progressBar => {
+        progressBar.style.width = progress + "%";
+    });
+});
+
+myDropzone.on("sending", function (file) {
+    // Show the total progress bar when upload starts
+    const progressBars = dropzone.querySelectorAll('.progress-bar');
+    progressBars.forEach(progressBar => {
+        progressBar.style.opacity = "1";
+    });
+});
+
+// Hide the total progress bar when nothing"s uploading anymore
+myDropzone.on("complete", function (progress) {
+    const progressBars = dropzone.querySelectorAll('.dz-complete');
+
+    setTimeout(function () {
+        progressBars.forEach(progressBar => {
+            progressBar.querySelector('.progress-bar').style.opacity = "0";
+            progressBar.querySelector('.progress').style.opacity = "0";
+        });
+    }, 300);
+});
+
+</script>
 
 {% endblock %}

@@ -9,95 +9,107 @@
         <div class="mb-2 col-xl-8 col-lg-12 col-md-12 col-sm-12">
 
             {% for dataset in datasets %}
-                <div class="card">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center justify-content-between">
-                            <h2>
 
-                                <a href="{{ dataset.get_uvlhub_doi() }}">
-                                    {{ dataset.ds_meta_data.title }}
-                                </a>
+            <div class="row">
 
-                            </h2>
-                            <div>
-                                <span class="badge bg-secondary">{{ dataset.get_cleaned_publication_type() }}</span>
+                <div class="col-12 mb-5">
+
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <h2>
+    
+                                    <a href="{{ dataset.get_uvlhub_doi() }}">
+                                        {{ dataset.ds_meta_data.title }}
+                                    </a>
+    
+                                </h2>
+                                <div>
+                                    <span class="badge bg-secondary">{{ dataset.get_cleaned_publication_type() }}</span>
+                                </div>
                             </div>
+
+                            <p>{{ dataset.created_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+    
+                            <div class="row mb-2">
+    
+                                <div class="col-12">
+                                    <p class="card-text">{{ dataset.ds_meta_data.description }}</p>
+                                </div>
+    
+                            </div>
+    
+                            <div class="row mb-2 mt-4">
+    
+                                <div class="col-12">
+                                    {% for author in dataset.ds_meta_data.authors %}
+                                        <p class="p-0 m-0">
+                                            {{ author.name }}
+                                            {% if author.affiliation %}
+                                                ({{ author.affiliation }})
+                                            {% endif %}
+                                            {% if author.orcid %}
+                                                ({{ author.orcid }})
+                                            {% endif %}
+                                        </p>
+                                    {% endfor %}
+                                </div>
+    
+    
+                            </div>
+    
+                            <div class="row mb-2">
+    
+                                <div class="col-12">
+                                    <a href="{{ dataset.get_uvlhub_doi() }}">{{ dataset.get_uvlhub_doi() }}</a>
+                                     <div id="dataset_doi_uvlhub_{{ dataset.id }}" style="display: none">
+                                    {{ dataset.get_uvlhub_doi() }}
+                                </div>
+    
+                                <i data-feather="clipboard" class="center-button-icon"
+                                   style="cursor: pointer"
+                                   onclick="copyText('dataset_doi_uvlhub_{{ dataset.id }}')"></i>
+                                </div>
+    
+    
+    
+                            </div>
+    
+                            <div class="row mb-2">
+    
+                                <div class="col-12">
+                                    {% for tag in dataset.ds_meta_data.tags.split(',') %}
+                                        <span class="badge bg-secondary">{{ tag.strip() }}</span>
+                                    {% endfor %}
+                                </div>
+    
+                            </div>
+    
+                            <div class="row  mt-4">
+                                <div class="col-12">
+                                    <a href="{{ dataset.get_uvlhub_doi() }}" class="btn btn-primary btn-sm"
+                                       style="border-radius: 5px;">
+                                        <i data-feather="eye" class="center-button-icon"></i>
+                                        View dataset
+                                    </a>
+    
+                                    <a href="/dataset/download/{{ dataset.id }}" class="btn btn-primary btn-sm"
+                                       style="border-radius: 5px;">
+                                        <i data-feather="download" class="center-button-icon"></i>
+                                        Download ({{ dataset.get_file_total_size_for_human() }})
+                                    </a>
+                                </div>
+                            </div>
+    
+    
                         </div>
-                        <p class="text-secondary">{{ dataset.created_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
-
-                        <div class="row mb-2">
-
-                            <div class="col-12">
-                                <p class="card-text">{{ dataset.ds_meta_data.description }}</p>
-                            </div>
-
-                        </div>
-
-                        <div class="row mb-2 mt-4">
-
-                            <div class="col-12">
-                                {% for author in dataset.ds_meta_data.authors %}
-                                    <p class="p-0 m-0">
-                                        {{ author.name }}
-                                        {% if author.affiliation %}
-                                            ({{ author.affiliation }})
-                                        {% endif %}
-                                        {% if author.orcid %}
-                                            ({{ author.orcid }})
-                                        {% endif %}
-                                    </p>
-                                {% endfor %}
-                            </div>
-
-
-                        </div>
-
-                        <div class="row mb-2">
-
-                            <div class="col-12">
-                                <a href="{{ dataset.get_uvlhub_doi() }}">{{ dataset.get_uvlhub_doi() }}</a>
-                                 <div id="dataset_doi_uvlhub_{{ dataset.id }}" style="display: none">
-                                {{ dataset.get_uvlhub_doi() }}
-                            </div>
-
-                            <i data-feather="clipboard" class="center-button-icon"
-                               style="cursor: pointer"
-                               onclick="copyText('dataset_doi_uvlhub_{{ dataset.id }}')"></i>
-                            </div>
-
-
-
-                        </div>
-
-                        <div class="row mb-2">
-
-                            <div class="col-12">
-                                {% for tag in dataset.ds_meta_data.tags.split(',') %}
-                                    <span class="badge bg-secondary">{{ tag.strip() }}</span>
-                                {% endfor %}
-                            </div>
-
-                        </div>
-
-                        <div class="row  mt-4">
-                            <div class="col-12">
-                                <a href="{{ dataset.get_uvlhub_doi() }}" class="btn btn-outline-primary btn-sm"
-                                   style="border-radius: 5px;">
-                                    <i data-feather="eye" class="center-button-icon"></i>
-                                    View dataset
-                                </a>
-
-                                <a href="/dataset/download/{{ dataset.id }}" class="btn btn-outline-primary btn-sm"
-                                   style="border-radius: 5px;">
-                                    <i data-feather="download" class="center-button-icon"></i>
-                                    Download ({{ dataset.get_file_total_size_for_human() }})
-                                </a>
-                            </div>
-                        </div>
-
-
                     </div>
+
                 </div>
+
+            </div>
+
+                
             {% endfor %}
 
             <a href="/explore" class="btn btn-primary">

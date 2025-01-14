@@ -1,3 +1,9 @@
 [data-kt-search-element="content"] {
-    transform: translate3d(-200px, 70px, 0px) !important; /* Ajusta el desplazamiento según sea necesario */
+    position: fixed !important;
+    transform: none !important;
+    display: none; /* Oculta el menú por defecto */
+}
+
+[data-kt-search-element="content"].show {
+    display: block; /* Muestra el menú cuando sea necesario */
 }
