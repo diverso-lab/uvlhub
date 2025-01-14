@@ -1,277 +1,133 @@
+/*
+    Dropzone
+*/
+
 import { FeatureModel } from "uvl-parser";
 
-// 
+// set the dropzone container id
+const id = "#uvl_dropzone";
+const dropzone = document.querySelector(id);
 
-let valid = true;
-let invalid_uvl_message = '';
+// set the preview element template
+var previewNode = dropzone.querySelector(".dropzone-item");
+previewNode.id = "";
+var previewTemplate = previewNode.parentNode.innerHTML;
+previewNode.parentNode.removeChild(previewNode);
 
-let dropzone = Dropzone.options.myDropzone = {
-    url: "/hubfile/upload",
-    paramName: 'file',
-    maxFilesize: 10,
-    acceptedFiles: '.uvl',
-    init: function () {
+var myDropzone = new Dropzone(id, { // Make the whole body a dropzone
+    url: "/hubfile/upload", // Set the url for your upload script location
+    parallelUploads: 20,
+    maxFilesize: 1, // Max filesize in MB
+    previewTemplate: previewTemplate,
+    previewsContainer: id + " .dropzone-items", // Define the container to display the previews
+    clickable: id + " .dropzone-select", // Define the element that should be used as click trigger to select files.
+    acceptedFiles: ".uvl" // Only accept files with .uvl extension
+});
 
-        let fileList = document.getElementById('file-list');
-        let dropzoneText = document.getElementById('dropzone-text');
-        let alerts = document.getElementById('alerts');
+myDropzone.on("addedfile", function (file) {
+    // Validar extensión del archivo
+    let ext = file.name.split('.').pop();
+    if (ext !== 'uvl') {
+        this.removeFile(file); // Elimina el archivo de la lista
 
-        if (hubfiles) {
-            for (let i = 0; i < hubfiles.length; i++) {
-                let hubfile = hubfiles[i];
-                fetch(hubfile.url)
-                .then(response => response.blob())
-                .then(blob => {
-                    let file = new File([blob], hubfile.name, {type: 'uvl'});
-                    this.addFile(file);
-                })
-            }
-        }
-            
-        this.on('addedfile', function (file) {
-
-            let ext = file.name.split('.').pop();
-            if (ext !== 'uvl') {
-                this.removeFile(file);
-        
-                let alert = document.createElement('p');
-                alert.textContent = 'Invalid file extension: ' + file.name;
-                alerts.appendChild(alert);
-                alerts.style.display = 'block';
-            } else {
-                // Read the file as text to pass it to the UVL parser
-                let reader = new FileReader();
-                reader.onload = function(event) {
-                    const fileContent = event.target.result;  // This contains the UVL file content
-        
-                    // Now, use uvl-parser to parse the content
-                    try {
-                        const featureModel = new FeatureModel(fileContent);
-                        const tree = featureModel.getFeatureModel();  // This is your parsed UVL tree
-        
-                        console.log("Parsed UVL Feature Model:", tree);
-                        valid = true;
-        
-                        
-                        // You can now manipulate `tree` or display it in the UI as needed
-                    } catch (error) {
-                        // Verificar si el error es debido a `Error.captureStackTrace`
-                        if (error.message.includes("Error.captureStackTrace is not a function")) {
-                            console.warn("Error.captureStackTrace is not supported in this environment.");
-                            valid = false;
-                            let alert = document.createElement('p');
-                            alert.innerHTML = 'Syntax error in <b>' + file.name + '</b>';
-                            alerts.appendChild(alert);
-                            alerts.style.display = 'block';
-                        } else {
-                            // Si es un error de sintaxis en el UVL, mostrar mensaje personalizado
-                            valid = false;
-                            console.error("Error parsing UVL file:", error.message);
-                            invalid_uvl_message = error.message;
-                            
-                            // Muestra el mensaje de error de sintaxis en el UI
-                            let alert = document.createElement('p');
-                            alert.innerHTML = 'Syntax error in <b>' + file.name + '</b><br>&nbsp;>&nbsp;>&nbsp;>&nbsp;' + error.message;
-                            alerts.appendChild(alert);
-                            alerts.style.display = 'block';
-                        }
-                    }
-                };
-                reader.readAsText(file);  // Read the file as text
-            }
-        
-        });
-        
-        this.on('error', function (file, response) {
-            console.error("Error uploading file: ", response);
-            let alert = document.createElement('p');
-            alert.textContent = 'Error uploading file: ' + file.name;
-            alerts.appendChild(alert);
-            alerts.style.display = 'block';
-        });
-
-        this.on('success', function (file, response) {
-
-            if(valid){
-                let dropzone = this;
-
-                showUploadDataset();
-
-                console.log("File uploaded: ", response);
-                // actions when UVL model is uploaded
-                let listItem = document.createElement('li');
-                let h4Element = document.createElement('h4');
-                h4Element.textContent = response.filename;
-                listItem.appendChild(h4Element);
-
-                // generate incremental id for form
-                let formUniqueId = generateIncrementalId();
-
-                /*
-                    ##########################################
-                    FORM BUTTON
-                    ##########################################
-                */
-                let formButton = document.createElement('button');
-                formButton.innerHTML = 'Show info';
-                formButton.classList.add('info-button', 'btn', 'btn-outline-secondary', "btn-sm");
-                formButton.style.borderRadius = '5px';
-                formButton.id = formUniqueId + "_button";
-
-                formButton.addEventListener('click', function () {
-                    if (formContainer.style.display === "none") {
-                        formContainer.style.display = "block";
-                        formButton.innerHTML = 'Hide info';
-                    } else {
-                        formContainer.style.display = "none";
-                        formButton.innerHTML = 'Add info';
-                    }
-                });
-
-                // append space
-                let space = document.createTextNode(" ");
-                listItem.appendChild(space);
-
-                /*
-                    ##########################################
-                    REMOVE BUTTON
-                    ##########################################
-                */
-
-                // remove button
-                let removeButton = document.createElement('button');
-                removeButton.innerHTML = 'Delete model';
-                removeButton.classList.add("remove-button", "btn", "btn-outline-danger", "btn-sm", "remove-button");
-                removeButton.style.borderRadius = '5px';
-
-                // append space
-                space = document.createTextNode(" ");
-                listItem.appendChild(space);
-
-                removeButton.addEventListener('click', function () {
-                    fileList.removeChild(listItem);
-                    this.removeFile(file);
-
-                    // Ajax request
-                    let xhr = new XMLHttpRequest();
-                    xhr.open('POST', '/hubfile/delete', true);
-                    xhr.setRequestHeader('Content-Type', 'application/json');
-                    xhr.onload = function () {
-                        if (xhr.status === 200) {
-                            console.log('Deleted file from server');
-
-                            if (dropzone.files.length === 0) {
-                                document.getElementById("submit_dataset").style.display = "none";
-                                cleanUploadErrors();
-                            }
-
-                        }
-                    };
-                    xhr.send(JSON.stringify({file: file.name}));
-                }.bind(this));
-
-                /*
-                    ##########################################
-                    APPEND BUTTONS
-                    ##########################################
-                */
-                listItem.appendChild(formButton);
-                listItem.appendChild(removeButton);
-
-                /*
-                    ##########################################
-                    UVL FORM
-                    ##########################################
-                */
-
-                // create specific form for UVL
-                let formContainer = document.createElement('div');
-                formContainer.id = formUniqueId + "_form";
-                formContainer.classList.add('uvl_form', "mt-3");
-                formContainer.style.display = "none";
-
-                formContainer.innerHTML = `
-                    <div class="row">
-                        <input type="hidden" value="${response.filename}" name="feature_models-${formUniqueId}-uvl_filename">
-                        <div class="col-12">
-                            <div class="row">
-                                <div class="col-12">
-                                    <div class="mb-3">
-                                        <label class="form-label">Title</label>
-                                        <input type="text" class="form-control" name="feature_models-${formUniqueId}-title">
-                                    </div>
-                                </div>
-                                <div class="col-12">
-                                    <div class="mb-3">
-                                        <label class="form-label">Description</label>
-                                        <textarea rows="4" class="form-control" name="feature_models-${formUniqueId}-desc"></textarea>
-                                    </div>
-                                </div>
-                                <div class="col-lg-6 col-12">
-                                    <div class="mb-3">
-                                        <label class="form-label" for="publication_type">Publication type</label>
-                                        <select class="form-control" name="feature_models-${formUniqueId}-publication_type">
-                                            <option value="none">None</option>
-                                            <option value="annotationcollection">Annotation Collection</option>
-                                            <option value="book">Book</option>
-                                            <option value="section">Book Section</option>
-                                            <option value="conferencepaper">Conference Paper</option>
-                                            <option value="datamanagementplan">Data Management Plan</option>
-                                            <option value="article">Journal Article</option>
-                                            <option value="patent">Patent</option>
-                                            <option value="preprint">Preprint</option>
-                                            <option value="deliverable">Project Deliverable</option>
-                                            <option value="milestone">Project Milestone</option>
-                                            <option value="proposal">Proposal</option>
-                                            <option value="report">Report</option>
-                                            <option value="softwaredocumentation">Software Documentation</option>
-                                            <option value="taxonomictreatment">Taxonomic Treatment</option>
-                                            <option value="technicalnote">Technical Note</option>
-                                            <option value="thesis">Thesis</option>
-                                            <option value="workingpaper">Working Paper</option>
-                                            <option value="other">Other</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="col-lg-6 col-6">
-                                    <div class="mb-3">
-                                        <label class="form-label" for="publication_doi">Publication DOI</label>
-                                        <input class="form-control" name="feature_models-${formUniqueId}-publication_doi" type="text" value="">
-                                    </div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="mb-3">
-                                        <label class="form-label">Tags (separated by commas)</label>
-                                        <input type="text" class="form-control" name="feature_models-${formUniqueId}-tags">
-                                    </div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="mb-3">
-                                        <label class="form-label">UVL version</label>
-                                        <input type="text" class="form-control" name="feature_models-${formUniqueId}-uvl_version">
-                                    </div>
-                                </div>
-                                <div class="col-12">
-                                    <div class="mb-3">
-                                        <label class="form-label">Authors</label>
-                                        <div id="` + formContainer.id + `_authors">
-                                        </div>
-                                        <button type="button" class="add_author_to_uvl btn btn-secondary" id="` + formContainer.id + `_authors_button">Add author</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    `;
-
-                listItem.appendChild(formContainer);
-                fileList.appendChild(listItem);
-            }
-
-            
-
-        });
-
-        
+        // Mostrar mensaje de error debajo del archivo
+        let fileError = document.createElement('div');
+        fileError.classList.add('dropzone-file-error');
+        fileError.innerHTML = `<span class="badge bg-danger">Invalid file extension: ${file.name}</span>`;
+        file.previewElement.appendChild(fileError);
+        return;
     }
-};
+
+    // Leer el contenido del archivo
+    let reader = new FileReader();
+    reader.onload = (event) => {
+        const fileContent = event.target.result; // Contenido del archivo UVL
+
+        try {
+            // Intentar parsear el contenido UVL
+            const featureModel = new FeatureModel(fileContent);
+            const tree = featureModel.getFeatureModel(); // El árbol parseado del UVL
+            console.log("Parsed UVL Feature Model:", tree);
+
+            // Si el archivo es válido, agregar un mensaje "sintaxis válida"
+            let fileSuccess = document.createElement('div');
+            fileSuccess.classList.add('dropzone-file-success');
+            fileSuccess.innerHTML = `<span class="badge bg-success">Valid syntax</span>`;
+            file.previewElement.querySelector('.dropzone-file').appendChild(fileSuccess);
+        } catch (error) {
+            // Si hay un error de sintaxis, mostrar mensaje debajo del archivo
+            console.error("Error parsing UVL file:", error.message);
+
+            let fileError = document.createElement('div');
+            fileError.classList.add('alert', 'alert-danger', 'mt-2', 'p-2'); // Estilos de KeenThemes
+            fileError.innerHTML = `<strong>Error:</strong> Syntax error: ${error.message}`;
+            file.previewElement.querySelector('.dropzone-file').appendChild(fileError);
+
+            file.previewElement.classList.add('dropzone-invalid'); // Marcar como inválido
+
+            // this.removeFile(file); // Elimina el archivo de Dropzone
+        }
+
+        // Si el archivo es válido, mantenerlo en Dropzone
+        const dropzoneItems = dropzone.querySelectorAll('.dropzone-item');
+        dropzoneItems.forEach(dropzoneItem => {
+            dropzoneItem.style.display = '';
+        });
+    };
+
+    // Leer el archivo como texto
+    reader.readAsText(file);
+});
+
+
+
+myDropzone.on("removedfile", function (file) {
+    console.log("Archivo eliminado:", file.name);
+
+    // Realizar una llamada al servidor para eliminar el archivo
+    fetch('/hubfile/delete', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ file: file.name }), // Asegúrate de enviar el nombre del archivo correcto
+    })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error("Error al eliminar el archivo del servidor");
+            }
+            console.log("Archivo eliminado del servidor con éxito");
+        })
+        .catch(error => {
+            console.error("Error al eliminar el archivo:", error);
+        });
+});
+
+
+// Update the total progress bar
+myDropzone.on("totaluploadprogress", function (progress) {
+    const progressBars = dropzone.querySelectorAll('.progress-bar');
+    progressBars.forEach(progressBar => {
+        progressBar.style.width = progress + "%";
+    });
+});
+
+myDropzone.on("sending", function (file) {
+    // Show the total progress bar when upload starts
+    const progressBars = dropzone.querySelectorAll('.progress-bar');
+    progressBars.forEach(progressBar => {
+        progressBar.style.opacity = "1";
+    });
+});
+
+// Hide the total progress bar when nothing"s uploading anymore
+myDropzone.on("complete", function (progress) {
+    const progressBars = dropzone.querySelectorAll('.dz-complete');
+
+    setTimeout(function () {
+        progressBars.forEach(progressBar => {
+            progressBar.querySelector('.progress-bar').style.opacity = "0";
+            progressBar.querySelector('.progress').style.opacity = "0";
+        });
+    }, 300);
+});

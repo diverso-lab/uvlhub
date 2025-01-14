@@ -220,7 +220,7 @@
 
                     <div class="mb-0 fv-row">
 
-                        <div class="card bg-light-warning" style="background-color: #E9F3FF; padding: 10px">
+                        <div class="card btn-light-primary" style="background-color: #E9F3FF; padding: 10px">
                             <div class="card-body">
                                 <form class="form" action="#" method="post">
                                     <!--begin::Input group-->
@@ -496,11 +496,12 @@
 {% block scripts %}
 
 <script src="{{ url_for('dataset.assets', subfolder='dist', filename='dataset.bundle.js') }}"></script>
+<script src="{{ url_for('hubfile.assets', subfolder='dist', filename='hubfile.bundle.js') }}"></script>
 
 <script id="author-template" type="x-tmpl-mustache">
     <div class="col-lg-12 draggable mb-10" tabindex="0" id="author-[[id]]">
     <!--begin::Card-->
-    <div class="card card-bordered shadow">
+    <div class="card card-bordered shadow-sm">
         <div class="card-header">
             <div class="card-toolbar">
                 <a href="#" class="btn btn-icon btn-sm btn-hover-light-primary draggable-handle">
@@ -615,64 +616,6 @@ document.addEventListener('DOMContentLoaded', function () {
 // hubfile.js
 // ---------------------------------------------
 
-/*
-    Dropzone
-*/
-// set the dropzone container id
-const id = "#uvl_dropzone";
-const dropzone = document.querySelector(id);
-
-// set the preview element template
-var previewNode = dropzone.querySelector(".dropzone-item");
-previewNode.id = "";
-var previewTemplate = previewNode.parentNode.innerHTML;
-previewNode.parentNode.removeChild(previewNode);
-
-var myDropzone = new Dropzone(id, { // Make the whole body a dropzone
-    url: "https://keenthemes.com/scripts/void.php", // Set the url for your upload script location
-    parallelUploads: 20,
-    maxFilesize: 1, // Max filesize in MB
-    previewTemplate: previewTemplate,
-    previewsContainer: id + " .dropzone-items", // Define the container to display the previews
-    clickable: id + " .dropzone-select", // Define the element that should be used as click trigger to select files.
-    acceptedFiles: ".uvl" // Only accept files with .uvl extension
-});
-
-myDropzone.on("addedfile", function (file) {
-    // Hookup the start button
-    const dropzoneItems = dropzone.querySelectorAll('.dropzone-item');
-    dropzoneItems.forEach(dropzoneItem => {
-        dropzoneItem.style.display = '';
-    });
-});
-
-// Update the total progress bar
-myDropzone.on("totaluploadprogress", function (progress) {
-    const progressBars = dropzone.querySelectorAll('.progress-bar');
-    progressBars.forEach(progressBar => {
-        progressBar.style.width = progress + "%";
-    });
-});
-
-myDropzone.on("sending", function (file) {
-    // Show the total progress bar when upload starts
-    const progressBars = dropzone.querySelectorAll('.progress-bar');
-    progressBars.forEach(progressBar => {
-        progressBar.style.opacity = "1";
-    });
-});
-
-// Hide the total progress bar when nothing"s uploading anymore
-myDropzone.on("complete", function (progress) {
-    const progressBars = dropzone.querySelectorAll('.dz-complete');
-
-    setTimeout(function () {
-        progressBars.forEach(progressBar => {
-            progressBar.querySelector('.progress-bar').style.opacity = "0";
-            progressBar.querySelector('.progress').style.opacity = "0";
-        });
-    }, 300);
-});
 
 </script>
 

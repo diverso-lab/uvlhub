@@ -7,3 +7,8 @@
 [data-kt-search-element="content"].show {
     display: block; /* Muestra el menú cuando sea necesario */
 }
+
+
+.dropzone-file-success .badge {
+    color: #ffffff !important; /* Forzar texto blanco */
+}
