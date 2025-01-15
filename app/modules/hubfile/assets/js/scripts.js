@@ -25,6 +25,11 @@ var myDropzone = new Dropzone(id, { // Make the whole body a dropzone
 });
 
 myDropzone.on("addedfile", function (file) {
+
+    // Generar un identificador único para el archivo
+    file.upload = file.upload || {};
+    file.upload.uuid = crypto.randomUUID(); // Generar un UUID único
+
     // Validar extensión del archivo
     let ext = file.name.split('.').pop();
     if (ext !== 'uvl') {
@@ -79,8 +84,6 @@ myDropzone.on("addedfile", function (file) {
     reader.readAsText(file);
 });
 
-
-
 myDropzone.on("removedfile", function (file) {
     console.log("Archivo eliminado:", file.name);
 
@@ -90,19 +93,21 @@ myDropzone.on("removedfile", function (file) {
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ file: file.name }), // Asegúrate de enviar el nombre del archivo correcto
+        body: JSON.stringify({ 
+            filename: file.name, // Nombre original del archivo
+            uuid: file.upload.uuid // UUID generado al subir
+        }),
     })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error("Error al eliminar el archivo del servidor");
-            }
-            console.log("Archivo eliminado del servidor con éxito");
-        })
-        .catch(error => {
-            console.error("Error al eliminar el archivo:", error);
-        });
+    .then(response => {
+        if (!response.ok) {
+            throw new Error("Error al eliminar el archivo del servidor");
+        }
+        console.log("Archivo eliminado del servidor con éxito");
+    })
+    .catch(error => {
+        console.error("Error al eliminar el archivo:", error);
+    });
 });
-
 
 // Update the total progress bar
 myDropzone.on("totaluploadprogress", function (progress) {
@@ -112,13 +117,23 @@ myDropzone.on("totaluploadprogress", function (progress) {
     });
 });
 
-myDropzone.on("sending", function (file) {
+myDropzone.on("sending", function (file, xhr, formData) {
     // Show the total progress bar when upload starts
     const progressBars = dropzone.querySelectorAll('.progress-bar');
     progressBars.forEach(progressBar => {
         progressBar.style.opacity = "1";
     });
+
+    // Generar un identificador único si no existe
+    file.upload = file.upload || {};
+    if (!file.upload.uuid) {
+        file.upload.uuid = crypto.randomUUID(); // Generar un UUID único
+    }
+
+    // Agregar el UUID al FormData que se envía al servidor
+    formData.append("uuid", file.upload.uuid);
 });
+
 
 // Hide the total progress bar when nothing"s uploading anymore
 myDropzone.on("complete", function (progress) {

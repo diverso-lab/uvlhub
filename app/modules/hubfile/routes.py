@@ -20,6 +20,7 @@ flamapy_service = FlamapyService()
 @login_required
 def upload_file():
     file = request.files["file"]
+    uuid = request.form.get("uuid")  # Obtener el UUID enviado desde el frontend
     temp_folder = current_user.temp_folder()
 
     if not file or not file.filename.endswith(".uvl"):
@@ -29,8 +30,11 @@ def upload_file():
     if not os.path.exists(temp_folder):
         os.makedirs(temp_folder)
 
+    # Generar un nombre único para el archivo
+    unique_filename = f"{uuid}_{file.filename}"
+
     # Ruta temporal para el archivo
-    temp_file_path = os.path.join(temp_folder, file.filename)
+    temp_file_path = os.path.join(temp_folder, unique_filename)
 
     # Guardar temporalmente el archivo
     try:
@@ -46,12 +50,11 @@ def upload_file():
         os.remove(temp_file_path)
         return jsonify(validation_result), status_code
 
-    # Si el archivo es válido, guardarlo permanentemente
-    new_filename = file.filename
+    # Si el archivo es válido, retornar el nombre único del archivo
     return jsonify(
         {
             "message": "UVL uploaded and validated successfully",
-            "filename": new_filename,
+            "filename": unique_filename,
         }
     ), 200
 
@@ -60,15 +63,21 @@ def upload_file():
 @login_required
 def delete():
     data = request.get_json()
-    filename = data.get("file")
+    filename = data.get("filename")  # Nombre original del archivo
+    uuid = data.get("uuid")  # UUID enviado desde el frontend
     temp_folder = current_user.temp_folder()
-    filepath = os.path.join(temp_folder, filename)
 
+    # Generar el nombre único del archivo
+    unique_filename = f"{uuid}_{filename}"
+    filepath = os.path.join(temp_folder, unique_filename)
+
+    # Verificar si el archivo existe y eliminarlo
     if os.path.exists(filepath):
         os.remove(filepath)
-        return jsonify({"message": "File deleted successfully"})
+        return jsonify({"message": "File deleted successfully"}), 200
 
-    return jsonify({"error": "Error: File not found"})
+    return jsonify({"error": "Error: File not found"}), 404
+
 
 
 @hubfile_bp.route("/hubfile/download/<int:file_id>", methods=["GET"])
