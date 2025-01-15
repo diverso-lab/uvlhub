@@ -270,7 +270,18 @@
                                                 <!--end::Items-->
                                             </div>
                                             <!--end::Dropzone-->
-                    
+
+                                            <ul class="pagination">
+                                                <li class="page-item previous disabled"><a href="#" class="page-link"><i class="previous"></i></a></li>
+                                                <li class="page-item "><a href="#" class="page-link">1</a></li>
+                                                <li class="page-item active"><a href="#" class="page-link">2</a></li>
+                                                <li class="page-item "><a href="#" class="page-link">3</a></li>
+                                                <li class="page-item "><a href="#" class="page-link">4</a></li>
+                                                <li class="page-item "><a href="#" class="page-link">5</a></li>
+                                                <li class="page-item "><a href="#" class="page-link">6</a></li>
+                                                <li class="page-item next"><a href="#"  class="page-link"><i class="next"></i></a></li>
+                                            </ul>
+
                                             <!--begin::Hint-->
                                             <span class="form-text text-muted">Max file size is 1MB and max number of files is 100.</span>
                                             <!--end::Hint-->
@@ -307,13 +318,13 @@
 
 
                     <div class="fv-row mb-10">
-                        <label class="form-label">Title</label>
-                        <input type="text" class="form-control mb-2" name="title" placeholder="Enter a title">
+                        <label class="form-label required">Title</label>
+                        <input type="text" name="title" class="form-control mb-2" placeholder="Enter a title">
                         <div class="text-muted fs-7">Set a dataset title. Recommended to be simple and precise keywords.</div>
                     </div>
         
                     <div class="fv-row mb-10">
-                        <label class="form-label">Description</label>
+                        <label class="form-label required">Description</label>
                         <div data-bs-theme="light">
                             <textarea name="description" id="kt_docs_ckeditor_classic">
                             </textarea>
