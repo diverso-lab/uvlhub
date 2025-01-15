@@ -6,15 +6,10 @@ import { FeatureModel } from "uvl-parser";
 
 document.addEventListener('DOMContentLoaded', function () {
 
-    // Función para actualizar los controles de paginación
+    // Función para actualizar la paginación
     function updatePagination(files) {
         const totalFiles = files.length;
         totalPages = Math.ceil(totalFiles / filesPerPage);
-
-        // Actualizar botones y la información de la página
-        prevPageButton.disabled = currentPage === 1;
-        nextPageButton.disabled = currentPage === totalPages || totalFiles === 0;
-        pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
 
         // Mostrar solo los archivos de la página actual
         files.forEach((file, index) => {
@@ -22,6 +17,9 @@ document.addEventListener('DOMContentLoaded', function () {
             const end = currentPage * filesPerPage;
             file.previewElement.style.display = index >= start && index < end ? '' : 'none';
         });
+
+        // Generar los elementos de la paginación
+        renderPagination();
     }
 
     /*
@@ -49,18 +47,15 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     myDropzone.on("addedfile", function (file) {
-
-        updatePagination(myDropzone.files);
-
         // Generar un identificador único para el archivo
         file.upload = file.upload || {};
         file.upload.uuid = crypto.randomUUID(); // Generar un UUID único
-
+    
         // Validar extensión del archivo
         let ext = file.name.split('.').pop();
         if (ext !== 'uvl') {
             this.removeFile(file); // Elimina el archivo de la lista
-
+    
             // Mostrar mensaje de error debajo del archivo
             let fileError = document.createElement('div');
             fileError.classList.add('dropzone-file-error');
@@ -68,18 +63,18 @@ document.addEventListener('DOMContentLoaded', function () {
             file.previewElement.appendChild(fileError);
             return;
         }
-
+    
         // Leer el contenido del archivo
         let reader = new FileReader();
         reader.onload = (event) => {
             const fileContent = event.target.result; // Contenido del archivo UVL
-
+    
             try {
                 // Intentar parsear el contenido UVL
                 const featureModel = new FeatureModel(fileContent);
                 const tree = featureModel.getFeatureModel(); // El árbol parseado del UVL
                 console.log("Parsed UVL Feature Model:", tree);
-
+    
                 // Si el archivo es válido, agregar un mensaje "sintaxis válida"
                 let fileSuccess = document.createElement('div');
                 fileSuccess.classList.add('dropzone-file-success');
@@ -88,31 +83,27 @@ document.addEventListener('DOMContentLoaded', function () {
             } catch (error) {
                 // Si hay un error de sintaxis, mostrar mensaje debajo del archivo
                 console.error("Error parsing UVL file:", error.message);
-
+    
                 let fileError = document.createElement('div');
                 fileError.classList.add('alert', 'alert-danger', 'mt-2', 'p-2'); // Estilos de KeenThemes
                 fileError.innerHTML = `<strong>Error:</strong> Syntax error: ${error.message}`;
                 file.previewElement.querySelector('.dropzone-file').appendChild(fileError);
-
+    
                 file.previewElement.classList.add('dropzone-invalid'); // Marcar como inválido
-
+    
                 // this.removeFile(file); // Elimina el archivo de Dropzone
             }
-
-            // Si el archivo es válido, mantenerlo en Dropzone
-            const dropzoneItems = dropzone.querySelectorAll('.dropzone-item');
-            dropzoneItems.forEach(dropzoneItem => {
-                dropzoneItem.style.display = '';
-            });
         };
-
+    
         // Leer el archivo como texto
         reader.readAsText(file);
+    
+        // Actualizar la paginación al final
+        updatePagination(myDropzone.files);
     });
+    
 
     myDropzone.on("removedfile", function (file) {
-        
-        updatePagination(myDropzone.files);
         
         console.log("Deleted file", file.name);
 
@@ -136,6 +127,9 @@ document.addEventListener('DOMContentLoaded', function () {
         .catch(error => {
             console.error("Error deleting the file:", error);
         });
+
+        updatePagination(myDropzone.files);
+
     });
 
     // Update the total progress bar
@@ -185,34 +179,57 @@ document.addEventListener('DOMContentLoaded', function () {
     let currentPage = 1; // Página actual
     let totalPages = 1; // Número total de páginas
 
-    // Referencias a los controles de paginación
-    const paginationContainer = document.createElement('div');
-    paginationContainer.classList.add('dropzone-pagination', 'mt-3');
-    paginationContainer.innerHTML = `
-        <button class="btn btn-sm btn-primary prev-page" disabled>Previous</button>
-        <span class="page-info">Page 1</span>
-        <button class="btn btn-sm btn-primary next-page">Next</button>
-    `;
+    // Crear el contenedor de paginación
+    const paginationContainer = document.createElement('ul');
+    paginationContainer.classList.add('pagination', 'mt-3');
     dropzone.parentNode.appendChild(paginationContainer);
 
-    const prevPageButton = paginationContainer.querySelector('.prev-page');
-    const nextPageButton = paginationContainer.querySelector('.next-page');
-    const pageInfo = paginationContainer.querySelector('.page-info');
+    // Función para renderizar los botones de la paginación
+    function renderPagination() {
+        paginationContainer.innerHTML = ''; // Limpiar paginación existente
 
-    // Eventos de los botones de paginación
-    prevPageButton.addEventListener('click', () => {
-        if (currentPage > 1) {
-            currentPage--;
-            updatePagination(myDropzone.files);
-        }
-    });
+        // Botón "Previous"
+        const prevButton = document.createElement('li');
+        prevButton.classList.add('page-item', 'previous');
+        if (currentPage === 1) prevButton.classList.add('disabled');
+        prevButton.innerHTML = `<a href="#" class="page-link"><i class="previous"></i></a>`;
+        prevButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (currentPage > 1) {
+                currentPage--;
+                updatePagination(myDropzone.files);
+            }
+        });
+        paginationContainer.appendChild(prevButton);
 
-    nextPageButton.addEventListener('click', () => {
-        if (currentPage < totalPages) {
-            currentPage++;
-            updatePagination(myDropzone.files);
+        // Botones de páginas
+        for (let i = 1; i <= totalPages; i++) {
+            const pageButton = document.createElement('li');
+            pageButton.classList.add('page-item');
+            if (i === currentPage) pageButton.classList.add('active');
+            pageButton.innerHTML = `<a href="#" class="page-link">${i}</a>`;
+            pageButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                currentPage = i;
+                updatePagination(myDropzone.files);
+            });
+            paginationContainer.appendChild(pageButton);
         }
-    });
+
+        // Botón "Next"
+        const nextButton = document.createElement('li');
+        nextButton.classList.add('page-item', 'next');
+        if (currentPage === totalPages) nextButton.classList.add('disabled');
+        nextButton.innerHTML = `<a href="#" class="page-link"><i class="next"></i></a>`;
+        nextButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (currentPage < totalPages) {
+                currentPage++;
+                updatePagination(myDropzone.files);
+            }
+        });
+        paginationContainer.appendChild(nextButton);
+    }
 
 });
 

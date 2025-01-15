@@ -220,78 +220,63 @@
 
                     <div class="mb-0 fv-row">
 
-                        <div class="card btn-light-primary">
-                            <div class="card-body">
-                                <form class="form" action="#" method="post">
-                                    <!--begin::Input group-->
-                    
-                                        <!--begin::Col-->
-                                            <!--begin::Dropzone-->
-                                            <div class="dropzone dropzone-queue mb-2" id="uvl_dropzone">
-                                                <!--begin::Controls-->
-                                                <div class="dropzone-panel mb-lg-0 mb-2">
-                                                    <h2 class="mb-10">Drag & drop your UVL files</h2>
-                                                    <a class="dropzone-select btn btn-sm btn-primary me-2">Attach files</a>
+                        <form class="form" action="#" method="post">
+                            <!--begin::Input group-->
+            
+                                <!--begin::Col-->
+                                    <!--begin::Dropzone-->
+                                    <div class="dropzone dropzone-queue mb-2" id="uvl_dropzone">
+                                        <!--begin::Controls-->
+                                        <div class="dropzone-panel mb-lg-0 mb-2">
+                                            <h2 class="mb-10">Drag & drop your UVL files</h2>
+                                            <a class="dropzone-select btn btn-sm btn-primary me-2">Attach files</a>
+                                        </div>
+                                        <!--end::Controls-->
+            
+                                        <!--begin::Items-->
+                                        <div class="dropzone-items wm-200px">
+                                            <div class="dropzone-item" style="display:none">
+                                                <!--begin::File-->
+                                                <div class="dropzone-file">
+                                                    <div class="dropzone-filename" title="some_image_file_name.jpg">
+                                                        <span data-dz-name>some_image_file_name.jpg</span>
+                                                        <strong>(<span data-dz-size>340kb</span>)</strong>
+                                                    </div>
+            
+                                                    <div class="dropzone-error" data-dz-errormessage></div>
                                                 </div>
-                                                <!--end::Controls-->
-                    
-                                                <!--begin::Items-->
-                                                <div class="dropzone-items wm-200px">
-                                                    <div class="dropzone-item" style="display:none">
-                                                        <!--begin::File-->
-                                                        <div class="dropzone-file">
-                                                            <div class="dropzone-filename" title="some_image_file_name.jpg">
-                                                                <span data-dz-name>some_image_file_name.jpg</span>
-                                                                <strong>(<span data-dz-size>340kb</span>)</strong>
-                                                            </div>
-                    
-                                                            <div class="dropzone-error" data-dz-errormessage></div>
+                                                <!--end::File-->
+            
+                                                <!--begin::Progress-->
+                                                <div class="dropzone-progress">
+                                                    <div class="progress">
+                                                        <div
+                                                            class="progress-bar bg-primary"
+                                                            role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" data-dz-uploadprogress>
                                                         </div>
-                                                        <!--end::File-->
-                    
-                                                        <!--begin::Progress-->
-                                                        <div class="dropzone-progress">
-                                                            <div class="progress">
-                                                                <div
-                                                                    class="progress-bar bg-primary"
-                                                                    role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" data-dz-uploadprogress>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <!--end::Progress-->
-                    
-                                                        <!--begin::Toolbar-->
-                                                        <div class="dropzone-toolbar">
-                                                            <span class="dropzone-delete" data-dz-remove><i class="bi bi-x fs-1"></i></span>
-                                                        </div>
-                                                        <!--end::Toolbar-->
                                                     </div>
                                                 </div>
-                                                <!--end::Items-->
+                                                <!--end::Progress-->
+            
+                                                <!--begin::Toolbar-->
+                                                <div class="dropzone-toolbar">
+                                                    <span class="dropzone-delete" data-dz-remove><i class="bi bi-x fs-1"></i></span>
+                                                </div>
+                                                <!--end::Toolbar-->
                                             </div>
-                                            <!--end::Dropzone-->
+                                        </div>
+                                        <!--end::Items-->
+                                    </div>
+                                    <!--end::Dropzone-->
 
-                                            <ul class="pagination">
-                                                <li class="page-item previous disabled"><a href="#" class="page-link"><i class="previous"></i></a></li>
-                                                <li class="page-item "><a href="#" class="page-link">1</a></li>
-                                                <li class="page-item active"><a href="#" class="page-link">2</a></li>
-                                                <li class="page-item "><a href="#" class="page-link">3</a></li>
-                                                <li class="page-item "><a href="#" class="page-link">4</a></li>
-                                                <li class="page-item "><a href="#" class="page-link">5</a></li>
-                                                <li class="page-item "><a href="#" class="page-link">6</a></li>
-                                                <li class="page-item next"><a href="#"  class="page-link"><i class="next"></i></a></li>
-                                            </ul>
-
-                                            <!--begin::Hint-->
-                                            <span class="form-text text-muted">Max file size is 1MB and max number of files is 100.</span>
-                                            <!--end::Hint-->
-                                        
-                                        <!--end::Col-->
-                                    
-                                    <!--end::Input group-->
-                                </form>
-                            </div>
-                        </div>
+                                    <!--begin::Hint-->
+                                    <span class="form-text text-muted">Max file size is 1MB and max number of files is 100.</span>
+                                    <!--end::Hint-->
+                                
+                                <!--end::Col-->
+                            
+                            <!--end::Input group-->
+                        </form>
 
                     </div>
 
