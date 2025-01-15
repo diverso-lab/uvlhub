@@ -85,7 +85,7 @@ myDropzone.on("addedfile", function (file) {
 });
 
 myDropzone.on("removedfile", function (file) {
-    console.log("Archivo eliminado:", file.name);
+    console.log("Deleted file", file.name);
 
     // Realizar una llamada al servidor para eliminar el archivo
     fetch('/hubfile/delete', {
@@ -100,12 +100,12 @@ myDropzone.on("removedfile", function (file) {
     })
     .then(response => {
         if (!response.ok) {
-            throw new Error("Error al eliminar el archivo del servidor");
+            throw new Error("Error deleting file from server");
         }
-        console.log("Archivo eliminado del servidor con éxito");
+        console.log("File successfully removed from server");
     })
     .catch(error => {
-        console.error("Error al eliminar el archivo:", error);
+        console.error("Error deleting the file:", error);
     });
 });
 

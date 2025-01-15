@@ -114,6 +114,14 @@ def create_dataset():
         msg = "Everything works!"
         return jsonify({"message": msg}), 200
 
+    temp_folder = current_user.temp_folder()
+
+    if os.path.exists(temp_folder):
+        try:
+            shutil.rmtree(temp_folder)  # Delete any previous temporary folder
+        except Exception as e:
+            return jsonify({"message": f"Error removing temp folder: {str(e)}"}), 500
+
     with_hubfiles = request.args.get("with_hubfiles", "")
     hubfiles_ids = [int(x) for x in with_hubfiles.split(",") if x]
     hubfiles = hubfile_service.get_by_ids(hubfiles_ids)
