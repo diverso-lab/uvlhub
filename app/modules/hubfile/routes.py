@@ -19,38 +19,51 @@ flamapy_service = FlamapyService()
 @hubfile_bp.route("/hubfile/upload", methods=["POST"])
 @login_required
 def upload_file():
-    file = request.files["file"]
-    uuid = request.form.get("uuid")  # Obtener el UUID enviado desde el frontend
+    file = request.files.get("file")
+    uuid = request.form.get("uuid")  # Retrieve the UUID sent from the frontend
     temp_folder = current_user.temp_folder()
 
     if not file or not file.filename.endswith(".uvl"):
         return jsonify({"message": "No valid file"}), 400
 
-    # Crear carpeta temporal si no existe
-    if not os.path.exists(temp_folder):
-        os.makedirs(temp_folder)
+    # Validate that the UUID is provided
+    if not uuid:
+        return jsonify({"message": "UUID is missing"}), 400
 
-    # Generar un nombre único para el archivo
+    # Safely create the temporary folder
+    try:
+        os.makedirs(temp_folder, exist_ok=True)  # Handle concurrency safely
+    except Exception as e:
+        return jsonify({"message": f"Error creating temp folder: {str(e)}"}), 500
+
+    # Generate a unique filename for the file
     unique_filename = f"{uuid}_{file.filename}"
 
-    # Ruta temporal para el archivo
+    # Define the temporary path for the file
     temp_file_path = os.path.join(temp_folder, unique_filename)
 
-    # Guardar temporalmente el archivo
+    # Save the file temporarily
     try:
         file.save(temp_file_path)
     except Exception as e:
-        return jsonify({"message": str(e)}), 500
+        return jsonify({"message": f"Error saving file: {str(e)}"}), 500
 
-    # Llamar directamente a `check_uvl` pasando la ruta temporal del archivo
-    validation_result, status_code = flamapy_service.check_uvl(temp_file_path)
+    # Validate the UVL file using `check_uvl`
+    try:
+        validation_result, status_code = flamapy_service.check_uvl(temp_file_path)
 
-    if status_code != 200:
-        # Si no es válido, eliminar el archivo temporal y retornar error
-        os.remove(temp_file_path)
-        return jsonify(validation_result), status_code
+        if status_code != 200:
+            # If the file is invalid, remove it and return an error
+            os.remove(temp_file_path)
+            return jsonify(validation_result), status_code
 
-    # Si el archivo es válido, retornar el nombre único del archivo
+    except Exception as e:
+        # Remove the file if an unexpected error occurs during validation
+        if os.path.exists(temp_file_path):
+            os.remove(temp_file_path)
+        return jsonify({"message": f"Error validating UVL: {str(e)}"}), 500
+
+    # If the file is valid, return the unique filename
     return jsonify(
         {
             "message": "UVL uploaded and validated successfully",
