@@ -5,6 +5,7 @@ import { FeatureModel } from "uvl-parser";
 */
 
 document.addEventListener('DOMContentLoaded', function () {
+
     // Pagination settings
     const filesPerPage = 5; // Number of files per page
     let currentPage = 1; // Current page
@@ -47,6 +48,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Dispatch the custom event
     document.dispatchEvent(new Event("myDropzoneReady"));
+
+    updateStep2Summary();
 
     // Update the visibility of the files according to the current page
     function updatePagination(files) {
@@ -124,6 +127,20 @@ document.addEventListener('DOMContentLoaded', function () {
         paginationContainer.appendChild(nextButton);
     }
 
+    // Función para actualizar el resumen de archivos UVL
+    function updateStep2Summary() {
+        const step2SummaryDiv = document.getElementById('step_2_summary');
+        const fileCount = myDropzone.files.length;
+    
+        if (fileCount > 0) {
+            step2SummaryDiv.innerHTML = `
+                <span class="badge badge-circle badge-outline badge-primary" style="text-color: white;">${fileCount}</span> UVL file${fileCount > 1 ? 's' : ''} uploaded
+            `;
+        } else {
+            step2SummaryDiv.innerHTML = 'No UVL files uploaded yet';
+        }
+    }
+
     myDropzone.on("addedfile", function (file) {
         file.upload = file.upload || {};
         file.upload.uuid = crypto.randomUUID(); // Generate a unique UUID
@@ -157,6 +174,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 fileSuccess.classList.add('dropzone-file-success');
                 fileSuccess.innerHTML = `<span class="badge bg-success">Valid syntax</span>`;
                 file.previewElement.querySelector('.dropzone-file').appendChild(fileSuccess);
+                updateStep2Summary();
             } catch (error) {
                 console.error("Error parsing UVL file:", error.message);
 
@@ -194,6 +212,7 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(response => {
                 if (!response.ok) throw new Error("Error deleting file from server");
                 updatePagination(myDropzone.files);
+                updateStep2Summary();
             })
             .catch(error => console.error("Error deleting the file:", error));
     });
