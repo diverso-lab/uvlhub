@@ -1,4 +1,5 @@
 import Mustache from 'mustache';
+import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
 
 document.addEventListener('DOMContentLoaded', function () {
 
@@ -133,14 +134,27 @@ document.addEventListener('DOMContentLoaded', function () {
         Editor
     */
     ClassicEditor
-        .create(document.querySelector('#kt_docs_ckeditor_classic'))
-        .then(editor => {
-            console.log(editor);
-        })
-        .catch(error => {
-            console.error(error);
-        });
+    .create(document.querySelector('#kt_docs_ckeditor_classic'), {
+        plugins: [
+            'Essentials', 'Paragraph', 'Heading', 'Bold', 'Italic', 'List', 'Link'
+        ],
+        toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', '|', 'undo', 'redo'],
+        markdown: {
+            // Optional: Set specific options for Markdown if needed
+        }
+    })
+    .then(editor => {
+        console.log('CKEditor initialized with Markdown support:', editor);
 
+        // Example: Log the Markdown content on change
+        editor.model.document.on('change:data', () => {
+            console.log('Markdown Content:', editor.getData());
+        });
+    })
+    .catch(error => {
+        console.error('Error initializing CKEditor:', error);
+    });
+    
     /*
         Authors
     */
