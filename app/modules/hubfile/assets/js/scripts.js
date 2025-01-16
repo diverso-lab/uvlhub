@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var previewTemplate = previewNode.parentNode.innerHTML;
     previewNode.parentNode.removeChild(previewNode);
 
-    var myDropzone = new Dropzone(id, {
+    window.myDropzone = new Dropzone(id, {
         url: "/hubfile/upload",
         parallelUploads: 20,
         maxFilesize: 1,
@@ -41,6 +41,12 @@ document.addEventListener('DOMContentLoaded', function () {
         clickable: id + " .dropzone-select",
         acceptedFiles: ".uvl"
     });
+
+    // Set a global flag to indicate the readiness of myDropzone
+    window.myDropzoneReady = true;
+
+    // Dispatch the custom event
+    document.dispatchEvent(new Event("myDropzoneReady"));
 
     // Update the visibility of the files according to the current page
     function updatePagination(files) {
@@ -153,11 +159,21 @@ document.addEventListener('DOMContentLoaded', function () {
                 file.previewElement.querySelector('.dropzone-file').appendChild(fileSuccess);
             } catch (error) {
                 console.error("Error parsing UVL file:", error.message);
-                let fileError = document.createElement('div');
-                fileError.classList.add('alert', 'alert-danger', 'mt-2', 'p-2');
-                fileError.innerHTML = `<strong>Error:</strong> Syntax error: ${error.message}`;
-                file.previewElement.querySelector('.dropzone-file').appendChild(fileError);
+
+                // Create a persistent error message
+                const persistentError = document.createElement('div');
+                persistentError.classList.add('alert', 'alert-danger', 'mt-2', 'p-2');
+                persistentError.innerHTML = `<strong>Error:</strong> Syntax error: ${error.message}`;
+                file.previewElement.querySelector('.dropzone-file').appendChild(persistentError);
+
+                // Mark the file as invalid in the UI
                 file.previewElement.classList.add('dropzone-invalid');
+
+                // Remove the file from Dropzone but keep the error message visible
+                setTimeout(() => {
+                    this.removeFile(file);
+                    dropzone.querySelector('.dropzone-items').appendChild(file.previewElement);
+                }, 500); // Small delay to visually show the addition
             }
         };
 
@@ -167,6 +183,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Update pagination at the end
         updatePagination(myDropzone.files);
     });
+
 
     myDropzone.on("removedfile", function (file) {
         fetch('/hubfile/delete', {

@@ -472,7 +472,7 @@
                         <span class="indicator-progress">Please wait... 
                         <span class="spinner-border spinner-border-sm align-middle ms-2"></span></span>
                     </button>
-                    <button type="button" class="btn btn-lg btn-primary" data-kt-stepper-action="next">Continue
+                    <button type="button" class="btn btn-lg btn-primary" data-kt-stepper-action="next" id="continue_button">Continue
                     <i class="ki-duotone ki-arrow-right fs-4 ms-1 me-0">
                         <span class="path1"></span>
                         <span class="path2"></span>
@@ -491,8 +491,9 @@
     
 {% block scripts %}
 
-<script src="{{ url_for('dataset.assets', subfolder='dist', filename='dataset.bundle.js') }}"></script>
 <script src="{{ url_for('hubfile.assets', subfolder='dist', filename='hubfile.bundle.js') }}"></script>
+<script src="{{ url_for('dataset.assets', subfolder='dist', filename='dataset.bundle.js') }}"></script>
+
 
 <script id="author-template" type="x-tmpl-mustache">
     <div class="col-lg-12 draggable mb-10" tabindex="0" id="author-[[id]]">
@@ -552,58 +553,7 @@
 
 document.addEventListener('DOMContentLoaded', function () {
 
-    /*
-        Stepper
-    */
-
-    // Stepper lement
-    var element = document.querySelector("#stepper_upload_dataset");
-
-    // Initialize Stepper
-    var stepper = new KTStepper(element);
-
-    // Handle next step
-    stepper.on("kt.stepper.next", function (stepper) {
-        stepper.goNext(); // go next step
-    });
-
-    // Handle previous step
-    stepper.on("kt.stepper.previous", function (stepper) {
-        stepper.goPrevious(); // go previous step
-    });
-
-    /*
-        Tagify
-    */
-    new Tagify( document.querySelector("#tags") );
-
-    /*
-        Editor
-    */
-    ClassicEditor
-        .create(document.querySelector('#kt_docs_ckeditor_classic'))
-        .then(editor => {
-            console.log(editor);
-        })
-        .catch(error => {
-            console.error(error);
-        });
-
-    /*
-        Authors
-    */
-
-    var containers = document.querySelectorAll(".draggable-zone");
-
-    var swappable = new Draggable.Sortable(containers, {
-        draggable: ".draggable",
-        handle: ".draggable .draggable-handle",
-        mirror: {
-            appendTo: "body",
-            constrainDimensions: true
-        }
-    });
-
+ 
 
 });
 
