@@ -9,7 +9,8 @@ from app.modules.dataset.models import (
     DSMetaData,
     PublicationType,
     DSMetrics,
-    Author)
+    Author,
+)
 from dotenv import load_dotenv
 
 
@@ -62,8 +63,9 @@ class DataSetSeeder(BaseSeeder):
             DataSet(
                 user_id=user1.id if i % 2 == 0 else user2.id,
                 ds_meta_data_id=seeded_ds_meta_data[i].id,
-                feature_model_count=3
-            ) for i in range(4)
+                feature_model_count=3,
+            )
+            for i in range(4)
         ]
         seeded_datasets = self.seed(datasets)
 
@@ -117,7 +119,13 @@ class DataSetSeeder(BaseSeeder):
             )
             user_id = dataset.user_id
 
-            dest_folder = os.path.join(working_dir, 'uploads', f'user_{user_id}', f'dataset_{dataset.id}', 'uvl')
+            dest_folder = os.path.join(
+                working_dir,
+                "uploads",
+                f"user_{user_id}",
+                f"dataset_{dataset.id}",
+                "uvl",
+            )
             os.makedirs(dest_folder, exist_ok=True)
             shutil.copy(os.path.join(src_folder, file_name), dest_folder)
 

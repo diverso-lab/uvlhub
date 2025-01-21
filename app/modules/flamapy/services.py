@@ -13,9 +13,9 @@ from antlr4.error.ErrorListener import ErrorListener
 from flamapy.metamodels.fm_metamodel.models import FeatureModel
 from flamapy.metamodels.fm_metamodel.operations import FMMetrics
 from flamapy.metamodels.bdd_metamodel.operations import BDDMetrics
-from flamapy.metamodels.pysat_metamodel.operations import PySATMetrics # noqa
-from flamapy.metamodels.pysat_metamodel.transformations import FmToPysat # noqa
-from flamapy.metamodels.bdd_metamodel.transformations import FmToBDD # noqa
+from flamapy.metamodels.pysat_metamodel.operations import PySATMetrics  # noqa
+from flamapy.metamodels.pysat_metamodel.transformations import FmToPysat  # noqa
+from flamapy.metamodels.bdd_metamodel.transformations import FmToBDD  # noqa
 
 logger = logging.getLogger(__name__)
 

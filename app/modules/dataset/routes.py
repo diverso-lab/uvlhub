@@ -201,7 +201,9 @@ def list_dataset():
     return render_template(
         "dataset/list_datasets.html",
         datasets=dataset_service.get_synchronized_datasets_by_user(current_user.id),
-        local_datasets=dataset_service.get_unsynchronized_datasets_by_user(current_user.id),
+        local_datasets=dataset_service.get_unsynchronized_datasets_by_user(
+            current_user.id
+        ),
     )
 
 
@@ -281,7 +283,9 @@ def subdomain_index(doi):
 def get_unsynchronized_dataset(dataset_id):
 
     # Get dataset
-    dataset = dataset_service.get_unsynchronized_dataset_by_user(current_user.id, dataset_id)
+    dataset = dataset_service.get_unsynchronized_dataset_by_user(
+        current_user.id, dataset_id
+    )
 
     if not dataset:
         abort(404)

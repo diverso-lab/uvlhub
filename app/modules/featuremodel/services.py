@@ -20,10 +20,13 @@ class FeatureModelService(BaseService):
     def count_feature_models(self):
 
         from app.modules.dataset.services import DataSetService
+
         dataset_service = DataSetService()
         synchronized_datasets = dataset_service.get_synchronized_datasets()
 
-        total_feature_models = sum(dataset.feature_model_count for dataset in synchronized_datasets)
+        total_feature_models = sum(
+            dataset.feature_model_count for dataset in synchronized_datasets
+        )
 
         return total_feature_models
 

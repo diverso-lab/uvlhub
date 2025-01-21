@@ -26,7 +26,7 @@ class Hubfile(db.Model):
         db.Integer, db.ForeignKey("feature_model.id"), nullable=False
     )
 
-    feature_model = db.relationship('FeatureModel', back_populates='hubfiles')
+    feature_model = db.relationship("FeatureModel", back_populates="hubfiles")
 
     def get_formatted_size(self):
         from app.modules.dataset.services import SizeService
@@ -79,7 +79,7 @@ class Hubfile(db.Model):
             "uploads",
             f"user_{self.feature_model.data_set.user_id}",
             f"dataset_{self.feature_model.data_set_id}",
-            'uvl',
+            "uvl",
             self.name,
         )
 
@@ -104,7 +104,9 @@ class HubfileDownloadRecord(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
     file_id = db.Column(db.Integer, db.ForeignKey("file.id"))
-    download_date = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.utc))
+    download_date = db.Column(
+        db.DateTime, nullable=False, default=lambda: datetime.now(pytz.utc)
+    )
     download_cookie = db.Column(db.String(36), nullable=False)
 
     def __repr__(self):
@@ -130,7 +132,5 @@ def hubfile_aupdated_listener(mapper, connection, target):
 
     task_manager = TaskQueueManager()
     task_manager.enqueue_task(
-        "app.modules.hubfile.tasks.transform_uvl",
-        path=path,
-        timeout=300
+        "app.modules.hubfile.tasks.transform_uvl", path=path, timeout=300
     )

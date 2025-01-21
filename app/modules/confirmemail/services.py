@@ -19,8 +19,10 @@ class ConfirmemailService(BaseService):
     def __init__(self):
         super().__init__(ConfirmemailRepository())
         self.repository = ConfirmemailRepository()
-        self.CONFIRM_EMAIL_SALT = os.getenv('CONFIRM_EMAIL_SALT', 'sample_salt')
-        self.CONFIRM_EMAIL_TOKEN_MAX_AGE = os.getenv('CONFIRM_EMAIL_TOKEN_MAX_AGE', 3600)
+        self.CONFIRM_EMAIL_SALT = os.getenv("CONFIRM_EMAIL_SALT", "sample_salt")
+        self.CONFIRM_EMAIL_TOKEN_MAX_AGE = os.getenv(
+            "CONFIRM_EMAIL_TOKEN_MAX_AGE", 3600
+        )
 
     def get_serializer(self):
         return URLSafeTimedSerializer(current_app.config["SECRET_KEY"])

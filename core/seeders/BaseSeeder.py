@@ -41,7 +41,9 @@ class BaseSeeder:
                 obj_dict = obj.__dict__.copy()
                 for key, value in obj_dict.items():
                     if isinstance(value, datetime):
-                        obj_dict[key] = value.isoformat()  # Convert datetime to ISO format
+                        obj_dict[key] = (
+                            value.isoformat()
+                        )  # Convert datetime to ISO format
                 # Optional: Log serialized objects for debugging
                 # print(json.dumps(obj_dict, default=self.json_serializer))
 

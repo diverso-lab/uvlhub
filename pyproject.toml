@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rosemary"
+version = "0.1.0"
+description = "Rosemary is a CLI to be able to work on UVLHub development more easily."
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "click",
+    "python-dotenv",
+]
+
+[project.scripts]
+rosemary = "rosemary.cli:cli"
+
+[tool.setuptools]
+packages = ["rosemary"]

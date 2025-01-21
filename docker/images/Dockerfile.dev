@@ -49,7 +49,7 @@ COPY --chmod=0755 scripts/init-testing-db.sh ./scripts/
 COPY app ./app
 COPY core ./core
 COPY rosemary/ ./rosemary
-COPY setup.py ./
+COPY pyproject.toml ./
 COPY docker/ ./docker
 COPY .moduleignore ./
 

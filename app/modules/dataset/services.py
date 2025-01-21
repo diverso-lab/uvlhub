@@ -67,7 +67,13 @@ class DataSetService(BaseService):
         source_dir = current_user.temp_folder()
 
         working_dir = os.getenv("WORKING_DIR", "")
-        dest_dir = os.path.join(working_dir, "uploads", f"user_{current_user.id}", f"dataset_{dataset.id}", "uvl")
+        dest_dir = os.path.join(
+            working_dir,
+            "uploads",
+            f"user_{current_user.id}",
+            f"dataset_{dataset.id}",
+            "uvl",
+        )
 
         os.makedirs(dest_dir, exist_ok=True)
 
@@ -78,39 +84,51 @@ class DataSetService(BaseService):
     def is_synchronized(self, dataset_id: int) -> bool:
         return self.repository.is_synchronized(dataset_id)
 
-    '''
+    """
         Synchronised dataset
-    '''
+    """
+
     def get_synchronized_datasets(self) -> List[DataSet]:
         return self.repository.get_synchronized_datasets()
 
     def get_synchronized_datasets_by_user(self, current_user_id: int) -> List[DataSet]:
         return self.repository.get_synchronized_datasets_by_user(current_user_id)
 
-    def get_synchronized_dataset_by_user(self, current_user_id: int, dataset_id: int) -> DataSet:
-        return self.repository.get_synchronized_dataset_by_user(current_user_id, dataset_id)
+    def get_synchronized_dataset_by_user(
+        self, current_user_id: int, dataset_id: int
+    ) -> DataSet:
+        return self.repository.get_synchronized_dataset_by_user(
+            current_user_id, dataset_id
+        )
 
     def count_synchronized_datasets(self) -> int:
         return self.repository.count_synchronized_datasets()
 
-    '''
+    """
         Unsynchronised dataset
-    '''
+    """
+
     def get_unsynchronized_datasets(self) -> List[DataSet]:
         return self.repository.get_unsynchronized_datasets()
 
-    def get_unsynchronized_datasets_by_user(self, current_user_id: int) -> List[DataSet]:
+    def get_unsynchronized_datasets_by_user(
+        self, current_user_id: int
+    ) -> List[DataSet]:
         return self.repository.get_unsynchronized_datasets_by_user(current_user_id)
 
-    def get_unsynchronized_dataset_by_user(self, current_user_id: int, dataset_id: int) -> DataSet:
-        return self.repository.get_unsynchronized_dataset_by_user(current_user_id, dataset_id)
+    def get_unsynchronized_dataset_by_user(
+        self, current_user_id: int, dataset_id: int
+    ) -> DataSet:
+        return self.repository.get_unsynchronized_dataset_by_user(
+            current_user_id, dataset_id
+        )
 
     def count_unsynchronized_datasets(self) -> int:
         return self.repository.count_unsynchronized_datasets()
 
-    '''
+    """
         Top X datasets...
-    '''
+    """
 
     def latest_synchronized(self) -> List[DataSet]:
         return self.repository.latest_synchronized()
@@ -128,7 +146,9 @@ class DataSetService(BaseService):
     def count_dsmetadata(self) -> int:
         return self.dsmetadata_repository.count()
 
-    def update_from_form(self, form: DataSetForm, current_user: User, dataset: DataSet) -> DataSet:
+    def update_from_form(
+        self, form: DataSetForm, current_user: User, dataset: DataSet
+    ) -> DataSet:
         main_author = {
             "name": f"{current_user.profile.surname}, {current_user.profile.name}",
             "affiliation": current_user.profile.affiliation,
@@ -304,8 +324,10 @@ class DataSetService(BaseService):
         return f"http://{domain}/doi/{dataset.ds_meta_data.dataset_doi}"
 
     def zip_dataset(self, dataset: DataSet) -> str:
-        working_dir = os.getenv('WORKING_DIR', '')
-        file_path = os.path.join(working_dir, "uploads", f"user_{dataset.user_id}", f"dataset_{dataset.id}")
+        working_dir = os.getenv("WORKING_DIR", "")
+        file_path = os.path.join(
+            working_dir, "uploads", f"user_{dataset.user_id}", f"dataset_{dataset.id}"
+        )
 
         temp_dir = tempfile.mkdtemp()
         zip_path = os.path.join(temp_dir, f"dataset_{dataset.id}.zip")
@@ -335,7 +357,9 @@ class DataSetService(BaseService):
                     for dataset_dir in os.listdir(user_path):
                         dataset_path = os.path.join(user_path, dataset_dir)
 
-                        if os.path.isdir(dataset_path) and dataset_dir.startswith("dataset_"):
+                        if os.path.isdir(dataset_path) and dataset_dir.startswith(
+                            "dataset_"
+                        ):
                             dataset_id = int(dataset_dir.split("_")[1])
 
                             if self.is_synchronized(dataset_id):
@@ -343,10 +367,14 @@ class DataSetService(BaseService):
                                     for file in files:
                                         full_path = os.path.join(subdir, file)
 
-                                        relative_path = os.path.relpath(full_path, dataset_path)
+                                        relative_path = os.path.relpath(
+                                            full_path, dataset_path
+                                        )
                                         zipf.write(
                                             full_path,
-                                            arcname=os.path.join(dataset_dir, relative_path),
+                                            arcname=os.path.join(
+                                                dataset_dir, relative_path
+                                            ),
                                         )
 
 

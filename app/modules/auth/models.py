@@ -13,7 +13,9 @@ class User(db.Model, UserMixin):
 
     email = db.Column(db.String(256), unique=True, nullable=True)
     password = db.Column(db.String(256), nullable=False)
-    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.utc))
+    created_at = db.Column(
+        db.DateTime, nullable=False, default=lambda: datetime.now(pytz.utc)
+    )
 
     data_sets = db.relationship("DataSet", backref="user", lazy=True)
     profile = db.relationship("UserProfile", backref="user", uselist=False)

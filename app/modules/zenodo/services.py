@@ -241,7 +241,7 @@ class ZenodoService(BaseService):
             f"user_{str(user_id)}",
             f"dataset_{dataset.id}",
             "uvl",
-            uvl_filename
+            uvl_filename,
         )
 
         files = {"file": open(file_path, "rb")}

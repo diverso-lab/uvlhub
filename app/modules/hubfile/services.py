@@ -32,12 +32,14 @@ class HubfileService(BaseService):
         hubfile_dataset = self.get_dataset_by_hubfile(hubfile)
         working_dir = os.getenv("WORKING_DIR")
 
-        path = os.path.join(working_dir,
-                            'uploads',
-                            f'user_{hubfile_user.id}',
-                            f'dataset_{hubfile_dataset.id}',
-                            'uvl',
-                            hubfile.name)
+        path = os.path.join(
+            working_dir,
+            "uploads",
+            f"user_{hubfile_user.id}",
+            f"dataset_{hubfile_dataset.id}",
+            "uvl",
+            hubfile.name,
+        )
 
         return path
 

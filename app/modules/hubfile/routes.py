@@ -64,12 +64,15 @@ def upload_file():
         return jsonify({"message": f"Error validating UVL: {str(e)}"}), 500
 
     # If the file is valid, return the unique filename
-    return jsonify(
-        {
-            "message": "UVL uploaded and validated successfully",
-            "filename": unique_filename,
-        }
-    ), 200
+    return (
+        jsonify(
+            {
+                "message": "UVL uploaded and validated successfully",
+                "filename": unique_filename,
+            }
+        ),
+        200,
+    )
 
 
 @hubfile_bp.route("/hubfile/delete", methods=["POST"])
@@ -92,7 +95,6 @@ def delete():
     return jsonify({"error": "Error: File not found"}), 404
 
 
-
 @hubfile_bp.route("/hubfile/download/<int:file_id>", methods=["GET"])
 def download_file(file_id):
     hubfile = HubfileService().get_or_404(file_id)
@@ -103,7 +105,7 @@ def download_file(file_id):
         "uploads",
         f"user_{user_owner.id}",
         f"dataset_{hubfile.feature_model.data_set_id}",
-        "uvl"
+        "uvl",
     )
 
     parent_directory_path = os.path.dirname(current_app.root_path)
@@ -128,7 +130,7 @@ def view_file(file_id):
         "uploads",
         f"user_{file.feature_model.data_set.user_id}",
         f"dataset_{file.feature_model.data_set_id}",
-        "uvl"
+        "uvl",
     )
 
     parent_directory_path = os.path.dirname(current_app.root_path)

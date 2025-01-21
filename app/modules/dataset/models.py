@@ -76,8 +76,12 @@ class DataSet(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
 
-    ds_meta_data_id = db.Column(db.Integer, db.ForeignKey('ds_meta_data.id'), nullable=False)
-    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.utc))
+    ds_meta_data_id = db.Column(
+        db.Integer, db.ForeignKey("ds_meta_data.id"), nullable=False
+    )
+    created_at = db.Column(
+        db.DateTime, nullable=False, default=lambda: datetime.now(pytz.utc)
+    )
 
     ds_meta_data = db.relationship(
         "DSMetaData", backref=db.backref("data_set", uselist=False)
@@ -99,6 +103,7 @@ class DataSet(db.Model):
 
     def is_synchronized(self) -> bool:
         from app.modules.dataset.services import DataSetService
+
         return DataSetService.is_synchronized(self.id)
 
     def get_cleaned_publication_type(self) -> str:
@@ -113,6 +118,7 @@ class DataSet(db.Model):
 
     def count_feature_models(self) -> int:
         from app.modules.dataset.services import DataSetService
+
         dataservice = DataSetService()
         return dataservice.count_feature_models(self.id)
 
@@ -140,23 +146,25 @@ class DataSet(db.Model):
 
     def to_dict(self):
         return {
-            'title': self.ds_meta_data.title,
-            'id': self.id,
-            'created_at': self.created_at.isoformat() if self.created_at else None,
-            'created_at_timestamp': int(self.created_at.timestamp()),
-            'description': self.ds_meta_data.description,
-            'authors': [author.to_dict() for author in self.ds_meta_data.authors],
-            'publication_type': self.get_cleaned_publication_type(),
-            'publication_doi': self.ds_meta_data.publication_doi,
-            'dataset_doi': self.ds_meta_data.dataset_doi,
-            'tags': self.ds_meta_data.tags.split(",") if self.ds_meta_data.tags else [],
-            'url': self.get_uvlhub_doi(),
-            'download': f'{request.host_url.rstrip("/")}/dataset/download/{self.id}',
-            'zenodo': self.get_zenodo_url(),
-            'files': [file.to_dict() for fm in self.feature_models for file in fm.hubfiles],
-            'files_count': self.get_files_count(),
-            'total_size_in_bytes': self.get_file_total_size(),
-            'total_size_in_human_format': self.get_file_total_size_for_human(),
+            "title": self.ds_meta_data.title,
+            "id": self.id,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "created_at_timestamp": int(self.created_at.timestamp()),
+            "description": self.ds_meta_data.description,
+            "authors": [author.to_dict() for author in self.ds_meta_data.authors],
+            "publication_type": self.get_cleaned_publication_type(),
+            "publication_doi": self.ds_meta_data.publication_doi,
+            "dataset_doi": self.ds_meta_data.dataset_doi,
+            "tags": self.ds_meta_data.tags.split(",") if self.ds_meta_data.tags else [],
+            "url": self.get_uvlhub_doi(),
+            "download": f'{request.host_url.rstrip("/")}/dataset/download/{self.id}',
+            "zenodo": self.get_zenodo_url(),
+            "files": [
+                file.to_dict() for fm in self.feature_models for file in fm.hubfiles
+            ],
+            "files_count": self.get_files_count(),
+            "total_size_in_bytes": self.get_file_total_size(),
+            "total_size_in_human_format": self.get_file_total_size_for_human(),
         }
 
     def get_zenodo_deposition(self) -> int:
@@ -183,9 +191,11 @@ class DataSet(db.Model):
 
 class DSDownloadRecord(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
-    dataset_id = db.Column(db.Integer, db.ForeignKey('data_set.id'))
-    download_date = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.utc))
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
+    dataset_id = db.Column(db.Integer, db.ForeignKey("data_set.id"))
+    download_date = db.Column(
+        db.DateTime, nullable=False, default=lambda: datetime.now(pytz.utc)
+    )
     download_cookie = db.Column(db.String(36), nullable=False)
 
     def __repr__(self):
@@ -199,9 +209,11 @@ class DSDownloadRecord(db.Model):
 
 class DSViewRecord(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
-    dataset_id = db.Column(db.Integer, db.ForeignKey('data_set.id'))
-    view_date = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.utc))
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
+    dataset_id = db.Column(db.Integer, db.ForeignKey("data_set.id"))
+    view_date = db.Column(
+        db.DateTime, nullable=False, default=lambda: datetime.now(pytz.utc)
+    )
     view_cookie = db.Column(db.String(36), nullable=False)
 
     def __repr__(self):

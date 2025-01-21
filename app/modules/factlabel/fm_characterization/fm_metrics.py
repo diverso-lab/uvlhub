@@ -476,7 +476,9 @@ def constraints_per_features(fm: FeatureModel, features: list[Feature]) -> list[
         _features_per_constraints.append([f for f in ctc.get_features()])
 
     for feature in features:
-        cpf = sum(feature.name in feature_list for feature_list in _features_per_constraints)
+        cpf = sum(
+            feature.name in feature_list for feature_list in _features_per_constraints
+        )
         _constraints_per_feature.append(cpf)
 
     return _constraints_per_feature

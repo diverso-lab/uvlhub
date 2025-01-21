@@ -5,33 +5,53 @@ import subprocess
 
 @click.command()
 def update():
-    """This command updates all packages based on the requirements.txt, excluding editable installations, and updates
-    the file with concrete versions."""
+    """Update dependencies by cleaning and regenerating requirements.txt, while handling editable sources separately."""
     requirements_path = os.path.join(os.getenv("WORKING_DIR", ""), "requirements.txt")
+    temp_requirements_path = os.path.join(os.getenv("WORKING_DIR", ""), "temp_requirements.txt")
+    editable_package = None  # To store the editable package if present
+
     try:
-        # Update pip first
-        subprocess.check_call(["pip", "install", "--upgrade", "pip"])
+        # Step 1: Create a temporary requirements file without versions and editable sources
+        with open(requirements_path, "r") as f, open(temp_requirements_path, "w") as temp_f:
+            for line in f:
+                if line.startswith("-e"):
+                    editable_package = line.strip()  # Store the editable package
+                elif line.strip():
+                    package = line.split("==")[0].strip()  # Remove version information
+                    temp_f.write(package + "\n")
 
-        # Read current requirements, excluding -e packages
-        with open(requirements_path, "r") as f:
-            requirements = [line.strip() for line in f if not line.startswith("-e")]
+        # Step 2: Uninstall all non-editable packages
+        installed_packages = subprocess.check_output(["pip", "freeze"]).decode("utf-8").splitlines()
+        non_editable_packages = [pkg for pkg in installed_packages if not pkg.startswith("-e")]
+        if non_editable_packages:
+            subprocess.check_call(["pip", "uninstall", "-y"] + [pkg.split("==")[0] for pkg in non_editable_packages])
 
-        # Update each package
-        for requirement in requirements:
-            package_name = requirement.split("==")[0]
-            if package_name:  # Ensure it's not an empty package name
-                subprocess.check_call(["pip", "install", "--upgrade", package_name])
+        # Step 3: Install packages from the temporary requirements file
+        subprocess.check_call(["pip", "install", "-r", temp_requirements_path])
 
-        # Generate a new requirements.txt, excluding editable installations
+        # Step 4: Regenerate requirements.txt with resolved versions
         freeze_output = subprocess.check_output(["pip", "freeze"]).decode("utf-8")
         with open(requirements_path, "w") as f:
-            for line in freeze_output.split("\n"):
-                if not line.startswith("-e"):
-                    f.write(line + "\n")
+            f.write(freeze_output)
 
-        click.echo(click.style("Update completed!", fg="green"))
+        # Step 5: Reinstall the editable package, suppressing any output or errors
+        if editable_package:
+            editable_path = editable_package.split()[1]  # Extract the path from '-e ./app'
+            subprocess.run(
+                ["pip", "install", "-e", editable_path],
+                stdout=subprocess.DEVNULL,  # Suppress output
+                stderr=subprocess.DEVNULL,  # Suppress errors
+            )
+
+        # Clean up the temporary file
+        os.remove(temp_requirements_path)
+
+        click.echo(click.style("Update completed successfully!", fg="green"))
+
     except subprocess.CalledProcessError as e:
         click.echo(click.style(f"Error during the update: {e}", fg="red"))
+    except Exception as e:
+        click.echo(click.style(f"Unexpected error: {e}", fg="red"))
 
 
 if __name__ == "__main__":
