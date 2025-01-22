@@ -1,5 +1,5 @@
-
 const path = require('path');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 const workingDir = process.env.WORKING_DIR || __dirname;
 
 module.exports = {
@@ -7,36 +7,35 @@ module.exports = {
   output: {
     filename: 'dataset.bundle.js',
     path: path.resolve(__dirname, '../dist'),
-    clean: true,
-  },
-  module: {
-    rules: [
-      {
-        test: /\.css$/,
-        use: ['style-loader', 'css-loader'], // Load CSS
-      },
-      {
-        test: /\.svg$/,
-        use: ['raw-loader'], // Load SVGs as raw text
-      },
-      {
-        test: /\.js$/,
-        exclude: /node_modules/,
-        use: {
-          loader: 'babel-loader',
-          options: {
-            presets: ['@babel/preset-env'],
-          },
-        },
-      },
-    ],
   },
   resolve: {
-    extensions: ['.js'],
-    alias: {
-      '@ckeditor': path.resolve(workingDir, 'node_modules/@ckeditor'),
-    },
+    fallback: {},
   },
   mode: 'development',
-  devtool: 'source-map',
+  plugins: [
+    new CopyWebpackPlugin({
+      patterns: [
+        {
+          from: path.resolve(workingDir, './node_modules/tinymce/skins'),
+          to: 'skins',
+        },
+        {
+          from: path.resolve(workingDir, './node_modules/tinymce/icons'),
+          to: 'icons',
+        },
+        {
+          from: path.resolve(workingDir, './node_modules/tinymce/themes'),
+          to: 'themes',
+        },
+        {
+          from: path.resolve(workingDir, './node_modules/tinymce/plugins'),
+          to: 'plugins',
+        },
+        {
+          from: path.resolve(workingDir, './node_modules/tinymce/models'),
+          to: 'models',
+        },
+      ],
+    }),
+  ],
 };

@@ -1,29 +1,23 @@
-import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
+import tinymce from 'tinymce';
+import 'tinymce/icons/default';
+import 'tinymce/themes/silver';
+import 'tinymce/plugins/lists';
+import 'tinymce/plugins/link';
 
-// Initialize CKEditor
-export function initializeCKEditor() {
-    ClassicEditor
-        .create(document.querySelector('#kt_docs_ckeditor_classic'), {
-            // List of plugins to include in the editor
-            plugins: [
-                'Essentials', 'Paragraph', 'Heading', 'Bold', 'Italic', 'List', 'Link'
-            ],
-            // Configure the toolbar options
-            toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', '|', 'undo', 'redo'],
-            // Markdown-specific configuration (optional)
-            markdown: {
-                // Optional: Set specific options for Markdown if needed
-            }
-        })
-        .then(editor => {
-            console.log('CKEditor initialized:', editor);
-
-            // Example: Log the Markdown content whenever the data changes
-            editor.model.document.on('change:data', () => {
-                console.log('CKEditor Content:', editor.getData());
-            });
-        })
-        .catch(error => {
-            console.error('Error initializing CKEditor:', error);
-        });
+export function initializeTinyMCE() {
+  tinymce.init({
+    selector: '#dataset_editor',
+    plugins: 'lists link',
+    toolbar: 'undo redo | bold italic | bullist numlist | link',
+    base_url: '/dataset/dist', // Ruta base para los recursos de TinyMCE del módulo
+    skin: 'default',
+    skin_url: '/dataset/dist/skins/ui/oxide', // Ruta para los skins
+    content_css: '/dataset/dist/skins/content/default/content.css', // Ruta para el CSS de contenido
+    license_key: 'gpl', // Acepta la licencia GPL
+    setup: (editor) => {
+      editor.on('change', () => {
+        console.log('TinyMCE Content:', editor.getContent());
+      });
+    },
+  });
 }

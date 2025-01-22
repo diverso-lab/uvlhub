@@ -12,3 +12,8 @@
 .dropzone-file-success .badge {
     color: #ffffff !important; /* Forzar texto blanco */
 }
+
+.tox-promotion{
+    display: none !important;
+  }
+  
