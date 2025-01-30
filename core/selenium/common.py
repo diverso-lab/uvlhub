@@ -7,7 +7,7 @@ import os
 
 
 def get_service_driver():
-    return os.environ["SERVICE_DRIVER"]
+    return os.environ.get("SERVICE_DRIVER", "firefox")
 
 
 def set_service_driver(driver="firefox"):
