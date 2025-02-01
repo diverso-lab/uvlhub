@@ -12,6 +12,7 @@ services:
     depends_on:
       - db
       - redis
+      - selenium-hub
     build:
       context: ../
       dockerfile: docker/images/Dockerfile.dev
@@ -71,6 +72,46 @@ services:
     networks:
       - uvlhub_network
 
+  selenium-hub:
+    image: selenium/hub:latest
+    container_name: selenium-hub
+    ports:
+      - "4442:4442"
+      - "4443:4443"
+      - "4444:4444"
+    networks:
+      - uvlhub_network
+
+  chrome:
+    image: selenium/node-chrome:latest
+    container_name: selenium-chrome
+    shm_size: 2gb
+    environment:
+      - SE_EVENT_BUS_HOST=selenium-hub
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+      - VNC_NO_PASSWORD=1
+      - SE_NODE_MAX_SESSIONS=1
+    depends_on:
+      - selenium-hub
+    networks:
+      - uvlhub_network
+
+  firefox:
+    image: selenium/node-firefox:latest
+    container_name: selenium-firefox
+    shm_size: 2gb
+    environment:
+      - SE_EVENT_BUS_HOST=selenium-hub
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+      - VNC_NO_PASSWORD=1
+      - SE_NODE_MAX_SESSIONS=1
+    depends_on:
+      - selenium-hub
+    networks:
+      - uvlhub_network
+
 volumes:
   db_data:
 
@@ -78,3 +119,6 @@ networks:
   uvlhub_network:
     driver: bridge
     name: uvlhub_network
+  docker_uvlhub_network:
+    driver: bridge
+    name: docker_uvlhub_network
