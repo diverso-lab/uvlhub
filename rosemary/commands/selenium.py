@@ -9,7 +9,8 @@ import docker
 @click.command("selenium", help="Executes Selenium tests based on the environment.")
 @click.argument("module", required=False)
 @click.option("--driver", default="firefox", type=click.Choice(["firefox", "chrome"], case_sensitive=False), help="Specify the Selenium WebDriver to use.")
-def selenium(module, driver):
+@click.option("--video", default="false", type=click.Choice(["true", "false"], case_sensitive=False), help="Specify if you would like to record the tests.")
+def selenium(module, driver, video):
     try:
         # Absolute paths
         working_dir = os.getenv("WORKING_DIR", "")
@@ -87,17 +88,59 @@ def selenium(module, driver):
                             fg="yellow")
             )
             click.echo(
-                click.style("Please check your sessions in http://localhost:4444/ui/#/sessions \
-                after test collection is finished", fg="green")
+                click.style("Please check your sessions in http://localhost:4444/ui/#/sessions after test collection is finished", fg="green")
             )
             click.echo(f"Running Selenium tests with command: {' '.join(test_command)}")
             subprocess.run(test_command, check=True)
             # we remove firefox and chrome video containers in order to access videos
-            subprocess.run(f"docker compose -f {docker_compose_file} down {service_name}", check=True, shell=True)
+            subprocess.run(f"docker compose -f {docker_compose_file} down", check=True, shell=True)
+            click.echo(click.style("All test have been executed.", fg="green"))
+
+        def record_selenium_tests(module):
+            client = docker.from_env()
+            """Records Selenium tests for both firefox and chrome drivers."""
+            if module:
+                selenium_test_path = os.path.join(modules_dir, module, "tests", "test_selenium.py")
+                test_command = ["pytest", selenium_test_path]
+            else:
+                selenium_test_paths = []
+                for module in os.listdir(modules_dir):
+                    tests_dir = os.path.join(modules_dir, module, "tests")
+                    selenium_test_path = os.path.join(tests_dir, "test_selenium.py")
+                    if os.path.exists(selenium_test_path):
+                        selenium_test_paths.append(selenium_test_path)
+                test_command = ["pytest"] + selenium_test_paths
+            docker_dir = os.path.join(working_dir, "docker/")
+            docker_compose_file = os.path.join(docker_dir, "docker-compose-video.yml")
+            try:
+                # Check if containers already exist
+                client.containers.get("firefox-video")
+                click.echo("firefox-video container is already running.")
+                client.containers.get("chrome-video")
+                click.echo("chrome-video container is already running.")
+            except docker.errors.NotFound:
+                click.echo(click.style("Something went wrong. Containers don't exist", fg="red"))
+                click.echo(click.style("Try running 'docker compose -f docker/docker-compose-video.yml up -d' ON YOUR HOST, NOT YOUR CONTAINER before using this command", fg="red"))
+                return
+            click.echo("Selenium-grid is running at http://localhost:4444")
             click.echo(
-                click.style("All test have been executed. Please check /tmp/videos for watching full test executions",
+                click.style("Remember test are collected first, and then runned, please be patient",
+                            fg="yellow")
+            )
+            click.echo(
+                click.style("Please check your sessions in http://localhost:4444/ui/#/sessions after test collection is finished", fg="green")
+            )
+            click.echo(f"Running Selenium tests with command: {' '.join(test_command)}")
+            subprocess.run(test_command, check=True)
+            # we remove firefox and chrome video containers in order to access videos
+            subprocess.run(f"docker compose -f {docker_compose_file} down", check=True, shell=True)
+            click.echo(
+                click.style("All test have been executed. Please check /docker/tmp/videos for watching full test executions",
                             fg="green")
-            )    
+            )
+            click.echo("If videos don't appear try running '/scripts/clean_docker.sh'. \
+            Then, run your docker-compose.dev and before running rosemary selenium don't forget to \
+            run this command: 'docker compose -f docker/docker-compose-video.yml up -d'", fg="blue")
 
         def run_vagrant_selenium_tests(module):
             """Run the Selenium tests in a Vagrant environment."""
@@ -115,7 +158,10 @@ def selenium(module, driver):
 
         # Check the environment and decide how to run the tests
         if working_dir == "/app/":
-            run_docker_selenium_tests(module)
+            if video == "true":
+                record_selenium_tests(module)
+            else:
+                run_docker_selenium_tests(module)
 
         elif working_dir == "":
             run_selenium_tests_in_local(module)
