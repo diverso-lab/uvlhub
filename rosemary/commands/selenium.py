@@ -135,7 +135,7 @@ def selenium(module, driver, video):
             # we remove firefox and chrome video containers in order to access videos
             subprocess.run(f"docker compose -f {docker_compose_file} down", check=True, shell=True)
             click.echo(
-                click.style("All test have been executed. Please check /docker/tmp/videos for watching full test executions",
+                click.style("All test have been executed. Check /docker/tmp/videos for watching full test results",
                             fg="green")
             )
             click.echo(click.style("If videos don't appear try running '/scripts/clean_docker.sh'. \
