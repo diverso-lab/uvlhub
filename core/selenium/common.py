@@ -19,7 +19,7 @@ def initialize_driver():
     working_dir = os.environ.get("WORKING_DIR", None)
     selenium_hub_url = "http://selenium-hub:4444/wd/hub"
     if working_dir == "/app/":
-        if True or get_service_driver() == "chrome":
+        if get_service_driver() == "chrome":
             options = webdriver.ChromeOptions()
             driver = webdriver.Remote(
                 command_executor=selenium_hub_url,  # URL del Hub
