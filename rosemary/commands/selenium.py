@@ -138,9 +138,9 @@ def selenium(module, driver, video):
                 click.style("All test have been executed. Please check /docker/tmp/videos for watching full test executions",
                             fg="green")
             )
-            click.echo("If videos don't appear try running '/scripts/clean_docker.sh'. \
+            click.echo(click.style("If videos don't appear try running '/scripts/clean_docker.sh'. \
             Then, run your docker-compose.dev and before running rosemary selenium don't forget to \
-            run this command: 'docker compose -f docker/docker-compose-video.yml up -d'", fg="blue")
+            run this command: 'docker compose -f docker/docker-compose-video.yml up -d'", fg="blue"))
 
         def run_vagrant_selenium_tests(module):
             """Run the Selenium tests in a Vagrant environment."""
