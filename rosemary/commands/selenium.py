@@ -9,7 +9,7 @@ import docker
 @click.command("selenium", help="Executes Selenium tests based on the environment.")
 @click.argument("module", required=False)
 @click.option("--driver", default="firefox", type=click.Choice(["firefox", "chrome"], case_sensitive=False), help="Specify the Selenium WebDriver to use.")
-@click.option("--video", default="false", type=click.Choice(["true", "false"], case_sensitive=False), help="Specify if you would like to record the tests.")
+@click.option("--video", default="false", type=click.Choice(["true", "false"], case_sensitive=False), help="Specify if you would like to record the tests. Only available in docker enviroment")
 def selenium(module, driver, video):
     try:
         # Absolute paths
