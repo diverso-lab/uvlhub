@@ -1,0 +1,24 @@
+name: ZAP scan
+
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+    branches:
+      - develop
+jobs:
+  zap_scan:
+    runs-on: ubuntu-latest
+    name: Scan the webapplication
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Run uvlhub docker
+        run: cp .env.docker.example .env && docker compose -f docker/docker-compose.dev.yml up -d
+
+      - name: ZAP Scan
+        uses: zaproxy/action-full-scan@v0.12.0
+        with:
+          target: 'http://localhost/'
