@@ -125,12 +125,14 @@ function updateDropzoneStatus() {
     console.log("Updating Dropzone status...");
     toggleContinueButton(myDropzone.files.length > 0);
 }
+
 function get_summary() {
     // Recoger valores básicos
     const datasetTypeElement = document.querySelector('input[name="dataset_type"]:checked');
     const datasetType = datasetTypeElement 
         ? document.querySelector(`label[for="${datasetTypeElement.id}"]`)?.innerText.trim() || "Not selected"
         : "Not selected";
+    
 
     const title = document.querySelector('input[name="title"]')?.value.trim() || "No title provided";
     const description = document.querySelector('textarea[name="description"]')?.value.trim() || "No description provided";
@@ -143,9 +145,15 @@ function get_summary() {
     const publicationDoi = document.querySelector('input[name="publication_doi"]')?.value.trim() || "No DOI provided";
 
     const tagsInput = document.querySelector('input#tags');
-    const tags = tagsInput?.value.trim()
-        ? tagsInput.value.split(',').map(tag => tag.trim()).join(', ')
-        : "No tags provided";
+    let tags = [];
+    if (tagsInput?.value.trim()) {
+        try {
+            const parsedTags = JSON.parse(tagsInput.value);
+            tags = parsedTags.map(tag => tag.value.trim());
+        } catch (error) {
+            console.error("Invalid JSON in tags input:", error);
+        }
+    }
 
     // Recoger autores
     const authorsContainer = document.getElementById('authors-container');
@@ -161,13 +169,17 @@ function get_summary() {
 
     // Crear contenido estructurado
     let summaryContent = `
-        <h2>Summary</h2>
-        <p><strong>Dataset type:</strong> ${datasetType}</p>
+        <h3>Summary</h3>
+        <p><strong>Dataset Type:</strong><br>${datasetType}</p>
         <p><strong>Title:</strong> ${title}</p>
         <p><strong>Description:</strong> ${description}</p>
-        <p><strong>Publication type:</strong> ${publicationType}</p>
+        <p><strong>Publication Type:</strong> ${publicationType}</p>
         <p><strong>Publication DOI:</strong> ${publicationDoi}</p>
-        <p><strong>Tags:</strong> ${tags}</p>
+        <p><strong>Tags:</strong> ${
+            tags.length > 0
+                ? tags.map(tag => `<span class="badge bg-primary me-1">${tag}</span>`).join('')
+                : "No tags provided"
+        }</p>
         <h4>Authors</h4>
     `;
 
@@ -198,4 +210,5 @@ function get_summary() {
         console.error('Div with ID "summary" not found.');
     }
 }
+
 
