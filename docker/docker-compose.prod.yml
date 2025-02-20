@@ -2,92 +2,32 @@ services:
 
   web:
     container_name: web_app_container
-    image: drorganvidez/uvlhub:latest
+    image: prueba
     env_file:
       - ../.env
-    expose:
-      - "5000"
-    ports:
-      - "5000:5000"
-    depends_on:
-      - db
-      - redis
-    restart: always
     volumes:
       - ./entrypoints/production_entrypoint.sh:/app/entrypoint.sh
       - ../scripts:/app/scripts
       - ../migrations:/app/migrations
       - ../uploads:/app/uploads
-      - ../.moduleignore:/app/.moduleignore
     command: [ "bash", "-c", "bash /app/entrypoint.sh" ]
-    networks:
-      - uvlhub_network
-
-  db:
-    container_name: mariadb_container
-    env_file:
-      - ../.env
-    image: mariadb:latest
-    command: --default-authentication-plugin=mysql_native_password
     restart: always
-    ports:
-      - "3306:3306"
-    volumes:
-      - db_data:/var/lib/mysql
+    depends_on:
+      - db
+      - redis
+      - base
     networks:
       - uvlhub_network
 
   nginx:
     container_name: nginx_web_server_container
     image: nginx:latest
-    volumes:
-      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf
-      - ./nginx/html:/usr/share/nginx/html
     ports:
       - "80:80"
+    volumes:
+      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf
     depends_on:
       - web
     restart: always
     networks:
       - uvlhub_network
-
-  redis:
-    image: "redis:latest"
-    container_name: redis_container
-    restart: always
-    networks:
-      - uvlhub_network
-
-  worker:
-    container_name: rq_worker_container
-    env_file:
-      - ../.env
-    depends_on:
-      - redis
-    build:
-      context: ../
-      dockerfile: docker/images/Dockerfile.worker
-    volumes:
-      - ../app/:/app/app
-      - ../core/:/app/core
-      - ../uploads/:/app/uploads
-    networks:
-      - uvlhub_network
-
-  watchtower:
-    container_name: watchtower_container
-    image: containrrr/watchtower
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    command: --cleanup --interval 120 web_app_container
-    restart: always
-    networks:
-      - uvlhub_network
-
-volumes:
-  db_data:
-
-networks:
-  uvlhub_network:
-    driver: bridge
-    name: uvlhub_network

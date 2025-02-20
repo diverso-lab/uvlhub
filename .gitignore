@@ -45,6 +45,7 @@ nginx.prod.ssl.conf
 .version
 entrypoint.sh
 deployments.log
+.last_env
 
 # Node.js dependencies
 node_modules/

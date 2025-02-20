@@ -18,10 +18,17 @@ def create_temp_requirements(requirements_path, temp_requirements_path):
 
 def uninstall_packages():
     """Uninstall all non-editable packages."""
-    installed_packages = subprocess.check_output(["pip", "freeze"]).decode("utf-8").splitlines()
-    non_editable_packages = [pkg for pkg in installed_packages if not pkg.startswith("-e")]
+    installed_packages = (
+        subprocess.check_output(["pip", "freeze"]).decode("utf-8").splitlines()
+    )
+    non_editable_packages = [
+        pkg for pkg in installed_packages if not pkg.startswith("-e")
+    ]
     if non_editable_packages:
-        subprocess.run(["pip", "uninstall", "-y"] + [pkg.split("==")[0] for pkg in non_editable_packages])
+        subprocess.run(
+            ["pip", "uninstall", "-y"]
+            + [pkg.split("==")[0] for pkg in non_editable_packages]
+        )
 
 
 def install_packages(requirements_file):
@@ -56,9 +63,13 @@ def clean_up(temp_requirements_path):
 def update_pip():
     """Update pip dependencies."""
     requirements_path = os.path.join(os.getenv("WORKING_DIR", ""), "requirements.txt")
-    temp_requirements_path = os.path.join(os.getenv("WORKING_DIR", ""), "temp_requirements.txt")
+    temp_requirements_path = os.path.join(
+        os.getenv("WORKING_DIR", ""), "temp_requirements.txt"
+    )
 
-    editable_package = create_temp_requirements(requirements_path, temp_requirements_path)
+    editable_package = create_temp_requirements(
+        requirements_path, temp_requirements_path
+    )
     uninstall_packages()
     install_packages(temp_requirements_path)
     regenerate_requirements(requirements_path)
@@ -72,13 +83,15 @@ def update_npm():
     package_json_path = os.path.join(working_dir, "package.json")
 
     if not os.path.exists(package_json_path):
-        click.echo(click.style("No package.json found. Skipping npm update.", fg="yellow"))
+        click.echo(
+            click.style("No package.json found. Skipping npm update.", fg="yellow")
+        )
         return
 
     try:
         # Step 1: Update package.json to latest versions
         subprocess.run(["npx", "npm-check-updates", "-u"], cwd=working_dir)
-        
+
         # Step 2: Install updated dependencies
         subprocess.run(["npm", "install"], cwd=working_dir)
 

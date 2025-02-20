@@ -87,7 +87,6 @@ pytz==2024.2
 pyzmq==26.2.0
 redis==5.2.1
 requests==2.32.3
--e /app
 rq==2.1.0
 selenium==4.28.0
 selenium-wire==5.1.0

@@ -1,0 +1,64 @@
+services:
+
+  base:
+    container_name: base_image
+    build:
+      context: ../
+      dockerfile: docker/images/Dockerfile.base
+    image: base:latest
+
+  runtime:
+    container_name: runtime_image
+    build:
+      context: ../
+      dockerfile: docker/images/Dockerfile.runtime
+    image: runtime:latest
+    depends_on:
+      - base
+
+  db:
+    container_name: mariadb_container
+    image: mariadb:latest
+    env_file:
+      - ../.env
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - uvlhub_network
+
+  redis:
+    container_name: redis_container
+    image: "redis:latest"
+    restart: always
+    networks:
+      - uvlhub_network
+
+  worker:
+    container_name: rq_worker_container
+    build:
+      context: ../
+      dockerfile: docker/images/Dockerfile.worker
+    image: worker:latest
+    depends_on:
+      - runtime
+      - redis
+    env_file:
+      - ../.env
+    volumes:
+      - ../app/:/app/app
+      - ../core/:/app/core
+      - ../uploads/:/app/uploads
+    networks:
+      - uvlhub_network
+
+volumes:
+  db_data:
+
+networks:
+  uvlhub_network:
+    driver: bridge
+    name: uvlhub_network

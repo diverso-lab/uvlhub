@@ -1,0 +1,13 @@
+services:
+
+  watchtower:
+    container_name: watchtower_container
+    image: containrrr/watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --cleanup --interval 120 web_app_container
+    restart: always
+    depends_on:
+      - web
+    networks:
+      - uvlhub_network

@@ -1,0 +1,53 @@
+FROM python:3.13
+
+# Variables de entorno
+ENV PIP_ROOT_USER_ACTION=ignore
+
+# Instalar dependencias del sistema
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    libc-dev \
+    python3-dev \
+    libffi-dev \
+    build-essential \
+    curl \
+    mariadb-client \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Instalar Node.js y npm
+RUN curl -fsSL https://deb.nodesource.com/setup_23.x | bash - \
+    && apt-get install -y --no-install-recommends nodejs \
+    && npm install -g npm@11 npx \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Crear directorio de trabajo
+WORKDIR /app
+
+# Copiar dependencias primero (mejor caché)
+COPY requirements.txt .
+COPY package.json .
+COPY pyproject.toml ./
+
+# Instalar dependencias de Python
+RUN pip install --no-cache-dir --upgrade pip
+RUN pip install -r requirements.txt
+
+# Instalar dependencias de Node.js
+RUN npm install
+
+# Copiar el resto de archivos del proyecto
+COPY app/ ./app
+COPY core/ ./core
+COPY rosemary/ ./rosemary
+COPY migrations/ ./migrations
+COPY docker/ ./docker
+
+# Instalar Rosemary como paquete editable
+RUN pip install -e ./
+
+# Eliminar caché de Python
+RUN find . -type d -name "__pycache__" -exec rm -r {} + \
+    && find . -type f -name "*.pyc" -exec rm -f {} +
+
+# Exponer puerto de la aplicación
+EXPOSE 5000
