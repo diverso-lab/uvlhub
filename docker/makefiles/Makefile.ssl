@@ -1,0 +1,48 @@
+.PHONY: ssl-setup ssl-renew
+
+ssl-setup:
+	@while true; do \
+		echo "Enter your domain (including 'www' and the extension, e.g., www.exampledomain.com):"; \
+		read domain; \
+		echo "Enter your email: "; \
+		read email; \
+		echo "Configured with the domain $$domain"; \
+		echo "Configured with the email $$email"; \
+		echo ""; \
+		echo "Are you sure the entered information is correct? [y/n]"; \
+		read confirm; \
+		if [ "$$confirm" = "y" ] || [ "$$confirm" = "Y" ]; then \
+			break; \
+		else \
+			echo "Please re-enter the information."; \
+			echo ""; \
+		fi; \
+	done; \
+	
+	echo "🔧 Configuring SSL with domain: $$domain and email: $$email"; \
+	cp ./nginx/nginx.prod.no-ssl.conf.template ./nginx/nginx.prod.ssl.conf; \
+	sed -i "s/{{domain}}/$$domain/g" ./nginx/nginx.prod.ssl.conf; \
+
+	echo "🚀 Starting Nginx without SSL to obtain certificates..."; \
+	docker compose -f docker-compose.base.yml -f docker-compose.prod.yml -f docker-compose.prod.ssl.yml up -d nginx; \
+
+	echo "🔐 Requesting SSL certificate with Certbot..."; \
+	docker compose -f docker-compose.base.yml -f docker-compose.prod.yml -f docker-compose.prod.ssl.yml run --rm certbot certonly --webroot --webroot-path=/var/www -d $$domain --email $$email --agree-tos --no-eff-email --force-renewal; \
+	cp ./nginx/nginx.prod.ssl.conf.template ./nginx/nginx.prod.ssl.conf; \
+	sed -i "s/{{domain}}/$$domain/g" ./nginx/nginx.prod.ssl.conf; \
+
+	echo "🔄 Restarting Nginx with SSL configuration..."; \
+	docker compose -f docker-compose.base.yml -f docker-compose.prod.yml -f docker-compose.prod.ssl.yml down; \
+	docker compose -f docker-compose.base.yml -f docker-compose.prod.yml -f docker-compose.prod.ssl.yml up -d --build; \
+
+	echo "✅ SSL setup completed!"
+
+ssl-renew:
+
+	@echo "🔄 Renewing SSL certificates..."; \
+	docker compose -f docker-compose.base.yml -f docker-compose.prod.yml -f docker-compose.prod.ssl.yml run --rm certbot renew --webroot --webroot-path=/var/www; \
+
+	echo "🔄 Restarting Nginx to apply new certificates..."; \
+	docker compose -f docker-compose.base.yml -f docker-compose.prod.yml -f docker-compose.prod.ssl.yml restart nginx; \
+
+	echo "✅ SSL certificates renewed successfully!"

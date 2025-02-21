@@ -1,0 +1,49 @@
+.PHONY: down up restart logs rebuild clean
+
+down:
+	$(call LOAD_ENV); \
+	docker compose $$COMPOSE_ENV down;
+
+up:
+	$(call LOAD_ENV); \
+	docker compose $$COMPOSE_ENV up -d;
+
+restart:
+	$(call LOAD_ENV); \
+	docker compose $$COMPOSE_ENV down; \
+	$(MAKE) remove-base-containers; \
+	docker compose $$COMPOSE_ENV up -d;
+
+logs:
+	$(call LOAD_ENV); \
+	docker compose $$COMPOSE_ENV logs -f;
+
+rebuild:
+	$(call LOAD_ENV); \
+	docker compose $$COMPOSE_ENV down; \
+	$(MAKE) remove-base-containers; \
+	echo "🧹 Cleaning Docker..."; \
+	docker system prune -af; \
+	echo "🚀 Building images..."; \
+	docker compose $$COMPOSE_ENV build; \
+	echo "🔄 Starting services..."; \
+	docker compose $$COMPOSE_ENV up -d; \
+	$(MAKE) remove-base-containers;
+
+clean:
+	@echo "🛑 Stopping all containers..."
+	@docker stop $$(docker ps -aq) || true
+
+	@echo "🗑️ Removing all containers..."
+	@docker rm $$(docker ps -aq) || true
+
+	@echo "🧹 Removing all volumes..."
+	@docker volume rm $$(docker volume ls -q) || true
+
+	@echo "🔥 Removing all images..."
+	@docker rmi -f $$(docker images -q) || true
+
+	@echo "🔗 Removing all custom networks..."
+	@docker network prune -f || true
+
+	@echo "✅ Cleanup completed."

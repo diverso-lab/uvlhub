@@ -1,0 +1,39 @@
+.PHONY: remove-base-containers show-env
+
+remove-base-containers:
+	@echo "🛑 Removing base and runtime containers..."
+	@docker compose -f docker-compose.base.yml rm -f base runtime || true
+
+show-env:
+	@if [ -f $(LAST_ENV_FILE) ]; then \
+		echo "🌍 Active environment:"; \
+		cat $(LAST_ENV_FILE); \
+	else \
+		echo "❌ No active environment found."; \
+	fi;
+
+.PHONY: docker-ps docker-images docker-volumes docker-networks
+
+docker-ps:
+	@echo "📋 Listing running containers..."
+	@docker ps --format "table {{.ID}}\t{{.Names}}\t{{.Status}}\t{{.Ports}}"
+
+docker-images:
+	@echo "🖼️ Listing Docker images..."
+	@docker images --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}"
+
+docker-volumes:
+	@echo "📦 Listing Docker volumes..."
+	@docker volume ls
+
+docker-networks:
+	@echo "🌐 Listing Docker networks..."
+	@docker network ls
+
+.PHONY: prune-docker
+
+prune-docker:
+	@echo "🔥 Removing unused Docker objects..."
+	@docker system prune -af
+	@docker volume prune -f
+	@docker network prune -f
