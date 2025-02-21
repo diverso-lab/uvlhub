@@ -3,12 +3,8 @@ FROM base AS runtime
 # Ensure package lists are up to date before installing packages
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-    mariadb-client \
-    gcc libc-dev python3-dev libffi-dev \
-    curl \
     bash \
     openrc \
-    build-essential \
     ca-certificates \
     gnupg \
     lsb-release \
@@ -20,6 +16,3 @@ RUN curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /
     && apt-get update \
     && apt-get install -y --no-install-recommends docker-ce-cli \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# Expose port for all environments
-EXPOSE 5000

@@ -7,8 +7,5 @@ COPY --chmod=0755 scripts/init-testing-db.sh ./scripts/
 # Copy worker processing script
 COPY docker/redis/worker.py /app/worker.py
 
-# Create .moduleignore file
-RUN echo "webhook" > /app/.moduleignore
-
 # Worker start command
 CMD ["python", "worker.py"]

@@ -2,7 +2,7 @@ services:
 
   web:
     container_name: web_app_container
-    image: prueba
+    image: drorganvidez/uvlhub:latest
     env_file:
       - ../.env
     volumes:

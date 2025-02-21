@@ -1,9 +1,9 @@
 FROM python:3.13
 
-# Variables de entorno
+# Environment variables
 ENV PIP_ROOT_USER_ACTION=ignore
 
-# Instalar dependencias del sistema
+# Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     libc-dev \
@@ -14,40 +14,43 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     mariadb-client \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Instalar Node.js y npm
+# Installing Node.js and npm
 RUN curl -fsSL https://deb.nodesource.com/setup_23.x | bash - \
     && apt-get install -y --no-install-recommends nodejs \
     && npm install -g npm@11 npx \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Crear directorio de trabajo
+# Create working directory
 WORKDIR /app
 
-# Copiar dependencias primero (mejor caché)
+# Copy dependencies first (better caching)
 COPY requirements.txt .
 COPY package.json .
 COPY pyproject.toml ./
 
-# Instalar dependencias de Python
+# Install Python dependencies
 RUN pip install --no-cache-dir --upgrade pip
 RUN pip install -r requirements.txt
 
-# Instalar dependencias de Node.js
+# Install Node.js dependencies
 RUN npm install
 
-# Copiar el resto de archivos del proyecto
+# Copy project files
 COPY app/ ./app
 COPY core/ ./core
 COPY rosemary/ ./rosemary
 COPY migrations/ ./migrations
 COPY docker/ ./docker
 
-# Instalar Rosemary como paquete editable
+# Install Rosemary as an 'editable' package
 RUN pip install -e ./
 
-# Eliminar caché de Python
+# Create the .moduleignore file with the module 'webhook' inside
+RUN echo "webhook" > /app/.moduleignore
+
+# Remove Python cache
 RUN find . -type d -name "__pycache__" -exec rm -r {} + \
     && find . -type f -name "*.pyc" -exec rm -f {} +
 
-# Exponer puerto de la aplicación
+# Expose application port
 EXPOSE 5000

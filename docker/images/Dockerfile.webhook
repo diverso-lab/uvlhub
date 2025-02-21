@@ -11,3 +11,6 @@ COPY --chmod=0755 scripts/restart_container.sh ./scripts/
 
 # Security settings in Git
 RUN git config --global --add safe.directory /app
+
+# Create the .moduleignore file (to enable the webhook module to load)
+RUN echo "" > /app/.moduleignore

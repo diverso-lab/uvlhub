@@ -5,14 +5,9 @@ ENV NODE_ENV=production
 # Copy necessary scripts and set permissions
 COPY --chmod=0755 scripts/wait-for-db.sh ./scripts/
 
-RUN echo "webhook" > /app/.moduleignore
-
-# Compilación de Webpack
+# Webpack compilation
 RUN rosemary webpack:compile
 
-# Agregar argumento de versión
+# Add version argument
 ARG VERSION_TAG
 RUN echo $VERSION_TAG > /app/.version
-
-# Exponer puerto
-EXPOSE 5000
