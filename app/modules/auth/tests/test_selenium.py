@@ -37,7 +37,7 @@ def test_login_and_check_element():
 
             driver.find_element(
                 By.XPATH,
-                "//h1[contains(@class, 'h2 mb-3') and contains(., 'Latest datasets')]",
+                "//h1[contains(@class, 'h2 mb-3') and contains(., 'Top datasets')]",
             )
             print("Test passed!")
 

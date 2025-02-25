@@ -20,6 +20,11 @@ RUN apt-get install -y --no-install-recommends ca-certificates gnupg lsb-release
     && apt-get update \
     && apt-get install -y --no-install-recommends docker-ce-cli 
 
+RUN mkdir -p ~/.docker/cli-plugins/ \
+    && LATEST_VERSION=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/') \
+    && curl -SL "https://github.com/docker/compose/releases/download/${LATEST_VERSION}/docker-compose-$(uname -s)-$(uname -m)" -o ~/.docker/cli-plugins/docker-compose \
+    && chmod +x ~/.docker/cli-plugins/docker-compose
+
 # Install Node.js and NPM
 RUN curl -fsSL https://deb.nodesource.com/setup_23.x | bash - \
     && apt-get install -y --no-install-recommends nodejs \
@@ -52,6 +57,7 @@ COPY rosemary/ ./rosemary
 COPY setup.py ./
 COPY docker/ ./docker
 COPY .moduleignore ./
+RUN mkdir -p /tmp  && chmod -R 777 /tmp && mkdir -p /tmp/videos && chmod -R 777 /tmp/videos
 
 # Update pip
 RUN pip install --no-cache-dir --upgrade pip

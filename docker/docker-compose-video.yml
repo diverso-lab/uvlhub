@@ -1,0 +1,29 @@
+services:
+
+  chrome_video:
+    image: selenium/video:ffmpeg-7.1-20250123
+    container_name: chrome-video
+    user: root
+    volumes:
+      - ./tmp/videos:/videos
+    environment:
+      - DISPLAY_CONTAINER_NAME=chrome
+      - FILE_NAME=chrome_video.mp4
+    networks:
+      - uvlhub_network
+
+  firefox_video:
+    image: selenium/video:ffmpeg-7.1-20250123
+    container_name: firefox-video
+    user: root
+    volumes:
+      - ./tmp/videos:/videos
+    environment:
+      - DISPLAY_CONTAINER_NAME=firefox
+      - FILE_NAME=firefox_video.mp4
+    networks:
+      - uvlhub_network
+
+networks:
+  uvlhub_network:
+    external: true

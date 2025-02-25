@@ -48,3 +48,6 @@ deployments.log
 
 # Node.js dependencies
 node_modules/
+
+# Selenium videos generated with selenium-grid
+docker/tmp/videos/
