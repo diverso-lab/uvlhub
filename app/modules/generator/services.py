@@ -1,8 +1,6 @@
 from app.modules.generator.repositories import GeneratorRepository
 from core.services.BaseService import BaseService
 import os
-import tempfile
-import shutil
 from zipfile import ZipFile
 
 class GeneratorService(BaseService):

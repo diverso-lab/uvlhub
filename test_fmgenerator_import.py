@@ -1,5 +1,6 @@
 from flamapy.metamodels.fm_metamodel.transformations.uvl_writer import UVLWriter
-from fm_generator.flamapy.metamodels.FMGenerator.models.models import Params, FmgeneratorModel
+from fm_generator.src.fm_generator.FMGenerator.models.config import Params
+from fm_generator.src.fm_generator.FMGenerator.models.models import FmgeneratorModel
 from flamapy.metamodels.fm_metamodel.models.feature_model import Attribute, Domain, Range
 import random
 

@@ -1,12 +1,12 @@
 from flask import render_template, request, redirect, url_for, session
 from app.modules.generator import generator_bp
-from fm_generator.flamapy.metamodels.FMGenerator.models.config import Params
+from fm_generator.src.fm_generator.FMGenerator.models.config import Params
 import os
 from flask import send_file
 import tempfile
 import shutil
 from datetime import datetime
-from fm_generator.flamapy.metamodels.FMGenerator.models.models import FmgeneratorModel
+from fm_generator.src.fm_generator.FMGenerator.models.models import FmgeneratorModel
 
 from app.modules.generator.services import GeneratorService
 
