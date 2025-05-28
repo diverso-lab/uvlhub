@@ -3,61 +3,206 @@
 {% block title %}Generate random feature models{% endblock %}
 
 {% block wizard_content %}
-<div class="row justify-content-left">
-    <div class="col-md-6">
-        <!-- Number of models -->
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <h3 class="mb-3">Language levels</h3>
+        <div class="row">
+            <div class="col-md-7">
+                <table class="table table-bordered align-middle" style="background: #fff;">
+                    <thead>
+                        <tr>
+                            <th class="text-center">Major levels</th>
+                            <th class="text-center">Minor levels</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="boolean_level" name="boolean_level" checked readonly>
+                                    <label class="form-check-label" for="boolean_level">Boolean level</label>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="group_cardinality" name="group_cardinality" checked readonly>
+                                    <label class="form-check-label" for="group_cardinality">Group cardinality</label>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="arithmetic_level" name="arithmetic_level" disabled>
+                                    <label class="form-check-label text-muted" for="arithmetic_level">Arithmetic level</label>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="feature_cardinality" name="feature_cardinality" disabled>
+                                    <label class="form-check-label text-muted" for="feature_cardinality">Feature cardinality</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="aggregate_functions" name="aggregate_functions" disabled>
+                                    <label class="form-check-label text-muted" for="aggregate_functions">Aggregate functions</label>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="type_level" name="type_level" disabled>
+                                    <label class="form-check-label text-muted" for="type_level">Type level</label>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="string_constraints" name="string_constraints" disabled>
+                                    <label class="form-check-label text-muted" for="string_constraints">String constraints</label>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-md-5">
+                <h4 class="mb-2">Tree hierarchy</h4>
+                <p style="font-size: 14px;">
+                    <strong>Note:</strong> in UVL, Boolean level is the minimum required level. Arithmetic level includes Boolean level, and Type level includes every one of them.<br>
+                    <br>
+                    If a minor level is selected, its respective major level will be automatically selected.
+                </p>
+            </div>
+        </div>
+
+        <h3 class="mt-4">Features</h3>
+        <div class="mb-4">
+            <!-- Número de features -->
+            <div class="mb-3">
+                <label class="form-label">Number of features</label>
+                <div class="d-flex align-items-center gap-3">
+                    <span>Min:</span>
+                    <input type="number" class="form-control" style="width: 80px;" min="0" max="10000" id="num_features_min" name="num_features_min" value="3000">
+                    <span>Max:</span>
+                    <input type="number" class="form-control" style="width: 80px;" min="0" max="10000" id="num_features_max" name="num_features_max" value="8500">
+                </div>
+            </div>
+
+            <!-- Distribución -->
+            <div class="mb-3">
+                <label class="form-label">Distribution (as a per unit value) CURRENTLY UNAVAILABLE</label>
+                <div class="row">
+                    <div class="col">
+                        <label class="form-label">Boolean:</label>
+                        <input type="number" step="0.01" min="0" max="1" class="form-control" name="dist_boolean" value="0.7">
+                    </div>
+                    <div class="col">
+                        <label class="form-label">Integer:</label>
+                        <input type="number" step="0.01" min="0" max="1" class="form-control" name="dist_integer" value="0.2">
+                    </div>
+                    <div class="col">
+                        <label class="form-label">Real:</label>
+                        <input type="number" step="0.01" min="0" max="1" class="form-control" name="dist_real" value="0.0">
+                    </div>
+                    <div class="col">
+                        <label class="form-label">String:</label>
+                        <input type="number" step="0.01" min="0" max="1" class="form-control" name="dist_string" value="0.0">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Feature cardinality -->
+            <div class="mb-3">
+                <label class="form-label">Feature cardinality <small>(only if selected)</small> CURRENTLY UNAVAILABLE</label>
+                <div class="p-3 border rounded" style="background: #fafbfc;">
+                    <div class="row mb-2">
+                        <div class="col-md-6">
+                            <div class="d-flex gap-2 align-items-center">
+                                <span>Min:</span>
+                                <input type="number" class="form-control" style="width: 80px;" min="1" max="10000" id="fc_min_val" name="fc_min_val" value="3000">
+                                <span>Max:</span>
+                                <input type="number" class="form-control" style="width: 80px;" min="1" max="10000" id="fc_min_max" name="fc_min_max" value="8500">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex gap-2 align-items-center">
+                                <span>Min:</span>
+                                <input type="number" class="form-control" style="width: 80px;" min="0" max="10000" id="fc_max_min" name="fc_max_min" value="3000">
+                                <span>Max:</span>
+                                <input type="number" class="form-control" style="width: 80px;" min="0" max="10000" id="fc_max_val" name="fc_max_val" value="8500">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Attach probability</label>
+                        <input type="number" step="0.01" min="0" max="1" class="form-control" style="width: 120px;" name="prob_fc" value="0.1">
+                    </div>
+                    <small class="text-muted">Note: 0 means no feature may have feature cardinality; 1 means every feature may have it.</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tree depth -->
+        <h3 class="mt-4">Maximum tree depth:</h3>
         <div class="mb-3">
-            <label for="num_models" class="form-label">Number of models</label>
-            <input type="range" class="form-range" min="0" max="10000" step="1" id="num_models" name="num_models" value="4000" oninput="num_models_val.value = num_models.value">
-            <input type="number" id="num_models_val" name="num_models_val" min="0" max="10000" value="4000" class="form-control mt-1" style="width: 100px;" oninput="num_models.value = num_models_val.value">
+            <input type="number" class="form-control" style="width: 80px; display: inline-block;" name="max_tree_depth" value="5" min="1">
+            <small class="text-muted d-block mt-1">
+                Note: cannot be greater than the maximum possible number of features given.
+            </small>
         </div>
 
-        <!-- Seed -->
-        <div class="mb-3 form-check">
-            <input class="form-check-input" type="checkbox" id="use_seed" name="use_seed" checked>
-            <label class="form-check-label" for="use_seed">Seed</label>
-            <input type="number" class="form-control mt-1" id="seed" name="seed" value="42" style="width: 100px;">
+        <h3>Groups</h3>
+        <div class="card p-3 mb-3">
+            <div class="row mb-2 g-2">
+                <div class="col">
+                    <label for="dist_optional" class="form-label">Optional:</label>
+                    <input type="number" class="form-control" step="0.01" min="0" max="1" id="dist_optional" name="dist_optional" value="0.7">
+                </div>
+                <div class="col">
+                    <label for="dist_mandatory" class="form-label">Mandatory:</label>
+                    <input type="number" class="form-control" step="0.01" min="0" max="1" id="dist_mandatory" name="dist_mandatory" value="0.2">
+                </div>
+                <div class="col">
+                    <label for="dist_alternative" class="form-label">Alternative:</label>
+                    <input type="number" class="form-control" step="0.01" min="0" max="1" id="dist_alternative" name="dist_alternative" value="0.0">
+                </div>
+                <div class="col">
+                    <label for="dist_or" class="form-label">Or:</label>
+                    <input type="number" class="form-control" step="0.01" min="0" max="1" id="dist_or" name="dist_or" value="0.0">
+                </div>
+            </div>
         </div>
 
-        <!-- Satisfiable -->
-        <div class="mb-3 form-check">
-            <input class="form-check-input" type="checkbox" id="ensure_satisfiable" name="ensure_satisfiable" checked>
-            <label class="form-check-label" for="ensure_satisfiable">Ensure satisfiable</label>
+        <h6 class="mt-4 mb-2">Group cardinality</h6>
+        <div class="card p-3 mb-3">
+            <div class="row mb-2">
+                <div class="col-md-3">
+                    <input type="number" class="form-control" step="0.01" min="0" max="1" id="dist_group_cardinality" name="dist_group_cardinality" value="0.1">
+                    <div class="form-text">only configurable if percentage is greater than 0</div>
+                </div>
+                <div class="col-md-9">
+                    <div class="row g-2 align-items-center mb-2">
+                        <div class="col-auto">
+                            <label class="form-label mb-0">Min:</label>
+                        </div>
+                        <div class="col-auto">
+                            <input type="number" class="form-control" id="group_cardinality_min" name="group_cardinality_min" min="0" value="3000">
+                        </div>
+                        <div class="col-auto">
+                            <label class="form-label mb-0">Max:</label>
+                        </div>
+                        <div class="col-auto">
+                            <input type="number" class="form-control" id="group_cardinality_max" name="group_cardinality_max" min="0" value="7000">
+                        </div>
+                    </div>
+                    <div class="form-text">
+                        Note: cannot be greater than the maximum possible number of features given.
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <!-- Name Prefix -->
-        <div class="mb-3">
-            <label for="name_prefix" class="form-label">Name/Prefix</label>
-            <input type="text" class="form-control" id="name_prefix" name="name_prefix" placeholder="e.g. fm">
-        </div>
 
-        <!-- Suffixes -->
-        <div class="mb-3 form-check">
-            <input class="form-check-input" type="checkbox" id="feature_count_suffix" name="feature_count_suffix">
-            <label class="form-check-label" for="feature_count_suffix">Include number of features as name's suffix</label>
-        </div>
-        <div class="mb-3 form-check">
-            <input class="form-check-input" type="checkbox" id="constraint_count_suffix" name="constraint_count_suffix">
-            <label class="form-check-label" for="constraint_count_suffix">Include number of constraints as name's suffix</label>
-        </div>
     </div>
 </div>
-{% endblock %}
-
-{% block scripts %}
-<!-- Puedes añadir JS para la sincronización del slider y el input -->
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-    const num_models = document.getElementById('num_models');
-    const num_models_val = document.getElementById('num_models_val');
-    num_models_val.value = num_models.value;
-
-    num_models.addEventListener('input', function() {
-        num_models_val.value = num_models.value;
-    });
-    num_models_val.addEventListener('input', function() {
-        num_models.value = num_models_val.value;
-    });
-});
-</script>
 {% endblock %}
