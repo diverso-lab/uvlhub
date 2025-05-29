@@ -140,28 +140,11 @@ def step3():
 
         print(params)
 
-        # Genera los modelos y el zip
-        # temp_dir = tempfile.mkdtemp()
-        # output_dir = os.path.join(temp_dir, "models_output")
-        # os.makedirs(output_dir, exist_ok=True)
-        # fm_generator = FmgeneratorModel(params)
-        # fm_generator.generate_models(output_dir)
-        # zip_path = os.path.join(temp_dir, "feature_models.zip")
-        # generator_service.zip_generated_models(output_dir, zip_path)
-        # zip_filename = f"fms.zip"
-        # try:
-        #     return send_file(zip_path, as_attachment=True, download_name=zip_filename)
-        # finally:
-        #     if os.path.exists(temp_dir):
-        #         shutil.rmtree(temp_dir)
-
         return redirect(url_for('generator.step4'))
 
     current_step = 3
     return render_template('generator/step3.html', current_step=current_step)
 
-
-from flamapy.metamodels.fm_metamodel.models.feature_model import Attribute, Domain, Range
 
 @generator_bp.route('/generator/step4', methods=['GET', 'POST'])
 def step4():
@@ -176,6 +159,7 @@ def step4():
         if random_attributes:
             params_dict['MIN_ATTRIBUTES'] = int(request.form.get('min_attributes', 1))
             params_dict['MAX_ATTRIBUTES'] = int(request.form.get('max_attributes', 5))
+            # Guarda listas vacías (datos nativos)
             params_dict['ATTRIBUTES_LIST'] = []
             params_dict['ATTRIBUTE_ATTACH_PROBS'] = []
             params_dict['ATTRIBUTE_IN_CONSTRAINTS'] = []
@@ -186,72 +170,143 @@ def step4():
             attr_attach_probs = request.form.getlist('attr_attach_prob')
             attr_use_in_constraints = request.form.getlist('attr_use_in_constraints')
 
-            attributes_list = []
+            attributes_data = []
             attach_probs_list = []
             in_constraints_list = []
 
-            # Ajusta esto según cómo llega el checkbox en el request (para "use in constraints")
+            # Formatea 'use_in_constraints' como set de índices (checkbox)
             constraints_checked = set()
-            for idx, val in enumerate(attr_use_in_constraints):
-                if val == 'on' or val == str(idx):
-                    constraints_checked.add(idx)
+            if attr_use_in_constraints:
+                # Si hay uno solo, puede llegar como string; si varios, como lista
+                if isinstance(attr_use_in_constraints, list):
+                    for idx, v in enumerate(attr_use_in_constraints):
+                        if v == 'on' or v == str(idx):
+                            constraints_checked.add(idx)
+                else:
+                    if attr_use_in_constraints == 'on':
+                        constraints_checked.add(0)
 
             for i in range(len(attr_names)):
                 name = attr_names[i]
                 type_ = attr_types[i].lower()
                 default_value = attr_defaults[i]
 
-                # --- Domain y default_value según tipo ---
-                if type_ == "boolean":
-                    domain = Domain(ranges=None, elements=[True, False])
-                    default_value = True if default_value == "True" else False
-                elif type_ == "integer":
-                    domain = Domain(ranges=None, elements=None)
-                    default_value = int(default_value) if default_value else 0
-                elif type_ == "real":
-                    domain = Domain(ranges=None, elements=None)
-                    default_value = float(default_value) if default_value else 0.0
-                elif type_ == "string":
-                    domain = Domain(ranges=None, elements=None)
-                    # default_value already string
-                else:
-                    domain = Domain(ranges=None, elements=None)
-
-                attribute = Attribute(
-                    name=name,
-                    domain=domain,
-                    default_value=default_value
-                )
-                attributes_list.append(attribute)
+                # Guarda solo como dict serializable (NO como instancia de Attribute)
+                attr_dict = {
+                    'name': name,
+                    'type': type_,
+                    'default_value': default_value,
+                }
+                attributes_data.append(attr_dict)
                 attach_probs_list.append(float(attr_attach_probs[i]) if attr_attach_probs[i] else 1.0)
-                # "on" is present in attr_use_in_constraints if checked, else it's absent
                 in_constraints_list.append(i in constraints_checked)
 
             params_dict['MIN_ATTRIBUTES'] = None
             params_dict['MAX_ATTRIBUTES'] = None
-            params_dict['ATTRIBUTES_LIST'] = attributes_list
+            params_dict['ATTRIBUTES_LIST'] = attributes_data
             params_dict['ATTRIBUTE_ATTACH_PROBS'] = attach_probs_list
             params_dict['ATTRIBUTE_IN_CONSTRAINTS'] = in_constraints_list
 
+        # GUARDA SOLO DATOS PRIMITIVOS EN SESSION
+        session['params'] = params_dict
+
+        print(params_dict)
+
+        # === Justo antes de generar modelos: construye los objetos Attribute si hace falta ===
+        # (Nunca los metas en la sesión!)
+        # --- Carga de params y conversión de atributos ---
         params = Params(**params_dict)
-        session['params'] = params.__dict__
 
-        print(params)
+        # Si es manual, construye la lista de Attribute:
+        if not params.RANDOM_ATTRIBUTES and params.ATTRIBUTES_LIST:
+            rebuilt_attrs = []
+            for attr in params.ATTRIBUTES_LIST:
+                type_ = attr['type']
+                name = attr['name']
+                value = attr['default_value']
 
-        # Genera modelos y zip
-        temp_dir = tempfile.mkdtemp()
-        output_dir = os.path.join(temp_dir, "models_output")
-        os.makedirs(output_dir, exist_ok=True)
-        fm_generator = FmgeneratorModel(params)
-        fm_generator.generate_models(output_dir)
-        zip_path = os.path.join(temp_dir, "feature_models.zip")
-        generator_service.zip_generated_models(output_dir, zip_path)
-        zip_filename = f"fms.zip"
-        try:
-            return send_file(zip_path, as_attachment=True, download_name=zip_filename)
-        finally:
-            if os.path.exists(temp_dir):
-                shutil.rmtree(temp_dir)
+                if type_ == 'boolean':
+                    domain = Domain(ranges=None, elements=[True, False])
+                    default_value = True if value == "True" else False
+                elif type_ == 'integer':
+                    domain = Domain(ranges=[Range(0, 100)], elements=None)
+                    default_value = int(value) if value else 0
+                elif type_ == 'real':
+                    domain = Domain(ranges=[Range(0, 100)], elements=None)
+                    default_value = float(value) if value else 0.0
+                elif type_ == 'string':
+                    domain = Domain(ranges=None, elements=None)
+                    default_value = value or ""
+                else:
+                    domain = Domain(ranges=None, elements=None)
+                    default_value = value
+
+                rebuilt_attrs.append(
+                    Attribute(name=name, domain=domain, default_value=default_value)
+                )
+            params.ATTRIBUTES_LIST = rebuilt_attrs
+
+        return redirect(url_for('generator.step5'))
 
     current_step = 4
     return render_template('generator/step4.html', current_step=current_step)
+
+
+@generator_bp.route('/generator/step5', methods=['GET'])
+def step5():
+    current_step = 5
+    return render_template('generator/step5.html', current_step=current_step)
+
+# Endpoint dedicado SOLO para descarga
+@generator_bp.route('/generator/download', methods=['GET'])
+def download_models():
+    params_dict = session.get('params')
+    if not params_dict:
+        return "Error: Params missing in session", 400
+
+    # Reconstruye el objeto Params (y lista de Attribute si toca, como en step4)
+    params = Params(**params_dict)
+
+    # Reconstruimos ATTRIBUTES_LIST
+    if not params.RANDOM_ATTRIBUTES and params.ATTRIBUTES_LIST:
+        rebuilt_attrs = []
+        for attr in params.ATTRIBUTES_LIST:
+            type_ = attr['type']
+            name = attr['name']
+            value = attr['default_value']
+
+            if type_ == 'boolean':
+                domain = Domain(ranges=None, elements=[True, False])
+                default_value = True if value == "True" else False
+            elif type_ == 'integer':
+                domain = Domain(ranges=[Range(0, 100)], elements=None)
+                default_value = int(value) if value else 0
+            elif type_ == 'real':
+                domain = Domain(ranges=[Range(0, 100)], elements=None)
+                default_value = float(value) if value else 0.0
+            elif type_ == 'string':
+                domain = Domain(ranges=None, elements=None)
+                default_value = value or ""
+            else:
+                domain = Domain(ranges=None, elements=None)
+                default_value = value
+
+            rebuilt_attrs.append(
+                Attribute(name=name, domain=domain, default_value=default_value)
+            )
+        params.ATTRIBUTES_LIST = rebuilt_attrs
+
+    # Genera los modelos y el zip SOLO aquí
+    temp_dir = tempfile.mkdtemp()
+    output_dir = os.path.join(temp_dir, "models_output")
+    os.makedirs(output_dir, exist_ok=True)
+    fm_generator = FmgeneratorModel(params)
+    fm_generator.generate_models(output_dir)
+    zip_path = os.path.join(temp_dir, "feature_models.zip")
+    generator_service.zip_generated_models(output_dir, zip_path)
+    zip_filename = f"fms.zip"
+    try:
+        return send_file(zip_path, as_attachment=True, download_name=zip_filename)
+    finally:
+        if os.path.exists(temp_dir):
+            shutil.rmtree(temp_dir)

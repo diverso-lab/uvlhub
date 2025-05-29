@@ -1,0 +1,22 @@
+{% extends "generator/index.html" %}
+
+{% block title %}Generate random feature models{% endblock %}
+
+{% block wizard_content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 text-center">
+
+        <h3 class="mb-4">Finishing</h3>
+        <p class="mb-4">Feature models have been generated successfully</p>
+        <div class="d-flex justify-content-center gap-3">
+
+            <a href="{{ url_for('generator.download_models') }}" class="btn btn-primary">
+                <i class="fa fa-download"></i> Download models
+            </a>
+            <button class="btn btn-outline-info" disabled>
+                <i class="fa fa-upload"></i> Upload to UVLHub
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}

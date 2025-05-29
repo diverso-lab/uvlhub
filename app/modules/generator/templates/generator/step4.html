@@ -22,14 +22,12 @@
             </div>
         </div>
 
-        <!-- Manual attributes (hidden by default) -->
         <div id="manual-attributes-section" style="display: none;">
             <div class="mb-3">
                 <button type="button" class="btn btn-outline-primary" id="add-attribute-btn">Add</button>
                 <button type="button" class="btn btn-outline-danger" id="delete-attribute-btn">Delete last one</button>
             </div>
             <div id="manual-attributes-list">
-                <!-- Attribute cards get inserted here -->
             </div>
         </div>
     </div>
@@ -48,7 +46,7 @@ randomCheckbox.addEventListener('change', function() {
     } else {
         randomSettings.style.display = 'none';
         manualSection.style.display = 'block';
-        // Ensure at least one attribute card by default
+
         if (manualAttributesList.getElementsByClassName('manual-attribute-card').length === 0) {
             addAttributeCard();
         }
@@ -63,7 +61,6 @@ document.getElementById('delete-attribute-btn').addEventListener('click', functi
     }
 });
 
-// -- Nuevo: Manejar el Value según tipo --
 function updateValueField(card, type) {
     const valueDiv = card.querySelector('.value-field');
     if (type === 'boolean') {
