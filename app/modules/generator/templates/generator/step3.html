@@ -3,61 +3,145 @@
 {% block title %}Generate random feature models{% endblock %}
 
 {% block wizard_content %}
-<div class="row justify-content-left">
-    <div class="col-md-6">
-        <!-- Number of models -->
+<div class="row justify-content-center">
+    <div class="col-md-8">
+
+        <h3 class="mb-3">Constraints</h3>
+
+        <!-- Número de constraints -->
         <div class="mb-3">
-            <label for="num_models" class="form-label">Number of models</label>
-            <input type="range" class="form-range" min="0" max="10000" step="1" id="num_models" name="num_models" value="4000" oninput="num_models_val.value = num_models.value">
-            <input type="number" id="num_models_val" name="num_models_val" min="0" max="10000" value="4000" class="form-control mt-1" style="width: 100px;" oninput="num_models.value = num_models_val.value">
+            <label class="form-label">Number of constraints</label>
+            <div class="d-flex align-items-center gap-3">
+                <span>Min:</span>
+                <input type="number" class="form-control" style="width: 100px;" min="0" max="10000" id="num_constraints_min" name="num_constraints_min" value="3000">
+                <span>Max:</span>
+                <input type="number" class="form-control" style="width: 100px;" min="0" max="10000" id="num_constraints_max" name="num_constraints_max" value="8500">
+            </div>
         </div>
 
-        <!-- Seed -->
-        <div class="mb-3 form-check">
-            <input class="form-check-input" type="checkbox" id="use_seed" name="use_seed" checked>
-            <label class="form-check-label" for="use_seed">Seed</label>
-            <input type="number" class="form-control mt-1" id="seed" name="seed" value="42" style="width: 100px;">
-        </div>
-
-        <!-- Satisfiable -->
-        <div class="mb-3 form-check">
-            <input class="form-check-input" type="checkbox" id="ensure_satisfiable" name="ensure_satisfiable" checked>
-            <label class="form-check-label" for="ensure_satisfiable">Ensure satisfiable</label>
-        </div>
-
-        <!-- Name Prefix -->
+        <!-- Extra Constraint Representativeness -->
         <div class="mb-3">
-            <label for="name_prefix" class="form-label">Name/Prefix</label>
-            <input type="text" class="form-control" id="name_prefix" name="name_prefix" placeholder="e.g. fm">
+            <label class="form-label">Extra Constraint Representativeness: <small>percentage of features that will appear in the boolean constraints (cross-tree constraints)</small></label>
+            <input type="number" step="0.01" min="0" max="1" class="form-control" name="extra_constraint_repr" value="0.7">
         </div>
 
-        <!-- Suffixes -->
-        <div class="mb-3 form-check">
-            <input class="form-check-input" type="checkbox" id="feature_count_suffix" name="feature_count_suffix">
-            <label class="form-check-label" for="feature_count_suffix">Include number of features as name's suffix</label>
+        <!-- Variables per constraint -->
+        <div class="mb-3">
+            <label class="form-label">Variables per constraint</label>
+            <div class="d-flex align-items-center gap-3">
+                <span>Min:</span>
+                <input type="number" class="form-control" style="width: 100px;" min="1" max="10000" id="vars_per_ctc_min" name="vars_per_ctc_min" value="3000">
+                <span>Max:</span>
+                <input type="number" class="form-control" style="width: 100px;" min="1" max="10000" id="vars_per_ctc_max" name="vars_per_ctc_max" value="8500">
+                <span class="text-muted ms-2" style="font-size: 13px;">Note: max variables per constraints cannot be greater than max number of features</span>
+            </div>
         </div>
-        <div class="mb-3 form-check">
-            <input class="form-check-input" type="checkbox" id="constraint_count_suffix" name="constraint_count_suffix">
-            <label class="form-check-label" for="constraint_count_suffix">Include number of constraints as name's suffix</label>
+
+        <!-- Distribution -->
+        <div class="mb-3">
+            <label class="form-label">Distribution</label>
+            <div class="row">
+                <div class="col">
+                    <label class="form-label">Boolean:</label>
+                    <input type="number" step="0.01" min="0" max="1" class="form-control" name="ctc_dist_boolean" value="0.7">
+                </div>
+                <div class="col">
+                    <label class="form-label">Integer:</label>
+                    <input type="number" step="0.01" min="0" max="1" class="form-control" name="ctc_dist_integer" value="0.2">
+                </div>
+                <div class="col">
+                    <label class="form-label">Real:</label>
+                    <input type="number" step="0.01" min="0" max="1" class="form-control" name="ctc_dist_real" value="0.7">
+                </div>
+                <div class="col">
+                    <label class="form-label">String:</label>
+                    <input type="number" step="0.01" min="0" max="1" class="form-control" name="ctc_dist_string" value="0.0">
+                </div>
+            </div>
         </div>
+
+        <!-- Boolean level constraints -->
+        <div class="mb-3">
+            <label class="form-label">Boolean level (only if greater than 0)</label>
+            <div class="d-flex gap-2 flex-wrap">
+                <span>!</span>
+                <input type="number" step="0.01" min="0" max="1" class="form-control" style="width: auto;" name="prob_not" value="0.3" placeholder="!">
+                <span>&</span>
+                <input type="number" step="0.01" min="0" max="1" class="form-control" style="width: auto;" name="prob_and" value="0.7" placeholder="&">
+                <span>|</span>
+                <input type="number" step="0.01" min="0" max="1" class="form-control" style="width: auto;" name="prob_or" value="0.1" placeholder="|">
+                <span>=></span>
+                <input type="number" step="0.01" min="0" max="1" class="form-control" style="width: auto;" name="prob_implies" value="0.1" placeholder="=>">
+                <span>&lt;=&gt;</span>
+                <input type="number" step="0.01" min="0" max="1" class="form-control" style="width: auto;" name="prob_equiv" value="0.1" placeholder="<=>">
+            </div>
+        </div>
+
+        <!-- Arithmetic level constraints -->
+        <div class="mb-3">
+            <label class="form-label">Arithmetic level constraints <small>(only if Arithmetic level is selected)</small></label>
+            <div class="row">
+                <div class="col">
+                    <label>+</label>
+                    <input type="number" step="0.01" min="0" max="1" class="form-control" name="prob_plus" value="0.7">
+                </div>
+                <div class="col">
+                    <label>-</label>
+                    <input type="number" step="0.01" min="0" max="1" class="form-control" name="prob_minus" value="0.2">
+                </div>
+                <div class="col">
+                    <label>*</label>
+                    <input type="number" step="0.01" min="0" max="1" class="form-control" name="prob_times" value="0.7">
+                </div>
+                <div class="col">
+                    <label>/</label>
+                    <input type="number" step="0.01" min="0" max="1" class="form-control" name="prob_div" value="0.0">
+                </div>
+                <div class="col">
+                    <label>=</label>
+                    <input type="number" step="0.01" min="0" max="1" class="form-control" name="prob_eq" value="0.0">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <label>&lt;</label>
+                    <input type="number" step="0.01" min="0" max="1" class="form-control" name="prob_lt" value="0.2">
+                </div>
+                <div class="col">
+                    <label>&gt;</label>
+                    <input type="number" step="0.01" min="0" max="1" class="form-control" name="prob_gt" value="0.7">
+                </div>
+                <div class="col">
+                    <label>&lt;=</label>
+                    <input type="number" step="0.01" min="0" max="1" class="form-control" name="prob_leq" value="0.0">
+                </div>
+                <div class="col">
+                    <label>&gt;=</label>
+                    <input type="number" step="0.01" min="0" max="1" class="form-control" name="prob_geq" value="0.0">
+                </div>
+            </div>
+            <div class="row mt-2">
+                <label>Aggregate functions (only if selected)</label>
+                <div class="col">
+                    <label>sum()</label>
+                    <input type="number" step="0.01" min="0" max="1" class="form-control" name="prob_sum" value="0.0">
+                </div>
+                <div class="col">
+                    <label>avg()</label>
+                    <input type="number" step="0.01" min="0" max="1" class="form-control" name="prob_avg" value="0.0">
+                </div>
+            </div>
+        </div>
+
+        <!-- Type level constraints -->
+        <div class="mb-3">
+            <label class="form-label">Type level constraints <small>(only if Type level and String constraints are selected)</small></label>
+            <div>
+                <label>len()</label>
+                <input type="number" step="0.01" min="0" max="1" class="form-control d-inline-block" name="prob_len" value="0.7" style="width: 90px;">
+            </div>
+        </div>
+
     </div>
 </div>
-{% endblock %}
-
-{% block scripts %}
-<!-- Puedes añadir JS para la sincronización del slider y el input -->
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-    const num_models = document.getElementById('num_models');
-    const num_models_val = document.getElementById('num_models_val');
-    num_models_val.value = num_models.value;
-
-    num_models.addEventListener('input', function() {
-        num_models_val.value = num_models.value;
-    });
-    num_models_val.addEventListener('input', function() {
-        num_models.value = num_models_val.value;
-    });
-});
-</script>
 {% endblock %}

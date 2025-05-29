@@ -82,9 +82,9 @@
                 <label class="form-label">Number of features</label>
                 <div class="d-flex align-items-center gap-3">
                     <span>Min:</span>
-                    <input type="number" class="form-control" style="width: 80px;" min="0" max="10000" id="num_features_min" name="num_features_min" value="3000">
+                    <input type="number" class="form-control" style="width: 100px;" min="0" max="10000" id="num_features_min" name="num_features_min" value="3000">
                     <span>Max:</span>
-                    <input type="number" class="form-control" style="width: 80px;" min="0" max="10000" id="num_features_max" name="num_features_max" value="8500">
+                    <input type="number" class="form-control" style="width: 100px;" min="0" max="10000" id="num_features_max" name="num_features_max" value="8500">
                 </div>
             </div>
 
@@ -116,20 +116,22 @@
                 <label class="form-label">Feature cardinality <small>(only if selected)</small> CURRENTLY UNAVAILABLE</label>
                 <div class="p-3 border rounded" style="background: #fafbfc;">
                     <div class="row mb-2">
-                        <div class="col-md-6">
+                        <div class="row-md-6">
+                            <label class="form-label">Min features</label>
                             <div class="d-flex gap-2 align-items-center">
                                 <span>Min:</span>
-                                <input type="number" class="form-control" style="width: 80px;" min="1" max="10000" id="fc_min_val" name="fc_min_val" value="3000">
+                                <input type="number" class="form-control" style="width: 100px;" min="1" max="10000" id="fc_min_min" name="fc_min_min" value="3000">
                                 <span>Max:</span>
-                                <input type="number" class="form-control" style="width: 80px;" min="1" max="10000" id="fc_min_max" name="fc_min_max" value="8500">
+                                <input type="number" class="form-control" style="width: 100px;" min="1" max="10000" id="fc_max_min" name="fc_max_min" value="8500">
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="row-md-6">
+                            <label class="form-label">Max features</label>
                             <div class="d-flex gap-2 align-items-center">
                                 <span>Min:</span>
-                                <input type="number" class="form-control" style="width: 80px;" min="0" max="10000" id="fc_max_min" name="fc_max_min" value="3000">
+                                <input type="number" class="form-control" style="width: 100px;" min="0" max="10000" id="fc_min_max" name="fc_min_max" value="3000">
                                 <span>Max:</span>
-                                <input type="number" class="form-control" style="width: 80px;" min="0" max="10000" id="fc_max_val" name="fc_max_val" value="8500">
+                                <input type="number" class="form-control" style="width: 100px;" min="0" max="10000" id="fc_max_max" name="fc_max_max" value="8500">
                             </div>
                         </div>
                     </div>
