@@ -16,3 +16,15 @@ Repository of feature models in UVL format integrated with Zenodo and flamapy fo
 ## Official documentation
 
 You can consult the official documentation of the project at [docs.uvlhub.io](https://docs.uvlhub.io/)
+
+### Installation
+
+Follow all steps of **Installation** in the official documentation. When you arrive to this step:
+```
+pip install -e ./
+```
+Please, do also:
+```
+pip install -e ./fm_generator
+```
+Then, keep on the next step naturally
