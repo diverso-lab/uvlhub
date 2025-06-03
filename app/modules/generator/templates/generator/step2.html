@@ -82,33 +82,58 @@
                 <label class="form-label">Number of features</label>
                 <div class="d-flex align-items-center gap-3">
                     <span>Min:</span>
-                    <input type="number" class="form-control" style="width: 100px;" min="0" max="10000" id="num_features_min" name="num_features_min" value="3000">
+                    <input type="number" class="form-control" style="width: 100px;" min="1" max="10000" id="num_features_min" name="num_features_min" value="{{ values.get('num_features_min', 3000) }}">
+                    {% if errors.get('num_features_min') %}
+                        <div class="text-danger">{{ errors['num_features_min'] }}</div>
+                    {% endif %}
                     <span>Max:</span>
-                    <input type="number" class="form-control" style="width: 100px;" min="0" max="10000" id="num_features_max" name="num_features_max" value="8500">
+                    <input type="number" class="form-control" style="width: 100px;" min="1" max="10000" id="num_features_max" name="num_features_max" value="{{ values.get('num_features_max', 8500) }}">
+                    {% if errors.get('num_features_max') %}
+                        <div class="text-danger">{{ errors['num_features_max'] }}</div>
+                    {% endif %}
                 </div>
             </div>
 
             <!-- Distribución -->
             <div class="mb-3">
-                <label class="form-label">Distribution (as a per unit value) CURRENTLY UNAVAILABLE</label>
+                <label class="form-label">Distribution (as a per unit value)</label>
                 <div class="row">
                     <div class="col">
                         <label class="form-label">Boolean:</label>
-                        <input type="number" step="0.01" min="0" max="1" class="form-control" name="dist_boolean" value="0.7">
+                        <input type="number" step="0.01" min="0" max="1" class="form-control" id="dist_boolean" name="dist_boolean" value="{{ values.get('dist_boolean', 0.7) }}">
+                        {% if errors.get('dist_boolean') %}
+                            <div class="text-danger">{{ errors['dist_boolean'] }}</div>
+                        {% endif %}
                     </div>
                     <div class="col">
                         <label class="form-label">Integer:</label>
-                        <input type="number" step="0.01" min="0" max="1" class="form-control" name="dist_integer" value="0.2">
+                        <input type="number" step="0.01" min="0" max="1" class="form-control" id="dist_integer" name="dist_integer" value="{{ values.get('dist_integer', 0.2) }}">
+                        {% if errors.get('dist_integer') %}
+                            <div class="text-danger">{{ errors['dist_integer'] }}</div>
+                        {% endif %}
                     </div>
                     <div class="col">
                         <label class="form-label">Real:</label>
-                        <input type="number" step="0.01" min="0" max="1" class="form-control" name="dist_real" value="0.0">
+                        <input type="number" step="0.01" min="0" max="1" class="form-control" id="dist_real" name="dist_real" value="{{ values.get('dist_real', 0.0) }}">
+                        {% if errors.get('dist_real') %}
+                            <div class="text-danger">{{ errors['dist_real'] }}</div>
+                        {% endif %}
                     </div>
                     <div class="col">
                         <label class="form-label">String:</label>
-                        <input type="number" step="0.01" min="0" max="1" class="form-control" name="dist_string" value="0.0">
+                        <input type="number" step="0.01" min="0" max="1" class="form-control" id="dist_string" name="dist_string" value="{{ values.get('dist_string', 0.0) }}">
+                        {% if errors.get('dist_string') %}
+                            <div class="text-danger">{{ errors['dist_string'] }}</div>
+                        {% endif %}
                     </div>
                 </div>
+                <div class="mt-2" id="dist_sum_display"
+                     style="font-weight:bold; color:{% if values.get('dist_total', '1.0000') != '1.0000' %}red{% else %}green{% endif %};">
+                    Current sum: <span id="dist_sum">{{ values.get('dist_total', '1.0000') }}</span>
+                </div>
+                {% if errors.get('dist_total') %}
+                    <div class="text-danger">{{ errors['dist_total'] }}</div>
+                {% endif %}
             </div>
 
             <!-- Feature cardinality -->
@@ -137,7 +162,10 @@
                     </div>
                     <div class="mb-2">
                         <label class="form-label">Attach probability</label>
-                        <input type="number" step="0.01" min="0" max="1" class="form-control" style="width: 120px;" name="prob_fc" value="0.1">
+                        <input type="number" step="0.01" min="0.01" max="1" class="form-control" style="width: 120px;" name="prob_fc" value="{{ values.get('attach_probability', 0.1) }}">
+                        {% if errors.get('attach_probability') %}
+                            <div class="text-danger">{{ errors['attach_probability'] }}</div>
+                        {% endif %}
                     </div>
                     <small class="text-muted">Note: 0 means no feature may have feature cardinality; 1 means every feature may have it.</small>
                 </div>
@@ -203,8 +231,26 @@
                 </div>
             </div>
         </div>
-
-
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    function updateDistSum() {
+        let b = parseFloat(document.getElementById('dist_boolean').value) || 0;
+        let i = parseFloat(document.getElementById('dist_integer').value) || 0;
+        let r = parseFloat(document.getElementById('dist_real').value) || 0;
+        let s = parseFloat(document.getElementById('dist_string').value) || 0;
+        let sum = (b + i + r + s);
+        document.getElementById('dist_sum').innerText = sum.toFixed(4);
+        document.getElementById('dist_sum_display').style.color = (Math.abs(sum - 1.0) < 0.001) ? 'green' : 'red';
+    }
+    ['dist_boolean','dist_integer','dist_real','dist_string'].forEach(function(id){
+        document.getElementById(id).addEventListener('input', updateDistSum);
+    });
+    updateDistSum();
+});
+</script>
 {% endblock %}

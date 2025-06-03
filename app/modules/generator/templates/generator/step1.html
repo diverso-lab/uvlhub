@@ -5,53 +5,71 @@
 {% block wizard_content %}
 <div class="row justify-content-left">
     <div class="col-md-6">
-        <!-- Number of models -->
+        <!-- Número de modelos -->
         <div class="mb-3">
             <label for="num_models" class="form-label">Number of models</label>
-            <input type="range" class="form-range" min="1" max="10000" step="1" id="num_models" name="num_models" value="5" oninput="num_models_val.value = num_models.value">
-            <input type="number" id="num_models_val" name="num_models_val" min="1" max="10000" value="5" class="form-control mt-1" style="width: 100px;" oninput="num_models.value = num_models_val.value">
+            <input type="range" class="form-range" min="1" max="10000" step="1" id="num_models"
+                   name="num_models" value="{{ values.get('num_models_val', 5) }}"
+                   oninput="num_models_val.value = num_models.value">
+            <input type="number" id="num_models_val" name="num_models_val" min="1" max="10000" 
+                   value="{{ values.get('num_models_val', 5) }}" class="form-control mt-1" style="width: 100px;"
+                   oninput="num_models.value = num_models_val.value">
+            {% if errors.get('num_models_val') %}
+                <div class="text-danger">{{ errors['num_models_val'] }}</div>
+            {% endif %}
         </div>
 
         <!-- Seed -->
-        <div class="mb-3 form-check">
-            <input class="form-check-input" type="checkbox" id="use_seed" name="use_seed" checked>
-            <label class="form-check-label" for="use_seed">Seed</label>
-            <input type="number" class="form-control mt-1" id="seed" name="seed" value="42" style="width: 100px;">
+        <div class="mb-3">
+            <label class="form-label" for="seed">Seed</label>
+            <input type="number" class="form-control mt-1" id="seed" name="seed" min="1"
+                value="{{ values.get('seed', 42) }}" style="width: 100px;">
+            {% if errors.get('seed') %}
+                <div class="text-danger">{{ errors['seed'] }}</div>
+            {% endif %}
         </div>
 
         <!-- Satisfiable -->
         <div class="mb-3 form-check">
-            <input class="form-check-input" type="checkbox" id="ensure_satisfiable" name="ensure_satisfiable" checked>
+            <input class="form-check-input" type="checkbox" id="ensure_satisfiable" name="ensure_satisfiable"
+                   {% if values.get('ensure_satisfiable', 'on') %} checked {% endif %}>
             <label class="form-check-label" for="ensure_satisfiable">Ensure satisfiable</label>
         </div>
 
         <!-- Name Prefix -->
         <div class="mb-3">
             <label for="name_prefix" class="form-label">Name/Prefix</label>
-            <input type="text" class="form-control" id="name_prefix" name="name_prefix" placeholder="e.g. fm">
+            <input type="text" class="form-control" id="name_prefix" name="name_prefix"
+                   placeholder="e.g. fm" value="{{ values.get('name_prefix', '') }}">
         </div>
 
         <!-- Suffixes -->
         <div class="mb-3 form-check">
-            <input class="form-check-input" type="checkbox" id="feature_count_suffix" name="feature_count_suffix">
+            <input class="form-check-input" type="checkbox" id="feature_count_suffix" name="feature_count_suffix"
+                   {% if values.get('feature_count_suffix') %} checked {% endif %}>
             <label class="form-check-label" for="feature_count_suffix">Include number of features as name's suffix</label>
         </div>
         <div class="mb-3 form-check">
-            <input class="form-check-input" type="checkbox" id="constraint_count_suffix" name="constraint_count_suffix">
+            <input class="form-check-input" type="checkbox" id="constraint_count_suffix" name="constraint_count_suffix"
+                   {% if values.get('constraint_count_suffix') %} checked {% endif %}>
             <label class="form-check-label" for="constraint_count_suffix">Include number of constraints as name's suffix</label>
         </div>
+
+        <!-- Error global (del __post_init__) -->
+        {% if errors.get('global') %}
+            <div class="alert alert-danger">{{ errors['global'] }}</div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
-<!-- Puedes añadir JS para la sincronización del slider y el input -->
 <script>
 document.addEventListener("DOMContentLoaded", function () {
     const num_models = document.getElementById('num_models');
     const num_models_val = document.getElementById('num_models_val');
+    // Asegúrate de que ambos estén sincronizados
     num_models_val.value = num_models.value;
-
     num_models.addEventListener('input', function() {
         num_models_val.value = num_models.value;
     });

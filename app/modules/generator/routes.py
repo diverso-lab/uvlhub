@@ -12,81 +12,198 @@ from flamapy.metamodels.fm_metamodel.models.feature_model import Attribute, Doma
 
 generator_service = GeneratorService()
 
+def validate_step1_form(form):
+    """Valida los campos del formulario de step1 y devuelve (errores, valores)."""
+    errors = {}
+    values = {}  # Para rellenar el formulario en caso de error
+
+    num_models_val = form.get('num_models_val', '').strip()
+    seed_val = form.get('seed', '').strip()
+
+    # Validar NUM_MODELS
+    try:
+        num_models = int(num_models_val)
+        if not (1 <= num_models <= 10000):
+            errors['num_models_val'] = 'Number of models must be between 1 and 10,000.'
+    except Exception:
+        errors['num_models_val'] = 'Number of models must be an integer.'
+
+    # Validar SEED
+    try:
+        seed = int(seed_val)
+        if seed <= 0:
+            errors['seed'] = 'Seed must be a positive integer.'
+    except Exception:
+        errors['seed'] = 'Seed must be a positive integer.'
+
+    # Guardar valores introducidos para recargar el formulario
+    for k in form:
+        values[k] = form[k]
+
+    return errors, values
+
+
+
 # Paso 1: solo guarda los valores y pasa a step2
 @generator_bp.route('/generator/step1', methods=['GET', 'POST'])
 def step1():
     if request.method == 'POST':
-        params = Params(
-            NUM_MODELS = int(request.form.get('num_models_val', 0)),
-            SEED = int(request.form.get('seed', 42)),
-            ENSURE_SATISFIABLE = 'ensure_satisfiable' in request.form,
-            NAME_PREFIX = request.form.get('name_prefix', ''),
-            INCLUDE_FEATURE_COUNT_SUFFIX = 'feature_count_suffix' in request.form,
-            INCLUDE_CONSTRAINT_COUNT_SUFFIX = 'constraint_count_suffix' in request.form,
-        )
-        # Guardar como dict
+        errors, values = validate_step1_form(request.form)
+        
+        # Si hay errores en la validación inicial
+        if errors:
+            print(f"[VALIDACIÓN STEP1] Errores detectados: {errors}")
+            return render_template('generator/step1.html', current_step=1, errors=errors, values=values)
+        
+        # Si pasa la validación, intentamos construir Params (llama a __post_init__)
+        try:
+            params = Params(
+                NUM_MODELS = int(request.form.get('num_models_val')),
+                SEED = int(request.form.get('seed')),
+                ENSURE_SATISFIABLE = 'ensure_satisfiable' in request.form,
+                NAME_PREFIX = request.form.get('name_prefix', ''),
+                INCLUDE_FEATURE_COUNT_SUFFIX = 'feature_count_suffix' in request.form,
+                INCLUDE_CONSTRAINT_COUNT_SUFFIX = 'constraint_count_suffix' in request.form,
+            )
+        except ValueError as e:
+            # Error lanzado por __post_init__, lo mostramos en consola y frontend
+            print(f"[Params __post_init__ ERROR] {e}")
+            errors['global'] = str(e)
+            return render_template('generator/step1.html', current_step=1, errors=errors, values=request.form)
+
+        # Sin errores: guardamos en sesión y redirigimos
         session['params'] = params.__dict__
         return redirect(url_for('generator.step2'))
 
-    current_step = 1
-    return render_template('generator/step1.html', current_step=current_step)
+    # GET: valores por defecto
+    default_values = {
+        'num_models_val': 5,
+        'seed': 42,
+        'name_prefix': '',
+        'ensure_satisfiable': 'on',
+        'feature_count_suffix': '',
+        'constraint_count_suffix': ''
+    }
+    return render_template('generator/step1.html', current_step=1, errors={}, values=default_values)
+
+
+def validate_step2_form(form):
+    """
+    Valida los campos del formulario de step2 y devuelve (errores, valores).
+    Validaciones:
+    - MIN_FEATURES y MAX_FEATURES: entre 1 y 10000, y MIN <= MAX.
+    - Distribuciones DIST_BOOLEAN, DIST_INTEGER, DIST_REAL, DIST_STRING: entre 0 y 1, suma exactamente 1.
+    - ATTACH_PROBABILITY (si existe): entre 0.01 y 1.
+    """
+    errors = {}
+    values = {}
+
+    # Validar número de features
+    min_features_val = form.get('num_features_min', '').strip()
+    max_features_val = form.get('num_features_max', '').strip()
+    try:
+        min_features = int(min_features_val)
+        if not (1 <= min_features <= 10000):
+            errors['num_features_min'] = 'Min. features must be between 1 and 10,000.'
+    except Exception:
+        errors['num_features_min'] = 'Min. features must be an integer.'
+    try:
+        max_features = int(max_features_val)
+        if not (1 <= max_features <= 10000):
+            errors['num_features_max'] = 'Max. features must be between 1 and 10,000.'
+    except Exception:
+        errors['num_features_max'] = 'Max. features must be an integer.'
+
+    if ('num_features_min' not in errors and 'num_features_max' not in errors
+        and min_features > max_features):
+        errors['num_features_max'] = 'Max. features must be greater than or equal to Min. features.'
+
+    # Validar distribuciones
+    dist_fields = ['dist_boolean', 'dist_integer', 'dist_real', 'dist_string']
+    dist_values = []
+    for f in dist_fields:
+        val = form.get(f, '').strip()
+        try:
+            v = float(val)
+            if not (0.0 <= v <= 1.0):
+                errors[f] = 'Value must be between 0 and 1.'
+            dist_values.append(v)
+        except Exception:
+            errors[f] = 'Value must be a decimal between 0 and 1.'
+            dist_values.append(0.0)
+    total_dist = sum(dist_values)
+    if abs(total_dist - 1.0) > 0.001:  # Permite pequeño error de redondeo
+        for f in dist_fields:
+            if f not in errors:
+                errors[f] = 'The sum of all distributions must be exactly 1.0.'
+        errors['dist_total'] = f"Current sum: {total_dist:.4f}. The total must be 1.0."
+
+    # Validar attach_probability (si el campo existe)
+    attach_prob_val = form.get('attach_probability')
+    if attach_prob_val is not None:
+        try:
+            ap = float(attach_prob_val.strip())
+            if not (0.01 <= ap <= 1.0):
+                errors['attach_probability'] = 'Attach probability must be between 0.01 and 1.'
+        except Exception:
+            errors['attach_probability'] = 'Attach probability must be a decimal between 0.01 and 1.'
+
+    # Guardar valores introducidos
+    for k in form:
+        values[k] = form[k]
+
+    # Añade el total de la distribución para mostrarlo en el template
+    values['dist_total'] = f"{sum(dist_values):.4f}"
+
+    return errors, values
+
+
 
 # Paso 2: genera y descarga el zip en POST
 @generator_bp.route('/generator/step2', methods=['GET', 'POST'])
 def step2():
     if request.method == 'POST':
+        errors, values = validate_step2_form(request.form)
+        if errors:
+            print(f"[VALIDACIÓN STEP2] Errores detectados: {errors}")
+            return render_template('generator/step2.html', current_step=2, errors=errors, values=values)
+
         params_dict = session.get('params')
         if not params_dict:
             return "Error: Params missing in session", 400
 
-        # ACTUALIZACIÓN DE TODOS LOS PARÁMETROS DEL FORMULARIO
+        # Actualiza los parámetros como ya hacías antes…
+        # [ ... tu código de siempre aquí ... ]
+        # Usa values en vez de request.form para inicializar valores, si lo necesitas.
 
-        # Niveles de lenguaje
-        params_dict['GROUP_CARDINALITY'] = 'group_cardinality' in request.form
-        params_dict['ARITHMETIC_LEVEL'] = 'arithmetic_level' in request.form
-        params_dict['TYPE_LEVEL'] = 'type_level' in request.form
-        params_dict['FEATURE_CARDINALITY'] = 'feature_cardinality' in request.form
-        params_dict['AGGREGATE_FUNCTIONS'] = 'aggregate_functions' in request.form
-        params_dict['STRING_CONSTRAINTS'] = 'string_constraints' in request.form
+        params_dict['MIN_FEATURES'] = int(request.form.get('num_features_min'))
+        params_dict['MAX_FEATURES'] = int(request.form.get('num_features_max'))
+        params_dict['DIST_BOOLEAN'] = float(request.form.get('dist_boolean'))
+        params_dict['DIST_INTEGER'] = float(request.form.get('dist_integer'))
+        params_dict['DIST_REAL'] = float(request.form.get('dist_real'))
+        params_dict['DIST_STRING'] = float(request.form.get('dist_string'))
 
-        params_dict['MIN_FEATURES'] = int(request.form.get('num_features_min', 1))
-        params_dict['MAX_FEATURES'] = int(request.form.get('num_features_max', 10))
-        params_dict['DIST_BOOLEAN'] = float(request.form.get('dist_boolean', 0.7))
-        params_dict['DIST_INTEGER'] = float(request.form.get('dist_integer', 0.2))
-        params_dict['DIST_REAL'] = float(request.form.get('dist_real', 0.0))
-        params_dict['DIST_STRING'] = float(request.form.get('dist_string', 0.0))
-        
-        # Tree depth
-        params_dict['MAX_TREE_DEPTH'] = int(request.form.get('max_tree_depth', 5))
+        attach_prob_val = request.form.get('attach_probability')
+        if attach_prob_val is not None:
+            params_dict['ATTACH_PROBABILITY'] = float(attach_prob_val)
 
-        # Groups
-        params_dict['DIST_OPTIONAL'] = float(request.form.get('dist_optional', 0.7))
-        params_dict['DIST_MANDATORY'] = float(request.form.get('dist_mandatory', 0.2))
-        params_dict['DIST_ALTERNATIVE'] = float(request.form.get('dist_alternative', 0.0))
-        params_dict['DIST_OR'] = float(request.form.get('dist_or', 0.0))
-
-        # Group cardinality
-        params_dict['DIST_GROUP_CARDINALITY'] = float(request.form.get('dist_group_cardinality', 0.1))
-        params_dict['GROUP_CARDINALITY_MIN'] = int(request.form.get('group_cardinality_min', 1))
-        params_dict['GROUP_CARDINALITY_MAX'] = int(request.form.get('group_cardinality_max', 10))
-
-        # Feature cardinality y attach_prob (si tu generador los soporta)
-        params_dict['PROB_FEATURE_CARDINALITY'] = float(request.form.get('prob_fc', 0.05))
-        params_dict['MIN_FEATURE_CARDINALITY'] = [int(request.form.get('fc_min_min', 1)), int(request.form.get('fc_max_min', 1))]
-        params_dict['MAX_FEATURE_CARDINALITY'] = [int(request.form.get('fc_min_max', 1)), int(request.form.get('fc_max_max', 1))]
-
-        # Checkbox (nivel de lenguaje) – Boolean, Arithmetic, etc (si algún día habilitas)
-        params_dict['GROUP_CARDINALITY'] = 'group_cardinality' in request.form
-        # Los demás están disabled por ahora
-
-        # Actualiza el objeto Params
         params = Params(**params_dict)
         session['params'] = params.__dict__
-
         return redirect(url_for('generator.step3'))
 
-    current_step = 2
-    return render_template('generator/step2.html', current_step=current_step)
+    # GET: valores por defecto
+    default_values = {
+        'num_features_min': 10,
+        'num_features_max': 50,
+        'dist_boolean': 0.7,
+        'dist_integer': 0.1,
+        'dist_real': 0.1,
+        'dist_string': 0.1,
+        'attach_probability': 1.0,
+        'dist_total': "1.0000"
+    }
+    return render_template('generator/step2.html', current_step=2, errors={}, values=default_values)
+
 
 
 @generator_bp.route('/generator/step3', methods=['GET', 'POST'])
