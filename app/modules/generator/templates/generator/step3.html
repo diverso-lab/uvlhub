@@ -13,16 +13,27 @@
             <label class="form-label">Number of constraints</label>
             <div class="d-flex align-items-center gap-3">
                 <span>Min:</span>
-                <input type="number" class="form-control" style="width: 100px;" min="0" max="10000" id="num_constraints_min" name="num_constraints_min" value="3000">
+                <input type="number" class="form-control" style="width: 100px;" min="1" max="10000" id="num_constraints_min" name="num_constraints_min" value="{{ values.get('num_constraints_min', 1) }}">
+                {% if errors.get('num_constraints_min') %}
+                    <div class="text-danger">{{ errors['num_constraints_min'] }}</div>
+                {% endif %}
                 <span>Max:</span>
-                <input type="number" class="form-control" style="width: 100px;" min="0" max="10000" id="num_constraints_max" name="num_constraints_max" value="8500">
+                <input type="number" class="form-control" style="width: 100px;" min="1" max="10000" id="num_constraints_max" name="num_constraints_max" value="{{ values.get('num_constraints_max', 10) }}">
+                {% if errors.get('num_constraints_max') %}
+                    <div class="text-danger">{{ errors['num_constraints_max'] }}</div>
+                {% endif %}
             </div>
         </div>
 
         <!-- Extra Constraint Representativeness -->
         <div class="mb-3">
-            <label class="form-label">Extra Constraint Representativeness: <small>percentage of features that will appear in the boolean constraints (cross-tree constraints)</small></label>
-            <input type="number" step="0.01" min="0" max="1" class="form-control" name="extra_constraint_repr" value="0.7">
+            <label class="form-label">Extra Constraint Representativeness: 
+                <small>number of times a feature may appear in each constraint (must be less than max variables per constraint)</small>
+            </label>
+            <input type="number" step="1" min="1" max="10000" class="form-control" name="extra_constraint_repr" value="{{ values.get('extra_constraint_repr', 1) }}">
+            {% if errors.get('extra_constraint_repr') %}
+                <div class="text-danger">{{ errors['extra_constraint_repr'] }}</div>
+            {% endif %}
         </div>
 
         <!-- Variables per constraint -->
@@ -30,10 +41,16 @@
             <label class="form-label">Variables per constraint</label>
             <div class="d-flex align-items-center gap-3">
                 <span>Min:</span>
-                <input type="number" class="form-control" style="width: 100px;" min="1" max="10000" id="vars_per_ctc_min" name="vars_per_ctc_min" value="3000">
+                <input type="number" class="form-control" style="width: 100px;" min="1" max="10000" id="vars_per_ctc_min" name="vars_per_ctc_min" value="{{ values.get('vars_per_ctc_min', 1) }}">
+                {% if errors.get('vars_per_ctc_min') %}
+                    <div class="text-danger">{{ errors['vars_per_ctc_min'] }}</div>
+                {% endif %}
                 <span>Max:</span>
-                <input type="number" class="form-control" style="width: 100px;" min="1" max="10000" id="vars_per_ctc_max" name="vars_per_ctc_max" value="8500">
-                <span class="text-muted ms-2" style="font-size: 13px;">Note: max variables per constraints cannot be greater than max number of features</span>
+                <input type="number" class="form-control" style="width: 100px;" min="1" max="10000" id="vars_per_ctc_max" name="vars_per_ctc_max" value="{{ values.get('vars_per_ctc_max', 10) }}">
+                {% if errors.get('vars_per_ctc_max') %}
+                    <div class="text-danger">{{ errors['vars_per_ctc_max'] }}</div>
+                {% endif %}
+                <span class="text-muted ms-2" style="font-size: 13px;">Note: max variables per constraint cannot be greater than max number of features</span>
             </div>
         </div>
 
@@ -43,19 +60,19 @@
             <div class="row">
                 <div class="col">
                     <label class="form-label">Boolean:</label>
-                    <input type="number" step="0.01" min="0" max="1" class="form-control" name="ctc_dist_boolean" value="0.7">
+                    <input type="number" step="0.01" min="0" max="1" class="form-control" name="ctc_dist_boolean" value="{{ values.get('ctc_dist_boolean', 0.7) }}">
                 </div>
                 <div class="col">
                     <label class="form-label">Integer:</label>
-                    <input type="number" step="0.01" min="0" max="1" class="form-control" name="ctc_dist_integer" value="0.2">
+                    <input type="number" step="0.01" min="0" max="1" class="form-control" name="ctc_dist_integer" value="{{ values.get('ctc_dist_integer', 0.2) }}">
                 </div>
                 <div class="col">
                     <label class="form-label">Real:</label>
-                    <input type="number" step="0.01" min="0" max="1" class="form-control" name="ctc_dist_real" value="0.7">
+                    <input type="number" step="0.01" min="0" max="1" class="form-control" name="ctc_dist_real" value="{{ values.get('ctc_dist_real', 0.7) }}">
                 </div>
                 <div class="col">
                     <label class="form-label">String:</label>
-                    <input type="number" step="0.01" min="0" max="1" class="form-control" name="ctc_dist_string" value="0.0">
+                    <input type="number" step="0.01" min="0" max="1" class="form-control" name="ctc_dist_string" value="{{ values.get('ctc_dist_string', 0.0) }}">
                 </div>
             </div>
         </div>
@@ -65,15 +82,15 @@
             <label class="form-label">Boolean level (only if greater than 0)</label>
             <div class="d-flex gap-2 flex-wrap">
                 <span>!</span>
-                <input type="number" step="0.01" min="0" max="1" class="form-control" style="width: auto;" name="prob_not" value="0.3" placeholder="!">
+                <input type="number" step="0.01" min="0" max="1" class="form-control" style="width: auto;" name="prob_not" value="{{ values.get('prob_not', 0.3) }}" placeholder="!">
                 <span>&</span>
-                <input type="number" step="0.01" min="0" max="1" class="form-control" style="width: auto;" name="prob_and" value="0.7" placeholder="&">
+                <input type="number" step="0.01" min="0" max="1" class="form-control" style="width: auto;" name="prob_and" value="{{ values.get('prob_and', 0.7) }}" placeholder="&">
                 <span>|</span>
-                <input type="number" step="0.01" min="0" max="1" class="form-control" style="width: auto;" name="prob_or" value="0.1" placeholder="|">
+                <input type="number" step="0.01" min="0" max="1" class="form-control" style="width: auto;" name="prob_or" value="{{ values.get('prob_or', 0.1) }}" placeholder="|">
                 <span>=></span>
-                <input type="number" step="0.01" min="0" max="1" class="form-control" style="width: auto;" name="prob_implies" value="0.1" placeholder="=>">
+                <input type="number" step="0.01" min="0" max="1" class="form-control" style="width: auto;" name="prob_implies" value="{{ values.get('prob_implies', 0.1) }}" placeholder="=>">
                 <span>&lt;=&gt;</span>
-                <input type="number" step="0.01" min="0" max="1" class="form-control" style="width: auto;" name="prob_equiv" value="0.1" placeholder="<=>">
+                <input type="number" step="0.01" min="0" max="1" class="form-control" style="width: auto;" name="prob_equiv" value="{{ values.get('prob_equiv', 0.1) }}" placeholder="<=>">
             </div>
         </div>
 
@@ -83,52 +100,52 @@
             <div class="row">
                 <div class="col">
                     <label>+</label>
-                    <input type="number" step="0.01" min="0" max="1" class="form-control" name="prob_plus" value="0.7">
+                    <input type="number" step="0.01" min="0" max="1" class="form-control" name="prob_plus" value="{{ values.get('prob_plus', 0.7) }}">
                 </div>
                 <div class="col">
                     <label>-</label>
-                    <input type="number" step="0.01" min="0" max="1" class="form-control" name="prob_minus" value="0.2">
+                    <input type="number" step="0.01" min="0" max="1" class="form-control" name="prob_minus" value="{{ values.get('prob_minus', 0.2) }}">
                 </div>
                 <div class="col">
                     <label>*</label>
-                    <input type="number" step="0.01" min="0" max="1" class="form-control" name="prob_times" value="0.7">
+                    <input type="number" step="0.01" min="0" max="1" class="form-control" name="prob_times" value="{{ values.get('prob_times', 0.7) }}">
                 </div>
                 <div class="col">
                     <label>/</label>
-                    <input type="number" step="0.01" min="0" max="1" class="form-control" name="prob_div" value="0.0">
+                    <input type="number" step="0.01" min="0" max="1" class="form-control" name="prob_div" value="{{ values.get('prob_div', 0.0) }}">
                 </div>
                 <div class="col">
                     <label>=</label>
-                    <input type="number" step="0.01" min="0" max="1" class="form-control" name="prob_eq" value="0.0">
+                    <input type="number" step="0.01" min="0" max="1" class="form-control" name="prob_eq" value="{{ values.get('prob_eq', 0.0) }}">
                 </div>
             </div>
             <div class="row">
                 <div class="col">
                     <label>&lt;</label>
-                    <input type="number" step="0.01" min="0" max="1" class="form-control" name="prob_lt" value="0.2">
+                    <input type="number" step="0.01" min="0" max="1" class="form-control" name="prob_lt" value="{{ values.get('prob_lt', 0.2) }}">
                 </div>
                 <div class="col">
                     <label>&gt;</label>
-                    <input type="number" step="0.01" min="0" max="1" class="form-control" name="prob_gt" value="0.7">
+                    <input type="number" step="0.01" min="0" max="1" class="form-control" name="prob_gt" value="{{ values.get('prob_gt', 0.7) }}">
                 </div>
                 <div class="col">
                     <label>&lt;=</label>
-                    <input type="number" step="0.01" min="0" max="1" class="form-control" name="prob_leq" value="0.0">
+                    <input type="number" step="0.01" min="0" max="1" class="form-control" name="prob_leq" value="{{ values.get('prob_leq', 0.0) }}">
                 </div>
                 <div class="col">
                     <label>&gt;=</label>
-                    <input type="number" step="0.01" min="0" max="1" class="form-control" name="prob_geq" value="0.0">
+                    <input type="number" step="0.01" min="0" max="1" class="form-control" name="prob_geq" value="{{ values.get('prob_geq', 0.0) }}">
                 </div>
             </div>
             <div class="row mt-2">
                 <label>Aggregate functions (only if selected)</label>
                 <div class="col">
                     <label>sum()</label>
-                    <input type="number" step="0.01" min="0" max="1" class="form-control" name="prob_sum" value="0.0">
+                    <input type="number" step="0.01" min="0" max="1" class="form-control" name="prob_sum" value="{{ values.get('prob_sum', 0.0) }}">
                 </div>
                 <div class="col">
                     <label>avg()</label>
-                    <input type="number" step="0.01" min="0" max="1" class="form-control" name="prob_avg" value="0.0">
+                    <input type="number" step="0.01" min="0" max="1" class="form-control" name="prob_avg" value="{{ values.get('prob_avg', 0.0) }}">
                 </div>
             </div>
         </div>
@@ -138,10 +155,9 @@
             <label class="form-label">Type level constraints <small>(only if Type level and String constraints are selected)</small></label>
             <div>
                 <label>len()</label>
-                <input type="number" step="0.01" min="0" max="1" class="form-control d-inline-block" name="prob_len" value="0.7" style="width: 90px;">
+                <input type="number" step="0.01" min="0" max="1" class="form-control d-inline-block" name="prob_len" value="{{ values.get('prob_len', 0.7) }}" style="width: 90px;">
             </div>
         </div>
-
     </div>
 </div>
 {% endblock %}
