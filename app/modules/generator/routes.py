@@ -569,25 +569,30 @@ def validate_step3_form(form, max_features: int = 10000):
 
 @generator_bp.route('/generator/step3', methods=['GET', 'POST'])
 def step3():
-    if request.method == 'POST':
-        params_dict = session.get('params')
-        if not params_dict:
-            return "Error: Params missing in session", 400
+    params_dict = session.get('params')
+    if not params_dict:
+        return "Error: Params missing in session", 400
 
-        # ------------------------------------------------------------
-        #  Aquí pasamos SOLO el entero max_features = params_dict['MAX_FEATURES']
-        # ------------------------------------------------------------
+    if request.method == 'POST':
+        # Extraer max_features de params_dict
         max_feats = params_dict.get('MAX_FEATURES', 10000)
+
+        # Validar el formulario con la función existente
         errors, values = validate_step3_form(request.form, max_feats)
+
+        # Inyectar aquí el valor real de aggregate_functions (llegado desde step2 y guardado en session)
+        values['aggregate_functions'] = params_dict.get('AGGREGATE_FUNCTIONS', False)
+        values['type_level'] = params_dict.get('TYPE_LEVEL', False)
+        values['string_constraints'] = params_dict.get('STRING_CONSTRAINTS', False)
 
         if errors:
             print(f"[VALIDACIÓN STEP3] Errores detectados: {errors}")
-            # Volvemos a pintar la misma plantilla con los errores y los valores que el usuario metió
-            return render_template('generator/step3.html', current_step=3, errors=errors, values=values)
+            return render_template('generator/step3.html',
+                                   current_step=3,
+                                   errors=errors,
+                                   values=values)
 
-        # ------------------------------------------------------------
-        #  Si no hay errores, guardamos todo en params_dict y avanzamos
-        # ------------------------------------------------------------
+        # Si no hay errores, guardamos todos los campos en params_dict y avanzamos
         params_dict['MIN_CONSTRAINTS'] = int(request.form.get('num_constraints_min', 1))
         params_dict['MAX_CONSTRAINTS'] = int(request.form.get('num_constraints_max', 1))
 
@@ -618,7 +623,7 @@ def step3():
         params_dict['PROB_MULTIPLY'] = float(request.form.get('prob_times', 0.1))
         params_dict['PROB_DIVIDE'] = float(request.form.get('prob_div', 0.0))
 
-        # Comparisons
+        # Comparison operators
         params_dict['PROB_EQUALS'] = float(request.form.get('prob_eq', 0.0))
         params_dict['PROB_LESS'] = float(request.form.get('prob_lt', 0.2))
         params_dict['PROB_GREATER'] = float(request.form.get('prob_gt', 0.7))
@@ -628,50 +633,60 @@ def step3():
         # Type level
         params_dict['PROB_LEN_FUNCTION'] = float(request.form.get('prob_len', 0.7))
 
-        # Reconstrucción del objeto Params y guardado en sesión
+        # Reconstruimos Params y guardamos en sesión
         params = Params(**params_dict)
         session['params'] = params.__dict__
 
         print(params)
         return redirect(url_for('generator.step4'))
 
-    # ------------------------------------------------------------
-    # GET: valores por defecto (se muestran si el usuario entra por primera vez)
-    # ------------------------------------------------------------
+    # ────────────────────────────────────────────────────────────────────────
+    # GET: Preparación de valores por defecto para mostrar la plantilla
+    # ────────────────────────────────────────────────────────────────────────
     current_step = 3
+
+    # Traemos también aggregate_functions de session, para inyectarlo en template
     default_values = {
-        'num_constraints_min': 1,
-        'num_constraints_max': 10,
-        'extra_constraint_repr': 1,
-        'vars_per_ctc_min': 1,
-        'vars_per_ctc_max': 10,
-        'ctc_dist_boolean': 0.7,
-        'ctc_dist_integer': 0.2,
-        'ctc_dist_real': 0.1,
-        'ctc_dist_string': 0.0,
-        'prob_not': 0.3,
-        'prob_and': 0.7,
-        'prob_or': 0.1,
-        'prob_implies': 0.1,
-        'prob_equiv': 0.1,
-        'prob_sum': 0.0,
-        'prob_avg': 0.0,
-        'prob_plus': 0.7,
-        'prob_minus': 0.2,
-        'prob_times': 0.1,
-        'prob_div': 0.0,
-        'prob_eq': 0.1,
-        'prob_lt': 0.2,
-        'prob_gt': 0.7,
-        'prob_leq': 0.0,
-        'prob_geq': 0.0,
-        'prob_len': 0.7,
+        'num_constraints_min': params_dict.get('MIN_CONSTRAINTS', 1),
+        'num_constraints_max': params_dict.get('MAX_CONSTRAINTS', 10),
+        'extra_constraint_repr': params_dict.get('EXTRA_CONSTRAINT_REPRESENTATIVENESS', 1),
+        'vars_per_ctc_min': params_dict.get('MIN_VARS_PER_CONSTRAINT', 1),
+        'vars_per_ctc_max': params_dict.get('MAX_VARS_PER_CONSTRAINT', 10),
+        'ctc_dist_boolean': params_dict.get('CTC_DIST_BOOLEAN', 0.7),
+        'ctc_dist_integer': params_dict.get('CTC_DIST_INTEGER', 0.2),
+        'ctc_dist_real': params_dict.get('CTC_DIST_REAL', 0.1),
+        'ctc_dist_string': params_dict.get('CTC_DIST_STRING', 0.0),
+        'prob_not': params_dict.get('PROB_NOT', 0.3),
+        'prob_and': params_dict.get('PROB_AND', 0.7),
+        'prob_or': params_dict.get('PROB_OR_CT', 0.1),
+        'prob_implies': params_dict.get('PROB_IMPLICATION', 0.1),
+        'prob_equiv': params_dict.get('PROB_EQUIVALENCE', 0.1),
+        'prob_sum': params_dict.get('PROB_SUM_FUNCTION', 0.0),
+        'prob_avg': params_dict.get('PROB_AVG_FUNCTION', 0.0),
+        'prob_plus': params_dict.get('PROB_SUM', 0.7),
+        'prob_minus': params_dict.get('PROB_SUBSTRACT', 0.2),
+        'prob_times': params_dict.get('PROB_MULTIPLY', 0.1),
+        'prob_div': params_dict.get('PROB_DIVIDE', 0.0),
+        'prob_eq': params_dict.get('PROB_EQUALS', 0.1),
+        'prob_lt': params_dict.get('PROB_LESS', 0.2),
+        'prob_gt': params_dict.get('PROB_GREATER', 0.7),
+        'prob_leq': params_dict.get('PROB_LESS_EQUALS', 0.0),
+        'prob_geq': params_dict.get('PROB_GREATER_EQUALS', 0.0),
+        'prob_len': params_dict.get('PROB_LEN_FUNCTION', 0.7),
         'ctc_dist_total': "1.0000",
         'boolop_sum': "1.0000",
         'arithmetic_sum': "1.0000",
-        'cmp_sum': "1.0000"
+        'cmp_sum': "1.0000",
+        # Estos tres campos son los que faltaban para que el checkbox oculto refleje el estado real:
+        'aggregate_functions': params_dict.get('AGGREGATE_FUNCTIONS', False),
+        'type_level': params_dict.get('TYPE_LEVEL', False),
+        'string_constraints': params_dict.get('STRING_CONSTRAINTS', False)
     }
-    return render_template('generator/step3.html', current_step=current_step, errors={}, values=default_values)
+
+    return render_template('generator/step3.html',
+                           current_step=current_step,
+                           errors={},
+                           values=default_values)
 
 
 
