@@ -19,13 +19,21 @@
                         <tr>
                             <td>
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="boolean_level" name="boolean_level" checked readonly>
+                                    <input class="form-check-input"
+                                        type="checkbox"
+                                        id="boolean_level"
+                                        name="boolean_level"
+                                        {% if values.get('boolean_level', False) %}checked{% endif %}>
                                     <label class="form-check-label" for="boolean_level">Boolean level</label>
                                 </div>
                             </td>
                             <td>
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="group_cardinality" name="group_cardinality" checked readonly>
+                                    <input class="form-check-input"
+                                        type="checkbox"
+                                        id="group_cardinality"
+                                        name="group_cardinality"
+                                        {% if values.get('group_cardinality', False) %}checked{% endif %}>
                                     <label class="form-check-label" for="group_cardinality">Group cardinality</label>
                                 </div>
                             </td>
@@ -33,32 +41,52 @@
                         <tr>
                             <td>
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="arithmetic_level" name="arithmetic_level" disabled>
-                                    <label class="form-check-label text-muted" for="arithmetic_level">Arithmetic level</label>
+                                    <input class="form-check-input"
+                                        type="checkbox"
+                                        id="arithmetic_level"
+                                        name="arithmetic_level"
+                                        {% if values.get('arithmetic_level', False) %}checked{% endif %}>
+                                    <label class="form-check-label" for="arithmetic_level">Arithmetic level</label>
                                 </div>
                             </td>
                             <td>
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="feature_cardinality" name="feature_cardinality" disabled>
-                                    <label class="form-check-label text-muted" for="feature_cardinality">Feature cardinality</label>
+                                    <input class="form-check-input"
+                                        type="checkbox"
+                                        id="feature_cardinality"
+                                        name="feature_cardinality"
+                                        {% if values.get('feature_cardinality', False) %}checked{% endif %}>
+                                    <label class="form-check-label" for="feature_cardinality">Feature cardinality</label>
                                 </div>
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="aggregate_functions" name="aggregate_functions" disabled>
-                                    <label class="form-check-label text-muted" for="aggregate_functions">Aggregate functions</label>
+                                    <input class="form-check-input"
+                                        type="checkbox"
+                                        id="aggregate_functions"
+                                        name="aggregate_functions"
+                                        {% if values.get('aggregate_functions', False) %}checked{% endif %}>
+                                    <label class="form-check-label" for="aggregate_functions">Aggregate functions</label>
                                 </div>
                             </td>
                         </tr>
                         <tr>
                             <td>
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="type_level" name="type_level" disabled>
-                                    <label class="form-check-label text-muted" for="type_level">Type level</label>
+                                    <input class="form-check-input"
+                                        type="checkbox"
+                                        id="type_level"
+                                        name="type_level"
+                                        {% if values.get('type_level', False) %}checked{% endif %}>
+                                    <label class="form-check-label" for="type_level">Type level</label>
                                 </div>
                             </td>
                             <td>
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="string_constraints" name="string_constraints" disabled>
-                                    <label class="form-check-label text-muted" for="string_constraints">String constraints</label>
+                                    <input class="form-check-input"
+                                        type="checkbox"
+                                        id="string_constraints"
+                                        name="string_constraints"
+                                        {% if values.get('string_constraints', False) %}checked{% endif %}>
+                                    <label class="form-check-label" for="string_constraints">String constraints</label>
                                 </div>
                             </td>
                         </tr>
@@ -231,26 +259,27 @@
         <!-- Group cardinality -->
         <h6 class="mt-4 mb-2">Group cardinality</h6>
         <div class="card p-3 mb-3">
-            <div class="row mb-2">
+            <div class="column mb-2">
                 <div class="col-md-3">
                     <input type="number" class="form-control" step="0.01" min="0" max="1" id="dist_group_cardinality" name="dist_group_cardinality" value="{{ values.get('dist_group_cardinality', 0.0) }}">
                     <div class="form-text">only configurable if percentage is greater than 0</div>
                 </div>
+                <br>
                 <div class="col-md-9">
                     <div class="row g-2 align-items-center mb-2">
                         <div class="col-auto">
-                            <label class="form-label mb-0">Min:</label>
                         </div>
                         <div class="col-auto">
+                            <label class="form-label mb-0">Min:</label>
                             <input type="number" class="form-control" id="group_cardinality_min" name="group_cardinality_min" min="1" value="{{ values.get('group_cardinality_min', 10) }}">
                             {% if errors.get('group_cardinality_min') %}
                                 <div class="text-danger">{{ errors['group_cardinality_min'] }}</div>
                             {% endif %}
                         </div>
                         <div class="col-auto">
-                            <label class="form-label mb-0">Max:</label>
                         </div>
                         <div class="col-auto">
+                            <label class="form-label mb-0">Max:</label>
                             <input type="number" class="form-control" id="group_cardinality_max" name="group_cardinality_max" min="1" value="{{ values.get('group_cardinality_max', 50) }}">
                             {% if errors.get('group_cardinality_max') %}
                                 <div class="text-danger">{{ errors['group_cardinality_max'] }}</div>

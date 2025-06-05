@@ -231,7 +231,6 @@ def validate_step2_form(form):
 
 
 
-
 # Paso 2: genera y descarga el zip en POST
 @generator_bp.route('/generator/step2', methods=['GET', 'POST'])
 def step2():
@@ -294,6 +293,13 @@ def step2():
     default_values = {
         'num_features_min': 10,
         'num_features_max': 50,
+        'boolean_level': True,
+        'group_cardinality': True,
+        'arithmetic_level': True,
+        'feature_cardinality': False,
+        'aggregate_functions': True,
+        'type_level': False,
+        'string_constraints': False,
         'dist_boolean': 0.7,
         'dist_integer': 0.1,
         'dist_real': 0.1,
@@ -316,21 +322,17 @@ def step2():
 
 
 
-def validate_step3_form(form, max_features):
-    """
-    Valida los campos del formulario de step3 y devuelve (errores, valores).
-    Validaciones:
-    - MIN_CONSTRAINTS >= 1
-    - MAX_CONSTRAINTS <= 10000 y >= MIN_CONSTRAINTS
-    - MAX_VARS_PER_CONSTRAINT <= MAX_FEATURES y >= MIN_VARS_PER_CONSTRAINT
-    - EXTRA_CONSTRAINT_REPRESENTATIVENESS < MAX_VARS_PER_CONSTRAINT
-    """
+
+def validate_step3_form(form, max_features: int = 10000):
     errors = {}
     values = {}
 
-    # Número de constraints
+    # ------------------------------------------------------------
+    # 1) NÚMERO DE CONSTRAINTS
+    # ------------------------------------------------------------
     min_constraints_val = form.get('num_constraints_min', '').strip()
     max_constraints_val = form.get('num_constraints_max', '').strip()
+
     try:
         min_constraints = int(min_constraints_val)
         if min_constraints < 1:
@@ -341,47 +343,221 @@ def validate_step3_form(form, max_features):
     try:
         max_constraints = int(max_constraints_val)
         if max_constraints > 10000:
-            errors['num_constraints_max'] = 'Max. constraints cannot exceed 10,000.'
+            errors['num_constraints_max'] = 'Max. constraints must be at most 10,000.'
     except Exception:
         errors['num_constraints_max'] = 'Max. constraints must be an integer.'
 
-    if ('num_constraints_min' not in errors and 'num_constraints_max' not in errors
-        and min_constraints > max_constraints):
-        errors['num_constraints_max'] = 'Max. constraints must be greater than or equal to min.'
+    if (
+        'num_constraints_min' not in errors
+        and 'num_constraints_max' not in errors
+        and int(min_constraints_val) > int(max_constraints_val)
+    ):
+        errors['num_constraints_max'] = 'Max. constraints must be greater than or equal to Min. constraints.'
 
-    # Variables por constraint
-    min_vars_val = form.get('vars_per_ctc_min', '').strip()
-    max_vars_val = form.get('vars_per_ctc_max', '').strip()
+    # ------------------------------------------------------------
+    # 2) EXTRA CONSTRAINT REPRESENTATIVENESS
+    # ------------------------------------------------------------
+    extra_constraint_repr_val = form.get('extra_constraint_repr', '').strip()
+    vars_per_ctc_max_val = form.get('vars_per_ctc_max', '').strip()
+
+    # Convertir extra_constraint_repr y vars_per_ctc_max solo UNA vez
     try:
-        min_vars = int(min_vars_val)
-        if min_vars < 1:
-            errors['vars_per_ctc_min'] = 'Min. variables per constraint must be at least 1.'
+        extra_constraint_repr = int(extra_constraint_repr_val)
     except Exception:
-        errors['vars_per_ctc_min'] = 'Min. variables per constraint must be an integer.'
+        extra_constraint_repr = None
+        errors['extra_constraint_repr'] = 'Must be an integer.'
+    try:
+        vars_per_ctc_max = int(vars_per_ctc_max_val)
+    except Exception:
+        vars_per_ctc_max = None
+        if 'extra_constraint_repr' not in errors:
+            # Pendiente mostrar error en el campo correcto
+            errors['vars_per_ctc_max'] = 'Max. vars per constraint must be an integer.'
+
+    if extra_constraint_repr is not None and vars_per_ctc_max is not None:
+        if extra_constraint_repr < 1:
+            errors['extra_constraint_repr'] = 'Must be an integer ≥ 1.'
+        elif extra_constraint_repr >= vars_per_ctc_max:
+            errors['extra_constraint_repr'] = 'Must be less than max variables per constraint.'
+
+    # ------------------------------------------------------------
+    # 3) VARIABLES POR CONSTRAINT
+    # ------------------------------------------------------------
+    # 3.1) vars_per_ctc_min
+    try:
+        vars_per_ctc_min = int(form.get('vars_per_ctc_min', '').strip())
+        if vars_per_ctc_min < 1:
+            errors['vars_per_ctc_min'] = 'Min. vars per constraint must be at least 1.'
+    except Exception:
+        vars_per_ctc_min = None
+        errors['vars_per_ctc_min'] = 'Min. vars per constraint must be an integer.'
+
+    # 3.2) vars_per_ctc_max (ya lo convertimos arriba)
+    vars_per_ctc_max_is_int = isinstance(vars_per_ctc_max, int)
+    if vars_per_ctc_max_is_int:
+        if vars_per_ctc_max > max_features:
+            errors['vars_per_ctc_max'] = 'Max. vars per constraint cannot exceed max number of features.'
+    else:
+        # Si no se pudo convertir a entero, ya está agregado el error en la excepción anterior
+        pass
+
+    # 3.3) comparación min ≤ max
+    if (
+        ('vars_per_ctc_min' not in errors)
+        and ('vars_per_ctc_max' not in errors)
+        and vars_per_ctc_min is not None
+        and vars_per_ctc_max_is_int
+    ):
+        if vars_per_ctc_min > vars_per_ctc_max:
+            errors['vars_per_ctc_max'] = 'Max. vars per constraint must be greater than or equal to Min.'
+
+    # ------------------------------------------------------------
+    # 4) CONSTRAINT TYPE DISTRIBUTION (suman 1.0)
+    # ------------------------------------------------------------
+    ctc_dist_fields = ['ctc_dist_boolean', 'ctc_dist_integer', 'ctc_dist_real', 'ctc_dist_string']
+    ctc_dist_values = []
+    for f in ctc_dist_fields:
+        val = form.get(f, '').strip()
+        try:
+            v = float(val)
+            if not (0.0 <= v <= 1.0):
+                errors[f] = 'Value must be between 0 and 1.'
+            ctc_dist_values.append(v)
+        except Exception:
+            errors[f] = 'Value must be a decimal between 0 and 1.'
+            ctc_dist_values.append(0.0)
+
+    ctc_dist_total = sum(ctc_dist_values)
+    if abs(ctc_dist_total - 1.0) > 0.001:
+        for f in ctc_dist_fields:
+            if f not in errors:
+                errors[f] = 'The sum of all constraint type distributions must be exactly 1.0.'
+        errors['ctc_dist_total'] = f"Current sum: {ctc_dist_total:.4f}. The total must be 1.0."
+    values['ctc_dist_total'] = f"{ctc_dist_total:.4f}"
+
+    # ------------------------------------------------------------
+    # 5) BOOLEAN LEVEL CONSTRAINTS
+    #    – se valida prob_not ∈ [0,1]
+    #    – luego los 4 campos (&, |, ⇒, ⇔) suman 1.0
+    # ------------------------------------------------------------
+    try:
+        prob_not = float(form.get('prob_not', '0'))
+        if not (0.0 <= prob_not <= 1.0):
+            errors['prob_not'] = 'Value must be between 0 and 1.'
+    except Exception:
+        errors['prob_not'] = 'Value must be a decimal between 0 and 1.'
+        prob_not = 0.0
 
     try:
-        max_vars = int(max_vars_val)
-        if max_vars > max_features:
-            errors['vars_per_ctc_max'] = f'Max. variables per constraint cannot exceed max features ({max_features}).'
+        prob_and = float(form.get('prob_and', '0'))
+        prob_or = float(form.get('prob_or', '0'))
+        prob_implies = float(form.get('prob_implies', '0'))
+        prob_equiv = float(form.get('prob_equiv', '0'))
     except Exception:
-        errors['vars_per_ctc_max'] = 'Max. variables per constraint must be an integer.'
+        # Si alguno no es float, marcamos el error
+        for f in ['prob_and', 'prob_or', 'prob_implies', 'prob_equiv']:
+            if f not in errors:
+                errors[f] = 'Value must be a decimal between 0 and 1.'
+        prob_and = prob_or = prob_implies = prob_equiv = 0.0
 
-    if ('vars_per_ctc_min' not in errors and 'vars_per_ctc_max' not in errors
-        and min_vars > max_vars):
-        errors['vars_per_ctc_max'] = 'Max. variables per constraint must be greater than or equal to min.'
+    prob_sum_boolean = prob_and + prob_or + prob_implies + prob_equiv
+    if abs(prob_sum_boolean - 1.0) > 0.001:
+        for f in ['prob_and', 'prob_or', 'prob_implies', 'prob_equiv']:
+            if f not in errors:
+                errors[f] = "The sum of AND, OR, ⇒ and ⇔ must be exactly 1.0."
+        errors['boolop_sum'] = f"Current sum: {prob_sum_boolean:.4f}. The total must be 1.0."
+    values['boolop_sum'] = f"{prob_sum_boolean:.4f}"
 
-    # Extra Constraint Representativeness
-    extra_repr_val = form.get('extra_constraint_repr', '').strip()
+    # ------------------------------------------------------------
+    # 6) ARITHMETIC LEVEL + AGGREGATE FUNCTIONS
+    #    – si aggregate_functions está marcado, sumar prob_sum + prob_avg
+    #    – de lo contrario, sólo (+,−,*,/) suman 1.0
+    # ------------------------------------------------------------
+    aggregate_functions_checked = (form.get('aggregate_functions') in ['on', 'true', '1', True])
+
     try:
-        extra_repr = int(extra_repr_val)
-        if 'vars_per_ctc_max' not in errors and extra_repr >= max_vars:
-            errors['extra_constraint_repr'] = 'Extra constraint representativeness must be less than max. variables per constraint.'
-        if extra_repr < 1:
-            errors['extra_constraint_repr'] = 'Extra constraint representativeness must be at least 1.'
+        prob_plus = float(form.get('prob_plus', '0'))
+        prob_minus = float(form.get('prob_minus', '0'))
+        prob_times = float(form.get('prob_times', '0'))
+        prob_div = float(form.get('prob_div', '0'))
     except Exception:
-        errors['extra_constraint_repr'] = 'Extra constraint representativeness must be an integer.'
+        for f in ['prob_plus', 'prob_minus', 'prob_times', 'prob_div']:
+            if f not in errors:
+                errors[f] = 'Value must be a decimal between 0 and 1.'
+        prob_plus = prob_minus = prob_times = prob_div = 0.0
 
-    # Guarda valores introducidos
+    if aggregate_functions_checked:
+        try:
+            prob_sum = float(form.get('prob_sum', '0'))
+            prob_avg = float(form.get('prob_avg', '0'))
+        except Exception:
+            for f in ['prob_sum', 'prob_avg']:
+                if f not in errors:
+                    errors[f] = 'Value must be a decimal between 0 and 1.'
+            prob_sum = prob_avg = 0.0
+    else:
+        prob_sum = prob_avg = 0.0
+
+    arithmetic_sum = prob_plus + prob_minus + prob_times + prob_div
+    arithmetic_fields = ['prob_plus', 'prob_minus', 'prob_times', 'prob_div']
+    agg_fields = ['prob_sum', 'prob_avg']
+
+    if aggregate_functions_checked:
+        arithmetic_sum += prob_sum + prob_avg
+        fields_to_check = arithmetic_fields + agg_fields
+    else:
+        fields_to_check = arithmetic_fields
+
+    if abs(arithmetic_sum - 1.0) > 0.001:
+        for f in fields_to_check:
+            if f not in errors:
+                errors[f] = "The sum of Arithmetic level constraints{} must be exactly 1.0.".format(
+                    " (including aggregate functions)" if aggregate_functions_checked else ""
+                )
+        errors['arithmetic_sum'] = f"Current sum: {arithmetic_sum:.4f}. The total must be 1.0."
+    values['arithmetic_sum'] = f"{arithmetic_sum:.4f}"
+
+    # ------------------------------------------------------------
+    # 7) COMPARISON OPERATORS (suman 1.0)
+    # ------------------------------------------------------------
+    try:
+        prob_eq = float(form.get('prob_eq', '0'))
+        prob_lt = float(form.get('prob_lt', '0'))
+        prob_gt = float(form.get('prob_gt', '0'))
+        prob_leq = float(form.get('prob_leq', '0'))
+        prob_geq = float(form.get('prob_geq', '0'))
+    except Exception:
+        for f in ['prob_eq', 'prob_lt', 'prob_gt', 'prob_leq', 'prob_geq']:
+            if f not in errors:
+                errors[f] = 'Value must be a decimal between 0 and 1.'
+        prob_eq = prob_lt = prob_gt = prob_leq = prob_geq = 0.0
+
+    cmp_sum = prob_eq + prob_lt + prob_gt + prob_leq + prob_geq
+    if abs(cmp_sum - 1.0) > 0.001:
+        for f in ['prob_eq', 'prob_lt', 'prob_gt', 'prob_leq', 'prob_geq']:
+            if f not in errors:
+                errors[f] = "The sum of comparison operators must be exactly 1.0."
+        errors['cmp_sum'] = f"Current sum: {cmp_sum:.4f}. The total must be 1.0."
+    values['cmp_sum'] = f"{cmp_sum:.4f}"
+
+    # ------------------------------------------------------------
+    # 8) TYPE LEVEL / STRING CONSTRAINTS
+    #    – si string_constraints y type_level están marcados, prob_len ∈ [0,1]
+    # ------------------------------------------------------------
+    type_level_checked = (form.get('type_level') in ['on', 'true', '1', True])
+    string_constraints_checked = (form.get('string_constraints') in ['on', 'true', '1', True])
+
+    if string_constraints_checked and type_level_checked:
+        try:
+            prob_len = float(form.get('prob_len', '0'))
+            if not (0.0 <= prob_len <= 1.0):
+                errors['prob_len'] = 'Value must be between 0 and 1.'
+        except Exception:
+            errors['prob_len'] = 'Value must be a decimal between 0 and 1.'
+
+    # ------------------------------------------------------------
+    # 9) GUARDAR TODOS LOS VALORES PARA REPINTAR EL FORMULARIO
+    # ------------------------------------------------------------
     for k in form:
         values[k] = form[k]
 
@@ -390,35 +566,39 @@ def validate_step3_form(form, max_features):
 
 
 
+
 @generator_bp.route('/generator/step3', methods=['GET', 'POST'])
 def step3():
-    # Para las validaciones dependientes de max_features:
-    params_dict = session.get('params')
-    if params_dict:
-        max_features = params_dict.get('MAX_FEATURES', 10000)
-    else:
-        max_features = 10000
-
     if request.method == 'POST':
-        errors, values = validate_step3_form(request.form, max_features)
-        if errors:
-            print(f"[VALIDACIÓN STEP3] Errores detectados: {errors}")
-            return render_template('generator/step3.html', current_step=3, errors=errors, values=values)
-
+        params_dict = session.get('params')
         if not params_dict:
             return "Error: Params missing in session", 400
 
-        # Recoge todos los parámetros de constraints
-        params_dict['MIN_CONSTRAINTS'] = int(request.form.get('num_constraints_min', 0))
-        params_dict['MAX_CONSTRAINTS'] = int(request.form.get('num_constraints_max', 0))
+        # ------------------------------------------------------------
+        #  Aquí pasamos SOLO el entero max_features = params_dict['MAX_FEATURES']
+        # ------------------------------------------------------------
+        max_feats = params_dict.get('MAX_FEATURES', 10000)
+        errors, values = validate_step3_form(request.form, max_feats)
+
+        if errors:
+            print(f"[VALIDACIÓN STEP3] Errores detectados: {errors}")
+            # Volvemos a pintar la misma plantilla con los errores y los valores que el usuario metió
+            return render_template('generator/step3.html', current_step=3, errors=errors, values=values)
+
+        # ------------------------------------------------------------
+        #  Si no hay errores, guardamos todo en params_dict y avanzamos
+        # ------------------------------------------------------------
+        params_dict['MIN_CONSTRAINTS'] = int(request.form.get('num_constraints_min', 1))
+        params_dict['MAX_CONSTRAINTS'] = int(request.form.get('num_constraints_max', 1))
+
         params_dict['EXTRA_CONSTRAINT_REPRESENTATIVENESS'] = int(request.form.get('extra_constraint_repr', 1))
 
         params_dict['MIN_VARS_PER_CONSTRAINT'] = int(request.form.get('vars_per_ctc_min', 1))
-        params_dict['MAX_VARS_PER_CONSTRAINT'] = int(request.form.get('vars_per_ctc_max', 10))
+        params_dict['MAX_VARS_PER_CONSTRAINT'] = int(request.form.get('vars_per_ctc_max', 1))
 
         params_dict['CTC_DIST_BOOLEAN'] = float(request.form.get('ctc_dist_boolean', 0.7))
         params_dict['CTC_DIST_INTEGER'] = float(request.form.get('ctc_dist_integer', 0.2))
-        params_dict['CTC_DIST_REAL'] = float(request.form.get('ctc_dist_real', 0.7))
+        params_dict['CTC_DIST_REAL'] = float(request.form.get('ctc_dist_real', 0.1))
         params_dict['CTC_DIST_STRING'] = float(request.form.get('ctc_dist_string', 0.0))
 
         # Boolean level
@@ -428,43 +608,71 @@ def step3():
         params_dict['PROB_IMPLICATION'] = float(request.form.get('prob_implies', 0.1))
         params_dict['PROB_EQUIVALENCE'] = float(request.form.get('prob_equiv', 0.1))
 
+        # Aggregate functions
+        params_dict['PROB_SUM_FUNCTION'] = float(request.form.get('prob_sum', 0.0))
+        params_dict['PROB_AVG_FUNCTION'] = float(request.form.get('prob_avg', 0.0))
+
         # Arithmetic level
         params_dict['PROB_SUM'] = float(request.form.get('prob_plus', 0.7))
         params_dict['PROB_SUBSTRACT'] = float(request.form.get('prob_minus', 0.2))
-        params_dict['PROB_MULTIPLY'] = float(request.form.get('prob_times', 0.7))
+        params_dict['PROB_MULTIPLY'] = float(request.form.get('prob_times', 0.1))
         params_dict['PROB_DIVIDE'] = float(request.form.get('prob_div', 0.0))
+
+        # Comparisons
         params_dict['PROB_EQUALS'] = float(request.form.get('prob_eq', 0.0))
         params_dict['PROB_LESS'] = float(request.form.get('prob_lt', 0.2))
         params_dict['PROB_GREATER'] = float(request.form.get('prob_gt', 0.7))
         params_dict['PROB_LESS_EQUALS'] = float(request.form.get('prob_leq', 0.0))
         params_dict['PROB_GREATER_EQUALS'] = float(request.form.get('prob_geq', 0.0))
 
-        # Aggregate functions
-        params_dict['PROB_SUM_FUNCTION'] = float(request.form.get('prob_sum', 0.0))
-        params_dict['PROB_AVG_FUNCTION'] = float(request.form.get('prob_avg', 0.0))
-
         # Type level
         params_dict['PROB_LEN_FUNCTION'] = float(request.form.get('prob_len', 0.7))
 
-        # Actualiza el objeto Params
+        # Reconstrucción del objeto Params y guardado en sesión
         params = Params(**params_dict)
         session['params'] = params.__dict__
 
         print(params)
-
         return redirect(url_for('generator.step4'))
 
+    # ------------------------------------------------------------
+    # GET: valores por defecto (se muestran si el usuario entra por primera vez)
+    # ------------------------------------------------------------
     current_step = 3
-    # Puedes usar los valores por defecto o los que quieras
     default_values = {
         'num_constraints_min': 1,
         'num_constraints_max': 10,
         'extra_constraint_repr': 1,
         'vars_per_ctc_min': 1,
         'vars_per_ctc_max': 10,
-        # ... y el resto por defecto si quieres pasárselos al render
+        'ctc_dist_boolean': 0.7,
+        'ctc_dist_integer': 0.2,
+        'ctc_dist_real': 0.1,
+        'ctc_dist_string': 0.0,
+        'prob_not': 0.3,
+        'prob_and': 0.7,
+        'prob_or': 0.1,
+        'prob_implies': 0.1,
+        'prob_equiv': 0.1,
+        'prob_sum': 0.0,
+        'prob_avg': 0.0,
+        'prob_plus': 0.7,
+        'prob_minus': 0.2,
+        'prob_times': 0.1,
+        'prob_div': 0.0,
+        'prob_eq': 0.1,
+        'prob_lt': 0.2,
+        'prob_gt': 0.7,
+        'prob_leq': 0.0,
+        'prob_geq': 0.0,
+        'prob_len': 0.7,
+        'ctc_dist_total': "1.0000",
+        'boolop_sum': "1.0000",
+        'arithmetic_sum': "1.0000",
+        'cmp_sum': "1.0000"
     }
     return render_template('generator/step3.html', current_step=current_step, errors={}, values=default_values)
+
 
 
 
@@ -574,10 +782,15 @@ def step4():
     return render_template('generator/step4.html', current_step=current_step)
 
 
+
+
 @generator_bp.route('/generator/step5', methods=['GET'])
 def step5():
     current_step = 5
     return render_template('generator/step5.html', current_step=current_step)
+
+
+
 
 # Endpoint dedicado SOLO para descarga
 @generator_bp.route('/generator/download', methods=['GET'])
