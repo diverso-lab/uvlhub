@@ -32,9 +32,16 @@
                 {% else %}
                     <button type="button" class="btn btn-outline-secondary" disabled>Previous</button>
                 {% endif %}
-                <button type="submit" class="btn btn-primary">Next &gt;</button>
+                
+                {% if current_step < 5 %}
+                    <button type="submit" class="btn btn-primary">Next &gt;</button>
+                {% endif %}
             </div>
         </form>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+    <script src="{{ url_for('generator.assets', subfolder='js', filename='scripts.js') }}"></script>
 {% endblock %}
