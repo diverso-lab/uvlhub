@@ -27,4 +27,9 @@ Please, do also:
 ```
 pip install -e ./fm_generator
 ```
+To download changes from fm_generator plugin, please do from the root of the project:
+```
+cd fm_generator
+git pull origin main
+```
 Then, keep on the next step naturally
