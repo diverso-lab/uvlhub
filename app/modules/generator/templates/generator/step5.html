@@ -1,0 +1,37 @@
+{% extends "generator/index.html" %}
+{% block title %}Finishing{% endblock %}
+
+{% block wizard_content %}
+<div class="row justify-content-center">
+  <div class="col-md-8 text-center">
+    <h3 class="mb-4">Finishing</h3>
+    <p class="mb-4">
+      Your feature models are being generated. If download does not start refresh this page.
+    </p>
+    <!-- <button type="submit" id="generate-zip-btn" class="btn btn-primary" >
+      <i class="fa fa-download"></i> Generate &amp; Download ZIP
+    </button> -->
+    <div id="generate-status" class="mt-3 fw-bold"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+  <!-- 1) JSZip & FileSaver desde CDN -->
+  <!--
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.0/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  -->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.0/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+  <!-- 2) Nuestro scripts.js (se encargará de todo) -->
+  <script type="module"
+          src="{{ url_for('generator.assets', subfolder='js', filename='scripts.js') }}">
+  </script>
+
+  <!-- <script src="{{ url_for('static', filename='pyodide/pyodide.js') }}"></script> -->
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
+  
+{% endblock %}

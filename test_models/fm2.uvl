@@ -1,0 +1,30 @@
+features
+	F0 
+		alternative
+			F3 
+			F2 {Capacity 30}
+				[0..2]
+					F5 
+						optional
+							F7 
+								[0..3]
+									F14 {Priority 'medium'}
+									F13 
+									F12 {Enabled true}
+					F4 {Enabled true}
+						[0..3]
+							F10 
+							F9 
+							F8 
+								optional
+									F11 
+			F1 
+				optional
+					F6 
+constraints
+	F2 <=> F12
+	! F10 | F6
+	! F12 <=> ! F14
+	F4 <=> F12
+	F12 <=> ! F6
+	F7 <=> ! F12

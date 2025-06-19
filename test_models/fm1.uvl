@@ -1,0 +1,31 @@
+features
+	F0 
+		[3]
+			F3 
+			F2 
+				[2]
+					F5 
+						optional
+							F8 
+					F4 {Enabled true}
+						optional
+							F9 
+			F1 
+				optional
+					F6 
+						mandatory
+							F7 {Enabled true}
+								[0..3]
+									F12 {Enabled true}
+									F11 
+									F10 
+constraints
+	F2 <=> F3
+	! F5 <=> F9
+	F6 => ! F5
+	F12 <=> F4
+	F10 & F4
+	! F8 | F3
+	F11 => F7
+	! F10 <=> F3
+	! F8 <=> F2

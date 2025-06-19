@@ -1,0 +1,155 @@
+{% extends "base_template.html" %}
+
+{% block title %}Explore{% endblock %}
+
+{% block content %}
+
+    <h1 class="h2 mb-3"><b>Explore</b></h1>
+
+    <div class="row">
+
+        <h3 class="h3 mb-3">
+                <span id="results_number"></span>
+            </h3>
+
+        <div class="col-lg-7 scrollable-column">
+
+
+            <div class="row">
+
+                <div id="results"></div>
+
+                <div class="col text-center" id="results_not_found">
+                    <img src="{{ url_for('static', filename='img/items/not_found.svg') }}"
+                         style="width: 50%; max-width: 100px; height: auto; margin-top: 30px"/>
+                    <p style="margin-top: 20px">
+                        We have not found any datasets that meet your search criteria. <br>How about trying some others?
+                    </p>
+                </div>
+
+                <div id="results_not_found" style="text-align: center;">
+
+                </div>
+
+
+            </div>
+        </div>
+
+        <div class="col-lg-5 fixed-column" id="filters">
+
+            {{ form.hidden_tag() }}
+
+            <div class="row">
+
+                <div class="col-12">
+
+                    <div class="row">
+
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label class="form-label" for="query">
+                                    Search for datasets by title, description, authors, tags, UVL files...
+                                </label>
+                                <input class="form-control" id="query" name="query" required="" type="text"
+                                       value="" autofocus>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label class="form-label" for="publication_type">Filter by publication
+                                    type</label>
+                                <select class="form-control" id="publication_type" name="publication_type"
+                                        required="">
+                                    <option value="any">Any</option>
+                                    <option value="none">None</option>
+                                    <option value="annotationcollection">Annotation Collection</option>
+                                    <option value="book">Book</option>
+                                    <option value="section">Book Section</option>
+                                    <option value="conferencepaper">Conference Paper</option>
+                                    <option value="datamanagementplan">Data Management Plan</option>
+                                    <option value="article">Journal Article</option>
+                                    <option value="patent">Patent</option>
+                                    <option value="preprint">Preprint</option>
+                                    <option value="deliverable">Project Deliverable</option>
+                                    <option value="milestone">Project Milestone</option>
+                                    <option value="proposal">Proposal</option>
+                                    <option value="report">Report</option>
+                                    <option value="softwaredocumentation">Software Documentation</option>
+                                    <option value="taxonomictreatment">Taxonomic Treatment</option>
+                                    <option value="technicalnote">Technical Note</option>
+                                    <option value="thesis">Thesis</option>
+                                    <option value="workingpaper">Working Paper</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="row">
+
+                        <div class="col-6">
+
+                            <div>
+                                Sort results by creation date
+                                <label class="form-check">
+                                    <input class="form-check-input" type="radio" value="newest" name="sorting"
+                                           checked="">
+                                    <span class="form-check-label">
+                                      Newest first
+                                    </span>
+                                </label>
+                                <label class="form-check">
+                                    <input class="form-check-input" type="radio" value="oldest" name="sorting">
+                                    <span class="form-check-label">
+                                      Oldest first
+                                    </span>
+                                </label>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="row">
+
+                        <div class="col-12">
+
+                            <div class="mt-3">
+
+                                <div id="authors">
+
+                                </div>
+
+                                <button id="clear-filters" class="btn btn-outline-primary">
+                                    <i data-feather="x-circle" style="vertical-align: middle; margin-top: -2px"></i>
+                                    Clear filters
+                                </button>
+
+
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="row">
+
+            </div>
+
+        </div>
+
+
+    </div>
+
+
+{% endblock %}
+
+{% block scripts %}
+    <script src="{{ url_for('explore.assets', subfolder='js', filename='scripts.js') }}"></script>
+{% endblock %}

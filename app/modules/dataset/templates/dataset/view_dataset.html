@@ -1,0 +1,468 @@
+{% extends "base_template.html" %}
+
+{% block title %}View dataset{% endblock %}
+
+{% block head_extra %}
+<style>
+    .option-button {
+        display: block;
+        width: 100%;
+        margin-bottom: 5px;
+    }
+
+    .option-button:last-child {
+        margin-bottom: 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="row mb-3">
+
+    <div class="col-6">
+        <a href="/explore" class="btn btn-primary btn-sm" id="search" style="border-radius: 5px;">
+            <i data-feather="search" class="center-button-icon"></i>
+            Explore more datasets
+        </a>
+    </div>
+
+
+</div>
+
+<div class="row">
+
+    <div class="col-xl-8 col-lg-12 col-md-12 col-sm-12 order-md-1 order-sm-1">
+
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between">
+
+                    <h1><b>{{ dataset.ds_meta_data.title }}</b></h1>
+                    <div>
+                        <span class="badge bg-secondary">{{ dataset.get_cleaned_publication_type() }}</span>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center justify-content-between">
+
+                </div>
+
+                <p class="text-secondary">{{ dataset.created_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+
+                <div class="row mb-4">
+
+                    <div class="col-md-4 col-12">
+                        <span class=" text-secondary">
+                            Description
+                        </span>
+                    </div>
+                    <div class="col-md-8 col-12">
+                        <p class="card-text">{{ dataset.ds_meta_data.description }}</p>
+                    </div>
+
+                </div>
+
+                {% if not dataset.is_anonymous() %}
+
+                <div class="row mb-2">
+
+                    <div class="col-md-4 col-12">
+                        <span class=" text-secondary">
+                            Uploaded by
+                        </span>
+                    </div>
+                    <div class="col-md-8 col-12">
+                        <a href="#">{{ dataset.user.profile.surname }}, {{ dataset.user.profile.name }}</a>
+                    </div>
+
+                </div>
+
+                {% endif %}
+
+                <div class="row mb-2">
+
+                    <div class="col-md-4 col-12">
+                        <span class=" text-secondary">
+                            Authors
+                        </span>
+                    </div>
+                    <div class="col-md-8 col-12">
+                        {% for author in dataset.ds_meta_data.authors %}
+                        <p class="p-0 m-0">
+                            {{ author.name }}
+                            {% if author.affiliation %}
+                            ({{ author.affiliation }})
+                            {% endif %}
+                            {% if author.orcid %}
+                            ({{ author.orcid }})
+                            {% endif %}
+                        </p>
+                        {% endfor %}
+                    </div>
+
+
+                </div>
+
+                {% if dataset.ds_meta_data.publication_doi %}
+                <div class="row mb-2">
+                    <div class="col-md-4 col-12">
+                        <span class="text-secondary">
+                            Publication DOI
+                        </span>
+                    </div>
+                    <div class="col-md-8 col-12">
+                        <a href="{{ dataset.ds_meta_data.publication_doi }}">
+                            {{ dataset.ds_meta_data.publication_doi }}
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if dataset.ds_meta_data.dataset_doi %}
+                <div class="row mb-2">
+
+                        <div class="col-md-4 col-12">
+                            <span class=" text-secondary">
+                                Zenodo record
+                            </span>
+                        </div>
+
+                        {% if FLASK_ENV == 'production' %}
+                            <div class="col-md-8 col-12">
+                                <a href="https://zenodo.org/records/{{ dataset.ds_meta_data.deposition_id }}" target="_blank">
+                                    https://zenodo.org/records/{{ dataset.ds_meta_data.deposition_id }}
+                                </a>
+                            </div>
+                        {% elif FLASK_ENV == 'development' %}
+                            <div class="col-md-8 col-12">
+                                <a href="https://sandbox.zenodo.org/records/{{ dataset.ds_meta_data.deposition_id }}" target="_blank">
+                                    https://sandbox.zenodo.org/records/{{ dataset.ds_meta_data.deposition_id }}
+                                </a>
+                            </div>
+                        {% else %}
+                            <div class="col-md-8 col-12">
+                                <a href="https://zenodo.org/records/{{ dataset.ds_meta_data.deposition_id }}" target="_blank">
+                                    https://sandbox.zenodo.org/records/{{ dataset.ds_meta_data.deposition_id }}
+                                </a>
+                            </div>
+                        {% endif %}
+
+                </div>
+                {% endif %}
+                <div class="row mb-2">
+
+                    <div class="col-md-4 col-12">
+                        <span class=" text-secondary">
+                            Tags
+                        </span>
+                    </div>
+                    <div class="col-md-8 col-12">
+                        {% for tag in dataset.ds_meta_data.tags.split(',') %}
+                        <span class="badge bg-secondary">{{ tag.strip() }}</span>
+                        {% endfor %}
+                    </div>
+
+                </div>
+
+
+
+            </div>
+
+            {% if dataset.ds_meta_data.dataset_doi %}
+            <div class="card-body" style="padding-top: 0px">
+
+                <div id="dataset_doi_uvlhub" style="display: none">
+                    {{ dataset.get_uvlhub_doi() }}
+                </div>
+
+                <button type="button" class="btn doi_button btn-sm" onclick="copyText('dataset_doi_uvlhub')">
+                    <span class="button_doi_id">
+                        <i data-feather="clipboard" class="center-button-icon" style="cursor: pointer"></i>
+                        <b>DOI</b>
+                    </span>
+                    <span class="doi_text">
+                        {{ dataset.get_uvlhub_doi() }}
+                    </span>
+                </button>
+
+                <div id="dataset_doi_uvlhub" style="display: none">
+                    {{ dataset.get_uvlhub_doi() }}
+                </div>
+
+            </div>
+            {% endif %}
+
+            {% if dataset.is_mine() %}
+            <div class="card-body" style="padding-top: 0px">
+
+                <hr>
+
+                <a href="{{ url_for('dataset.edit_dataset', dataset_id=dataset.id)}}" class="btn btn-outline-primary" style="border-radius: 5px;">
+                    <i data-feather="edit" class="center-button-icon"></i>
+                    Edit
+                </a>
+
+            </div>
+            {% endif %}
+
+
+
+        </div>
+
+        <div class="card">
+
+            <div class="card-body">
+
+                <h2>Related publications </h3>
+
+                David Romero-Organvidez, José A. Galindo, Chico Sundermann, Jose-Miguel Horcas, David Benavides,
+                <i>UVLHub: A feature model data repository using UVL and open science principles</i>,
+                Journal of Systems and Software,
+                2024,
+                112150,
+                ISSN 0164-1212,
+                <a href="https://doi.org/10.1016/j.jss.2024.112150" target="_blank">https://doi.org/10.1016/j.jss.2024.112150</a>
+
+                <br>
+
+                <button onclick="copyText('bibtex_cite_uvlhub')" class="btn btn-light btn-sm" style="border-radius: 5px;">
+                    <i data-feather="clipboard" class="center-button-icon"></i>
+                    Copy in BibTex
+                </button>
+
+                <button onclick="copyText('ris_cite_uvlhub')" class="btn btn-light btn-sm" style="border-radius: 5px;">
+                    <i data-feather="clipboard" class="center-button-icon"></i>
+                    Copy in RIS
+                </button>
+
+                <button onclick="copyText('apa_cite_uvlhub')" class="btn btn-light btn-sm" style="border-radius: 5px;">
+                    <i data-feather="clipboard" class="center-button-icon"></i>
+                    Copy in APA
+                </button>
+
+                <button onclick="copyText('text_cite_uvlhub')" class="btn btn-light btn-sm" style="border-radius: 5px;">
+                    <i data-feather="clipboard" class="center-button-icon"></i>
+                    Copy in text
+                </button>
+
+                <br><br>
+
+                David Benavides, Chico Sundermann, Kevin Feichtinger, José A. Galindo, Rick Rabiser and Thomas Thüm,
+                <i>Uvl: Feature Modelling with the Universal Variability Language.</i>
+                <a href="https://doi.org/10.1016/j.jss.2024.112326" target="_blank">https://doi.org/10.1016/j.jss.2024.112326</a>
+
+                <br>
+
+                <button onclick="copyText('bibtex_cite_uvl')" class="btn btn-light btn-sm" style="border-radius: 5px;">
+                    <i data-feather="clipboard" class="center-button-icon"></i>
+                    Copy in BibTex
+                </button>
+
+                <button onclick="copyText('ris_cite_uvl')" class="btn btn-light btn-sm" style="border-radius: 5px;">
+                    <i data-feather="clipboard" class="center-button-icon"></i>
+                    Copy in RIS
+                </button>
+
+                <button onclick="copyText('apa_cite_uvl')" class="btn btn-light btn-sm" style="border-radius: 5px;">
+                    <i data-feather="clipboard" class="center-button-icon"></i>
+                    Copy in APA
+                </button>
+
+                <button onclick="copyText('text_cite_uvl')" class="btn btn-light btn-sm" style="border-radius: 5px;">
+                    <i data-feather="clipboard" class="center-button-icon"></i>
+                    Copy in text
+                </button>
+
+
+            </div>
+
+        </div>
+
+
+    </div>
+
+    <div class="col-xl-4 col-lg-12 col-md-12 col-sm-12 order-md-2 order-sm-2">
+
+        <div class="list-group">
+
+            <div class="list-group-item">
+
+                <div class="row">
+                    <div class="col-12 d-flex justify-content-between align-items-center">
+                        <h4 style="margin-bottom: 0px">UVL models</h4>
+                        <h4 style="margin-bottom: 0px;"><span class="badge bg-dark">{{ dataset.count_feature_models() }}</span></h4>
+                    </div>
+                </div>
+
+
+            </div>
+
+
+            {% for feature_model in dataset.feature_models %}
+                {% for file in feature_model.hubfiles %}
+                    <div class="list-group-item">
+
+                        <div class="row">
+                            <div class="col-12">
+
+                                <div class="row">
+                                    <div class="col-8">
+                                        <i data-feather="file"></i> {{ file.name }}
+                                        <br>
+                                        <small class="text-muted">({{ file.get_formatted_size() }})</small>
+                                    </div>
+                                    
+                                </div>
+
+                                <div class="row" style="word-wrap: break-word;">
+                                    <div class="col-12">
+                                        <div id="check_{{ file.id }}">
+                                            
+                                        </div>
+                                    </div>
+                                </div>
+
+
+                            </div>
+                            <div class="col-12 text-end" >
+
+                                <button onclick="viewFile('{{ file.id }}')" class="btn btn-outline-secondary btn-sm" style="border-radius: 5px;">
+                                    <i data-feather="eye"></i> View
+                                </button>
+
+                                <button onclick="viewFactLabel('{{ file.id }}')" class="btn btn-outline-secondary btn-sm" style="border-radius: 5px;">
+                                    <i data-feather="tag"></i> Fact Label
+                                </button>
+
+                                <button onclick="addToCart('{{ file.id }}')" class="btn btn-outline-secondary btn-sm" style="border-radius: 5px;">
+                                    <i data-feather="plus"></i> <i data-feather="download"></i> Add
+                                </button>
+
+                                <div class="btn-group" role="group">
+                                    <button id="btnGroupDropExport{{ file.id }}" type="button" class="btn btn-primary btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" style=" border-radius: 5px;">
+                                        <i data-feather="download"></i> Export
+                                    </button>
+                                    <ul class="dropdown-menu" aria-labelledby="btnGroupDropExport{{ file.id }}">
+                                        <li>
+                                            <a class="dropdown-item" href="{{ url_for('hubfile.download_file', file_id=file.id) }}">
+                                                UVL
+                                            </a>
+                                            <a class="dropdown-item" href="{{ url_for('flamapy.to_glencoe', file_id=file.id) }}">
+                                                Glencoe
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" href="{{ url_for('flamapy.to_cnf', file_id=file.id) }}">
+                                                DIMACS
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" href="{{ url_for('flamapy.to_splot', file_id=file.id) }}">
+                                                SPLOT
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                
+
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% endfor %}
+        </div>
+
+        <a href="/dataset/download/{{ dataset.id }}" class="btn btn-primary mt-3" style="border-radius: 5px;">
+            <i data-feather="download" class="center-button-icon"></i>
+            Download all ({{ dataset.get_file_total_size_for_human() }})
+        </a>
+    </div>
+
+</div>
+
+<!-- Modal-->
+<div class="modal fade" id="fileViewerModal" tabindex="-1" aria-labelledby="fileViewerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" style="height: 80vh; display: flex; align-items: center;">
+        <div class="modal-content" style="height: 80vh;">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <h5 class="modal-title" id="fileViewerModalLabel">Feature model view</h5>
+                <div>
+                    <button onclick="" id="factlabelButton" class="btn btn-outline-secondary btn-sm"
+                        style="margin-right: 5px; margin-bottom: 5px; border-radius: 5px;">
+                        <i data-feather="tag"></i>
+                </button>
+                    <a href="#" class="btn btn-outline-primary btn-sm" id="downloadButton"
+                        style="margin-right: 5px; margin-bottom: 5px; border-radius: 5px;">
+                        <i data-feather="download"></i>
+                    </a>
+                    <button onclick="copyToClipboard()" class="btn btn-outline-secondary btn-sm"
+                        style="margin-right: 5px; margin-bottom: 5px; border-radius: 5px;">
+                        <i data-feather="copy"></i>
+                    </button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+            </div>
+            <div class="modal-body" style="overflow-y: auto; height: calc(100vh - 50px);">
+                <pre id="fileContent" style="height: 100%; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word; background-color: #f5f5f5; padding: 20px; border-radius: 5px; border: 1px solid #ccc;"></pre>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Fact Label-->
+<div class="modal fade" id="factlabelViewerModal" tabindex="-1" aria-labelledby="factlabelViewerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" style="height: 80vh; display: flex; align-items: center;">
+        <div class="modal-content" style="height: 80vh;">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <h5 class="modal-title" id="factlabelViewerModalLabel">FM Fact Label</h5>
+                <div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+            </div>
+            
+            <!-- FM Fact Label chart -->
+            <div class="modal-body" style="overflow-y: auto; height: calc(100vh - 50px);">
+                <svg class="chart" id="FMFactLabelChart"></svg>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            feather.replace();
+        });
+        
+        var currentFileId;
+        
+        function viewFile(fileId) {
+        fetch(`/hubfile/view/${fileId}`)
+            .then(response => response.json())
+            .then(data => {
+                    document.getElementById('fileContent').textContent = data.content;
+                    currentFileId = fileId;
+                    document.getElementById('downloadButton').href = `/hubfile/download/${fileId}`;
+                    document.getElementById('factlabelButton').setAttribute('onclick', `viewFactLabel(${fileId})`);
+                    var modal = new bootstrap.Modal(document.getElementById('fileViewerModal'));
+                    modal.show();
+            })
+            .catch(error => console.error('Error loading file:', error));
+        }
+    </script>
+    
+
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+
+    <script src="{{ url_for('factlabel.assets', subfolder='js', filename='scripts.js') }}"></script>
+    <script src="{{ url_for('flamapy.assets', subfolder='js', filename='scripts.js') }}"></script>
+    <script src="{{ url_for('downloadqueue.assets', subfolder='js', filename='scripts.js') }}"></script>
+{% endblock %}

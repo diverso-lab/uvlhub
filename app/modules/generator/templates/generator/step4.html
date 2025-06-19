@@ -1,0 +1,188 @@
+{% extends "generator/index.html" %}
+
+{% block title %}Generate random feature models{% endblock %}
+
+{% block wizard_content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+
+        <h3 class="mb-3">Attributes</h3>
+
+        <!-- Checkbox “Random attributes” -->
+        <div class="form-check mb-3">
+            <input
+                class="form-check-input"
+                type="checkbox"
+                id="random_attributes"
+                name="random_attributes"
+                {% if values.get('random_attributes') %}checked{% endif %}>
+            <label class="form-check-label" for="random_attributes">Random attributes</label>
+        </div>
+
+        <!-- Sección para Random: Min / Max -->
+        <div id="random-attributes-settings">
+            <div class="mb-3 d-flex align-items-center gap-3">
+                <label for="min_attributes" class="form-label mb-0">Min:</label>
+                <input
+                    type="number"
+                    class="form-control"
+                    style="width:90px;"
+                    min="1"
+                    max="10000"
+                    id="min_attributes"
+                    name="min_attributes"
+                    value="{{ values.get('min_attributes', 1) }}">
+                {% if errors.get('min_attributes') %}
+                    <div class="text-danger ms-2">{{ errors['min_attributes'] }}</div>
+                {% endif %}
+
+                <label for="max_attributes" class="form-label mb-0 ms-3">Max:</label>
+                <input
+                    type="number"
+                    class="form-control"
+                    style="width:90px;"
+                    min="1"
+                    max="10000"
+                    id="max_attributes"
+                    name="max_attributes"
+                    value="{{ values.get('max_attributes', 5) }}">
+                {% if errors.get('max_attributes') %}
+                    <div class="text-danger ms-2">{{ errors['max_attributes'] }}</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Sección para entrada manual de atributos: inicialmente oculta -->
+        <div id="manual-attributes-section" style="display: none;">
+            <div class="mb-3">
+                <button type="button" class="btn btn-outline-primary" id="add-attribute-btn">Add</button>
+                <button type="button" class="btn btn-outline-danger" id="delete-attribute-btn">Delete last one</button>
+            </div>
+            <div id="manual-attributes-list">
+                <!-- Aquí se insertan dinámicamente las tarjetas de atributos manuales -->
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+// Referencias a los elementos
+const randomCheckbox = document.getElementById('random_attributes');
+const randomSettings = document.getElementById('random-attributes-settings');
+const manualSection = document.getElementById('manual-attributes-section');
+const manualAttributesList = document.getElementById('manual-attributes-list');
+
+// Función para alternar visibilidad entre sección “random” y sección “manual”
+function toggleAttributeSections() {
+    if (randomCheckbox.checked) {
+        randomSettings.style.display = 'block';
+        manualSection.style.display = 'none';
+    } else {
+        randomSettings.style.display = 'none';
+        manualSection.style.display = 'block';
+
+        // Si no hay ninguna tarjeta manual aún, agregamos una de prueba
+        if (manualAttributesList.getElementsByClassName('manual-attribute-card').length === 0) {
+            addAttributeCard();
+        }
+    }
+}
+
+// Listeners para alternar secciones
+randomCheckbox.addEventListener('change', toggleAttributeSections);
+
+// Plantilla y lógica para añadir/eliminar tarjetas manuales
+document.getElementById('add-attribute-btn').addEventListener('click', addAttributeCard);
+document.getElementById('delete-attribute-btn').addEventListener('click', function() {
+    const cards = manualAttributesList.getElementsByClassName('manual-attribute-card');
+    if (cards.length > 0) {
+        cards[cards.length - 1].remove();
+    }
+});
+
+// Función auxiliar para actualizar el campo “Value” según el tipo seleccionado
+function updateValueField(card, type) {
+    const valueDiv = card.querySelector('.value-field');
+    if (type === 'boolean') {
+        valueDiv.innerHTML = `
+            <label class="form-label">Value</label>
+            <select class="form-select" name="attr_value" required>
+                <option value="True">True</option>
+                <option value="False">False</option>
+            </select>
+        `;
+    } else {
+        valueDiv.innerHTML = `
+            <label class="form-label">Value</label>
+            <input type="text" class="form-control" name="attr_value" placeholder="e.g. 5 or Red" required>
+        `;
+    }
+}
+
+// Plantilla para añadir una nueva tarjeta de atributo manual
+function addAttributeCard() {
+    const idx = manualAttributesList.children.length;
+    const card = document.createElement('div');
+    card.className = 'card p-3 mb-3 manual-attribute-card';
+
+    card.innerHTML = `
+        <div class="mb-2">
+            <label class="form-label">Name</label>
+            <input type="text" class="form-control" name="attr_name" placeholder="e.g. Seats" required>
+        </div>
+        <div class="mb-2">
+            <label class="form-label">Type</label>
+            <select class="form-select attr-type-select" name="attr_type" required>
+                <option value="integer">Integer</option>
+                <option value="real">Real</option>
+                <option value="boolean">Boolean</option>
+                <option value="string">String</option>
+            </select>
+        </div>
+        <div class="mb-2 value-field">
+            <!-- Aquí se mostrará el campo “Value” según tipo -->
+        </div>
+        <div class="mb-2">
+            <label class="form-label">Attach probability</label>
+            <input type="number"
+                   class="form-control"
+                   name="attr_attach_prob"
+                   step="0.01"
+                   min="0"
+                   max="1"
+                   value="0.7"
+                   required>
+        </div>
+        <div class="form-check mb-2">
+            <input class="form-check-input"
+                   type="checkbox"
+                   name="attr_use_in_constraints"
+                   id="attr_use_in_constraints_${idx}"
+                   checked>
+            <label class="form-check-label" for="attr_use_in_constraints_${idx}">
+                Use in constraints
+            </label>
+        </div>
+    `;
+    manualAttributesList.appendChild(card);
+
+    // Inicializar campo “Value” con tipo por defecto (integer)
+    updateValueField(card, 'integer');
+
+    // Cuando cambie el <select> de tipo, actualizamos el campo Value
+    card.querySelector('.attr-type-select').addEventListener('change', function() {
+        updateValueField(card, this.value);
+    });
+}
+
+// Al cargar la página, seleccionamos la sección apropiada según el checkbox
+toggleAttributeSections();
+
+// Si venimos de GET con random_attributes desmarcado, agregamos al menos una tarjeta
+if (!randomCheckbox.checked) {
+    addAttributeCard();
+}
+</script>
+<script src="{{ url_for('generator.assets', subfolder='js', filename='scripts.js') }}"></script>
+{% endblock %}

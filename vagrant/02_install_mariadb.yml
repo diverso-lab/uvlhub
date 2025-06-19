@@ -1,0 +1,48 @@
+---
+- hosts: all
+  become: true
+
+  tasks:
+    - name: Install MariaDB Server
+      apt:
+        name:
+          - mariadb-server
+          - python3-pymysql
+        update_cache: yes
+      become: yes
+
+    - name: Start and enable MariaDB service
+      systemd:
+        name: mariadb
+        state: started
+        enabled: yes
+
+    - name: Change default MariaDB password
+      become: yes
+      mysql_user:
+        login_unix_socket: /run/mysqld/mysqld.sock
+        login_user: 'root'
+        login_password: ''
+        name: 'root'
+        password: '{{ mariadb_root_password }}'
+        state: present
+
+
+    - name: Create SQL script
+      copy:
+        content: |
+          CREATE DATABASE IF NOT EXISTS {{ mariadb_database }};
+          CREATE DATABASE IF NOT EXISTS {{ mariadb_test_database }};
+          CREATE USER IF NOT EXISTS '{{ mariadb_user }}'@'localhost' IDENTIFIED BY '{{ mariadb_password }}';
+          GRANT ALL PRIVILEGES ON {{ mariadb_database }}.* TO '{{ mariadb_user }}'@'localhost';
+          GRANT ALL PRIVILEGES ON {{ mariadb_test_database }}.* TO '{{ mariadb_user }}'@'localhost';
+          FLUSH PRIVILEGES;
+        dest: /tmp/setup.sql
+
+    - name: Import SQL script
+      command: bash -c "mysql -u root -p'{{ mariadb_root_password }}' < /tmp/setup.sql"
+
+    - name: Remove temporary SQL script
+      file:
+        path: /tmp/setup.sql
+        state: absent

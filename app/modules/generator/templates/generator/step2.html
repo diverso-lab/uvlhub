@@ -1,0 +1,333 @@
+{% extends "generator/index.html" %}
+
+{% block title %}Generate random feature models{% endblock %}
+
+{% block wizard_content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <h3 class="mb-3">Language levels</h3>
+        <div class="row">
+            <div class="col-md-7">
+                <table class="table table-bordered align-middle" style="background: #fff;">
+                    <thead>
+                        <tr>
+                            <th class="text-center">Major levels</th>
+                            <th class="text-center">Minor levels</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <div class="form-check">
+                                    <input class="form-check-input"
+                                        type="checkbox"
+                                        id="boolean_level"
+                                        name="boolean_level"
+                                        {% if values.get('boolean_level', False) %}checked{% endif %}>
+                                    <label class="form-check-label" for="boolean_level">Boolean level</label>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="form-check">
+                                    <input class="form-check-input"
+                                        type="checkbox"
+                                        id="group_cardinality"
+                                        name="group_cardinality"
+                                        {% if values.get('group_cardinality', False) %}checked{% endif %}>
+                                    <label class="form-check-label" for="group_cardinality">Group cardinality</label>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="form-check">
+                                    <input class="form-check-input"
+                                        type="checkbox"
+                                        id="arithmetic_level"
+                                        name="arithmetic_level"
+                                        {% if values.get('arithmetic_level', False) %}checked{% endif %}>
+                                    <label class="form-check-label" for="arithmetic_level">Arithmetic level</label>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="form-check">
+                                    <input class="form-check-input"
+                                        type="checkbox"
+                                        id="feature_cardinality"
+                                        name="feature_cardinality"
+                                        {% if values.get('feature_cardinality', False) %}checked{% endif %}>
+                                    <label class="form-check-label" for="feature_cardinality">Feature cardinality</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input"
+                                        type="checkbox"
+                                        id="aggregate_functions"
+                                        name="aggregate_functions"
+                                        {% if values.get('aggregate_functions', False) %}checked{% endif %}>
+                                    <label class="form-check-label" for="aggregate_functions">Aggregate functions</label>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="form-check">
+                                    <input class="form-check-input"
+                                        type="checkbox"
+                                        id="type_level"
+                                        name="type_level"
+                                        {% if values.get('type_level', False) %}checked{% endif %}>
+                                    <label class="form-check-label" for="type_level">Type level</label>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="form-check">
+                                    <input class="form-check-input"
+                                        type="checkbox"
+                                        id="string_constraints"
+                                        name="string_constraints"
+                                        {% if values.get('string_constraints', False) %}checked{% endif %}>
+                                    <label class="form-check-label" for="string_constraints">String constraints</label>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-md-5">
+                <h4 class="mb-2">Tree hierarchy</h4>
+                <p style="font-size: 14px;">
+                    <strong>Note:</strong> in UVL, Boolean level is the minimum required level. Arithmetic level includes Boolean level, and Type level includes every one of them.<br>
+                    <br>
+                    If a minor level is selected, its respective major level will be automatically selected.
+                </p>
+            </div>
+        </div>
+
+        <h3 class="mt-4">Features</h3>
+        <div class="mb-4">
+            <!-- Número de features -->
+            <div class="mb-3">
+                <label class="form-label">Number of features</label>
+                <div class="d-flex align-items-center gap-3">
+                    <span>Min:</span>
+                    <input type="number" class="form-control" style="width: 100px;" min="1" max="10000" id="num_features_min" name="num_features_min" value="{{ values.get('num_features_min', 3000) }}">
+                    {% if errors.get('num_features_min') %}
+                        <div class="text-danger">{{ errors['num_features_min'] }}</div>
+                    {% endif %}
+                    <span>Max:</span>
+                    <input type="number" class="form-control" style="width: 100px;" min="1" max="10000" id="num_features_max" name="num_features_max" value="{{ values.get('num_features_max', 8500) }}">
+                    {% if errors.get('num_features_max') %}
+                        <div class="text-danger">{{ errors['num_features_max'] }}</div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Maximum tree depth:</label>
+                <input type="number" class="form-control" style="width: 80px; display: inline-block;" name="max_tree_depth" id="max_tree_depth"
+                       value="{{ values.get('max_tree_depth', 5) }}" min="1">
+                {% if errors.get('max_tree_depth') %}
+                    <div class="text-danger">{{ errors['max_tree_depth'] }}</div>
+                {% endif %}
+                <small class="text-muted d-block mt-1">
+                    Note: cannot be greater than the maximum possible number of features given.
+                </small>
+            </div>
+
+            <!-- Distribución -->
+            <div class="mb-3">
+                <label class="form-label">Distribution (as a per unit value)</label>
+                <div class="row">
+                    <div class="col">
+                        <label class="form-label">Boolean:</label>
+                        <input type="number" step="0.01" min="0" max="1" class="form-control" id="dist_boolean" name="dist_boolean" value="{{ values.get('dist_boolean', 0.7) }}">
+                        {% if errors.get('dist_boolean') %}
+                            <div class="text-danger">{{ errors['dist_boolean'] }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col">
+                        <label class="form-label">Integer:</label>
+                        <input type="number" step="0.01" min="0" max="1" class="form-control" id="dist_integer" name="dist_integer" value="{{ values.get('dist_integer', 0.1) }}">
+                        {% if errors.get('dist_integer') %}
+                            <div class="text-danger">{{ errors['dist_integer'] }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col">
+                        <label class="form-label">Real:</label>
+                        <input type="number" step="0.01" min="0" max="1" class="form-control" id="dist_real" name="dist_real" value="{{ values.get('dist_real', 0.1) }}">
+                        {% if errors.get('dist_real') %}
+                            <div class="text-danger">{{ errors['dist_real'] }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col">
+                        <label class="form-label">String:</label>
+                        <input type="number" step="0.01" min="0" max="1" class="form-control" id="dist_string" name="dist_string" value="{{ values.get('dist_string', 0.1) }}">
+                        {% if errors.get('dist_string') %}
+                            <div class="text-danger">{{ errors['dist_string'] }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="mt-2" id="dist_sum_display"
+                    style="font-weight:bold; color:{% if values.get('dist_total', '1.0000') != '1.0000' %}red{% else %}green{% endif %};">
+                    Current sum: <span id="dist_sum">{{ values.get('dist_total', '1.0000') }}</span>
+                </div>
+                {% if errors.get('dist_total') %}
+                    <div class="text-danger">{{ errors['dist_total'] }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Feature cardinality -->
+            <div class="mb-3">
+                <label class="form-label">Feature cardinality <small>(only if selected)</small> CURRENTLY UNAVAILABLE</label>
+                <div class="p-3 border rounded" style="background: #fafbfc;">
+                    <div class="row mb-2">
+                        <div class="col">
+                            <label class="form-label">Min:</label>
+                            <input type="number" class="form-control" style="width: 100px;" min="1" max="10000" id="min_feature_cardinality" name="min_feature_cardinality" value="{{ values.get('min_feature_cardinality', 2) }}">
+                            {% if errors.get('min_feature_cardinality') %}
+                                <div class="text-danger">{{ errors['min_feature_cardinality'] }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col">
+                            <label class="form-label">Max:</label>
+                            <input type="number" class="form-control" style="width: 100px;" min="1" max="10000" id="max_feature_cardinality" name="max_feature_cardinality" value="{{ values.get('max_feature_cardinality', 5) }}">
+                            {% if errors.get('max_feature_cardinality') %}
+                                <div class="text-danger">{{ errors['max_feature_cardinality'] }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Attach probability</label>
+                        <input type="number" step="0.01" min="0.01" max="1" class="form-control" style="width: 120px;" name="prob_fc" value="{{ values.get('prob_fc', 0.1) }}">
+                        {% if errors.get('attach_probability') %}
+                            <div class="text-danger">{{ errors['attach_probability'] }}</div>
+                        {% endif %}
+                    </div>
+                    <small class="text-muted">Note: 0 means no feature may have feature cardinality; 1 means every feature may have it.</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Distribución de relaciones -->
+        <h3>Groups</h3>
+        <div class="card p-3 mb-3">
+            <div class="row mb-2 g-2">
+                <div class="col">
+                    <label for="dist_optional" class="form-label">Optional:</label>
+                    <input type="number" class="form-control" step="0.01" min="0" max="1" id="dist_optional" name="dist_optional" value="{{ values.get('dist_optional', 0.3) }}">
+                    {% if errors.get('dist_optional') %}
+                        <div class="text-danger">{{ errors['dist_optional'] }}</div>
+                    {% endif %}
+                </div>
+                <div class="col">
+                    <label for="dist_mandatory" class="form-label">Mandatory:</label>
+                    <input type="number" class="form-control" step="0.01" min="0" max="1" id="dist_mandatory" name="dist_mandatory" value="{{ values.get('dist_mandatory', 0.3) }}">
+                    {% if errors.get('dist_mandatory') %}
+                        <div class="text-danger">{{ errors['dist_mandatory'] }}</div>
+                    {% endif %}
+                </div>
+                <div class="col">
+                    <label for="dist_alternative" class="form-label">Alternative:</label>
+                    <input type="number" class="form-control" step="0.01" min="0" max="1" id="dist_alternative" name="dist_alternative" value="{{ values.get('dist_alternative', 0.2) }}">
+                    {% if errors.get('dist_alternative') %}
+                        <div class="text-danger">{{ errors['dist_alternative'] }}</div>
+                    {% endif %}
+                </div>
+                <div class="col">
+                    <label for="dist_or" class="form-label">Or:</label>
+                    <input type="number" class="form-control" step="0.01" min="0" max="1" id="dist_or" name="dist_or" value="{{ values.get('dist_or', 0.2) }}">
+                    {% if errors.get('dist_or') %}
+                        <div class="text-danger">{{ errors['dist_or'] }}</div>
+                    {% endif %}
+                </div>
+                <div class="col">
+                    <label for="dist_group_cardinality" class="form-label">Group cardinality:</label>
+                    <input type="number" class="form-control" step="0.01" min="0" max="1" id="dist_group_cardinality" name="dist_group_cardinality" value="{{ values.get('dist_group_cardinality', 0.0) }}">
+                    {% if errors.get('dist_group_cardinality') %}
+                        <div class="text-danger">{{ errors['dist_group_cardinality'] }}</div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="mt-2" id="rel_sum_display"
+                style="font-weight:bold; color:{% if values.get('rel_dist_total', '1.0000') != '1.0000' %}red{% else %}green{% endif %};">
+                Relation dist sum: <span id="rel_sum">{{ values.get('rel_dist_total', '1.0000') }}</span>
+            </div>
+            {% if errors.get('rel_dist_total') %}
+                <div class="text-danger">{{ errors['rel_dist_total'] }}</div>
+            {% endif %}
+        </div>
+
+        <!-- Group cardinality -->
+        <h6 class="mt-4 mb-2">Group cardinality</h6>
+        <div class="card p-3 mb-3">
+            <div class="column mb-2">
+                <div class="col-md-3">
+                    <input type="number" class="form-control" step="0.01" min="0" max="1" id="dist_group_cardinality" name="dist_group_cardinality" value="{{ values.get('dist_group_cardinality', 0.0) }}">
+                    <div class="form-text">only configurable if percentage is greater than 0</div>
+                </div>
+                <br>
+                <div class="col-md-9">
+                    <div class="row g-2 align-items-center mb-2">
+                        <div class="col-auto">
+                        </div>
+                        <div class="col-auto">
+                            <label class="form-label mb-0">Min:</label>
+                            <input type="number" class="form-control" id="group_cardinality_min" name="group_cardinality_min" min="1" value="{{ values.get('group_cardinality_min', 10) }}">
+                            {% if errors.get('group_cardinality_min') %}
+                                <div class="text-danger">{{ errors['group_cardinality_min'] }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-auto">
+                        </div>
+                        <div class="col-auto">
+                            <label class="form-label mb-0">Max:</label>
+                            <input type="number" class="form-control" id="group_cardinality_max" name="group_cardinality_max" min="1" value="{{ values.get('group_cardinality_max', 50) }}">
+                            {% if errors.get('group_cardinality_max') %}
+                                <div class="text-danger">{{ errors['group_cardinality_max'] }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="form-text">
+                        Note: must be inside the interval of features.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    function updateDistSum() {
+        let b = parseFloat(document.getElementById('dist_boolean').value) || 0;
+        let i = parseFloat(document.getElementById('dist_integer').value) || 0;
+        let r = parseFloat(document.getElementById('dist_real').value) || 0;
+        let s = parseFloat(document.getElementById('dist_string').value) || 0;
+        let sum = (b + i + r + s);
+        document.getElementById('dist_sum').innerText = sum.toFixed(4);
+        document.getElementById('dist_sum_display').style.color = (Math.abs(sum - 1.0) < 0.001) ? 'green' : 'red';
+    }
+    ['dist_boolean','dist_integer','dist_real','dist_string'].forEach(function(id){
+        document.getElementById(id).addEventListener('input', updateDistSum);
+    });
+    updateDistSum();
+
+    function updateRelSum() {
+        let fields = ['dist_optional', 'dist_mandatory', 'dist_alternative', 'dist_or', 'dist_group_cardinality'];
+        let sum = 0;
+        fields.forEach(function(id){
+            sum += parseFloat(document.getElementById(id).value) || 0;
+        });
+        document.getElementById('rel_sum').innerText = sum.toFixed(4);
+        document.getElementById('rel_sum_display').style.color = (Math.abs(sum - 1.0) < 0.001) ? 'green' : 'red';
+    }
+    ['dist_optional','dist_mandatory','dist_alternative','dist_or','dist_group_cardinality'].forEach(function(id){
+        document.getElementById(id).addEventListener('input', updateRelSum);
+    });
+    updateRelSum();
+});
+</script>
+<script src="{{ url_for('generator.assets', subfolder='js', filename='scripts.js') }}"></script>
+
+{% endblock %}

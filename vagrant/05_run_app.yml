@@ -1,0 +1,46 @@
+---
+- hosts: all
+  become: true
+
+  vars:
+    common_environment:
+      FLASK_APP_NAME: "{{ flask_app_name }}"
+      FLASK_ENV: "{{ flask_env }}"
+      DOMAIN: "{{ domain }}"
+      MARIADB_HOSTNAME: "{{ mariadb_hostname }}"
+      MARIADB_PORT: "{{ mariadb_port }}"
+      MARIADB_DATABASE: "{{ mariadb_database }}"
+      MARIADB_TEST_DATABASE: "{{ mariadb_test_database }}"
+      MARIADB_USER: "{{ mariadb_user }}"
+      MARIADB_PASSWORD: "{{ mariadb_password }}"
+      MARIADB_ROOT_PASSWORD: "{{ mariadb_root_password }}"
+      WORKING_DIR: "{{ working_dir }}"
+
+  tasks:
+
+    - name: Add webhook to .moduleignore
+      shell: echo "webhook" > {{ working_dir }}.moduleignore
+      args:
+        executable: /bin/bash
+      environment: "{{ common_environment }}"
+
+    - name: Set database with Rosemary
+      shell: |
+        source {{ working_dir }}venv/bin/activate
+        cd {{ working_dir }}
+        flask db upgrade
+        rosemary db:seed -y --reset
+      args:
+        executable: /bin/bash
+      environment: "{{ common_environment }}"
+
+    - name: Run Flask application
+      shell: |
+        source {{ working_dir }}venv/bin/activate
+        cd {{ working_dir }}
+        nohup flask run --host=0.0.0.0 --port=5000 --reload --debug > app.log 2>&1 &
+      args:
+        executable: /bin/bash
+      environment: "{{ common_environment }}"
+      async: 1
+      poll: 0

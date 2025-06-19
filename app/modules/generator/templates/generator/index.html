@@ -1,0 +1,47 @@
+{% extends "base_template.html" %}
+
+{% block title %}Generate random feature models{% endblock %}
+
+{% block content %}
+<div class="wizard-container">
+    <h2><strong>Generate</strong> random feature models</h2>
+    <div class="wizard-tabs">
+        {% set steps = [
+            'General information',
+            'Feature tree',
+            'Constraints',
+            'Attributes',
+            'Finishing'
+        ] %}
+        <ul class="wizard-tabs-list">
+            {% for step in steps %}
+                {% set i = loop.index %}
+                <li class="wizard-tab{% if current_step == i %} active-tab{% endif %}">
+                    {{ step }}
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div class="wizard-content">
+        <form id="generator-wizard-step1" method="post" action="{{ url_for('generator.step' ~ current_step) }}">
+            {% block wizard_content %}
+            {% endblock %}
+            <div class="d-flex justify-content-between mt-4">
+                {% if current_step > 1 %}
+                    <a href="{{ url_for('generator.step' ~ (current_step - 1)) }}" class="btn btn-outline-secondary">Previous</a>
+                {% else %}
+                    <button type="button" class="btn btn-outline-secondary" disabled>Previous</button>
+                {% endif %}
+                
+                {% if current_step < 5 %}
+                    <button type="submit" class="btn btn-primary">Next &gt;</button>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+    <script src="{{ url_for('generator.assets', subfolder='js', filename='scripts.js') }}"></script>
+{% endblock %}

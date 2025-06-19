@@ -1,0 +1,38 @@
+events {}
+
+http {
+    upstream web {
+        server web:5000;
+    }
+
+    server {
+        listen 80;
+        server_name {{domain}};
+
+        location ~ /.well-known/acme-challenge/ {
+            root /var/www;
+            try_files $uri =404;
+        }
+
+        location / {
+
+            # Set proxy headers
+            proxy_pass http://web;
+            proxy_set_header Host $http_host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+
+            # Increase proxy timeout settings
+            proxy_connect_timeout 3600;
+            proxy_send_timeout 3600;
+            proxy_read_timeout 3600;
+        }
+
+        error_page 502 /502_prod.html;
+        location = /502_prod.html {
+            root /usr/share/nginx/html;
+            internal;
+        }
+    }
+}

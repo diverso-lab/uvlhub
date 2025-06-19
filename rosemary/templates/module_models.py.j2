@@ -1,0 +1,8 @@
+from app import db
+
+
+class {{ module_name | pascalcase }}(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+
+    def __repr__(self):
+        return f'{{ module_name | pascalcase }}<{self.id}>'

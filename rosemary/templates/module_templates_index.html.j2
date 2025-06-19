@@ -1,0 +1,11 @@
+{% raw %}{%{% endraw %} extends "base_template.html" {% raw %}%}{% endraw %}
+
+{% raw %}{%{% endraw %} block title {% raw %}%}{% endraw %}View {{ module_name }}{% raw %}{%{% endraw %} endblock {% raw %}%}{% endraw %}
+
+{% raw %}{%{% endraw %} block content {% raw %}%}{% endraw %}
+
+{% raw %}{%{% endraw %} endblock {% raw %}%}{% endraw %}
+
+{% raw %}{%{% endraw %} block scripts {% raw %}%}{% endraw %}
+    <script src="{% raw %}{{ url_for('{% endraw %}{{ module_name }}{% raw %}.assets', subfolder='js', filename='scripts.js') }}{% endraw %}"></script>
+{% raw %}{%{% endraw %} endblock {% raw %}%}{% endraw %}

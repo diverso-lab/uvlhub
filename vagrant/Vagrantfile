@@ -1,0 +1,88 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+require 'pathname'
+require 'fileutils'
+
+# Method to load environment variables from an .env file and return them as a hash
+def load_env(file)
+  env_vars = {}
+  if File.exist?(file)
+    File.readlines(file).each do |line|
+      key, value = line.strip.split('=', 2)
+      if key && value
+        ENV[key] = value
+        env_vars[key] = value
+      end
+    end
+  else
+    raise "Env file not found: #{file}"
+  end
+  env_vars
+end
+
+# Load .env file from the top level and get the loaded variables
+env_file_path = File.expand_path("../../.env", __FILE__)
+puts "Loading .env file from: #{env_file_path}"
+loaded_env_vars = load_env(env_file_path)
+
+# Print only the variables that were loaded from the .env file
+loaded_env_vars.each do |key, value|
+  puts "#{key}: #{value}"
+end
+
+
+Vagrant.configure("2") do |config|
+
+  # Choose a base box
+  config.vm.box = "ubuntu/jammy64"
+
+  # Network configuration
+  config.vm.network "forwarded_port", guest: 5000, host: 5000
+  config.vm.network "forwarded_port", guest: 8089, host: 8089
+
+  # Synced folders
+  config.vm.synced_folder "../", "/vagrant"
+
+  # Use Ansible for provisioning
+  config.vm.provision "ansible" do |ansible|
+    ansible.playbook = "00_main.yml"
+    ansible.extra_vars = {
+      flask_app_name: ENV['FLASK_APP_NAME'],
+      flask_env: ENV['FLASK_ENV'],
+      domain: ENV['DOMAIN'],
+      mariadb_hostname: ENV['MARIADB_HOSTNAME'],
+      mariadb_port: ENV['MARIADB_PORT'],
+      mariadb_database: ENV['MARIADB_DATABASE'],
+      mariadb_test_database: ENV['MARIADB_TEST_DATABASE'],
+      mariadb_user: ENV['MARIADB_USER'],
+      mariadb_password: ENV['MARIADB_PASSWORD'],
+      mariadb_root_password: ENV['MARIADB_ROOT_PASSWORD'],
+      working_dir: ENV['WORKING_DIR']
+    }
+  end
+
+  # Load environment variables on vagrant ssh
+  config.vm.provision "shell", inline: <<-SHELL
+    ENV_FILE="/vagrant/.env"
+    if [ -f $ENV_FILE ]; then
+      export $(cat $ENV_FILE | xargs)
+      while IFS= read -r line; do
+        echo "export $line" >> /etc/profile.d/vagrant_env.sh
+      done < $ENV_FILE
+    else
+      echo "Env file not found: $ENV_FILE"
+      exit 1
+    fi
+  SHELL
+
+  config.vm.provision "shell", run: "always", inline: <<-SHELL
+    echo 'source /etc/profile.d/vagrant_env.sh' >> /home/vagrant/.bashrc
+  SHELL
+
+  # Provider configuration
+  config.vm.provider "virtualbox" do |vb|
+    vb.memory = "2048"
+    vb.cpus = 4
+  end
+end

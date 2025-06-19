@@ -1,0 +1,7 @@
+---
+- import_playbook: 01_setup.yml
+- import_playbook: 02_install_mariadb.yml
+- import_playbook: 03_mariadb_scripts.yml
+- import_playbook: 04_install_dependencies.yml
+- import_playbook: 05_run_app.yml
+- import_playbook: 06_utilities.yml
