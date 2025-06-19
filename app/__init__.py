@@ -25,7 +25,8 @@ sess = Session()
 
 
 def create_app(config_name="development"):
-    app = Flask(__name__)
+    app = Flask(__name__,
+                static_folder='static')
 
     # Load configuration according to environment
     config_manager = ConfigManager(app)
