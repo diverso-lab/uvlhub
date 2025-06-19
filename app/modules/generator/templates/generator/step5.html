@@ -17,21 +17,16 @@
 {% endblock %}
 
 {% block scripts %}
-  <!-- 1) JSZip & FileSaver desde CDN -->
-  <!--
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.0/jszip.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-  -->
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.0/jszip.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-
-  <!-- 2) Nuestro scripts.js (se encargará de todo) -->
-  <script type="module"
-          src="{{ url_for('generator.assets', subfolder='js', filename='scripts.js') }}">
+  <script type="module">
+    import { loadPyodide } from "{{ url_for('static', filename='pyodide/pyodide.mjs') }}";
+    window.loadPyodide = loadPyodide;
   </script>
 
-  <!-- <script src="{{ url_for('static', filename='pyodide/pyodide.js') }}"></script> -->
-  <script src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
+  <script type="module"
+          src="{{ url_for('generator.assets', subfolder='dist', filename='generator.bundle.js') }}">
+  </script>
+
+  <script src="{{ url_for('static', filename='pyodide/pyodide.js') }}"></script>
   
 {% endblock %}

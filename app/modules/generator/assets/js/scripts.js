@@ -1,9 +1,12 @@
 // app/modules/generator/assets/js/scripts.js
 
 // Importamos Pyodide desde tu carpeta estática
-import { loadPyodide } from 'https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.mjs';
-const JSZip  = globalThis.JSZip;
-const saveAs = globalThis.saveAs;
+// import { loadPyodide } from '/static/pyodide/pyodide.mjs';
+// const JSZip  = globalThis.JSZip;
+// const saveAs = globalThis.saveAs;
+
+import JSZip from "jszip";
+import { saveAs } from "file-saver";
 
 console.log("Hi, I am a script loaded from the step5 of generator module")
 
@@ -20,8 +23,8 @@ class NavigatorExecutor {
     // 1) Carga Pyodide
     const pythonFile = await fetch("/static/js/fmgen_wrapper.py");
     console.log("🚀 Loading Pyodide…");
-    const pyodide = await loadPyodide({
-      indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.27.7/full/'
+    const pyodide = await window.loadPyodide({
+      indexURL: '/static/pyodide'
     });
     await pyodide.loadPackage('micropip');
     await pyodide.loadPackage('packaging');
@@ -56,13 +59,6 @@ class NavigatorExecutor {
     ];
 
     console.log("📦 Installing wheels…");
-    await pyodide.runPythonAsync(`
-      import micropip
-      await micropip.install("markupsafe", deps=False)
-      await micropip.install("click", deps=False)
-      await micropip.install("jinja2", deps=False)
-      print("✅ Installed pyodide dependencies")
-    `);
     for (let wheel of wheels) {
       const url = `/static/js/${wheel}`;
       await pyodide.runPythonAsync(`
