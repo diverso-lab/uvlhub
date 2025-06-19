@@ -3,8 +3,6 @@
     "version": "1.0.0",
     "description": "Repository of feature models in UVL format integrated with Zenodo and flamapy following Open Science principles - Developed by DiversoLab",
     "dependencies": {
-        "file-saver": "^2.0.5",
-        "jszip": "^3.10.1",
         "uvl-parser": "^0.0.3"
     },
     "devDependencies": {

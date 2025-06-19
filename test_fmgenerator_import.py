@@ -4,14 +4,6 @@ from fm_generator.src.fm_generator.FMGenerator.models.models import FmgeneratorM
 from flamapy.metamodels.fm_metamodel.models.feature_model import Attribute, Domain, Range
 import random
 
-import os
-
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-print(__file__)
-print(SCRIPT_DIR)
-output_dir = os.path.join(SCRIPT_DIR, 'test_models')
-os.makedirs(output_dir, exist_ok=True)
-
 if __name__ == "__main__":
 
     # Atributo booleano
@@ -112,4 +104,4 @@ if __name__ == "__main__":
     )
 
     generator = FmgeneratorModel(params)
-    models = generator.generate_models(output_dir)
+    models = generator.generate_models()
