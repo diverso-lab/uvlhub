@@ -1,86 +1,139 @@
-import { loadPyodide } from './pyodide/pyodide.mjs';
-// import('/generator/js/pyodide/pyodide.js')
+// app/modules/generator/assets/js/scripts.js
 
-console.log("Hi, I am a script loaded from generator module");
+// Importamos Pyodide desde tu carpeta estática
+import { loadPyodide } from 'https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.mjs';
+const JSZip  = globalThis.JSZip;
+const saveAs = globalThis.saveAs;
+
+console.log("Hi, I am a script loaded from the step5 of generator module")
 
 class NavigatorExecutor {
-    constructor() {
-        this.pyodide = null;
+  constructor() {
+    this.pyodide = null;
+    this.isValid = false;
+  }
+
+  /**
+   * Carga Pyodide, micropip y todos los wheels desde /static/js
+   */
+  async loadFlamapy() {
+    // 1) Carga Pyodide
+    const pythonFile = await fetch("/static/js/fmgen_wrapper.py");
+    console.log("🚀 Loading Pyodide…");
+    const pyodide = await loadPyodide({
+      indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.27.7/full/'
+    });
+    await pyodide.loadPackage('micropip');
+    await pyodide.loadPackage('packaging');
+    console.log("📦 micropip + packaging ready");
+
+    // 2) Instala todos los wheels en bloque
+    const wheels = [
+      'afmparser-1.0.3-py3-none-any.whl',
+      'antlr4_python3_runtime-4.13.1-py3-none-any.whl',
+      'astutils-0.0.6-py3-none-any.whl',
+      'blinker-1.9.0-py3-none-any.whl',
+      'dd-0.5.7-py3-none-any.whl',
+      'flamapy_bdd-2.0.1-py3-none-any.whl',
+      'flamapy_configurator-2.0.1-py3-none-any.whl',
+      'flamapy_fm-2.0.1-py3-none-any.whl',
+      'flamapy_fm-2.0.2.dev0-py3-none-any.whl',
+      'flamapy_fw-2.0.1-py3-none-any.whl',
+      'flamapy_fw-2.0.2.dev0-py3-none-any.whl',
+      'flamapy_sat-2.0.1-py3-none-any.whl',
+      'flamapy-2.0.1-py3-none-any.whl',
+      'flask-3.1.0-py3-none-any.whl',
+      'fm_generator-0.0.1-py3-none-any.whl',
+      'graphviz-0.20-py3-none-any.whl',
+      'itsdangerous-2.2.0-py3-none-any.whl',
+      'networkx-3.4.2-py3-none-any.whl',
+      'ply-3.11-py2.py3-none-any.whl',
+      'pydot-4.0.0-py3-none-any.whl',
+      'setuptools-80.9.0-py3-none-any.whl',
+      'six-1.17.0-py2.py3-none-any.whl',
+      'uvlparser-2.0.1-py3-none-any.whl',
+      'werkzeug-3.1.3-py3-none-any.whl'
+    ];
+
+    console.log("📦 Installing wheels…");
+    await pyodide.runPythonAsync(`
+      import micropip
+      await micropip.install("markupsafe", deps=False)
+      await micropip.install("click", deps=False)
+      await micropip.install("jinja2", deps=False)
+      print("✅ Installed pyodide dependencies")
+    `);
+    for (let wheel of wheels) {
+      const url = `/static/js/${wheel}`;
+      await pyodide.runPythonAsync(`
+        import micropip
+        await micropip.install("${url}", deps=False)
+        print("✅ Installed ${wheel}")
+      `);
     }
 
-    async load_WASM(){
-        
-        const pythonFile = await fetch("/generator/js/flamapy_ide.py");
-        const pyodideInstance = await loadPyodide({
-            indexURL: "./pyodide",
-        });
-        await pyodide.loadPackage("micropip");
-        const micropip = pyodide.pyimport("micropip");
-    
-        await pyodide.runPythonAsync(`
-            import micropip
-            
-            await micropip.install("afmparser-1.0.3-py3-none-any.whl", deps=False)
-            await micropip.install("antlr4_python3_runtime-4.13.1-py3-none-any.whl", deps=False)
-            await micropip.install("astutils-0.0.6-py3-none-any.whl", deps=False)
-            await micropip.install("dd-0.5.7-py3-none-any.whl", deps=False)
-            await micropip.install("flamapy_bdd-2.0.1-py3-none-any.whl", deps=False)
-            await micropip.install("flamapy_configurator-2.0.1-py3-none-any.whl", deps=False)
-            await micropip.install("flamapy_fm-2.0.1-py3-none-any.whl", deps=False)
-            await micropip.install("flamapy_fm-2.0.2.dev0-py3-none-any.whl", deps=False)
-            await micropip.install("flamapy_fw-2.0.1-py3-none-any.whl", deps=False)
-            await micropip.install("flamapy_fw-2.0.2.dev0-py3-none-any.whl", deps=False)
-            await micropip.install("flamapy_sat-2.0.1-py3-none-any.whl", deps=False)
-            await micropip.install("flamapy-2.0.1-py3-none-any.whl", deps=False)
-            await micropip.install("fm_generator-0.0.1-py3-none-any.whl", deps=False)
-            await micropip.install("graphviz-0.20-py3-none-any.whl", deps=False)
-            await micropip.install("networkx-3.4.2-py3-none-any.whl", deps=False)
-            await micropip.install("ply-3.11-py2.py3-none-any.whl", deps=False)
-            await micropip.install("psutil-7.0.0-cp36-abi3-manylinux_2_12_x86_64.manylinux2010_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", deps=False)
-            await micropip.install("pydot-4.0.0-py3-none-any.whl", deps=False)
-            await micropip.install("python_sat-0.1.8.dev17-pp310-pypy310_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.manylinux_2_28_x86_64.whl", deps=False)
-            await micropip.install("setuptools-80.9.0-py3-none-any.whl", deps=False)
-            await micropip.install("six-1.17.0-py2.py3-none-any.whl", deps=False)
-            await micropip.install("uvlparser-2.0.1-py3-none-any.whl", deps=False)
-            print("AAAAAAAAAAA")
-        `)
+    console.log("✅ All wheels installed");
+    this.pyodide = pyodide;
 
-        await pyodideInstance.runPythonAsync(await pythonFile.text());
-        pyodideInstance.FS.mkdir("export");
+    await pyodide.runPythonAsync(await pythonFile.text())
+      .then(() => console.log("El wrapper lo coge piola"))
+      .catch((e) => console.error("Las cagao con el wrapper", e))
+  }
 
-        this.pyodide = pyodideInstance;
+
+  async generateModels() {
+    if (!this.pyodide) {
+      throw new Error("Pyodide not initialized — call loadFlamapy() first");
     }
 
-    async generate_models() {
-        // this.pyodide.globals.set("code", code);
-        // const jsonResult = await this.pyodide.runPythonAsync(
-        // `
-        //     with open("uvlfile.uvl", "w") as text_file:
-        //         text_file.write(code)
-            
-        //     process_uvl_file('uvlfile.uvl')
-        // `
-        // );
-        // const result = JSON.parse(jsonResult);
-        // this.isValid = result.valid;
-        console.log('Executing from scripts.js')
-        return result;
+    console.log("🔄 Fetching params-json…");
+    const resp = await fetch('/generator/params-json');
+    if (!resp.ok) {
+      throw new Error("Failed to fetch params-json: " + resp.status);
     }
+
+    const paramsObj = await resp.json();
+    console.log(paramsObj)
+
+    // Inyectamos el JSON en una variable Python
+    const pj = JSON.stringify(paramsObj);
+    this.pyodide.globals.set('params_json', pj);
+
+    console.log("⚙️ Running generate_models wrapper…");
+
+    const uvlsJson = await this.pyodide.runPythonAsync(`
+      generate_models(params_json)
+    `);
+
+
+
+    return JSON.parse(uvlsJson);
+  }
 }
 
-const navigatorExecutor = new NavigatorExecutor()
+// Al cargar el módulo, instanciamos y arrancamos la carga
+const executor = new NavigatorExecutor();
 
-navigatorExecutor.load_WASM()
-    .then(() => {
-        self.postMessage({ status: "loaded" })
-        navigatorExecutor.generate_models()
-        console.log('AAAAAAAAAAAAA')
-    })
-    .catch((exception) => self.postMessage({ status: "error", exception }));
+executor.loadFlamapy()
+  .then(async () => {
+    console.log("🚀 Pyodide y wheels listos");
 
-// const pyodideInstance = await loadPyodide({
-//     indexURL: "js/pyodide",
-// });
-// await pyodide.loadPackage("micropip");
-// const micropip = pyodide.pyimport("micropip");
-// console.log()
+    // Aquí llamamos a generateModels, obtenemos el array de UVLs…
+    const uvls = await executor.generateModels();
+
+    // …y lo metemos en un ZIP:
+    const zip = new JSZip();
+    uvls.forEach((u, i) => {
+      zip.file(`fm${i}.uvl`, u);
+    });
+
+    // Generamos el blob y lo descargamos:
+    const blob = await zip.generateAsync({ type: "blob" });
+    saveAs(blob, "feature_models.zip");
+    console.log("💾 ZIP descargado");
+  })
+  .catch(err => console.error("❌ Error cargando Pyodide:", err));
+
+
+// Exportamos la clase por si la necesitas en otros scripts
+export { NavigatorExecutor };

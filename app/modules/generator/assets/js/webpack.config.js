@@ -1,22 +1,3 @@
-// const path = require('path');
-
-// module.exports = {
-//   entry: path.resolve(__dirname, './scripts.js'),
-//   output: {
-//     filename: 'generator.bundle.js',
-//     path: path.resolve(__dirname, '../dist'),
-//   },
-//   resolve: {
-//     fallback: {
-//       fs: false,
-//       child_process: false
-//     }
-//   },
-//   mode: 'development',
-// };
-
-
-
 const path = require('path');
 const webpack = require('webpack');
 
@@ -25,29 +6,25 @@ module.exports = {
   output: {
     filename: 'generator.bundle.js',
     path: path.resolve(__dirname, '../dist'),
+    module: true,        // <-- Emitimos un ES module
   },
   mode: 'development',
   devtool: 'source-map',
+
   experiments: {
     topLevelAwait: true,
     asyncWebAssembly: true,
+    outputModule: true,  // <-- Esto + output.module: true
   },
+
   resolve: {
-    alias: {
-      pyodide: path.resolve(__dirname, 'pyodide')
-    },
-    fallback: {
-      fs: false,
-      'fs/promises': false,
-      child_process: false,
-      crypto: false,
-      url: false,
-      vm: false,
-      path: false,
-    },
-    extensions: ['.mjs', '.js', '.json', '.wasm'],
+    alias: { pyodide: path.resolve(__dirname, '../../../../static/pyodide') },
+    fallback: { fs: false, 'fs/promises': false, child_process: false,
+                crypto: false, url: false, vm: false, path: false },
+    extensions: ['.mjs','.js','.json','.wasm'],
     mainFields: ['browser','module','main'],
   },
+
   module: {
     rules: [
       { test: /\.wasm$/, type: 'webassembly/async' },
@@ -55,9 +32,7 @@ module.exports = {
     ]
   },
   plugins: [
-    // <-- Aquí ignoramos TODO import que comience por "node:"
-    new webpack.IgnorePlugin({
-      resourceRegExp: /^node:/,
-    }),
-  ],
+    new webpack.IgnorePlugin({ resourceRegExp: /^node:/ })
+  ]
 };
+

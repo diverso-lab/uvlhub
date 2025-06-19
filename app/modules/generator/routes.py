@@ -13,6 +13,7 @@ from flamapy.metamodels.fm_metamodel.models.feature_model import (
     Domain,
     Range,
 )  # Ajusta el import si es necesario
+from flask import jsonify
 
 generator_service = GeneratorService()
 
@@ -977,62 +978,79 @@ def step4():
     )
 
 
-@generator_bp.route("/generator/step5", methods=["GET"])
+# @generator_bp.route("/generator/step5", methods=["GET"])
+# def step5():
+#     current_step = 5
+#     return render_template("generator/step5.html", current_step=current_step)
+
+
+# Endpoint dedicado SOLO para descarga
+@generator_bp.route("/generator/step5", methods=["GET", "POST"])
 def step5():
+    if request.method == "POST":
+        params_dict = session.get("params")
+        if not params_dict:
+            return "Error: Params missing in session", 400
+
+        # Reconstruye el objeto Params (y lista de Attribute si toca, como en step4)
+        params = Params(**params_dict)
+
+        # Reconstruimos ATTRIBUTES_LIST
+        if not params.RANDOM_ATTRIBUTES and params.ATTRIBUTES_LIST:
+            rebuilt_attrs = []
+            for attr in params.ATTRIBUTES_LIST:
+                type_ = attr["type"]
+                name = attr["name"]
+                value = attr["default_value"]
+
+                if type_ == "boolean":
+                    domain = Domain(ranges=None, elements=[True, False])
+                    default_value = True if value == "True" else False
+                elif type_ == "integer":
+                    domain = Domain(ranges=[Range(0, 100)], elements=None)
+                    default_value = int(value) if value else 0
+                elif type_ == "real":
+                    domain = Domain(ranges=[Range(0, 100)], elements=None)
+                    default_value = float(value) if value else 0.0
+                elif type_ == "string":
+                    domain = Domain(ranges=None, elements=None)
+                    default_value = value or ""
+                else:
+                    domain = Domain(ranges=None, elements=None)
+                    default_value = value
+
+                rebuilt_attrs.append(
+                    Attribute(name=name, domain=domain, default_value=default_value)
+                )
+            # params.ATTRIBUTES_LIST = rebuilt_attrs
+            params_dict["ATTRIBUTES_LIST"] = rebuilt_attrs
+            session['params'] = params_dict
+            print("AAAAAAAAAAAAAAAAAAAAAAAAA")
+            print(session['params'])
+
+        # Genera los modelos y el zip SOLO aquí
+        # temp_dir = tempfile.mkdtemp()
+        # output_dir = os.path.join(temp_dir, "models_output")
+        # os.makedirs(output_dir, exist_ok=True)
+        # fm_generator = FmgeneratorModel(params)
+        # fm_generator.generate_models(output_dir)
+        # zip_path = os.path.join(temp_dir, "feature_models.zip")
+        # generator_service.zip_generated_models(output_dir, zip_path)
+        # zip_filename = f"fms.zip"
+        # try:
+        #     return send_file(zip_path, as_attachment=True, download_name=zip_filename)
+        # finally:
+        #     if os.path.exists(temp_dir):
+        #         shutil.rmtree(temp_dir)
+
     current_step = 5
     return render_template("generator/step5.html", current_step=current_step)
 
 
-# Endpoint dedicado SOLO para descarga
-@generator_bp.route("/generator/download", methods=["GET"])
-def download_models():
-    params_dict = session.get("params")
-    if not params_dict:
-        return "Error: Params missing in session", 400
 
-    # Reconstruye el objeto Params (y lista de Attribute si toca, como en step4)
-    params = Params(**params_dict)
-
-    # Reconstruimos ATTRIBUTES_LIST
-    if not params.RANDOM_ATTRIBUTES and params.ATTRIBUTES_LIST:
-        rebuilt_attrs = []
-        for attr in params.ATTRIBUTES_LIST:
-            type_ = attr["type"]
-            name = attr["name"]
-            value = attr["default_value"]
-
-            if type_ == "boolean":
-                domain = Domain(ranges=None, elements=[True, False])
-                default_value = True if value == "True" else False
-            elif type_ == "integer":
-                domain = Domain(ranges=[Range(0, 100)], elements=None)
-                default_value = int(value) if value else 0
-            elif type_ == "real":
-                domain = Domain(ranges=[Range(0, 100)], elements=None)
-                default_value = float(value) if value else 0.0
-            elif type_ == "string":
-                domain = Domain(ranges=None, elements=None)
-                default_value = value or ""
-            else:
-                domain = Domain(ranges=None, elements=None)
-                default_value = value
-
-            rebuilt_attrs.append(
-                Attribute(name=name, domain=domain, default_value=default_value)
-            )
-        params.ATTRIBUTES_LIST = rebuilt_attrs
-
-    # Genera los modelos y el zip SOLO aquí
-    temp_dir = tempfile.mkdtemp()
-    output_dir = os.path.join(temp_dir, "models_output")
-    os.makedirs(output_dir, exist_ok=True)
-    fm_generator = FmgeneratorModel(params)
-    fm_generator.generate_models(output_dir)
-    zip_path = os.path.join(temp_dir, "feature_models.zip")
-    generator_service.zip_generated_models(output_dir, zip_path)
-    zip_filename = f"fms.zip"
-    try:
-        return send_file(zip_path, as_attachment=True, download_name=zip_filename)
-    finally:
-        if os.path.exists(temp_dir):
-            shutil.rmtree(temp_dir)
+@generator_bp.route('/generator/params-json', methods=['GET'])
+def get_params_json():
+    params = session.get('params')
+    if not params:
+        return jsonify({"error": "Params missing"}), 400
+    return jsonify(params)
