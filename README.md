@@ -32,4 +32,8 @@ To download changes from fm_generator plugin, please do from the root of the pro
 cd fm_generator
 git pull origin main
 ```
-Then, keep on the next step naturally
+You also need to install some dependencies with npm:
+```
+npm install jszip file-saver
+```
+Then, keep on the next step naturally from the official documentation.
