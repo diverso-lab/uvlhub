@@ -22,6 +22,9 @@ RUN apt-get clean \
 # Set the working directory in the container to /app
 WORKDIR /app
 
+# Copy setup.py to the root of the container
+COPY setup.py .
+
 # Copy files
 COPY app/ ./app
 COPY core/ ./core
@@ -58,6 +61,7 @@ RUN pip install -e ./
 # Install npm dependencies
 COPY package.json .
 RUN npm install
+RUN npm install jszip file-saver
 
 # Compile webpack files
 RUN rosemary webpack:compile
