@@ -30,6 +30,7 @@ COPY app/ ./app
 COPY core/ ./core
 COPY rosemary/ ./rosemary
 COPY migrations/ ./migrations
+COPY fm_generator/ ./fm_generator
 
 # Copy requirements.txt into the working directory /app
 COPY requirements.txt .
