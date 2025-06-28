@@ -19,6 +19,7 @@ from rosemary.commands.update import update
 from rosemary.commands.make_module import make_module
 from rosemary.commands.env import env
 from rosemary.commands.test import test
+from rosemary.commands.detect_secrets import detect_secrets
 
 
 class RosemaryCLI(click.Group):
@@ -57,6 +58,7 @@ cli.add_command(stop)
 cli.add_command(selenium)
 cli.add_command(module_list)
 cli.add_command(webpack_compile)
+cli.add_command(detect_secrets)
 
 if __name__ == "__main__":
     cli()
