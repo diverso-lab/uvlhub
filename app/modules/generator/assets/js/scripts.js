@@ -72,8 +72,8 @@ class NavigatorExecutor {
     this.pyodide = pyodide;
 
     await pyodide.runPythonAsync(await pythonFile.text())
-      .then(() => console.log("El wrapper lo coge piola"))
-      .catch((e) => console.error("Las cagao con el wrapper", e))
+      .then(() => console.log("Wrapper detected"))
+      .catch((e) => console.error("There was an error trying to find the wrapper", e))
   }
 
 
