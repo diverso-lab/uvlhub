@@ -1,27 +1,26 @@
 features
 	F0 
-		[0..2]
-			F3 
+		mandatory
 			F2 
-		optional
-			F1 
-				[0..3]
-					F6 
-					F5 
-						optional
-							F7 
-								[0..4]
-									F13 {Enabled true}
-									F12 
-									F11 
-									F10 
+		mandatory
+			F1 {Enabled true}
+				[0..2]
 					F4 
-						[2]
-							F9 
-							F8 
+						mandatory
+							F6 
+					F3 {Capacity 30}
+						optional
+							F7 {Priority 'medium'}
+						optional
+							F5 
+								[0..3]
+									F10 
+									F9 {Priority 'medium'}
+									F8 
 constraints
-	F13 => F6
-	F3 <=> F10
-	! F13 <=> F8
-	F12 => ! F3
-	F9 <=> ! F12
+	F6 <=> F4
+	F9 <=> ! F7
+	F8 <=> F9
+	F2 <=> F9
+	F7 <=> F3
+	F7 <=> ! F10

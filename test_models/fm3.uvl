@@ -1,34 +1,29 @@
 features
 	F0 
-		[0..4]
-			F4 {Capacity 30}
-			F3 
+		mandatory
+			F3 {Enabled true}
+		[0..2]
 			F2 
-			F1 
-				[0..4]
-					F8 {Capacity 30}
-						mandatory
-							F9 
-								[0..4]
-									F16 {Enabled true}
-									F15 
-									F14 
-									F13 {Priority 'medium'}
-					F7 
-						optional
-							F10 
-					F6 
-						optional
-							F11 
+				[0..2]
 					F5 
 						optional
-							F12 {Capacity 30, Priority 'medium'}
+							F7 
+								optional
+									F12 
+					F4 
+						[0..2]
+							F9 {Enabled true}
+							F8 
+								[0..2]
+									F11 
+									F10 {Capacity 30}
+			F1 {Enabled true}
+				optional
+					F6 {Capacity 30}
 constraints
-	F11 <=> F12
-	! F12 => ! F6
-	! F12 <=> F14
-	F8 | F13
-	F13 => ! F14
-	F16 <=> ! F5
-	! F12 <=> ! F13
-	! F14 <=> ! F7
+	F2 <=> F3
+	F7 | F9
+	F11 <=> F5
+	F2 <=> F5
+	F9 <=> F2
+	! F10 | F5

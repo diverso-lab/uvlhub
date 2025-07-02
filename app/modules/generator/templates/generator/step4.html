@@ -101,21 +101,58 @@ document.getElementById('delete-attribute-btn').addEventListener('click', functi
     }
 });
 
+// Auxiliar para validar Boolean (al menos uno)
+function validateBooleanCheckboxes(card) {
+    const trueBox = card.querySelector('.boolean-true');
+    const falseBox = card.querySelector('.boolean-false');
+    const errorDiv = card.querySelector('.bool-error');
+    if (!trueBox.checked && !falseBox.checked) {
+        errorDiv.textContent = 'Select at least one value (True or False)';
+        return false;
+    } else {
+        errorDiv.textContent = '';
+        return true;
+    }
+}
+
 // Función auxiliar para actualizar el campo “Value” según el tipo seleccionado
-function updateValueField(card, type) {
+function updateValueField(card, type, idx) {
     const valueDiv = card.querySelector('.value-field');
     if (type === 'boolean') {
         valueDiv.innerHTML = `
-            <label class="form-label">Value</label>
-            <select class="form-select" name="attr_value" required>
-                <option value="True">True</option>
-                <option value="False">False</option>
-            </select>
+            <label class="form-label mb-1">Possible values</label><br>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input boolean-true" type="checkbox" name="attr_value_true_${idx}">
+                <label class="form-check-label">True</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input boolean-false" type="checkbox" name="attr_value_false_${idx}">
+                <label class="form-check-label">False</label>
+            </div>
+            <div class="text-danger bool-error" style="font-size:0.95em; margin-top:2px;"></div>
+        `;
+        // Validación en tiempo real
+        const trueBox = valueDiv.querySelector('.boolean-true');
+        const falseBox = valueDiv.querySelector('.boolean-false');
+        trueBox.addEventListener('change', () => validateBooleanCheckboxes(card));
+        falseBox.addEventListener('change', () => validateBooleanCheckboxes(card));
+    } else if (type === 'integer' || type === 'real' || type === 'string') {
+        valueDiv.innerHTML = `
+            <div class="d-flex gap-2">
+                <div>
+                    <label class="form-label mb-1">Min</label>
+                    <input type="number" class="form-control" name="attr_min_value_${idx}" required step="${type === 'real' ? 'any' : '1'}">
+                </div>
+                <div>
+                    <label class="form-label mb-1">Max</label>
+                    <input type="number" class="form-control" name="attr_max_value_${idx}" required step="${type === 'real' ? 'any' : '1'}">
+                </div>
+            </div>
         `;
     } else {
         valueDiv.innerHTML = `
             <label class="form-label">Value</label>
-            <input type="text" class="form-control" name="attr_value" placeholder="e.g. 5 or Red" required>
+            <input type="text" class="form-control" name="attr_value_${idx}" placeholder="e.g. 5 or Red" required>
         `;
     }
 }
@@ -129,11 +166,11 @@ function addAttributeCard() {
     card.innerHTML = `
         <div class="mb-2">
             <label class="form-label">Name</label>
-            <input type="text" class="form-control" name="attr_name" placeholder="e.g. Seats" required>
+            <input type="text" class="form-control" name="attr_name_${idx}" placeholder="e.g. Seats" required>
         </div>
         <div class="mb-2">
             <label class="form-label">Type</label>
-            <select class="form-select attr-type-select" name="attr_type" required>
+            <select class="form-select attr-type-select" name="attr_type_${idx}" required>
                 <option value="integer">Integer</option>
                 <option value="real">Real</option>
                 <option value="boolean">Boolean</option>
@@ -147,7 +184,7 @@ function addAttributeCard() {
             <label class="form-label">Attach probability</label>
             <input type="number"
                    class="form-control"
-                   name="attr_attach_prob"
+                   name="attr_attach_prob_${idx}"
                    step="0.01"
                    min="0"
                    max="1"
@@ -157,7 +194,7 @@ function addAttributeCard() {
         <div class="form-check mb-2">
             <input class="form-check-input"
                    type="checkbox"
-                   name="attr_use_in_constraints"
+                   name="attr_use_in_constraints_${idx}"
                    id="attr_use_in_constraints_${idx}"
                    checked>
             <label class="form-check-label" for="attr_use_in_constraints_${idx}">
@@ -168,13 +205,29 @@ function addAttributeCard() {
     manualAttributesList.appendChild(card);
 
     // Inicializar campo “Value” con tipo por defecto (integer)
-    updateValueField(card, 'integer');
+    updateValueField(card, 'integer', idx);
 
     // Cuando cambie el <select> de tipo, actualizamos el campo Value
     card.querySelector('.attr-type-select').addEventListener('change', function() {
-        updateValueField(card, this.value);
+        updateValueField(card, this.value, idx);
     });
 }
+
+// Validar al hacer submit que todos los Boolean tengan al menos una opción seleccionada
+document.querySelector('form').addEventListener('submit', function(e) {
+    let valid = true;
+    document.querySelectorAll('.manual-attribute-card').forEach((card, idx) => {
+        const typeSelect = card.querySelector('.attr-type-select');
+        if (typeSelect.value === 'boolean') {
+            if (!validateBooleanCheckboxes(card)) {
+                valid = false;
+            }
+        }
+    });
+    if (!valid) {
+        e.preventDefault();
+    }
+});
 
 // Al cargar la página, seleccionamos la sección apropiada según el checkbox
 toggleAttributeSections();
@@ -184,5 +237,6 @@ if (!randomCheckbox.checked) {
     addAttributeCard();
 }
 </script>
+
 <script src="{{ url_for('generator.assets', subfolder='js', filename='scripts.js') }}"></script>
 {% endblock %}

@@ -134,27 +134,27 @@
                     >
                 </div>
                 <div class="col">
-                    <label class="form-label">Integer:</label>
+                    <label class="form-label">Numeric:</label>
                     <input
                         type="number"
                         step="0.01"
                         min="0"
                         max="1"
                         class="form-control"
-                        name="ctc_dist_integer"
-                        value="{{ values.get('ctc_dist_integer', 0.2) }}"
+                        name="ctc_dist_numeric"
+                        value="{{ values.get('ctc_dist_numeric', 0.2) }}"
                     >
                 </div>
                 <div class="col">
-                    <label class="form-label">Real:</label>
+                    <label class="form-label">Aggregate:</label>
                     <input
                         type="number"
                         step="0.01"
                         min="0"
                         max="1"
                         class="form-control"
-                        name="ctc_dist_real"
-                        value="{{ values.get('ctc_dist_real', 0.1) }}"
+                        name="ctc_dist_aggregate"
+                        value="{{ values.get('ctc_dist_aggregate', 0.1) }}"
                     >
                 </div>
                 <div class="col">
@@ -456,7 +456,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // Constraint type dist
-    let ctc_ids = ['ctc_dist_boolean', 'ctc_dist_integer', 'ctc_dist_real', 'ctc_dist_string'];
+    let ctc_ids = ['ctc_dist_boolean', 'ctc_dist_numeric', 'ctc_dist_aggregate', 'ctc_dist_string'];
     ctc_ids.forEach(id => {
         let el = document.getElementsByName(id)[0];
         if (el) el.addEventListener('input', () => updateSum(ctc_ids, 'ctc_dist_total'));
