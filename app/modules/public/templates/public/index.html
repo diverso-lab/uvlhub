@@ -15,95 +15,127 @@
                 <div class="col-12 mb-5">
 
                     <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center justify-content-between">
-                                <h2>
-    
-                                    <a href="{{ dataset.get_uvlhub_doi() }}">
-                                        {{ dataset.ds_meta_data.title }}
-                                    </a>
-    
-                                </h2>
-                                <div>
-                                    <span class="badge bg-secondary">{{ dataset.get_cleaned_publication_type() }}</span>
-                                </div>
-                            </div>
+                    <div class="card-body">
 
-                            <p>{{ dataset.created_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
-    
-                            <div class="row mb-2">
-    
-                                <div class="col-12">
-                                    <p class="card-text">{{ dataset.ds_meta_data.description }}</p>
-                                </div>
-    
-                            </div>
-    
-                            <div class="row mb-2 mt-4">
-    
-                                <div class="col-12">
-                                    {% for author in dataset.ds_meta_data.authors %}
-                                        <p class="p-0 m-0">
-                                            {{ author.name }}
-                                            {% if author.affiliation %}
-                                                ({{ author.affiliation }})
-                                            {% endif %}
-                                            {% if author.orcid %}
-                                                ({{ author.orcid }})
-                                            {% endif %}
-                                        </p>
-                                    {% endfor %}
-                                </div>
-    
-    
-                            </div>
-    
-                            <div class="row mb-2">
-    
-                                <div class="col-12">
-                                    <a href="{{ dataset.get_uvlhub_doi() }}">{{ dataset.get_uvlhub_doi() }}</a>
-                                     <div id="dataset_doi_uvlhub_{{ dataset.id }}" style="display: none">
-                                    {{ dataset.get_uvlhub_doi() }}
-                                </div>
-    
-                                <i data-feather="clipboard" class="center-button-icon"
-                                   style="cursor: pointer"
-                                   onclick="copyText('dataset_doi_uvlhub_{{ dataset.id }}')"></i>
-                                </div>
-    
-    
-    
-                            </div>
-    
-                            <div class="row mb-2">
-    
-                                <div class="col-12">
-                                    {% for tag in dataset.ds_meta_data.tags.split(',') %}
-                                        <span class="badge bg-secondary">{{ tag.strip() }}</span>
-                                    {% endfor %}
-                                </div>
-    
-                            </div>
-    
-                            <div class="row  mt-4">
-                                <div class="col-12">
-                                    <a href="{{ dataset.get_uvlhub_doi() }}" class="btn btn-primary btn-sm"
-                                       style="border-radius: 5px;">
-                                        <i data-feather="eye" class="center-button-icon"></i>
-                                        View dataset
-                                    </a>
-    
-                                    <a href="/dataset/download/{{ dataset.id }}" class="btn btn-primary btn-sm"
-                                       style="border-radius: 5px;">
-                                        <i data-feather="download" class="center-button-icon"></i>
-                                        Download ({{ dataset.get_file_total_size_for_human() }})
-                                    </a>
-                                </div>
-                            </div>
-    
-    
+                        <div class="d-flex align-items-center justify-content-between">
+                            <h2 class="mb-0">
+                                <a href="{{ dataset.get_uvlhub_doi() }}">
+                                    {{ dataset.ds_meta_data.title }}
+                                </a>
+                            </h2>
+                            <span class="badge bg-secondary">{{ dataset.get_cleaned_publication_type() }}</span>
                         </div>
+
+                        <p class="text-muted mt-2 mb-1">
+                            {{ dataset.created_at.strftime('%B %d, %Y at %I:%M %p') }}
+                        </p>
+
+                        <!-- Autores estilo Zenodo -->
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <ul class="list-unstyled mb-0" style="font-size: 0.85rem;">
+                                {% for author in dataset.ds_meta_data.authors %}
+                                    <li class="d-flex align-items-center mb-1" style="line-height: 1.2;">
+                                    <i data-feather="user" class="me-2 text-muted" style="width: 14px; height: 14px;"></i>
+                                    <span class="me-2">{{ author.name }}</span>
+
+                                    {% if author.affiliation %}
+                                        <span class="badge bg-light text-muted me-2" style="font-size: 0.75rem;">
+                                        {{ author.affiliation }}
+                                        </span>
+                                    {% endif %}
+
+                                    {% if author.orcid %}
+                                        <a href="https://orcid.org/{{ author.orcid }}"
+                                        target="_blank"
+                                        class="text-success d-flex align-items-center"
+                                        data-bs-toggle="tooltip"
+                                        data-bs-placement="top"
+                                        title="ORCID: {{ author.orcid }}">
+                                        <img src="https://info.orcid.org/wp-content/uploads/2019/11/orcid_16x16.png"
+                                            alt="ORCID" class="me-1" width="14" height="14" />
+                                        </a>
+                                    {% endif %}
+                                    </li>
+                                {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+
+
+                        <div class="row mb-2">
+                            <div class="col-12">
+                                <p class="card-text">{{ dataset.ds_meta_data.description }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Tags -->
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                {% for tag in dataset.ds_meta_data.tags.split(',') %}
+                                    <span class="badge bg-secondary">{{ tag.strip() }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Botones: View / Download -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+
+                                <a href="{{ dataset.get_uvlhub_doi() }}"
+                                class="btn btn-outline-secondary btn-xs me-2 d-inline-flex align-items-center"
+                                style="font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 4px;">
+                                <i data-feather="eye" class="me-1" style="width: 14px; height: 14px;"></i>
+                                View
+                                </a>
+
+                                <a href="/dataset/download/{{ dataset.id }}"
+                                class="btn btn-outline-secondary btn-xs d-inline-flex align-items-center"
+                                style="font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 4px;">
+                                <i data-feather="download" class="me-1" style="width: 14px; height: 14px;"></i>
+                                Download ({{ dataset.get_file_total_size_for_human() }})
+                                </a>
+
+                            </div>
+                        </div>
+
+                        <!-- DOI + Copy icon -->
+                        <div class="row mt-3">
+                            <div class="col-12 d-flex align-items-center flex-wrap">
+                                
+                                <!-- Etiqueta DOI -->
+                                <span class="px-3 py-1 bg-dark text-white fw-bold rounded-start" style="font-family: monospace;">
+                                DOI
+                                </span>
+
+                                <!-- Enlace al DOI -->
+                                <a href="{{ dataset.get_uvlhub_doi() }}"
+                                target="_blank"
+                                class="px-3 py-1 text-white fw-semibold text-decoration-none rounded-end me-2"
+                                style="background: linear-gradient(90deg, #2176bd 0%, #2980b9 100%); font-family: monospace;">
+                                {{ dataset.get_uvlhub_doi() }}
+                                </a>
+
+                                <!-- Copiar DOI -->
+                                <i data-feather="clipboard"
+                                class="center-button-icon"
+                                style="cursor: pointer"
+                                onclick="copyText('dataset_doi_uvlhub_{{ dataset.id }}')"
+                                data-bs-toggle="tooltip"
+                                title="Copy DOI">
+                                </i>
+
+                                <!-- Texto oculto para copiar -->
+                                <div id="dataset_doi_uvlhub_{{ dataset.id }}" style="display: none;">
+                                {{ dataset.get_uvlhub_doi() }}
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
+</div>
+
+
 
                 </div>
 
@@ -125,68 +157,89 @@
 
                 <div class="col-12">
 
-                    <div class="card mb-10 shadow-sm">
-                    <div class="card-body p-8">
-                        <h2 class="fs-2x fw-bold text-dark mb-8">Hub statistics</h2>
+<!-- BLOQUE 1: Contenido del hub -->
+<div class="card mb-6 shadow-sm">
+  <div class="card-body p-8">
+    <h2 class="fs-1 fw-bold text-dark mb-6">
+  <i data-feather="layers" class="me-2 text-primary"></i>
+  Hub content
+</h2>
+    <div class="row g-6">
+      <!-- Datasets -->
+      <div class="col-md-6">
+        <div class="bg-light-primary rounded p-6 text-center">
+          <i data-feather="database" class="svg-icon svg-icon-2x mb-2 text-primary"></i>
+          <div class="fs-3 fw-bold text-gray-800">{{ datasets_counter | format_thousands }}</div>
+          <div class="text-muted">Datasets</div>
+        </div>
+      </div>
+      <!-- Feature Models -->
+      <div class="col-md-6">
+        <div class="bg-light-info rounded p-6 text-center">
+          <i data-feather="file" class="svg-icon svg-icon-2x mb-2 text-info"></i>
+          <div class="fs-3 fw-bold text-gray-800">{{ feature_models_counter | format_thousands }}</div>
+          <div class="text-muted">Feature Models</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-                        <div class="row g-6">
-                        <!-- Datasets -->
-                        <div class="col-md-6 col-xl-4 h-100">
-                            <div class="bg-light-primary rounded p-6 h-100 d-flex flex-column justify-content-center align-items-center text-center">
-                            <i data-feather="database" class="svg-icon svg-icon-2x mb-2 text-primary"></i>
-                            <div class="fs-3 fw-bold text-gray-800">{{ datasets_counter | format_thousands }}</div>
-                            <div class="text-muted">Datasets</div>
-                            </div>
-                        </div>
+<!-- BLOQUE 2: Visualizaciones -->
+<div class="card mb-6 shadow-sm">
+  <div class="card-body p-8">
+<h2 class="fs-2 fw-bold text-dark mb-6">
+  <i data-feather="eye" class="me-2 text-success"></i>
+  Views
+</h2>
+    <div class="row g-6">
+      <!-- Dataset views -->
+      <div class="col-md-6">
+        <div class="bg-light-success rounded p-6 text-center">
+          <i data-feather="eye" class="svg-icon svg-icon-2x mb-2 text-success"></i>
+          <div class="fs-3 fw-bold text-gray-800">{{ total_dataset_views | format_thousands }}</div>
+          <div class="text-muted">Dataset views</div>
+        </div>
+      </div>
+      <!-- Feature Model views -->
+      <div class="col-md-6">
+        <div class="bg-light-success rounded p-6 text-center">
+          <i data-feather="eye" class="svg-icon svg-icon-2x mb-2 text-success"></i>
+          <div class="fs-3 fw-bold text-gray-800">{{ total_feature_model_views | format_thousands }}</div>
+          <div class="text-muted">Feature model views</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-                        <!-- Feature Models -->
-                        <div class="col-md-6 col-xl-4 h-100">
-                            <div class="bg-light-info rounded p-6 h-100 d-flex flex-column justify-content-center align-items-center text-center">
-                            <i data-feather="file" class="svg-icon svg-icon-2x mb-2 text-info"></i>
-                            <div class="fs-3 fw-bold text-gray-800">{{ feature_models_counter }}</div>
-                            <div class="text-muted">Feature models</div>
-                            </div>
-                        </div>
-
-                        <!-- Dataset Views -->
-                        <div class="col-md-6 col-xl-4 h-100">
-                            <div class="bg-light-success rounded p-6 h-100 d-flex flex-column justify-content-center align-items-center text-center">
-                            <i data-feather="eye" class="svg-icon svg-icon-2x mb-2 text-success"></i>
-                            <div class="fs-3 fw-bold text-gray-800">{{ total_dataset_views }}</div>
-                            <div class="text-muted">Dataset views</div>
-                            </div>
-                        </div>
-
-                        <!-- Feature Model Views -->
-                        <div class="col-md-6 col-xl-4 h-100">
-                            <div class="bg-light-success rounded p-6 h-100 d-flex flex-column justify-content-center align-items-center text-center">
-                            <i data-feather="eye" class="svg-icon svg-icon-2x mb-2 text-success"></i>
-                            <div class="fs-3 fw-bold text-gray-800">{{ total_feature_model_views }}</div>
-                            <div class="text-muted">Feature model views</div>
-                            </div>
-                        </div>
-
-                        <!-- Dataset Downloads -->
-                        <div class="col-md-6 col-xl-4 h-100">
-                            <div class="bg-light-warning rounded p-6 h-100 d-flex flex-column justify-content-center align-items-center text-center">
-                            <i data-feather="download" class="svg-icon svg-icon-2x mb-2 text-warning"></i>
-                            <div class="fs-3 fw-bold text-gray-800">{{ total_dataset_downloads }}</div>
-                            <div class="text-muted">Dataset downloads</div>
-                            </div>
-                        </div>
-
-                        <!-- Feature Model Downloads -->
-                        <div class="col-md-6 col-xl-4 h-100">
-                            <div class="bg-light-warning rounded p-6 h-100 d-flex flex-column justify-content-center align-items-center text-center">
-                            <i data-feather="download" class="svg-icon svg-icon-2x mb-2 text-warning"></i>
-                            <div class="fs-3 fw-bold text-gray-800">{{ total_feature_model_downloads }}</div>
-                            <div class="text-muted">Feature model downloads</div>
-                            </div>
-                        </div>
-                        </div>
-                    </div>
-                    </div>
-
+<!-- BLOQUE 3: Descargas -->
+<div class="card mb-10 shadow-sm">
+  <div class="card-body p-8">
+<h2 class="fs-2 fw-bold text-dark mb-6">
+  <i data-feather="download" class="me-2 text-warning"></i>
+  Downloads
+</h2>
+    <div class="row g-6">
+      <!-- Dataset downloads -->
+      <div class="col-md-6">
+        <div class="bg-light-warning rounded p-6 text-center">
+          <i data-feather="download" class="svg-icon svg-icon-2x mb-2 text-warning"></i>
+          <div class="fs-3 fw-bold text-gray-800">{{ total_dataset_downloads | format_thousands }}</div>
+          <div class="text-muted">Dataset downloads</div>
+        </div>
+      </div>
+      <!-- Feature Model downloads -->
+      <div class="col-md-6">
+        <div class="bg-light-warning rounded p-6 text-center">
+          <i data-feather="download" class="svg-icon svg-icon-2x mb-2 text-warning"></i>
+          <div class="fs-3 fw-bold text-gray-800">{{ total_feature_model_downloads | format_thousands }}</div>
+          <div class="text-muted">Feature model downloads</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 
                 </div>

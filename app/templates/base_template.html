@@ -603,7 +603,7 @@
 						<div class="app-sidebar-logo px-6" id="kt_app_sidebar_logo">
 							<!--begin::Logo image-->
 							<a href="{{url_for('public.index')}}">
-								<img alt="Logo" src="{{ url_for('static', filename='media/logos/default-dark.svg') }}" class="h-60px app-sidebar-logo-default" />
+								<img alt="Logo" src="{{ url_for('static', filename='media/logos/default-dark.svg') }}" class="h-40px app-sidebar-logo-default" />
 							</a>
 							<!--end::Logo image-->
 							<!--begin::Sidebar toggle-->
@@ -1438,10 +1438,22 @@
 					});
 				}
 			});
+
+			function copyText(id) {
+				const text = document.getElementById(id).innerText;
+				navigator.clipboard.writeText(text).then(() => {
+					return
+				});
+			}
 				
 		</script>
 
 		{% block scripts %}{% endblock %}
+
+		<script src="https://unpkg.com/feather-icons"></script>
+<script>
+  feather.replace()
+</script>
 
 	</body>
 	<!--end::Body-->

@@ -21,3 +21,13 @@
 .bg-primary{
     color: white !important;
 }
+
+/* Sidebar en modo oscuro */
+[data-kt-app-layout="dark-sidebar"] .app-sidebar {
+    background-color: var(--bs-app-sidebar-dark-bg-color);
+}
+
+/* Sidebar en modo claro */
+[data-kt-app-layout="light-sidebar"] .app-sidebar {
+    background-color: #f8f9fa; /* o cualquier otro color claro que te guste */
+}
