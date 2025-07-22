@@ -84,6 +84,13 @@ def create_app(config_name="development"):
         env_vars["PRODUCTION"] = flask_env == "production"
 
         return env_vars
+    
+    @app.template_filter("format_thousands")
+    def format_thousands(value):
+        try:
+            return f"{int(value):,}".replace(",", " ")  # espacio fino U+202F
+        except (ValueError, TypeError):
+            return value
 
     return app
 
