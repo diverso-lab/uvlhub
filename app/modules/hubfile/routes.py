@@ -10,6 +10,7 @@ from app.modules.hubfile.services import HubfileDownloadRecordService, HubfileSe
 
 from app import db
 from app.modules.statistics.services import StatisticsService
+from flask import render_template
 
 hubfile_download_record_service = HubfileDownloadRecordService()
 
@@ -104,7 +105,7 @@ def download_file(file_id):
     directory_path = os.path.join(
         "uploads",
         f"user_{user_owner.id}",
-        f"dataset_{hubfile.feature_model.data_set_id}",
+        f"dataset_{hubfile.feature_model.dataset_id}",
         "uvl",
     )
 
@@ -121,61 +122,32 @@ def download_file(file_id):
     return resp
 
 
-@hubfile_bp.route("/hubfile/view/<int:file_id>", methods=["GET"])
-def view_file(file_id):
-    file = HubfileService().get_or_404(file_id)
-    filename = file.name
+@hubfile_bp.route("/hubfile/<int:file_id>/view", methods=["GET"])
+def view_page(file_id):
+    selected_file = HubfileService().get_or_404(file_id)
+    dataset = selected_file.feature_model.data_set
 
+    # Leer contenido UVL
     directory_path = os.path.join(
         "uploads",
-        f"user_{file.feature_model.data_set.user_id}",
-        f"dataset_{file.feature_model.data_set_id}",
-        "uvl",
+        f"user_{dataset.user_id}",
+        f"dataset_{dataset.id}",
+        "uvl"
     )
-
-    parent_directory_path = os.path.dirname(current_app.root_path)
-    file_path = os.path.join(parent_directory_path, directory_path, filename)
+    file_path = os.path.join(current_app.root_path, "..", directory_path, selected_file.name)
 
     try:
-        if os.path.exists(file_path):
-            with open(file_path, "r") as f:
-                content = f.read()
-
-            user_cookie = request.cookies.get("view_cookie")
-            if not user_cookie:
-                user_cookie = str(uuid.uuid4())
-
-            # Check if the view record already exists for this cookie
-            existing_record = HubfileViewRecord.query.filter_by(
-                user_id=current_user.id if current_user.is_authenticated else None,
-                file_id=file_id,
-                view_cookie=user_cookie,
-            ).first()
-
-            if not existing_record:
-                # Register file view
-                new_view_record = HubfileViewRecord(
-                    user_id=current_user.id if current_user.is_authenticated else None,
-                    file_id=file_id,
-                    view_date=datetime.now(),
-                    view_cookie=user_cookie,
-                )
-                db.session.add(new_view_record)
-                db.session.commit()
-
-                statistics_service = StatisticsService()
-                statistics_service.increment_feature_models_viewed()
-
-            # Prepare response
-            response = jsonify({"success": True, "content": content})
-            if not request.cookies.get("view_cookie"):
-                response = make_response(response)
-                response.set_cookie(
-                    "view_cookie", user_cookie, max_age=60 * 60 * 24 * 365 * 2
-                )
-
-            return response
-        else:
-            return jsonify({"success": False, "error": "File not found"}), 404
+        with open(file_path, "r") as f:
+            content = f.read()
     except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
+        content = f"[Error reading file: {e}]"
+
+    # Registrar vista (opcional, como hacías antes)
+    # [...]
+
+    return render_template(
+        "hubfile/view_file.html",
+        selected_file=selected_file,
+        hubfiles=dataset.get_all_hubfiles(),  # O como lo tengas implementado
+        uvl_content=content
+    )

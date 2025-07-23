@@ -98,7 +98,7 @@ class DataSetSeeder(BaseSeeder):
 
         feature_models = [
             FeatureModel(
-                data_set_id=seeded_datasets[i // 3].id,
+                dataset_id=seeded_datasets[i // 3].id,
                 fm_meta_data_id=seeded_fm_meta_data[i].id,
             )
             for i in range(12)
@@ -115,7 +115,7 @@ class DataSetSeeder(BaseSeeder):
             file_name = f"file{i+1}.uvl"
             feature_model = seeded_feature_models[i]
             dataset = next(
-                ds for ds in seeded_datasets if ds.id == feature_model.data_set_id
+                ds for ds in seeded_datasets if ds.id == feature_model.dataset_id
             )
             user_id = dataset.user_id
 

@@ -1,0 +1,35 @@
+<div id="file-list">
+    {% for file in hubfiles %}
+        <div class="file-entry">
+            <div>
+                <i data-feather="file" class="me-1"></i>
+                <strong>{{ file.name }}</strong>
+                <small class="text-muted">({{ file.get_formatted_size() }})</small>
+            </div>
+            <div>
+                <button onclick="viewFile('{{ file.id }}')" class="btn btn-outline-secondary btn-sm">
+                    <i data-feather="eye"></i> View
+                </button>
+                <a href="{{ url_for('hubfile.download_file', file_id=file.id) }}" class="btn btn-outline-secondary btn-sm">
+                    <i data-feather="download"></i> Download
+                </a>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+<nav id="pagination-nav" aria-label="Pagination">
+    <ul class="pagination pagination-sm mt-3">
+        {% if prev_page %}
+            <li class="page-item">
+                <a class="page-link" href="#" onclick="loadFiles({{ prev_page }}); return false;">Previous</a>
+            </li>
+        {% endif %}
+        <li class="page-item active"><span class="page-link">{{ page }}</span></li>
+        {% if next_page %}
+            <li class="page-item">
+                <a class="page-link" href="#" onclick="loadFiles({{ next_page }}); return false;">Next</a>
+            </li>
+        {% endif %}
+    </ul>
+</nav>

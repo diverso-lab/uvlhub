@@ -254,25 +254,32 @@ def download_all_dataset():
 
 @dataset_bp.route("/doi/<path:doi>/", methods=["GET"])
 def subdomain_index(doi):
-
-    # Check if the DOI is an old DOI
+    # Redirección si el DOI es antiguo
     new_doi = doi_mapping_service.get_new_doi(doi)
     if new_doi:
-        # Redirect to the same path with the new DOI
         return redirect(url_for("dataset.subdomain_index", doi=new_doi), code=302)
 
-    # Try to search the dataset by the provided DOI (which should already be the new one)
+    # Buscar el dataset por DOI
     ds_meta_data = dsmetadata_service.filter_by_doi(doi)
-
     if not ds_meta_data:
         abort(404)
 
-    # Get dataset
     dataset = ds_meta_data.data_set
 
-    # Save the cookie to the user's browser
+    # Obtener todos los hubfiles de los feature models
+    hubfiles = []
+    for fm in dataset.feature_models:
+        hubfiles.extend(fm.hubfiles)
+
+    # Guardar la cookie
     user_cookie = ds_view_record_service.create_cookie(dataset=dataset)
-    resp = make_response(render_template("dataset/view_dataset.html", dataset=dataset))
+
+    # Renderizar vista con todos los datos
+    resp = make_response(render_template(
+        "dataset/view_dataset.html",
+        dataset=dataset,
+        hubfiles=hubfiles  # <-- ¡Esto faltaba!
+    ))
     resp.set_cookie("view_cookie", user_cookie)
 
     return resp
@@ -291,3 +298,4 @@ def get_unsynchronized_dataset(dataset_id):
         abort(404)
 
     return render_template("dataset/view_dataset.html", dataset=dataset)
+

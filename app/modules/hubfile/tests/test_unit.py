@@ -38,7 +38,7 @@ def test_create_hubfile_calls_enqueue_task(test_client):
         dataset = DataSetRepository().create(
             user_id=user.id, ds_meta_data_id=dsmetadata.id
         )
-        fm = FeatureModelRepository().create(data_set_id=dataset.id)
+        fm = FeatureModelRepository().create(dataset_id=dataset.id)
         HubfileRepository().create(
             name="test.uvl",
             checksum="1234",

@@ -157,94 +157,92 @@
 
                 <div class="col-12">
 
-<!-- BLOQUE 1: Contenido del hub -->
-<div class="card mb-6 shadow-sm">
-  <div class="card-body p-8">
-    <h2 class="fs-1 fw-bold text-dark mb-6">
-  <i data-feather="layers" class="me-2 text-primary"></i>
-  Hub content
-</h2>
-    <div class="row g-6">
-      <!-- Datasets -->
-      <div class="col-md-6">
-        <div class="bg-light-primary rounded p-6 text-center">
-          <i data-feather="database" class="svg-icon svg-icon-2x mb-2 text-primary"></i>
-          <div class="fs-3 fw-bold text-gray-800">{{ datasets_counter | format_thousands }}</div>
-          <div class="text-muted">Datasets</div>
-        </div>
-      </div>
-      <!-- Feature Models -->
-      <div class="col-md-6">
-        <div class="bg-light-info rounded p-6 text-center">
-          <i data-feather="file" class="svg-icon svg-icon-2x mb-2 text-info"></i>
-          <div class="fs-3 fw-bold text-gray-800">{{ feature_models_counter | format_thousands }}</div>
-          <div class="text-muted">Feature Models</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+                  <!-- BLOQUE 1: Contenido del hub -->
+                  <div class="card mb-6 shadow-sm">
+                    <div class="card-body p-8">
+                      <h2 class="fs-1 fw-bold text-dark mb-6">
+                    <i data-feather="layers" class="me-2 text-primary"></i>
+                    Hub content
+                  </h2>
+                      <div class="row g-6">
+                        <!-- Datasets -->
+                        <div class="col-md-6">
+                          <div class="bg-light-primary rounded p-6 text-center">
+                            <i data-feather="database" class="svg-icon svg-icon-2x mb-2 text-primary"></i>
+                            <div class="fs-3 fw-bold text-gray-800">{{ datasets_counter | format_thousands }}</div>
+                            <div class="text-muted">Datasets</div>
+                          </div>
+                        </div>
+                        <!-- Feature Models -->
+                        <div class="col-md-6">
+                          <div class="bg-light-info rounded p-6 text-center">
+                            <i data-feather="file" class="svg-icon svg-icon-2x mb-2 text-info"></i>
+                            <div class="fs-3 fw-bold text-gray-800">{{ feature_models_counter | format_thousands }}</div>
+                            <div class="text-muted">Feature Models</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
 
-<!-- BLOQUE 2: Visualizaciones -->
-<div class="card mb-6 shadow-sm">
-  <div class="card-body p-8">
-<h2 class="fs-2 fw-bold text-dark mb-6">
-  <i data-feather="eye" class="me-2 text-success"></i>
-  Views
-</h2>
-    <div class="row g-6">
-      <!-- Dataset views -->
-      <div class="col-md-6">
-        <div class="bg-light-success rounded p-6 text-center">
-          <i data-feather="eye" class="svg-icon svg-icon-2x mb-2 text-success"></i>
-          <div class="fs-3 fw-bold text-gray-800">{{ total_dataset_views | format_thousands }}</div>
-          <div class="text-muted">Dataset views</div>
-        </div>
-      </div>
-      <!-- Feature Model views -->
-      <div class="col-md-6">
-        <div class="bg-light-success rounded p-6 text-center">
-          <i data-feather="eye" class="svg-icon svg-icon-2x mb-2 text-success"></i>
-          <div class="fs-3 fw-bold text-gray-800">{{ total_feature_model_views | format_thousands }}</div>
-          <div class="text-muted">Feature model views</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+                  <!-- BLOQUE 2: Visualizaciones -->
+                  <div class="card mb-6 shadow-sm">
+                    <div class="card-body p-8">
+                  <h2 class="fs-2 fw-bold text-dark mb-6">
+                    <i data-feather="eye" class="me-2 text-success"></i>
+                    Views
+                  </h2>
+                      <div class="row g-6">
+                        <!-- Dataset views -->
+                        <div class="col-md-6">
+                          <div class="bg-light-success rounded p-6 text-center">
+                            <i data-feather="eye" class="svg-icon svg-icon-2x mb-2 text-success"></i>
+                            <div class="fs-3 fw-bold text-gray-800">{{ total_dataset_views | format_thousands }}</div>
+                            <div class="text-muted">Dataset views</div>
+                          </div>
+                        </div>
+                        <!-- Feature Model views -->
+                        <div class="col-md-6">
+                          <div class="bg-light-success rounded p-6 text-center">
+                            <i data-feather="eye" class="svg-icon svg-icon-2x mb-2 text-success"></i>
+                            <div class="fs-3 fw-bold text-gray-800">{{ total_feature_model_views | format_thousands }}</div>
+                            <div class="text-muted">Feature model views</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
 
-<!-- BLOQUE 3: Descargas -->
-<div class="card mb-10 shadow-sm">
-  <div class="card-body p-8">
-<h2 class="fs-2 fw-bold text-dark mb-6">
-  <i data-feather="download" class="me-2 text-warning"></i>
-  Downloads
-</h2>
-    <div class="row g-6">
-      <!-- Dataset downloads -->
-      <div class="col-md-6">
-        <div class="bg-light-warning rounded p-6 text-center">
-          <i data-feather="download" class="svg-icon svg-icon-2x mb-2 text-warning"></i>
-          <div class="fs-3 fw-bold text-gray-800">{{ total_dataset_downloads | format_thousands }}</div>
-          <div class="text-muted">Dataset downloads</div>
-        </div>
-      </div>
-      <!-- Feature Model downloads -->
-      <div class="col-md-6">
-        <div class="bg-light-warning rounded p-6 text-center">
-          <i data-feather="download" class="svg-icon svg-icon-2x mb-2 text-warning"></i>
-          <div class="fs-3 fw-bold text-gray-800">{{ total_feature_model_downloads | format_thousands }}</div>
-          <div class="text-muted">Feature model downloads</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+                  <!-- BLOQUE 3: Descargas -->
+                  <div class="card mb-10 shadow-sm">
+                    <div class="card-body p-8">
+                  <h2 class="fs-2 fw-bold text-dark mb-6">
+                    <i data-feather="download" class="me-2 text-warning"></i>
+                    Downloads
+                  </h2>
+                      <div class="row g-6">
+                        <!-- Dataset downloads -->
+                        <div class="col-md-6">
+                          <div class="bg-light-warning rounded p-6 text-center">
+                            <i data-feather="download" class="svg-icon svg-icon-2x mb-2 text-warning"></i>
+                            <div class="fs-3 fw-bold text-gray-800">{{ total_dataset_downloads | format_thousands }}</div>
+                            <div class="text-muted">Dataset downloads</div>
+                          </div>
+                        </div>
+                        <!-- Feature Model downloads -->
+                        <div class="col-md-6">
+                          <div class="bg-light-warning rounded p-6 text-center">
+                            <i data-feather="download" class="svg-icon svg-icon-2x mb-2 text-warning"></i>
+                            <div class="fs-3 fw-bold text-gray-800">{{ total_feature_model_downloads | format_thousands }}</div>
+                            <div class="text-muted">Feature model downloads</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
 
 
                 </div>
-
-
 
             </div>
 
@@ -332,28 +330,28 @@
                 <div class="col-12">
 
                     <div class="card mb-10 shadow-sm">
-  <div class="card-body p-8">
-    <h2 class="fs-2x fw-bold text-dark mb-4">
-      What is <span class="text-primary">uvlhub.io</span>?
-    </h2>
-    <p class="fs-6 text-gray-600 mb-10">
-      <strong>uvlhub.io</strong> is a repository of feature models in UVL format integrated with
-      Zenodo and FlamaPy, developed by <strong>DiversoLab</strong>.
-    </p>
+                      <div class="card-body p-8">
+                        <h2 class="fs-2x fw-bold text-dark mb-4">
+                          What is <span class="text-primary">uvlhub.io</span>?
+                        </h2>
+                        <p class="fs-6 text-gray-600 mb-10">
+                          <strong>uvlhub.io</strong> is a repository of feature models in UVL format integrated with
+                          Zenodo and FlamaPy, developed by <strong>DiversoLab</strong>.
+                        </p>
 
-    <h2 class="fs-2x fw-bold text-dark mb-4">
-      Can I contribute?
-    </h2>
-    <p class="fs-6 text-gray-600 mb-6">
-      Sure! You can fork our official GitHub repository, create fantastic features, and then
-      send us a pull request.
-    </p>
+                        <h2 class="fs-2x fw-bold text-dark mb-4">
+                          Can I contribute?
+                        </h2>
+                        <p class="fs-6 text-gray-600 mb-6">
+                          Sure! You can fork our official GitHub repository, create fantastic features, and then
+                          send us a pull request.
+                        </p>
 
-    <a href="https://github.com/diverso-lab/uvlhub" target="_blank" class="btn btn-primary fw-semibold">
-      Go to GitHub
-    </a>
-  </div>
-</div>
+                        <a href="https://github.com/diverso-lab/uvlhub" target="_blank" class="btn btn-primary fw-semibold">
+                          Go to GitHub
+                        </a>
+                      </div>
+                    </div>
 
                 </div>
 

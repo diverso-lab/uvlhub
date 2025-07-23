@@ -243,7 +243,7 @@ class DataSetService(BaseService):
                     fmmetadata.authors.append(author)
 
                 fm = self.feature_model_repository.create(
-                    commit=False, data_set_id=dataset.id, fm_meta_data_id=fmmetadata.id
+                    commit=False, dataset_id=dataset.id, fm_meta_data_id=fmmetadata.id
                 )
 
                 feature_model_count += 1

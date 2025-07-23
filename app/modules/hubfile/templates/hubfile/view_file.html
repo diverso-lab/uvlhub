@@ -1,0 +1,33 @@
+{% extends "base_template.html" %}
+
+{% block content %}
+<div class="container-xxl">
+    <div class="row">
+        <!-- Sidebar: listado de archivos -->
+        <div class="col-md-3">
+            <div class="list-group">
+                {% for f in hubfiles %}
+                    <a href="{{ url_for('hubfile.view_page', file_id=f.id) }}"
+                       class="list-group-item list-group-item-action {% if f.id == selected_file.id %}active{% endif %}">
+                        {{ f.name }}
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Contenido UVL -->
+        <div class="col-md-9">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Viewing: {{ selected_file.name }}</h3>
+                </div>
+                <div class="card-body">
+                    <pre style="white-space: pre-wrap; background-color: #f9f9f9; padding: 1em; border-radius: 8px;">
+{{ uvl_content }}
+                    </pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -31,3 +31,18 @@
 [data-kt-app-layout="light-sidebar"] .app-sidebar {
     background-color: #f8f9fa; /* o cualquier otro color claro que te guste */
 }
+
+a {
+  color: #287FB9;
+}
+
+.file-entry {
+    padding: 0.75rem;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.file-entry:last-child {
+    border-bottom: none;
+}

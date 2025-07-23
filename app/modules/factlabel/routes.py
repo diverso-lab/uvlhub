@@ -22,7 +22,7 @@ def view_factlabel(file_id):
     directory_path = os.path.join(
         "uploads",
         f"user_{file.feature_model.data_set.user_id}",
-        f"dataset_{file.feature_model.data_set_id}",
+        f"dataset_{file.feature_model.dataset_id}",
         "uvl",
     )
 
