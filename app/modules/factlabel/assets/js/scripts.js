@@ -215,7 +215,8 @@ function drawFMFactLabel(data) {
    var maxHeight = yAnalysis + MARGING_BETWEEN_PROPERTIES + PROPERTY_HEIGHT * data.analysis.length;
    chart.append("rect").attr("id", "border");
    drawBorders(maxWidth, maxHeight);
-   chart.attr("height", maxHeight);
+   const bbox = chart.node().getBBox();
+   chart.attr("height", bbox.height + 10); 
    collapseSubProperties(data);
 }
 
@@ -794,3 +795,5 @@ function context2d(width, height, dpi) {
    context.scale(dpi, dpi);
    return context;
 }
+
+window.drawFMFactLabel = drawFMFactLabel;

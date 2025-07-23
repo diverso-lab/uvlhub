@@ -122,8 +122,8 @@ def download_file(file_id):
     return resp
 
 
-@hubfile_bp.route("/hubfile/<int:file_id>/view", methods=["GET"])
-def view_page(file_id):
+@hubfile_bp.route("/hubfile/view/<int:file_id>", methods=["GET"])
+def view_uvl(file_id):
     selected_file = HubfileService().get_or_404(file_id)
     dataset = selected_file.feature_model.data_set
 
@@ -142,12 +142,10 @@ def view_page(file_id):
     except Exception as e:
         content = f"[Error reading file: {e}]"
 
-    # Registrar vista (opcional, como hacías antes)
-    # [...]
-
     return render_template(
         "hubfile/view_file.html",
         selected_file=selected_file,
-        hubfiles=dataset.get_all_hubfiles(),  # O como lo tengas implementado
+        hubfiles=dataset.files(),
+        dataset=dataset,
         uvl_content=content
     )

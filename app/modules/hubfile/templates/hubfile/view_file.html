@@ -1,13 +1,72 @@
 {% extends "base_template.html" %}
 
 {% block content %}
-<div class="container-xxl">
+
+<div class="container-xxl" id="kt_app_content_container">
+
+    <div class="row">
+
+        <div class="col-12 mb-5">
+
+            <div class="card">
+                <div class="card-body">
+
+                    <div class="d-flex align-items-center justify-content-between">
+                        <h1 class="mb-0">
+                            <a href="{{ dataset.get_uvlhub_doi() }}">
+                                {{ dataset.ds_meta_data.title }}
+                            </a>
+                        </h1>
+                        <span class="badge bg-secondary">{{ dataset.get_cleaned_publication_type() }}</span>
+                    </div>
+
+                    <!-- DOI + Copy icon -->
+                    <div class="row mt-3">
+                        <div class="col-12 d-flex align-items-center flex-wrap">
+                            
+                            <!-- Etiqueta DOI -->
+                            <span class="px-3 py-1 bg-dark text-white fw-bold rounded-start" style="font-family: monospace;">
+                            DOI
+                            </span>
+
+                            <!-- Enlace al DOI -->
+                            <a href="{{ dataset.get_uvlhub_doi() }}"
+                            target="_blank"
+                            class="px-3 py-1 text-white fw-semibold text-decoration-none rounded-end me-2"
+                            style="background: linear-gradient(90deg, #2176bd 0%, #2980b9 100%); font-family: monospace;">
+                            {{ dataset.get_uvlhub_doi() }}
+                            </a>
+
+                            <!-- Copiar DOI -->
+                            <i data-feather="clipboard"
+                            class="center-button-icon"
+                            style="cursor: pointer"
+                            onclick="copyText('dataset_doi_uvlhub_{{ dataset.id }}')"
+                            data-bs-toggle="tooltip"
+                            title="Copy DOI">
+                            </i>
+
+                            <!-- Texto oculto para copiar -->
+                            <div id="dataset_doi_uvlhub_{{ dataset.id }}" style="display: none;">
+                            {{ dataset.get_uvlhub_doi() }}
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+
     <div class="row">
         <!-- Sidebar: listado de archivos -->
         <div class="col-md-3">
             <div class="list-group">
                 {% for f in hubfiles %}
-                    <a href="{{ url_for('hubfile.view_page', file_id=f.id) }}"
+                    <a href="{{ url_for('hubfile.view_uvl', file_id=f.id) }}"
                        class="list-group-item list-group-item-action {% if f.id == selected_file.id %}active{% endif %}">
                         {{ f.name }}
                     </a>
@@ -15,19 +74,88 @@
             </div>
         </div>
 
-        <!-- Contenido UVL -->
-        <div class="col-md-9">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Viewing: {{ selected_file.name }}</h3>
+        <!-- Contenido principal con tabs -->
+<div class="col-md-9">
+    <div class="card">
+        <!-- Tabs nav -->
+        <ul class="nav nav-tabs nav-line-tabs nav-line-tabs-2x fs-6 px-4 pt-4" id="fileTabs" role="tablist">
+            <li class="nav-item me-2" role="presentation">
+                <button class="nav-link active" id="uvl-tab" data-bs-toggle="tab" data-bs-target="#uvl" type="button" role="tab" aria-controls="uvl" aria-selected="true">
+                    <i class="ki-duotone ki-code me-2"></i> UVL
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="factlabel-tab" data-bs-toggle="tab" data-bs-target="#factlabel" type="button" role="tab" aria-controls="factlabel" aria-selected="false">
+                    <i class="ki-duotone ki-graph me-2"></i> FM Fact Label
+                </button>
+            </li>
+        </ul>
+
+        <!-- Tabs content -->
+        <div class="tab-content p-4">
+            <!-- UVL Tab -->
+            <div class="tab-pane fade show active" id="uvl" role="tabpanel" aria-labelledby="uvl-tab">
+                <h5 class="mb-4 text-dark fw-bold">{{ selected_file.name }}</h5>
+                <div class="bg-light rounded border p-4">
+                    <pre class="m-0" style="white-space: pre-wrap;">{{ uvl_content }}</pre>
                 </div>
-                <div class="card-body">
-                    <pre style="white-space: pre-wrap; background-color: #f9f9f9; padding: 1em; border-radius: 8px;">
-{{ uvl_content }}
-                    </pre>
+            </div>
+
+            <!-- Fact Label Tab -->
+            <div class="tab-pane fade" id="factlabel" role="tabpanel" aria-labelledby="factlabel-tab">
+                <h5 class="mb-4 text-dark fw-bold">Feature Model Characterization</h5>
+                <div class="bg-light rounded border p-4">
+                    <div id="FMFactLabelWrapper" style="overflow-y: auto; max-height: 600px; overflow-x: auto;">
+                        <svg id="FMFactLabelChart" class="chart w-100"></svg>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script src="{{ url_for('factlabel.assets', subfolder='dist', filename='factlabel.bundle.js') }}"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Inicializar feather
+        feather.replace();
+
+        // Cargar el gráfico solo al hacer clic en la pestaña
+        const factLabelTab = document.getElementById('factlabel-tab');
+        let chartLoaded = false;
+
+        factLabelTab.addEventListener('shown.bs.tab', function () {
+            if (!chartLoaded) {
+                renderFactLabel({{ selected_file.id }});
+                chartLoaded = true;
+            }
+        });
+    });
+
+function renderFactLabel(fileId) {
+    fetch(`/factlabel/view/${fileId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Aquí puedes invocar tu función D3 pasando el contenido
+                drawFMFactLabel(data.content); // esta función es tuya
+            } else {
+                console.error("Error:", data.error);
+                d3.select("#FMFactLabelChart").text("Error loading fact label.");
+            }
+        })
+        .catch(error => {
+            console.error("Fetch error:", error);
+            d3.select("#FMFactLabelChart").text("Could not load fact label.");
+        });
+}   
+</script>
 {% endblock %}
