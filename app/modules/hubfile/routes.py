@@ -149,3 +149,27 @@ def view_uvl(file_id):
         dataset=dataset,
         uvl_content=content
     )
+
+
+@hubfile_bp.route("/hubfile/raw/<int:file_id>", methods=["GET"])
+def raw_uvl(file_id):
+    selected_file = HubfileService().get_or_404(file_id)
+    dataset = selected_file.feature_model.data_set
+
+    # Construir ruta absoluta al archivo
+    directory_path = os.path.join(
+        "uploads",
+        f"user_{dataset.user_id}",
+        f"dataset_{dataset.id}",
+        "uvl"
+    )
+    file_path = os.path.join(current_app.root_path, "..", directory_path, selected_file.name)
+
+    try:
+        with open(file_path, "r") as f:
+            content = f.read()
+        return content, 200, {'Content-Type': 'text/plain; charset=utf-8'}
+    except FileNotFoundError:
+        return jsonify({"error": "File not found"}), 404
+    except Exception as e:
+        return jsonify({"error": f"Unexpected error: {str(e)}"}), 500

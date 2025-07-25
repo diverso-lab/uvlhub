@@ -79,6 +79,7 @@
     <div class="card">
         <!-- Tabs nav -->
         <ul class="nav nav-tabs nav-line-tabs nav-line-tabs-2x fs-6 px-4 pt-4" id="fileTabs" role="tablist">
+
             <li class="nav-item me-2" role="presentation">
                 <button class="nav-link active" id="uvl-tab" data-bs-toggle="tab" data-bs-target="#uvl" type="button" role="tab" aria-controls="uvl" aria-selected="true">
                     <i class="ki-duotone ki-code me-2"></i> UVL
@@ -89,13 +90,22 @@
                     <i class="ki-duotone ki-graph me-2"></i> FM Fact Label
                 </button>
             </li>
+            {% set raw_url = url_for('hubfile.raw_uvl', file_id=selected_file.id, _external=True) %}
+            {% set ide_url = 'https://ide.flamapy.org/?import=' ~ (raw_url | urlencode) %}
+
+            <li class="nav-item ms-auto" role="presentation">
+                <a class="nav-link d-flex align-items-center" href="{{ ide_url }}" target="_blank" rel="noopener noreferrer">
+                    Open in &nbsp;
+                    <img src="{{ url_for('static', filename='media/logos/flamapy_horizontal_logo_white.svg') }}" alt="Flamapy IDE"  height="25" class="me-2" />
+                </a>
+            </li>
+
         </ul>
 
         <!-- Tabs content -->
         <div class="tab-content p-4">
             <!-- UVL Tab -->
             <div class="tab-pane fade show active" id="uvl" role="tabpanel" aria-labelledby="uvl-tab">
-                <h5 class="mb-4 text-dark fw-bold">{{ selected_file.name }}</h5>
                 <div class="bg-light rounded border p-4">
                     <pre class="m-0" style="white-space: pre-wrap;">{{ uvl_content }}</pre>
                 </div>
@@ -103,7 +113,6 @@
 
             <!-- Fact Label Tab -->
             <div class="tab-pane fade" id="factlabel" role="tabpanel" aria-labelledby="factlabel-tab">
-                <h5 class="mb-4 text-dark fw-bold">Feature Model Characterization</h5>
                 <div class="bg-light rounded border p-4">
                     <div id="FMFactLabelWrapper" style="overflow-y: auto; max-height: 600px; overflow-x: auto;">
                         <svg id="FMFactLabelChart" class="chart w-100"></svg>
