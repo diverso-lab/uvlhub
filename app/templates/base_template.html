@@ -536,7 +536,7 @@
 												<!--begin::Username-->
 												<div class="d-flex flex-column">
 													<div class="fw-bold d-flex align-items-center fs-5">{{ current_user.profile.surname }}, {{ current_user.profile.name }}
-													<span class="badge badge-light-success fw-bold fs-8 px-2 py-1 ms-2">Pro</span></div>
+													</div>
 													<a href="#" class="fw-semibold text-muted text-hover-primary fs-7">{{ current_user.email }}</a>
 												</div>
 												<!--end::Username-->
@@ -760,9 +760,25 @@
 										<!--begin:Menu item-->
 										<div class="menu-item">
 											<!--begin:Menu link-->
+											<a class="menu-link" target="_blank" href="/apidocs">
+												<span class="menu-icon">
+													<i class="ki-duotone ki-document fs-2">
+													<span class="path1"></span>
+													<span class="path2"></span>
+													</i>
+												</span>
+												<span class="menu-title">Read the API docs</span>
+											</a>
+											<!--end:Menu link-->
+										</div>
+										<!--end:Menu item-->
+
+										<!--begin:Menu item-->
+										<div class="menu-item">
+											<!--begin:Menu link-->
 											<a class="menu-link {{ 'active' if request.endpoint == 'apikeys.list_api_keys' else '' }}" href="{{ url_for('apikeys.list_api_keys') }}">
 												<span class="menu-icon">
-													<i class="ki-duotone ki-code">
+													<i class="ki-duotone ki-code fs-2">
 													<span class="path1"></span>
 													<span class="path2"></span>
 													<span class="path3"></span>
@@ -780,7 +796,7 @@
 											<!--begin:Menu link-->
 											<a class="menu-link {{ 'active' if request.endpoint == 'apikeys.generate_api_key' else '' }}" href="{{ url_for('apikeys.generate_api_key') }}">
 												<span class="menu-icon">
-													<i class="ki-duotone ki-code">
+													<i class="ki-duotone ki-code fs-2">
 													<span class="path1"></span>
 													<span class="path2"></span>
 													<span class="path3"></span>
@@ -887,6 +903,8 @@
 
 								<!--begin::Content container-->
 								<div id="kt_app_content_container" class="app-container container-fluid">
+
+									{% include "_flash_messages.html" %}
 
 									{% block content %}{% endblock %}
 

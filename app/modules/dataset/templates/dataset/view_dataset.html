@@ -134,11 +134,6 @@
             <table class="table align-middle table-row-dashed fs-6 gy-5" id="kt_models_table">
                 <thead>
                     <tr class="text-start text-gray-500 fw-bold fs-7 text-uppercase gs-0">
-                        <th class="w-10px pe-2">
-                            <div class="form-check form-check-sm form-check-custom form-check-solid">
-                                <input class="form-check-input" type="checkbox" data-kt-check="true" data-kt-check-target="#kt_models_table .form-check-input" />
-                            </div>
-                        </th>
                         <th class="min-w-200px">Name</th>
                         <th class="min-w-100px text-end">Size</th>
                         <th class="min-w-100px text-end">Actions</th>
@@ -147,12 +142,12 @@
                 <tbody class="fw-semibold text-gray-600">
                     {% for file in hubfiles %}
                     <tr>
-                        <td>
-                            <div class="form-check form-check-sm form-check-custom form-check-solid">
-                                <input class="form-check-input" type="checkbox" value="{{ file.id }}" />
-                            </div>
+                        <td class="font-monospace">
+                            <a href="{{ url_for('hubfile.view_uvl', file_id=file.id) }}" class="text-primary text-hover-dark fw-semibold">
+                                {{ file.name }}
+                            </a>
                         </td>
-                        <td class="font-monospace">{{ file.name }}</td>
+
                         <td class="text-end">{{ file.get_formatted_size() }}</td>
                         <td class="text-end">
                             <div class="btn-group">

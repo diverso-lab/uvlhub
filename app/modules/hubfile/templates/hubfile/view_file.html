@@ -1,8 +1,8 @@
 {% extends "base_template.html" %}
 
-{% block content %}
+{% set title = dataset.ds_meta_data.title  %}
 
-<div class="container-xxl" id="kt_app_content_container">
+{% block content %}
 
     <div class="row">
 
@@ -62,70 +62,111 @@
 
 
     <div class="row">
-        <!-- Sidebar: listado de archivos -->
+
+        <!-- Sidebar: tabla de archivos -->
         <div class="col-md-3">
-            <div class="list-group">
-                {% for f in hubfiles %}
-                    <a href="{{ url_for('hubfile.view_uvl', file_id=f.id) }}"
-                       class="list-group-item list-group-item-action {% if f.id == selected_file.id %}active{% endif %}">
-                        {{ f.name }}
-                    </a>
-                {% endfor %}
+            <div class="card card-flush h-100">
+                <div class="card-header py-5">
+                    <div class="card-title">
+                        <div class="d-flex align-items-center position-relative my-1">
+                            <i class="ki-duotone ki-magnifier fs-3 position-absolute ms-4">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                            </i>
+                            <input type="text"
+                                data-file-search
+                                class="form-control form-control-solid w-100 ps-12"
+                                placeholder="Search files" />
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body pt-0">
+                    <table class="table align-middle table-row-dashed fs-7 gy-3" id="kt_files_table">
+                        <thead>
+                            <tr class="text-muted fw-bold text-uppercase fs-8">
+                                <th>Name</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for f in hubfiles %}
+                            <tr>
+                                <td class="font-monospace">
+                                    <a href="{{ url_for('hubfile.view_uvl', file_id=f.id) }}"
+                                    class="{% if f.id == selected_file.id %}fw-bold text-primary{% else %}text-muted{% endif %}">
+                                        {{ f.name }}
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
+
+
         <!-- Contenido principal con tabs -->
-<div class="col-md-9">
-    <div class="card">
-        <!-- Tabs nav -->
-        <ul class="nav nav-tabs nav-line-tabs nav-line-tabs-2x fs-6 px-4 pt-4" id="fileTabs" role="tablist">
+        <div class="col-md-9">
+            <div class="card">
+                <!-- Tabs nav -->
+                <ul class="nav nav-tabs nav-line-tabs nav-line-tabs-2x fs-6 px-4 pt-4" id="fileTabs" role="tablist" style="border-bottom: none;">
 
-            <li class="nav-item me-2" role="presentation">
-                <button class="nav-link active" id="uvl-tab" data-bs-toggle="tab" data-bs-target="#uvl" type="button" role="tab" aria-controls="uvl" aria-selected="true">
-                    <i class="ki-duotone ki-code me-2"></i> UVL
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="factlabel-tab" data-bs-toggle="tab" data-bs-target="#factlabel" type="button" role="tab" aria-controls="factlabel" aria-selected="false">
-                    <i class="ki-duotone ki-graph me-2"></i> FM Fact Label
-                </button>
-            </li>
-            {% set raw_url = url_for('hubfile.raw_uvl', file_id=selected_file.id, _external=True) %}
-            {% set ide_url = 'https://ide.flamapy.org/?import=' ~ (raw_url | urlencode) %}
 
-            <li class="nav-item ms-auto" role="presentation">
-                <a class="nav-link d-flex align-items-center" href="{{ ide_url }}" target="_blank" rel="noopener noreferrer">
-                    Open in &nbsp;
-                    <img src="{{ url_for('static', filename='media/logos/flamapy_horizontal_logo_white.svg') }}" alt="Flamapy IDE"  height="25" class="me-2" />
-                </a>
-            </li>
+                    <li class="nav-item me-2" role="presentation">
+                        <button class="nav-link active" id="uvl-tab" data-bs-toggle="tab" data-bs-target="#uvl" type="button" role="tab" aria-controls="uvl" aria-selected="true">
+                            <i class="ki-duotone ki-message-text">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                            <span class="path3"></span>
+                            </i> UVL
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="factlabel-tab" data-bs-toggle="tab" data-bs-target="#factlabel" type="button" role="tab" aria-controls="factlabel" aria-selected="false">
+                            <i class="ki-duotone ki-graph">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                            <span class="path3"></span>
+                            <span class="path4"></span>
+                            </i> FM Fact Label
+                        </button>
+                    </li>
+                    {% set raw_url = url_for('hubfile.raw_uvl', file_id=selected_file.id, _external=True) %}
+                    {% set ide_url = 'https://ide.flamapy.org/?import=' ~ (raw_url | urlencode) %}
 
-        </ul>
+                    <li class="nav-item ms-auto" role="presentation">
+                        <a class="nav-link d-flex align-items-center" href="{{ ide_url }}" target="_blank" rel="noopener noreferrer">
+                            Open in &nbsp;
+                            <img src="{{ url_for('static', filename='media/logos/flamapy_horizontal_logo_white.svg') }}" alt="Flamapy IDE"  height="25" class="me-2" />
+                        </a>
+                    </li>
 
-        <!-- Tabs content -->
-        <div class="tab-content p-4">
-            <!-- UVL Tab -->
-            <div class="tab-pane fade show active" id="uvl" role="tabpanel" aria-labelledby="uvl-tab">
-                <div class="bg-light rounded border p-4">
-                    <pre class="m-0" style="white-space: pre-wrap;">{{ uvl_content }}</pre>
-                </div>
-            </div>
+                </ul>
 
-            <!-- Fact Label Tab -->
-            <div class="tab-pane fade" id="factlabel" role="tabpanel" aria-labelledby="factlabel-tab">
-                <div class="bg-light rounded border p-4">
-                    <div id="FMFactLabelWrapper" style="overflow-y: auto; max-height: 600px; overflow-x: auto;">
-                        <svg id="FMFactLabelChart" class="chart w-100"></svg>
+                <!-- Tabs content -->
+                <div class="tab-content p-4">
+                    <!-- UVL Tab -->
+                    <div class="tab-pane fade show active" id="uvl" role="tabpanel" aria-labelledby="uvl-tab">
+                        <div class="bg-light rounded border p-4">
+                            <pre class="m-0" style="white-space: pre-wrap;">{{ uvl_content }}</pre>
+                        </div>
+                    </div>
+
+                    <!-- Fact Label Tab -->
+                    <div class="tab-pane fade" id="factlabel" role="tabpanel" aria-labelledby="factlabel-tab">
+                        <div class="bg-light rounded border p-4">
+                            <div id="FMFactLabelWrapper" style="overflow-y: auto; max-height: 600px; overflow-x: auto;">
+                                <svg id="FMFactLabelChart" class="chart w-100"></svg>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-</div>
 
     </div>
 
-</div>
 {% endblock %}
 
 {% block scripts %}
@@ -154,8 +195,7 @@ function renderFactLabel(fileId) {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Aquí puedes invocar tu función D3 pasando el contenido
-                drawFMFactLabel(data.content); // esta función es tuya
+                drawFMFactLabel(data.content); // tu función D3
             } else {
                 console.error("Error:", data.error);
                 d3.select("#FMFactLabelChart").text("Error loading fact label.");
@@ -165,6 +205,32 @@ function renderFactLabel(fileId) {
             console.error("Fetch error:", error);
             d3.select("#FMFactLabelChart").text("Could not load fact label.");
         });
-}   
+}
+
+
+$(function () {
+    const table = $('#kt_files_table').DataTable({
+        pageLength: 5,
+        ordering: false,
+        lengthChange: false,
+        info: false,
+        language: {
+            paginate: {
+                previous: '<i class="ki-duotone ki-left fs-5"></i>',
+                next: '<i class="ki-duotone ki-right fs-5"></i>'
+            }
+        },
+        dom: 'tp' // sin buscador automático de DataTables, solo tabla + paginación
+    });
+
+    const searchInput = document.querySelector('[data-file-search]');
+    if (searchInput) {
+        searchInput.addEventListener('input', function () {
+            table.search(this.value).draw();
+        });
+    }
+});
+
+
 </script>
 {% endblock %}

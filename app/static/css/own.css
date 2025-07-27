@@ -46,3 +46,35 @@ a {
 .file-entry:last-child {
     border-bottom: none;
 }
+
+#kt_files_table_paginate {
+    display: flex;
+    justify-content: center;
+    padding-top: 0.5rem;
+}
+
+#kt_files_table_paginate .paginate_button {
+    padding: 0.25rem 0.5rem !important;
+    font-size: 0.75rem !important;
+    margin: 0 2px;
+    border-radius: 0.5rem !important;
+    min-width: 2rem;
+}
+
+/* Botón activo Keen-style */
+#kt_files_table_paginate .paginate_button.current {
+    background-color: var(--bs-primary);
+    color: white !important;
+    border: none !important;
+}
+
+/* Botones prev/next */
+#kt_files_table_paginate .paginate_button:not(.current) {
+    background-color: transparent !important;
+    color: #b5b5c3 !important;
+    border: none !important;
+}
+
+#kt_files_table_wrapper .dataTables_paginate {
+    margin-top: 0.5rem;
+}
