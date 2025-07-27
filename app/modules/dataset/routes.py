@@ -7,6 +7,7 @@ import tempfile
 
 from flask import (
     abort,
+    current_app,
     jsonify,
     make_response,
     redirect,
@@ -18,9 +19,12 @@ from flask import (
 )
 from flask_login import login_required, current_user
 
+# from app.modules.apikeys.decorators import require_api_key
+from app.modules.apikeys.decorators import require_api_key
 from app.modules.dataset.decorators import is_dataset_owner
 from app.modules.dataset.forms import DataSetForm
 from app.modules.dataset import dataset_bp
+from app.modules.dataset.models import DataSet
 from app.modules.dataset.services import (
     AuthorService,
     DSDownloadRecordService,
@@ -29,6 +33,7 @@ from app.modules.dataset.services import (
     DataSetService,
     DOIMappingService,
 )
+from app.modules.hubfile.models import Hubfile
 from app.modules.hubfile.services import HubfileService
 from app.modules.zenodo.services import ZenodoService
 
@@ -299,3 +304,430 @@ def get_unsynchronized_dataset(dataset_id):
 
     return render_template("dataset/view_dataset.html", dataset=dataset)
 
+
+# REST API
+
+@dataset_bp.route("/api/v1/datasets", methods=["GET"])
+@require_api_key("read_dataset")
+def api_list_datasets():
+    """
+    List datasets
+    ---
+    tags:
+      - Datasets
+    security:
+      - ApiKeyAuth: []
+    parameters:
+      - name: page
+        in: query
+        type: integer
+        description: Page number
+        required: false
+        default: 1
+    responses:
+      200:
+        description: Paginated list of datasets
+    """
+    
+    page = request.args.get("page", 1, type=int)
+    per_page = 5
+
+    pagination = DataSet.query.paginate(page=page, per_page=per_page, error_out=False)
+    items = [ds.to_dict() for ds in pagination.items]
+
+    return jsonify({
+        "page": page,
+        "per_page": per_page,
+        "total": pagination.total,
+        "pages": pagination.pages,
+        "datasets": items
+    })
+
+@dataset_bp.route("/api/v1/datasets/<int:dataset_id>", methods=["GET"])
+@require_api_key("read_dataset")
+def api_dataset_detail(dataset_id):
+    """
+    Get dataset detail
+    ---
+    tags:
+      - Datasets
+    security:
+      - ApiKeyAuth: []
+    parameters:
+      - name: dataset_id
+        in: path
+        type: integer
+        required: true
+        description: ID of the dataset to retrieve
+    responses:
+      200:
+        description: Dataset details
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: integer
+                name:
+                  type: string
+                description:
+                  type: string
+                created_at:
+                  type: string
+                  format: date-time
+              example:
+                id: 1
+                name: "Example Dataset"
+                description: "A sample dataset for demonstration purposes."
+                created_at: "2025-07-27T10:00:00Z"
+      404:
+        description: Dataset not found
+    """
+    dataset = DataSet.query.get(dataset_id)
+    if not dataset:
+        return jsonify({"error": "Dataset not found"}), 404
+    return jsonify(dataset.to_dict())
+
+@dataset_bp.route("/api/v1/datasets/<int:dataset_id>/summary", methods=["GET"])
+@require_api_key("read_dataset")
+def api_dataset_summary(dataset_id):
+    """
+    Get dataset summary
+    ---
+    tags:
+      - Datasets
+    security:
+      - ApiKeyAuth: []
+    parameters:
+      - name: dataset_id
+        in: path
+        type: integer
+        required: true
+        description: ID of the dataset to summarize
+    responses:
+      200:
+        description: Summary of the dataset
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: integer
+                title:
+                  type: string
+                description:
+                  type: string
+                publication_type:
+                  type: string
+                files_count:
+                  type: integer
+                total_size_in_bytes:
+                  type: integer
+                total_size_human:
+                  type: string
+                doi:
+                  type: string
+                  nullable: true
+                created_at:
+                  type: string
+                  format: date-time
+              example:
+                id: 2
+                title: "My Dataset"
+                description: "A dataset summary"
+                publication_type: "Journal"
+                files_count: 3
+                total_size_in_bytes: 1048576
+                total_size_human: "1 MB"
+                doi: "10.1234/example.doi"
+                created_at: "2025-07-27T12:34:56Z"
+      404:
+        description: Dataset not found
+    """
+    dataset = DataSet.query.get(dataset_id)
+    if not dataset:
+        return jsonify({"error": "Dataset not found"}), 404
+
+    return jsonify({
+        "id": dataset.id,
+        "title": dataset.name(),
+        "description": dataset.description(),
+        "publication_type": dataset.get_cleaned_publication_type(),
+        "files_count": dataset.get_files_count(),
+        "total_size_in_bytes": dataset.get_file_total_size(),
+        "total_size_human": dataset.get_file_total_size_for_human(),
+        "doi": dataset.ds_meta_data.dataset_doi,
+        "created_at": dataset.created_at.isoformat()
+    })
+
+
+@dataset_bp.route("/api/v1/datasets/<int:dataset_id>/files", methods=["GET"])
+@require_api_key("read_dataset")
+def api_list_files(dataset_id):
+    """
+    List files in a dataset
+    ---
+    tags:
+      - Datasets
+    security:
+      - ApiKeyAuth: []
+    parameters:
+      - name: dataset_id
+        in: path
+        type: integer
+        required: true
+        description: ID of the dataset
+      - name: page
+        in: query
+        type: integer
+        required: false
+        description: Page number for pagination
+        default: 1
+    responses:
+      200:
+        description: Paginated list of files in the dataset
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                page:
+                  type: integer
+                per_page:
+                  type: integer
+                total:
+                  type: integer
+                pages:
+                  type: integer
+                files:
+                  type: array
+                  items:
+                    type: object
+              example:
+                page: 1
+                per_page: 5
+                total: 12
+                pages: 3
+                files:
+                  - id: 101
+                    name: "model.uvl"
+                    size: 1234
+                    checksum: "abcd1234"
+                    feature_model_id: 1
+                  - id: 102
+                    name: "config.uvl"
+                    size: 5678
+                    checksum: "efgh5678"
+                    feature_model_id: 1
+      404:
+        description: Dataset not found
+    """
+    dataset = DataSet.query.get(dataset_id)
+    if not dataset:
+        return jsonify({"error": "Dataset not found"}), 404
+
+    all_files = dataset.files()
+    page = request.args.get("page", 1, type=int)
+    per_page = 5
+
+    total = len(all_files)
+    start = (page - 1) * per_page
+    end = start + per_page
+    files_page = all_files[start:end]
+
+    return jsonify({
+        "page": page,
+        "per_page": per_page,
+        "total": total,
+        "pages": (total + per_page - 1) // per_page,
+        "files": [file.to_dict() for file in files_page]
+    })
+
+@dataset_bp.route("/api/v1/files/<int:file_id>", methods=["GET"])
+@require_api_key("read_dataset")
+def api_file_detail(file_id):
+    """
+    Get file details
+    ---
+    tags:
+      - Files
+    security:
+      - ApiKeyAuth: []
+    parameters:
+      - name: file_id
+        in: path
+        type: integer
+        required: true
+        description: ID of the file to retrieve
+    responses:
+      200:
+        description: File details
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: integer
+                name:
+                  type: string
+                size:
+                  type: integer
+                checksum:
+                  type: string
+                feature_model_id:
+                  type: integer
+              example:
+                id: 42
+                name: "example.uvl"
+                size: 10240
+                checksum: "a1b2c3d4"
+                feature_model_id: 7
+      404:
+        description: File not found
+    """
+    file = Hubfile.query.get(file_id)
+    if not file:
+        return jsonify({"error": "File not found"}), 404
+
+    return jsonify(file.to_dict())
+
+@dataset_bp.route("/api/v1/files/<int:file_id>/raw", methods=["GET"])
+@require_api_key("read_dataset")
+def api_file_raw(file_id):
+    """
+    Get raw file content
+    ---
+    tags:
+      - Files
+    security:
+      - ApiKeyAuth: []
+    parameters:
+      - name: file_id
+        in: path
+        type: integer
+        required: true
+        description: ID of the file to retrieve
+    responses:
+      200:
+        description: Raw content of the file
+        content:
+          text/plain:
+            schema:
+              type: string
+              example: |
+                uvl
+                root MyFeature
+                features
+                    MyFeature;
+      404:
+        description: File not found
+      500:
+        description: Error reading file from disk
+    """
+    file = Hubfile.query.get(file_id)
+    if not file:
+        return jsonify({"error": "File not found"}), 404
+
+    dataset = file.feature_model.data_set
+
+    file_path = os.path.join(
+        current_app.root_path, "..", "uploads",
+        f"user_{dataset.user_id}",
+        f"dataset_{dataset.id}",
+        "uvl",
+        file.name
+    )
+
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            content = f.read()
+        return content, 200, {'Content-Type': 'text/plain; charset=utf-8'}
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@dataset_bp.route("/api/v1/files/<int:file_id>/metadata", methods=["GET"])
+@require_api_key("read_dataset")
+def api_file_metadata(file_id):
+    """
+    Get metadata of the file's feature model
+    ---
+    tags:
+      - Files
+    security:
+      - ApiKeyAuth: []
+    parameters:
+      - name: file_id
+        in: path
+        type: integer
+        required: true
+        description: ID of the file whose metadata should be returned
+    responses:
+      200:
+        description: Metadata of the file's feature model
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                tags:
+                  type: array
+                  items:
+                    type: string
+                publication_type:
+                  type: string
+                uvl_version:
+                  type: string
+                publication_doi:
+                  type: string
+                  nullable: true
+                authors:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      affiliation:
+                        type: string
+                      orcid:
+                        type: string
+              example:
+                title: "My Feature Model"
+                description: "This model represents the configuration options..."
+                tags: ["security", "IoT"]
+                publication_type: "Conference"
+                uvl_version: "1.0"
+                publication_doi: "10.5555/example.doi"
+                authors:
+                  - name: "Alice Smith"
+                    affiliation: "University of Sevilla"
+                    orcid: "0000-0002-1825-0097"
+      404:
+        description: File not found or metadata not available
+    """
+    file = Hubfile.query.get(file_id)
+    if not file:
+        return jsonify({"error": "File not found"}), 404
+
+    fm = file.feature_model
+    if not fm or not fm.fm_meta_data:
+        return jsonify({"error": "Metadata not available"}), 404
+
+    meta = fm.fm_meta_data
+
+    return jsonify({
+        "title": meta.title,
+        "description": meta.description,
+        "tags": meta.tags.split(",") if meta.tags else [],
+        "publication_type": meta.publication_type.name,
+        "uvl_version": meta.uvl_version,
+        "publication_doi": meta.publication_doi,
+        "authors": [a.to_dict() for a in meta.authors]
+    })

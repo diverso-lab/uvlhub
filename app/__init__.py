@@ -6,6 +6,7 @@ from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
 from flask_migrate import Migrate
 from flask_session import Session
+from flasgger import Swagger
 
 from app.modules.mail.services import MailService
 from core.configuration.configuration import get_app_version
@@ -58,6 +59,30 @@ def create_app(config_name="development"):
     # Set up logging
     logging_manager = LoggingManager(app)
     logging_manager.setup_logging()
+
+    # Swagger API
+    swagger_template = {
+        "swagger": "2.0",
+        "info": {
+            "title": "UVLHub Rest API (v1)",
+            "description": "API to access datasets, files and metadata.",
+            "version": "1.0.0"
+        },
+        "securityDefinitions": {
+            "ApiKeyAuth": {
+                "type": "apiKey",
+                "name": "X-API-Key",
+                "in": "header"
+            }
+        },
+        "security": [
+            {
+                "ApiKeyAuth": []
+            }
+        ]
+    }
+
+    swagger = Swagger(app, template=swagger_template)
 
     # Initialize error handler manager
     error_handler_manager = ErrorHandlerManager(app)

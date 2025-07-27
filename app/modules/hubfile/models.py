@@ -62,7 +62,7 @@ class Hubfile(db.Model):
             "checksum": self.checksum,
             "size_in_bytes": self.size,
             "size_in_human_format": self.get_formatted_size(),
-            "url": url_for("hubfile_bp.download", file_id=self.id, _external=True),
+            "url": url_for("hubfile.download_file", file_id=self.id, _external=True),
         }
 
     def __repr__(self):

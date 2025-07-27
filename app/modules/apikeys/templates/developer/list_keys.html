@@ -1,0 +1,54 @@
+{% extends "base_template.html" %}
+
+{% set title = "API keys" %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <a href="{{ url_for('apikeys.generate_api_key') }}" class="btn btn-sm btn-primary">
+            <i class="ki-duotone ki-plus fs-5 me-1"></i> New API Key
+        </a>
+    </div>
+    <div class="card-body">
+        {% if api_keys %}
+            <div class="table-responsive">
+                <table class="table align-middle table-row-dashed gy-5">
+                    <thead>
+                        <tr class="text-start text-muted fw-bold fs-7 text-uppercase gs-0">
+                            <th>ID</th>
+                            <th>Scopes</th>
+                            <th>Created</th>
+                            <th>Last Used</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-gray-600 fw-semibold">
+                        {% for key in api_keys %}
+                            <tr>
+                                <td>{{ key.id }}</td>
+                                <td>
+                                    {% for scope in key.scopes.split(",") %}
+                                        <span class="badge badge-light-success me-1">{{ scope }}</span>
+                                    {% endfor %}
+                                </td>
+                                <td>{{ key.created_at.strftime('%Y-%m-%d') }}</td>
+                                <td>
+                                    {% if key.last_used_at %}
+                                        {{ key.last_used_at.strftime('%Y-%m-%d') }}
+                                    {% else %}
+                                        <span class="badge badge-light">Never</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="alert alert-warning">
+                <i class="ki-duotone ki-lock fs-2 me-2"></i> You haven't created any API keys yet.
+                <a href="{{ url_for('apikeys.generate_api_key') }}" class="ms-2">Generate one</a>.
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
