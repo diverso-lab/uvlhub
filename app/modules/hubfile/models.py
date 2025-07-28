@@ -47,7 +47,7 @@ class Hubfile(db.Model):
         return os.path.join(
             os.getenv("WORKING_DIR", ""),
             "uploads",
-            f"user_{self.feature_model.data_set.user_id}",
+            f"user_{self.feature_model.dataset.user_id}",
             f"dataset_{self.feature_model.dataset_id}",
             "uvl",
             self.name,

@@ -1,3 +1,4 @@
+import hashlib
 import os
 import uuid
 
@@ -12,7 +13,7 @@ from app.modules.hubfile.repositories import (
 )
 from app.modules.statistics.services import StatisticsService
 from core.services.BaseService import BaseService
-
+from app import db
 
 class HubfileService(BaseService):
     def __init__(self):
@@ -45,6 +46,43 @@ class HubfileService(BaseService):
 
     def get_by_ids(self, ids: list[int]) -> list[Hubfile]:
         return self.repository.get_by_ids(ids)
+    
+    def create_from_file(self, feature_model_id: int, filepath: str) -> Hubfile:
+        """
+        Crea un Hubfile a partir de un archivo .uvl ya ubicado en el directorio destino.
+
+        Args:
+            feature_model_id (int): ID del FeatureModel al que pertenece el archivo.
+            filepath (str): Ruta completa al archivo UVL.
+
+        Returns:
+            Hubfile: La instancia creada.
+        """
+        if not os.path.isfile(filepath):
+            raise FileNotFoundError(f"Archivo no encontrado: {filepath}")
+
+        name = os.path.basename(filepath)
+        size = os.path.getsize(filepath)
+        checksum = self._calculate_checksum(filepath)
+
+        hubfile = Hubfile(
+            feature_model_id=feature_model_id,
+            name=name,
+            size=size,
+            checksum=checksum
+        )
+        db.session.add(hubfile)
+        db.session.flush()
+
+        return hubfile
+
+    def _calculate_checksum(self, filepath: str) -> str:
+        """Calcula el hash SHA256 del archivo"""
+        sha256 = hashlib.sha256()
+        with open(filepath, "rb") as f:
+            for chunk in iter(lambda: f.read(4096), b""):
+                sha256.update(chunk)
+        return sha256.hexdigest()
 
 
 class HubfileDownloadRecordService(BaseService):

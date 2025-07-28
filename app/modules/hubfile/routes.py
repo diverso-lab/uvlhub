@@ -125,7 +125,7 @@ def download_file(file_id):
 @hubfile_bp.route("/hubfiles/<int:file_id>", methods=["GET"])
 def view_uvl(file_id):
     selected_file = HubfileService().get_or_404(file_id)
-    dataset = selected_file.feature_model.data_set
+    dataset = selected_file.feature_model.dataset
 
     # Leer contenido UVL
     directory_path = os.path.join(
@@ -154,7 +154,7 @@ def view_uvl(file_id):
 @hubfile_bp.route("/hubfiles/raw/<int:file_id>", methods=["GET"])
 def raw_uvl(file_id):
     selected_file = HubfileService().get_or_404(file_id)
-    dataset = selected_file.feature_model.data_set
+    dataset = selected_file.feature_model.dataset
 
     # Construir ruta absoluta al archivo
     directory_path = os.path.join(

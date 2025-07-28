@@ -37,7 +37,6 @@ class Author(db.Model):
     affiliation = db.Column(db.String(120))
     orcid = db.Column(db.String(120))
     ds_meta_data_id = db.Column(db.Integer, db.ForeignKey("ds_meta_data.id"))
-    fm_meta_data_id = db.Column(db.Integer, db.ForeignKey("fm_meta_data.id"))
 
     def to_dict(self):
         return {"name": self.name, "affiliation": self.affiliation, "orcid": self.orcid}
@@ -78,8 +77,14 @@ class DataSet(db.Model):
     ds_meta_data_id = db.Column(db.Integer, db.ForeignKey("ds_meta_data.id"), nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.utc))
 
-    ds_meta_data = db.relationship("DSMetaData", backref=db.backref("data_set", uselist=False))
-    feature_models = db.relationship("FeatureModel", backref="data_set", lazy=True, cascade="all, delete")
+    ds_meta_data = db.relationship("DSMetaData", backref=db.backref("dataset", uselist=False))
+   
+    feature_models = db.relationship(
+        "FeatureModel",
+        back_populates="dataset",
+        cascade="all, delete-orphan",
+        lazy=True
+    )
 
     feature_model_count = db.Column(db.Integer, nullable=False, default=0)
 

@@ -46,7 +46,7 @@ def test_get_uvlhub_doi(mock_getenv):
 @patch("app.modules.dataset.services.DSViewRecordService.create_cookie")
 def test_subdomain_index_success(mock_create_cookie, mock_filter_by_doi, test_client):
     mock_dataset = MagicMock()
-    mock_filter_by_doi.return_value = MagicMock(data_set=mock_dataset)
+    mock_filter_by_doi.return_value = MagicMock(dataset=mock_dataset)
     mock_create_cookie.return_value = "mock_cookie"
 
     response = test_client.get("/doi/10.1234/datafset1/")

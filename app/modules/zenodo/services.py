@@ -155,50 +155,58 @@ class ZenodoService(BaseService):
             raise Exception("Failed to get depositions")
         return response.json()
 
-    def create_new_deposition(self, dataset: DataSet) -> dict:
+    def create_new_deposition(self, dataset: DataSet, anonymous: bool = False) -> dict:
         """
         Create a new deposition in Zenodo.
 
         Args:
             dataset (DataSet): The DataSet object containing the metadata of the deposition.
+            anonymous (bool): Whether to anonymize the creators metadata.
 
         Returns:
             dict: The response in JSON format with the details of the created deposition.
         """
 
         logger.info("Dataset sending to Zenodo...")
-        logger.info(f"Publication type...{dataset.ds_meta_data.publication_type.value}")
+        logger.info(f"Publication type... {dataset.ds_meta_data.publication_type.value}")
+        logger.info(f"Anonymous upload: {anonymous}")
 
-        metadata = {
-            "title": dataset.ds_meta_data.title,
-            "upload_type": (
-                "dataset"
-                if dataset.ds_meta_data.publication_type.value == "none"
-                else "publication"
-            ),
-            "publication_type": (
-                dataset.ds_meta_data.publication_type.value
-                if dataset.ds_meta_data.publication_type.value != "none"
-                else None
-            ),
-            "description": dataset.ds_meta_data.description,
-            "creators": [
+        upload_type = (
+            "dataset"
+            if dataset.ds_meta_data.publication_type.value == "none"
+            else "publication"
+        )
+        publication_type = (
+            dataset.ds_meta_data.publication_type.value
+            if dataset.ds_meta_data.publication_type.value != "none"
+            else None
+        )
+
+        if anonymous or not dataset.ds_meta_data.authors:
+            creators = [{"name": "Anonymous"}]
+        else:
+            creators = [
                 {
                     "name": author.name,
-                    **(
-                        {"affiliation": author.affiliation}
-                        if author.affiliation
-                        else {}
-                    ),
+                    **({"affiliation": author.affiliation} if author.affiliation else {}),
                     **({"orcid": author.orcid} if author.orcid else {}),
                 }
                 for author in dataset.ds_meta_data.authors
-            ],
-            "keywords": (
-                ["uvlhub"]
-                if not dataset.ds_meta_data.tags
-                else dataset.ds_meta_data.tags.split(", ") + ["uvlhub"]
-            ),
+            ]
+
+        keywords = (
+            ["uvlhub"]
+            if not dataset.ds_meta_data.tags
+            else dataset.ds_meta_data.tags.replace(", ", ",").split(",") + ["uvlhub"]
+        )
+
+        metadata = {
+            "title": dataset.ds_meta_data.title,
+            "upload_type": upload_type,
+            "publication_type": publication_type,
+            "description": dataset.ds_meta_data.description,
+            "creators": creators,
+            "keywords": keywords,
             "access_right": "open",
             "license": "CC-BY-4.0",
         }
@@ -209,10 +217,9 @@ class ZenodoService(BaseService):
             self.ZENODO_API_URL, params=self.params, json=data, headers=self.headers
         )
         if response.status_code != 201:
-            error_message = (
-                f"Failed to create deposition. Error details: {response.json()}"
-            )
+            error_message = f"Failed to create deposition. Error details: {response.json()}"
             raise Exception(error_message)
+
         return response.json()
 
     def upload_file(
@@ -255,21 +262,47 @@ class ZenodoService(BaseService):
             raise Exception(error_message)
         return response.json()
 
-    def publish_deposition(self, deposition_id: int) -> dict:
+    def upload_zip(self, dataset: DataSet, deposition_id: int, zip_path: str) -> dict:
         """
-        Publish a deposition in Zenodo.
+        Upload a ZIP file containing all UVL models to a Zenodo deposition.
+        """
+        file_name = os.path.basename(zip_path)
+        data = {"name": file_name}
+        with open(zip_path, "rb") as file_obj:
+            files = {"file": file_obj}
+            upload_url = f"{self.ZENODO_API_URL}/{deposition_id}/files"
+            response = requests.post(
+                upload_url, params=self.params, data=data, files=files
+            )
+
+        if response.status_code != 201:
+            logger.error(f"Failed to upload ZIP: {response.content}")
+            raise Exception(f"Error uploading ZIP to Zenodo: {response.json()}")
+
+        return response.json()
+
+    def publish_deposition(self, deposition_id: int):
+        """
+        Publish a deposition on Zenodo.
 
         Args:
-            deposition_id (int): The ID of the deposition in Zenodo.
-
-        Returns:
-            dict: The response in JSON format with the details of the published deposition.
+            deposition_id (int): The ID of the deposition to be published.
         """
         publish_url = f"{self.ZENODO_API_URL}/{deposition_id}/actions/publish"
-        response = requests.post(publish_url, params=self.params, headers=self.headers)
+        logger.info(f"Publishing deposition {deposition_id} at {publish_url}")
+
+        response = requests.post(
+            publish_url,
+            params=self.params,
+            headers=self.headers,
+        )
+
+        logger.info(f"Zenodo publish response code: {response.status_code}")
+        logger.info(f"Zenodo publish response body: {response.text}")
+
         if response.status_code != 202:
             raise Exception("Failed to publish deposition")
-        return response.json()
+
 
     def update_deposition(self, deposition_id: int, metadata: dict) -> dict:
         """
@@ -348,3 +381,4 @@ class ZenodoService(BaseService):
             str: The DOI of the deposition.
         """
         return self.get_deposition(deposition_id).get("doi")
+

@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: da661642ea97
+Revision ID: d8bb59ffcda1
 Revises: 
-Create Date: 2025-07-23 18:23:28.640967
+Create Date: 2025-07-28 12:25:53.165361
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'da661642ea97'
+revision = 'd8bb59ffcda1'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -36,12 +36,6 @@ def upgrade():
     )
     op.create_table('flamapy',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_table('fm_metrics',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('solver', sa.Text(), nullable=True),
-    sa.Column('not_solver', sa.Text(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('reset_token',
@@ -76,6 +70,17 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_table('api_keys',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('key', sa.String(length=64), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('scopes', sa.String(length=256), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('last_used_at', sa.DateTime(), nullable=True),
+    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('key')
+    )
     op.create_table('ds_meta_data',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('deposition_id', sa.Integer(), nullable=True),
@@ -88,19 +93,6 @@ def upgrade():
     sa.Column('ds_metrics_id', sa.Integer(), nullable=True),
     sa.Column('dataset_anonymous', sa.Boolean(), nullable=True),
     sa.ForeignKeyConstraint(['ds_metrics_id'], ['ds_metrics.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_table('fm_meta_data',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('uvl_filename', sa.String(length=120), nullable=False),
-    sa.Column('title', sa.String(length=120), nullable=False),
-    sa.Column('description', sa.Text(), nullable=False),
-    sa.Column('publication_type', sa.Enum('ANNOTATION_COLLECTION', 'BOOK', 'BOOK_SECTION', 'CONFERENCE_PAPER', 'DATA_MANAGEMENT_PLAN', 'JOURNAL_ARTICLE', 'PATENT', 'PREPRINT', 'PROJECT_DELIVERABLE', 'PROJECT_MILESTONE', 'PROPOSAL', 'REPORT', 'SOFTWARE_DOCUMENTATION', 'TAXONOMIC_TREATMENT', 'TECHNICAL_NOTE', 'THESIS', 'WORKING_PAPER', 'OTHER', name='publicationtype'), nullable=False),
-    sa.Column('publication_doi', sa.String(length=120), nullable=True),
-    sa.Column('tags', sa.String(length=120), nullable=True),
-    sa.Column('uvl_version', sa.String(length=120), nullable=True),
-    sa.Column('fm_metrics_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['fm_metrics_id'], ['fm_metrics.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('user_profile',
@@ -119,9 +111,7 @@ def upgrade():
     sa.Column('affiliation', sa.String(length=120), nullable=True),
     sa.Column('orcid', sa.String(length=120), nullable=True),
     sa.Column('ds_meta_data_id', sa.Integer(), nullable=True),
-    sa.Column('fm_meta_data_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['ds_meta_data_id'], ['ds_meta_data.id'], ),
-    sa.ForeignKeyConstraint(['fm_meta_data_id'], ['fm_meta_data.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('datasets',
@@ -167,9 +157,7 @@ def upgrade():
     op.create_table('feature_model',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('dataset_id', sa.Integer(), nullable=False),
-    sa.Column('fm_meta_data_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['dataset_id'], ['datasets.id'], ),
-    sa.ForeignKeyConstraint(['fm_meta_data_id'], ['fm_meta_data.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('hubfiles',
@@ -216,14 +204,13 @@ def downgrade():
     op.drop_table('datasets')
     op.drop_table('author')
     op.drop_table('user_profile')
-    op.drop_table('fm_meta_data')
     op.drop_table('ds_meta_data')
+    op.drop_table('api_keys')
     op.drop_table('zenodo')
     op.drop_table('webhook')
     op.drop_table('user')
     op.drop_table('statistics')
     op.drop_table('reset_token')
-    op.drop_table('fm_metrics')
     op.drop_table('flamapy')
     op.drop_table('factlabel')
     op.drop_table('ds_metrics')

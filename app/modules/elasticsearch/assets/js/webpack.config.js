@@ -2,7 +2,7 @@ const path = require('path');
 module.exports = {
   entry: path.resolve(__dirname, './scripts.js'),
   output: {
-    filename: '{{ module_name }}.bundle.js',
+    filename: 'elasticsearch.bundle.js',
     path: path.resolve(__dirname, '../dist'),
   },
   resolve: {

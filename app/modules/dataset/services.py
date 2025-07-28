@@ -26,15 +26,13 @@ from app.modules.dataset.repositories import (
     DSViewRecordRepository,
     DataSetRepository,
 )
-from app.modules.featuremodel.repositories import (
-    FMMetaDataRepository,
-    FeatureModelRepository,
-)
+from app.modules.featuremodel.repositories import FeatureModelRepository
 from app.modules.hubfile.repositories import (
     HubfileDownloadRecordRepository,
     HubfileRepository,
     HubfileViewRecordRepository,
 )
+from app.modules.hubfile.services import HubfileService
 from app.modules.statistics.services import StatisticsService
 from core.services.BaseService import BaseService
 
@@ -55,32 +53,16 @@ class DataSetService(BaseService):
         self.feature_model_repository = FeatureModelRepository()
         self.author_repository = AuthorRepository()
         self.dsmetadata_repository = DSMetaDataRepository()
-        self.fmmetadata_repository = FMMetaDataRepository()
         self.dsdownloadrecord_repository = DSDownloadRecordRepository()
         self.hubfiledownloadrecord_repository = HubfileDownloadRecordRepository()
         self.hubfilerepository = HubfileRepository()
         self.dsviewrecord_repostory = DSViewRecordRepository()
         self.hubfileviewrecord_repository = HubfileViewRecordRepository()
 
-    def move_feature_models(self, dataset: DataSet):
-        current_user = AuthenticationService().get_authenticated_user()
-        source_dir = current_user.temp_folder()
-
-        working_dir = os.getenv("WORKING_DIR", "")
-        dest_dir = os.path.join(
-            working_dir,
-            "uploads",
-            f"user_{current_user.id}",
-            f"dataset_{dataset.id}",
-            "uvl",
-        )
-
-        os.makedirs(dest_dir, exist_ok=True)
-
-        for feature_model in dataset.feature_models:
-            uvl_filename = feature_model.fm_meta_data.uvl_filename
-            shutil.move(os.path.join(source_dir, uvl_filename), dest_dir)
-
+    def create_basic_dataset(self, user: User) -> DataSet:
+        dataset = self.create(commit=False, user_id=user.id, ds_meta_data_id=None)
+        return dataset
+    
     def is_synchronized(self, dataset_id: int) -> bool:
         return self.repository.is_synchronized(dataset_id)
 
@@ -325,7 +307,7 @@ class DataSetService(BaseService):
 
     def zip_dataset(self, dataset: DataSet) -> str:
         working_dir = os.getenv("WORKING_DIR", "")
-        file_path = os.path.join(
+        dataset_dir = os.path.join(
             working_dir, "uploads", f"user_{dataset.user_id}", f"dataset_{dataset.id}"
         )
 
@@ -333,20 +315,13 @@ class DataSetService(BaseService):
         zip_path = os.path.join(temp_dir, f"dataset_{dataset.id}.zip")
 
         with ZipFile(zip_path, "w") as zipf:
-            for subdir, dirs, files in os.walk(file_path):
+            for subdir, _, files in os.walk(dataset_dir):
                 for file in files:
                     full_path = os.path.join(subdir, file)
+                    relative_path = os.path.relpath(full_path, dataset_dir)
+                    zipf.write(full_path, arcname=relative_path)
 
-                    relative_path = os.path.relpath(full_path, file_path)
-
-                    zipf.write(
-                        full_path,
-                        arcname=os.path.join(
-                            os.path.basename(zip_path[:-4]), relative_path
-                        ),
-                    )
-
-        return temp_dir
+        return zip_path
 
     def zip_all_datasets(self, zip_path: str):
         with ZipFile(zip_path, "w") as zipf:

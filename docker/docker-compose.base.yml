@@ -37,6 +37,21 @@ services:
     networks:
       - uvlhub_network
 
+  elasticsearch:
+    container_name: elasticsearch_container
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.18.4
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - xpack.security.transport.ssl.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    networks:
+      - uvlhub_network
+
   worker:
     container_name: rq_worker_container
     build:
@@ -57,6 +72,7 @@ services:
 
 volumes:
   db_data:
+  es_data:
 
 networks:
   uvlhub_network:
