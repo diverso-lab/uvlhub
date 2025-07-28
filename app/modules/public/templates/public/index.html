@@ -89,7 +89,7 @@
                                 View
                                 </a>
 
-                                <a href="/dataset/download/{{ dataset.id }}"
+                                <a href="/datasets/download/{{ dataset.id }}"
                                 class="btn btn-outline-secondary btn-xs d-inline-flex align-items-center"
                                 style="font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 4px;">
                                 <i data-feather="download" class="me-1" style="width: 14px; height: 14px;"></i>
@@ -160,7 +160,7 @@
                   <!-- BLOQUE 1: Contenido del hub -->
                   <div class="card mb-6 shadow-sm">
                     <div class="card-body p-8">
-                      <h2 class="fs-1 fw-bold text-dark mb-6">
+                      <h2 class="fs-2 fw-bold text-body mb-6">
                     <i data-feather="layers" class="me-2 text-primary"></i>
                     Hub content
                   </h2>
@@ -178,7 +178,7 @@
                           <div class="bg-light-info rounded p-6 text-center">
                             <i data-feather="file" class="svg-icon svg-icon-2x mb-2 text-info"></i>
                             <div class="fs-3 fw-bold text-gray-800">{{ feature_models_counter | format_thousands }}</div>
-                            <div class="text-muted">Feature Models</div>
+                            <div class="text-muted">Models</div>
                           </div>
                         </div>
                       </div>
@@ -188,7 +188,7 @@
                   <!-- BLOQUE 2: Visualizaciones -->
                   <div class="card mb-6 shadow-sm">
                     <div class="card-body p-8">
-                  <h2 class="fs-2 fw-bold text-dark mb-6">
+                  <h2 class="fs-2 fw-bold text-body mb-6">
                     <i data-feather="eye" class="me-2 text-success"></i>
                     Views
                   </h2>
@@ -206,7 +206,7 @@
                           <div class="bg-light-success rounded p-6 text-center">
                             <i data-feather="eye" class="svg-icon svg-icon-2x mb-2 text-success"></i>
                             <div class="fs-3 fw-bold text-gray-800">{{ total_feature_model_views | format_thousands }}</div>
-                            <div class="text-muted">Feature model views</div>
+                            <div class="text-muted">Model views</div>
                           </div>
                         </div>
                       </div>
@@ -216,10 +216,10 @@
                   <!-- BLOQUE 3: Descargas -->
                   <div class="card mb-10 shadow-sm">
                     <div class="card-body p-8">
-                  <h2 class="fs-2 fw-bold text-dark mb-6">
+                  <h3 class="fs-2 fw-bold text-body mb-6">
                     <i data-feather="download" class="me-2 text-warning"></i>
                     Downloads
-                  </h2>
+                  </h3>
                       <div class="row g-6">
                         <!-- Dataset downloads -->
                         <div class="col-md-6">
@@ -234,7 +234,7 @@
                           <div class="bg-light-warning rounded p-6 text-center">
                             <i data-feather="download" class="svg-icon svg-icon-2x mb-2 text-warning"></i>
                             <div class="fs-3 fw-bold text-gray-800">{{ total_feature_model_downloads | format_thousands }}</div>
-                            <div class="text-muted">Feature model downloads</div>
+                            <div class="text-muted">Model downloads</div>
                           </div>
                         </div>
                       </div>

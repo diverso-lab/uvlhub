@@ -1,7 +1,17 @@
 {% extends "base_template.html" %}
 
+{% set title = dataset.ds_meta_data.title  %}
+
+{% block breadcrumb %}
+
+<ol class="breadcrumb text-muted fs-6 fw-semibold">
+    <li class="breadcrumb-item"><a href="/" class="">Home</a></li>
+    <li class="breadcrumb-item text-muted">{{ dataset.ds_meta_data.title }}</li>
+</ol>
+
+{% endblock %}
+
 {% block content %}
-<div class="container-xxl" id="kt_app_content_container">
 
     <div class="row">
 
@@ -11,11 +21,6 @@
                 <div class="card-body">
 
                     <div class="d-flex align-items-center justify-content-between">
-                        <h1 class="mb-0">
-                            <a href="{{ dataset.get_uvlhub_doi() }}">
-                                {{ dataset.ds_meta_data.title }}
-                            </a>
-                        </h1>
                         <span class="badge bg-secondary">{{ dataset.get_cleaned_publication_type() }}</span>
                     </div>
 
@@ -123,7 +128,7 @@
                 </div>
             </div>
             <div class="card-toolbar flex-row-fluid justify-content-end gap-5">
-                <a href="/dataset/download/{{ dataset.id }}" class="btn btn-primary">
+                <a href="/datasets/download/{{ dataset.id }}" class="btn btn-primary">
                     <i data-feather="download" class="me-1" style="width: 14px; height: 14px;"></i>
                                 Download dataset ({{ dataset.get_file_total_size_for_human() }})
                 </a>
@@ -195,8 +200,6 @@
             </table>
         </div>
     </div>
-
-</div>
 {% endblock %}
 
 {% block scripts %}

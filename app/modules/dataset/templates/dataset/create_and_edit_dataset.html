@@ -2,6 +2,15 @@
 
 {% set title = "Upload dataset" %}
 
+{% block breadcrumb %}
+
+<ol class="breadcrumb text-muted fs-6 fw-semibold">
+    <li class="breadcrumb-item"><a href="/" class="">Home</a></li>
+    <li class="breadcrumb-item text-muted">Upload dataset</li>
+</ol>
+
+{% endblock %}
+
 {% block content %}
 
 <div class="stepper stepper-pills stepper-column d-flex flex-column flex-xl-row flex-row-fluid gap-10" id="stepper_upload_dataset">
@@ -139,16 +148,10 @@
                 <div class="w-100">
                     <!--begin::Heading-->
                     <div class="pb-10 pb-lg-15">
-                        <h2 class="fw-bold d-flex align-items-center text-gray-900">Setup dataset type 
-                        <span class="ms-1" data-bs-toggle="tooltip" title="With this option you can control the visibility of your dataset. It is very useful if, for example, your dataset is not complete or your paper is in a double-blind review process.">
-                            <i class="ki-duotone ki-information-5 text-gray-500 fs-6">
-                                <span class="path1"></span>
-                                <span class="path2"></span>
-                                <span class="path3"></span>
-                            </i>
-                        </span></h2>
-                        <div class="text-muted fw-semibold fs-6">If you need more info, please check out 
-                            <a href="#" class="link-primary fw-bold">Help Page</a>.</div>
+                        <h2 class="fw-bold d-flex align-items-center text-gray-900">Setup dataset type</h2>
+                        <div class="text-muted fw-semibold fs-6">
+                            With this option you can control the visibility of your dataset. It is very useful if, for example, your dataset is not complete or your paper is in a double-blind review process.
+                        </div>
                     </div>
                     <!--end::Heading-->
                     <!--begin::Input group-->
@@ -216,8 +219,10 @@
                     <div class="pb-10 pb-lg-15">
                         <!--begin::Title-->
                         <h2 class="fw-bold text-gray-900">Upload UVL files</h2>
-                        <div class="text-muted fw-semibold fs-6">If you need more info, please check out 
-                        <a href="#" class="link-primary fw-bold">Help Page</a>.</div>
+                        <div class="text-muted fw-semibold fs-6">
+                            You can upload as many UVL files as you want.
+                            All files will be automatically checked by our built-in syntax analyzer to ensure they are valid.
+                        </div>
                     </div>
 
                     <div class="mb-0 fv-row">
@@ -230,7 +235,7 @@
                                     <div class="dropzone dropzone-queue mb-2" id="uvl_dropzone">
                                         <!--begin::Controls-->
                                         <div class="dropzone-panel mb-lg-0 mb-2">
-                                            <h2 class="mb-10">Drag & drop your UVL files</h2>
+                                            <h3 class="mb-10">Drag & drop your UVL files</h3>
                                             <a class="dropzone-select btn btn-sm btn-primary me-2">Attach files</a>
                                         </div>
                                         <!--end::Controls-->
@@ -296,8 +301,9 @@
                         <h2 class="fw-bold text-gray-900">Setup dataset info</h2>
                         <!--end::Title-->
                         <!--begin::Notice-->
-                        <div class="text-muted fw-semibold fs-6">If you need more info, please check out 
-                        <a href="#" class="link-primary fw-bold">Help Page</a>.</div>
+                        <div class="text-muted fw-semibold fs-6">
+                            Provide a title, description, publication details and tags to complete your dataset metadata.
+                        </div>
                         <!--end::Notice-->
                     </div>
                     <!--end::Heading-->
@@ -381,8 +387,9 @@
 
                     <div class="pb-10 pb-lg-15">
                         <h2 class="fw-bold text-gray-900">Setup authors</h2>
-                        <div class="text-muted fw-semibold fs-6">If you need more info, please check out 
-                        <a href="#" class="text-primary fw-bold">Help Page</a>.</div>
+                        <div class="text-muted fw-semibold fs-6">
+                            Add the authors of the dataset, including their name, affiliation and ORCID if available.
+                        </div>
                     </div>
 
                     <div class="row draggable-zone" id="authors-container" tabindex="0">

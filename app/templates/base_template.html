@@ -727,7 +727,7 @@
 														<span class="path2"></span>
 													</i>
 												</span>
-												<span class="menu-title">Upload datasets</span>
+												<span class="menu-title">Upload dataset</span>
 											</a>
 											<!--end:Menu link-->
 										</div>
@@ -905,6 +905,15 @@
 								<div id="kt_app_content_container" class="app-container container-fluid">
 
 									{% include "_flash_messages.html" %}
+
+									<div class="row mb-4">
+										<div class="col-12">
+											
+										{% block breadcrumb %}{% endblock %}
+										</div>
+									</div>
+
+									
 
 									{% block content %}{% endblock %}
 

@@ -50,7 +50,7 @@ ds_download_record_service = DSDownloadRecordService()
 hubfile_service = HubfileService()
 
 
-@dataset_bp.route("/dataset/upload", methods=["GET", "POST"])
+@dataset_bp.route("/datasets/upload", methods=["GET", "POST"])
 @login_required
 def create_dataset():
     form = DataSetForm()
@@ -155,7 +155,7 @@ def edit_dataset(dataset_id):
     )
 
 
-@dataset_bp.route("/dataset/update", methods=["POST"])
+@dataset_bp.route("/datasets/update", methods=["POST"])
 @login_required
 def update_dataset():
 
@@ -200,7 +200,7 @@ def update_dataset():
     return jsonify({"message": msg}), 200
 
 
-@dataset_bp.route("/dataset/list", methods=["GET"])
+@dataset_bp.route("/datasets/list", methods=["GET"])
 @login_required
 def list_dataset():
     return render_template(
@@ -212,7 +212,7 @@ def list_dataset():
     )
 
 
-@dataset_bp.route("/dataset/download/<int:dataset_id>", methods=["GET"])
+@dataset_bp.route("/datasets/download/<int:dataset_id>", methods=["GET"])
 def download_dataset(dataset_id):
 
     dataset = dataset_service.get_or_404(dataset_id)
@@ -235,7 +235,7 @@ def download_dataset(dataset_id):
     return resp
 
 
-@dataset_bp.route("/dataset/download/all", methods=["GET"])
+@dataset_bp.route("/datasets/download/all", methods=["GET"])
 def download_all_dataset():
     # Crear un directorio temporal
     temp_dir = tempfile.mkdtemp()
@@ -290,7 +290,7 @@ def subdomain_index(doi):
     return resp
 
 
-@dataset_bp.route("/dataset/unsynchronized/<int:dataset_id>/", methods=["GET"])
+@dataset_bp.route("/datasets/unsynchronized/<int:dataset_id>/", methods=["GET"])
 @login_required
 def get_unsynchronized_dataset(dataset_id):
 

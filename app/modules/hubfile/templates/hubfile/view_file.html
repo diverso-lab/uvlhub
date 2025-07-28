@@ -2,6 +2,16 @@
 
 {% set title = dataset.ds_meta_data.title  %}
 
+{% block breadcrumb %}
+
+<ol class="breadcrumb text-muted fs-6 fw-semibold">
+    <li class="breadcrumb-item"><a href="/" class="">Home</a></li>
+    <li class="breadcrumb-item"><a href="{{ dataset.get_uvlhub_doi() }}" class="">{{ dataset.ds_meta_data.title }}</a></li>
+    <li class="breadcrumb-item text-muted">{{selected_file.name}}</li>
+</ol>
+
+{% endblock %}
+
 {% block content %}
 
     <div class="row">
@@ -12,11 +22,6 @@
                 <div class="card-body">
 
                     <div class="d-flex align-items-center justify-content-between">
-                        <h1 class="mb-0">
-                            <a href="{{ dataset.get_uvlhub_doi() }}">
-                                {{ dataset.ds_meta_data.title }}
-                            </a>
-                        </h1>
                         <span class="badge bg-secondary">{{ dataset.get_cleaned_publication_type() }}</span>
                     </div>
 
@@ -76,7 +81,7 @@
                             <input type="text"
                                 data-file-search
                                 class="form-control form-control-solid w-100 ps-12"
-                                placeholder="Search files" />
+                                placeholder="Search models" />
                         </div>
                     </div>
                 </div>
@@ -132,6 +137,50 @@
                             </i> FM Fact Label
                         </button>
                     </li>
+
+                    <li class="nav-item dropdown ms-2">
+                        <button class="nav-link dropdown-toggle d-flex align-items-center" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="ki-duotone ki-export me-2">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                            </i>
+                            Export
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('hubfile.download_file', file_id=selected_file.id) }}">
+                                    UVL
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('flamapy.to_glencoe', file_id=selected_file.id) }}">
+                                    Glencoe
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('flamapy.to_cnf', file_id=selected_file.id) }}">
+                                    DIMACS
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('flamapy.to_splot', file_id=selected_file.id) }}">
+                                    SPLOT
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
+                    <li class="nav-item ms-2">
+                        <button type="button"
+                                class="nav-link d-flex align-items-center"
+                                onclick="copyCurrentUVL(this)"
+                                data-bs-toggle="tooltip"
+                                data-bs-placement="bottom"
+                                title="Copy to clipboard">
+                            <i class="ki-duotone ki-copy"></i>&nbsp;Copy
+                        </button>
+                    </li>
+
                     {% set raw_url = url_for('hubfile.raw_uvl', file_id=selected_file.id, _external=True) %}
                     {% set ide_url = 'https://ide.flamapy.org/?import=' ~ (raw_url | urlencode) %}
 
@@ -231,6 +280,31 @@ $(function () {
     }
 });
 
+function copyCurrentUVL(buttonEl) {
+    const content = `{{ uvl_content | escape | replace('\n', '\\n') | replace('"', '\\"') }}`;
+
+    navigator.clipboard.writeText(content).then(() => {
+        // Cambia el tooltip temporalmente
+        const tooltip = bootstrap.Tooltip.getInstance(buttonEl) || new bootstrap.Tooltip(buttonEl);
+        tooltip.setContent({ '.tooltip-inner': 'Copied!' });
+        tooltip.show();
+
+        // Restaurar texto tras 1.5 segundos
+        setTimeout(() => {
+            tooltip.setContent({ '.tooltip-inner': 'Copy to clipboard' });
+        }, 1500);
+    });
+}
+
+// Activar tooltips al cargar
+document.addEventListener('DOMContentLoaded', function () {
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+        new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
+    feather.replace();
+});
 
 </script>
 {% endblock %}

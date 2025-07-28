@@ -96,7 +96,7 @@ def delete():
     return jsonify({"error": "Error: File not found"}), 404
 
 
-@hubfile_bp.route("/hubfile/download/<int:file_id>", methods=["GET"])
+@hubfile_bp.route("/hubfiles/download/<int:file_id>", methods=["GET"])
 def download_file(file_id):
     hubfile = HubfileService().get_or_404(file_id)
     user_owner = hubfile.get_owner_user()
@@ -122,7 +122,7 @@ def download_file(file_id):
     return resp
 
 
-@hubfile_bp.route("/hubfile/view/<int:file_id>", methods=["GET"])
+@hubfile_bp.route("/hubfiles/<int:file_id>", methods=["GET"])
 def view_uvl(file_id):
     selected_file = HubfileService().get_or_404(file_id)
     dataset = selected_file.feature_model.data_set
@@ -151,7 +151,7 @@ def view_uvl(file_id):
     )
 
 
-@hubfile_bp.route("/hubfile/raw/<int:file_id>", methods=["GET"])
+@hubfile_bp.route("/hubfiles/raw/<int:file_id>", methods=["GET"])
 def raw_uvl(file_id):
     selected_file = HubfileService().get_or_404(file_id)
     dataset = selected_file.feature_model.data_set

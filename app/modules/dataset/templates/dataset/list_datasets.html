@@ -1,6 +1,15 @@
 {% extends "base_template.html" %}
 {% set title = "My datasets" %}
 
+{% block breadcrumb %}
+
+<ol class="breadcrumb text-muted fs-6 fw-semibold">
+    <li class="breadcrumb-item"><a href="/" class="">Home</a></li>
+    <li class="breadcrumb-item text-muted">My datasets</li>
+</ol>
+
+{% endblock %}
+
 {% block content %}
 
 {% if datasets %}

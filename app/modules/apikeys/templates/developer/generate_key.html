@@ -1,6 +1,16 @@
 {% extends "base_template.html" %}
 {% set title = "Generate API key" %}
 
+{% block breadcrumb %}
+
+<ol class="breadcrumb text-muted fs-6 fw-semibold">
+    <li class="breadcrumb-item"><a href="/" class="">Home</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('apikeys.list_api_keys') }}" class="">API keys</a></li>
+    <li class="breadcrumb-item text-muted">Generate API key</li>
+</ol>
+
+{% endblock %}
+
 {% block content %}
 <div class="row">
     <div class="col-md-8 col-lg-6">
