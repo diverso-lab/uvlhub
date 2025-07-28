@@ -7,6 +7,7 @@ from typing import List, Optional
 import uuid
 from zipfile import ZipFile
 import zipfile
+import bleach
 
 from flask import current_app, request
 
@@ -188,8 +189,20 @@ class DataSetService(BaseService):
             "orcid": current_user.profile.get_orcid(),
         }
         try:
-            logger.info(f"Creating dsmetadata...: {form.get_dsmetadata()}")
-            dsmetadata = self.dsmetadata_repository.create(**form.get_dsmetadata())
+            dsmetadata_data = form.get_dsmetadata()
+
+            # Limpiar HTML en el campo description
+            raw_description = dsmetadata_data.get("description", "")
+            clean_description = bleach.clean(
+                raw_description,
+                tags=["b", "i", "u", "a", "p", "br"],
+                attributes={"a": ["href", "title", "target"]},
+                strip=True
+            )
+            dsmetadata_data["description"] = clean_description
+
+            logger.info(f"Creating dsmetadata...: {dsmetadata_data}")
+            dsmetadata = self.dsmetadata_repository.create(**dsmetadata_data)
 
             dsmetadata_info = form.get_dsmetadata()
             is_anonymous = dsmetadata_info.get("dataset_anonymous", False)

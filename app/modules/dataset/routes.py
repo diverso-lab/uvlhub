@@ -198,7 +198,7 @@ def create_dataset():
         hubfiles=[hub.to_dict() for hub in hubfiles],
     )
 
-
+'''
 @dataset_bp.route("/dataset/edit/<int:dataset_id>", methods=["GET"])
 @login_required
 @is_dataset_owner
@@ -259,7 +259,7 @@ def update_dataset():
 
     msg = "[Back] Everything works!"
     return jsonify({"message": msg}), 200
-
+'''
 
 @dataset_bp.route("/datasets/list", methods=["GET"])
 @login_required

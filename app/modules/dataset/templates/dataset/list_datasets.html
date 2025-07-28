@@ -46,9 +46,6 @@
                             </a>
                         </td>
                         <td>
-                            <a href="{{ url_for('dataset.edit_dataset', dataset_id=dataset.id) }}" class="btn btn-sm btn-icon btn-light-primary me-1" title="Edit">
-                                <i class="ki-duotone ki-pencil fs-2"><span class="path1"></span><span class="path2"></span></i>
-                            </a>
                             <a href="{{ dataset.get_uvlhub_doi() }}" class="btn btn-sm btn-icon btn-light-info me-1" title="View">
                                 <i class="ki-duotone ki-eye fs-2">
                                     <span class="path1"></span>
@@ -58,9 +55,9 @@
                             </a>
                             <a href="{{ url_for('dataset.download_dataset', dataset_id=dataset.id) }}" class="btn btn-sm btn-icon btn-light-success" title="Download">
                                 <i class="ki-duotone ki-folder-down fs-2">
- <span class="path1"></span>
- <span class="path2"></span>
-</i>
+                                    <span class="path1"></span>
+                                    <span class="path2"></span>
+                                </i>
                             </a>
                         </td>
                     </tr>
@@ -104,10 +101,17 @@
                         <td>{{ dataset.get_publication() }}</td>
                         <td>
                             <a href="{{ url_for('dataset.get_unsynchronized_dataset', dataset_id=dataset.id) }}" class="btn btn-sm btn-icon btn-light-info me-1" title="View">
-                                <i class="ki-duotone ki-eye fs-5"><span class="path1"></span><span class="path2"></span></i>
+                                <i class="ki-duotone ki-eye fs-2">
+                                    <span class="path1"></span>
+                                    <span class="path2"></span>
+                                    <span class="path3"></span>
+                                </i></i>
                             </a>
                             <a href="{{ url_for('dataset.download_dataset', dataset_id=dataset.id) }}" class="btn btn-sm btn-icon btn-light-success" title="Download">
-                                <i class="ki-duotone ki-download fs-5"><span class="path1"></span><span class="path2"></span></i>
+                                <i class="ki-duotone ki-folder-down fs-2">
+                                    <span class="path1"></span>
+                                    <span class="path2"></span>
+                                </i>
                             </a>
                         </td>
                     </tr>

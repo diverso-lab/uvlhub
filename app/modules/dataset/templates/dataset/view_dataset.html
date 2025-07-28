@@ -63,7 +63,7 @@
 
                     <div class="row mb-2">
                         <div class="col-12">
-                            <p class="card-text">{{ dataset.ds_meta_data.description }}</p>
+                            <p class="card-text">{{ dataset.ds_meta_data.description | safe}}</p>
                         </div>
                     </div>
 
@@ -76,6 +76,7 @@
                         </div>
                     </div>
 
+                    {% if dataset.ds_meta_data.dataset_doi %}
                     <!-- DOI + Copy icon -->
                     <div class="row mt-3">
                         <div class="col-12 d-flex align-items-center flex-wrap">
@@ -108,6 +109,7 @@
                             </div>
                         </div>
                     </div>
+                    {% endif %}
 
                 </div>
             </div>

@@ -1,5 +1,19 @@
 export function initializeSubmit() {
-    document.querySelector('[data-kt-stepper-action="submit"]').addEventListener('click', async function () {
+    const submitBtn = document.querySelector('[data-kt-stepper-action="submit"]');
+    const continueBtn = document.querySelector('[data-kt-stepper-action="next"]');
+    const errorContainer = document.getElementById("upload-error");
+
+    submitBtn.addEventListener('click', async function () {
+        // Reset errores visuales
+        errorContainer.classList.add("d-none");
+        errorContainer.innerHTML = "";
+
+        // Mostrar mensaje y bloquear botones
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = "Submitting...";
+        submitBtn.disabled = true;
+        continueBtn.disabled = true;
+
         const formData = new FormData();
 
         // Dataset type
@@ -25,7 +39,6 @@ export function initializeSubmit() {
         let index = 0;
         document.querySelectorAll('#authors-container input[name$="[name]"]').forEach(nameInput => {
             const authorRoot = nameInput.closest('.draggable');
-
             const affInput = authorRoot.querySelector('input[name$="[affiliation]"]');
             const orcidInput = authorRoot.querySelector('input[name$="[orcid]"]');
 
@@ -41,14 +54,7 @@ export function initializeSubmit() {
             }
         });
 
-        // Submit to backend
         try {
-
-            console.log("[DEBUG] FormData entries:");
-            for (const [key, value] of formData.entries()) {
-                console.log(`${key} -> ${value}`);
-            }
-
             const response = await fetch("/datasets/upload", {
                 method: "POST",
                 body: formData,
@@ -57,15 +63,21 @@ export function initializeSubmit() {
             const result = await response.json();
 
             if (response.ok) {
-                alert("Dataset created successfully");
                 window.location.href = "/datasets/list";
             } else {
-                alert("Error creating dataset: " + JSON.stringify(result));
+                errorContainer.innerHTML = `❌ Error creating dataset:<br><code>${JSON.stringify(result)}</code>`;
+                errorContainer.classList.remove("d-none");
             }
 
         } catch (error) {
             console.error("Error on submit:", error);
-            alert("Error in the connection to the server");
+            errorContainer.innerHTML = "❌ Error connecting to the server. Please try again.";
+            errorContainer.classList.remove("d-none");
+        } finally {
+            // Restaurar estado del botón
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+            continueBtn.disabled = false;
         }
     });
 }

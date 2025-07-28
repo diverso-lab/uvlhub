@@ -3,14 +3,27 @@
 {% set title = dataset.ds_meta_data.title  %}
 
 {% block breadcrumb %}
-
 <ol class="breadcrumb text-muted fs-6 fw-semibold">
     <li class="breadcrumb-item"><a href="/" class="">Home</a></li>
-    <li class="breadcrumb-item"><a href="{{ dataset.get_uvlhub_doi() }}" class="">{{ dataset.ds_meta_data.title }}</a></li>
-    <li class="breadcrumb-item text-muted">{{selected_file.name}}</li>
-</ol>
 
+    {% if dataset.ds_meta_data.dataset_doi %}
+        <li class="breadcrumb-item">
+            <a href="{{ dataset.get_uvlhub_doi() }}" class="">
+                {{ dataset.ds_meta_data.title }}
+            </a>
+        </li>
+    {% else %}
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('dataset.get_unsynchronized_dataset', dataset_id=dataset.id) }}" class="">
+                {{ dataset.ds_meta_data.title }}
+            </a>
+        </li>
+    {% endif %}
+
+    <li class="breadcrumb-item text-muted">{{ selected_file.name }}</li>
+</ol>
 {% endblock %}
+
 
 {% block content %}
 
@@ -25,10 +38,10 @@
                         <span class="badge bg-secondary">{{ dataset.get_cleaned_publication_type() }}</span>
                     </div>
 
+                    {% if dataset.ds_meta_data.dataset_doi %}
                     <!-- DOI + Copy icon -->
                     <div class="row mt-3">
                         <div class="col-12 d-flex align-items-center flex-wrap">
-                            
                             <!-- Etiqueta DOI -->
                             <span class="px-3 py-1 bg-dark text-white fw-bold rounded-start" style="font-family: monospace;">
                             DOI
@@ -57,6 +70,8 @@
                             </div>
                         </div>
                     </div>
+                    {% endif %}
+
 
                 </div>
             </div>
