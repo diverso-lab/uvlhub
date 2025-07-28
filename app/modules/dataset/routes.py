@@ -1,7 +1,6 @@
 from datetime import datetime
 import logging
 import os
-import json
 import shutil
 import tempfile
 
@@ -14,13 +13,11 @@ from flask import (
     render_template,
     request,
     send_file,
-    send_from_directory,
     url_for,
 )
 from flask_login import login_required, current_user
 from app import db
 
-# from app.modules.apikeys.decorators import require_api_key
 from app.modules.apikeys.decorators import require_api_key
 from app.modules.dataset.decorators import is_dataset_owner
 from app.modules.dataset.forms import DataSetForm
@@ -95,21 +92,24 @@ def create_dataset():
             logger.info(f"[UPLOAD] DataSet created (not committed yet) with ID: {dataset.id}")
 
             # Crear autores
-            i = 0
-            while True:
-                name = request.form.get(f"authors[{i}][name]")
-                if not name:
-                    break
-                affiliation = request.form.get(f"authors[{i}][affiliation]")
-                orcid = request.form.get(f"authors[{i}][orcid]")
-                author_service.create(
-                    ds_meta_data_id=ds_meta.id,
-                    name=name,
-                    affiliation=affiliation,
-                    orcid=orcid,
-                )
-                logger.info(f"[UPLOAD] Author #{i} added: {name}, {affiliation}, {orcid}")
-                i += 1
+            if dataset_type != "zenodo_anonymous":
+                i = 0
+                while True:
+                    name = request.form.get(f"authors[{i}][name]")
+                    if not name:
+                        break
+                    affiliation = request.form.get(f"authors[{i}][affiliation]")
+                    orcid = request.form.get(f"authors[{i}][orcid]")
+                    author_service.create(
+                        ds_meta_data_id=ds_meta.id,
+                        name=name,
+                        affiliation=affiliation,
+                        orcid=orcid,
+                    )
+                    logger.info(f"[UPLOAD] Author #{i} added: {name}, {affiliation}, {orcid}")
+                    i += 1
+            else:
+                logger.info("[UPLOAD] Dataset is anonymous: authors will not be stored in DB")
 
             # Guardar en base de datos
             db.session.commit()
@@ -157,11 +157,12 @@ def create_dataset():
             zenodo_service.upload_zip(dataset, deposition_id, zip_path)
             logger.info(f"[UPLOAD] ZIP uploaded to Zenodo for deposition {deposition_id}")
 
-            if dataset_type == "zenodo":
-                zenodo_service.publish_deposition(deposition_id)
-                doi = zenodo_service.get_doi(deposition_id)
-                dataset_service.update_dsmetadata(ds_meta.id, dataset_doi=doi)
-                logger.info(f"[UPLOAD] Dataset {dataset.id} published on Zenodo with DOI: {doi}")
+            if dataset_type in {"zenodo", "zenodo_anonymous"}:
+              zenodo_service.publish_deposition(deposition_id)
+              doi = zenodo_service.get_doi(deposition_id)
+              dataset_service.update_dsmetadata(ds_meta.id, dataset_doi=doi)
+              logger.info(f"[UPLOAD] Dataset {dataset.id} published on Zenodo with DOI: {doi}")
+
 
         except Exception as exc:
             logger.exception(f"[UPLOAD ERROR] Zenodo upload failed for dataset {dataset.id}: {exc}")
@@ -274,24 +275,19 @@ def list_dataset():
 
 @dataset_bp.route("/datasets/download/<int:dataset_id>", methods=["GET"])
 def download_dataset(dataset_id):
-
     dataset = dataset_service.get_or_404(dataset_id)
 
-    temp_dir = dataset_service.zip_dataset(dataset)
+    zip_path = dataset_service.zip_from_storage(dataset)
+
+    if not zip_path or not os.path.exists(zip_path):
+        abort(404, description="ZIP file not found.")
 
     user_cookie = ds_download_record_service.create_cookie(dataset)
 
     resp = make_response(
-        send_from_directory(
-            temp_dir,
-            f"dataset_{dataset.id}.zip",
-            as_attachment=True,
-            mimetype="application/zip",
-        )
+        send_file(zip_path, as_attachment=True, mimetype="application/zip")
     )
-
     resp.set_cookie("download_cookie", user_cookie)
-
     return resp
 
 
@@ -343,7 +339,7 @@ def subdomain_index(doi):
     resp = make_response(render_template(
         "dataset/view_dataset.html",
         dataset=dataset,
-        hubfiles=hubfiles  # <-- ¡Esto faltaba!
+        hubfiles=hubfiles
     ))
     resp.set_cookie("view_cookie", user_cookie)
 
@@ -359,10 +355,18 @@ def get_unsynchronized_dataset(dataset_id):
         current_user.id, dataset_id
     )
 
+    # Obtener todos los hubfiles de los feature models
+    hubfiles = []
+    for fm in dataset.feature_models:
+        hubfiles.extend(fm.hubfiles)
+
+
     if not dataset:
         abort(404)
 
-    return render_template("dataset/view_dataset.html", dataset=dataset)
+    return render_template("dataset/view_dataset.html", 
+                           dataset=dataset,
+                           hubfiles=hubfiles)
 
 
 # REST API

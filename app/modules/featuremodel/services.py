@@ -65,7 +65,11 @@ class FeatureModelService(BaseService):
                 continue
 
             uvl_path = os.path.join(source_dir, filename)
-            dest_path = os.path.join(dest_dir, filename)
+
+            # Quitar el prefijo UUID si existe
+            original_filename = filename.split("_", 1)[-1] if "_" in filename else filename
+
+            dest_path = os.path.join(dest_dir, original_filename)
             shutil.move(uvl_path, dest_path)
             logger.info(f"[FM] Moved {filename} to {dest_path}")
 

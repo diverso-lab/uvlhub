@@ -6,8 +6,9 @@ import tempfile
 from typing import List, Optional
 import uuid
 from zipfile import ZipFile
+import zipfile
 
-from flask import request
+from flask import current_app, request
 
 from app.modules.auth.models import User
 from app.modules.auth.services import AuthenticationService
@@ -351,6 +352,30 @@ class DataSetService(BaseService):
                                                 dataset_dir, relative_path
                                             ),
                                         )
+
+    def zip_from_storage(self, dataset):
+        dataset_folder = os.path.join(
+            os.getenv("WORKING_DIR", ""),
+            "uploads",
+            f"user_{dataset.user_id}",
+            f"dataset_{dataset.id}",
+            "uvl"
+        )
+
+        if not os.path.exists(dataset_folder):
+            current_app.logger.warning(f"[ZIP] Dataset folder not found: {dataset_folder}")
+            return None  # Lo manejarás con abort(404) fuera
+
+        temp_dir = tempfile.mkdtemp()
+        zip_path = os.path.join(temp_dir, f"dataset_{dataset.id}.zip")
+
+        with zipfile.ZipFile(zip_path, 'w') as zipf:
+            for filename in os.listdir(dataset_folder):
+                file_path = os.path.join(dataset_folder, filename)
+                arcname = filename
+                zipf.write(file_path, arcname=arcname)
+
+        return zip_path
 
 
 class AuthorService(BaseService):

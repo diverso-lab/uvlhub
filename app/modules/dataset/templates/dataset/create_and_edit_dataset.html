@@ -479,73 +479,45 @@
 
 
 <script id="author-template" type="x-tmpl-mustache">
-    <div class="col-lg-12 draggable mb-10" tabindex="0" id="author-[[id]]">
-    <!--begin::Card-->
+<div class="col-lg-12 draggable mb-10" tabindex="0" id="author-[[id]]">
     <div class="card card-bordered shadow-sm">
         <div class="card-header">
             <div class="card-toolbar">
                 <a href="#" class="btn btn-icon btn-sm btn-hover-light-primary draggable-handle">
-                    <i class="ki-duotone ki-abstract-14 fs-2x"><span class="path1"></span><span class="path2"></span></i>
+                    <i class="ki-duotone ki-abstract-14 fs-2x">
+                        <span class="path1"></span><span class="path2"></span>
+                    </i>
                 </a>
             </div>
             <div class="card-title">
                 <button type="button" class="btn btn-sm btn-light-danger me-3 remove-author" data-id="[[id]]">
                     <i class="ki-duotone ki-minus-square fs-4 me-1">
-                        <span class="path1"></span>
-                        <span class="path2"></span>
-                        <span class="path3"></span>
+                        <span class="path1"></span><span class="path2"></span><span class="path3"></span>
                     </i>Remove author
                 </button>
             </div>
         </div>
         <div class="card-body">
-            <form>
-                <!-- Name and Affiliation -->
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label for="name_[[id]]" class="form-label">Name *</label>
-                        <input type="text" id="name_[[id]]" name="name_[[id]]" class="form-control" placeholder="Enter your name" required>
-                    </div>
-                    <div class="col-md-6">
-                        <label for="affiliation_[[id]]" class="form-label">Affiliation</label>
-                        <input type="text" id="affiliation_[[id]]" name="affiliation_[[id]]" class="form-control" placeholder="Enter your affiliation">
-                    </div>
+            <!-- Cambiamos los name para que sigan el formato authors[INDEX][campo] -->
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Name *</label>
+                    <input type="text" name="authors[[index]][name]" class="form-control" placeholder="Enter your name" required>
                 </div>
-                <!-- ORCID -->
-                <div class="row mb-3">
-                    <div class="col-md-12">
-                        <label for="orcid_[[id]]" class="form-label">ORCID</label>
-                        <input type="text" id="orcid_[[id]]" name="orcid_[[id]]" class="form-control" placeholder="Enter your ORCID">
-                    </div>
+                <div class="col-md-6">
+                    <label class="form-label">Affiliation</label>
+                    <input type="text" name="authors[[index]][affiliation]" class="form-control" placeholder="Enter your affiliation">
                 </div>
-            </form>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-12">
+                    <label class="form-label">ORCID</label>
+                    <input type="text" name="authors[[index]][orcid]" class="form-control" placeholder="Enter your ORCID">
+                </div>
+            </div>
         </div>
     </div>
-    <!--end::Card-->
 </div>
-</script>
-
-
-<script>
-
-// ---------------------------------------------
-// dataset.js
-// ---------------------------------------------
-
-
-
-document.addEventListener('DOMContentLoaded', function () {
-
- 
-
-});
-
-
-// ---------------------------------------------
-// hubfile.js
-// ---------------------------------------------
-
-
 </script>
 
 {% endblock %}

@@ -22,15 +22,33 @@ export function initializeSubmit() {
         }
 
         // Authors
-        document.querySelectorAll("#authors-container .draggable").forEach(authorCard => {
-            const id = authorCard.id.replace("author-", "");
-            formData.append("authors[][name]", document.querySelector(`#name_${id}`).value);
-            formData.append("authors[][affiliation]", document.querySelector(`#affiliation_${id}`).value);
-            formData.append("authors[][orcid]", document.querySelector(`#orcid_${id}`).value);
+        let index = 0;
+        document.querySelectorAll('#authors-container input[name$="[name]"]').forEach(nameInput => {
+            const authorRoot = nameInput.closest('.draggable');
+
+            const affInput = authorRoot.querySelector('input[name$="[affiliation]"]');
+            const orcidInput = authorRoot.querySelector('input[name$="[orcid]"]');
+
+            const name = nameInput.value.trim();
+            const affiliation = affInput?.value.trim() || "";
+            const orcid = orcidInput?.value.trim() || "";
+
+            if (name) {
+                formData.append(`authors[${index}][name]`, name);
+                formData.append(`authors[${index}][affiliation]`, affiliation);
+                formData.append(`authors[${index}][orcid]`, orcid);
+                index++;
+            }
         });
 
         // Submit to backend
         try {
+
+            console.log("[DEBUG] FormData entries:");
+            for (const [key, value] of formData.entries()) {
+                console.log(`${key} -> ${value}`);
+            }
+
             const response = await fetch("/datasets/upload", {
                 method: "POST",
                 body: formData,
