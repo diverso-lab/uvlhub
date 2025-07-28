@@ -23,6 +23,8 @@ cryptography==44.0.0
 dd==0.5.7
 dnspython==2.7.0
 docker==7.1.0
+elastic-transport==8.17.1
+elasticsearch==8.18.1
 email_validator==2.2.0
 Faker==33.3.1
 flake8==7.1.1
@@ -91,7 +93,7 @@ python-sat==0.1.8.dev17
 pytz==2024.2
 PyYAML==6.0.2
 pyzmq==26.2.0
-redis==5.2.1
+redis==5.2.1 
 referencing==0.36.2
 requests==2.32.3
 rpds-py==0.26.0

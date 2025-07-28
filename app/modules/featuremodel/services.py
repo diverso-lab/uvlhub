@@ -1,6 +1,7 @@
 import logging
 import os
 import shutil
+from app.modules.elasticsearch.utils import index_hubfile
 from app.modules.featuremodel.models import FeatureModel
 from app.modules.featuremodel.repositories import FeatureModelRepository
 from app.modules.hubfile.services import HubfileService
@@ -81,6 +82,9 @@ class FeatureModelService(BaseService):
             # Crear Hubfile
             hubfile = hubfile_service.create_from_file(feature_model.id, dest_path)
             logger.info(f"[FM] Hubfile created with ID: {hubfile.id} for FeatureModel {feature_model.id}")
+
+            # Indexar en Elasticsearch
+            index_hubfile(hubfile)
 
             created_models.append(feature_model)
 

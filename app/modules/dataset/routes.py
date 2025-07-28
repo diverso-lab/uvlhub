@@ -31,6 +31,7 @@ from app.modules.dataset.services import (
     DataSetService,
     DOIMappingService,
 )
+from app.modules.elasticsearch.utils import index_dataset
 from app.modules.featuremodel.services import FeatureModelService
 from app.modules.hubfile.models import Hubfile
 from app.modules.hubfile.services import HubfileService
@@ -115,6 +116,9 @@ def create_dataset():
             db.session.commit()
             logger.info(f"[UPLOAD] Dataset {dataset.id} and metadata committed to DB")
 
+            # Indexar el dataset en Elasticsearch
+            index_dataset(dataset)
+
             # Mover modelos
             feature_model_service = FeatureModelService()
             created_fms = feature_model_service.create_from_uvl_files(dataset)
@@ -198,68 +202,6 @@ def create_dataset():
         hubfiles=[hub.to_dict() for hub in hubfiles],
     )
 
-'''
-@dataset_bp.route("/dataset/edit/<int:dataset_id>", methods=["GET"])
-@login_required
-@is_dataset_owner
-def edit_dataset(dataset_id):
-    dataset = dataset_service.get_or_404(dataset_id)
-    form = DataSetForm(obj=dataset)
-    form = dataset_service.populate_form_from_dataset(form=form, dataset=dataset)
-    is_edit = True
-    return render_template(
-        "dataset/create_and_edit_dataset.html",
-        form=form,
-        is_edit=is_edit,
-        dataset=dataset,
-        enumerate=enumerate,
-    )
-
-
-@dataset_bp.route("/datasets/update", methods=["POST"])
-@login_required
-def update_dataset():
-
-    form = DataSetForm()
-    dataset_id = request.form.get("datasetId")
-    dataset = dataset_service.get_by_id(dataset_id)
-
-    if dataset is None:
-        abort(404)
-
-    if dataset.user_id != current_user.id:
-        abort(404)
-
-    logger.info(f"[BACK] Dataset: {dataset.id}")
-
-    if not form.validate_on_submit():
-        logger.info(f"Form errors: {form.errors}")
-        return jsonify({"message": form.errors}), 400
-
-    try:
-        logger.info("Updating dataset...")
-        dataset = dataset_service.update_from_form(
-            form=form, current_user=current_user, dataset=dataset
-        )
-        logger.info(f"Updating deposition with id {dataset.get_zenodo_deposition()}")
-    except Exception as exc:
-        logger.exception(f"Exception while saving dataset data in local {exc}")
-        return (
-            jsonify({"Exception while saving dataset data in local: ": str(exc)}),
-            400,
-        )
-
-    try:
-        zenodo_service.update_deposition(
-            deposition_id=dataset.get_zenodo_deposition(),
-            metadata=dataset.get_zenodo_metadata(),
-        )
-    except Exception as exc:
-        logger.exception(f"Exception while update deposition in Zenodo: {exc}")
-
-    msg = "[Back] Everything works!"
-    return jsonify({"message": msg}), 200
-'''
 
 @dataset_bp.route("/datasets/list", methods=["GET"])
 @login_required
