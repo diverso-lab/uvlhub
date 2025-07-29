@@ -17,6 +17,7 @@ def index():
 def search():
 
     from app.modules.elasticsearch.services import ElasticsearchService
+
     search_service = ElasticsearchService()
 
     query = request.args.get("q", "")
@@ -31,6 +32,7 @@ def search():
 def api_search():
 
     from app.modules.elasticsearch.services import ElasticsearchService
+
     search_service = ElasticsearchService()
 
     query = request.args.get("q", "")

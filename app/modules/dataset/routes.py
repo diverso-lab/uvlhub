@@ -4,6 +4,7 @@ import os
 import shutil
 import tempfile
 
+from app.modules.elasticsearch.utils import index_dataset, index_hubfile
 from flask import (
     abort,
     current_app,
@@ -30,7 +31,6 @@ from app.modules.dataset.services import (
     DataSetService,
     DOIMappingService,
 )
-from app.modules.elasticsearch.utils import index_dataset
 from app.modules.featuremodel.services import FeatureModelService
 from app.modules.hubfile.models import Hubfile
 from app.modules.hubfile.services import HubfileService
@@ -180,10 +180,15 @@ def create_dataset():
                 doi = zenodo_service.get_doi(deposition_id)
 
                 if doi:
-                    # Indexar el dataset en Elasticsearch
-                    index_dataset(dataset)
+                    dataset_service.update_dsmetadata(ds_meta.id, dataset_doi=doi)
+                    dataset = dataset_service.get_by_id(
+                        dataset.id
+                    )
+                else:
+                    logger.warning(
+                        f"[UPLOAD] No DOI received for deposition {deposition_id}"
+                    )
 
-                dataset_service.update_dsmetadata(ds_meta.id, dataset_doi=doi)
                 logger.info(
                     f"[UPLOAD] Dataset {dataset.id} published on Zenodo with DOI: {doi}"
                 )
@@ -203,6 +208,14 @@ def create_dataset():
             )
 
         shutil.rmtree(current_user.temp_folder(), ignore_errors=True)
+
+        dataset = dataset_service.get_by_id(dataset.id)
+        index_dataset(dataset)
+
+        for fm in created_fms:
+            for hubfile in fm.hubfiles:
+                index_hubfile(hubfile)
+
         return (
             jsonify(
                 {
@@ -213,26 +226,7 @@ def create_dataset():
             200,
         )
 
-    # GET request
-    logger.info("[UPLOAD] GET request - rendering dataset creation form")
-    temp_folder = current_user.temp_folder()
-    if os.path.exists(temp_folder):
-        try:
-            shutil.rmtree(temp_folder)
-            logger.info("[UPLOAD] Temp folder cleaned on GET")
-        except Exception as e:
-            logger.exception("[UPLOAD ERROR] Could not remove temp folder")
-            return jsonify({"message": f"Error removing temp folder: {str(e)}"}), 500
-
-    with_hubfiles = request.args.get("with_hubfiles", "")
-    hubfiles_ids = [int(x) for x in with_hubfiles.split(",") if x]
-    hubfiles = hubfile_service.get_by_ids(hubfiles_ids)
-
-    return render_template(
-        "dataset/create_and_edit_dataset.html",
-        form=form,
-        hubfiles=[hub.to_dict() for hub in hubfiles],
-    )
+    return render_template("dataset/create_and_edit_dataset.html", form=form)
 
 
 @dataset_bp.route("/datasets/list", methods=["GET"])

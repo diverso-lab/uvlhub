@@ -1,8 +1,12 @@
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def init_search_index():
     try:
         from app.modules.elasticsearch.services import ElasticsearchService
+
         search = ElasticsearchService()
 
         search.create_index_if_not_exists()
@@ -14,6 +18,7 @@ def init_search_index():
 def index_dataset(dataset):
 
     from app.modules.elasticsearch.services import ElasticsearchService
+
     search = ElasticsearchService()
 
     if not dataset.ds_meta_data.dataset_doi:
@@ -54,11 +59,16 @@ def index_dataset(dataset):
     }
 
     search.index_document(doc_id=f"dataset-{dataset.id}", data=doc)
+    
+    logger.info(
+        f"[SEARCH] Dataset {dataset.id} indexed with DOI: {dataset.ds_meta_data.dataset_doi}"
+    )
 
 
 def index_hubfile(hubfile):
 
     from app.modules.elasticsearch.services import ElasticsearchService
+
     search = ElasticsearchService()
 
     dataset = hubfile.feature_model.dataset if hubfile.feature_model else None
@@ -84,6 +94,10 @@ def index_hubfile(hubfile):
     }
 
     search.index_document(doc_id=f"hubfile-{hubfile.id}", data=doc)
+
+    logger.info(
+        f"[SEARCH] Hubfile {hubfile.id} indexed in dataset: {dataset.id}"
+    )
 
 
 def reindex_all():

@@ -66,9 +66,7 @@ def test_signup_user_no_name(test_client):
         data=dict(surname="Foo", email="test@example.com", password="test1234"),
         follow_redirects=True,
     )
-    assert response.request.path == url_for(
-        "auth.signup"
-    ), "Signup was unsuccessful"
+    assert response.request.path == url_for("auth.signup"), "Signup was unsuccessful"
     assert b"This field is required" in response.data, response.data
 
 
@@ -88,9 +86,7 @@ def test_signup_user_unsuccessful(mock_captcha, test_client):
         ),
         follow_redirects=True,
     )
-    assert response.request.path == url_for(
-        "auth.signup"
-    ), "Signup was unsuccessful"
+    assert response.request.path == url_for("auth.signup"), "Signup was unsuccessful"
 
 
 @patch(

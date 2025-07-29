@@ -1,38 +1,41 @@
 import click
 import base64
-import pkg_resources
+
+try:
+    from importlib.metadata import metadata, version, PackageNotFoundError
+except ImportError:
+    from importlib_metadata import (
+        metadata,
+        version,
+        PackageNotFoundError,
+    )  # fallback para Python <3.8
 
 
-def get_metadata_value(metadata_lines, key):
-    default_value = f"{key}: Unknown"
-    line = next(
-        (line for line in metadata_lines if line.startswith(key)), default_value
-    )
-    return (
-        line.split(":", 1)[1].strip()
-        if line != default_value
-        else default_value.split(":", 1)[1].strip()
-    )
+def get_metadata_value(meta, key, default="Unknown"):
+    return meta.get(key, default)
 
 
 @click.command()
 def info():
     """Displays information about the Rosemary CLI."""
-    distribution = pkg_resources.get_distribution("rosemary")
+    package_name = "rosemary"
 
     try:
-        metadata = distribution.get_metadata_lines("METADATA")
-        author = get_metadata_value(metadata, "Author")
-        author_email = get_metadata_value(metadata, "Author-email")
-        description = get_metadata_value(metadata, "Summary")
-    except FileNotFoundError:
-        author, author_email, description = "Unknown", "Unknown", "Not available"
+        meta = metadata(package_name)
+        author = get_metadata_value(meta, "Author")
+        author_email = get_metadata_value(meta, "Author-email")
+        description = get_metadata_value(meta, "Summary")
+        ver = version(package_name)
+    except PackageNotFoundError:
+        author, author_email, description, ver = (
+            "Unknown",
+            "Unknown",
+            "Not available",
+            "Unknown",
+        )
 
-    name = distribution.project_name
-    version = distribution.version
-
-    click.echo(f"Name: {name}")
-    click.echo(f"Version: {version}")
+    click.echo(f"Name: {package_name}")
+    click.echo(f"Version: {ver}")
     click.echo(f"Author: {author}")
     click.echo(f"Author-email: {author_email}")
     click.echo(f"Description: {description}")

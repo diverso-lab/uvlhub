@@ -8,7 +8,9 @@ from flask.cli import with_appcontext
 )
 @with_appcontext
 def elasticsearch_reset():
-    from app.modules.elasticsearch.services import ElasticsearchService  # <--- aquí dentro
+    from app.modules.elasticsearch.services import (
+        ElasticsearchService,
+    )  # <--- aquí dentro
 
     search = ElasticsearchService()
 
@@ -30,6 +32,7 @@ def elasticsearch_reset():
     try:
         click.echo(click.style("🔁 Reindexing all documents...", fg="cyan"))
         from app.modules.elasticsearch.utils import reindex_all
+
         reindex_all()
         click.echo(click.style("✅ Reindexing completed successfully!", fg="green"))
     except Exception as e:

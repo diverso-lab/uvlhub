@@ -1,7 +1,6 @@
 import logging
 import os
 import shutil
-from app.modules.elasticsearch.utils import index_hubfile
 from app.modules.featuremodel.models import FeatureModel
 from app.modules.featuremodel.repositories import FeatureModelRepository
 from app.modules.hubfile.services import HubfileService
@@ -82,13 +81,6 @@ class FeatureModelService(BaseService):
             logger.info(
                 f"[FM] Hubfile created with ID: {hubfile.id} for FeatureModel {feature_model.id}"
             )
-
-            if dataset.ds_meta_data.dataset_doi:
-                index_hubfile(hubfile)
-            else:
-                logger.info(
-                    f"[SKIP] Hubfile {hubfile.id} not indexed because dataset {dataset.id} has no DOI"
-                )
 
             created_models.append(feature_model)
 
