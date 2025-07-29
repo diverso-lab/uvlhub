@@ -201,7 +201,12 @@ class DSDownloadRecord(db.Model):
     download_cookie = db.Column(db.String(36), nullable=False)
 
     def __repr__(self):
-        return f"<Download id={self.id} dataset_id={self.dataset_id} date={self.download_date} cookie={self.download_cookie}>"
+        return (
+            f"<Download id={self.id} "
+            f"dataset_id={self.dataset_id} "
+            f"date={self.download_date} "
+            f"cookie={self.download_cookie}>"
+        )
 
 
 class DSViewRecord(db.Model):

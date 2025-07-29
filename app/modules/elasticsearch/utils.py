@@ -38,7 +38,12 @@ def index_dataset(dataset):
             else []
         ),
         "publication_type": dataset.ds_meta_data.publication_type.name,
-        "content": f"{dataset.ds_meta_data.title} {dataset.ds_meta_data.description} {dataset.ds_meta_data.publication_doi} {' '.join(a.name for a in dataset.ds_meta_data.authors)}",
+        "content": (
+            f"{dataset.ds_meta_data.title} "
+            f"{dataset.ds_meta_data.description} "
+            f"{dataset.ds_meta_data.publication_doi} "
+            f"{' '.join(a.name for a in dataset.ds_meta_data.authors)}"
+        ),
         "created_at": dataset.created_at.isoformat(),
         "total_size_in_bytes": dataset.get_file_total_size(),
         "files_count": dataset.get_files_count(),

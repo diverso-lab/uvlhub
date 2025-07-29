@@ -173,7 +173,10 @@ class ElasticsearchService(BaseService):
     def search(self, query: str, publication_type=None, sorting="newest", size=10):
         try:
             print(
-                f"[DEBUG] Buscando en '{self.index_name}' con query: '{query}', tipo: {publication_type}, orden: {sorting}"
+                f"[DEBUG] Buscando en '{self.index_name}' "
+                f"con query: '{query}', "
+                f"tipo: {publication_type}, "
+                f"orden: {sorting}"
             )
 
             must_clauses = []
