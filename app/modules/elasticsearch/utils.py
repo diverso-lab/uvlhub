@@ -59,7 +59,7 @@ def index_dataset(dataset):
     }
 
     search.index_document(doc_id=f"dataset-{dataset.id}", data=doc)
-    
+
     logger.info(
         f"[SEARCH] Dataset {dataset.id} indexed with DOI: {dataset.ds_meta_data.dataset_doi}"
     )
