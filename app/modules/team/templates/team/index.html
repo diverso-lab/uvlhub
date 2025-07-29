@@ -1,19 +1,25 @@
 {% extends "base_template.html" %}
 
-{% block title %}View dataset{% endblock %}
+{% set title = "Team" %}
+
+{% block breadcrumb %}
+
+<ol class="breadcrumb text-muted fs-6 fw-semibold">
+    <li class="breadcrumb-item"><a href="/" class="">Home</a></li>
+    <li class="breadcrumb-item text-muted">Team</li>
+</ol>
+
+{% endblock %}
 
 {% block content %}
-
-    <h1 class="h3 mb-3"><b>Team</b></h1>
-
 
     <div class="row row-cols-1 row-cols-lg-3 row-cols-md-2 row-cols-12 g-4">
 
         <div class="col">
 
-            <div class="card h-100">
-                <img src="{{ url_for('static', filename='img/logos/university_of_seville.svg') }}"
-                     class="card-img-top custom-img" alt="University of Seville">
+            <div class="card h-100 p-4">
+                <img src="{{ url_for('static', filename='media/logos/university_of_seville.svg') }}"
+                     class="card-img-top mb-4 logo-img" alt="University of Seville">
                 <div class="card-body custom-card-body">
                     <h5 class="card-title">University of Seville, Spain</h5>
                     <p class="card-text">
@@ -30,9 +36,9 @@
 
         <div class="col">
 
-            <div class="card h-100">
-                <img src="{{ url_for('static', filename='img/logos/university_of_malaga.svg') }}"
-                     class="card-img-top custom-img" alt="University of Malaga">
+            <div class="card h-100 p-4">
+                <img src="{{ url_for('static', filename='media/logos/university_of_malaga.svg') }}"
+                     class="card-img-top mb-4 logo-img" alt="University of Malaga">
                 <div class="card-body custom-card-body">
                     <h5 class="card-title">University of Malaga, Spain</h5>
                     <p class="card-text">
@@ -48,9 +54,9 @@
 
         <div class="col">
 
-            <div class="card h-100">
-                <img src="{{ url_for('static', filename='img/logos/university_of_ulm.svg') }}"
-                     class="card-img-top custom-img" alt="University of Ulm">
+            <div class="card h-100 p-4">
+                <img src="{{ url_for('static', filename='media/logos/university_of_ulm.svg') }}"
+                     class="card-img-top mb-4 logo-img" alt="University of Ulm">
                 <div class="card-body custom-card-body">
                     <h5 class="card-title">University of Ulm, Germany</h5>
                     <p class="card-text">

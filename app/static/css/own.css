@@ -78,3 +78,9 @@ a {
 #kt_files_table_wrapper .dataTables_paginate {
     margin-top: 0.5rem;
 }
+
+.logo-img {
+    height: 100px;
+    object-fit: contain;
+    object-position: center;
+}
