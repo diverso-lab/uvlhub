@@ -1,10 +1,6 @@
 from flask import render_template, request, jsonify
-
 from app.modules.dataset.models import PublicationType
-from app.modules.elasticsearch.services import ElasticsearchService
 from app.modules.explore import explore_bp
-
-search_service = ElasticsearchService()
 
 
 @explore_bp.route("/explore", methods=["GET", "POST"])
@@ -19,6 +15,10 @@ def index():
 
 @explore_bp.route("/search")
 def search():
+
+    from app.modules.elasticsearch.services import ElasticsearchService
+    search_service = ElasticsearchService()
+
     query = request.args.get("q", "")
     try:
         results = search_service.search(query, size=10)
@@ -29,6 +29,10 @@ def search():
 
 @explore_bp.route("/api/v1/search")
 def api_search():
+
+    from app.modules.elasticsearch.services import ElasticsearchService
+    search_service = ElasticsearchService()
+
     query = request.args.get("q", "")
     publication_type = request.args.get("publication_type")
     sorting = request.args.get("sorting", "newest")

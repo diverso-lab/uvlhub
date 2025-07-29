@@ -1,23 +1,5 @@
 import click
 from flask.cli import with_appcontext
-from app.modules.elasticsearch.utils import reindex_all
-from app.modules.elasticsearch.services import ElasticsearchService
-
-
-@click.command(
-    "elasticsearch:reindex",
-    help="Reindexes all datasets and hubfiles into the Elasticsearch index.",
-)
-@with_appcontext
-def elasticsearch_reindex():
-    click.echo(click.style("[INFO] Starting reindexing process...", fg="cyan"))
-    try:
-        reindex_all()
-        click.echo(
-            click.style("[SUCCESS] Reindexing completed successfully!", fg="green")
-        )
-    except Exception as e:
-        click.echo(click.style(f"[ERROR] Reindexing failed: {e}", fg="red"))
 
 
 @click.command(
@@ -26,7 +8,10 @@ def elasticsearch_reindex():
 )
 @with_appcontext
 def elasticsearch_reset():
+    from app.modules.elasticsearch.services import ElasticsearchService  # <--- aquí dentro
+
     search = ElasticsearchService()
+
     try:
         click.echo(click.style("🗑️  Deleting Elasticsearch index...", fg="yellow"))
         search.es.indices.delete(index=search.index_name)
@@ -44,7 +29,26 @@ def elasticsearch_reset():
 
     try:
         click.echo(click.style("🔁 Reindexing all documents...", fg="cyan"))
+        from app.modules.elasticsearch.utils import reindex_all
         reindex_all()
         click.echo(click.style("✅ Reindexing completed successfully!", fg="green"))
+    except Exception as e:
+        click.echo(click.style(f"[ERROR] Reindexing failed: {e}", fg="red"))
+
+
+@click.command(
+    "elasticsearch:reindex",
+    help="Reindexes all datasets and hubfiles into the Elasticsearch index.",
+)
+@with_appcontext
+def elasticsearch_reindex():
+    from app.modules.elasticsearch.utils import reindex_all  # mover aquí
+
+    click.echo(click.style("[INFO] Starting reindexing process...", fg="cyan"))
+    try:
+        reindex_all()
+        click.echo(
+            click.style("[SUCCESS] Reindexing completed successfully!", fg="green")
+        )
     except Exception as e:
         click.echo(click.style(f"[ERROR] Reindexing failed: {e}", fg="red"))

@@ -60,11 +60,6 @@ def create_app(config_name="development"):
     logging_manager = LoggingManager(app)
     logging_manager.setup_logging()
 
-    # Elastic Search
-    from app.modules.elasticsearch.utils import init_search_index
-
-    init_search_index()
-
     # Swagger API
     swagger_template = {
         "swagger": "2.0",

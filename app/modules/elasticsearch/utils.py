@@ -1,10 +1,10 @@
-from app.modules.elasticsearch.services import ElasticsearchService
-
-search = ElasticsearchService()
 
 
 def init_search_index():
     try:
+        from app.modules.elasticsearch.services import ElasticsearchService
+        search = ElasticsearchService()
+
         search.create_index_if_not_exists()
     except Exception as e:
         print(f"[ERROR init_search_index] {e}")
@@ -12,6 +12,10 @@ def init_search_index():
 
 
 def index_dataset(dataset):
+
+    from app.modules.elasticsearch.services import ElasticsearchService
+    search = ElasticsearchService()
+
     if not dataset.ds_meta_data.dataset_doi:
         print(f"[SKIP] Dataset {dataset.id} has no dataset_doi. Skipping indexing.")
         return
@@ -53,6 +57,10 @@ def index_dataset(dataset):
 
 
 def index_hubfile(hubfile):
+
+    from app.modules.elasticsearch.services import ElasticsearchService
+    search = ElasticsearchService()
+
     dataset = hubfile.feature_model.dataset if hubfile.feature_model else None
 
     if not dataset or not dataset.ds_meta_data.dataset_doi:
