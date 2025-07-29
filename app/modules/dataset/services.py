@@ -1,7 +1,6 @@
 import logging
 import os
 import hashlib
-import shutil
 import tempfile
 from typing import List, Optional
 import uuid
@@ -12,7 +11,6 @@ import bleach
 from flask import current_app, request
 
 from app.modules.auth.models import User
-from app.modules.auth.services import AuthenticationService
 from app.modules.dataset.forms import AuthorForm, DataSetForm, FeatureModelForm
 from app.modules.dataset.models import (
     DSDownloadRecord,
@@ -34,7 +32,6 @@ from app.modules.hubfile.repositories import (
     HubfileRepository,
     HubfileViewRecordRepository,
 )
-from app.modules.hubfile.services import HubfileService
 from app.modules.statistics.services import StatisticsService
 from core.services.BaseService import BaseService
 
@@ -64,7 +61,7 @@ class DataSetService(BaseService):
     def create_basic_dataset(self, user: User) -> DataSet:
         dataset = self.create(commit=False, user_id=user.id, ds_meta_data_id=None)
         return dataset
-    
+
     def is_synchronized(self, dataset_id: int) -> bool:
         return self.repository.is_synchronized(dataset_id)
 
@@ -197,7 +194,7 @@ class DataSetService(BaseService):
                 raw_description,
                 tags=["b", "i", "u", "a", "p", "br"],
                 attributes={"a": ["href", "title", "target"]},
-                strip=True
+                strip=True,
             )
             dsmetadata_data["description"] = clean_description
 
@@ -372,17 +369,19 @@ class DataSetService(BaseService):
             "uploads",
             f"user_{dataset.user_id}",
             f"dataset_{dataset.id}",
-            "uvl"
+            "uvl",
         )
 
         if not os.path.exists(dataset_folder):
-            current_app.logger.warning(f"[ZIP] Dataset folder not found: {dataset_folder}")
+            current_app.logger.warning(
+                f"[ZIP] Dataset folder not found: {dataset_folder}"
+            )
             return None  # Lo manejarás con abort(404) fuera
 
         temp_dir = tempfile.mkdtemp()
         zip_path = os.path.join(temp_dir, f"dataset_{dataset.id}.zip")
 
-        with zipfile.ZipFile(zip_path, 'w') as zipf:
+        with zipfile.ZipFile(zip_path, "w") as zipf:
             for filename in os.listdir(dataset_folder):
                 file_path = os.path.join(dataset_folder, filename)
                 arcname = filename

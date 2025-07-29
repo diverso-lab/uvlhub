@@ -3,4 +3,4 @@ from wtforms import SubmitField
 
 
 class ElasticsearchForm(FlaskForm):
-    submit = SubmitField('Save elasticsearch')
+    submit = SubmitField("Save elasticsearch")

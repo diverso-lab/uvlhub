@@ -3,7 +3,6 @@ import logging
 from app.modules.flamapy.repositories import FlamapyRepository
 from core.services.BaseService import BaseService
 from flamapy.interfaces.python.flamapy_feature_model import FLAMAFeatureModel
-from flamapy.core.exceptions import FlamaException
 
 from antlr4 import CommonTokenStream, FileStream
 from uvl.UVLCustomLexer import UVLCustomLexer
@@ -18,6 +17,7 @@ from flamapy.metamodels.pysat_metamodel.transformations import FmToPysat  # noqa
 from flamapy.metamodels.bdd_metamodel.transformations import FmToBDD  # noqa
 
 logger = logging.getLogger(__name__)
+
 
 class FlamapyService(BaseService):
     def __init__(self):
@@ -72,7 +72,9 @@ class FlamapyService(BaseService):
             parser.addErrorListener(error_listener)
 
             if error_listener.errors:
-                logger.warning(f"[UVL Parser] Syntax errors detected: {error_listener.errors}")
+                logger.warning(
+                    f"[UVL Parser] Syntax errors detected: {error_listener.errors}"
+                )
                 return {"errors": error_listener.errors}, 400
 
             try:
@@ -80,9 +82,13 @@ class FlamapyService(BaseService):
                 return {"message": "Valid Model"}, 200
 
             except Exception as fe:
-                logger.warning(f"[UVL Parser] FLAMA failed but will be ignored: {str(fe)}")
-                return {"message": "Valid Model (FLAMA transformation skipped due to unsupported attributes)"}, 200
+                logger.warning(
+                    f"[UVL Parser] FLAMA failed but will be ignored: {str(fe)}"
+                )
+                return {
+                    "message": "Valid Model (FLAMA transformation skipped due to unsupported attributes)"
+                }, 200
 
         except Exception as e:
-            logger.exception("[UVL Parser] Unexpected error during parsing:")
-            return {"error": "Internal error during UVL check"}, 500
+            logger.exception(f"[UVL Parser] Unexpected error during parsing: {e}")
+            return {"error": f"Internal error during UVL check, {e}"}, 500

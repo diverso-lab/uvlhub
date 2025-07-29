@@ -67,7 +67,7 @@ def test_signup_user_no_name(test_client):
         follow_redirects=True,
     )
     assert response.request.path == url_for(
-        "auth.show_signup_form"
+        "auth.signup"
     ), "Signup was unsuccessful"
     assert b"This field is required" in response.data, response.data
 
@@ -89,7 +89,7 @@ def test_signup_user_unsuccessful(mock_captcha, test_client):
         follow_redirects=True,
     )
     assert response.request.path == url_for(
-        "auth.show_signup_form"
+        "auth.signup"
     ), "Signup was unsuccessful"
 
 
@@ -192,7 +192,7 @@ def test_confirm_user_token_expired(test_client):
 
     url = url_for("confirmemail.confirm_user", token=token, _external=False)
     response = test_client.get(url, follow_redirects=True)
-    assert response.request.path == url_for("auth.show_signup_form", _external=False)
+    assert response.request.path == url_for("auth.signup", _external=False)
 
 
 def test_confirm_user_token_tempered(test_client):
@@ -204,7 +204,7 @@ def test_confirm_user_token_tempered(test_client):
     AuthenticationService.SALT = "user-confirm"
     url = url_for("confirmemail.confirm_user", token=token, _external=False)
     response = test_client.get(url, follow_redirects=True)
-    assert response.request.path == url_for("auth.show_signup_form", _external=False)
+    assert response.request.path == url_for("auth.signup", _external=False)
 
 
 def test_confirm_user_active_user(test_client):

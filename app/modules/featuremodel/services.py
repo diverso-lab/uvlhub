@@ -34,7 +34,7 @@ class FeatureModelService(BaseService):
         )
 
         return total_feature_models
-    
+
     def create_from_uvl_files(self, dataset) -> list[FeatureModel]:
         """
         Crea un FeatureModel y Hubfile por cada archivo UVL del directorio temporal del usuario.
@@ -66,7 +66,9 @@ class FeatureModelService(BaseService):
                 continue
 
             uvl_path = os.path.join(source_dir, filename)
-            original_filename = filename.split("_", 1)[-1] if "_" in filename else filename
+            original_filename = (
+                filename.split("_", 1)[-1] if "_" in filename else filename
+            )
 
             dest_path = os.path.join(dest_dir, original_filename)
             shutil.move(uvl_path, dest_path)
@@ -77,16 +79,22 @@ class FeatureModelService(BaseService):
             db.session.flush()
 
             hubfile = hubfile_service.create_from_file(feature_model.id, dest_path)
-            logger.info(f"[FM] Hubfile created with ID: {hubfile.id} for FeatureModel {feature_model.id}")
+            logger.info(
+                f"[FM] Hubfile created with ID: {hubfile.id} for FeatureModel {feature_model.id}"
+            )
 
             if dataset.ds_meta_data.dataset_doi:
                 index_hubfile(hubfile)
             else:
-                logger.info(f"[SKIP] Hubfile {hubfile.id} not indexed because dataset {dataset.id} has no DOI")
+                logger.info(
+                    f"[SKIP] Hubfile {hubfile.id} not indexed because dataset {dataset.id} has no DOI"
+                )
 
             created_models.append(feature_model)
 
         db.session.commit()
-        logger.info(f"[FM] {len(created_models)} feature models created for dataset {dataset.id}")
+        logger.info(
+            f"[FM] {len(created_models)} feature models created for dataset {dataset.id}"
+        )
 
         return created_models

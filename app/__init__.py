@@ -62,6 +62,7 @@ def create_app(config_name="development"):
 
     # Elastic Search
     from app.modules.elasticsearch.utils import init_search_index
+
     init_search_index()
 
     # Swagger API
@@ -70,23 +71,15 @@ def create_app(config_name="development"):
         "info": {
             "title": "UVLHub Rest API (v1)",
             "description": "API to access datasets, files and metadata.",
-            "version": "1.0.0"
+            "version": "1.0.0",
         },
         "securityDefinitions": {
-            "ApiKeyAuth": {
-                "type": "apiKey",
-                "name": "X-API-Key",
-                "in": "header"
-            }
+            "ApiKeyAuth": {"type": "apiKey", "name": "X-API-Key", "in": "header"}
         },
-        "security": [
-            {
-                "ApiKeyAuth": []
-            }
-        ]
+        "security": [{"ApiKeyAuth": []}],
     }
 
-    swagger = Swagger(app, template=swagger_template)
+    Swagger(app, template=swagger_template)
 
     # Initialize error handler manager
     error_handler_manager = ErrorHandlerManager(app)
@@ -113,7 +106,7 @@ def create_app(config_name="development"):
         env_vars["PRODUCTION"] = flask_env == "production"
 
         return env_vars
-    
+
     @app.template_filter("format_thousands")
     def format_thousands(value):
         try:

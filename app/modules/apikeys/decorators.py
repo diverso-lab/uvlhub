@@ -3,6 +3,7 @@ from functools import wraps
 from flask import request, jsonify
 import pytz
 
+
 def require_api_key(required_scope):
     def decorator(f):
         @wraps(f)
@@ -10,7 +11,7 @@ def require_api_key(required_scope):
             key = request.headers.get("X-API-Key")
             if not key:
                 return jsonify({"error": "Missing API key"}), 401
-            
+
             from app.modules.apikeys.models import ApiKey
             from app import db
 
@@ -24,5 +25,7 @@ def require_api_key(required_scope):
             api_key.last_used_at = datetime.now(pytz.utc)
             db.session.commit()
             return f(*args, **kwargs)
+
         return wrapper
+
     return decorator

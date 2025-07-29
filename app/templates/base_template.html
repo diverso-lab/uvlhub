@@ -13,6 +13,9 @@
               content="diversolab, uvl, feature models, software product line, university of seville,
                university of malaga, university of ulm, david romero, david benavides, jose a galindo, jose miguel horcas,
     chico sundermann">
+
+		<link rel="shortcut icon" href="{{ url_for("static", filename="media/icons/icon-250x250.png") }}"/>
+
 		<!--begin::Fonts(mandatory for all pages)-->
 		<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,400,500,600,700" />
 		<!--end::Fonts-->
@@ -56,8 +59,8 @@
 						<!--begin::Mobile logo-->
 						<div class="d-flex align-items-center flex-grow-1 flex-lg-grow-0">
 							<a href="/" class="d-lg-none">
-								<img alt="Logo" src="{{ url_for('static', filename='media/logos/default-small.svg') }}" class="theme-light-show h-30px" />
-								<img alt="Logo" src="{{ url_for('static', filename='media/logos/default-small-dark.svg') }}" class="theme-dark-show h-30px" />
+								<img alt="Logo" src="{{ url_for('static', filename='media/logos/uvlhub_ball.png') }}" class="theme-light-show h-30px" />
+								<img alt="Logo" src="{{ url_for('static', filename='media/logos/uvlhub_ball.png') }}" class="theme-dark-show h-30px" />
 							</a>
 						</div>
 						<!--end::Mobile logo-->
@@ -145,10 +148,17 @@
 							<!--end::Menu wrapper-->
 							<!--begin::Navbar-->
 							<div class="app-navbar flex-shrink-0">
+
 								<!--begin::Theme mode-->
-								<div class="app-navbar-item ms-1 ms-lg-3">
+								
+								<div class="app-navbar-item me-2">
 									<!--begin::Menu toggle-->
-									<a href="#" class="btn btn-icon btn-custom btn-icon-muted btn-active-light btn-active-color-primary w-35px h-35px w-md-40px h-md-40px" data-kt-menu-trigger="{default:'click', lg: 'hover'}" data-kt-menu-attach="parent" data-kt-menu-placement="bottom-end">
+
+									    <button class="btn btn-light-outline-secondary d-flex align-items-center gap-2 px-4 py-2 fw-bold"
+											data-kt-menu-trigger="{default:'click', lg: 'hover'}"
+											data-kt-menu-attach="parent"
+											data-kt-menu-placement="bottom-end">
+
 										<i class="ki-duotone ki-night-day theme-light-show fs-1">
 											<span class="path1"></span>
 											<span class="path2"></span>
@@ -161,11 +171,15 @@
 											<span class="path9"></span>
 											<span class="path10"></span>
 										</i>
-										<i class="ki-duotone ki-moon theme-dark-show fs-1">
+										<i class="ki-duotone ki-moon theme-dark-show">
 											<span class="path1"></span>
 											<span class="path2"></span>
-										</i>
-									</a>
+										</i> <span class="d-none d-md-inline">Mode</span>
+										
+									</button>
+
+							
+
 									<!--begin::Menu toggle-->
 									<!--begin::Menu-->
 									<div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-title-gray-700 menu-icon-gray-500 menu-active-bg menu-state-color fw-semibold py-4 fs-base w-150px" data-kt-menu="true" data-kt-element="theme-mode-menu">
@@ -222,6 +236,41 @@
 									<!--end::Menu-->
 								</div>
 								<!--end::Theme mode-->
+
+								<!--begin::Citation modal trigger-->
+								<div class="app-navbar-item me-2">
+									<!--begin::Cite us button-->
+									<button class="btn btn-light-outline-secondary d-flex align-items-center gap-2 px-4 py-2 fw-bold"
+											data-bs-toggle="modal" 
+											data-bs-target="#citationModal">
+									<i class="ki-duotone ki-heart">
+										<span class="path1"></span>
+										<span class="path2"></span>
+										</i> <span class="d-none d-md-inline">Cite us!</span>
+									</button>
+								<!--end::Cite us button-->
+
+								</div>
+								<!--end::Citation modal trigger-->
+
+								<!--begin::Download all-->
+								<div class="app-navbar-item me-2">
+								<a href="{{url_for('dataset.download_all_dataset')}}" 
+									class="btn btn-light-secondary d-flex align-items-center gap-2 px-4 py-2 fw-bold" 
+									id="download-all-button"
+									data-bs-toggle="tooltip" 
+									data-bs-placement="bottom" 
+									title="Download all datasets">
+								<i class="ki-duotone ki-cloud-download fs-2">
+								<span class="path1"></span>
+								<span class="path2"></span>
+								</i> <span class="d-none d-md-inline">Download all</span>
+									</a>
+								</div>
+								<!--end::Download all-->
+
+
+								
 
 								{% if not current_user.is_anonymous %}
 								<!--begin::User menu-->
@@ -399,7 +448,7 @@
 										<!--begin:Menu item-->
 										<div class="menu-item">
 											<!--begin:Menu link-->
-											<a class="menu-link" href="{{ url_for('auth.show_signup_form') }}">
+											<a class="menu-link {{ 'active' if request.endpoint == 'auth.signup' else '' }}" href="{{ url_for('auth.signup') }}">
 												<span class="menu-icon">
 													<i class="ki-duotone ki-user-tick fs-2">
 														<span class="path1"></span>
@@ -611,7 +660,7 @@
 								<!--begin::Content container-->
 								<div id="kt_app_content_container" class="app-container container-fluid">
 
-									{% include "_flash_messages.html" %}
+									
 
 									<div class="row mb-4">
 										<div class="col-12">
@@ -620,7 +669,7 @@
 										</div>
 									</div>
 
-									
+									{% include "_flash_messages.html" %}
 
 									{% block content %}{% endblock %}
 
@@ -644,7 +693,11 @@
 								<ul class="menu menu-gray-600 menu-hover-primary fw-semibold order-1">
 
 									<li class="menu-item">
-										<a href="https://github.com/diverso-lab/uvlhub" target="_blank" class="menu-link px-2">Repository on GitHub</a>
+										<a href="https://github.com/diverso-lab/uvlhub" target="_blank" class="menu-link px-2">
+											<i class="ki-duotone ki-github fs-2">
+											<span class="path1"></span>
+											<span class="path2"></span>
+											</i>&nbsp;Repository on GitHub</a>
 									</li>
 
 								</ul>
@@ -671,677 +724,82 @@
 			</i>
 		</div>
 		<!--end::Scrolltop-->
-		<!--begin::Modals-->
-		<!--begin::Modal - Upgrade plan-->
-		<div class="modal fade" id="kt_modal_upgrade_plan" tabindex="-1" aria-hidden="true">
-			<!--begin::Modal dialog-->
-			<div class="modal-dialog modal-xl">
-				<!--begin::Modal content-->
-				<div class="modal-content rounded">
-					<!--begin::Modal header-->
-					<div class="modal-header justify-content-end border-0 pb-0">
-						<!--begin::Close-->
-						<div class="btn btn-sm btn-icon btn-active-color-primary" data-bs-dismiss="modal">
-							<i class="ki-duotone ki-cross fs-1">
-								<span class="path1"></span>
-								<span class="path2"></span>
-							</i>
-						</div>
-						<!--end::Close-->
-					</div>
-					<!--end::Modal header-->
-					<!--begin::Modal body-->
-					<div class="modal-body pt-0 pb-15 px-5 px-xl-20">
-						<!--begin::Heading-->
-						<div class="mb-13 text-center">
-							<h1 class="mb-3">Upgrade a Plan</h1>
-							<div class="text-muted fw-semibold fs-5">If you need more info, please check 
-							<a href="#" class="link-primary fw-bold">Pricing Guidelines</a>.</div>
-						</div>
-						<!--end::Heading-->
-						<!--begin::Plans-->
-						<div class="d-flex flex-column">
-							<!--begin::Nav group-->
-							<div class="nav-group nav-group-outline mx-auto" data-kt-buttons="true">
-								<button class="btn btn-color-gray-500 btn-active btn-active-secondary px-6 py-3 me-2 active" data-kt-plan="month">Monthly</button>
-								<button class="btn btn-color-gray-500 btn-active btn-active-secondary px-6 py-3" data-kt-plan="annual">Annual</button>
-							</div>
-							<!--end::Nav group-->
-							<!--begin::Row-->
-							<div class="row mt-10">
-								<!--begin::Col-->
-								<div class="col-lg-6 mb-10 mb-lg-0">
-									<!--begin::Tabs-->
-									<div class="nav flex-column">
-										<!--begin::Tab link-->
-										<label class="nav-link btn btn-outline btn-outline-dashed btn-color-dark btn-active btn-active-primary d-flex flex-stack text-start p-6 active mb-6" data-bs-toggle="tab" data-bs-target="#kt_upgrade_plan_startup">
-											<!--end::Description-->
-											<div class="d-flex align-items-center me-2">
-												<!--begin::Radio-->
-												<div class="form-check form-check-custom form-check-solid form-check-success flex-shrink-0 me-6">
-													<input class="form-check-input" type="radio" name="plan" checked="checked" value="startup" />
-												</div>
-												<!--end::Radio-->
-												<!--begin::Info-->
-												<div class="flex-grow-1">
-													<div class="d-flex align-items-center fs-2 fw-bold flex-wrap">Startup</div>
-													<div class="fw-semibold opacity-75">Best for startups</div>
-												</div>
-												<!--end::Info-->
-											</div>
-											<!--end::Description-->
-											<!--begin::Price-->
-											<div class="ms-5">
-												<span class="mb-2">$</span>
-												<span class="fs-3x fw-bold" data-kt-plan-price-month="39" data-kt-plan-price-annual="399">39</span>
-												<span class="fs-7 opacity-50">/ 
-												<span data-kt-element="period">Mon</span></span>
-											</div>
-											<!--end::Price-->
-										</label>
-										<!--end::Tab link-->
-										<!--begin::Tab link-->
-										<label class="nav-link btn btn-outline btn-outline-dashed btn-color-dark btn-active btn-active-primary d-flex flex-stack text-start p-6 mb-6" data-bs-toggle="tab" data-bs-target="#kt_upgrade_plan_advanced">
-											<!--end::Description-->
-											<div class="d-flex align-items-center me-2">
-												<!--begin::Radio-->
-												<div class="form-check form-check-custom form-check-solid form-check-success flex-shrink-0 me-6">
-													<input class="form-check-input" type="radio" name="plan" value="advanced" />
-												</div>
-												<!--end::Radio-->
-												<!--begin::Info-->
-												<div class="flex-grow-1">
-													<div class="d-flex align-items-center fs-2 fw-bold flex-wrap">Advanced</div>
-													<div class="fw-semibold opacity-75">Best for 100+ team size</div>
-												</div>
-												<!--end::Info-->
-											</div>
-											<!--end::Description-->
-											<!--begin::Price-->
-											<div class="ms-5">
-												<span class="mb-2">$</span>
-												<span class="fs-3x fw-bold" data-kt-plan-price-month="339" data-kt-plan-price-annual="3399">339</span>
-												<span class="fs-7 opacity-50">/ 
-												<span data-kt-element="period">Mon</span></span>
-											</div>
-											<!--end::Price-->
-										</label>
-										<!--end::Tab link-->
-										<!--begin::Tab link-->
-										<label class="nav-link btn btn-outline btn-outline-dashed btn-color-dark btn-active btn-active-primary d-flex flex-stack text-start p-6 mb-6" data-bs-toggle="tab" data-bs-target="#kt_upgrade_plan_enterprise">
-											<!--end::Description-->
-											<div class="d-flex align-items-center me-2">
-												<!--begin::Radio-->
-												<div class="form-check form-check-custom form-check-solid form-check-success flex-shrink-0 me-6">
-													<input class="form-check-input" type="radio" name="plan" value="enterprise" />
-												</div>
-												<!--end::Radio-->
-												<!--begin::Info-->
-												<div class="flex-grow-1">
-													<div class="d-flex align-items-center fs-2 fw-bold flex-wrap">Enterprise 
-													<span class="badge badge-light-success ms-2 py-2 px-3 fs-7">Popular</span></div>
-													<div class="fw-semibold opacity-75">Best value for 1000+ team</div>
-												</div>
-												<!--end::Info-->
-											</div>
-											<!--end::Description-->
-											<!--begin::Price-->
-											<div class="ms-5">
-												<span class="mb-2">$</span>
-												<span class="fs-3x fw-bold" data-kt-plan-price-month="999" data-kt-plan-price-annual="9999">999</span>
-												<span class="fs-7 opacity-50">/ 
-												<span data-kt-element="period">Mon</span></span>
-											</div>
-											<!--end::Price-->
-										</label>
-										<!--end::Tab link-->
-										<!--begin::Tab link-->
-										<label class="nav-link btn btn-outline btn-outline-dashed btn-color-dark btn-active btn-active-primary d-flex flex-stack text-start p-6 mb-6" data-bs-toggle="tab" data-bs-target="#kt_upgrade_plan_custom">
-											<!--end::Description-->
-											<div class="d-flex align-items-center me-2">
-												<!--begin::Radio-->
-												<div class="form-check form-check-custom form-check-solid form-check-success flex-shrink-0 me-6">
-													<input class="form-check-input" type="radio" name="plan" value="custom" />
-												</div>
-												<!--end::Radio-->
-												<!--begin::Info-->
-												<div class="flex-grow-1">
-													<div class="d-flex align-items-center fs-2 fw-bold flex-wrap">Custom</div>
-													<div class="fw-semibold opacity-75">Requet a custom license</div>
-												</div>
-												<!--end::Info-->
-											</div>
-											<!--end::Description-->
-											<!--begin::Price-->
-											<div class="ms-5">
-												<a href="#" class="btn btn-sm btn-success">Contact Us</a>
-											</div>
-											<!--end::Price-->
-										</label>
-										<!--end::Tab link-->
-									</div>
-									<!--end::Tabs-->
-								</div>
-								<!--end::Col-->
-								<!--begin::Col-->
-								<div class="col-lg-6">
-									<!--begin::Tab content-->
-									<div class="tab-content rounded h-100 bg-light p-10">
-										<!--begin::Tab Pane-->
-										<div class="tab-pane fade show active" id="kt_upgrade_plan_startup">
-											<!--begin::Heading-->
-											<div class="pb-5">
-												<h2 class="fw-bold text-gray-900">What’s in Startup Plan?</h2>
-												<div class="text-muted fw-semibold">Optimal for 10+ team size and new startup</div>
-											</div>
-											<!--end::Heading-->
-											<!--begin::Body-->
-											<div class="pt-1">
-												<!--begin::Item-->
-												<div class="d-flex align-items-center mb-7">
-													<span class="fw-semibold fs-5 text-gray-700 flex-grow-1">Up to 10 Active Users</span>
-													<i class="ki-duotone ki-check-circle fs-1 text-success">
-														<span class="path1"></span>
-														<span class="path2"></span>
-													</i>
-												</div>
-												<!--end::Item-->
-												<!--begin::Item-->
-												<div class="d-flex align-items-center mb-7">
-													<span class="fw-semibold fs-5 text-gray-700 flex-grow-1">Up to 30 Project Integrations</span>
-													<i class="ki-duotone ki-check-circle fs-1 text-success">
-														<span class="path1"></span>
-														<span class="path2"></span>
-													</i>
-												</div>
-												<!--end::Item-->
-												<!--begin::Item-->
-												<div class="d-flex align-items-center mb-7">
-													<span class="fw-semibold fs-5 text-gray-700 flex-grow-1">Analytics Module</span>
-													<i class="ki-duotone ki-check-circle fs-1 text-success">
-														<span class="path1"></span>
-														<span class="path2"></span>
-													</i>
-												</div>
-												<!--end::Item-->
-												<!--begin::Item-->
-												<div class="d-flex align-items-center mb-7">
-													<span class="fw-semibold fs-5 text-muted flex-grow-1">Finance Module</span>
-													<i class="ki-duotone ki-cross-circle fs-1">
-														<span class="path1"></span>
-														<span class="path2"></span>
-													</i>
-												</div>
-												<!--end::Item-->
-												<!--begin::Item-->
-												<div class="d-flex align-items-center mb-7">
-													<span class="fw-semibold fs-5 text-muted flex-grow-1">Accounting Module</span>
-													<i class="ki-duotone ki-cross-circle fs-1">
-														<span class="path1"></span>
-														<span class="path2"></span>
-													</i>
-												</div>
-												<!--end::Item-->
-												<!--begin::Item-->
-												<div class="d-flex align-items-center mb-7">
-													<span class="fw-semibold fs-5 text-muted flex-grow-1">Network Platform</span>
-													<i class="ki-duotone ki-cross-circle fs-1">
-														<span class="path1"></span>
-														<span class="path2"></span>
-													</i>
-												</div>
-												<!--end::Item-->
-												<!--begin::Item-->
-												<div class="d-flex align-items-center">
-													<span class="fw-semibold fs-5 text-muted flex-grow-1">Unlimited Cloud Space</span>
-													<i class="ki-duotone ki-cross-circle fs-1">
-														<span class="path1"></span>
-														<span class="path2"></span>
-													</i>
-												</div>
-												<!--end::Item-->
-											</div>
-											<!--end::Body-->
-										</div>
-										<!--end::Tab Pane-->
-										<!--begin::Tab Pane-->
-										<div class="tab-pane fade" id="kt_upgrade_plan_advanced">
-											<!--begin::Heading-->
-											<div class="pb-5">
-												<h2 class="fw-bold text-gray-900">What’s in Startup Plan?</h2>
-												<div class="text-muted fw-semibold">Optimal for 100+ team size and grown company</div>
-											</div>
-											<!--end::Heading-->
-											<!--begin::Body-->
-											<div class="pt-1">
-												<!--begin::Item-->
-												<div class="d-flex align-items-center mb-7">
-													<span class="fw-semibold fs-5 text-gray-700 flex-grow-1">Up to 10 Active Users</span>
-													<i class="ki-duotone ki-check-circle fs-1 text-success">
-														<span class="path1"></span>
-														<span class="path2"></span>
-													</i>
-												</div>
-												<!--end::Item-->
-												<!--begin::Item-->
-												<div class="d-flex align-items-center mb-7">
-													<span class="fw-semibold fs-5 text-gray-700 flex-grow-1">Up to 30 Project Integrations</span>
-													<i class="ki-duotone ki-check-circle fs-1 text-success">
-														<span class="path1"></span>
-														<span class="path2"></span>
-													</i>
-												</div>
-												<!--end::Item-->
-												<!--begin::Item-->
-												<div class="d-flex align-items-center mb-7">
-													<span class="fw-semibold fs-5 text-gray-700 flex-grow-1">Analytics Module</span>
-													<i class="ki-duotone ki-check-circle fs-1 text-success">
-														<span class="path1"></span>
-														<span class="path2"></span>
-													</i>
-												</div>
-												<!--end::Item-->
-												<!--begin::Item-->
-												<div class="d-flex align-items-center mb-7">
-													<span class="fw-semibold fs-5 text-gray-700 flex-grow-1">Finance Module</span>
-													<i class="ki-duotone ki-check-circle fs-1 text-success">
-														<span class="path1"></span>
-														<span class="path2"></span>
-													</i>
-												</div>
-												<!--end::Item-->
-												<!--begin::Item-->
-												<div class="d-flex align-items-center mb-7">
-													<span class="fw-semibold fs-5 text-gray-700 flex-grow-1">Accounting Module</span>
-													<i class="ki-duotone ki-check-circle fs-1 text-success">
-														<span class="path1"></span>
-														<span class="path2"></span>
-													</i>
-												</div>
-												<!--end::Item-->
-												<!--begin::Item-->
-												<div class="d-flex align-items-center mb-7">
-													<span class="fw-semibold fs-5 text-muted flex-grow-1">Network Platform</span>
-													<i class="ki-duotone ki-cross-circle fs-1">
-														<span class="path1"></span>
-														<span class="path2"></span>
-													</i>
-												</div>
-												<!--end::Item-->
-												<!--begin::Item-->
-												<div class="d-flex align-items-center">
-													<span class="fw-semibold fs-5 text-muted flex-grow-1">Unlimited Cloud Space</span>
-													<i class="ki-duotone ki-cross-circle fs-1">
-														<span class="path1"></span>
-														<span class="path2"></span>
-													</i>
-												</div>
-												<!--end::Item-->
-											</div>
-											<!--end::Body-->
-										</div>
-										<!--end::Tab Pane-->
-										<!--begin::Tab Pane-->
-										<div class="tab-pane fade" id="kt_upgrade_plan_enterprise">
-											<!--begin::Heading-->
-											<div class="pb-5">
-												<h2 class="fw-bold text-gray-900">What’s in Startup Plan?</h2>
-												<div class="text-muted fw-semibold">Optimal for 1000+ team and enterpise</div>
-											</div>
-											<!--end::Heading-->
-											<!--begin::Body-->
-											<div class="pt-1">
-												<!--begin::Item-->
-												<div class="d-flex align-items-center mb-7">
-													<span class="fw-semibold fs-5 text-gray-700 flex-grow-1">Up to 10 Active Users</span>
-													<i class="ki-duotone ki-check-circle fs-1 text-success">
-														<span class="path1"></span>
-														<span class="path2"></span>
-													</i>
-												</div>
-												<!--end::Item-->
-												<!--begin::Item-->
-												<div class="d-flex align-items-center mb-7">
-													<span class="fw-semibold fs-5 text-gray-700 flex-grow-1">Up to 30 Project Integrations</span>
-													<i class="ki-duotone ki-check-circle fs-1 text-success">
-														<span class="path1"></span>
-														<span class="path2"></span>
-													</i>
-												</div>
-												<!--end::Item-->
-												<!--begin::Item-->
-												<div class="d-flex align-items-center mb-7">
-													<span class="fw-semibold fs-5 text-gray-700 flex-grow-1">Analytics Module</span>
-													<i class="ki-duotone ki-check-circle fs-1 text-success">
-														<span class="path1"></span>
-														<span class="path2"></span>
-													</i>
-												</div>
-												<!--end::Item-->
-												<!--begin::Item-->
-												<div class="d-flex align-items-center mb-7">
-													<span class="fw-semibold fs-5 text-gray-700 flex-grow-1">Finance Module</span>
-													<i class="ki-duotone ki-check-circle fs-1 text-success">
-														<span class="path1"></span>
-														<span class="path2"></span>
-													</i>
-												</div>
-												<!--end::Item-->
-												<!--begin::Item-->
-												<div class="d-flex align-items-center mb-7">
-													<span class="fw-semibold fs-5 text-gray-700 flex-grow-1">Accounting Module</span>
-													<i class="ki-duotone ki-check-circle fs-1 text-success">
-														<span class="path1"></span>
-														<span class="path2"></span>
-													</i>
-												</div>
-												<!--end::Item-->
-												<!--begin::Item-->
-												<div class="d-flex align-items-center mb-7">
-													<span class="fw-semibold fs-5 text-gray-700 flex-grow-1">Network Platform</span>
-													<i class="ki-duotone ki-check-circle fs-1 text-success">
-														<span class="path1"></span>
-														<span class="path2"></span>
-													</i>
-												</div>
-												<!--end::Item-->
-												<!--begin::Item-->
-												<div class="d-flex align-items-center">
-													<span class="fw-semibold fs-5 text-gray-700 flex-grow-1">Unlimited Cloud Space</span>
-													<i class="ki-duotone ki-check-circle fs-1 text-success">
-														<span class="path1"></span>
-														<span class="path2"></span>
-													</i>
-												</div>
-												<!--end::Item-->
-											</div>
-											<!--end::Body-->
-										</div>
-										<!--end::Tab Pane-->
-										<!--begin::Tab Pane-->
-										<div class="tab-pane fade" id="kt_upgrade_plan_custom">
-											<!--begin::Heading-->
-											<div class="pb-5">
-												<h2 class="fw-bold text-gray-900">What’s in Startup Plan?</h2>
-												<div class="text-muted fw-semibold">Optimal for corporations</div>
-											</div>
-											<!--end::Heading-->
-											<!--begin::Body-->
-											<div class="pt-1">
-												<!--begin::Item-->
-												<div class="d-flex align-items-center mb-7">
-													<span class="fw-semibold fs-5 text-gray-700 flex-grow-1">Unlimited Users</span>
-													<i class="ki-duotone ki-check-circle fs-1 text-success">
-														<span class="path1"></span>
-														<span class="path2"></span>
-													</i>
-												</div>
-												<!--end::Item-->
-												<!--begin::Item-->
-												<div class="d-flex align-items-center mb-7">
-													<span class="fw-semibold fs-5 text-gray-700 flex-grow-1">Unlimited Project Integrations</span>
-													<i class="ki-duotone ki-check-circle fs-1 text-success">
-														<span class="path1"></span>
-														<span class="path2"></span>
-													</i>
-												</div>
-												<!--end::Item-->
-												<!--begin::Item-->
-												<div class="d-flex align-items-center mb-7">
-													<span class="fw-semibold fs-5 text-gray-700 flex-grow-1">Analytics Module</span>
-													<i class="ki-duotone ki-check-circle fs-1 text-success">
-														<span class="path1"></span>
-														<span class="path2"></span>
-													</i>
-												</div>
-												<!--end::Item-->
-												<!--begin::Item-->
-												<div class="d-flex align-items-center mb-7">
-													<span class="fw-semibold fs-5 text-gray-700 flex-grow-1">Finance Module</span>
-													<i class="ki-duotone ki-check-circle fs-1 text-success">
-														<span class="path1"></span>
-														<span class="path2"></span>
-													</i>
-												</div>
-												<!--end::Item-->
-												<!--begin::Item-->
-												<div class="d-flex align-items-center mb-7">
-													<span class="fw-semibold fs-5 text-gray-700 flex-grow-1">Accounting Module</span>
-													<i class="ki-duotone ki-check-circle fs-1 text-success">
-														<span class="path1"></span>
-														<span class="path2"></span>
-													</i>
-												</div>
-												<!--end::Item-->
-												<!--begin::Item-->
-												<div class="d-flex align-items-center mb-7">
-													<span class="fw-semibold fs-5 text-gray-700 flex-grow-1">Network Platform</span>
-													<i class="ki-duotone ki-check-circle fs-1 text-success">
-														<span class="path1"></span>
-														<span class="path2"></span>
-													</i>
-												</div>
-												<!--end::Item-->
-												<!--begin::Item-->
-												<div class="d-flex align-items-center">
-													<span class="fw-semibold fs-5 text-gray-700 flex-grow-1">Unlimited Cloud Space</span>
-													<i class="ki-duotone ki-check-circle fs-1 text-success">
-														<span class="path1"></span>
-														<span class="path2"></span>
-													</i>
-												</div>
-												<!--end::Item-->
-											</div>
-											<!--end::Body-->
-										</div>
-										<!--end::Tab Pane-->
-									</div>
-									<!--end::Tab content-->
-								</div>
-								<!--end::Col-->
-							</div>
-							<!--end::Row-->
-						</div>
-						<!--end::Plans-->
-						<!--begin::Actions-->
-						<div class="d-flex flex-center flex-row-fluid pt-12">
-							<button type="reset" class="btn btn-light me-3" data-bs-dismiss="modal">Cancel</button>
-							<button type="submit" class="btn btn-primary" id="kt_modal_upgrade_plan_btn">
-								<!--begin::Indicator label-->
-								<span class="indicator-label">Upgrade Plan</span>
-								<!--end::Indicator label-->
-								<!--begin::Indicator progress-->
-								<span class="indicator-progress">Please wait... 
-								<span class="spinner-border spinner-border-sm align-middle ms-2"></span></span>
-								<!--end::Indicator progress-->
-							</button>
-						</div>
-						<!--end::Actions-->
-					</div>
-					<!--end::Modal body-->
-				</div>
-				<!--end::Modal content-->
-			</div>
-			<!--end::Modal dialog-->
-		</div>
-		<!--end::Modal - Upgrade plan-->
-		<!--end::Modal - Create Campaign-->
+
+{% include "cites.html" %}
+
+
+
+
+
+		<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const formats = ['text', 'apa', 'bibtex', 'ris'];
+    const papers = ['uvlhub', 'uvl'];
+
+    papers.forEach(paper => {
+        formats.forEach(format => {
+            const targetId = `${format}_cite_${paper}`;
+            const sourceEl = document.getElementById(targetId);
+            const hiddenEl = document.querySelector(`#${targetId}[style*="display: none"]`);
+            if (sourceEl && hiddenEl) {
+                sourceEl.textContent = hiddenEl.textContent.trim();
+            }
+        });
+    });
+});
+
+function copyCitation(preId, event) {
+    const text = document.getElementById(preId).textContent;
+    navigator.clipboard.writeText(text).then(() => {
+        const button = event.target;
+        const originalText = button.textContent;
+        button.textContent = 'Copied!';
+        setTimeout(() => {
+            button.textContent = originalText;
+        }, 1500);
+    }).catch(err => {
+        console.error("Failed to copy citation:", err);
+    });
+}
+</script>
 
 		<!--begin::Javascript-->
+
 		<!--begin::Global Javascript Bundle(mandatory for all pages)-->
 		<script src="{{ url_for('static', filename='plugins/global/plugins.bundle.js') }}"></script>
 		<script src="{{ url_for('static', filename='js/scripts.bundle.js') }}"></script>
-		<!--end::Global Javascript Bundle-->
-		<!--begin::Vendors Javascript(used for this page only)-->
-		<script src="https://cdn.amcharts.com/lib/5/index.js"></script>
-		<script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
-		<script src="https://cdn.amcharts.com/lib/5/percent.js"></script>
-		<script src="https://cdn.amcharts.com/lib/5/radar.js"></script>
-		<script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
-		<script src="https://cdn.amcharts.com/lib/5/map.js"></script>
-		<script src="https://cdn.amcharts.com/lib/5/geodata/worldLow.js"></script>
-		<script src="https://cdn.amcharts.com/lib/5/geodata/continentsLow.js"></script>
-		<script src="https://cdn.amcharts.com/lib/5/geodata/usaLow.js"></script>
-		<script src="https://cdn.amcharts.com/lib/5/geodata/worldTimeZonesLow.js"></script>
-		<script src="https://cdn.amcharts.com/lib/5/geodata/worldTimeZoneAreasLow.js"></script>
 		<script src="{{ url_for('static', filename='plugins/custom/datatables/datatables.bundle.js') }}"></script>
-		<!--end::Vendors Javascript-->
-		<!--begin::Custom Javascript(used for this page only)-->
 		<script src="{{ url_for('static', filename='js/widgets.bundle.js') }}"></script>
+		<!--end::Global Javascript Bundle-->
+
+		<!--begin::Custom Javascript(used for all pages)-->
+		<script src="{{ url_for('static', filename='js/search.js') }}"></script>
+		<script src="{{ url_for('static', filename='js/copy_doi.js') }}"></script>
 		<!--end::Custom Javascript-->
+
 		<!--end::Javascript-->
 
 		<script src="{{ url_for('static', filename='plugins/custom/prismjs/prismjs.bundle.js') }}"></script>
 		<script src="{{ url_for('static', filename='plugins/custom/draggable/draggable.bundle.js') }}"></script>
-		
-		<script>
-
-			// Search menu
-
-			document.addEventListener('DOMContentLoaded', function () {
-				const menu = document.querySelector('[data-kt-search-element="content"]');
-				const toggle = document.getElementById('kt_header_search_toggle');
-
-				if (menu && toggle) {
-					// Escucha el evento de clic en el toggle
-					toggle.addEventListener('click', function () {
-						// Obtén las coordenadas del toggle
-						const toggleRect = toggle.getBoundingClientRect();
-
-						// Ajusta el menú para que esté justo debajo del icono de búsqueda
-						menu.style.position = 'fixed';
-						menu.style.top = `${toggleRect.bottom}px`; // Posición justo debajo
-						menu.style.left = `${toggleRect.left}px`; // Alineado con el icono
-						menu.style.transform = 'none'; // Elimina cualquier transformación previa
-					});
-				}
-			});
-
-			function copyText(id) {
-				const text = document.getElementById(id).innerText;
-				navigator.clipboard.writeText(text).then(() => {
-					const icon = document.querySelector(`[onclick="copyText('${id}')"]`);
-					const tooltip = bootstrap.Tooltip.getInstance(icon);
-
-					// Cambia el texto a "Copied!" temporalmente
-					icon.setAttribute('data-bs-original-title', 'Copied!');
-					tooltip.show();
-
-					// Espera 2 segundos, luego restaura el título original y oculta el tooltip
-					setTimeout(() => {
-						icon.setAttribute('data-bs-original-title', 'Copy DOI');
-						tooltip.hide();
-					}, 1500);
-				});
-			}
-				
-		</script>
 
 		{% block scripts %}{% endblock %}
 
 		<script src="https://unpkg.com/feather-icons"></script>
-<script>
-  feather.replace()
-</script>
+				
+		<script>
+			feather.replace()
+		</script>
 
+		<!-- Google tag (gtag.js) -->
+		<script async src="https://www.googletagmanager.com/gtag/js?id=G-EEXQ0FJFDG"></script>
+		<script>
+			window.dataLayer = window.dataLayer || [];
+			function gtag(){dataLayer.push(arguments);}
+			gtag('js', new Date());
 
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-    const input = document.querySelector('[data-kt-search-element="input"]');
-    if (!input) return;
-
-    const getResultsWrapper = () => document.querySelector('[data-kt-search-element="results"]');
-    const getResultsContainer = () => document.querySelector('[data-kt-search-element="results"] .scroll-y');
-    const getEmptyWrapper = () => document.querySelector('[data-kt-search-element="empty"]');
-
-    let timeout;
-    let currentController = null;
-    let lastQuerySent = "";
-
-    input.addEventListener("input", function () {
-        const rawQuery = input.value;
-        const query = rawQuery.trim();
-
-        if (timeout) clearTimeout(timeout);
-
-        const resultsWrapper = getResultsWrapper();
-        const resultsContainer = getResultsContainer();
-        const emptyWrapper = getEmptyWrapper();
-
-        if (!resultsWrapper || !resultsContainer || !emptyWrapper) return;
-
-        if (query.length >= 2) {
-            timeout = setTimeout(() => {
-                if (query === lastQuerySent) return;
-
-                if (currentController) currentController.abort();
-                currentController = new AbortController();
-                lastQuerySent = query;
-
-                fetch(`/search?q=${encodeURIComponent(query)}`, {
-                    signal: currentController.signal
-                })
-                .then(response => {
-                    if (!response.ok) throw new Error("Network error");
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.results && data.results.length > 0) {
-                        resultsWrapper.classList.remove("d-none");
-                        emptyWrapper.classList.add("d-none");
-
-                        resultsContainer.innerHTML = "";
-                        for (const item of data.results) {
-                            const title = item.title || item.filename || "Untitled";
-                            const icon = item.type === "dataset" ? "ki-folder" : "ki-file";
-
-                            const href = item.type === "dataset"
-                                ? `/doi/${item.dataset_doi}`
-                                : `/hubfiles/${item.feature_model_id}`;
-
-                            const subtitle = item.type === "dataset"
-                                ? (`doi/${item.dataset_doi}` || `Dataset ID: ${item.dataset_id}`)
-                                : (item.dataset_title || `Dataset ID: ${item.dataset_id}`);
-
-                            resultsContainer.innerHTML += `
-                                <div class="d-flex align-items-center mb-5">
-                                    <div class="symbol symbol-40px me-4">
-                                        <span class="symbol-label bg-light">
-                                            <i class="ki-duotone ${icon} fs-2 text-primary">
-                                                <span class="path1"></span><span class="path2"></span>
-                                            </i>
-                                        </span>
-                                    </div>
-                                    <div class="d-flex flex-column">
-                                        <a href="${href}" class="fs-6 text-gray-800 text-hover-primary fw-semibold">${title}</a>
-                                        <span class="fs-7 text-muted fw-semibold">${subtitle}</span>
-                                    </div>
-                                </div>
-                            `;
-                        }
-                    } else {
-                        resultsWrapper.classList.add("d-none");
-                        emptyWrapper.classList.remove("d-none");
-                    }
-                })
-                .catch(err => {
-                    if (err.name === "AbortError") return;
-                    console.error("Search failed", err);
-                    resultsWrapper.classList.add("d-none");
-                    emptyWrapper.classList.remove("d-none");
-                });
-            }, 300);
-        } else {
-            if (currentController) currentController.abort();
-            lastQuerySent = "";
-            resultsWrapper.classList.add("d-none");
-            emptyWrapper.classList.add("d-none");
-        }
-    });
-});
-</script>
-
-
+			gtag('config', 'G-EEXQ0FJFDG');
+		</script>
+		<!-- End Google tag (gtag.js) -->
 
 	</body>
 	<!--end::Body-->

@@ -19,7 +19,6 @@ from flask_login import login_required, current_user
 from app import db
 
 from app.modules.apikeys.decorators import require_api_key
-from app.modules.dataset.decorators import is_dataset_owner
 from app.modules.dataset.forms import DataSetForm
 from app.modules.dataset import dataset_bp
 from app.modules.dataset.models import DataSet, PublicationType
@@ -71,8 +70,10 @@ def create_dataset():
             publication_doi = request.form.get("publication_doi")
             tags = request.form.getlist("tags[]")
 
-            logger.info(f"[UPLOAD] Dataset metadata - title: {title}, description: {description}, "
-                        f"publication_type_id: {publication_type_id}, publication_doi: {publication_doi}, tags: {tags}")
+            logger.info(
+                f"[UPLOAD] Dataset metadata - title: {title}, description: {description}, "
+                f"publication_type_id: {publication_type_id}, publication_doi: {publication_doi}, tags: {tags}"
+            )
 
             # Crear DSMetaData
             ds_meta = dsmetadata_service.create(
@@ -86,11 +87,11 @@ def create_dataset():
 
             # Crear DataSet
             dataset = dataset_service.create(
-                commit=False,
-                user_id=current_user.id,
-                ds_meta_data_id=ds_meta.id
+                commit=False, user_id=current_user.id, ds_meta_data_id=ds_meta.id
             )
-            logger.info(f"[UPLOAD] DataSet created (not committed yet) with ID: {dataset.id}")
+            logger.info(
+                f"[UPLOAD] DataSet created (not committed yet) with ID: {dataset.id}"
+            )
 
             # Crear autores
             if dataset_type != "zenodo_anonymous":
@@ -107,10 +108,14 @@ def create_dataset():
                         affiliation=affiliation,
                         orcid=orcid,
                     )
-                    logger.info(f"[UPLOAD] Author #{i} added: {name}, {affiliation}, {orcid}")
+                    logger.info(
+                        f"[UPLOAD] Author #{i} added: {name}, {affiliation}, {orcid}"
+                    )
                     i += 1
             else:
-                logger.info("[UPLOAD] Dataset is anonymous: authors will not be stored in DB")
+                logger.info(
+                    "[UPLOAD] Dataset is anonymous: authors will not be stored in DB"
+                )
 
             # Guardar en base de datos
             db.session.commit()
@@ -119,7 +124,9 @@ def create_dataset():
             # Mover modelos
             feature_model_service = FeatureModelService()
             created_fms = feature_model_service.create_from_uvl_files(dataset)
-            logger.info(f"[UPLOAD] {len(created_fms)} feature models created and moved for dataset {dataset.id}")
+            logger.info(
+                f"[UPLOAD] {len(created_fms)} feature models created and moved for dataset {dataset.id}"
+            )
 
         except Exception as exc:
             logger.exception(f"[UPLOAD ERROR] Error creating dataset locally: {exc}")
@@ -128,12 +135,19 @@ def create_dataset():
 
         # Si es draft, terminar aquí
         if dataset_type == "draft":
-            logger.info(f"[UPLOAD] Dataset {dataset.id} saved as draft, not uploaded to Zenodo")
+            logger.info(
+                f"[UPLOAD] Dataset {dataset.id} saved as draft, not uploaded to Zenodo"
+            )
             shutil.rmtree(current_user.temp_folder(), ignore_errors=True)
-            return jsonify({
-                "message": "Dataset created locally (draft).",
-                "dataset_id": dataset.id
-            }), 200
+            return (
+                jsonify(
+                    {
+                        "message": "Dataset created locally (draft).",
+                        "dataset_id": dataset.id,
+                    }
+                ),
+                200,
+            )
 
         # Comprobación defensiva
         if dataset_type not in {"zenodo", "zenodo_anonymous"}:
@@ -141,11 +155,12 @@ def create_dataset():
             return jsonify({"error": f"Invalid dataset_type: {dataset_type}"}), 400
 
         # Subir a Zenodo
-        logger.info(f"[UPLOAD] Dataset {dataset.id} will be uploaded to Zenodo (type: {dataset_type})")
+        logger.info(
+            f"[UPLOAD] Dataset {dataset.id} will be uploaded to Zenodo (type: {dataset_type})"
+        )
         try:
             deposition = zenodo_service.create_new_deposition(
-                dataset,
-                anonymous=(dataset_type == "zenodo_anonymous")
+                dataset, anonymous=(dataset_type == "zenodo_anonymous")
             )
             deposition_id = deposition.get("id")
             logger.info(f"[UPLOAD] Zenodo deposition created with ID: {deposition_id}")
@@ -156,32 +171,47 @@ def create_dataset():
             logger.info(f"[UPLOAD] Dataset zipped at path: {zip_path}")
 
             zenodo_service.upload_zip(dataset, deposition_id, zip_path)
-            logger.info(f"[UPLOAD] ZIP uploaded to Zenodo for deposition {deposition_id}")
+            logger.info(
+                f"[UPLOAD] ZIP uploaded to Zenodo for deposition {deposition_id}"
+            )
 
             if dataset_type in {"zenodo", "zenodo_anonymous"}:
-              zenodo_service.publish_deposition(deposition_id)
-              doi = zenodo_service.get_doi(deposition_id)
+                zenodo_service.publish_deposition(deposition_id)
+                doi = zenodo_service.get_doi(deposition_id)
 
-              if doi:
-                # Indexar el dataset en Elasticsearch
-                index_dataset(dataset)
+                if doi:
+                    # Indexar el dataset en Elasticsearch
+                    index_dataset(dataset)
 
-              dataset_service.update_dsmetadata(ds_meta.id, dataset_doi=doi)
-              logger.info(f"[UPLOAD] Dataset {dataset.id} published on Zenodo with DOI: {doi}")
-
+                dataset_service.update_dsmetadata(ds_meta.id, dataset_doi=doi)
+                logger.info(
+                    f"[UPLOAD] Dataset {dataset.id} published on Zenodo with DOI: {doi}"
+                )
 
         except Exception as exc:
-            logger.exception(f"[UPLOAD ERROR] Zenodo upload failed for dataset {dataset.id}: {exc}")
-            return jsonify({
-                "error": f"Dataset created locally (ID: {dataset.id}), but Zenodo upload failed: {str(exc)}",
-                "dataset_id": dataset.id
-            }), 200
+            logger.exception(
+                f"[UPLOAD ERROR] Zenodo upload failed for dataset {dataset.id}: {exc}"
+            )
+            return (
+                jsonify(
+                    {
+                        "error": f"Dataset created locally (ID: {dataset.id}), but Zenodo upload failed: {str(exc)}",
+                        "dataset_id": dataset.id,
+                    }
+                ),
+                200,
+            )
 
         shutil.rmtree(current_user.temp_folder(), ignore_errors=True)
-        return jsonify({
-            "message": "Dataset created and uploaded to Zenodo.",
-            "dataset_id": dataset.id
-        }), 200
+        return (
+            jsonify(
+                {
+                    "message": "Dataset created and uploaded to Zenodo.",
+                    "dataset_id": dataset.id,
+                }
+            ),
+            200,
+        )
 
     # GET request
     logger.info("[UPLOAD] GET request - rendering dataset creation form")
@@ -280,11 +310,9 @@ def subdomain_index(doi):
     user_cookie = ds_view_record_service.create_cookie(dataset=dataset)
 
     # Renderizar vista con todos los datos
-    resp = make_response(render_template(
-        "dataset/view_dataset.html",
-        dataset=dataset,
-        hubfiles=hubfiles
-    ))
+    resp = make_response(
+        render_template("dataset/view_dataset.html", dataset=dataset, hubfiles=hubfiles)
+    )
     resp.set_cookie("view_cookie", user_cookie)
 
     return resp
@@ -304,16 +332,16 @@ def get_unsynchronized_dataset(dataset_id):
     for fm in dataset.feature_models:
         hubfiles.extend(fm.hubfiles)
 
-
     if not dataset:
         abort(404)
 
-    return render_template("dataset/view_dataset.html", 
-                           dataset=dataset,
-                           hubfiles=hubfiles)
+    return render_template(
+        "dataset/view_dataset.html", dataset=dataset, hubfiles=hubfiles
+    )
 
 
 # REST API
+
 
 @dataset_bp.route("/api/v1/datasets", methods=["GET"])
 @require_api_key("read_dataset")
@@ -336,20 +364,23 @@ def api_list_datasets():
       200:
         description: Paginated list of datasets
     """
-    
+
     page = request.args.get("page", 1, type=int)
     per_page = 5
 
     pagination = DataSet.query.paginate(page=page, per_page=per_page, error_out=False)
     items = [ds.to_dict() for ds in pagination.items]
 
-    return jsonify({
-        "page": page,
-        "per_page": per_page,
-        "total": pagination.total,
-        "pages": pagination.pages,
-        "datasets": items
-    })
+    return jsonify(
+        {
+            "page": page,
+            "per_page": per_page,
+            "total": pagination.total,
+            "pages": pagination.pages,
+            "datasets": items,
+        }
+    )
+
 
 @dataset_bp.route("/api/v1/datasets/<int:dataset_id>", methods=["GET"])
 @require_api_key("read_dataset")
@@ -396,6 +427,7 @@ def api_dataset_detail(dataset_id):
     if not dataset:
         return jsonify({"error": "Dataset not found"}), 404
     return jsonify(dataset.to_dict())
+
 
 @dataset_bp.route("/api/v1/datasets/<int:dataset_id>/summary", methods=["GET"])
 @require_api_key("read_dataset")
@@ -458,17 +490,19 @@ def api_dataset_summary(dataset_id):
     if not dataset:
         return jsonify({"error": "Dataset not found"}), 404
 
-    return jsonify({
-        "id": dataset.id,
-        "title": dataset.name(),
-        "description": dataset.description(),
-        "publication_type": dataset.get_cleaned_publication_type(),
-        "files_count": dataset.get_files_count(),
-        "total_size_in_bytes": dataset.get_file_total_size(),
-        "total_size_human": dataset.get_file_total_size_for_human(),
-        "doi": dataset.ds_meta_data.dataset_doi,
-        "created_at": dataset.created_at.isoformat()
-    })
+    return jsonify(
+        {
+            "id": dataset.id,
+            "title": dataset.name(),
+            "description": dataset.description(),
+            "publication_type": dataset.get_cleaned_publication_type(),
+            "files_count": dataset.get_files_count(),
+            "total_size_in_bytes": dataset.get_file_total_size(),
+            "total_size_human": dataset.get_file_total_size_for_human(),
+            "doi": dataset.ds_meta_data.dataset_doi,
+            "created_at": dataset.created_at.isoformat(),
+        }
+    )
 
 
 @dataset_bp.route("/api/v1/datasets/<int:dataset_id>/files", methods=["GET"])
@@ -545,13 +579,16 @@ def api_list_files(dataset_id):
     end = start + per_page
     files_page = all_files[start:end]
 
-    return jsonify({
-        "page": page,
-        "per_page": per_page,
-        "total": total,
-        "pages": (total + per_page - 1) // per_page,
-        "files": [file.to_dict() for file in files_page]
-    })
+    return jsonify(
+        {
+            "page": page,
+            "per_page": per_page,
+            "total": total,
+            "pages": (total + per_page - 1) // per_page,
+            "files": [file.to_dict() for file in files_page],
+        }
+    )
+
 
 @dataset_bp.route("/api/v1/files/<int:file_id>", methods=["GET"])
 @require_api_key("read_dataset")
@@ -602,6 +639,7 @@ def api_file_detail(file_id):
 
     return jsonify(file.to_dict())
 
+
 @dataset_bp.route("/api/v1/files/<int:file_id>/raw", methods=["GET"])
 @require_api_key("read_dataset")
 def api_file_raw(file_id):
@@ -642,19 +680,22 @@ def api_file_raw(file_id):
     dataset = file.feature_model.dataset
 
     file_path = os.path.join(
-        current_app.root_path, "..", "uploads",
+        current_app.root_path,
+        "..",
+        "uploads",
         f"user_{dataset.user_id}",
         f"dataset_{dataset.id}",
         "uvl",
-        file.name
+        file.name,
     )
 
     try:
         with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
-        return content, 200, {'Content-Type': 'text/plain; charset=utf-8'}
+        return content, 200, {"Content-Type": "text/plain; charset=utf-8"}
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 @dataset_bp.route("/api/v1/files/<int:file_id>/metadata", methods=["GET"])
 @require_api_key("read_dataset")
@@ -730,12 +771,14 @@ def api_file_metadata(file_id):
 
     meta = fm.fm_meta_data
 
-    return jsonify({
-        "title": meta.title,
-        "description": meta.description,
-        "tags": meta.tags.split(",") if meta.tags else [],
-        "publication_type": meta.publication_type.name,
-        "uvl_version": meta.uvl_version,
-        "publication_doi": meta.publication_doi,
-        "authors": [a.to_dict() for a in meta.authors]
-    })
+    return jsonify(
+        {
+            "title": meta.title,
+            "description": meta.description,
+            "tags": meta.tags.split(",") if meta.tags else [],
+            "publication_type": meta.publication_type.name,
+            "uvl_version": meta.uvl_version,
+            "publication_doi": meta.publication_doi,
+            "authors": [a.to_dict() for a in meta.authors],
+        }
+    )

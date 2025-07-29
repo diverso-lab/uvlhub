@@ -15,6 +15,7 @@ from app.modules.statistics.services import StatisticsService
 from core.services.BaseService import BaseService
 from app import db
 
+
 class HubfileService(BaseService):
     def __init__(self):
         super().__init__(HubfileRepository())
@@ -46,7 +47,7 @@ class HubfileService(BaseService):
 
     def get_by_ids(self, ids: list[int]) -> list[Hubfile]:
         return self.repository.get_by_ids(ids)
-    
+
     def create_from_file(self, feature_model_id: int, filepath: str) -> Hubfile:
         """
         Crea un Hubfile a partir de un archivo .uvl ya ubicado en el directorio destino.
@@ -66,10 +67,7 @@ class HubfileService(BaseService):
         checksum = self._calculate_checksum(filepath)
 
         hubfile = Hubfile(
-            feature_model_id=feature_model_id,
-            name=name,
-            size=size,
-            checksum=checksum
+            feature_model_id=feature_model_id, name=name, size=size, checksum=checksum
         )
         db.session.add(hubfile)
         db.session.flush()

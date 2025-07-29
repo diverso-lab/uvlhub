@@ -23,24 +23,30 @@ class Hubfile(db.Model):
     name = db.Column(db.String(120), nullable=False)
     checksum = db.Column(db.String(120), nullable=False)
     size = db.Column(db.Integer, nullable=False)
-    feature_model_id = db.Column(db.Integer, db.ForeignKey("feature_model.id"), nullable=False)
+    feature_model_id = db.Column(
+        db.Integer, db.ForeignKey("feature_model.id"), nullable=False
+    )
 
     feature_model = db.relationship("FeatureModel", back_populates="hubfiles")
 
     def get_formatted_size(self):
         from app.modules.dataset.services import SizeService
+
         return SizeService().get_human_readable_size(self.size)
 
     def get_owner_user(self) -> User:
         from app.modules.hubfile.services import HubfileService
+
         return HubfileService().get_owner_user_by_hubfile(self)
 
     def get_dataset(self) -> DataSet:
         from app.modules.hubfile.services import HubfileService
+
         return HubfileService().get_dataset_by_hubfile(self)
 
     def get_path(self) -> str:
         from app.modules.hubfile.services import HubfileService
+
         return HubfileService().get_path_by_hubfile(self)
 
     def get_full_path(self) -> str:
@@ -88,7 +94,9 @@ class HubfileDownloadRecord(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
     file_id = db.Column(db.Integer, db.ForeignKey("hubfiles.id"), nullable=False)
-    download_date = db.Column(db.DateTime, default=lambda: datetime.now(pytz.utc), nullable=False)
+    download_date = db.Column(
+        db.DateTime, default=lambda: datetime.now(pytz.utc), nullable=False
+    )
     download_cookie = db.Column(db.String(36), nullable=False)
 
     def __repr__(self):

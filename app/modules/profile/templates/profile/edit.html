@@ -1,105 +1,78 @@
 {% extends "base_template.html" %}
-
 {% set title = "Edit profile" %}
 
+{% block breadcrumb %}
+
+<ol class="breadcrumb text-muted fs-6 fw-semibold">
+    <li class="breadcrumb-item"><a href="/" class="">Home</a></li>
+    <li class="breadcrumb-item text-muted">Edit profile</li>
+</ol>
+
+{% endblock %}
+
 {% block content %}
-
 <div class="row">
-
-    <div class="col-12 col-lg-6">
-
-        <form method="POST" action="{{ url_for('profile.edit_profile') }}" class="needs-validation" novalidate>
-            {{ form.hidden_tag() }}
-
-            <div class="row form-group">
-
-                <div class="col-6">
-                    {{ form.surname.label(class="form-label") }}
-                    {% set surname_value = form.surname.data if form.surname.data else current_user.profile.surname %}
-                    {{ form.surname(class="form-control", placeholder="Enter your surname", required=true,
-                    value=surname_value) }}
-                    {% for error in form.surname.errors %}
-                    <span style="color: red;">{{ error }}</span>
-                    <br>
-                    {% endfor %}
-                </div>
-
-                <div class="col-6">
-                    {{ form.name.label(class="form-label") }}
-                    {% set name_value = form.name.data if form.name.data else current_user.profile.name %}
-                    {{ form.name(class="form-control", placeholder="Enter your name",
-                    required=true, value=name_value) }}
-                    {% for error in form.name.errors %}
-                    <span style="color: red;">{{ error }}</span>
-                    <br>
-                    {% endfor %}
-                </div>
-
+    <div class="col-md-8 col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title fw-bold">Edit your profile</h3>
             </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('profile.edit_profile') }}" class="needs-validation" novalidate>
+                    {{ form.hidden_tag() }}
 
-            <div class="row form-group mt-3">
+                    <div class="row mb-4">
+                        <div class="col-6">
+                            {{ form.surname.label(class="form-label fw-semibold") }}
+                            {% set surname_value = form.surname.data if form.surname.data else current_user.profile.surname %}
+                            {{ form.surname(class="form-control", placeholder="Enter your surname", required=true, value=surname_value) }}
+                            {% for error in form.surname.errors %}
+                                <div class="text-danger small mt-1">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-6">
+                            {{ form.name.label(class="form-label fw-semibold") }}
+                            {% set name_value = form.name.data if form.name.data else current_user.profile.name %}
+                            {{ form.name(class="form-control", placeholder="Enter your name", required=true, value=name_value) }}
+                            {% for error in form.name.errors %}
+                                <div class="text-danger small mt-1">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
 
-                <div class="col-6">
-                    {{ form.affiliation.label(class="form-label") }}
-                    {% set affiliation_value = form.affiliation.data if form.affiliation.data else
-                    (current_user.profile.affiliation if current_user.profile.affiliation else '') %}
-                    {{ form.affiliation(class="form-control", placeholder="Enter your affiliation", required=true,
-                    value=affiliation_value) }}
-                    {% for error in form.affiliation.errors %}
-                    <span style="color: red;">{{ error }}</span>
-                    <br>
-                    {% endfor %}
-                </div>
+                    <div class="mb-4">
+                        {{ form.affiliation.label(class="form-label fw-semibold") }}
+                        {% set affiliation_value = form.affiliation.data if form.affiliation.data else (current_user.profile.affiliation or '') %}
+                        {{ form.affiliation(class="form-control", placeholder="Enter your affiliation", required=true, value=affiliation_value) }}
+                        {% for error in form.affiliation.errors %}
+                            <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+                    </div>
 
+                    {% if profile.get_orcid() %}
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold" for="orcid">ORCID</label>
+                        <input class="form-control" disabled id="orcid" maxlength="19" minlength="19" name="orcid" required type="text" value="{{ profile.get_orcid() }}">
+                    </div>
+                    {% endif %}
+
+                    {% if error %}
+                    <div class="alert alert-danger d-flex align-items-center p-3 mb-4">
+                        <i class="ki-duotone ki-shield-alert fs-2 me-3">
+                            <span class="path1"></span><span class="path2"></span>
+                        </i>
+                        <div>{{ error }}</div>
+                    </div>
+                    {% endif %}
+
+                    <div class="mb-4">
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
             </div>
-
-            {% if profile.get_orcid() %}
-
-            <div class="row form-group mt-3">
-
-                <div class="col-12">
-                    <label class="form-label" for="orcid">ORCID</label>
-
-                    <input class="form-control" disabled="" id="orcid" maxlength="19" minlength="19" name="orcid"
-                         required="" type="text" value="{{profile.get_orcid()}}">
-
-                </div>
-
-            </div>
-
-            {% endif %}
-
-            <div class="row form-group">
-
-                <div class="col-12 mt-3">
-                    {{ form.submit(class="btn btn-primary") }}
-                </div>
-
-
-            </div>
-        </form>
-
-
-    </div>
-
-    <div class="row">
-
-        <div class="col-lg-6 col-12">
-
-            {% if error %}
-
-            <div class="mt-3">
-                <p style="color: red;"><strong>Error:</strong> {{ error }}
-            </div>
-
-            {% endif %}
-
         </div>
-
     </div>
-
 </div>
-
 {% endblock %}
 
 {% block scripts %}

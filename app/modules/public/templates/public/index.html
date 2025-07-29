@@ -165,10 +165,37 @@
 
             <div class="row">
 
+                {% if current_user.is_anonymous %}
+
+                    <div class="col-12">
+
+                        <div class="card mb-5 shadow-sm">
+                        <div class="card-body text-center p-8">
+                            <h2 class="fs-2x fw-bold mb-4">Let's get started!</h2>
+                            <p class="fs-6 text-gray-600 mb-6">
+                            Ready to upload your amazing feature models in UVL format and share them with the world?
+                            </p>
+                            <div class="d-grid gap-3">
+                            <a href="/signup" class="btn btn-primary btn-lg fw-semibold">
+                                <i data-feather="user-plus" class="me-2"></i>
+                                Sign Up
+                            </a>
+                            <a href="/login" class="btn btn-outline-primary btn-lg fw-semibold">
+                                <i data-feather="log-in" class="me-2"></i>
+                                I'm already registered
+                            </a>
+                            </div>
+                        </div>
+                        </div>
+
+                    </div>
+
+                {% endif %}
+
                 <div class="col-12">
 
                   <!-- BLOQUE 1: Contenido del hub -->
-                  <div class="card mb-6 shadow-sm">
+                  <div class="card mb-5 shadow-sm">
                     <div class="card-body p-8">
                       <h2 class="fs-2 fw-bold text-body mb-6">
                     <i data-feather="layers" class="me-2 text-primary"></i>
@@ -196,7 +223,7 @@
                   </div>
 
                   <!-- BLOQUE 2: Visualizaciones -->
-                  <div class="card mb-6 shadow-sm">
+                  <div class="card mb-5 shadow-sm">
                     <div class="card-body p-8">
                   <h2 class="fs-2 fw-bold text-body mb-6">
                     <i data-feather="eye" class="me-2 text-success"></i>
@@ -224,7 +251,7 @@
                   </div>
 
                   <!-- BLOQUE 3: Descargas -->
-                  <div class="card mb-10 shadow-sm">
+                  <div class="card mb-5 shadow-sm">
                     <div class="card-body p-8">
                   <h3 class="fs-2 fw-bold text-body mb-6">
                     <i data-feather="download" class="me-2 text-warning"></i>
@@ -256,102 +283,19 @@
 
             </div>
 
-                <div class="col-12">
-
-                    <div class="card mb-5">
-
-                        <div class="card-body">
-                    
-                            <h2> <b>Related publications</b> </h2>
-                            
-                            David Romero-Organvidez, José A. Galindo, Chico Sundermann, Jose-Miguel Horcas, David Benavides. 
-                            <i>UVLHub: A feature model data repository using UVL and open science principles</i>,
-                            Journal of Systems and Software,
-                            2024,
-                            112150,
-                            ISSN 0164-1212,
-                            <a href="https://doi.org/10.1016/j.jss.2024.112150" target="_blank">https://doi.org/10.1016/j.jss.2024.112150</a>
-
-                            <br>
-
-                            <button onclick="copyText('bibtex_cite_uvlhub')" class="btn btn-light" style="border-radius: 5px; margin-right: 10px">
-                                <i data-feather="clipboard" class="center-button-icon"></i>
-                                Copy in BibTex
-                            </button>
-                    
-                            <button onclick="copyText('ris_cite_uvlhub')" class="btn btn-light" style="border-radius: 5px;">
-                                <i data-feather="clipboard" class="center-button-icon"></i>
-                                Copy in RIS
-                            </button>
-
-                            <br><br>
-
-                            David Benavides, Chico Sundermann, Kevin Feichtinger, José A. Galindo, Rick Rabiser and Thomas Thüm,
-                            <i>Uvl: Feature Modelling with the Universal Variability Language.</i>
-                            <a href="http://dx.doi.org/10.2139/ssrn.4764657" target="_blank">http://dx.doi.org/10.2139/ssrn.4764657</a>
-
-                            <br>
-
-                            <button onclick="copyText('bibtex_cite_uvl')" class="btn btn-light" style="border-radius: 5px; margin-right: 10px">
-                                <i data-feather="clipboard" class="center-button-icon"></i>
-                                Copy in BibTex
-                            </button>
-                    
-                            <button onclick="copyText('ris_cite_uvl')" class="btn btn-light" style="border-radius: 5px;">
-                                <i data-feather="clipboard" class="center-button-icon"></i>
-                                Copy in RIS
-                            </button>
-
-                    
-                        </div>
-                    
-                    </div>
-                    
-
-                </div>
-
-                {% if current_user.is_anonymous %}
-
-                    <div class="col-12">
-
-                        <div class="card mb-5 shadow-sm">
-                        <div class="card-body text-center p-8">
-                            <h2 class="fs-2x fw-bold mb-4">Let's get started!</h2>
-                            <p class="fs-6 text-gray-600 mb-6">
-                            Ready to upload your amazing feature models in UVL format and share them with the world?
-                            </p>
-                            <div class="d-grid gap-3">
-                            <a href="/signup" class="btn btn-primary btn-lg fw-semibold">
-                                <i data-feather="user-plus" class="me-2"></i>
-                                Sign Up
-                            </a>
-                            <a href="/login" class="btn btn-outline-primary btn-lg fw-semibold">
-                                <i data-feather="log-in" class="me-2"></i>
-                                I'm already registered
-                            </a>
-                            </div>
-                        </div>
-                        </div>
-
-                    </div>
-
-                {% endif %}
+                
 
                 <div class="col-12">
 
                     <div class="card mb-10 shadow-sm">
                       <div class="card-body p-8">
-                        <h2 class="fs-2x fw-bold text-dark mb-4">
-                          What is <span class="text-primary">uvlhub.io</span>?
-                        </h2>
+                        <h2 class="fs-2x fw-bold mb-4">What is uvlhub.io?</h2>
                         <p class="fs-6 text-gray-600 mb-10">
                           <strong>uvlhub.io</strong> is a repository of feature models in UVL format integrated with
-                          Zenodo and FlamaPy, developed by <strong>DiversoLab</strong>.
+                          Zenodo and flamapy, developed by <strong>DiversoLab</strong>.
                         </p>
 
-                        <h2 class="fs-2x fw-bold text-dark mb-4">
-                          Can I contribute?
-                        </h2>
+                        <h2 class="fs-2x fw-bold mb-4">Can I contribute?</h2>
                         <p class="fs-6 text-gray-600 mb-6">
                           Sure! You can fork our official GitHub repository, create fantastic features, and then
                           send us a pull request.

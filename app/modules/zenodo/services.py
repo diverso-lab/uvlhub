@@ -168,7 +168,9 @@ class ZenodoService(BaseService):
         """
 
         logger.info("Dataset sending to Zenodo...")
-        logger.info(f"Publication type... {dataset.ds_meta_data.publication_type.value}")
+        logger.info(
+            f"Publication type... {dataset.ds_meta_data.publication_type.value}"
+        )
         logger.info(f"Anonymous upload: {anonymous}")
 
         upload_type = (
@@ -188,7 +190,11 @@ class ZenodoService(BaseService):
             creators = [
                 {
                     "name": author.name,
-                    **({"affiliation": author.affiliation} if author.affiliation else {}),
+                    **(
+                        {"affiliation": author.affiliation}
+                        if author.affiliation
+                        else {}
+                    ),
                     **({"orcid": author.orcid} if author.orcid else {}),
                 }
                 for author in dataset.ds_meta_data.authors
@@ -217,7 +223,9 @@ class ZenodoService(BaseService):
             self.ZENODO_API_URL, params=self.params, json=data, headers=self.headers
         )
         if response.status_code != 201:
-            error_message = f"Failed to create deposition. Error details: {response.json()}"
+            error_message = (
+                f"Failed to create deposition. Error details: {response.json()}"
+            )
             raise Exception(error_message)
 
         return response.json()
@@ -303,7 +311,6 @@ class ZenodoService(BaseService):
         if response.status_code != 202:
             raise Exception("Failed to publish deposition")
 
-
     def update_deposition(self, deposition_id: int, metadata: dict) -> dict:
         """
         Update a deposition in Zenodo.
@@ -381,4 +388,3 @@ class ZenodoService(BaseService):
             str: The DOI of the deposition.
         """
         return self.get_deposition(deposition_id).get("doi")
-

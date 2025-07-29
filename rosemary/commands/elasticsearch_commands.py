@@ -6,21 +6,23 @@ from app.modules.elasticsearch.services import ElasticsearchService
 
 @click.command(
     "elasticsearch:reindex",
-    help="Reindexes all datasets and hubfiles into the Elasticsearch index."
+    help="Reindexes all datasets and hubfiles into the Elasticsearch index.",
 )
 @with_appcontext
 def elasticsearch_reindex():
     click.echo(click.style("[INFO] Starting reindexing process...", fg="cyan"))
     try:
         reindex_all()
-        click.echo(click.style("[SUCCESS] Reindexing completed successfully!", fg="green"))
+        click.echo(
+            click.style("[SUCCESS] Reindexing completed successfully!", fg="green")
+        )
     except Exception as e:
         click.echo(click.style(f"[ERROR] Reindexing failed: {e}", fg="red"))
 
 
 @click.command(
     "elasticsearch:reset",
-    help="Deletes and recreates the Elasticsearch index, then reindexes all documents."
+    help="Deletes and recreates the Elasticsearch index, then reindexes all documents.",
 )
 @with_appcontext
 def elasticsearch_reset():

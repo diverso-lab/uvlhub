@@ -19,7 +19,7 @@ confirmemail_service = ConfirmemailService()
 
 
 @auth_bp.route("/signup/", methods=["GET", "POST"])
-def show_signup_form():
+def signup():
     if current_user.is_authenticated:
         return redirect(url_for("public.index"))
 

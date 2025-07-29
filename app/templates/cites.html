@@ -1,0 +1,150 @@
+<!--begin::Citation Modal-->
+<div class="modal fade" id="citationModal" tabindex="-1" aria-labelledby="citationModalLabel" aria-hidden="true">
+	<div class="modal-dialog modal-xl modal-dialog-centered">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title">How to cite us</h5>
+				<button type="button" class="btn btn-sm btn-icon btn-active-light-primary" data-bs-dismiss="modal">
+					<i class="ki-duotone ki-cross fs-2">
+ <span class="path1"></span>
+ <span class="path2"></span>
+</i>
+				</button>
+			</div>
+			<div class="modal-body">
+				<ul class="nav nav-tabs mb-3" id="citationTabs" role="tablist">
+					<li class="nav-item" role="presentation">
+						<button class="nav-link active" id="uvlhub-tab" data-bs-toggle="tab" data-bs-target="#uvlhub" type="button" role="tab">UVLHub</button>
+					</li>
+					<li class="nav-item" role="presentation">
+						<button class="nav-link" id="uvl-tab" data-bs-toggle="tab" data-bs-target="#uvl" type="button" role="tab">UVL</button>
+					</li>
+				</ul>
+				<div class="tab-content" id="citationTabsContent">
+					{% for key in ['uvlhub', 'uvl'] %}
+					<div class="tab-pane fade {% if loop.first %}show active{% endif %}" id="{{ key }}" role="tabpanel">
+						{% for format in ['bibtex', 'apa', 'text', 'ris'] %}
+						<div class="mb-4">
+							<div class="d-flex justify-content-between align-items-center mb-2">
+								<h6 class="mb-0 text-capitalize">{{ format }}</h6>
+								<button class="btn btn-sm btn-light-primary" onclick="copyCitation('{{ format }}_cite_{{ key }}', event)">
+									Copy
+								</button>
+							</div>
+							<pre id="{{ format }}_cite_{{ key }}" class="bg-light p-3 rounded" style="white-space: pre-wrap;"></pre>
+						</div>
+						{% endfor %}
+					</div>
+					{% endfor %}
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<!--end::Citation Modal-->
+
+<pre id="bibtex_cite_uvlhub" style="display: none">
+@article{romero2024_uvlhub_open_science,
+    title = {UVLHub: A feature model data repository using UVL and open science principles},
+    journal = {Journal of Systems and Software},
+    pages = {112150},
+    year = {2024},
+    issn = {0164-1212},
+    doi = {https://doi.org/10.1016/j.jss.2024.112150},
+    url = {https://www.sciencedirect.com/science/article/pii/S016412122400195X},
+    author = {David Romero-Organvidez and José A. Galindo and Chico Sundermann and Jose-Miguel Horcas and David Benavides},
+    keywords = {Feature models, Software product line, Variability, Dataset, Uvl}
+}
+</pre>
+
+<pre id="ris_cite_uvlhub" style="display: none">
+TY  - JOUR
+T1  - UVLHub: A feature model data repository using UVL and open science principles
+AU  - Romero-Organvidez, David
+AU  - Galindo, José A.
+AU  - Sundermann, Chico
+AU  - Horcas, Jose-Miguel
+AU  - Benavides, David
+JO  - Journal of Systems and Software
+SP  - 112150
+PY  - 2024
+DA  - 2024/07/01/
+SN  - 0164-1212
+DO  - https://doi.org/10.1016/j.jss.2024.112150
+UR  - https://www.sciencedirect.com/science/article/pii/S016412122400195X
+KW  - Feature models
+KW  - Software product line
+KW  - Variability
+KW  - Dataset
+KW  - Uvl
+</pre>
+
+<pre id="text_cite_uvlhub" style="display: none;">
+David Romero-Organvidez, José A. Galindo, Chico Sundermann, Jose-Miguel Horcas, David Benavides,
+UVLHub: A feature model data repository using UVL and open science principles,
+Journal of Systems and Software,
+2024,
+112150,
+ISSN 0164-1212,
+https://doi.org/10.1016/j.jss.2024.112150.
+(https://www.sciencedirect.com/science/article/pii/S016412122400195X)
+Keywords: Feature models; Software product line; Variability; Dataset; Uvl
+</pre>
+
+<pre id="apa_cite_uvlhub" style="display: none;">
+Romero-Organvidez, D., Galindo, J. A., Sundermann, C., Horcas, J.-M., & Benavides, D. (2024). UVLHub: A feature model data repository using UVL and open science principles. Journal of Systems and Software, 2024, 112150. https://doi.org/10.1016/j.jss.2024.112150
+</pre>
+
+<pre id="bibtex_cite_uvl" style="display: none">
+@article{benavides2024uvl,
+    title = {UVL: Feature modelling with the Universal Variability Language},
+    journal = {Journal of Systems and Software},
+    volume = {225},
+    pages = {112326},
+    year = {2025},
+    issn = {0164-1212},
+    doi = {https://doi.org/10.1016/j.jss.2024.112326},
+    url = {https://www.sciencedirect.com/science/article/pii/S0164121224003704},
+    author = {David Benavides and Chico Sundermann and Kevin Feichtinger and José A. Galindo and Rick Rabiser and Thomas Thüm},
+    keywords = {Feature model, Software product lines, Variability},
+}      
+</pre>
+
+<pre id="ris_cite_uvl" style="display: none">
+TY  - JOUR
+T1  - UVL: Feature modelling with the Universal Variability Language
+AU  - Benavides, David
+AU  - Sundermann, Chico
+AU  - Feichtinger, Kevin
+AU  - Galindo, José A.
+AU  - Rabiser, Rick
+AU  - Thüm, Thomas
+JO  - Journal of Systems and Software
+VL  - 225
+SP  - 112326
+PY  - 2025
+DA  - 2025/07/01/
+SN  - 0164-1212
+DO  - https://doi.org/10.1016/j.jss.2024.112326
+UR  - https://www.sciencedirect.com/science/article/pii/S0164121224003704
+KW  - Feature model
+KW  - Software product lines
+KW  - Variability
+</pre>
+
+<pre id="text_cite_uvl" style="display: none;">
+David Benavides, Chico Sundermann, Kevin Feichtinger, José A. Galindo, Rick Rabiser, Thomas Thüm,
+UVL: Feature modelling with the Universal Variability Language,
+Journal of Systems and Software,
+Volume 225,
+2025,
+112326,
+ISSN 0164-1212,
+https://doi.org/10.1016/j.jss.2024.112326.
+(https://www.sciencedirect.com/science/article/pii/S0164121224003704)
+Keywords: Feature model; Software product lines; Variability
+</pre>
+
+<pre id="apa_cite_uvl" style="display: none;">
+Benavides, D., Sundermann, C., Feichtinger, K., Galindo, J. A., Rabiser, R., & Thüm, T. (2025). UVL: Feature modelling with the Universal Variability Language. Journal of Systems and Software, 225, 112326. https://doi.org/10.1016/j.jss.2024.112326
+</pre>

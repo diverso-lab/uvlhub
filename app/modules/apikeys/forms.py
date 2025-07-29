@@ -3,4 +3,4 @@ from wtforms import SubmitField
 
 
 class ApikeysForm(FlaskForm):
-    submit = SubmitField('Save apikeys')
+    submit = SubmitField("Save apikeys")

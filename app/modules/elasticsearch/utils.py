@@ -2,12 +2,14 @@ from app.modules.elasticsearch.services import ElasticsearchService
 
 search = ElasticsearchService()
 
+
 def init_search_index():
     try:
         search.create_index_if_not_exists()
     except Exception as e:
         print(f"[ERROR init_search_index] {e}")
         raise
+
 
 def index_dataset(dataset):
     if not dataset.ds_meta_data.dataset_doi:
@@ -26,11 +28,15 @@ def index_dataset(dataset):
             {
                 "name": a.name,
                 "affiliation": getattr(a, "affiliation", None),
-                "orcid": getattr(a, "orcid", None)
+                "orcid": getattr(a, "orcid", None),
             }
             for a in dataset.ds_meta_data.authors
         ],
-        "tags": [t.strip() for t in dataset.ds_meta_data.tags.split(",")] if dataset.ds_meta_data.tags else [],
+        "tags": (
+            [t.strip() for t in dataset.ds_meta_data.tags.split(",")]
+            if dataset.ds_meta_data.tags
+            else []
+        ),
         "publication_type": dataset.ds_meta_data.publication_type.name,
         "content": f"{dataset.ds_meta_data.title} {dataset.ds_meta_data.description} {dataset.ds_meta_data.publication_doi} {' '.join(a.name for a in dataset.ds_meta_data.authors)}",
         "created_at": dataset.created_at.isoformat(),
@@ -45,7 +51,9 @@ def index_hubfile(hubfile):
     dataset = hubfile.feature_model.dataset if hubfile.feature_model else None
 
     if not dataset or not dataset.ds_meta_data.dataset_doi:
-        print(f"[SKIP] Hubfile {hubfile.id} skipped (no dataset or dataset has no DOI).")
+        print(
+            f"[SKIP] Hubfile {hubfile.id} skipped (no dataset or dataset has no DOI)."
+        )
         return
 
     doc = {
@@ -59,7 +67,7 @@ def index_hubfile(hubfile):
         "dataset_title": dataset.ds_meta_data.title,
         "checksum": hubfile.checksum,
         "size_in_bytes": hubfile.size,
-        "size_in_human_format": hubfile.get_formatted_size()
+        "size_in_human_format": hubfile.get_formatted_size(),
     }
 
     search.index_document(doc_id=f"hubfile-{hubfile.id}", data=doc)
@@ -72,7 +80,9 @@ def reindex_all():
     datasets = DataSet.query.all()
     hubfiles = Hubfile.query.all()
 
-    print(f"[REINDEX] Reindexing {len(datasets)} datasets and {len(hubfiles)} hubfiles...")
+    print(
+        f"[REINDEX] Reindexing {len(datasets)} datasets and {len(hubfiles)} hubfiles..."
+    )
 
     for dataset in datasets:
         index_dataset(dataset)

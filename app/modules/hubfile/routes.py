@@ -1,15 +1,9 @@
-from datetime import datetime
 import os
-import uuid
 from app.modules.flamapy.services import FlamapyService
 from flask import current_app, jsonify, make_response, request, send_from_directory
 from flask_login import current_user, login_required
 from app.modules.hubfile import hubfile_bp
-from app.modules.hubfile.models import HubfileViewRecord
 from app.modules.hubfile.services import HubfileDownloadRecordService, HubfileService
-
-from app import db
-from app.modules.statistics.services import StatisticsService
 from flask import render_template
 
 hubfile_download_record_service = HubfileDownloadRecordService()
@@ -129,12 +123,11 @@ def view_uvl(file_id):
 
     # Leer contenido UVL
     directory_path = os.path.join(
-        "uploads",
-        f"user_{dataset.user_id}",
-        f"dataset_{dataset.id}",
-        "uvl"
+        "uploads", f"user_{dataset.user_id}", f"dataset_{dataset.id}", "uvl"
     )
-    file_path = os.path.join(current_app.root_path, "..", directory_path, selected_file.name)
+    file_path = os.path.join(
+        current_app.root_path, "..", directory_path, selected_file.name
+    )
 
     try:
         with open(file_path, "r") as f:
@@ -147,7 +140,7 @@ def view_uvl(file_id):
         selected_file=selected_file,
         hubfiles=dataset.files(),
         dataset=dataset,
-        uvl_content=content
+        uvl_content=content,
     )
 
 
@@ -158,17 +151,16 @@ def raw_uvl(file_id):
 
     # Construir ruta absoluta al archivo
     directory_path = os.path.join(
-        "uploads",
-        f"user_{dataset.user_id}",
-        f"dataset_{dataset.id}",
-        "uvl"
+        "uploads", f"user_{dataset.user_id}", f"dataset_{dataset.id}", "uvl"
     )
-    file_path = os.path.join(current_app.root_path, "..", directory_path, selected_file.name)
+    file_path = os.path.join(
+        current_app.root_path, "..", directory_path, selected_file.name
+    )
 
     try:
         with open(file_path, "r") as f:
             content = f.read()
-        return content, 200, {'Content-Type': 'text/plain; charset=utf-8'}
+        return content, 200, {"Content-Type": "text/plain; charset=utf-8"}
     except FileNotFoundError:
         return jsonify({"error": "File not found"}), 404
     except Exception as e:
