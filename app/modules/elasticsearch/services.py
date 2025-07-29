@@ -83,7 +83,14 @@ class ElasticsearchService(BaseService):
                             "title": {"type": "text", "analyzer": "custom_text_analyzer"},
                             "filename": {"type": "text", "analyzer": "custom_filename_analyzer"},
                             "doi": {"type": "keyword"},
-                            "authors": {"type": "text", "analyzer": "custom_text_analyzer"},
+                            "authors": {
+                                "type": "nested",  # o "object" si no vas a hacer queries sobre campos internos
+                                "properties": {
+                                    "name": {"type": "text", "analyzer": "custom_text_analyzer"},
+                                    "affiliation": {"type": "text", "analyzer": "custom_text_analyzer"},
+                                    "orcid": {"type": "keyword"}
+                                }
+                            },
                             "content": {"type": "text", "analyzer": "custom_text_analyzer"},
                             "dataset_id": {"type": "integer"},
                             "feature_model_id": {"type": "integer"},
@@ -130,18 +137,78 @@ class ElasticsearchService(BaseService):
             print(f"[ERROR] No se pudo eliminar documento '{doc_id}': {e}")
             raise
 
-    def search(self, query: str, size=10):
+    def search(self, query: str, publication_type=None, sorting="newest", size=10):
         try:
-            print(f"[DEBUG] Buscando en '{self.index_name}' con query: '{query}'")
-            result = self.es.search(index=self.index_name, query={
-                "multi_match": {
-                    "query": query,
-                    "fields": ["title^3", "authors", "filename^2", "content"],
-                    "fuzziness": "AUTO"
-                }
-            }, size=size)
+            print(f"[DEBUG] Buscando en '{self.index_name}' con query: '{query}', tipo: {publication_type}, orden: {sorting}")
+
+            must_clauses = []
+
+            if query:
+                must_clauses.append({
+                    "multi_match": {
+                        "query": query,
+                        "fields": ["title^3", "authors", "filename^2", "content"],
+                        "fuzziness": "AUTO"
+                    }
+                })
+
+            if publication_type:
+                must_clauses.append({
+                    "term": {
+                        "publication_type.keyword": publication_type.lower()
+                    }
+                })
+
+            sort_clause = [
+                {"created_at": {"order": "desc"}} if sorting == "newest" else {"created_at": {"order": "asc"}}
+            ]
+
+            body = {
+                "query": {
+                    "bool": {
+                        "must": must_clauses
+                    }
+                },
+                "sort": sort_clause
+            }
+
+            result = self.es.search(index=self.index_name, body=body, size=size)
             print(f"[SUCCESS] Búsqueda completada. Resultados: {len(result['hits']['hits'])}")
-            return [hit["_source"] for hit in result["hits"]["hits"]]
+
+            return [self._format_hit(hit) for hit in result["hits"]["hits"]]
+
         except Exception as e:
             print(f"[ERROR] Fallo en la búsqueda: {e}")
             raise
+
+    def _format_hit(self, hit):
+        """Formatea un resultado Elasticsearch con fechas y tamaños legibles."""
+        from datetime import datetime
+
+        source = hit["_source"]
+
+        # Formato de fecha
+        if "created_at" in source:
+            try:
+                dt = datetime.fromisoformat(source["created_at"])
+                source["created_at"] = dt.strftime("%d %b %Y, %H:%M")
+            except Exception:
+                pass
+
+        # Tamaño legible
+        if "total_size_in_bytes" in source:
+            source["total_size_in_human_format"] = self._human_readable_size(source["total_size_in_bytes"])
+
+        return source
+
+    def _human_readable_size(self, size_bytes):
+        if size_bytes is None:
+            return ""
+        if size_bytes == 0:
+            return "0 B"
+        size_name = ("B", "KB", "MB", "GB", "TB")
+        i = int(min(len(size_name) - 1, max(0, (size_bytes.bit_length() - 1) // 10)))
+        p = 1 << (i * 10)
+        s = round(size_bytes / p, 2)
+        return f"{s} {size_name[i]}"
+

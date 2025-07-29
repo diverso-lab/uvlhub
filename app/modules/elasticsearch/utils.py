@@ -16,15 +16,23 @@ def index_dataset(dataset):
 
     doc = {
         "type": "dataset",
+        "id": dataset.id,
         "title": dataset.ds_meta_data.title,
         "description": dataset.ds_meta_data.description,
         "publication_doi": dataset.ds_meta_data.publication_doi,
         "dataset_doi": dataset.ds_meta_data.dataset_doi,
-        "authors": [a.name for a in dataset.ds_meta_data.authors],
-        "tags": dataset.ds_meta_data.tags,
+        "url": dataset.get_uvlhub_doi(),
+        "authors": [
+            {
+                "name": a.name,
+                "affiliation": getattr(a, "affiliation", None),
+                "orcid": getattr(a, "orcid", None)
+            }
+            for a in dataset.ds_meta_data.authors
+        ],
+        "tags": [t.strip() for t in dataset.ds_meta_data.tags.split(",")] if dataset.ds_meta_data.tags else [],
         "publication_type": dataset.ds_meta_data.publication_type.name,
         "content": f"{dataset.ds_meta_data.title} {dataset.ds_meta_data.description} {dataset.ds_meta_data.publication_doi} {' '.join(a.name for a in dataset.ds_meta_data.authors)}",
-        "dataset_id": dataset.id,
         "created_at": dataset.created_at.isoformat(),
         "total_size_in_bytes": dataset.get_file_total_size(),
         "files_count": dataset.get_files_count(),
@@ -47,9 +55,11 @@ def index_hubfile(hubfile):
         "content": hubfile.name,
         "feature_model_id": hubfile.feature_model_id,
         "dataset_id": dataset.id,
+        "dataset_doi": dataset.get_uvlhub_doi(),
         "dataset_title": dataset.ds_meta_data.title,
         "checksum": hubfile.checksum,
-        "size_in_bytes": hubfile.size
+        "size_in_bytes": hubfile.size,
+        "size_in_human_format": hubfile.get_formatted_size()
     }
 
     search.index_document(doc_id=f"hubfile-{hubfile.id}", data=doc)

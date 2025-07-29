@@ -1,23 +1,15 @@
 from flask import render_template, request, jsonify
 
+from app.modules.dataset.models import PublicationType
 from app.modules.elasticsearch.services import ElasticsearchService
 from app.modules.explore import explore_bp
-from app.modules.explore.forms import ExploreForm
-from app.modules.explore.services import ExploreService
 
 search_service = ElasticsearchService()
 
 @explore_bp.route("/explore", methods=["GET", "POST"])
 def index():
-    if request.method == "GET":
-        query = request.args.get("query", "")
-        form = ExploreForm()
-        return render_template("explore/index.html", form=form, query=query)
-
-    if request.method == "POST":
-        criteria = request.get_json()
-        datasets = ExploreService().filter(**criteria)
-        return jsonify([dataset.to_dict() for dataset in datasets])
+    publication_type_choices = [(pt.value, pt.name.replace("_", " ").title()) for pt in PublicationType]
+    return render_template("explore/index.html", publication_type_choices=publication_type_choices)
 
 @explore_bp.route("/search")
 def search():
@@ -27,3 +19,17 @@ def search():
         return jsonify({"results": results})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@explore_bp.route("/api/v1/search")
+def api_search():
+    query = request.args.get("q", "")
+    publication_type = request.args.get("publication_type")
+    sorting = request.args.get("sorting", "newest")
+
+    results = search_service.search(
+        query=query,
+        publication_type=publication_type,
+        sorting=sorting
+    )
+
+    return jsonify(results)

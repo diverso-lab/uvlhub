@@ -36,7 +36,10 @@
                                 <ul class="list-unstyled mb-0" style="font-size: 0.85rem;">
                                 {% for author in dataset.ds_meta_data.authors %}
                                     <li class="d-flex align-items-center mb-1" style="line-height: 1.2;">
-                                    <i data-feather="user" class="me-2 text-muted" style="width: 14px; height: 14px;"></i>
+                                    <i class="ki-duotone ki-user">
+                                    <span class="path1"></span>
+                                    <span class="path2"></span>
+                                    </i> &nbsp;
                                     <span class="me-2">{{ author.name }}</span>
 
                                     {% if author.affiliation %}
@@ -85,14 +88,21 @@
                                 <a href="{{ dataset.get_uvlhub_doi() }}"
                                 class="btn btn-outline-secondary btn-xs me-2 d-inline-flex align-items-center"
                                 style="font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 4px;">
-                                <i data-feather="eye" class="me-1" style="width: 14px; height: 14px;"></i>
+                                <i class="ki-duotone ki-eye">
+                                  <span class="path1"></span>
+                                  <span class="path2"></span>
+                                  <span class="path3"></span>
+                                </i>
                                 View
                                 </a>
 
                                 <a href="/datasets/download/{{ dataset.id }}"
                                 class="btn btn-outline-secondary btn-xs d-inline-flex align-items-center"
                                 style="font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 4px;">
-                                <i data-feather="download" class="me-1" style="width: 14px; height: 14px;"></i>
+                                <i class="ki-duotone ki-folder-down">
+                                  <span class="path1"></span>
+                                  <span class="path2"></span>
+                                </i>
                                 Download ({{ dataset.get_file_total_size_for_human() }})
                                 </a>
 
