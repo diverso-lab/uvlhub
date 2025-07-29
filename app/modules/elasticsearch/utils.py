@@ -10,11 +10,16 @@ def init_search_index():
         raise
 
 def index_dataset(dataset):
+    if not dataset.ds_meta_data.dataset_doi:
+        print(f"[SKIP] Dataset {dataset.id} has no dataset_doi. Skipping indexing.")
+        return
+
     doc = {
         "type": "dataset",
         "title": dataset.ds_meta_data.title,
         "description": dataset.ds_meta_data.description,
-        "doi": dataset.ds_meta_data.publication_doi,
+        "publication_doi": dataset.ds_meta_data.publication_doi,
+        "dataset_doi": dataset.ds_meta_data.dataset_doi,
         "authors": [a.name for a in dataset.ds_meta_data.authors],
         "tags": dataset.ds_meta_data.tags,
         "publication_type": dataset.ds_meta_data.publication_type.name,
@@ -24,19 +29,29 @@ def index_dataset(dataset):
         "total_size_in_bytes": dataset.get_file_total_size(),
         "files_count": dataset.get_files_count(),
     }
+
     search.index_document(doc_id=f"dataset-{dataset.id}", data=doc)
 
 
 def index_hubfile(hubfile):
+    dataset = hubfile.feature_model.dataset if hubfile.feature_model else None
+
+    if not dataset or not dataset.ds_meta_data.dataset_doi:
+        print(f"[SKIP] Hubfile {hubfile.id} skipped (no dataset or dataset has no DOI).")
+        return
+
     doc = {
         "type": "hubfile",
+        "id": hubfile.id,
         "filename": hubfile.name,
         "content": hubfile.name,
         "feature_model_id": hubfile.feature_model_id,
-        "dataset_id": hubfile.feature_model.dataset_id,
+        "dataset_id": dataset.id,
+        "dataset_title": dataset.ds_meta_data.title,
         "checksum": hubfile.checksum,
-        "size_in_bytes": hubfile.size,
+        "size_in_bytes": hubfile.size
     }
+
     search.index_document(doc_id=f"hubfile-{hubfile.id}", data=doc)
 
 

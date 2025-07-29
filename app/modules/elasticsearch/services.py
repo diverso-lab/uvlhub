@@ -49,8 +49,29 @@ class ElasticsearchService(BaseService):
 
             if not exists:
                 print(f"[DEBUG] Creando índice '{self.index_name}'...")
+
                 self.es.indices.create(index=self.index_name, body={
                     "settings": {
+                        "analysis": {
+                            "analyzer": {
+                                "custom_text_analyzer": {
+                                    "type": "custom",
+                                    "tokenizer": "standard",
+                                    "filter": ["lowercase", "asciifolding"]
+                                },
+                                "custom_filename_analyzer": {
+                                    "type": "custom",
+                                    "tokenizer": "custom_filename_tokenizer",
+                                    "filter": ["lowercase", "asciifolding"]
+                                }
+                            },
+                            "tokenizer": {
+                                "custom_filename_tokenizer": {
+                                    "type": "pattern",
+                                    "pattern": "[_\\W]+"
+                                }
+                            }
+                        },
                         "index": {
                             "number_of_shards": 1,
                             "number_of_replicas": 0
@@ -59,16 +80,19 @@ class ElasticsearchService(BaseService):
                     "mappings": {
                         "properties": {
                             "type": {"type": "keyword"},
-                            "title": {"type": "text"},
-                            "filename": {"type": "text"},
+                            "title": {"type": "text", "analyzer": "custom_text_analyzer"},
+                            "filename": {"type": "text", "analyzer": "custom_filename_analyzer"},
                             "doi": {"type": "keyword"},
-                            "authors": {"type": "text"},
-                            "content": {"type": "text"},
+                            "authors": {"type": "text", "analyzer": "custom_text_analyzer"},
+                            "content": {"type": "text", "analyzer": "custom_text_analyzer"},
                             "dataset_id": {"type": "integer"},
-                            "feature_model_id": {"type": "integer"}
+                            "feature_model_id": {"type": "integer"},
+                            "dataset_title": {"type": "text", "analyzer": "custom_text_analyzer"}
                         }
                     }
                 })
+
+
                 print(f"[SUCCESS] Índice '{self.index_name}' creado correctamente.")
             else:
                 print(f"[INFO] El índice '{self.index_name}' ya existe.")

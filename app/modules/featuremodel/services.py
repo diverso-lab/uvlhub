@@ -66,25 +66,23 @@ class FeatureModelService(BaseService):
                 continue
 
             uvl_path = os.path.join(source_dir, filename)
-
-            # Quitar el prefijo UUID si existe
             original_filename = filename.split("_", 1)[-1] if "_" in filename else filename
 
             dest_path = os.path.join(dest_dir, original_filename)
             shutil.move(uvl_path, dest_path)
             logger.info(f"[FM] Moved {filename} to {dest_path}")
 
-            # Crear FeatureModel
             feature_model = FeatureModel(dataset_id=dataset.id)
             db.session.add(feature_model)
             db.session.flush()
 
-            # Crear Hubfile
             hubfile = hubfile_service.create_from_file(feature_model.id, dest_path)
             logger.info(f"[FM] Hubfile created with ID: {hubfile.id} for FeatureModel {feature_model.id}")
 
-            # Indexar en Elasticsearch
-            index_hubfile(hubfile)
+            if dataset.ds_meta_data.dataset_doi:
+                index_hubfile(hubfile)
+            else:
+                logger.info(f"[SKIP] Hubfile {hubfile.id} not indexed because dataset {dataset.id} has no DOI")
 
             created_models.append(feature_model)
 

@@ -116,9 +116,6 @@ def create_dataset():
             db.session.commit()
             logger.info(f"[UPLOAD] Dataset {dataset.id} and metadata committed to DB")
 
-            # Indexar el dataset en Elasticsearch
-            index_dataset(dataset)
-
             # Mover modelos
             feature_model_service = FeatureModelService()
             created_fms = feature_model_service.create_from_uvl_files(dataset)
@@ -164,6 +161,11 @@ def create_dataset():
             if dataset_type in {"zenodo", "zenodo_anonymous"}:
               zenodo_service.publish_deposition(deposition_id)
               doi = zenodo_service.get_doi(deposition_id)
+
+              if doi:
+                # Indexar el dataset en Elasticsearch
+                index_dataset(dataset)
+
               dataset_service.update_dsmetadata(ds_meta.id, dataset_doi=doi)
               logger.info(f"[UPLOAD] Dataset {dataset.id} published on Zenodo with DOI: {doi}")
 
