@@ -181,9 +181,7 @@ def create_dataset():
 
                 if doi:
                     dataset_service.update_dsmetadata(ds_meta.id, dataset_doi=doi)
-                    dataset = dataset_service.get_by_id(
-                        dataset.id
-                    )
+                    dataset = dataset_service.get_by_id(dataset.id)
                 else:
                     logger.warning(
                         f"[UPLOAD] No DOI received for deposition {deposition_id}"

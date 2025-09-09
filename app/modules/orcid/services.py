@@ -8,7 +8,7 @@ from app import db
 from app.modules.auth.models import User
 from app.modules.profile.models import UserProfile
 from app.modules.orcid.models import Orcid
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import generate_password_hash
 from sqlalchemy.exc import SQLAlchemyError
 
 
@@ -45,7 +45,9 @@ class OrcidService(BaseService):
         # Valida respuesta
         resp = self.orcid_client.get("https://orcid.org/oauth/userinfo", token=token)
         if not resp or resp.status_code != 200:
-            current_app.logger.error("ORCID userinfo fallo: %s", getattr(resp, "text", None))
+            current_app.logger.error(
+                "ORCID userinfo fallo: %s", getattr(resp, "text", None)
+            )
             return None
         data = resp.json() or {}
         # 'sub' es el ORCID iD en OIDC
@@ -62,7 +64,7 @@ class OrcidService(BaseService):
         if not orcid_id:
             return None
 
-        given_name  = user_info.get("given_name") or ""
+        given_name = user_info.get("given_name") or ""
         family_name = user_info.get("family_name") or ""
         affiliation = user_info.get("affiliation") or ""  # si no existe, queda ""
 

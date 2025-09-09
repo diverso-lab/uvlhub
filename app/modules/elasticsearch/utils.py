@@ -95,9 +95,7 @@ def index_hubfile(hubfile):
 
     search.index_document(doc_id=f"hubfile-{hubfile.id}", data=doc)
 
-    logger.info(
-        f"[SEARCH] Hubfile {hubfile.id} indexed in dataset: {dataset.id}"
-    )
+    logger.info(f"[SEARCH] Hubfile {hubfile.id} indexed in dataset: {dataset.id}")
 
 
 def reindex_all():
