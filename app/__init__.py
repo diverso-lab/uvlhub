@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from flask_migrate import Migrate
 from flask_session import Session
 from flasgger import Swagger
+from flask_cors import CORS
 
 from app.modules.mail.services import MailService
 from core.configuration.configuration import get_app_version
@@ -59,6 +60,12 @@ def create_app(config_name="development"):
     # Set up logging
     logging_manager = LoggingManager(app)
     logging_manager.setup_logging()
+
+    # CORS
+    CORS(app, resources={
+        r"/hubfiles/raw/*": {"origins": "https://ide.flamapy.org"}
+    })
+
 
     # Swagger API
     swagger_template = {

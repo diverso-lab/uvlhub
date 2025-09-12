@@ -196,15 +196,19 @@
                         </button>
                     </li>
 
-                    {% set raw_url = url_for('hubfile.raw_uvl', file_id=selected_file.id, _external=True) %}
-                    {% set ide_url = 'https://ide.flamapy.org/?import=' ~ (raw_url | urlencode) %}
-
                     <li class="nav-item ms-auto" role="presentation">
-                        <a class="nav-link d-flex align-items-center" href="{{ ide_url }}" target="_blank" rel="noopener noreferrer">
-                            Open in &nbsp;
-                            <img src="{{ url_for('static', filename='media/logos/flamapy_horizontal_logo_white.svg') }}" alt="Flamapy IDE"  height="25" class="me-2" />
-                        </a>
-                    </li>
+    <a href="{{ selected_file.get_ide_url() }}" 
+       target="_blank" 
+       rel="noopener noreferrer"
+       class="btn btn-sm btn-secondary d-flex align-items-center">
+        <img src="{{ url_for('static', filename='media/logos/flamapy_ide.svg') }}" 
+             alt="Flamapy IDE"  
+             height="20" 
+             class="me-2" />
+        <i class="ki-outline ki-exit-right-corner fs-2"></i>
+    </a>
+</li>
+
 
                 </ul>
 

@@ -11,6 +11,8 @@ from app.modules.auth.models import User
 from app.modules.dataset.models import DataSet
 from core.managers.task_queue_manager import TaskQueueManager
 from dotenv import load_dotenv
+from urllib.parse import urlencode
+from flask import url_for
 
 logger = logging.getLogger(__name__)
 load_dotenv()
@@ -63,6 +65,14 @@ class Hubfile(db.Model):
             "uvl",
             self.name,
         )
+    
+    def get_ide_url(self) -> str:
+        """
+        Devuelve la URL lista para abrir este hubfile en Flamapy IDE,
+        con el import correctamente codificado.
+        """
+        raw_url = url_for("hubfile.raw_uvl", file_id=self.id, _external=True)
+        return f"https://ide.flamapy.org/?import={raw_url}"
 
     def to_dict(self):
         from flask import url_for
