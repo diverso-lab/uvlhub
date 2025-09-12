@@ -128,108 +128,118 @@
 
         <!-- Contenido principal con tabs -->
         <div class="col-md-9">
+
+            
             <div class="card">
-                <!-- Tabs nav -->
-                <ul class="nav nav-tabs nav-line-tabs nav-line-tabs-2x fs-6 px-4 pt-4" id="fileTabs" role="tablist" style="border-bottom: none;">
+
+                
+            <ul class="nav nav-tabs nav-line-tabs nav-line-tabs-2x fs-6 px-4 pt-4" id="fileTabs" role="tablist" style="border-bottom: none;">
+
+                <li class="nav-item" role="presentation">
+                    <span class="nav-link disabled text-bold fw-bold">
+                        {{ selected_file.name }}
+                    </span>
+                </li>
+
+                <li class="nav-item ms-2" role="presentation">
+                    <a href="javascript:void(0);"
+                    onclick="copyCurrentUVL(this)"
+                    class="btn btn-sm btn-secondary d-flex align-items-center"
+                    data-bs-toggle="tooltip"
+                    data-bs-placement="bottom"
+                    title="Copy to clipboard">
+                        <i class="ki-duotone ki-copy"></i>
+                        Copy
+                    </a>
+                </li>
+
+                <li class="nav-item ms-auto dropdown" role="presentation">
+                    <a class="btn btn-sm btn-secondary dropdown-toggle d-flex align-items-center"
+                    href="#"
+                    id="exportDropdown"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false">
+                        <i class="ki-duotone ki-file-right">
+                        <span class="path1"></span>
+                        <span class="path2"></span>
+                        </i>
+                        Export
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="exportDropdown">
+                        <li>
+                            <a class="dropdown-item" href="{{ url_for('hubfile.download_file', file_id=selected_file.id) }}">
+                                UVL
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="{{ url_for('flamapy.to_glencoe', file_id=selected_file.id) }}">
+                                Glencoe
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="{{ url_for('flamapy.to_cnf', file_id=selected_file.id) }}">
+                                DIMACS
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="{{ url_for('flamapy.to_splot', file_id=selected_file.id) }}">
+                                SPLOT
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                
+
+                <li class="nav-item ms-2" role="presentation">
+                    <a href="{{ selected_file.get_ide_url() }}" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    class="btn btn-sm btn-secondary d-flex align-items-center">
+                        <img src="{{ url_for('static', filename='media/logos/flamapy_ide.svg') }}" 
+                            alt="Flamapy IDE"  
+                            height="20" 
+                            class="me-2" />
+                        <i class="ki-outline ki-exit-right-corner"></i>
+                    </a>
+                </li>
+            </ul>
 
 
-                    <li class="nav-item me-2" role="presentation">
-                        <button class="nav-link active" id="uvl-tab" data-bs-toggle="tab" data-bs-target="#uvl" type="button" role="tab" aria-controls="uvl" aria-selected="true">
-                            <i class="ki-duotone ki-message-text">
-                            <span class="path1"></span>
-                            <span class="path2"></span>
-                            <span class="path3"></span>
-                            </i> UVL
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="factlabel-tab" data-bs-toggle="tab" data-bs-target="#factlabel" type="button" role="tab" aria-controls="factlabel" aria-selected="false">
-                            <i class="ki-duotone ki-graph">
-                            <span class="path1"></span>
-                            <span class="path2"></span>
-                            <span class="path3"></span>
-                            <span class="path4"></span>
-                            </i> FM Fact Label
-                        </button>
-                    </li>
-
-                    <li class="nav-item dropdown ms-2">
-                        <button class="nav-link dropdown-toggle d-flex align-items-center" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="ki-duotone ki-export me-2">
-                                <span class="path1"></span>
-                                <span class="path2"></span>
-                            </i>
-                            Export
-                        </button>
-                        <ul class="dropdown-menu">
-                            <li>
-                                <a class="dropdown-item" href="{{ url_for('hubfile.download_file', file_id=selected_file.id) }}">
-                                    UVL
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="{{ url_for('flamapy.to_glencoe', file_id=selected_file.id) }}">
-                                    Glencoe
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="{{ url_for('flamapy.to_cnf', file_id=selected_file.id) }}">
-                                    DIMACS
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="{{ url_for('flamapy.to_splot', file_id=selected_file.id) }}">
-                                    SPLOT
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
-
-                    <li class="nav-item ms-2">
-                        <button type="button"
-                                class="nav-link d-flex align-items-center"
-                                onclick="copyCurrentUVL(this)"
-                                data-bs-toggle="tooltip"
-                                data-bs-placement="bottom"
-                                title="Copy to clipboard">
-                            <i class="ki-duotone ki-copy"></i>&nbsp;Copy
-                        </button>
-                    </li>
-
-                    <li class="nav-item ms-auto" role="presentation">
-    <a href="{{ selected_file.get_ide_url() }}" 
-       target="_blank" 
-       rel="noopener noreferrer"
-       class="btn btn-sm btn-secondary d-flex align-items-center">
-        <img src="{{ url_for('static', filename='media/logos/flamapy_ide.svg') }}" 
-             alt="Flamapy IDE"  
-             height="20" 
-             class="me-2" />
-        <i class="ki-outline ki-exit-right-corner fs-2"></i>
-    </a>
-</li>
-
-
-                </ul>
-
-                <!-- Tabs content -->
-                <div class="tab-content p-4">
-                    <!-- UVL Tab -->
-                    <div class="tab-pane fade show active" id="uvl" role="tabpanel" aria-labelledby="uvl-tab">
-                        <div class="bg-light rounded border p-4">
+                <div class="row p-4">
+                    <!-- UVL a la izquierda -->
+                    <div class="col-md-6">
+                        <div class="bg-light rounded border p-4 h-100">
+                                <img src="{{ url_for('static', filename='media/logos/uvl_logo.svg') }}"
+                                    alt="UVL Logo"
+                                    height="24"
+                                    class="ms-auto mb-2" />
                             <pre class="m-0" style="white-space: pre-wrap;">{{ uvl_content }}</pre>
                         </div>
                     </div>
+                    
+                    <!-- Fact Label a la derecha -->
+                    <div class="col-md-6">
+                        <div class="bg-light rounded border p-4 h-100">
+                            <img src="{{ url_for('static', filename='media/logos/factlabel_logo.svg') }}"
+                                alt="Fact Label Logo"
+                                height="24"
+                                class="ms-auto mb-2" />
+                            <div id="FMFactLabelWrapper" class="w-100" style="overflow-y: auto; max-height: 600px;">
+    <svg id="FMFactLabelChart" class="chart w-100" preserveAspectRatio="xMinYMin meet"></svg>
+</div>
 
-                    <!-- Fact Label Tab -->
-                    <div class="tab-pane fade" id="factlabel" role="tabpanel" aria-labelledby="factlabel-tab">
-                        <div class="bg-light rounded border p-4">
-                            <div id="FMFactLabelWrapper" style="overflow-y: auto; max-height: 600px; overflow-x: auto;">
-                                <svg id="FMFactLabelChart" class="chart w-100"></svg>
-                            </div>
+<style>
+    #FMFactLabelWrapper, #FMFactLabelChart {
+    width: 100% !important;
+}
+</style>
                         </div>
                     </div>
+
+                    
                 </div>
+
             </div>
         </div>
 
@@ -242,28 +252,20 @@
 <script src="{{ url_for('factlabel.assets', subfolder='dist', filename='factlabel.bundle.js') }}"></script>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        // Inicializar feather
-        feather.replace();
 
-        // Cargar el gráfico solo al hacer clic en la pestaña
-        const factLabelTab = document.getElementById('factlabel-tab');
-        let chartLoaded = false;
+document.addEventListener('DOMContentLoaded', function () {
+    feather.replace();
 
-        factLabelTab.addEventListener('shown.bs.tab', function () {
-            if (!chartLoaded) {
-                renderFactLabel({{ selected_file.id }});
-                chartLoaded = true;
-            }
-        });
-    });
+    // Cargar Fact Label automáticamente
+    renderFactLabel({{ selected_file.id }});
+});
 
 function renderFactLabel(fileId) {
     fetch(`/factlabel/view/${fileId}`)
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                drawFMFactLabel(data.content); // tu función D3
+                drawFMFactLabel(data.content); // versión limpia mejorada
             } else {
                 console.error("Error:", data.error);
                 d3.select("#FMFactLabelChart").text("Error loading fact label.");
@@ -274,7 +276,6 @@ function renderFactLabel(fileId) {
             d3.select("#FMFactLabelChart").text("Could not load fact label.");
         });
 }
-
 
 $(function () {
     const table = $('#kt_files_table').DataTable({

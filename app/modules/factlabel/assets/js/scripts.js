@@ -96,14 +96,42 @@ function drawFMFactLabel(data) {
 
    // Calculate maximum width for the label.
    //var maxWidth = Math.max(calculateTotalMaxWidth(data.metrics), calculateTotalMaxWidth(data.analysis));
-   PROPERTY_HEIGHT = textSize("Any text", PROPERTY_FONT_FAMILY, PROPERTY_FONT_SIZE, "bold").height;// + MARGING_BETWEEN_PROPERTIES;
-   maxIndentationWidth = Math.max(calculateMaxIndentationWidth(data.metrics), calculateMaxIndentationWidth(data.analysis));
-   maxNameWidth = Math.max(calculateMaxNameWidth(data.metrics), calculateMaxNameWidth(data.analysis));
-   maxValueWidth = Math.max(calculateMaxValueWidth(data.metrics), calculateMaxValueWidth(data.analysis));
-   maxRatioWidth = Math.max(calculateMaxRatioWidth(data.metrics), calculateMaxRatioWidth(data.analysis));
-   maxWidth = maxIndentationWidth + maxNameWidth + PROPERTIES_VALUES_SPACE + maxValueWidth + PROPERTIES_RATIO_SPACE + maxRatioWidth + LEFT_MARGING; //textSize("-".repeat(PROPERTY_INDENTATION), PROPERTY_FONT_FAMILY, PROPERTY_FONT_SIZE).width;
-   chart.attr("width", maxWidth);
-   //.attr("height", BAR_HEIGHT * 10 + BAR_HEIGHT * data.metadata.length + BAR_HEIGHT * data.metrics.length); // CAMBIAR EL *10 AJUSTANDOLO BIEN
+PROPERTY_HEIGHT = textSize("Any text", PROPERTY_FONT_FAMILY, PROPERTY_FONT_SIZE, "bold").height;
+
+maxIndentationWidth = Math.max(
+    calculateMaxIndentationWidth(data.metrics),
+    calculateMaxIndentationWidth(data.analysis)
+);
+maxNameWidth = Math.max(
+    calculateMaxNameWidth(data.metrics),
+    calculateMaxNameWidth(data.analysis)
+);
+maxValueWidth = Math.max(
+    calculateMaxValueWidth(data.metrics),
+    calculateMaxValueWidth(data.analysis)
+);
+maxRatioWidth = Math.max(
+    calculateMaxRatioWidth(data.metrics),
+    calculateMaxRatioWidth(data.analysis)
+);
+
+maxWidth =
+    maxIndentationWidth +
+    maxNameWidth +
+    PROPERTIES_VALUES_SPACE +
+    maxValueWidth +
+    PROPERTIES_RATIO_SPACE +
+    maxRatioWidth +
+    LEFT_MARGING;
+
+// en vez de width fijo, usamos viewBox y width="100%"
+const bboxHeight = 800; // valor temporal, luego lo ajustas con getBBox()
+chart
+    .attr("viewBox", `0 0 ${maxWidth} ${bboxHeight}`)
+    .attr("preserveAspectRatio", "xMinYMin meet")
+    .attr("width", "100%")
+    .attr("height", bboxHeight);
+
 
    x = d3.scaleLinear().domain([0, maxWidth]).range([0, maxWidth]);
 
@@ -215,8 +243,11 @@ function drawFMFactLabel(data) {
    var maxHeight = yAnalysis + MARGING_BETWEEN_PROPERTIES + PROPERTY_HEIGHT * data.analysis.length;
    chart.append("rect").attr("id", "border");
    drawBorders(maxWidth, maxHeight);
-   const bbox = chart.node().getBBox();
-   chart.attr("height", bbox.height + 10); 
+const bbox = chart.node().getBBox();
+chart
+    .attr("viewBox", `0 0 ${maxWidth} ${bbox.height + 10}`)
+    .attr("height", bbox.height + 10);
+
    collapseSubProperties(data);
 }
 
