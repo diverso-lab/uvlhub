@@ -139,6 +139,14 @@ class DataSet(db.Model):
         from app.modules.dataset.services import DataSetService
 
         return DataSetService().get_uvlhub_doi(self)
+    
+    def get_uvlhub_doi_path(self) -> str:
+        doi = self.get_uvlhub_doi()
+        # Si encuentra "/doi", devolver desde ahí
+        idx = doi.find("/doi")
+        if idx != -1:
+            return doi[idx:]
+        return doi  # fallback: devuelve completo si no hay /doi
 
     def is_anonymous(self) -> bool:
         return self.ds_meta_data.dataset_anonymous

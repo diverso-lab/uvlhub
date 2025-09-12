@@ -119,21 +119,23 @@
                                 </span>
 
                                 <!-- Enlace al DOI -->
-                                <a href="{{ dataset.get_uvlhub_doi() }}"
-                                target="_blank"
-                                class="px-3 py-1 text-white fw-semibold text-decoration-none rounded-end me-2"
-                                style="background: linear-gradient(90deg, #2176bd 0%, #2980b9 100%); font-family: monospace;">
-                                {{ dataset.get_uvlhub_doi() }}
-                                </a>
+                                <div class="d-flex align-items-center flex-wrap">
+                                  <a href="{{ dataset.get_uvlhub_doi() }}"
+                                    target="_blank"
+                                    class="px-3 py-1 text-white fw-semibold text-decoration-none rounded-end me-2"
+                                    style="background: linear-gradient(90deg, #2176bd 0%, #2980b9 100%); font-family: monospace; word-break: break-all;">
+                                    {{ dataset.get_uvlhub_doi_path() }}
+                                  </a>
 
-                                <!-- Copiar DOI -->
-                                <i data-feather="clipboard"
-                                class="center-button-icon"
-                                style="cursor: pointer"
-                                onclick="copyText('dataset_doi_uvlhub_{{ dataset.id }}')"
-                                data-bs-toggle="tooltip"
-                                title="Copy DOI">
-                                </i>
+                                  <!-- Copiar DOI -->
+                                  <i data-feather="clipboard"
+                                    class="center-button-icon"
+                                    style="cursor: pointer"
+                                    onclick="copyText('dataset_doi_uvlhub_{{ dataset.id }}')"
+                                    data-bs-toggle="tooltip"
+                                    title="Copy DOI">
+                                  </i>
+                                </div>
 
                                 <!-- Texto oculto para copiar -->
                                 <div id="dataset_doi_uvlhub_{{ dataset.id }}" style="display: none;">
