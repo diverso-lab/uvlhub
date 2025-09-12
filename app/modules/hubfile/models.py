@@ -49,6 +49,11 @@ class Hubfile(db.Model):
 
         return HubfileService().get_path_by_hubfile(self)
 
+    def get_url(self) -> str:
+        from app.modules.hubfile.services import HubfileService
+
+        return HubfileService().get_hubfile_url(self)
+
     def get_full_path(self) -> str:
         return os.path.join(
             os.getenv("WORKING_DIR", ""),

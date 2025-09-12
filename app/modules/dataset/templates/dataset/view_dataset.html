@@ -91,7 +91,7 @@
                             target="_blank"
                             class="px-3 py-1 text-white fw-semibold text-decoration-none rounded-end me-2"
                             style="background: linear-gradient(90deg, #2176bd 0%, #2980b9 100%); font-family: monospace;">
-                            {{ dataset.get_uvlhub_doi() }}
+                            {{ dataset.get_uvlhub_doi_path() }}
                             </a>
 
                             <!-- Copiar DOI -->
@@ -150,7 +150,7 @@
                     {% for file in hubfiles %}
                     <tr>
                         <td class="font-monospace">
-                            <a href="{{ url_for('hubfile.view_uvl', file_id=file.id) }}" class="text-primary text-hover-dark fw-semibold">
+                            <a href="{{ file.get_url()}}" class="text-primary text-hover-dark fw-semibold">
                                 {{ file.name }}
                             </a>
                         </td>
@@ -187,7 +187,7 @@
                                 </ul>
 
                                 <!-- View page link -->
-<a href="{{ url_for('hubfile.view_uvl', file_id=file.id) }}"
+<a href="{{ file.get_url()}}"
    class="btn btn-sm btn-light btn-active-light-secondary me-1">
     <i class="ki-duotone ki-eye fs-5"></i> View
 </a>

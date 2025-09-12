@@ -1,21 +1,21 @@
 document.addEventListener('DOMContentLoaded', function () {
-				const menu = document.querySelector('[data-kt-search-element="content"]');
-				const toggle = document.getElementById('kt_header_search_toggle');
+    const menu = document.querySelector('[data-kt-search-element="content"]');
+    const toggle = document.getElementById('kt_header_search_toggle');
 
-				if (menu && toggle) {
-					// Escucha el evento de clic en el toggle
-					toggle.addEventListener('click', function () {
-						// Obtén las coordenadas del toggle
-						const toggleRect = toggle.getBoundingClientRect();
+    if (menu && toggle) {
+        // Escucha el evento de clic en el toggle
+        toggle.addEventListener('click', function () {
+            // Obtén las coordenadas del toggle
+            const toggleRect = toggle.getBoundingClientRect();
 
-						// Ajusta el menú para que esté justo debajo del icono de búsqueda
-						menu.style.position = 'fixed';
-						menu.style.top = `${toggleRect.bottom}px`; // Posición justo debajo
-						menu.style.left = `${toggleRect.left}px`; // Alineado con el icono
-						menu.style.transform = 'none'; // Elimina cualquier transformación previa
-					});
-				}
-			});
+            // Ajusta el menú para que esté justo debajo del icono de búsqueda
+            menu.style.position = 'fixed';
+            menu.style.top = `${toggleRect.bottom}px`; // Posición justo debajo
+            menu.style.left = `${toggleRect.left}px`; // Alineado con el icono
+            menu.style.transform = 'none'; // Elimina cualquier transformación previa
+        });
+    }
+});
 
 document.addEventListener("DOMContentLoaded", function () {
     const input = document.querySelector('[data-kt-search-element="input"]');
@@ -68,7 +68,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
                             const href = item.type === "dataset"
                                 ? `/doi/${item.dataset_doi}`
-                                : `/hubfiles/${item.feature_model_id}`;
+                                : `${item.url}`;
 
                             const subtitle = item.type === "dataset"
                                 ? (`doi/${item.dataset_doi}` || `Dataset ID: ${item.dataset_id}`)

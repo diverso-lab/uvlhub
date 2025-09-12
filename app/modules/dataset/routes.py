@@ -279,6 +279,7 @@ def download_all_dataset():
             shutil.rmtree(temp_dir)
 
 
+@dataset_bp.route("/doi/<path:doi>", methods=["GET"])
 @dataset_bp.route("/doi/<path:doi>/", methods=["GET"])
 def subdomain_index(doi):
     # Redirección si el DOI es antiguo

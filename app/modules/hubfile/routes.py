@@ -1,14 +1,18 @@
 import os
+from app.modules.dataset.services import DOIMappingService, DSMetaDataService
 from app.modules.flamapy.services import FlamapyService
 from flask import current_app, jsonify, make_response, request, send_from_directory
 from flask_login import current_user, login_required
 from app.modules.hubfile import hubfile_bp
 from app.modules.hubfile.services import HubfileDownloadRecordService, HubfileService
 from flask import render_template
+from flask import abort, redirect, url_for
 
 hubfile_download_record_service = HubfileDownloadRecordService()
 
 flamapy_service = FlamapyService()
+doi_mapping_service = DOIMappingService()
+dsmetadata_service = DSMetaDataService()
 
 
 @hubfile_bp.route("/hubfile/upload", methods=["POST"])
@@ -122,6 +126,59 @@ def view_uvl(file_id):
     dataset = selected_file.feature_model.dataset
 
     # Leer contenido UVL
+    directory_path = os.path.join(
+        "uploads", f"user_{dataset.user_id}", f"dataset_{dataset.id}", "uvl"
+    )
+    file_path = os.path.join(
+        current_app.root_path, "..", directory_path, selected_file.name
+    )
+
+    try:
+        with open(file_path, "r") as f:
+            content = f.read()
+    except Exception as e:
+        content = f"[Error reading file: {e}]"
+
+    return render_template(
+        "hubfile/view_file.html",
+        selected_file=selected_file,
+        hubfiles=dataset.files(),
+        dataset=dataset,
+        uvl_content=content,
+    )
+
+
+@hubfile_bp.route("/doi/<path:doi>/files/<string:filename>", methods=["GET"])
+def view_uvl_with_doi(doi, filename):
+    # 1. Comprobar si el DOI está redirigido a otro
+    new_doi = doi_mapping_service.get_new_doi(doi)
+    if new_doi:
+        return redirect(
+            url_for("hubfile.view_uvl_with_doi", doi=new_doi, filename=filename),
+            code=302,
+        )
+
+    # 2. Buscar dataset por DOI
+    ds_meta_data = dsmetadata_service.filter_by_doi(doi)
+    if not ds_meta_data:
+        abort(404)
+
+    dataset = ds_meta_data.dataset
+
+    # 3. Buscar hubfile por nombre dentro del dataset
+    selected_file = next(
+        (
+            hf
+            for fm in dataset.feature_models
+            for hf in fm.hubfiles
+            if hf.name == filename
+        ),
+        None,
+    )
+    if not selected_file:
+        abort(404)
+
+    # 4. Construir ruta al archivo en disco
     directory_path = os.path.join(
         "uploads", f"user_{dataset.user_id}", f"dataset_{dataset.id}", "uvl"
     )

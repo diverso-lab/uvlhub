@@ -89,6 +89,7 @@ def index_hubfile(hubfile):
         "dataset_doi": dataset.get_uvlhub_doi(),
         "dataset_title": dataset.ds_meta_data.title,
         "checksum": hubfile.checksum,
+        "url": hubfile.get_url(),
         "size_in_bytes": hubfile.size,
         "size_in_human_format": hubfile.get_formatted_size(),
     }

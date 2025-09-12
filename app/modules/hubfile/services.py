@@ -82,6 +82,16 @@ class HubfileService(BaseService):
                 sha256.update(chunk)
         return sha256.hexdigest()
 
+    def get_hubfile_url(self, hubfile: Hubfile) -> str:
+        dataset = self.get_dataset_by_hubfile(hubfile)
+        ds_meta = dataset.ds_meta_data
+        if not ds_meta or not ds_meta.dataset_doi:
+            return None
+
+        path = f"/doi/{ds_meta.dataset_doi}/files/{hubfile.name}"
+
+        return path
+
 
 class HubfileDownloadRecordService(BaseService):
     def __init__(self):

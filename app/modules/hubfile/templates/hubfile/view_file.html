@@ -52,7 +52,7 @@
                             target="_blank"
                             class="px-3 py-1 text-white fw-semibold text-decoration-none rounded-end me-2"
                             style="background: linear-gradient(90deg, #2176bd 0%, #2980b9 100%); font-family: monospace;">
-                            {{ dataset.get_uvlhub_doi() }}
+                            {{ dataset.get_uvlhub_doi_path() }}
                             </a>
 
                             <!-- Copiar DOI -->
@@ -111,7 +111,7 @@
                             {% for f in hubfiles %}
                             <tr>
                                 <td class="font-monospace">
-                                    <a href="{{ url_for('hubfile.view_uvl', file_id=f.id) }}"
+                                    <a href="{{ f.get_url() }}"
                                     class="{% if f.id == selected_file.id %}fw-bold text-primary{% else %}text-muted{% endif %}">
                                         {{ f.name }}
                                     </a>
