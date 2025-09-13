@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 
 import pytz
-from sqlalchemy import event
+from sqlalchemy import event, Text
 from sqlalchemy.orm import joinedload, object_session
 
 from app import db
@@ -11,7 +11,6 @@ from app.modules.auth.models import User
 from app.modules.dataset.models import DataSet
 from core.managers.task_queue_manager import TaskQueueManager
 from dotenv import load_dotenv
-from urllib.parse import urlencode
 from flask import url_for
 
 logger = logging.getLogger(__name__)
@@ -30,6 +29,7 @@ class Hubfile(db.Model):
     )
 
     feature_model = db.relationship("FeatureModel", back_populates="hubfiles")
+    factlabel_json = db.Column(Text, nullable=True)
 
     def get_formatted_size(self):
         from app.modules.dataset.services import SizeService
@@ -65,7 +65,7 @@ class Hubfile(db.Model):
             "uvl",
             self.name,
         )
-    
+
     def get_ide_url(self) -> str:
         """
         Devuelve la URL lista para abrir este hubfile en Flamapy IDE,
@@ -119,7 +119,7 @@ class HubfileDownloadRecord(db.Model):
 
 
 @event.listens_for(Hubfile, "after_insert")
-def hubfile_aupdated_listener(mapper, connection, target):
+def hubfile_after_insert_listener(mapper, connection, target):
     session = object_session(target)
 
     hubfile_with_fm = (
@@ -131,6 +131,13 @@ def hubfile_aupdated_listener(mapper, connection, target):
     path = hubfile_with_fm.get_full_path()
 
     task_manager = TaskQueueManager()
+
+    # Transformación UVL
     task_manager.enqueue_task(
-        "app.modules.hubfile.tasks.transform_uvl", path=path, timeout=300
+        "app.modules.hubfile.tasks.transform_uvl", path=path, timeout=30
+    )
+
+    # Fact Label
+    task_manager.enqueue_task(
+        "app.modules.hubfile.tasks.compute_factlabel", hubfile_id=target.id, timeout=30
     )

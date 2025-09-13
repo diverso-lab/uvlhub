@@ -62,10 +62,7 @@ def create_app(config_name="development"):
     logging_manager.setup_logging()
 
     # CORS
-    CORS(app, resources={
-        r"/hubfiles/raw/*": {"origins": "https://ide.flamapy.org"}
-    })
-
+    CORS(app, resources={r"/hubfiles/raw/*": {"origins": "https://ide.flamapy.org"}})
 
     # Swagger API
     swagger_template = {

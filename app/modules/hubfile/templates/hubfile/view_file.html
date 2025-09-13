@@ -214,7 +214,8 @@
                                     alt="UVL Logo"
                                     height="24"
                                     class="ms-auto mb-2" />
-                            <pre class="m-0" style="white-space: pre-wrap;">{{ uvl_content }}</pre>
+                            <pre class="m-0" style="white-space: pre-wrap; font-size: 0.85rem;">{{ uvl_content }}</pre>
+
                         </div>
                     </div>
                     
@@ -265,17 +266,34 @@ function renderFactLabel(fileId) {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                drawFMFactLabel(data.content); // versión limpia mejorada
+                drawFMFactLabel(data.content); // Fact Label disponible
             } else {
-                console.error("Error:", data.error);
-                d3.select("#FMFactLabelChart").text("Error loading fact label.");
+                console.warn("FM FactLabel not yet available:", data.error);
+                d3.select("#FMFactLabelChart")
+                  .append("text")
+                  .attr("x", "50%")
+                  .attr("y", "50%")
+                  .attr("text-anchor", "middle")
+                  .attr("dominant-baseline", "middle")
+                  .attr("font-size", "14px")
+                  .attr("fill", "#999")
+                  .text("FM FactLabel not yet available");
             }
         })
         .catch(error => {
             console.error("Fetch error:", error);
-            d3.select("#FMFactLabelChart").text("Could not load fact label.");
+            d3.select("#FMFactLabelChart")
+              .append("text")
+              .attr("x", "50%")
+              .attr("y", "50%")
+              .attr("text-anchor", "middle")
+              .attr("dominant-baseline", "middle")
+              .attr("font-size", "14px")
+              .attr("fill", "red")
+              .text("Error loading FM FactLabel");
         });
 }
+
 
 $(function () {
     const table = $('#kt_files_table').DataTable({
