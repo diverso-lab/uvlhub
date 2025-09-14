@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 001
+Revision ID: 84bec63cef2e
 Revises: 
-Create Date: 2025-07-28 12:25:53.165361
+Create Date: 2025-09-14 18:45:38.222623
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '001'
+revision = '84bec63cef2e'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -30,7 +30,7 @@ def upgrade():
     sa.Column('number_of_features', sa.Integer(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_table('factlabel',
+    op.create_table('elasticsearch',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
@@ -166,6 +166,7 @@ def upgrade():
     sa.Column('checksum', sa.String(length=120), nullable=False),
     sa.Column('size', sa.Integer(), nullable=False),
     sa.Column('feature_model_id', sa.Integer(), nullable=False),
+    sa.Column('factlabel_json', sa.Text(), nullable=True),
     sa.ForeignKeyConstraint(['feature_model_id'], ['feature_model.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
@@ -212,7 +213,7 @@ def downgrade():
     op.drop_table('statistics')
     op.drop_table('reset_token')
     op.drop_table('flamapy')
-    op.drop_table('factlabel')
+    op.drop_table('elasticsearch')
     op.drop_table('ds_metrics')
     op.drop_table('doi_mapping')
     # ### end Alembic commands ###
