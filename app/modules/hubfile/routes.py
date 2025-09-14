@@ -1,4 +1,5 @@
 import os
+import shutil
 from app.modules.dataset.services import DOIMappingService, DSMetaDataService
 from app.modules.flamapy.services import FlamapyService
 from flask import current_app, jsonify, make_response, request, send_from_directory
@@ -13,6 +14,7 @@ hubfile_download_record_service = HubfileDownloadRecordService()
 flamapy_service = FlamapyService()
 doi_mapping_service = DOIMappingService()
 dsmetadata_service = DSMetaDataService()
+hubfile_service = HubfileService()
 
 
 @hubfile_bp.route("/hubfile/upload", methods=["POST"])
@@ -78,20 +80,23 @@ def upload_file():
 @login_required
 def delete():
     data = request.get_json()
-    filename = data.get("filename")  # Nombre original del archivo
-    uuid = data.get("uuid")  # UUID enviado desde el frontend
+    filename = data.get("filename")
     temp_folder = current_user.temp_folder()
 
-    # Generar el nombre único del archivo
-    unique_filename = f"{uuid}_{filename}"
-    filepath = os.path.join(temp_folder, unique_filename)
+    if not filename:
+        return jsonify({"message": "Filename is missing"}), 400
 
-    # Verificar si el archivo existe y eliminarlo
-    if os.path.exists(filepath):
-        os.remove(filepath)
+    file_path = os.path.join(temp_folder, filename)
+
+    if not os.path.exists(file_path):
+        return jsonify({"message": "File not found"}), 404
+
+    try:
+        os.remove(file_path)
         return jsonify({"message": "File deleted successfully"}), 200
+    except Exception as e:
+        return jsonify({"message": f"Error deleting file: {str(e)}"}), 500
 
-    return jsonify({"error": "Error: File not found"}), 404
 
 
 @hubfile_bp.route("/hubfiles/download/<int:file_id>", methods=["GET"])
@@ -118,6 +123,12 @@ def download_file(file_id):
     resp.set_cookie("file_download_cookie", user_cookie)
 
     return resp
+
+
+@hubfile_bp.route("/hubfile/clear_temp", methods=["POST"])
+@login_required
+def clear_temp():
+    return hubfile_service.clear_temp()
 
 
 @hubfile_bp.route("/hubfiles/<int:file_id>", methods=["GET"])

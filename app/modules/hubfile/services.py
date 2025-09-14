@@ -1,8 +1,10 @@
 import hashlib
 import os
+import shutil
 import uuid
 
-from flask import request
+from flask import request, jsonify
+from flask_login import current_user
 from app.modules.auth.models import User
 from app.modules.dataset.models import DataSet
 from app.modules.hubfile.models import Hubfile
@@ -91,6 +93,18 @@ class HubfileService(BaseService):
         path = f"/doi/{ds_meta.dataset_doi}/files/{hubfile.name}"
 
         return path
+    
+    def clear_temp(self):
+        temp_folder = current_user.temp_folder()
+
+        try:
+            if os.path.exists(temp_folder):
+                shutil.rmtree(temp_folder, ignore_errors=True)
+            os.makedirs(temp_folder, exist_ok=True)
+
+            return jsonify({"message": "Temp folder cleared"}), 200
+        except Exception as e:
+            return jsonify({"error": f"Error clearing temp folder: {str(e)}"}), 500
 
 
 class HubfileDownloadRecordService(BaseService):

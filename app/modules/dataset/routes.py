@@ -224,6 +224,7 @@ def create_dataset():
             200,
         )
 
+    hubfile_service.clear_temp()
     return render_template("dataset/create_and_edit_dataset.html", form=form)
 
 
