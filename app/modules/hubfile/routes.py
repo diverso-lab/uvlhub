@@ -24,8 +24,8 @@ def upload_file():
     uuid = request.form.get("uuid")  # Retrieve the UUID sent from the frontend
     temp_folder = current_user.temp_folder()
 
-    if not file or not file.filename.endswith(".uvl"):
-        return jsonify({"message": "No valid file"}), 400
+    if not file:
+        return jsonify({"message": "No file uploaded"}), 400
 
     # Validate that the UUID is provided
     if not uuid:
@@ -39,8 +39,6 @@ def upload_file():
 
     # Generate a unique filename for the file
     unique_filename = f"{uuid}_{file.filename}"
-
-    # Define the temporary path for the file
     temp_file_path = os.path.join(temp_folder, unique_filename)
 
     # Save the file temporarily
@@ -49,26 +47,33 @@ def upload_file():
     except Exception as e:
         return jsonify({"message": f"Error saving file: {str(e)}"}), 500
 
-    # Validate the UVL file using `check_uvl`
-    try:
-        validation_result, status_code = flamapy_service.check_uvl(temp_file_path)
+    ext = file.filename.lower().split(".")[-1]
 
-        if status_code != 200:
-            # If the file is invalid, remove it and return an error
-            os.remove(temp_file_path)
-            return jsonify(validation_result), status_code
+    if ext == "uvl":
+        # Validate the UVL file
+        try:
+            validation_result, status_code = flamapy_service.check_uvl(temp_file_path)
 
-    except Exception as e:
-        # Remove the file if an unexpected error occurs during validation
-        if os.path.exists(temp_file_path):
-            os.remove(temp_file_path)
-        return jsonify({"message": f"Error validating UVL: {str(e)}"}), 500
+            if status_code != 200:
+                os.remove(temp_file_path)
+                return jsonify(validation_result), status_code
+        except Exception as e:
+            if os.path.exists(temp_file_path):
+                os.remove(temp_file_path)
+            return jsonify({"message": f"Error validating UVL: {str(e)}"}), 500
 
-    # If the file is valid, return the unique filename
+    elif ext == "zip":
+        # Do not validate ZIPs, just accept them
+        pass
+    else:
+        # Unsupported extension
+        os.remove(temp_file_path)
+        return jsonify({"message": "Unsupported file type"}), 400
+
     return (
         jsonify(
             {
-                "message": "UVL uploaded and validated successfully",
+                "message": f"{ext.upper()} uploaded successfully",
                 "filename": unique_filename,
             }
         ),
