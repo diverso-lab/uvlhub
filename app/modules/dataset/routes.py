@@ -4,6 +4,7 @@ import os
 import shutil
 import tempfile
 
+from app.modules.dataset.decorators import is_dataset_owner
 from app.modules.elasticsearch.services import IndexingService
 from app.modules.elasticsearch.utils import index_dataset, index_hubfile
 from flask import (
@@ -224,6 +225,7 @@ def subdomain_index(doi):
 
 @dataset_bp.route("/datasets/unsynchronized/<int:dataset_id>/", methods=["GET"])
 @login_required
+@is_dataset_owner
 def get_unsynchronized_dataset(dataset_id):
 
     # Get dataset

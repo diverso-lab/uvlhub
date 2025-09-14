@@ -1,5 +1,10 @@
 import os
-from app.modules.dataset.services import DOIMappingService, DSMetaDataService
+from app.modules.dataset.decorators import is_dataset_owner
+from app.modules.dataset.services import (
+    DOIMappingService,
+    DSMetaDataService,
+    DataSetService,
+)
 from app.modules.flamapy.services import FlamapyService
 from flask import current_app, jsonify, make_response, request, send_from_directory
 from flask_login import current_user, login_required
@@ -14,6 +19,7 @@ flamapy_service = FlamapyService()
 doi_mapping_service = DOIMappingService()
 dsmetadata_service = DSMetaDataService()
 hubfile_service = HubfileService()
+dataset_service = DataSetService()
 
 
 @hubfile_bp.route("/hubfile/upload", methods=["POST"])
@@ -134,12 +140,18 @@ def clear_temp():
     return hubfile_service.clear_temp()
 
 
-@hubfile_bp.route("/hubfiles/<int:file_id>", methods=["GET"])
-def view_uvl(file_id):
-    selected_file = HubfileService().get_or_404(file_id)
-    dataset = selected_file.feature_model.dataset
+@hubfile_bp.route("/datasets/unsynchronized/<int:dataset_id>/files/<int:file_id>")
+@login_required
+@is_dataset_owner
+def view_unsynchronized_file(dataset_id, file_id):
+    # Buscar dataset y archivo en base de datos
+    dataset = dataset_service.get_by_id(dataset_id)
+    selected_file = hubfile_service.get_by_id(file_id)
 
-    # Leer contenido UVL
+    if not dataset or not selected_file:
+        abort(404)
+
+    # 4. Construir ruta al archivo en disco
     directory_path = os.path.join(
         "uploads", f"user_{dataset.user_id}", f"dataset_{dataset.id}", "uvl"
     )

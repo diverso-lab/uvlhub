@@ -150,11 +150,20 @@
                     {% for file in hubfiles %}
                     <tr>
                         <td class="font-monospace">
-                            <a href="{{ file.get_url()}}" class="text-primary text-hover-dark fw-semibold">
-                                {{ file.name }}
-                            </a>
-                        </td>
-
+    {% if dataset.ds_meta_data.dataset_doi %}
+        <!-- Dataset sincronizado con DOI -->
+        <a href="{{ file.get_url() }}" 
+           class="text-primary text-hover-dark fw-semibold">
+            {{ file.name }}
+        </a>
+    {% else %}
+        <!-- Dataset en borrador (sin DOI) -->
+        <a href="{{ url_for('hubfile.view_unsynchronized_file', dataset_id=dataset.id, file_id=file.id) }}" 
+           class="text-primary text-hover-dark fw-semibold">
+            {{ file.name }}
+        </a>
+    {% endif %}
+</td>
                         <td class="text-end">{{ file.get_formatted_size() }}</td>
                         <td class="text-end">
                             <div class="btn-group">
