@@ -250,3 +250,31 @@ class ElasticsearchService(BaseService):
         p = 1 << (i * 10)
         s = round(size_bytes / p, 2)
         return f"{s} {size_name[i]}"
+
+
+class IndexingService:
+    """
+    Encapsula la lógica de indexación en Elasticsearch.
+    """
+
+    def __init__(self, index_dataset_fn, index_hubfile_fn, logger):
+        self.index_dataset = index_dataset_fn
+        self.index_hubfile = index_hubfile_fn
+        self.logger = logger
+
+    def index_dataset_and_hubfiles(self, dataset, created_fms):
+        try:
+            # Re-obtener dataset actualizado
+            self.index_dataset(dataset)
+            self.logger.info(f"[INDEX] Dataset {dataset.id} indexed")
+
+            for fm in created_fms:
+                for hubfile in fm.hubfiles:
+                    self.index_hubfile(hubfile)
+                    self.logger.info(f"[INDEX] Hubfile {hubfile.id} indexed")
+
+        except Exception as exc:
+            self.logger.exception(
+                f"[INDEX ERROR] Failed to index dataset {dataset.id}: {exc}"
+            )
+            raise

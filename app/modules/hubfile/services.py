@@ -93,7 +93,7 @@ class HubfileService(BaseService):
         path = f"/doi/{ds_meta.dataset_doi}/files/{hubfile.name}"
 
         return path
-    
+
     def clear_temp(self):
         temp_folder = current_user.temp_folder()
 

@@ -1,5 +1,6 @@
 import logging
 import os
+import shutil
 import requests
 
 from app.modules.dataset.models import DataSet
@@ -10,7 +11,7 @@ from core.configuration.configuration import uploads_folder_name
 from dotenv import load_dotenv
 from flask import jsonify, Response
 from flask_login import current_user
-
+from app import db
 
 from core.services.BaseService import BaseService
 
@@ -388,3 +389,61 @@ class ZenodoService(BaseService):
             str: The DOI of the deposition.
         """
         return self.get_deposition(deposition_id).get("doi")
+
+
+class ZenodoDatasetService:
+    def __init__(self, zenodo_service, dataset_service, logger):
+        self.zenodo_service = zenodo_service
+        self.dataset_service = dataset_service
+        self.logger = logger
+
+    def upload_to_zenodo(self, dataset, ds_meta, dataset_type, current_user):
+        """
+        Sube el dataset a Zenodo (normal o anónimo).
+        Devuelve el DOI si todo va bien.
+        """
+        try:
+            anonymous = dataset_type == "zenodo_anonymous"
+            deposition = self.zenodo_service.create_new_deposition(
+                dataset, anonymous=anonymous
+            )
+            deposition_id = deposition.get("id")
+            self.logger.info(f"[ZENODO] Deposition created with ID: {deposition_id}")
+
+            # Guardar deposition_id en DB
+            self.dataset_service.update_dsmetadata(
+                ds_meta.id, deposition_id=deposition_id
+            )
+
+            # Crear ZIP
+            zip_path = self.dataset_service.zip_dataset(dataset)
+            self.logger.info(f"[ZENODO] Dataset zipped at path: {zip_path}")
+
+            # Subir ZIP
+            self.zenodo_service.upload_zip(dataset, deposition_id, zip_path)
+            self.logger.info(f"[ZENODO] ZIP uploaded for deposition {deposition_id}")
+
+            # Publicar deposition
+            self.zenodo_service.publish_deposition(deposition_id)
+            doi = self.zenodo_service.get_doi(deposition_id)
+
+            if doi:
+                self.dataset_service.update_dsmetadata(ds_meta.id, dataset_doi=doi)
+                dataset = self.dataset_service.get_by_id(dataset.id)
+                self.logger.info(
+                    f"[ZENODO] Dataset {dataset.id} published with DOI: {doi}"
+                )
+            else:
+                self.logger.warning(
+                    f"[ZENODO] No DOI received for deposition {deposition_id}"
+                )
+
+            # Cleanup temporal
+            shutil.rmtree(current_user.temp_folder(), ignore_errors=True)
+
+            return doi
+
+        except Exception as exc:
+            db.session.rollback()
+            self.logger.exception(f"[ZENODO ERROR] {exc}")
+            raise

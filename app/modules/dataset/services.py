@@ -17,6 +17,7 @@ from app.modules.dataset.models import (
     DSViewRecord,
     DataSet,
     DSMetaData,
+    PublicationType,
 )
 from app.modules.dataset.repositories import (
     AuthorRepository,
@@ -34,6 +35,7 @@ from app.modules.hubfile.repositories import (
 )
 from app.modules.statistics.services import StatisticsService
 from core.services.BaseService import BaseService
+from app import db
 
 logger = logging.getLogger(__name__)
 
@@ -488,3 +490,85 @@ class SizeService:
             return f"{round(size / (1024 ** 2), 2)} MB"
         else:
             return f"{round(size / (1024 ** 3), 2)} GB"
+
+
+class LocalDatasetService:
+    def __init__(
+        self,
+        dsmetadata_service,
+        dataset_service,
+        author_service,
+        feature_model_service,
+        logger,
+    ):
+        self.dsmetadata_service = dsmetadata_service
+        self.dataset_service = dataset_service
+        self.author_service = author_service
+        self.feature_model_service = feature_model_service
+        self.logger = logger
+
+    def create_local_dataset(self, form, current_user):
+        try:
+            title = form.get("title")
+            description = form.get("description")
+            publication_type_id = form.get("publication_type")
+            publication_doi = form.get("publication_doi")
+            tags = form.getlist("tags[]")
+
+            self.logger.info(
+                f"[LOCAL] Metadata - title: {title}, description: {description}, "
+                f"publication_type_id: {publication_type_id}, publication_doi: {publication_doi}, tags: {tags}"
+            )
+
+            # Crear DSMetaData
+            ds_meta = self.dsmetadata_service.create(
+                title=title,
+                description=description,
+                publication_type=PublicationType(publication_type_id),
+                publication_doi=publication_doi,
+                tags=",".join(tags) if tags else "",
+            )
+            self.logger.info(f"[LOCAL] DSMetaData created with ID: {ds_meta.id}")
+
+            # Crear DataSet
+            dataset = self.dataset_service.create(
+                commit=False, user_id=current_user.id, ds_meta_data_id=ds_meta.id
+            )
+            self.logger.info(f"[LOCAL] DataSet created with ID: {dataset.id}")
+
+            # Crear autores
+            i = 0
+            while True:
+                name = form.get(f"authors[{i}][name]")
+                if not name:
+                    break
+                affiliation = form.get(f"authors[{i}][affiliation]")
+                orcid = form.get(f"authors[{i}][orcid]")
+
+                self.author_service.create(
+                    ds_meta_data_id=ds_meta.id,
+                    name=name,
+                    affiliation=affiliation,
+                    orcid=orcid,
+                )
+                self.logger.info(
+                    f"[LOCAL] Author #{i} added: {name}, {affiliation}, {orcid}"
+                )
+                i += 1
+
+            # Guardar en DB
+            db.session.commit()
+            self.logger.info(f"[LOCAL] Dataset {dataset.id} committed to DB")
+
+            # Mover modelos
+            created_fms = self.feature_model_service.create_from_uvl_files(dataset)
+            self.logger.info(
+                f"[LOCAL] {len(created_fms)} feature models created for dataset {dataset.id}"
+            )
+
+            return dataset, ds_meta, created_fms
+
+        except Exception as exc:
+            db.session.rollback()
+            self.logger.exception(f"[LOCAL ERROR] {exc}")
+            raise

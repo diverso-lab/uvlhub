@@ -1,5 +1,4 @@
 import os
-import shutil
 from app.modules.dataset.services import DOIMappingService, DSMetaDataService
 from app.modules.flamapy.services import FlamapyService
 from flask import current_app, jsonify, make_response, request, send_from_directory
@@ -101,7 +100,6 @@ def delete():
         return jsonify({"message": "File deleted successfully"}), 200
     except Exception as e:
         return jsonify({"message": f"Error deleting file: {str(e)}"}), 500
-
 
 
 @hubfile_bp.route("/hubfiles/download/<int:file_id>", methods=["GET"])

@@ -4,6 +4,7 @@ import os
 import shutil
 import tempfile
 
+from app.modules.elasticsearch.services import IndexingService
 from app.modules.elasticsearch.utils import index_dataset, index_hubfile
 from flask import (
     abort,
@@ -17,12 +18,11 @@ from flask import (
     url_for,
 )
 from flask_login import login_required, current_user
-from app import db
 
 from app.modules.apikeys.decorators import require_api_key
 from app.modules.dataset.forms import DataSetForm
 from app.modules.dataset import dataset_bp
-from app.modules.dataset.models import DataSet, PublicationType
+from app.modules.dataset.models import DataSet
 from app.modules.dataset.services import (
     AuthorService,
     DSDownloadRecordService,
@@ -30,11 +30,12 @@ from app.modules.dataset.services import (
     DSViewRecordService,
     DataSetService,
     DOIMappingService,
+    LocalDatasetService,
 )
 from app.modules.featuremodel.services import FeatureModelService
 from app.modules.hubfile.models import Hubfile
 from app.modules.hubfile.services import HubfileService
-from app.modules.zenodo.services import ZenodoService
+from app.modules.zenodo.services import ZenodoDatasetService, ZenodoService
 
 logger = logging.getLogger(__name__)
 
@@ -55,89 +56,25 @@ def create_dataset():
     form = DataSetForm()
 
     if request.method == "POST":
-        logger.info("[UPLOAD] POST request received for dataset creation")
-        logger.info(f"[UPLOAD] Form keys received: {list(request.form.keys())}")
         dataset_type = request.form.get("dataset_type", "draft")
-        logger.info(f"[UPLOAD] Received dataset_type: {dataset_type}")
 
-        dataset = None
-        ds_meta = None
-
+        # 1. Crear dataset local
+        local_service = LocalDatasetService(
+            dsmetadata_service,
+            dataset_service,
+            author_service,
+            FeatureModelService(),
+            logger,
+        )
         try:
-            title = request.form.get("title")
-            description = request.form.get("description")
-            publication_type_id = request.form.get("publication_type")
-            publication_doi = request.form.get("publication_doi")
-            tags = request.form.getlist("tags[]")
-
-            logger.info(
-                f"[UPLOAD] Dataset metadata - title: {title}, description: {description}, "
-                f"publication_type_id: {publication_type_id}, publication_doi: {publication_doi}, tags: {tags}"
+            dataset, ds_meta, created_fms = local_service.create_local_dataset(
+                request.form, current_user
             )
-
-            # Crear DSMetaData
-            ds_meta = dsmetadata_service.create(
-                title=title,
-                description=description,
-                publication_type=PublicationType(publication_type_id),
-                publication_doi=publication_doi,
-                tags=",".join(tags) if tags else "",
-            )
-            logger.info(f"[UPLOAD] DSMetaData created with ID: {ds_meta.id}")
-
-            # Crear DataSet
-            dataset = dataset_service.create(
-                commit=False, user_id=current_user.id, ds_meta_data_id=ds_meta.id
-            )
-            logger.info(
-                f"[UPLOAD] DataSet created (not committed yet) with ID: {dataset.id}"
-            )
-
-            # Crear autores
-            if dataset_type != "zenodo_anonymous":
-                i = 0
-                while True:
-                    name = request.form.get(f"authors[{i}][name]")
-                    if not name:
-                        break
-                    affiliation = request.form.get(f"authors[{i}][affiliation]")
-                    orcid = request.form.get(f"authors[{i}][orcid]")
-                    author_service.create(
-                        ds_meta_data_id=ds_meta.id,
-                        name=name,
-                        affiliation=affiliation,
-                        orcid=orcid,
-                    )
-                    logger.info(
-                        f"[UPLOAD] Author #{i} added: {name}, {affiliation}, {orcid}"
-                    )
-                    i += 1
-            else:
-                logger.info(
-                    "[UPLOAD] Dataset is anonymous: authors will not be stored in DB"
-                )
-
-            # Guardar en base de datos
-            db.session.commit()
-            logger.info(f"[UPLOAD] Dataset {dataset.id} and metadata committed to DB")
-
-            # Mover modelos
-            feature_model_service = FeatureModelService()
-            created_fms = feature_model_service.create_from_uvl_files(dataset)
-            logger.info(
-                f"[UPLOAD] {len(created_fms)} feature models created and moved for dataset {dataset.id}"
-            )
-
         except Exception as exc:
-            logger.exception(f"[UPLOAD ERROR] Error creating dataset locally: {exc}")
-            db.session.rollback()
             return jsonify({"error": f"Error creating dataset: {str(exc)}"}), 400
 
-        # Si es draft, terminar aquí
+        # 2. Draft → terminar aquí
         if dataset_type == "draft":
-            logger.info(
-                f"[UPLOAD] Dataset {dataset.id} saved as draft, not uploaded to Zenodo"
-            )
             shutil.rmtree(current_user.temp_folder(), ignore_errors=True)
             return (
                 jsonify(
@@ -149,80 +86,53 @@ def create_dataset():
                 200,
             )
 
-        # Comprobación defensiva
-        if dataset_type not in {"zenodo", "zenodo_anonymous"}:
-            logger.warning(f"[UPLOAD] Invalid dataset_type received: {dataset_type}")
-            return jsonify({"error": f"Invalid dataset_type: {dataset_type}"}), 400
-
-        # Subir a Zenodo
-        logger.info(
-            f"[UPLOAD] Dataset {dataset.id} will be uploaded to Zenodo (type: {dataset_type})"
-        )
-        try:
-            deposition = zenodo_service.create_new_deposition(
-                dataset, anonymous=(dataset_type == "zenodo_anonymous")
+        # 3. Zenodo
+        if dataset_type in {"zenodo", "zenodo_anonymous"}:
+            zenodo_service_facade = ZenodoDatasetService(
+                zenodo_service, dataset_service, logger
             )
-            deposition_id = deposition.get("id")
-            logger.info(f"[UPLOAD] Zenodo deposition created with ID: {deposition_id}")
-
-            dataset_service.update_dsmetadata(ds_meta.id, deposition_id=deposition_id)
-
-            zip_path = dataset_service.zip_dataset(dataset)
-            logger.info(f"[UPLOAD] Dataset zipped at path: {zip_path}")
-
-            zenodo_service.upload_zip(dataset, deposition_id, zip_path)
-            logger.info(
-                f"[UPLOAD] ZIP uploaded to Zenodo for deposition {deposition_id}"
-            )
-
-            if dataset_type in {"zenodo", "zenodo_anonymous"}:
-                zenodo_service.publish_deposition(deposition_id)
-                doi = zenodo_service.get_doi(deposition_id)
-
-                if doi:
-                    dataset_service.update_dsmetadata(ds_meta.id, dataset_doi=doi)
-                    dataset = dataset_service.get_by_id(dataset.id)
-                else:
-                    logger.warning(
-                        f"[UPLOAD] No DOI received for deposition {deposition_id}"
-                    )
-
-                logger.info(
-                    f"[UPLOAD] Dataset {dataset.id} published on Zenodo with DOI: {doi}"
+            try:
+                doi = zenodo_service_facade.upload_to_zenodo(
+                    dataset, ds_meta, dataset_type, current_user
+                )
+            except Exception as exc:
+                return (
+                    jsonify(
+                        {
+                            "error": (
+                                f"Dataset created locally (ID: {dataset.id}), "
+                                f"but Zenodo upload failed: {exc}"
+                            ),
+                            "dataset_id": dataset.id,
+                        }
+                    ),
+                    200,
                 )
 
-        except Exception as exc:
-            logger.exception(
-                f"[UPLOAD ERROR] Zenodo upload failed for dataset {dataset.id}: {exc}"
-            )
+            # 4. Indexación
+            indexing_service = IndexingService(index_dataset, index_hubfile, logger)
+            try:
+                dataset = dataset_service.get_by_id(
+                    dataset.id
+                )  # actualizado tras Zenodo
+                indexing_service.index_dataset_and_hubfiles(dataset, created_fms)
+            except Exception as exc:
+                logger.warning(
+                    f"[UPLOAD] Dataset {dataset.id} created and uploaded, but indexing failed: {exc}"
+                )
+
             return (
                 jsonify(
                     {
-                        "error": f"Dataset created locally (ID: {dataset.id}), but Zenodo upload failed: {str(exc)}",
+                        "message": "Dataset created and uploaded to Zenodo.",
                         "dataset_id": dataset.id,
+                        "doi": doi,
                     }
                 ),
                 200,
             )
 
-        shutil.rmtree(current_user.temp_folder(), ignore_errors=True)
-
-        dataset = dataset_service.get_by_id(dataset.id)
-        index_dataset(dataset)
-
-        for fm in created_fms:
-            for hubfile in fm.hubfiles:
-                index_hubfile(hubfile)
-
-        return (
-            jsonify(
-                {
-                    "message": "Dataset created and uploaded to Zenodo.",
-                    "dataset_id": dataset.id,
-                }
-            ),
-            200,
-        )
+        return jsonify({"error": f"Invalid dataset_type: {dataset_type}"}), 400
 
     hubfile_service.clear_temp()
     return render_template("dataset/create_and_edit_dataset.html", form=form)
