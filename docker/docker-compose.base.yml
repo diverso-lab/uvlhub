@@ -18,7 +18,7 @@ services:
 
   db:
     container_name: mariadb_container
-    image: mariadb:latest
+    image: mariadb:12.0.2
     env_file:
       - ../.env
     command: --default-authentication-plugin=mysql_native_password
@@ -32,7 +32,7 @@ services:
 
   redis:
     container_name: redis_container
-    image: "redis:latest"
+    image: "redis:8.2.1"
     restart: always
     networks:
       - uvlhub_network

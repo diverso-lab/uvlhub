@@ -21,7 +21,7 @@ services:
 
   nginx:
     container_name: nginx_web_server_container
-    image: nginx:latest
+    image: nginx:1.29.1
     ports:
       - "80:80"
     volumes:
