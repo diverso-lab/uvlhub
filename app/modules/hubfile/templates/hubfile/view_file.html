@@ -84,47 +84,57 @@
     <div class="row">
 
         <!-- Sidebar: tabla de archivos -->
-        <div class="col-md-3 mb-5 mb-md-0">
-            <div class="card card-flush h-100">
-                
-                <div class="card-header py-5">
-                    <div class="card-title">
-                        <div class="d-flex align-items-center position-relative my-1">
-                            <i class="ki-duotone ki-magnifier fs-3 position-absolute ms-4">
-                                <span class="path1"></span>
-                                <span class="path2"></span>
-                            </i>
-                            <input type="text"
-                                data-file-search
-                                class="form-control form-control-solid w-100 ps-12"
-                                placeholder="Search models" />
-                        </div>
-                    </div>
-                </div>
+<div class="col-md-3 mb-5 mb-md-0">
+    <div class="card card-flush h-100 d-flex flex-column">
 
-                <div class="card-body pt-0">
-                    <table class="table align-middle table-row-dashed fs-7 gy-3" id="kt_files_table">
-                        <thead>
-                            <tr class="text-muted fw-bold text-uppercase fs-8">
-                                <th>Name</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for f in hubfiles %}
-                            <tr>
-                                <td class="font-monospace">
-                                    <a href="{{ f.get_url() }}"
-                                    class="{% if f.id == selected_file.id %}fw-bold text-primary{% else %}text-muted{% endif %}">
-                                        {{ f.name }}
-                                    </a>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+        <!-- Header con buscador -->
+        <div class="card-header py-5">
+            <div class="card-title w-100"><!-- 👈 fuerza ancho completo -->
+                <div class="d-flex align-items-center position-relative my-1 w-100"><!-- 👈 ancho completo -->
+                    <i class="ki-duotone ki-magnifier fs-3 position-absolute ms-4">
+                        <span class="path1"></span>
+                        <span class="path2"></span>
+                    </i>
+                    <input type="text"
+                           data-file-search
+                           class="form-control form-control-solid w-100 ps-12 small"
+                           placeholder="Search models" />
                 </div>
             </div>
         </div>
+
+        <!-- Body con tabla -->
+        <div class="card-body pt-0 flex-grow-1">
+            <table class="table align-middle table-row-dashed fs-7 gy-3" id="kt_files_table">
+                <thead>
+                    <tr class="text-muted fw-bold text-uppercase fs-8">
+                        <th>Name</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for f in hubfiles %}
+                    <tr>
+                        <td class="font-monospace">
+                            <a href="{{ f.get_url() }}"
+                               class="{% if f.id == selected_file.id %}fw-bold text-primary{% else %}text-muted{% endif %}">
+                                {{ f.name }}
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Footer con botón ancho completo -->
+        <div class="mt-auto d-flex justify-content-center pb-4 px-4">
+            <a href="/datasets/download/{{ dataset.id }}" class="btn btn-sm btn-primary w-100">
+                <i data-feather="download" class="me-1" style="width: 14px; height: 14px;"></i>
+                Download all dataset ({{ dataset.get_file_total_size_for_human() }})
+            </a>
+        </div>
+    </div>
+</div>
 
 
 
@@ -138,22 +148,15 @@
             <ul class="nav nav-tabs nav-line-tabs nav-line-tabs-2x fs-6 px-4 pt-4" id="fileTabs" role="tablist" style="border-bottom: none;">
 
                 <li class="nav-item" role="presentation">
-                    <span class="nav-link disabled text-bold fw-bold">
+                    <span class="nav-link disabled fw-bold d-flex align-items-center fs-5">
+                        <i class="ki-duotone ki-file fs-2 mr-2">
+                    <span class="path1"></span>
+                    <span class="path2"></span>
+                    </i> &nbsp;
                         {{ selected_file.name }}
                     </span>
                 </li>
 
-                <li class="nav-item ms-2" role="presentation">
-                    <a href="javascript:void(0);"
-                    onclick="copyCurrentUVL(this)"
-                    class="btn btn-sm btn-secondary d-flex align-items-center"
-                    data-bs-toggle="tooltip"
-                    data-bs-placement="bottom"
-                    title="Copy to clipboard">
-                        <i class="ki-duotone ki-copy"></i>
-                        Copy
-                    </a>
-                </li>
 
                 <li class="nav-item ms-auto dropdown" role="presentation">
                     <a class="btn btn-sm btn-secondary dropdown-toggle d-flex align-items-center"
@@ -191,7 +194,6 @@
                     </ul>
                 </li>
 
-                
 
                 <li class="nav-item ms-2" role="presentation">
                     <a href="{{ selected_file.get_ide_url() }}" 
@@ -200,7 +202,7 @@
                     class="btn btn-sm btn-secondary d-flex align-items-center">
                         <img src="{{ url_for('static', filename='media/logos/flamapy_ide.svg') }}" 
                             alt="Flamapy IDE"  
-                            height="20" 
+                            height="18" 
                             class="me-2" />
                         <i class="ki-outline ki-exit-right-corner"></i>
                     </a>
@@ -212,10 +214,23 @@
                     <!-- UVL a la izquierda -->
                     <div class="col-md-6">
                         <div class="bg-light rounded border p-4 h-100">
-                                <img src="{{ url_for('static', filename='media/logos/uvl_logo.svg') }}"
-                                    alt="UVL Logo"
-                                    height="24"
-                                    class="ms-auto mb-2" />
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <!-- Logo a la izquierda -->
+                                    <img src="{{ url_for('static', filename='media/logos/uvl_logo.svg') }}"
+                                        alt="UVL Logo"
+                                        height="24" />
+
+                                    <!-- Botón a la derecha -->
+                                    <a href="javascript:void(0);"
+                                    onclick="copyCurrentUVL(this)"
+                                    class="btn btn-sm btn-secondary d-flex align-items-center"
+                                    data-bs-toggle="tooltip"
+                                    data-bs-placement="bottom"
+                                    title="Copy to clipboard">
+                                        <i class="ki-duotone ki-copy me-1"></i>
+                                        Copy
+                                    </a>
+                                </div>
                             <pre class="m-0" style="white-space: pre-wrap; font-size: 0.85rem;">{{ uvl_content }}</pre>
 
                         </div>
@@ -299,7 +314,7 @@ function renderFactLabel(fileId) {
 
 $(function () {
     const table = $('#kt_files_table').DataTable({
-        pageLength: 10,
+        pageLength: 15,
         ordering: false,
         lengthChange: false,
         info: false,
