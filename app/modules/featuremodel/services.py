@@ -34,18 +34,22 @@ class FeatureModelService(BaseService):
 
         return total_feature_models
 
-    def create_from_uvl_files(self, dataset) -> list[FeatureModel]:
+    def create_from_uvl_files(
+        self, dataset, base_dir: str = None
+    ) -> list[FeatureModel]:
         """
-        Crea un FeatureModel y Hubfile por cada archivo UVL del directorio temporal del usuario.
+        Crea un FeatureModel y Hubfile por cada archivo UVL en el directorio indicado.
+        Si no se pasa base_dir, se usan los UVL del directorio temporal del usuario.
 
         Args:
             dataset (DataSet): Dataset al que se van a asociar los modelos.
+            base_dir (str, opcional): Directorio desde el que leer los UVL.
 
         Returns:
             list[FeatureModel]: Lista de modelos creados.
         """
         user = dataset.user
-        source_dir = user.temp_folder()
+        source_dir = base_dir or user.temp_folder()  # 👈 aquí el cambio
 
         working_dir = os.getenv("WORKING_DIR", "")
         dest_dir = os.path.join(

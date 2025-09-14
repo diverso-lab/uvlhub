@@ -134,10 +134,10 @@ def hubfile_after_insert_listener(mapper, connection, target):
 
     # Transformación UVL
     task_manager.enqueue_task(
-        "app.modules.hubfile.tasks.transform_uvl", path=path, timeout=30
+        "app.modules.hubfile.tasks.transform_uvl", path=path, timeout=5
     )
 
     # Fact Label
     task_manager.enqueue_task(
-        "app.modules.hubfile.tasks.compute_factlabel", hubfile_id=target.id, timeout=30
+        "app.modules.hubfile.tasks.compute_factlabel", hubfile_id=target.id, timeout=5
     )

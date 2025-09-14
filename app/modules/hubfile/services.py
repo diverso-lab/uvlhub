@@ -1,7 +1,10 @@
 import hashlib
 import os
 import shutil
+from typing import List, Tuple
 import uuid
+from pathlib import Path
+import zipfile
 
 from flask import request, jsonify
 from flask_login import current_user
@@ -133,3 +136,101 @@ class HubfileDownloadRecordService(BaseService):
             self.statistics_service.increment_feature_models_downloaded()
 
         return user_cookie
+
+
+class UploadIngestService:
+    """
+    Prepara los UVL para su procesamiento:
+      - Extrae zips de forma segura.
+      - Recolecta todos los .uvl (de zips y sueltos).
+      - Aplana en una carpeta de staging.
+    """
+
+    def __init__(self, logger):
+        self.logger = logger
+
+    # -------- utils -------- #
+
+    def _safe_extract_zip(self, zip_path: str, dest_dir: str) -> None:
+        """Extrae evitando path traversal."""
+        with zipfile.ZipFile(zip_path, "r") as zf:
+            for member in zf.infolist():
+                # Normaliza y evita rutas absolutas o con ..
+                member_path = Path(member.filename)
+                if member.is_dir():
+                    continue
+                target_path = Path(dest_dir) / member_path
+                # Comprobación de contención
+                target_path_resolved = target_path.resolve()
+                if not str(target_path_resolved).startswith(
+                    str(Path(dest_dir).resolve())
+                ):
+                    raise ValueError(
+                        f"[INGEST] Zip slip detectado en {zip_path}: {member.filename}"
+                    )
+                target_path.parent.mkdir(parents=True, exist_ok=True)
+                with zf.open(member, "r") as src, open(target_path, "wb") as dst:
+                    shutil.copyfileobj(src, dst)
+
+    def _unique_dest(self, dest_dir: str, filename: str) -> str:
+        """Genera un nombre único si hay colisiones."""
+        base = Path(filename).stem
+        ext = Path(filename).suffix
+        candidate = Path(dest_dir) / f"{base}{ext}"
+        i = 1
+        while candidate.exists():
+            candidate = Path(dest_dir) / f"{base} ({i}){ext}"
+            i += 1
+        return str(candidate)
+
+    # -------- public -------- #
+
+    def prepare_uvls(self, temp_root: str) -> Tuple[str, List[str]]:
+        """
+        Prepara y aplana UVLs en temp_root/_uvl_stage.
+        Devuelve (stage_dir, lista_uvls).
+        """
+        stage_dir = str(Path(temp_root) / "_uvl_stage")
+        extract_root = str(Path(temp_root) / "_extracted_zips")
+
+        # Limpia staging/extract anteriores
+        shutil.rmtree(stage_dir, ignore_errors=True)
+        shutil.rmtree(extract_root, ignore_errors=True)
+        Path(stage_dir).mkdir(parents=True, exist_ok=True)
+        Path(extract_root).mkdir(parents=True, exist_ok=True)
+
+        # 1) localizar y extraer zips
+        zip_paths = [str(p) for p in Path(temp_root).rglob("*.zip")]
+        self.logger.info(f"[INGEST] Zips detectados: {len(zip_paths)}")
+        for zp in zip_paths:
+            subdir = Path(extract_root) / f"{Path(zp).stem}_{uuid.uuid4().hex[:8]}"
+            subdir.mkdir(parents=True, exist_ok=True)
+            self._safe_extract_zip(zp, str(subdir))
+            self.logger.info(f"[INGEST] Extraído: {zp} -> {subdir}")
+
+        # 2) recolectar todos los .uvl (en temp_root y en extract_root)
+        def collect_uvls_from(root: str) -> List[Path]:
+            return [p for p in Path(root).rglob("*.uvl") if p.is_file()]
+
+        uvl_sources = collect_uvls_from(temp_root) + collect_uvls_from(extract_root)
+        self.logger.info(
+            f"[INGEST] UVLs encontrados (antes de aplanar): {len(uvl_sources)}"
+        )
+
+        # 3) aplanar en stage_dir con nombres únicos
+        staged_paths: List[str] = []
+        for src in uvl_sources:
+            dest = self._unique_dest(stage_dir, src.name)
+            shutil.copy2(str(src), dest)
+            staged_paths.append(dest)
+
+        # 4) validación mínima
+        if not staged_paths:
+            raise ValueError(
+                "No se encontró ningún archivo .uvl tras procesar zips y sueltos."
+            )
+
+        self.logger.info(
+            f"[INGEST] UVLs en staging: {len(staged_paths)} (dir: {stage_dir})"
+        )
+        return stage_dir, sorted(staged_paths)

@@ -86,6 +86,7 @@
         <!-- Sidebar: tabla de archivos -->
         <div class="col-md-3 mb-5 mb-md-0">
             <div class="card card-flush h-100">
+                
                 <div class="card-header py-5">
                     <div class="card-title">
                         <div class="d-flex align-items-center position-relative my-1">
@@ -100,6 +101,7 @@
                         </div>
                     </div>
                 </div>
+
                 <div class="card-body pt-0">
                     <table class="table align-middle table-row-dashed fs-7 gy-3" id="kt_files_table">
                         <thead>
@@ -297,7 +299,7 @@ function renderFactLabel(fileId) {
 
 $(function () {
     const table = $('#kt_files_table').DataTable({
-        pageLength: 5,
+        pageLength: 10,
         ordering: false,
         lengthChange: false,
         info: false,

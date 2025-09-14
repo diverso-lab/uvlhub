@@ -1,5 +1,5 @@
 import os
-from unittest.mock import patch, ANY
+from unittest.mock import patch
 from app.modules.auth.repositories import UserRepository
 from app.modules.dataset.models import PublicationType
 from app.modules.dataset.repositories import DSMetaDataRepository, DataSetRepository
@@ -49,12 +49,12 @@ def test_create_hubfile_calls_enqueue_tasks(test_client):
         mock_enqueue_task.assert_any_call(
             "app.modules.hubfile.tasks.transform_uvl",
             path=path,
-            timeout=30,
+            timeout=5,
         )
 
         # Verificar que se llamó a compute_factlabel
         mock_enqueue_task.assert_any_call(
             "app.modules.hubfile.tasks.compute_factlabel",
             hubfile_id=hubfile.id,
-            timeout=30,
+            timeout=5,
         )

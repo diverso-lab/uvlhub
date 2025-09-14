@@ -8,6 +8,7 @@ from zipfile import ZipFile
 import zipfile
 import bleach
 
+from app.modules.hubfile.services import UploadIngestService
 from flask import current_app, request
 
 from app.modules.auth.models import User
@@ -560,8 +561,16 @@ class LocalDatasetService:
             db.session.commit()
             self.logger.info(f"[LOCAL] Dataset {dataset.id} committed to DB")
 
+            ingest = UploadIngestService(self.logger)
+            stage_dir, staged_uvls = ingest.prepare_uvls(current_user.temp_folder())
+            self.logger.info(f"[LOCAL] {len(staged_uvls)} UVLs listos en {stage_dir}")
+
             # Mover modelos
-            created_fms = self.feature_model_service.create_from_uvl_files(dataset)
+            stage_dir, staged_uvls = ingest.prepare_uvls(current_user.temp_folder())
+            created_fms = self.feature_model_service.create_from_uvl_files(
+                dataset, base_dir=stage_dir
+            )
+
             self.logger.info(
                 f"[LOCAL] {len(created_fms)} feature models created for dataset {dataset.id}"
             )
