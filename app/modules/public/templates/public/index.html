@@ -195,92 +195,52 @@
                 {% endif %}
 
                 <div class="col-12">
-
-                  <!-- BLOQUE 1: Contenido del hub -->
                   <div class="card mb-5 shadow-sm">
-                    <div class="card-body p-8">
+                    <div class="card-body p-6">
                       <h2 class="fs-2 fw-bold text-body mb-6">
-                    <i data-feather="layers" class="me-2 text-primary"></i>
-                    Hub content
-                  </h2>
+                        <i data-feather="bar-chart-2" class="me-2 text-primary"></i>
+                        Hub statistics
+                      </h2>
                       <div class="row g-6">
                         <!-- Datasets -->
-                        <div class="col-md-6">
-                          <div class="bg-light-primary rounded p-6 text-center">
-                            <i data-feather="database" class="svg-icon svg-icon-2x mb-2 text-primary"></i>
-                            <div class="fs-3 fw-bold text-gray-800">{{ datasets_counter | format_thousands }}</div>
-                            <div class="text-muted">Datasets</div>
-                          </div>
+                        <div class="col-6 col-md-4 text-center">
+                          <i data-feather="database" class="svg-icon svg-icon-2x mb-2 text-primary"></i>
+                          <div class="fs-3 fw-bold text-gray-800">{{ datasets_counter | format_thousands }}</div>
+                          <div class="text-muted">Datasets</div>
                         </div>
-                        <!-- Feature Models -->
-                        <div class="col-md-6">
-                          <div class="bg-light-info rounded p-6 text-center">
-                            <i data-feather="file" class="svg-icon svg-icon-2x mb-2 text-info"></i>
-                            <div class="fs-3 fw-bold text-gray-800">{{ feature_models_counter | format_thousands }}</div>
-                            <div class="text-muted">Models</div>
-                          </div>
+                        <!-- Models -->
+                        <div class="col-6 col-md-4 text-center">
+                          <i data-feather="file" class="svg-icon svg-icon-2x mb-2 text-info"></i>
+                          <div class="fs-3 fw-bold text-gray-800">{{ feature_models_counter | format_thousands }}</div>
+                          <div class="text-muted">Models</div>
                         </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- BLOQUE 2: Visualizaciones -->
-                  <div class="card mb-5 shadow-sm">
-                    <div class="card-body p-8">
-                  <h2 class="fs-2 fw-bold text-body mb-6">
-                    <i data-feather="eye" class="me-2 text-success"></i>
-                    Views
-                  </h2>
-                      <div class="row g-6">
                         <!-- Dataset views -->
-                        <div class="col-md-6">
-                          <div class="bg-light-success rounded p-6 text-center">
-                            <i data-feather="eye" class="svg-icon svg-icon-2x mb-2 text-success"></i>
-                            <div class="fs-3 fw-bold text-gray-800">{{ total_dataset_views | format_thousands }}</div>
-                            <div class="text-muted">Dataset views</div>
-                          </div>
+                        <div class="col-6 col-md-4 text-center">
+                          <i data-feather="eye" class="svg-icon svg-icon-2x mb-2 text-success"></i>
+                          <div class="fs-3 fw-bold text-gray-800">{{ total_dataset_views | format_thousands }}</div>
+                          <div class="text-muted">Dataset views</div>
                         </div>
-                        <!-- Feature Model views -->
-                        <div class="col-md-6">
-                          <div class="bg-light-success rounded p-6 text-center">
-                            <i data-feather="eye" class="svg-icon svg-icon-2x mb-2 text-success"></i>
-                            <div class="fs-3 fw-bold text-gray-800">{{ total_feature_model_views | format_thousands }}</div>
-                            <div class="text-muted">Model views</div>
-                          </div>
+                        <!-- Model views -->
+                        <div class="col-6 col-md-4 text-center">
+                          <i data-feather="eye" class="svg-icon svg-icon-2x mb-2 text-success"></i>
+                          <div class="fs-3 fw-bold text-gray-800">{{ total_feature_model_views | format_thousands }}</div>
+                          <div class="text-muted">Model views</div>
                         </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- BLOQUE 3: Descargas -->
-                  <div class="card mb-5 shadow-sm">
-                    <div class="card-body p-8">
-                  <h3 class="fs-2 fw-bold text-body mb-6">
-                    <i data-feather="download" class="me-2 text-warning"></i>
-                    Downloads
-                  </h3>
-                      <div class="row g-6">
                         <!-- Dataset downloads -->
-                        <div class="col-md-6">
-                          <div class="bg-light-warning rounded p-6 text-center">
-                            <i data-feather="download" class="svg-icon svg-icon-2x mb-2 text-warning"></i>
-                            <div class="fs-3 fw-bold text-gray-800">{{ total_dataset_downloads | format_thousands }}</div>
-                            <div class="text-muted">Dataset downloads</div>
-                          </div>
+                        <div class="col-6 col-md-4 text-center">
+                          <i data-feather="download" class="svg-icon svg-icon-2x mb-2 text-warning"></i>
+                          <div class="fs-3 fw-bold text-gray-800">{{ total_dataset_downloads | format_thousands }}</div>
+                          <div class="text-muted">Dataset downloads</div>
                         </div>
-                        <!-- Feature Model downloads -->
-                        <div class="col-md-6">
-                          <div class="bg-light-warning rounded p-6 text-center">
-                            <i data-feather="download" class="svg-icon svg-icon-2x mb-2 text-warning"></i>
-                            <div class="fs-3 fw-bold text-gray-800">{{ total_feature_model_downloads | format_thousands }}</div>
-                            <div class="text-muted">Model downloads</div>
-                          </div>
+                        <!-- Model downloads -->
+                        <div class="col-6 col-md-4 text-center">
+                          <i data-feather="download" class="svg-icon svg-icon-2x mb-2 text-warning"></i>
+                          <div class="fs-3 fw-bold text-gray-800">{{ total_feature_model_downloads | format_thousands }}</div>
+                          <div class="text-muted">Model downloads</div>
                         </div>
                       </div>
                     </div>
                   </div>
-
-
                 </div>
 
             </div>
@@ -289,25 +249,77 @@
 
                 <div class="col-12">
 
-                    <div class="card mb-10 shadow-sm">
+                    <div class="card mb-5 shadow-sm">
                       <div class="card-body p-8">
-                        <h2 class="fs-2x fw-bold mb-4">What is uvlhub.io?</h2>
+                        <h2 class="fw-bold mb-4">What is uvlhub.io?</h2>
                         <p class="fs-6 text-gray-600 mb-10">
                           <strong>uvlhub.io</strong> is a repository of feature models in UVL format integrated with
                           Zenodo and flamapy, developed by <strong>DiversoLab</strong>.
                         </p>
 
-                        <h2 class="fs-2x fw-bold mb-4">Can I contribute?</h2>
+                        <h2 class="fw-bold mb-4">Can I contribute?</h2>
                         <p class="fs-6 text-gray-600 mb-6">
                           Sure! You can fork our official GitHub repository, create fantastic features, and then
                           send us a pull request.
                         </p>
 
-                        <a href="https://github.com/diverso-lab/uvlhub" target="_blank" class="btn btn-primary fw-semibold">
-                          Go to GitHub
+                        <a href="https://github.com/diverso-lab/uvlhub" target="_blank" 
+                          class="btn btn-secondary">
+                          <i class="ki-duotone ki-github fs-2">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                          </i>
+                          <span>Go to GitHub</span>
                         </a>
+
                       </div>
                     </div>
+
+                </div>
+
+                <div class="col-12">
+
+                    <div class="card">
+
+                        <div class="card-body">
+                    
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                          <h2 class="mb-0"><b>Cite us!</b></h2>
+                          <button class="btn btn-secondary d-flex align-items-center gap-2 px-4 py-2 fw-bold" 
+                                  data-bs-toggle="modal" data-bs-target="#citationModal">
+                            <i class="ki-duotone ki-heart">
+                              <span class="path1"></span>
+                              <span class="path2"></span>
+                            </i> 
+                            <span class="d-none d-md-inline">How to cite us?</span>
+                          </button>
+                        </div>
+
+                        <p>
+                          David Romero-Organvidez, José A. Galindo, Chico Sundermann, Jose-Miguel Horcas, David Benavides. 
+                          <i>UVLHub: A feature model data repository using UVL and open science principles</i>,
+                          Journal of Systems and Software,
+                          2024,
+                          112150,
+                          ISSN 0164-1212,
+                          <a href="https://doi.org/10.1016/j.jss.2024.112150" target="_blank">https://doi.org/10.1016/j.jss.2024.112150</a>
+                        </p>
+
+                        <p>
+                          David Benavides, Chico Sundermann, Kevin Feichtinger, José A. Galindo, Rick Rabiser and Thomas Thüm,
+                          <i>Uvl: Feature Modelling with the Universal Variability Language.</i>,
+                          Journal of Systems and Software,
+                          Volume 225,
+                          2025,
+                          112326,
+                          ISSN 0164-121
+                          <a href="https://doi.org/10.1016/j.jss.2024.112326" target="_blank">https://doi.org/10.1016/j.jss.2024.112326</a>
+                        </p>
+
+                        </div>
+                    
+                    </div>
+                    
 
                 </div>
 
