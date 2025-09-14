@@ -68,10 +68,13 @@ class Hubfile(db.Model):
 
     def get_ide_url(self) -> str:
         """
-        Devuelve la URL lista para abrir este hubfile en Flamapy IDE,
-        con el import correctamente codificado.
+        Returns the URL ready to open this hubfile in Flamapy IDE,
+        with the import correctly encoded.
+        On localhost, leave http; on any other host, force https.
         """
         raw_url = url_for("hubfile.raw_uvl", file_id=self.id, _external=True)
+        if "localhost" not in raw_url and "127.0.0.1" not in raw_url:
+            raw_url = raw_url.replace("http://", "https://", 1)
         return f"https://ide.flamapy.org/?import={raw_url}"
 
     def to_dict(self):
