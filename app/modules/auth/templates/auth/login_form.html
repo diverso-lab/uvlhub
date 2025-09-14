@@ -51,13 +51,11 @@
                         {{ form.submit(class="btn btn-primary me-3") }}
                         <span class="text-muted">or</span>
                         <a href="{{ url_for('orcid.login') }}"
-                           class="btn btn-info d-flex align-items-center"
-                           style="border-radius: 6px;">
-                            <i class="ki-duotone ki-key fs-4 me-2">
-                                <span class="path1"></span><span class="path2"></span>
-                            </i>
+                        class="btn btn-orcid d-flex align-items-center">
                             Login with ORCID
                         </a>
+
+
                     </div>
 
                     <!-- Signup / Forgot password -->

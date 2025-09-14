@@ -84,3 +84,13 @@ a {
     object-fit: contain;
     object-position: center;
 }
+
+.btn-orcid {
+    background-color: #A6CE39 !important;
+    border-color: #A6CE39 !important;
+    color: #fff !important;
+}
+.btn-orcid:hover {
+    background-color: #8fbf2f !important; /* tono más oscuro al hover */
+    border-color: #8fbf2f !important;
+}
