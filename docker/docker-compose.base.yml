@@ -49,6 +49,7 @@ services:
       - "9200:9200"
     volumes:
       - es_data:/usr/share/elasticsearch/data
+    restart: always
     networks:
       - uvlhub_network
 
