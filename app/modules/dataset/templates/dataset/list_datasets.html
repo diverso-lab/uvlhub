@@ -113,6 +113,17 @@
                                     <span class="path2"></span>
                                 </i>
                             </a>
+                            <a href="javascript:void(0);" 
+                                class="btn btn-sm btn-light-primary me-1 btn-sync d-inline-flex align-items-center"
+                                data-dataset-id="{{ dataset.id }}" 
+                                title="Sync to Zenodo and make public">
+                                <i class="ki-duotone ki-folder-up fs-3">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                                </i>
+                                Sync to Zenodo and make public
+                            </a>
+
                         </td>
                     </tr>
                     {% endfor %}
@@ -123,10 +134,101 @@
 </div>
 {% endif %}
 
+<div class="modal fade" tabindex="-1" id="syncConfirmModal">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      
+      <div class="modal-header">
+        <h5 class="modal-title d-flex align-items-center">
+        <i class="ki-duotone ki-folder-up fs-2 me-2">
+            <span class="path1"></span>
+            <span class="path2"></span>
+        </i>
+        Confirm sync to Zenodo and make public
+        </h5>
+
+        <button type="button" class="btn btn-sm btn-icon" data-bs-dismiss="modal">
+          <i class="ki-duotone ki-cross fs-2"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <p class="fw-semibold text-gray-700">
+          Once synchronized, the dataset will be uploaded permanently to Zenodo.  
+          <b>This action cannot be undone.</b>
+        </p>
+        <p class="text-muted fs-7">
+          Synchronization with Zenodo is required for your dataset to become public in UVLHub.
+        </p>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="confirmSyncBtn">
+        <i class="ki-duotone ki-folder-up fs-2 me-2">
+        <span class="path1"></span>
+        <span class="path2"></span>
+        </i>
+        <span class="btn-text">Sync now</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
 {% endblock %}
 
 
 {% block scripts %}
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    let selectedDatasetId = null;
+    const syncBtn = document.getElementById("confirmSyncBtn");
+    const syncBtnText = syncBtn.querySelector(".btn-text");
+
+    // Abrir modal al pulsar Sync
+    $("#unsynchronizedDatasetsTable").on("click", ".btn-sync", function (e) {
+        e.preventDefault();
+        selectedDatasetId = this.dataset.datasetId;
+        const modal = new bootstrap.Modal(document.getElementById('syncConfirmModal'));
+        modal.show();
+    });
+
+    // Acción de confirmación
+    syncBtn.addEventListener("click", function () {
+        if (!selectedDatasetId) return;
+
+        // Cambiar estado del botón
+        syncBtn.disabled = true;
+        syncBtnText.textContent = "Synchronizing...";
+        syncBtn.insertAdjacentHTML("beforeend", '<span class="spinner-border spinner-border-sm ms-2"></span>');
+
+        fetch(`/datasets/sync/${selectedDatasetId}`, {method: "POST"})
+            .then(r => r.json())
+            .then(data => {
+                if (data.doi) {
+                    toastr.success("Dataset synchronized! DOI: " + data.doi);
+                    location.reload();
+                } else {
+                    toastr.error(data.error || "Failed to sync dataset.");
+                }
+            })
+            .catch(err => toastr.error("Unexpected error: " + err))
+            .finally(() => {
+                // restaurar botón si NO recargas
+                syncBtn.disabled = false;
+                syncBtnText.textContent = "Sync now";
+                syncBtn.querySelector(".spinner-border")?.remove();
+            });
+    });
+});
+</script>
+
+
+
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         $("#synchronizedDatasetsTable").DataTable();

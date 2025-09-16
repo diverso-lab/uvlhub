@@ -215,6 +215,38 @@ def get_unsynchronized_dataset(dataset_id):
     return render_template("dataset/view_dataset.html", dataset=dataset, hubfiles=hubfiles)
 
 
+@dataset_bp.route("/datasets/sync/<int:dataset_id>", methods=["POST", "GET"])
+@login_required
+@is_dataset_owner
+def sync_dataset(dataset_id):
+    dataset = dataset_service.get_or_404(dataset_id)
+
+    if dataset.ds_meta_data.dataset_doi:
+        return jsonify({"error": "Dataset already synchronized"}), 400
+
+    zenodo_service_facade = ZenodoDatasetService(zenodo_service, dataset_service, logger)
+    try:
+        doi = zenodo_service_facade.upload_to_zenodo(dataset, dataset.ds_meta_data, "zenodo", current_user)
+    except Exception as exc:
+        logger.exception(f"[SYNC ERROR] {exc}")
+        return jsonify({"error": f"Zenodo upload failed: {exc}"}), 400
+
+    # Indexar en Elasticsearch
+    indexing_service = IndexingService(index_dataset, index_hubfile, logger)
+    try:
+        dataset = dataset_service.get_by_id(dataset.id)
+        indexing_service.index_dataset_and_hubfiles(dataset, dataset.feature_models)
+    except Exception as exc:
+        logger.warning(f"[SYNC] Dataset {dataset.id} uploaded, but indexing failed: {exc}")
+
+    if request.method == "GET":
+        # redirección visual
+        return redirect(url_for("dataset.list_dataset"))
+    else:
+        # respuesta JSON (útil si luego quieres AJAX)
+        return jsonify({"message": "Dataset synchronized", "doi": doi}), 200
+
+
 # REST API
 
 
