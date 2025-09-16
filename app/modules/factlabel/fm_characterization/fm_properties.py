@@ -1,5 +1,5 @@
-from typing import Any, Optional
 from enum import Enum
+from typing import Any, Optional
 
 
 class FMProperty:
@@ -68,9 +68,7 @@ class FMProperties(Enum):
     DESCRIPTION = FMProperty("Description", "Description of the feature model.", None)
     AUTHOR = FMProperty("Author", "Author of the feature model", None)
     YEAR = FMProperty("Year", "Year of creation of the feature model", None)
-    REFERENCE = FMProperty(
-        "Reference", "Main paper for reference or DOI of the feature model", None
-    )
+    REFERENCE = FMProperty("Reference", "Main paper for reference or DOI of the feature model", None)
     TAGS = FMProperty("Tags", "Tags or keywords that identify the feature model.", None)
     DOMAIN = FMProperty("Domain", "Domain of the feature model.", None)
 
@@ -91,55 +89,38 @@ class FMProperties(Enum):
         "Features that have not subfeatures (aka 'primitive features' or 'terminal features').",
         FEATURES,
     )
-    COMPOUND_FEATURES = FMProperty(
-        "Compound features", "Features that have subfeatures.", FEATURES
-    )
+    COMPOUND_FEATURES = FMProperty("Compound features", "Features that have subfeatures.", FEATURES)
     CONCRETE_COMPOUND_FEATURES = FMProperty(
         "Concrete compound features",
         "Concrete and compound features.",
         CONCRETE_FEATURES,
     )
-    CONCRETE_LEAF_FEATURES = FMProperty(
-        "Concrete leaf features", "Concrete and leaf features.", CONCRETE_FEATURES
-    )
+    CONCRETE_LEAF_FEATURES = FMProperty("Concrete leaf features", "Concrete and leaf features.", CONCRETE_FEATURES)
     ABSTRACT_COMPOUND_FEATURES = FMProperty(
         "Abstract compound features",
         "Abstract and compound features.",
         ABSTRACT_FEATURES,
     )
-    ABSTRACT_LEAF_FEATURES = FMProperty(
-        "Abstract leaf features", "Abstract and leaf features.", ABSTRACT_FEATURES
-    )
+    ABSTRACT_LEAF_FEATURES = FMProperty("Abstract leaf features", "Abstract and leaf features.", ABSTRACT_FEATURES)
     TREE_RELATIONSHIPS = FMProperty(
         "Tree relationships",
         "Number of relationships (edges) of the feature model.",
         None,
     )
-    ROOT_FEATURE = FMProperty(
-        "Root feature", "The root of the feature model.", FEATURES
-    )
-    TOP_FEATURES = FMProperty(
-        "Top features", "Features that are first descendants of the root.", ROOT_FEATURE
-    )
+    ROOT_FEATURE = FMProperty("Root feature", "The root of the feature model.", FEATURES)
+    TOP_FEATURES = FMProperty("Top features", "Features that are first descendants of the root.", ROOT_FEATURE)
     SOLITARY_FEATURES = FMProperty(
         "Solitary features",
         "Features that are not grouped in a feature group.",
         FEATURES,
     )
-    GROUPED_FEATURES = FMProperty(
-        "Grouped features", "Features that occurs in a feature group.", FEATURES
-    )
+    GROUPED_FEATURES = FMProperty("Grouped features", "Features that occurs in a feature group.", FEATURES)
     MANDATORY_FEATURES = FMProperty(
         "Mandatory features",
-        (
-            "Features marked as mandatory that need to be selected "
-            "if its parent is selected."
-        ),
+        ("Features marked as mandatory that need to be selected " "if its parent is selected."),
         TREE_RELATIONSHIPS,
     )
-    OPTIONAL_FEATURES = FMProperty(
-        "Optional features", "Feature marked as optional.", TREE_RELATIONSHIPS
-    )
+    OPTIONAL_FEATURES = FMProperty("Optional features", "Feature marked as optional.", TREE_RELATIONSHIPS)
     FEATURE_GROUPS = FMProperty(
         "Feature groups",
         "Features that express a choice over the grouped features in a group.",
@@ -209,9 +190,7 @@ class FMProperties(Enum):
         DEPTH_TREE,
     )
 
-    CROSS_TREE_CONSTRAINTS = FMProperty(
-        "Cross-tree constraints", "Textual cross-tree constraints.", None
-    )
+    CROSS_TREE_CONSTRAINTS = FMProperty("Cross-tree constraints", "Textual cross-tree constraints.", None)
     SIMPLE_CONSTRAINTS = FMProperty(
         "Simple constraints",
         "Requires and Excludes constraints.",
@@ -280,12 +259,8 @@ class FMProperties(Enum):
         "Features that do not appear in all the configurations.",
         None,
     )  # Also 'Real optional features'
-    DEAD_FEATURES = FMProperty(
-        "Dead features", "Features that cannot appear in any configuration.", None
-    )
-    UNIQUE_FEATURES = FMProperty(
-        "Unique features", "Features that appear in exactly one configuration.", None
-    )
+    DEAD_FEATURES = FMProperty("Dead features", "Features that cannot appear in any configuration.", None)
+    UNIQUE_FEATURES = FMProperty("Unique features", "Features that appear in exactly one configuration.", None)
     FALSE_OPTIONAL_FEATURES = FMProperty(
         "False-optional features",
         "Features defined as optionals the selection of their parents make the feature itself selected as well.",

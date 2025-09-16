@@ -1,5 +1,6 @@
 from flask import current_app, redirect, url_for
 from flask_login import login_user
+
 from app.modules.orcid import orcid_bp
 from app.modules.orcid.services import OrcidService
 

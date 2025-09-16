@@ -13,8 +13,35 @@ dependencies = [
     "python-dotenv",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "black",
+    "isort",
+    "flake8",
+    "autoflake",
+]
+
 [project.scripts]
 rosemary = "rosemary.cli:cli"
 
 [tool.setuptools]
 packages = ["rosemary"]
+
+# --------------------
+# Formatting & linting
+# --------------------
+
+[tool.black]
+line-length = 120
+target-version = ["py313"]
+
+[tool.isort]
+line_length = 120
+profile = "black"
+
+[flake8]
+max-line-length = 120
+extend-ignore = [
+    "E203",  # espacios antes de ':', Black ya lo maneja
+    "W503",  # salto de línea antes de operador binario
+]

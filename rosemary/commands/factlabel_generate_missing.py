@@ -13,17 +13,13 @@ def factlabel_generate_missing():
 
     click.echo(click.style("🔎 Looking for hubfiles without FactLabel...", fg="cyan"))
 
-    missing = Hubfile.query.filter(
-        (Hubfile.factlabel_json.is_(None)) | (Hubfile.factlabel_json == "")
-    ).all()
+    missing = Hubfile.query.filter((Hubfile.factlabel_json.is_(None)) | (Hubfile.factlabel_json == "")).all()
 
     if not missing:
         click.echo(click.style("✅ All hubfiles already have FactLabels!", fg="green"))
         return
 
-    click.echo(
-        click.style(f"Found {len(missing)} hubfiles missing FactLabels.", fg="yellow")
-    )
+    click.echo(click.style(f"Found {len(missing)} hubfiles missing FactLabels.", fg="yellow"))
 
     task_manager = TaskQueueManager()
     count_enqueued = 0
@@ -36,18 +32,8 @@ def factlabel_generate_missing():
                 timeout=5,
             )
             count_enqueued += 1
-            click.echo(
-                click.style(
-                    f"📤 Hubfile {hubfile.id} enqueued for FactLabel", fg="cyan"
-                )
-            )
+            click.echo(click.style(f"📤 Hubfile {hubfile.id} enqueued for FactLabel", fg="cyan"))
         except Exception as e:
-            click.echo(
-                click.style(f"❌ Could not enqueue Hubfile {hubfile.id}: {e}", fg="red")
-            )
+            click.echo(click.style(f"❌ Could not enqueue Hubfile {hubfile.id}: {e}", fg="red"))
 
-    click.echo(
-        click.style(
-            f"\n🎉 Enqueued {count_enqueued} jobs for FactLabel generation.", fg="green"
-        )
-    )
+    click.echo(click.style(f"\n🎉 Enqueued {count_enqueued} jobs for FactLabel generation.", fg="green"))

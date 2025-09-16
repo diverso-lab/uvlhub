@@ -1,5 +1,6 @@
 import os
 import subprocess
+
 import click
 
 
@@ -19,16 +20,13 @@ def selenium(module):
             selenium_test_path = os.path.join(module_path, "tests", "test_selenium.py")
             if not os.path.exists(selenium_test_path):
                 raise click.UsageError(
-                    f"Selenium test for module '{module}' does not exist at path "
-                    f"'{selenium_test_path}'."
+                    f"Selenium test for module '{module}' does not exist at path " f"'{selenium_test_path}'."
                 )
 
     def run_selenium_tests_in_local(module):
         """Run the Selenium tests."""
         if module:
-            selenium_test_path = os.path.join(
-                modules_dir, module, "tests", "test_selenium.py"
-            )
+            selenium_test_path = os.path.join(modules_dir, module, "tests", "test_selenium.py")
             test_command = ["python", selenium_test_path]
         else:
             selenium_test_paths = []

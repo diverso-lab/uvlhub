@@ -1,18 +1,17 @@
 import logging
 import os
 import shutil
-import requests
 
+import requests
+from dotenv import load_dotenv
+from flask import Response, jsonify
+from flask_login import current_user
+
+from app import db
 from app.modules.dataset.models import DataSet
 from app.modules.featuremodel.models import FeatureModel
 from app.modules.zenodo.repositories import ZenodoRepository
-
 from core.configuration.configuration import uploads_folder_name
-from dotenv import load_dotenv
-from flask import jsonify, Response
-from flask_login import current_user
-from app import db
-
 from core.services.BaseService import BaseService
 
 logger = logging.getLogger(__name__)
@@ -35,17 +34,11 @@ class ZenodoService(BaseService):
         ZENODO_API_URL = ""
 
         if FLASK_ENV == "development":
-            ZENODO_API_URL = os.getenv(
-                "ZENODO_API_URL", "https://sandbox.zenodo.org/api/deposit/depositions"
-            )
+            ZENODO_API_URL = os.getenv("ZENODO_API_URL", "https://sandbox.zenodo.org/api/deposit/depositions")
         elif FLASK_ENV == "production":
-            ZENODO_API_URL = os.getenv(
-                "ZENODO_API_URL", "https://zenodo.org/api/deposit/depositions"
-            )
+            ZENODO_API_URL = os.getenv("ZENODO_API_URL", "https://zenodo.org/api/deposit/depositions")
         else:
-            ZENODO_API_URL = os.getenv(
-                "ZENODO_API_URL", "https://sandbox.zenodo.org/api/deposit/depositions"
-            )
+            ZENODO_API_URL = os.getenv("ZENODO_API_URL", "https://sandbox.zenodo.org/api/deposit/depositions")
 
         return ZENODO_API_URL
 
@@ -59,9 +52,7 @@ class ZenodoService(BaseService):
         Returns:
             bool: True if the connection is successful, False otherwise.
         """
-        response = requests.get(
-            self.ZENODO_API_URL, params=self.params, headers=self.headers
-        )
+        response = requests.get(self.ZENODO_API_URL, params=self.params, headers=self.headers)
         return response.status_code == 200
 
     def test_full_connection(self) -> Response:
@@ -93,9 +84,7 @@ class ZenodoService(BaseService):
             }
         }
 
-        response = requests.post(
-            self.ZENODO_API_URL, json=data, params=self.params, headers=self.headers
-        )
+        response = requests.post(self.ZENODO_API_URL, json=data, params=self.params, headers=self.headers)
 
         if response.status_code != 201:
             return jsonify(
@@ -114,9 +103,7 @@ class ZenodoService(BaseService):
         data = {"name": "test_file.txt"}
         files = {"file": open(file_path, "rb")}
         publish_url = f"{self.ZENODO_API_URL}/{deposition_id}/files"
-        response = requests.post(
-            publish_url, params=self.params, data=data, files=files
-        )
+        response = requests.post(publish_url, params=self.params, data=data, files=files)
         files["file"].close()  # Close the file after uploading
 
         logger.info(f"Publish URL: {publish_url}")
@@ -127,15 +114,11 @@ class ZenodoService(BaseService):
         logger.info(f"Response Content: {response.content}")
 
         if response.status_code != 201:
-            messages.append(
-                f"Failed to upload test file to Zenodo. Response code: {response.status_code}"
-            )
+            messages.append(f"Failed to upload test file to Zenodo. Response code: {response.status_code}")
             success = False
 
         # Step 3: Delete the deposition
-        response = requests.delete(
-            f"{self.ZENODO_API_URL}/{deposition_id}", params=self.params
-        )
+        response = requests.delete(f"{self.ZENODO_API_URL}/{deposition_id}", params=self.params)
 
         if os.path.exists(file_path):
             os.remove(file_path)
@@ -149,9 +132,7 @@ class ZenodoService(BaseService):
         Returns:
             dict: The response in JSON format with the depositions.
         """
-        response = requests.get(
-            self.ZENODO_API_URL, params=self.params, headers=self.headers
-        )
+        response = requests.get(self.ZENODO_API_URL, params=self.params, headers=self.headers)
         if response.status_code != 200:
             raise Exception("Failed to get depositions")
         return response.json()
@@ -169,21 +150,20 @@ class ZenodoService(BaseService):
         """
 
         logger.info("Dataset sending to Zenodo...")
-        logger.info(
-            f"Publication type... {dataset.ds_meta_data.publication_type.value}"
+        pub_type = (
+            dataset.ds_meta_data.publication_type.value
+            if dataset.ds_meta_data.publication_type
+            else "Not specified"
         )
+
+        logger.info(f"Publication type... {pub_type}")
+
         logger.info(f"Anonymous upload: {anonymous}")
 
-        upload_type = (
-            "dataset"
-            if dataset.ds_meta_data.publication_type.value == "none"
-            else "publication"
-        )
-        publication_type = (
-            dataset.ds_meta_data.publication_type.value
-            if dataset.ds_meta_data.publication_type.value != "none"
-            else None
-        )
+        pub_type = dataset.ds_meta_data.publication_type.value if dataset.ds_meta_data.publication_type else None
+
+        upload_type = "dataset" if pub_type == "none" else "publication"
+        publication_type = pub_type if pub_type and pub_type != "none" else None
 
         if anonymous or not dataset.ds_meta_data.authors:
             creators = [{"name": "Anonymous"}]
@@ -191,11 +171,7 @@ class ZenodoService(BaseService):
             creators = [
                 {
                     "name": author.name,
-                    **(
-                        {"affiliation": author.affiliation}
-                        if author.affiliation
-                        else {}
-                    ),
+                    **({"affiliation": author.affiliation} if author.affiliation else {}),
                     **({"orcid": author.orcid} if author.orcid else {}),
                 }
                 for author in dataset.ds_meta_data.authors
@@ -220,13 +196,9 @@ class ZenodoService(BaseService):
 
         data = {"metadata": metadata}
 
-        response = requests.post(
-            self.ZENODO_API_URL, params=self.params, json=data, headers=self.headers
-        )
+        response = requests.post(self.ZENODO_API_URL, params=self.params, json=data, headers=self.headers)
         if response.status_code != 201:
-            error_message = (
-                f"Failed to create deposition. Error details: {response.json()}"
-            )
+            error_message = f"Failed to create deposition. Error details: {response.json()}"
             raise Exception(error_message)
 
         return response.json()
@@ -263,9 +235,7 @@ class ZenodoService(BaseService):
         files = {"file": open(file_path, "rb")}
 
         publish_url = f"{self.ZENODO_API_URL}/{deposition_id}/files"
-        response = requests.post(
-            publish_url, params=self.params, data=data, files=files
-        )
+        response = requests.post(publish_url, params=self.params, data=data, files=files)
         if response.status_code != 201:
             error_message = f"Failed to upload files. Error details: {response.json()}"
             raise Exception(error_message)
@@ -280,9 +250,7 @@ class ZenodoService(BaseService):
         with open(zip_path, "rb") as file_obj:
             files = {"file": file_obj}
             upload_url = f"{self.ZENODO_API_URL}/{deposition_id}/files"
-            response = requests.post(
-                upload_url, params=self.params, data=data, files=files
-            )
+            response = requests.post(upload_url, params=self.params, data=data, files=files)
 
         if response.status_code != 201:
             logger.error(f"Failed to upload ZIP: {response.content}")
@@ -327,9 +295,7 @@ class ZenodoService(BaseService):
         # Step 1: Change the deposition to an editable draft
         edit_url = f"{self.ZENODO_API_URL}/{deposition_id}/actions/edit"
         logger.info(f"Zenodo edit URL: {edit_url}")
-        edit_response = requests.post(
-            edit_url, params=self.params, headers=self.headers
-        )
+        edit_response = requests.post(edit_url, params=self.params, headers=self.headers)
 
         if edit_response.status_code != 201:
             error_message = (
@@ -343,9 +309,7 @@ class ZenodoService(BaseService):
         data = {"metadata": metadata}
         update_url = f"{self.ZENODO_API_URL}/{deposition_id}"
         logger.info(f"Zenodo update URL: {update_url}")
-        update_response = requests.put(
-            update_url, params=self.params, json=data, headers=self.headers
-        )
+        update_response = requests.put(update_url, params=self.params, json=data, headers=self.headers)
 
         if update_response.status_code != 200:
             error_message = (
@@ -371,9 +335,7 @@ class ZenodoService(BaseService):
             dict: The response in JSON format with the details of the deposition.
         """
         deposition_url = f"{self.ZENODO_API_URL}/{deposition_id}"
-        response = requests.get(
-            deposition_url, params=self.params, headers=self.headers
-        )
+        response = requests.get(deposition_url, params=self.params, headers=self.headers)
         if response.status_code != 200:
             raise Exception("Failed to get deposition")
         return response.json()
@@ -404,16 +366,12 @@ class ZenodoDatasetService:
         """
         try:
             anonymous = dataset_type == "zenodo_anonymous"
-            deposition = self.zenodo_service.create_new_deposition(
-                dataset, anonymous=anonymous
-            )
+            deposition = self.zenodo_service.create_new_deposition(dataset, anonymous=anonymous)
             deposition_id = deposition.get("id")
             self.logger.info(f"[ZENODO] Deposition created with ID: {deposition_id}")
 
             # Guardar deposition_id en DB
-            self.dataset_service.update_dsmetadata(
-                ds_meta.id, deposition_id=deposition_id
-            )
+            self.dataset_service.update_dsmetadata(ds_meta.id, deposition_id=deposition_id)
 
             # Crear ZIP
             zip_path = self.dataset_service.zip_dataset(dataset)
@@ -430,13 +388,9 @@ class ZenodoDatasetService:
             if doi:
                 self.dataset_service.update_dsmetadata(ds_meta.id, dataset_doi=doi)
                 dataset = self.dataset_service.get_by_id(dataset.id)
-                self.logger.info(
-                    f"[ZENODO] Dataset {dataset.id} published with DOI: {doi}"
-                )
+                self.logger.info(f"[ZENODO] Dataset {dataset.id} published with DOI: {doi}")
             else:
-                self.logger.warning(
-                    f"[ZENODO] No DOI received for deposition {deposition_id}"
-                )
+                self.logger.warning(f"[ZENODO] No DOI received for deposition {deposition_id}")
 
             # Cleanup temporal
             shutil.rmtree(current_user.temp_folder(), ignore_errors=True)

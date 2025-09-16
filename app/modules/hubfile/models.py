@@ -3,15 +3,15 @@ import os
 from datetime import datetime
 
 import pytz
-from sqlalchemy import event, Text
+from dotenv import load_dotenv
+from flask import url_for
+from sqlalchemy import Text, event
 from sqlalchemy.orm import joinedload, object_session
 
 from app import db
 from app.modules.auth.models import User
 from app.modules.dataset.models import DataSet
 from core.managers.task_queue_manager import TaskQueueManager
-from dotenv import load_dotenv
-from flask import url_for
 
 logger = logging.getLogger(__name__)
 load_dotenv()
@@ -24,9 +24,7 @@ class Hubfile(db.Model):
     name = db.Column(db.String(120), nullable=False)
     checksum = db.Column(db.String(120), nullable=False)
     size = db.Column(db.Integer, nullable=False)
-    feature_model_id = db.Column(
-        db.Integer, db.ForeignKey("feature_model.id"), nullable=False
-    )
+    feature_model_id = db.Column(db.Integer, db.ForeignKey("feature_model.id"), nullable=False)
 
     feature_model = db.relationship("FeatureModel", back_populates="hubfiles")
     factlabel_json = db.Column(Text, nullable=True)
@@ -112,9 +110,7 @@ class HubfileDownloadRecord(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
     file_id = db.Column(db.Integer, db.ForeignKey("hubfiles.id"), nullable=False)
-    download_date = db.Column(
-        db.DateTime, default=lambda: datetime.now(pytz.utc), nullable=False
-    )
+    download_date = db.Column(db.DateTime, default=lambda: datetime.now(pytz.utc), nullable=False)
     download_cookie = db.Column(db.String(36), nullable=False)
 
     def __repr__(self):
@@ -126,21 +122,14 @@ def hubfile_after_insert_listener(mapper, connection, target):
     session = object_session(target)
 
     hubfile_with_fm = (
-        session.query(Hubfile)
-        .options(joinedload(Hubfile.feature_model))
-        .filter(Hubfile.id == target.id)
-        .first()
+        session.query(Hubfile).options(joinedload(Hubfile.feature_model)).filter(Hubfile.id == target.id).first()
     )
     path = hubfile_with_fm.get_full_path()
 
     task_manager = TaskQueueManager()
 
     # Transformación UVL
-    task_manager.enqueue_task(
-        "app.modules.hubfile.tasks.transform_uvl", path=path, timeout=5
-    )
+    task_manager.enqueue_task("app.modules.hubfile.tasks.transform_uvl", path=path, timeout=5)
 
     # Fact Label
-    task_manager.enqueue_task(
-        "app.modules.hubfile.tasks.compute_factlabel", hubfile_id=target.id, timeout=5
-    )
+    task_manager.enqueue_task("app.modules.hubfile.tasks.compute_factlabel", hubfile_id=target.id, timeout=5)

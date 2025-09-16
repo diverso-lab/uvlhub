@@ -1,10 +1,10 @@
 import base64
-from io import BytesIO
 import random
-from PIL import Image
-from captcha.image import ImageCaptcha
+from io import BytesIO
 
+from captcha.image import ImageCaptcha
 from flask import session
+from PIL import Image
 
 
 class CaptchaService:

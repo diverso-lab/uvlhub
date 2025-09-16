@@ -1,10 +1,11 @@
-from io import BytesIO
 import os
 import zipfile
+from io import BytesIO
+
 from flask import render_template, request, send_file
+
 from app.modules.downloadqueue import downloadqueue_bp
 from app.modules.hubfile.services import HubfileService
-
 
 hubfile_service = HubfileService()
 

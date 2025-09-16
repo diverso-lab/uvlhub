@@ -1,10 +1,11 @@
 import statistics
 
-from fm_characterization import FMProperties, FMPropertyMeasure
-from .fm_utils import get_ratio
-from . import constraints_utils as ctcs_utils
-from flamapy.metamodels.fm_metamodel.models import FeatureModel, Feature
 from flamapy.metamodels.fm_metamodel import operations as fm_operations
+from flamapy.metamodels.fm_metamodel.models import Feature, FeatureModel
+from fm_characterization import FMProperties, FMPropertyMeasure
+
+from . import constraints_utils as ctcs_utils
+from .fm_utils import get_ratio
 
 
 class FMMetrics:
@@ -50,10 +51,7 @@ class FMMetrics:
                     self._strictcomplex_constraints.append(str(ctc))
 
         self._constraints_per_features = constraints_per_features(model, self._features)
-        self._feature_ancestors = [
-            len(get_feature_ancestors(self._features_by_name[f]))
-            for f in self._leaf_features
-        ]
+        self._feature_ancestors = [len(get_feature_ancestors(self._features_by_name[f])) for f in self._leaf_features]
 
     def get_metrics(self) -> list[FMPropertyMeasure]:
         result = []
@@ -131,9 +129,7 @@ class FMMetrics:
         )
 
     def fm_top_features(self) -> FMPropertyMeasure:
-        _top_features = [
-            f.name for r in self.fm.root.get_relations() for f in r.children
-        ]
+        _top_features = [f.name for r in self.fm.root.get_relations() for f in r.children]
         return FMPropertyMeasure(
             FMProperties.TOP_FEATURES.value,
             _top_features,
@@ -151,9 +147,7 @@ class FMMetrics:
         )
 
     def fm_compound_features(self) -> FMPropertyMeasure:
-        _compound_features = [
-            f.name for f in self._features if len(f.get_relations()) > 0
-        ]
+        _compound_features = [f.name for f in self._features if len(f.get_relations()) > 0]
         return FMPropertyMeasure(
             FMProperties.COMPOUND_FEATURES.value,
             _compound_features,
@@ -162,11 +156,7 @@ class FMMetrics:
         )
 
     def fm_abstract_leaf_features(self) -> FMPropertyMeasure:
-        _abstract_leaf_features = [
-            name
-            for name, f in self._abstract_features.items()
-            if len(f.get_relations()) == 0
-        ]
+        _abstract_leaf_features = [name for name, f in self._abstract_features.items() if len(f.get_relations()) == 0]
         return FMPropertyMeasure(
             FMProperties.ABSTRACT_LEAF_FEATURES.value,
             _abstract_leaf_features,
@@ -176,9 +166,7 @@ class FMMetrics:
 
     def fm_abstract_compound_features(self) -> FMPropertyMeasure:
         _abstract_compound_features = [
-            name
-            for name, f in self._abstract_features.items()
-            if len(f.get_relations()) > 0
+            name for name, f in self._abstract_features.items() if len(f.get_relations()) > 0
         ]
         return FMPropertyMeasure(
             FMProperties.ABSTRACT_COMPOUND_FEATURES.value,
@@ -188,11 +176,7 @@ class FMMetrics:
         )
 
     def fm_concrete_leaf_features(self) -> FMPropertyMeasure:
-        _concrete_leaf_features = [
-            name
-            for name, f in self._concrete_features.items()
-            if len(f.get_relations()) == 0
-        ]
+        _concrete_leaf_features = [name for name, f in self._concrete_features.items() if len(f.get_relations()) == 0]
         return FMPropertyMeasure(
             FMProperties.CONCRETE_LEAF_FEATURES.value,
             _concrete_leaf_features,
@@ -202,9 +186,7 @@ class FMMetrics:
 
     def fm_concrete_compound_features(self) -> FMPropertyMeasure:
         _concrete_compound_features = [
-            name
-            for name, f in self._concrete_features.items()
-            if len(f.get_relations()) > 0
+            name for name, f in self._concrete_features.items() if len(f.get_relations()) > 0
         ]
         return FMPropertyMeasure(
             FMProperties.CONCRETE_COMPOUND_FEATURES.value,
@@ -222,11 +204,7 @@ class FMMetrics:
         )
 
     def fm_solitary_features(self) -> FMPropertyMeasure:
-        _solitary_features = [
-            f.name
-            for f in self._features
-            if not f.is_root() and not f.parent.is_group()
-        ]
+        _solitary_features = [f.name for f in self._features if not f.is_root() and not f.parent.is_group()]
         return FMPropertyMeasure(
             FMProperties.SOLITARY_FEATURES.value,
             _solitary_features,
@@ -235,9 +213,7 @@ class FMMetrics:
         )
 
     def fm_grouped_features(self) -> FMPropertyMeasure:
-        _grouped_features = [
-            f.name for f in self._features if not f.is_root() and f.parent.is_group()
-        ]
+        _grouped_features = [f.name for f in self._features if not f.is_root() and f.parent.is_group()]
         return FMPropertyMeasure(
             FMProperties.GROUPED_FEATURES.value,
             _grouped_features,
@@ -305,9 +281,7 @@ class FMMetrics:
 
     def fm_cardinality_groups(self) -> FMPropertyMeasure:
         _group_features = [f.name for f in self._features if f.is_group()]
-        _cardinality_groups = [
-            f.name for f in self._features if f.is_cardinality_group()
-        ]
+        _cardinality_groups = [f.name for f in self._features if f.is_cardinality_group()]
         return FMPropertyMeasure(
             FMProperties.CARDINALITY_GROUPS.value,
             _cardinality_groups,
@@ -326,52 +300,33 @@ class FMMetrics:
 
     def fm_mean_depth_tree(self) -> FMPropertyMeasure:
         _mean_depth_tree = statistics.mean(self._feature_ancestors)
-        return FMPropertyMeasure(
-            FMProperties.MEAN_DEPTH_TREE.value, round(_mean_depth_tree, 2)
-        )
+        return FMPropertyMeasure(FMProperties.MEAN_DEPTH_TREE.value, round(_mean_depth_tree, 2))
 
     def fm_median_depth_tree(self) -> FMPropertyMeasure:
         _median_depth_tree = statistics.median(self._feature_ancestors)
-        return FMPropertyMeasure(
-            FMProperties.MEDIAN_DEPTH_TREE.value, round(_median_depth_tree, 2)
-        )
+        return FMPropertyMeasure(FMProperties.MEDIAN_DEPTH_TREE.value, round(_median_depth_tree, 2))
 
     def fm_avg_branching_factor(self) -> FMPropertyMeasure:
         _avg_branching_factor = fm_operations.average_branching_factor(self.fm)
-        return FMPropertyMeasure(
-            FMProperties.BRANCHING_FACTOR.value, _avg_branching_factor
-        )
+        return FMPropertyMeasure(FMProperties.BRANCHING_FACTOR.value, _avg_branching_factor)
 
     def fm_min_children_per_feature(self) -> FMPropertyMeasure:
         n_children = [
-            sum(len(r.children) for r in feature.get_relations())
-            for feature in self._features
-            if not feature.is_leaf()
+            sum(len(r.children) for r in feature.get_relations()) for feature in self._features if not feature.is_leaf()
         ]
         _min_children_per_feature = min(n_children) if len(n_children) > 0 else 0
-        return FMPropertyMeasure(
-            FMProperties.MIN_CHILDREN_PER_FEATURE.value, _min_children_per_feature
-        )
+        return FMPropertyMeasure(FMProperties.MIN_CHILDREN_PER_FEATURE.value, _min_children_per_feature)
 
     def fm_max_children_per_feature(self) -> FMPropertyMeasure:
         _max_children_per_feature = max(
-            sum(len(r.children) for r in feature.get_relations())
-            for feature in self._features
+            sum(len(r.children) for r in feature.get_relations()) for feature in self._features
         )
-        return FMPropertyMeasure(
-            FMProperties.MAX_CHILDREN_PER_FEATURE.value, _max_children_per_feature
-        )
+        return FMPropertyMeasure(FMProperties.MAX_CHILDREN_PER_FEATURE.value, _max_children_per_feature)
 
     def fm_avg_children_per_feature(self) -> FMPropertyMeasure:
-        nof_children = sum(
-            len(r.children)
-            for feature in self._features
-            for r in feature.get_relations()
-        )
+        nof_children = sum(len(r.children) for feature in self._features for r in feature.get_relations())
         _avg_children_per_feature = round(nof_children / len(self._features), 2)
-        return FMPropertyMeasure(
-            FMProperties.AVG_CHILDREN_PER_FEATURE.value, _avg_children_per_feature
-        )
+        return FMPropertyMeasure(FMProperties.AVG_CHILDREN_PER_FEATURE.value, _avg_children_per_feature)
 
     def fm_cross_tree_constraints(self) -> FMPropertyMeasure:
         _cross_tree_constraints = self._constraints
@@ -436,9 +391,7 @@ class FMMetrics:
         )
 
     def fm_extra_constraint_representativeness(self) -> FMPropertyMeasure:
-        _features_in_constraints = list(
-            {f for ctc in self.fm.get_constraints() for f in ctc.get_features()}
-        )
+        _features_in_constraints = list({f for ctc in self.fm.get_constraints() for f in ctc.get_features()})
         _ecr = get_ratio(_features_in_constraints, self._features, 2)
         return FMPropertyMeasure(
             FMProperties.EXTRA_CONSTRAINT_REPRESENTATIVENESS.value,
@@ -476,9 +429,7 @@ def constraints_per_features(fm: FeatureModel, features: list[Feature]) -> list[
         _features_per_constraints.append([f for f in ctc.get_features()])
 
     for feature in features:
-        cpf = sum(
-            feature.name in feature_list for feature_list in _features_per_constraints
-        )
+        cpf = sum(feature.name in feature_list for feature_list in _features_per_constraints)
         _constraints_per_feature.append(cpf)
 
     return _constraints_per_feature

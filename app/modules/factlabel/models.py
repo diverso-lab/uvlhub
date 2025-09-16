@@ -1,7 +1,8 @@
-from typing import Optional, Any
-from app import db
+from typing import Any, Optional
 
 from flamapy.core.operations import Metrics
+
+from app import db
 
 
 class Factlabel(db.Model):
@@ -44,45 +45,31 @@ class FMMetadata:
 
     def fm_name(self, value: Optional[str] = None) -> dict[str, Any]:
         """Name of the feature model."""
-        return Metrics.construct_result(
-            name="Name", doc=self.fm_name.__doc__, result=value
-        )
+        return Metrics.construct_result(name="Name", doc=self.fm_name.__doc__, result=value)
 
     def fm_description(self, value: Optional[str] = None) -> dict[str, Any]:
         """Description of the feature model."""
-        return Metrics.construct_result(
-            name="Description", doc=self.fm_name.__doc__, result=value
-        )
+        return Metrics.construct_result(name="Description", doc=self.fm_name.__doc__, result=value)
 
     def fm_author(self, value: Optional[str] = None) -> dict[str, Any]:
         """Author of the feature model."""
-        return Metrics.construct_result(
-            name="Author", doc=self.fm_name.__doc__, result=value
-        )
+        return Metrics.construct_result(name="Author", doc=self.fm_name.__doc__, result=value)
 
     def fm_year(self, value: Optional[str] = None) -> dict[str, Any]:
         """Year of creation of the feature model."""
-        return Metrics.construct_result(
-            name="Year", doc=self.fm_name.__doc__, result=value
-        )
+        return Metrics.construct_result(name="Year", doc=self.fm_name.__doc__, result=value)
 
     def fm_reference(self, value: Optional[str] = None) -> dict[str, Any]:
         """Main paper for reference or DOI of the feature model."""
-        return Metrics.construct_result(
-            name="Reference", doc=self.fm_name.__doc__, result=value
-        )
+        return Metrics.construct_result(name="Reference", doc=self.fm_name.__doc__, result=value)
 
     def fm_tags(self, value: Optional[str] = None) -> dict[str, Any]:
         """Tags or keywords that identify the feature model."""
-        return Metrics.construct_result(
-            name="Tags", doc=self.fm_name.__doc__, result=value
-        )
+        return Metrics.construct_result(name="Tags", doc=self.fm_name.__doc__, result=value)
 
     def fm_domains(self, value: Optional[str] = None) -> dict[str, Any]:
         """Domain of the feature model."""
-        return Metrics.construct_result(
-            name="Domain", doc=self.fm_name.__doc__, result=value
-        )
+        return Metrics.construct_result(name="Domain", doc=self.fm_name.__doc__, result=value)
 
 
 METRICS_ORDER = [

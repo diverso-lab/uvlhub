@@ -1,38 +1,28 @@
-from datetime import datetime
 import logging
 import os
 import shutil
 import tempfile
+from datetime import datetime
 
-from app.modules.dataset.decorators import is_dataset_owner
-from app.modules.elasticsearch.services import IndexingService
-from app.modules.elasticsearch.utils import index_dataset, index_hubfile
-from flask import (
-    abort,
-    current_app,
-    jsonify,
-    make_response,
-    redirect,
-    render_template,
-    request,
-    send_file,
-    url_for,
-)
-from flask_login import login_required, current_user
+from flask import abort, current_app, jsonify, make_response, redirect, render_template, request, send_file, url_for
+from flask_login import current_user, login_required
 
 from app.modules.apikeys.decorators import require_api_key
-from app.modules.dataset.forms import DataSetForm
 from app.modules.dataset import dataset_bp
+from app.modules.dataset.decorators import is_dataset_owner
+from app.modules.dataset.forms import DataSetForm
 from app.modules.dataset.models import DataSet
 from app.modules.dataset.services import (
     AuthorService,
+    DataSetService,
+    DOIMappingService,
     DSDownloadRecordService,
     DSMetaDataService,
     DSViewRecordService,
-    DataSetService,
-    DOIMappingService,
     LocalDatasetService,
 )
+from app.modules.elasticsearch.services import IndexingService
+from app.modules.elasticsearch.utils import index_dataset, index_hubfile
 from app.modules.featuremodel.services import FeatureModelService
 from app.modules.hubfile.models import Hubfile
 from app.modules.hubfile.services import HubfileService
@@ -68,9 +58,7 @@ def create_dataset():
             logger,
         )
         try:
-            dataset, ds_meta, created_fms = local_service.create_local_dataset(
-                request.form, current_user
-            )
+            dataset, ds_meta, created_fms = local_service.create_local_dataset(request.form, current_user)
         except Exception as exc:
             return jsonify({"error": f"Error creating dataset: {str(exc)}"}), 400
 
@@ -89,20 +77,15 @@ def create_dataset():
 
         # 3. Zenodo
         if dataset_type in {"zenodo", "zenodo_anonymous"}:
-            zenodo_service_facade = ZenodoDatasetService(
-                zenodo_service, dataset_service, logger
-            )
+            zenodo_service_facade = ZenodoDatasetService(zenodo_service, dataset_service, logger)
             try:
-                doi = zenodo_service_facade.upload_to_zenodo(
-                    dataset, ds_meta, dataset_type, current_user
-                )
+                doi = zenodo_service_facade.upload_to_zenodo(dataset, ds_meta, dataset_type, current_user)
             except Exception as exc:
                 return (
                     jsonify(
                         {
                             "error": (
-                                f"Dataset created locally (ID: {dataset.id}), "
-                                f"but Zenodo upload failed: {exc}"
+                                f"Dataset created locally (ID: {dataset.id}), " f"but Zenodo upload failed: {exc}"
                             ),
                             "dataset_id": dataset.id,
                         }
@@ -113,14 +96,10 @@ def create_dataset():
             # 4. Indexación
             indexing_service = IndexingService(index_dataset, index_hubfile, logger)
             try:
-                dataset = dataset_service.get_by_id(
-                    dataset.id
-                )  # actualizado tras Zenodo
+                dataset = dataset_service.get_by_id(dataset.id)  # actualizado tras Zenodo
                 indexing_service.index_dataset_and_hubfiles(dataset, created_fms)
             except Exception as exc:
-                logger.warning(
-                    f"[UPLOAD] Dataset {dataset.id} created and uploaded, but indexing failed: {exc}"
-                )
+                logger.warning(f"[UPLOAD] Dataset {dataset.id} created and uploaded, but indexing failed: {exc}")
 
             return (
                 jsonify(
@@ -145,9 +124,7 @@ def list_dataset():
     return render_template(
         "dataset/list_datasets.html",
         datasets=dataset_service.get_synchronized_datasets_by_user(current_user.id),
-        local_datasets=dataset_service.get_unsynchronized_datasets_by_user(
-            current_user.id
-        ),
+        local_datasets=dataset_service.get_unsynchronized_datasets_by_user(current_user.id),
     )
 
 
@@ -162,9 +139,7 @@ def download_dataset(dataset_id):
 
     user_cookie = ds_download_record_service.create_cookie(dataset)
 
-    resp = make_response(
-        send_file(zip_path, as_attachment=True, mimetype="application/zip")
-    )
+    resp = make_response(send_file(zip_path, as_attachment=True, mimetype="application/zip"))
     resp.set_cookie("download_cookie", user_cookie)
     return resp
 
@@ -215,9 +190,7 @@ def subdomain_index(doi):
     user_cookie = ds_view_record_service.create_cookie(dataset=dataset)
 
     # Renderizar vista con todos los datos
-    resp = make_response(
-        render_template("dataset/view_dataset.html", dataset=dataset, hubfiles=hubfiles)
-    )
+    resp = make_response(render_template("dataset/view_dataset.html", dataset=dataset, hubfiles=hubfiles))
     resp.set_cookie("view_cookie", user_cookie)
 
     return resp
@@ -229,9 +202,7 @@ def subdomain_index(doi):
 def get_unsynchronized_dataset(dataset_id):
 
     # Get dataset
-    dataset = dataset_service.get_unsynchronized_dataset_by_user(
-        current_user.id, dataset_id
-    )
+    dataset = dataset_service.get_unsynchronized_dataset_by_user(current_user.id, dataset_id)
 
     # Obtener todos los hubfiles de los feature models
     hubfiles = []
@@ -241,9 +212,7 @@ def get_unsynchronized_dataset(dataset_id):
     if not dataset:
         abort(404)
 
-    return render_template(
-        "dataset/view_dataset.html", dataset=dataset, hubfiles=hubfiles
-    )
+    return render_template("dataset/view_dataset.html", dataset=dataset, hubfiles=hubfiles)
 
 
 # REST API

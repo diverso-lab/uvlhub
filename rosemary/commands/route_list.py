@@ -1,8 +1,9 @@
 import os
+from collections import defaultdict
+
 import click
 from flask import current_app
 from flask.cli import with_appcontext
-from collections import defaultdict
 
 
 @click.command("route:list", help="Lists all routes of the Flask application.")
@@ -25,17 +26,13 @@ def route_list(module_name, group):
         click.echo(f"Listing routes for the '{module_name}' module...")
         # Path filtering for a specific module
         filtered_rules = [
-            rule
-            for rule in current_app.url_map.iter_rules()
-            if rule.endpoint.startswith(f"{module_name}.")
+            rule for rule in current_app.url_map.iter_rules() if rule.endpoint.startswith(f"{module_name}.")
         ]
         print_route_table(filtered_rules)
     else:
         if group:  # Group routes by module
             click.echo("Listing routes for all modules, grouped by module...")
-            rules = sorted(
-                current_app.url_map.iter_rules(), key=lambda rule: rule.endpoint
-            )
+            rules = sorted(current_app.url_map.iter_rules(), key=lambda rule: rule.endpoint)
             grouped_rules = defaultdict(list)
             for rule in rules:
                 module = rule.endpoint.split(".")[0]
@@ -46,9 +43,7 @@ def route_list(module_name, group):
                 print_route_table(rules)
         else:  # Lists all routes without grouping
             click.echo("Listing routes for all modules...")
-            rules = sorted(
-                current_app.url_map.iter_rules(), key=lambda rule: rule.endpoint
-            )
+            rules = sorted(current_app.url_map.iter_rules(), key=lambda rule: rule.endpoint)
             print_route_table(rules)
 
 

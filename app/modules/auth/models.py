@@ -1,9 +1,8 @@
 from datetime import datetime
 
-
-from flask_login import UserMixin
 import pytz
-from werkzeug.security import generate_password_hash, check_password_hash
+from flask_login import UserMixin
+from werkzeug.security import check_password_hash, generate_password_hash
 
 from app import db
 
@@ -13,16 +12,12 @@ class User(db.Model, UserMixin):
 
     email = db.Column(db.String(256), unique=True, nullable=True)
     password = db.Column(db.String(256), nullable=False)
-    created_at = db.Column(
-        db.DateTime, nullable=False, default=lambda: datetime.now(pytz.utc)
-    )
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.utc))
 
     data_sets = db.relationship("DataSet", backref="user", lazy=True)
     profile = db.relationship("UserProfile", backref="user", uselist=False)
     active = db.Column(db.Boolean, default=True, nullable=False)
-    api_keys = db.relationship(
-        "ApiKey", back_populates="user", cascade="all, delete-orphan"
-    )
+    api_keys = db.relationship("ApiKey", back_populates="user", cascade="all, delete-orphan")
 
     def __init__(self, **kwargs):
         super(User, self).__init__(**kwargs)

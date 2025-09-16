@@ -64,9 +64,7 @@ def login(test_client, email, password):
     Returns:
         response: POST login request response.
     """
-    response = test_client.post(
-        "/login", data=dict(email=email, password=password), follow_redirects=True
-    )
+    response = test_client.post("/login", data=dict(email=email, password=password), follow_redirects=True)
     return response
 
 

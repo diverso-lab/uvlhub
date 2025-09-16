@@ -1,7 +1,8 @@
-import click
-import subprocess
-from dotenv import load_dotenv
 import os
+import subprocess
+
+import click
+from dotenv import load_dotenv
 
 
 @click.command("db:console", help="Opens a MariaDB console with credentials from .env.")

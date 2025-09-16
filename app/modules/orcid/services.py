@@ -1,15 +1,17 @@
 import os
 import secrets
-from app.modules.orcid.repositories import OrcidRepository
-from core.services.BaseService import BaseService
-from flask import current_app
+
 from authlib.integrations.flask_client import OAuth
+from flask import current_app
+from sqlalchemy.exc import SQLAlchemyError
+from werkzeug.security import generate_password_hash
+
 from app import db
 from app.modules.auth.models import User
-from app.modules.profile.models import UserProfile
 from app.modules.orcid.models import Orcid
-from werkzeug.security import generate_password_hash
-from sqlalchemy.exc import SQLAlchemyError
+from app.modules.orcid.repositories import OrcidRepository
+from app.modules.profile.models import UserProfile
+from core.services.BaseService import BaseService
 
 
 class OrcidService(BaseService):
@@ -45,9 +47,7 @@ class OrcidService(BaseService):
         # Valida respuesta
         resp = self.orcid_client.get("https://orcid.org/oauth/userinfo", token=token)
         if not resp or resp.status_code != 200:
-            current_app.logger.error(
-                "ORCID userinfo fallo: %s", getattr(resp, "text", None)
-            )
+            current_app.logger.error("ORCID userinfo fallo: %s", getattr(resp, "text", None))
             return None
         data = resp.json() or {}
         # 'sub' es el ORCID iD en OIDC

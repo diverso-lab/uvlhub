@@ -1,13 +1,13 @@
-from typing import Any
 import logging
-from app.modules.factlabel.repositories import FactlabelRepository
-from core.services.BaseService import BaseService
-
-from app.modules.hubfile.models import Hubfile
-from app.modules.flamapy.services import FlamapyService
-from app.modules.factlabel.models import FMMetadata, METRICS_ORDER, ANALYSIS_ORDER
+from typing import Any
 
 from flamapy.metamodels.fm_metamodel.transformations import UVLReader
+
+from app.modules.factlabel.models import ANALYSIS_ORDER, METRICS_ORDER, FMMetadata
+from app.modules.factlabel.repositories import FactlabelRepository
+from app.modules.flamapy.services import FlamapyService
+from app.modules.hubfile.models import Hubfile
+from core.services.BaseService import BaseService
 
 logger = logging.getLogger(__name__)
 
@@ -33,29 +33,21 @@ class FactlabelService(BaseService):
 
         analysis_results = FlamapyService().get_analysis_results(fm)
 
-        logger.info(
-            f"Expected  metrics: {len(METRICS_ORDER)} :: metrics obtained: {len(metrics)}"
-        )
-        logger.info(
-            f"Expected  analysis: {len(ANALYSIS_ORDER)} :: analysis obtained: {len(analysis_results)}"
-        )
+        logger.info(f"Expected  metrics: {len(METRICS_ORDER)} :: metrics obtained: {len(metrics)}")
+        logger.info(f"Expected  analysis: {len(ANALYSIS_ORDER)} :: analysis obtained: {len(analysis_results)}")
         logger.info(f"Equals? {metrics == analysis_results}")
         # for m in metrics:
         #     print(m)
         # Sort metrics according to the Fact Label order
         metrics_dict = {item["name"]: item for item in metrics}
-        ordered_metrics = [
-            metrics_dict[name] for name in METRICS_ORDER if name in metrics_dict
-        ]
+        ordered_metrics = [metrics_dict[name] for name in METRICS_ORDER if name in metrics_dict]
 
         analysis_dict = {item["name"]: item for item in analysis_results}
         # Update Satisfiable result for human-readability
         satisfiable = analysis_dict["Satisfiable"]["result"]
         analysis_dict["Satisfiable"]["result"] = "Yes" if satisfiable else "No"
         # Sort analysis results according to the Fact Label order
-        ordered_analysis = [
-            analysis_dict[name] for name in ANALYSIS_ORDER if name in analysis_dict
-        ]
+        ordered_analysis = [analysis_dict[name] for name in ANALYSIS_ORDER if name in analysis_dict]
 
         result = {}
         result["metadata"] = metadata

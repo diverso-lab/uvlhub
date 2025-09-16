@@ -1,6 +1,7 @@
 import os
 
 from flask_mail import Mail, Message
+
 from app.modules.mail.repositories import MailRepository
 from core.services.BaseService import BaseService
 
@@ -17,9 +18,7 @@ class MailService(BaseService):
         app.config["MAIL_PORT"] = int(os.getenv("MAIL_PORT", "587"))
         app.config["MAIL_USE_TLS"] = os.getenv("MAIL_USE_TLS", "True") == "True"
         app.config["MAIL_USE_SSL"] = os.getenv("MAIL_USE_SSL", "False") == "True"
-        app.config["MAIL_USERNAME"] = os.getenv(
-            "MAIL_USERNAME", "tu_correo@tudominio.com"
-        )
+        app.config["MAIL_USERNAME"] = os.getenv("MAIL_USERNAME", "tu_correo@tudominio.com")
         app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD", "tu_password")
         app.config["MAIL_DEFAULT_SENDER"] = os.getenv("MAIL_USERNAME")
 

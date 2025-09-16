@@ -2,9 +2,7 @@ import json
 from typing import Any
 
 from flamapy.metamodels.fm_metamodel.models import FeatureModel
-
-from fm_characterization import FMProperty, FMAnalysis, FMMetadata, FMMetrics
-
+from fm_characterization import FMAnalysis, FMMetadata, FMMetrics, FMProperty
 
 SPACE = " "
 
@@ -28,9 +26,7 @@ class FMCharacterization:
             indentation = SPACE * get_parents_numbers(property.property)
             name = property.property.name
             value = str(property.value) if property.size is None else str(property.size)
-            ratio = (
-                f" ({str(property.ratio*100)}%)" if property.ratio is not None else ""
-            )
+            ratio = f" ({str(property.ratio*100)}%)" if property.ratio is not None else ""
             lines.append(f"{indentation}{name}: {value}{ratio}")
 
         lines.append("ANALYSIS")
@@ -38,9 +34,7 @@ class FMCharacterization:
             indentation = SPACE * get_parents_numbers(property.property)
             name = property.property.name
             value = str(property.value) if property.size is None else str(property.size)
-            ratio = (
-                f" ({str(property.ratio*100)}%)" if property.ratio is not None else ""
-            )
+            ratio = f" ({str(property.ratio*100)}%)" if property.ratio is not None else ""
             lines.append(f"{indentation}{name}: {value}{ratio}")
         return "\n".join(lines)
 

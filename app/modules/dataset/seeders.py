@@ -1,17 +1,13 @@
 import os
 import shutil
+
+from dotenv import load_dotenv
+
 from app.modules.auth.models import User
+from app.modules.dataset.models import Author, DataSet, DSMetaData, DSMetrics, PublicationType
 from app.modules.featuremodel.models import FeatureModel
 from app.modules.hubfile.models import Hubfile
 from core.seeders.BaseSeeder import BaseSeeder
-from app.modules.dataset.models import (
-    DataSet,
-    DSMetaData,
-    PublicationType,
-    DSMetrics,
-    Author,
-)
-from dotenv import load_dotenv
 
 
 class DataSetSeeder(BaseSeeder):
@@ -81,16 +77,12 @@ class DataSetSeeder(BaseSeeder):
         # Crear archivos y Hubfiles
         load_dotenv()
         working_dir = os.getenv("WORKING_DIR", "")
-        src_folder = os.path.join(
-            working_dir, "app", "modules", "dataset", "uvl_examples"
-        )
+        src_folder = os.path.join(working_dir, "app", "modules", "dataset", "uvl_examples")
 
         for i in range(12):
             file_name = f"file{i+1}.uvl"
             feature_model = seeded_feature_models[i]
-            dataset = next(
-                ds for ds in seeded_datasets if ds.id == feature_model.dataset_id
-            )
+            dataset = next(ds for ds in seeded_datasets if ds.id == feature_model.dataset_id)
             user_id = dataset.user_id
 
             dest_folder = os.path.join(

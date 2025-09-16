@@ -1,16 +1,13 @@
-from flask import render_template, request, jsonify
+from flask import jsonify, render_template, request
+
 from app.modules.dataset.models import PublicationType
 from app.modules.explore import explore_bp
 
 
 @explore_bp.route("/explore", methods=["GET", "POST"])
 def index():
-    publication_type_choices = [
-        (pt.value, pt.name.replace("_", " ").title()) for pt in PublicationType
-    ]
-    return render_template(
-        "explore/index.html", publication_type_choices=publication_type_choices
-    )
+    publication_type_choices = [(pt.value, pt.name.replace("_", " ").title()) for pt in PublicationType]
+    return render_template("explore/index.html", publication_type_choices=publication_type_choices)
 
 
 @explore_bp.route("/search")
@@ -39,8 +36,6 @@ def api_search():
     publication_type = request.args.get("publication_type")
     sorting = request.args.get("sorting", "newest")
 
-    results = search_service.search(
-        query=query, publication_type=publication_type, sorting=sorting
-    )
+    results = search_service.search(query=query, publication_type=publication_type, sorting=sorting)
 
     return jsonify(results)

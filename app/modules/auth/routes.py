@@ -1,16 +1,15 @@
-from flask import flash, render_template, redirect, url_for, request
+from flask import flash, redirect, render_template, request, url_for
 from flask_login import current_user, logout_user
 from pymysql import IntegrityError
 
+from app import db
 from app.modules.auth import auth_bp
 from app.modules.auth.decorators import guest_required
-from app.modules.auth.forms import SignupForm, LoginForm
+from app.modules.auth.forms import LoginForm, SignupForm
 from app.modules.auth.services import AuthenticationService
+from app.modules.captcha.services import CaptchaService
 from app.modules.confirmemail.services import ConfirmemailService
 from app.modules.profile.services import UserProfileService
-from app.modules.captcha.services import CaptchaService
-
-from app import db
 
 authentication_service = AuthenticationService()
 user_profile_service = UserProfileService()
@@ -64,9 +63,7 @@ def login():
         if authentication_service.login(form.email.data, form.password.data):
             return redirect(url_for("public.index"))
 
-        return render_template(
-            "auth/login_form.html", form=form, error="Invalid credentials"
-        )
+        return render_template("auth/login_form.html", form=form, error="Invalid credentials")
 
     return render_template("auth/login_form.html", form=form)
 

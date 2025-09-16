@@ -1,4 +1,5 @@
 from flask import flash, redirect, render_template, request, url_for
+
 from app.modules.auth.decorators import guest_required
 from app.modules.reset import reset_bp
 from app.modules.reset.services import ResetService
@@ -24,9 +25,7 @@ def forgot():
                 "success",
             )
         except Exception as exc:
-            flash(
-                f"An error occurred while trying to reset the password: {exc}", "danger"
-            )
+            flash(f"An error occurred while trying to reset the password: {exc}", "danger")
 
         return redirect(url_for("auth.login"))
     return render_template("forgot/forgot.html")

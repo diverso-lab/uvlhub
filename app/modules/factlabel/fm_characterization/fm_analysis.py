@@ -1,12 +1,12 @@
-from fm_characterization import FMProperties, FMPropertyMeasure
-from .fm_utils import get_ratio, get_nof_configuration_as_str
-
-from flamapy.metamodels.fm_metamodel.models import FeatureModel
-from flamapy.metamodels.pysat_metamodel.transformations.fm_to_pysat import FmToPysat
-from flamapy.metamodels.bdd_metamodel.transformations.fm_to_bdd import FmToBDD
-from flamapy.metamodels.pysat_metamodel import operations as sat_operations
 from flamapy.metamodels.bdd_metamodel import operations as bdd_operations
+from flamapy.metamodels.bdd_metamodel.transformations.fm_to_bdd import FmToBDD
 from flamapy.metamodels.fm_metamodel import operations as fm_operations
+from flamapy.metamodels.fm_metamodel.models import FeatureModel
+from flamapy.metamodels.pysat_metamodel import operations as sat_operations
+from flamapy.metamodels.pysat_metamodel.transformations.fm_to_pysat import FmToPysat
+from fm_characterization import FMProperties, FMPropertyMeasure
+
+from .fm_utils import get_nof_configuration_as_str, get_ratio
 
 
 class FMAnalysis:
@@ -17,18 +17,12 @@ class FMAnalysis:
         try:
             self.bdd_model = FmToBDD(model).transform()
         except Exception as e:
-            print(
-                f"Warning: the feature model is too large to build the BDD model. (Exception: {e})"
-            )
+            print(f"Warning: the feature model is too large to build the BDD model. (Exception: {e})")
             self.bdd_model = None
 
         # For performance purposes
-        self._common_features = (
-            sat_operations.Glucose3CoreFeatures().execute(self.sat_model).get_result()
-        )
-        self._dead_features = (
-            sat_operations.Glucose3DeadFeatures().execute(self.sat_model).get_result()
-        )
+        self._common_features = sat_operations.Glucose3CoreFeatures().execute(self.sat_model).get_result()
+        self._dead_features = sat_operations.Glucose3DeadFeatures().execute(self.sat_model).get_result()
 
     def get_analysis(self) -> list[FMPropertyMeasure]:
         result = []
@@ -78,9 +72,7 @@ class FMAnalysis:
 
     def fm_false_optional_features(self) -> FMPropertyMeasure:
         _false_optional_features = (
-            sat_operations.Glucose3FalseOptionalFeatures(self.fm)
-            .execute(self.sat_model)
-            .get_result()
+            sat_operations.Glucose3FalseOptionalFeatures(self.fm).execute(self.sat_model).get_result()
         )
         return FMPropertyMeasure(
             FMProperties.FALSE_OPTIONAL_FEATURES.value,
@@ -91,16 +83,10 @@ class FMAnalysis:
 
     def fm_configurations_number(self) -> FMPropertyMeasure:
         if self.bdd_model is not None:
-            _configurations = (
-                bdd_operations.BDDProductsNumber().execute(self.bdd_model).get_result()
-            )
+            _configurations = bdd_operations.BDDProductsNumber().execute(self.bdd_model).get_result()
             _approximation = False
         else:
-            _configurations = (
-                fm_operations.FMEstimatedProductsNumber().execute(self.fm).get_result()
-            )
+            _configurations = fm_operations.FMEstimatedProductsNumber().execute(self.fm).get_result()
             _approximation = True
-        _configurations = get_nof_configuration_as_str(
-            _configurations, _approximation, len(self.fm.get_constraints())
-        )
+        _configurations = get_nof_configuration_as_str(_configurations, _approximation, len(self.fm.get_constraints()))
         return FMPropertyMeasure(FMProperties.CONFIGURATIONS.value, _configurations)

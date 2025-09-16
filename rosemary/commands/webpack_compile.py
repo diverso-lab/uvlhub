@@ -1,7 +1,8 @@
 import logging
-import click
 import os
 import subprocess
+
+import click
 
 logger = logging.getLogger(__name__)
 
@@ -78,27 +79,15 @@ def compile_module(module, watch, production):
         try:
             if watch:
                 # Execute in the background without blocking the console, redirecting only stderr to os.devnull
-                subprocess.Popen(
-                    webpack_command, shell=True, stdout=None, stderr=subprocess.DEVNULL
-                )
-                click.echo(
-                    click.style(f"Started watching {module} in {mode} mode!", fg="blue")
-                )
+                subprocess.Popen(webpack_command, shell=True, stdout=None, stderr=subprocess.DEVNULL)
+                click.echo(click.style(f"Started watching {module} in {mode} mode!", fg="blue"))
 
             else:
                 # Blocking execution for normal compilation without watch
                 subprocess.run(webpack_command, shell=True, check=True)
-                click.echo(
-                    click.style(
-                        f"Successfully compiled {module} in {mode} mode!", fg="green"
-                    )
-                )
+                click.echo(click.style(f"Successfully compiled {module} in {mode} mode!", fg="green"))
 
         except subprocess.CalledProcessError as e:
             click.echo(click.style(f"Error compiling {module}: {e}", fg="red"))
     else:
-        click.echo(
-            click.style(
-                f"No webpack.config.js found in {module}, skipping...", fg="yellow"
-            )
-        )
+        click.echo(click.style(f"No webpack.config.js found in {module}, skipping...", fg="yellow"))

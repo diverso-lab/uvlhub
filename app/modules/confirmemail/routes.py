@@ -1,5 +1,6 @@
 from flask import flash, redirect, render_template, url_for
 from flask_login import login_user
+
 from app.modules.confirmemail import confirmemail_bp
 from app.modules.confirmemail.services import ConfirmemailService
 

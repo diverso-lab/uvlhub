@@ -1,7 +1,8 @@
 import json
-import uuid
 import logging
+import uuid
 from datetime import datetime
+
 from flask import jsonify, make_response, request
 from flask_login import current_user
 
@@ -55,9 +56,7 @@ def view_factlabel(file_id):
         response = jsonify({"success": True, "content": content})
         if not request.cookies.get("view_cookie"):
             response = make_response(response)
-            response.set_cookie(
-                "view_cookie", user_cookie, max_age=60 * 60 * 24 * 365 * 2
-            )
+            response.set_cookie("view_cookie", user_cookie, max_age=60 * 60 * 24 * 365 * 2)
         return response
 
     except Exception as e:

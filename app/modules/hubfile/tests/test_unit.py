@@ -1,17 +1,17 @@
 import os
 from unittest.mock import patch
+
+from dotenv import load_dotenv
+
 from app.modules.auth.repositories import UserRepository
 from app.modules.dataset.models import PublicationType
-from app.modules.dataset.repositories import DSMetaDataRepository, DataSetRepository
+from app.modules.dataset.repositories import DataSetRepository, DSMetaDataRepository
 from app.modules.featuremodel.repositories import FeatureModelRepository
 from app.modules.hubfile.repositories import HubfileRepository
-from dotenv import load_dotenv
 
 
 def test_create_hubfile_calls_enqueue_tasks(test_client):
-    with patch(
-        "core.managers.task_queue_manager.TaskQueueManager.enqueue_task"
-    ) as mock_enqueue_task:
+    with patch("core.managers.task_queue_manager.TaskQueueManager.enqueue_task") as mock_enqueue_task:
         # Crear entidades mínimas
         user = UserRepository().create(password="foo")
         dsmetadata = DSMetaDataRepository().create(
@@ -19,9 +19,7 @@ def test_create_hubfile_calls_enqueue_tasks(test_client):
             description="test",
             publication_type=PublicationType.BOOK,
         )
-        dataset = DataSetRepository().create(
-            user_id=user.id, ds_meta_data_id=dsmetadata.id
-        )
+        dataset = DataSetRepository().create(user_id=user.id, ds_meta_data_id=dsmetadata.id)
         fm = FeatureModelRepository().create(dataset_id=dataset.id)
         hubfile = HubfileRepository().create(
             name="test.uvl",

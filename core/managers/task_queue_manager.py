@@ -1,9 +1,9 @@
-from datetime import datetime
 import logging
-from flask import current_app
-import pytz
-from rq import Queue
+from datetime import datetime
 
+import pytz
+from flask import current_app
+from rq import Queue
 
 logger = logging.getLogger(__name__)
 
@@ -33,9 +33,7 @@ class TaskQueueManager:
         :param kwargs: Named arguments required by the task.
         """
         if timeout is None:
-            timeout = (
-                self.redis_worker_timeout
-            )  # Asigna el timeout de la instancia si no se provee uno.
+            timeout = self.redis_worker_timeout  # Asigna el timeout de la instancia si no se provee uno.
 
         task_metadata = {
             "task_name": task_name,
@@ -47,6 +45,4 @@ class TaskQueueManager:
 
         # Bind the custom task to RQ with timeout
         self.queue.enqueue(task_name, *args, **kwargs, job_timeout=timeout)
-        logger.info(
-            f"Task '{task_name}' enqueued with arguments: {args}, {kwargs} and timeout: {timeout}"
-        )
+        logger.info(f"Task '{task_name}' enqueued with arguments: {args}, {kwargs} and timeout: {timeout}")

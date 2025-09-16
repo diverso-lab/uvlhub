@@ -1,13 +1,9 @@
 import time
+
+from elasticsearch import ApiError, BadRequestError, ConnectionError, Elasticsearch, NotFoundError
+
 from app.modules.elasticsearch.repositories import ElasticsearchRepository
 from core.services.BaseService import BaseService
-from elasticsearch import (
-    Elasticsearch,
-    NotFoundError,
-    BadRequestError,
-    ApiError,
-    ConnectionError,
-)
 
 
 class ElasticsearchService(BaseService):
@@ -33,9 +29,7 @@ class ElasticsearchService(BaseService):
         self.index_name = index_name
 
         if not self.wait_for_elasticsearch():
-            print(
-                "[ERROR] Elasticsearch no responde tras varios intentos. Continuando, pero puede fallar luego."
-            )
+            print("[ERROR] Elasticsearch no responde tras varios intentos. Continuando, pero puede fallar luego.")
 
         print("[INIT] ElasticsearchService inicializado correctamente.\n")
 
@@ -43,13 +37,9 @@ class ElasticsearchService(BaseService):
         print("[WAIT] Esperando a que Elasticsearch esté disponible...")
         for attempt in range(retries):
             if self.es.ping():
-                print(
-                    f"[WAIT] Elasticsearch respondió al ping en intento {attempt + 1}."
-                )
+                print(f"[WAIT] Elasticsearch respondió al ping en intento {attempt + 1}.")
                 return True
-            print(
-                f"[WAIT] Intento {attempt + 1} fallido. Reintentando en {delay} segundos..."
-            )
+            print(f"[WAIT] Intento {attempt + 1} fallido. Reintentando en {delay} segundos...")
             time.sleep(delay)
         return False
 
@@ -148,9 +138,7 @@ class ElasticsearchService(BaseService):
 
     def index_document(self, doc_id: str, data: dict):
         try:
-            print(
-                f"[DEBUG] Indexando documento con ID '{doc_id}' en '{self.index_name}'"
-            )
+            print(f"[DEBUG] Indexando documento con ID '{doc_id}' en '{self.index_name}'")
             self.es.index(index=self.index_name, id=doc_id, document=data)
             print(f"[SUCCESS] Documento '{doc_id}' indexado correctamente.")
         except Exception as e:
@@ -159,9 +147,7 @@ class ElasticsearchService(BaseService):
 
     def delete_document(self, doc_id: str):
         try:
-            print(
-                f"[DEBUG] Eliminando documento con ID '{doc_id}' de '{self.index_name}'"
-            )
+            print(f"[DEBUG] Eliminando documento con ID '{doc_id}' de '{self.index_name}'")
             self.es.delete(index=self.index_name, id=doc_id)
             print(f"[SUCCESS] Documento '{doc_id}' eliminado.")
         except NotFoundError:
@@ -193,24 +179,16 @@ class ElasticsearchService(BaseService):
                 )
 
             if publication_type:
-                must_clauses.append(
-                    {"term": {"publication_type.keyword": publication_type.lower()}}
-                )
+                must_clauses.append({"term": {"publication_type.keyword": publication_type.lower()}})
 
             sort_clause = [
-                (
-                    {"created_at": {"order": "desc"}}
-                    if sorting == "newest"
-                    else {"created_at": {"order": "asc"}}
-                )
+                {"created_at": {"order": "desc"}} if sorting == "newest" else {"created_at": {"order": "asc"}}
             ]
 
             body = {"query": {"bool": {"must": must_clauses}}, "sort": sort_clause}
 
             result = self.es.search(index=self.index_name, body=body, size=size)
-            print(
-                f"[SUCCESS] Búsqueda completada. Resultados: {len(result['hits']['hits'])}"
-            )
+            print(f"[SUCCESS] Búsqueda completada. Resultados: {len(result['hits']['hits'])}")
 
             return [self._format_hit(hit) for hit in result["hits"]["hits"]]
 
@@ -234,9 +212,7 @@ class ElasticsearchService(BaseService):
 
         # Tamaño legible
         if "total_size_in_bytes" in source:
-            source["total_size_in_human_format"] = self._human_readable_size(
-                source["total_size_in_bytes"]
-            )
+            source["total_size_in_human_format"] = self._human_readable_size(source["total_size_in_bytes"])
 
         return source
 
@@ -274,7 +250,5 @@ class IndexingService:
                     self.logger.info(f"[INDEX] Hubfile {hubfile.id} indexed")
 
         except Exception as exc:
-            self.logger.exception(
-                f"[INDEX ERROR] Failed to index dataset {dataset.id}: {exc}"
-            )
+            self.logger.exception(f"[INDEX ERROR] Failed to index dataset {dataset.id}: {exc}")
             raise

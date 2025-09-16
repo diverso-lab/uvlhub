@@ -1,19 +1,12 @@
-from datetime import datetime
 import logging
-from flask_login import current_user
+from datetime import datetime
 from typing import List, Optional
 
 import pytz
+from flask_login import current_user
 from sqlalchemy import desc
 
-from app.modules.dataset.models import (
-    Author,
-    DOIMapping,
-    DSDownloadRecord,
-    DSMetaData,
-    DSViewRecord,
-    DataSet,
-)
+from app.modules.dataset.models import Author, DataSet, DOIMapping, DSDownloadRecord, DSMetaData, DSViewRecord
 from core.repositories.BaseRepository import BaseRepository
 
 logger = logging.getLogger(__name__)
@@ -77,11 +70,7 @@ class DataSetRepository(BaseRepository):
         super().__init__(DataSet)
 
     def is_synchronized(self, dataset_id: int) -> bool:
-        dataset = (
-            self.model.query.join(DSMetaData)
-            .filter(self.model.id == dataset_id)
-            .first()
-        )
+        dataset = self.model.query.join(DSMetaData).filter(self.model.id == dataset_id).first()
         if dataset and dataset.ds_meta_data.dataset_doi:
             return True
         return False
@@ -101,16 +90,12 @@ class DataSetRepository(BaseRepository):
     def get_synchronized_datasets_by_user(self, current_user_id: int) -> List[DataSet]:
         return (
             self.model.query.join(DSMetaData)
-            .filter(
-                DataSet.user_id == current_user_id, DSMetaData.dataset_doi.isnot(None)
-            )
+            .filter(DataSet.user_id == current_user_id, DSMetaData.dataset_doi.isnot(None))
             .order_by(self.model.created_at.desc())
             .all()
         )
 
-    def get_synchronized_dataset_by_user(
-        self, current_user_id: int, dataset_id: int
-    ) -> DataSet:
+    def get_synchronized_dataset_by_user(self, current_user_id: int, dataset_id: int) -> DataSet:
         return (
             self.model.query.join(DSMetaData)
             .filter(
@@ -122,11 +107,7 @@ class DataSetRepository(BaseRepository):
         )
 
     def count_synchronized_datasets(self) -> int:
-        return (
-            self.model.query.join(DSMetaData)
-            .filter(DSMetaData.dataset_doi.isnot(None))
-            .count()
-        )
+        return self.model.query.join(DSMetaData).filter(DSMetaData.dataset_doi.isnot(None)).count()
 
     """
         Unsynchronised dataset
@@ -140,21 +121,15 @@ class DataSetRepository(BaseRepository):
             .all()
         )
 
-    def get_unsynchronized_datasets_by_user(
-        self, current_user_id: int
-    ) -> List[DataSet]:
+    def get_unsynchronized_datasets_by_user(self, current_user_id: int) -> List[DataSet]:
         return (
             self.model.query.join(DSMetaData)
-            .filter(
-                DataSet.user_id == current_user_id, DSMetaData.dataset_doi.is_(None)
-            )
+            .filter(DataSet.user_id == current_user_id, DSMetaData.dataset_doi.is_(None))
             .order_by(self.model.created_at.desc())
             .all()
         )
 
-    def get_unsynchronized_dataset_by_user(
-        self, current_user_id: int, dataset_id: int
-    ) -> DataSet:
+    def get_unsynchronized_dataset_by_user(self, current_user_id: int, dataset_id: int) -> DataSet:
         return (
             self.model.query.join(DSMetaData)
             .filter(
@@ -166,11 +141,7 @@ class DataSetRepository(BaseRepository):
         )
 
     def count_unsynchronized_datasets(self):
-        return (
-            self.model.query.join(DSMetaData)
-            .filter(DSMetaData.dataset_doi.is_(None))
-            .count()
-        )
+        return self.model.query.join(DSMetaData).filter(DSMetaData.dataset_doi.is_(None)).count()
 
     """
         Top X datasets...

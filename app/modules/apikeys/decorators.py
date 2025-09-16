@@ -1,7 +1,8 @@
 from datetime import datetime
 from functools import wraps
-from flask import request, jsonify
+
 import pytz
+from flask import jsonify, request
 
 
 def require_api_key(required_scope):
@@ -12,8 +13,8 @@ def require_api_key(required_scope):
             if not key:
                 return jsonify({"error": "Missing API key"}), 401
 
-            from app.modules.apikeys.models import ApiKey
             from app import db
+            from app.modules.apikeys.models import ApiKey
 
             api_key = ApiKey.query.filter_by(key=key).first()
             if not api_key:

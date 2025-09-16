@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField
-from wtforms.validators import DataRequired, Length, Regexp, Optional
+from wtforms.validators import DataRequired, Length, Optional, Regexp
 
 
 class UserProfileForm(FlaskForm):
@@ -10,13 +10,9 @@ class UserProfileForm(FlaskForm):
         "ORCID",
         validators=[
             Optional(),
-            Length(
-                min=19, max=19, message="ORCID must have 16 numbers separated by dashes"
-            ),
+            Length(min=19, max=19, message="ORCID must have 16 numbers separated by dashes"),
             Regexp(r"^\d{4}-\d{4}-\d{4}-\d{4}$", message="Invalid ORCID format"),
         ],
     )
-    affiliation = StringField(
-        "Affiliation", validators=[Optional(), Length(min=5, max=100)]
-    )
+    affiliation = StringField("Affiliation", validators=[Optional(), Length(min=5, max=100)])
     submit = SubmitField("Save profile")

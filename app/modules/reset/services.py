@@ -1,14 +1,15 @@
 from datetime import datetime
+
+import pytz
 from flask import abort, current_app, url_for
 from itsdangerous import BadTimeSignature, SignatureExpired, URLSafeTimedSerializer
-import pytz
+from werkzeug.security import generate_password_hash
+
+from app import db, mail_service
 from app.modules.auth.models import User
 from app.modules.reset.models import ResetToken
 from app.modules.reset.repositories import ResetRepository
 from core.services.BaseService import BaseService
-from app import db
-from werkzeug.security import generate_password_hash
-from app import mail_service
 
 
 class ResetService(BaseService):

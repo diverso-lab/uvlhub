@@ -1,8 +1,10 @@
 import logging
-from app.modules.hubfile.services import HubfileService
-from flask import send_file, jsonify
-from app.modules.flamapy import flamapy_bp
 import os
+
+from flask import jsonify, send_file
+
+from app.modules.flamapy import flamapy_bp
+from app.modules.hubfile.services import HubfileService
 
 logger = logging.getLogger(__name__)
 
@@ -19,15 +21,11 @@ def download_transformed_file(file_id, extension, subdirectory):
         dataset_dir = os.path.dirname(os.path.dirname(hubfile.get_path()))
         original_filename = os.path.basename(hubfile.get_path())
         transformed_filename = original_filename.replace(".uvl", extension)
-        transformed_file_path = os.path.join(
-            dataset_dir, subdirectory, transformed_filename
-        )
+        transformed_file_path = os.path.join(dataset_dir, subdirectory, transformed_filename)
 
         if not os.path.exists(transformed_file_path):
             return (
-                jsonify(
-                    {"error": f"Transformed file not found: {transformed_file_path}"}
-                ),
+                jsonify({"error": f"Transformed file not found: {transformed_file_path}"}),
                 404,
             )
 

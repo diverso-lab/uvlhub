@@ -1,11 +1,12 @@
 from datetime import datetime
-import pytz
 from enum import Enum
 from typing import List
 
+import pytz
 from flask import request
 from flask_login import current_user
-from sqlalchemy import Boolean, Enum as SQLAlchemyEnum
+from sqlalchemy import Boolean
+from sqlalchemy import Enum as SQLAlchemyEnum
 
 from app import db
 
@@ -56,17 +57,13 @@ class DSMetaData(db.Model):
     deposition_id = db.Column(db.Integer)
     title = db.Column(db.String(120), nullable=False)
     description = db.Column(db.Text, nullable=False)
-    publication_type = db.Column(SQLAlchemyEnum(PublicationType), nullable=False)
+    publication_type = db.Column(SQLAlchemyEnum(PublicationType))
     publication_doi = db.Column(db.String(120))
     dataset_doi = db.Column(db.String(120))
     tags = db.Column(db.String(120))
     ds_metrics_id = db.Column(db.Integer, db.ForeignKey("ds_metrics.id"))
-    ds_metrics = db.relationship(
-        "DSMetrics", uselist=False, backref="ds_meta_data", cascade="all, delete"
-    )
-    authors = db.relationship(
-        "Author", backref="ds_meta_data", lazy=True, cascade="all, delete"
-    )
+    ds_metrics = db.relationship("DSMetrics", uselist=False, backref="ds_meta_data", cascade="all, delete")
+    authors = db.relationship("Author", backref="ds_meta_data", lazy=True, cascade="all, delete")
     dataset_anonymous = db.Column(Boolean, default=False)
 
 
@@ -74,16 +71,10 @@ class DataSet(db.Model):
     __tablename__ = "datasets"
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-    ds_meta_data_id = db.Column(
-        db.Integer, db.ForeignKey("ds_meta_data.id"), nullable=False
-    )
-    created_at = db.Column(
-        db.DateTime, nullable=False, default=lambda: datetime.now(pytz.utc)
-    )
+    ds_meta_data_id = db.Column(db.Integer, db.ForeignKey("ds_meta_data.id"), nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.utc))
 
-    ds_meta_data = db.relationship(
-        "DSMetaData", backref=db.backref("dataset", uselist=False)
-    )
+    ds_meta_data = db.relationship("DSMetaData", backref=db.backref("dataset", uselist=False))
 
     feature_models = db.relationship(
         "FeatureModel",
@@ -108,15 +99,13 @@ class DataSet(db.Model):
 
         return DataSetService.is_synchronized(self.id)
 
-    def get_cleaned_publication_type(self) -> str:
+    def get_cleaned_publication_type(self) -> str | None:
+        if not self.ds_meta_data.publication_type:
+            return None
         return self.ds_meta_data.publication_type.name.replace("_", " ").title()
 
     def get_zenodo_url(self) -> str:
-        return (
-            f"https://zenodo.org/record/{self.ds_meta_data.deposition_id}"
-            if self.ds_meta_data.dataset_doi
-            else None
-        )
+        return f"https://zenodo.org/record/{self.ds_meta_data.deposition_id}" if self.ds_meta_data.dataset_doi else None
 
     def count_feature_models(self) -> int:
         from app.modules.dataset.services import DataSetService
@@ -151,7 +140,9 @@ class DataSet(db.Model):
     def is_anonymous(self) -> bool:
         return self.ds_meta_data.dataset_anonymous
 
-    def get_publication(self) -> str:
+    def get_publication(self) -> str | None:
+        if not self.ds_meta_data.publication_type:
+            return None
         return self.ds_meta_data.publication_type.name.replace("_", " ").title()
 
     def to_dict(self):
@@ -169,9 +160,7 @@ class DataSet(db.Model):
             "url": self.get_uvlhub_doi(),
             "download": f'{request.host_url.rstrip("/")}/dataset/download/{self.id}',
             "zenodo": self.get_zenodo_url(),
-            "files": [
-                file.to_dict() for fm in self.feature_models for file in fm.hubfiles
-            ],
+            "files": [file.to_dict() for fm in self.feature_models for file in fm.hubfiles],
             "files_count": self.get_files_count(),
             "total_size_in_bytes": self.get_file_total_size(),
             "total_size_in_human_format": self.get_file_total_size_for_human(),
@@ -181,14 +170,18 @@ class DataSet(db.Model):
         return self.ds_meta_data.deposition_id
 
     def get_zenodo_metadata(self):
-        return {
+        metadata = {
             "title": self.ds_meta_data.title,
             "description": self.ds_meta_data.description,
             "creators": [author.to_dict() for author in self.ds_meta_data.authors],
             "upload_type": "publication",
-            "publication_type": self.ds_meta_data.publication_type.value,
             "tags": self.ds_meta_data.tags.split(",") if self.ds_meta_data.tags else [],
         }
+
+        if self.ds_meta_data.publication_type:
+            metadata["publication_type"] = self.ds_meta_data.publication_type.value
+
+        return metadata
 
     def is_mine(self):
         if not current_user.is_authenticated:
@@ -203,9 +196,7 @@ class DSDownloadRecord(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
     dataset_id = db.Column(db.Integer, db.ForeignKey("datasets.id"))
-    download_date = db.Column(
-        db.DateTime, nullable=False, default=lambda: datetime.now(pytz.utc)
-    )
+    download_date = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.utc))
     download_cookie = db.Column(db.String(36), nullable=False)
 
     def __repr__(self):
@@ -221,9 +212,7 @@ class DSViewRecord(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
     dataset_id = db.Column(db.Integer, db.ForeignKey("datasets.id"))
-    view_date = db.Column(
-        db.DateTime, nullable=False, default=lambda: datetime.now(pytz.utc)
-    )
+    view_date = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.utc))
     view_cookie = db.Column(db.String(36), nullable=False)
 
     def __repr__(self):

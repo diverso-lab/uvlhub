@@ -1,13 +1,15 @@
 import hashlib
 import os
 import shutil
-from typing import List, Tuple
 import uuid
-from pathlib import Path
 import zipfile
+from pathlib import Path
+from typing import List, Tuple
 
-from flask import request, jsonify
+from flask import jsonify, request
 from flask_login import current_user
+
+from app import db
 from app.modules.auth.models import User
 from app.modules.dataset.models import DataSet
 from app.modules.hubfile.models import Hubfile
@@ -18,7 +20,6 @@ from app.modules.hubfile.repositories import (
 )
 from app.modules.statistics.services import StatisticsService
 from core.services.BaseService import BaseService
-from app import db
 
 
 class HubfileService(BaseService):
@@ -71,9 +72,7 @@ class HubfileService(BaseService):
         size = os.path.getsize(filepath)
         checksum = self._calculate_checksum(filepath)
 
-        hubfile = Hubfile(
-            feature_model_id=feature_model_id, name=name, size=size, checksum=checksum
-        )
+        hubfile = Hubfile(feature_model_id=feature_model_id, name=name, size=size, checksum=checksum)
         db.session.add(hubfile)
         db.session.flush()
 
@@ -127,9 +126,7 @@ class HubfileDownloadRecordService(BaseService):
         if not user_cookie:
             user_cookie = str(uuid.uuid4())
 
-        existing_record = self.the_record_exists(
-            hubfile=hubfile, user_cookie=user_cookie
-        )
+        existing_record = self.the_record_exists(hubfile=hubfile, user_cookie=user_cookie)
 
         if not existing_record:
             self.create_new_record(hubfile=hubfile, user_cookie=user_cookie)
@@ -162,12 +159,8 @@ class UploadIngestService:
                 target_path = Path(dest_dir) / member_path
                 # Comprobación de contención
                 target_path_resolved = target_path.resolve()
-                if not str(target_path_resolved).startswith(
-                    str(Path(dest_dir).resolve())
-                ):
-                    raise ValueError(
-                        f"[INGEST] Zip slip detectado en {zip_path}: {member.filename}"
-                    )
+                if not str(target_path_resolved).startswith(str(Path(dest_dir).resolve())):
+                    raise ValueError(f"[INGEST] Zip slip detectado en {zip_path}: {member.filename}")
                 target_path.parent.mkdir(parents=True, exist_ok=True)
                 with zf.open(member, "r") as src, open(target_path, "wb") as dst:
                     shutil.copyfileobj(src, dst)
@@ -213,9 +206,7 @@ class UploadIngestService:
             return [p for p in Path(root).rglob("*.uvl") if p.is_file()]
 
         uvl_sources = collect_uvls_from(temp_root) + collect_uvls_from(extract_root)
-        self.logger.info(
-            f"[INGEST] UVLs encontrados (antes de aplanar): {len(uvl_sources)}"
-        )
+        self.logger.info(f"[INGEST] UVLs encontrados (antes de aplanar): {len(uvl_sources)}")
 
         # 3) aplanar en stage_dir con nombres únicos
         staged_paths: List[str] = []
@@ -226,11 +217,7 @@ class UploadIngestService:
 
         # 4) validación mínima
         if not staged_paths:
-            raise ValueError(
-                "No se encontró ningún archivo .uvl tras procesar zips y sueltos."
-            )
+            raise ValueError("No se encontró ningún archivo .uvl tras procesar zips y sueltos.")
 
-        self.logger.info(
-            f"[INGEST] UVLs en staging: {len(staged_paths)} (dir: {stage_dir})"
-        )
+        self.logger.info(f"[INGEST] UVLs en staging: {len(staged_paths)} (dir: {stage_dir})")
         return stage_dir, sorted(staged_paths)

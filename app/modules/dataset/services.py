@@ -1,32 +1,26 @@
+import hashlib
 import logging
 import os
-import hashlib
 import tempfile
-from typing import List, Optional
 import uuid
-from zipfile import ZipFile
 import zipfile
-import bleach
+from typing import List, Optional
+from zipfile import ZipFile
 
-from app.modules.hubfile.services import UploadIngestService
+import bleach
 from flask import current_app, request
 
+from app import db
 from app.modules.auth.models import User
 from app.modules.dataset.forms import AuthorForm, DataSetForm, FeatureModelForm
-from app.modules.dataset.models import (
-    DSDownloadRecord,
-    DSViewRecord,
-    DataSet,
-    DSMetaData,
-    PublicationType,
-)
+from app.modules.dataset.models import DataSet, DSDownloadRecord, DSMetaData, DSViewRecord, PublicationType
 from app.modules.dataset.repositories import (
     AuthorRepository,
+    DataSetRepository,
     DOIMappingRepository,
     DSDownloadRecordRepository,
     DSMetaDataRepository,
     DSViewRecordRepository,
-    DataSetRepository,
 )
 from app.modules.featuremodel.repositories import FeatureModelRepository
 from app.modules.hubfile.repositories import (
@@ -34,9 +28,9 @@ from app.modules.hubfile.repositories import (
     HubfileRepository,
     HubfileViewRecordRepository,
 )
+from app.modules.hubfile.services import UploadIngestService
 from app.modules.statistics.services import StatisticsService
 from core.services.BaseService import BaseService
-from app import db
 
 logger = logging.getLogger(__name__)
 
@@ -78,12 +72,8 @@ class DataSetService(BaseService):
     def get_synchronized_datasets_by_user(self, current_user_id: int) -> List[DataSet]:
         return self.repository.get_synchronized_datasets_by_user(current_user_id)
 
-    def get_synchronized_dataset_by_user(
-        self, current_user_id: int, dataset_id: int
-    ) -> DataSet:
-        return self.repository.get_synchronized_dataset_by_user(
-            current_user_id, dataset_id
-        )
+    def get_synchronized_dataset_by_user(self, current_user_id: int, dataset_id: int) -> DataSet:
+        return self.repository.get_synchronized_dataset_by_user(current_user_id, dataset_id)
 
     def count_synchronized_datasets(self) -> int:
         return self.repository.count_synchronized_datasets()
@@ -95,17 +85,11 @@ class DataSetService(BaseService):
     def get_unsynchronized_datasets(self) -> List[DataSet]:
         return self.repository.get_unsynchronized_datasets()
 
-    def get_unsynchronized_datasets_by_user(
-        self, current_user_id: int
-    ) -> List[DataSet]:
+    def get_unsynchronized_datasets_by_user(self, current_user_id: int) -> List[DataSet]:
         return self.repository.get_unsynchronized_datasets_by_user(current_user_id)
 
-    def get_unsynchronized_dataset_by_user(
-        self, current_user_id: int, dataset_id: int
-    ) -> DataSet:
-        return self.repository.get_unsynchronized_dataset_by_user(
-            current_user_id, dataset_id
-        )
+    def get_unsynchronized_dataset_by_user(self, current_user_id: int, dataset_id: int) -> DataSet:
+        return self.repository.get_unsynchronized_dataset_by_user(current_user_id, dataset_id)
 
     def count_unsynchronized_datasets(self) -> int:
         return self.repository.count_unsynchronized_datasets()
@@ -130,9 +114,7 @@ class DataSetService(BaseService):
     def count_dsmetadata(self) -> int:
         return self.dsmetadata_repository.count()
 
-    def update_from_form(
-        self, form: DataSetForm, current_user: User, dataset: DataSet
-    ) -> DataSet:
+    def update_from_form(self, form: DataSetForm, current_user: User, dataset: DataSet) -> DataSet:
         main_author = {
             "name": f"{current_user.profile.surname}, {current_user.profile.name}",
             "affiliation": current_user.profile.affiliation,
@@ -142,17 +124,13 @@ class DataSetService(BaseService):
 
             # Update dataset metadata
             logger.info(f"Updating dsmetadata...: {form.get_dsmetadata()}")
-            dsmetadata = self.dsmetadata_repository.update(
-                id=dataset.ds_meta_data.id, **form.get_dsmetadata()
-            )
+            dsmetadata = self.dsmetadata_repository.update(id=dataset.ds_meta_data.id, **form.get_dsmetadata())
 
             # Update authors
             dsmetadata_info = form.get_dsmetadata()
             is_anonymous = dsmetadata_info.get("dataset_anonymous", False)
 
-            self.author_repository.delete_by_column(
-                column_name="ds_meta_data_id", value=dataset.ds_meta_data.id
-            )
+            self.author_repository.delete_by_column(column_name="ds_meta_data_id", value=dataset.ds_meta_data.id)
 
             if is_anonymous:
                 author_list = form.get_anonymous_authors()
@@ -164,9 +142,7 @@ class DataSetService(BaseService):
                     author_list = [main_author]
 
             for author_data in author_list:
-                author = self.author_repository.create(
-                    commit=False, ds_meta_data_id=dsmetadata.id, **author_data
-                )
+                author = self.author_repository.create(commit=False, ds_meta_data_id=dsmetadata.id, **author_data)
                 dsmetadata.authors.append(author)
 
             #   Save updated data in local
@@ -217,25 +193,17 @@ class DataSetService(BaseService):
                     author_list = [main_author]
 
             for author_data in author_list:
-                author = self.author_repository.create(
-                    commit=False, ds_meta_data_id=dsmetadata.id, **author_data
-                )
+                author = self.author_repository.create(commit=False, ds_meta_data_id=dsmetadata.id, **author_data)
                 dsmetadata.authors.append(author)
 
-            dataset = self.create(
-                commit=False, user_id=current_user.id, ds_meta_data_id=dsmetadata.id
-            )
+            dataset = self.create(commit=False, user_id=current_user.id, ds_meta_data_id=dsmetadata.id)
 
             feature_model_count = 0
             for feature_model in form.feature_models:
                 uvl_filename = feature_model.uvl_filename.data
-                fmmetadata = self.fmmetadata_repository.create(
-                    commit=False, **feature_model.get_fmmetadata()
-                )
+                fmmetadata = self.fmmetadata_repository.create(commit=False, **feature_model.get_fmmetadata())
                 for author_data in feature_model.get_authors():
-                    author = self.author_repository.create(
-                        commit=False, fm_meta_data_id=fmmetadata.id, **author_data
-                    )
+                    author = self.author_repository.create(commit=False, fm_meta_data_id=fmmetadata.id, **author_data)
                     fmmetadata.authors.append(author)
 
                 fm = self.feature_model_repository.create(
@@ -321,9 +289,7 @@ class DataSetService(BaseService):
 
     def zip_dataset(self, dataset: DataSet) -> str:
         working_dir = os.getenv("WORKING_DIR", "")
-        dataset_dir = os.path.join(
-            working_dir, "uploads", f"user_{dataset.user_id}", f"dataset_{dataset.id}"
-        )
+        dataset_dir = os.path.join(working_dir, "uploads", f"user_{dataset.user_id}", f"dataset_{dataset.id}")
 
         temp_dir = tempfile.mkdtemp()
         zip_path = os.path.join(temp_dir, f"dataset_{dataset.id}.zip")
@@ -346,9 +312,7 @@ class DataSetService(BaseService):
                     for dataset_dir in os.listdir(user_path):
                         dataset_path = os.path.join(user_path, dataset_dir)
 
-                        if os.path.isdir(dataset_path) and dataset_dir.startswith(
-                            "dataset_"
-                        ):
+                        if os.path.isdir(dataset_path) and dataset_dir.startswith("dataset_"):
                             dataset_id = int(dataset_dir.split("_")[1])
 
                             if self.is_synchronized(dataset_id):
@@ -356,14 +320,10 @@ class DataSetService(BaseService):
                                     for file in files:
                                         full_path = os.path.join(subdir, file)
 
-                                        relative_path = os.path.relpath(
-                                            full_path, dataset_path
-                                        )
+                                        relative_path = os.path.relpath(full_path, dataset_path)
                                         zipf.write(
                                             full_path,
-                                            arcname=os.path.join(
-                                                dataset_dir, relative_path
-                                            ),
+                                            arcname=os.path.join(dataset_dir, relative_path),
                                         )
 
     def zip_from_storage(self, dataset):
@@ -376,9 +336,7 @@ class DataSetService(BaseService):
         )
 
         if not os.path.exists(dataset_folder):
-            current_app.logger.warning(
-                f"[ZIP] Dataset folder not found: {dataset_folder}"
-            )
+            current_app.logger.warning(f"[ZIP] Dataset folder not found: {dataset_folder}")
             return None  # Lo manejarás con abort(404) fuera
 
         temp_dir = tempfile.mkdtemp()
@@ -415,9 +373,7 @@ class DSDownloadRecordService(BaseService):
         if not user_cookie:
             user_cookie = str(uuid.uuid4())
 
-        existing_record = self.the_record_exists(
-            dataset=dataset, user_cookie=user_cookie
-        )
+        existing_record = self.the_record_exists(dataset=dataset, user_cookie=user_cookie)
 
         if not existing_record:
             self.create_new_record(dataset=dataset, user_cookie=user_cookie)
@@ -454,9 +410,7 @@ class DSViewRecordService(BaseService):
         if not user_cookie:
             user_cookie = str(uuid.uuid4())
 
-        existing_record = self.the_record_exists(
-            dataset=dataset, user_cookie=user_cookie
-        )
+        existing_record = self.the_record_exists(dataset=dataset, user_cookie=user_cookie)
 
         if not existing_record:
             self.create_new_record(dataset=dataset, user_cookie=user_cookie)
@@ -521,20 +475,20 @@ class LocalDatasetService:
                 f"publication_type_id: {publication_type_id}, publication_doi: {publication_doi}, tags: {tags}"
             )
 
+            publication_type = PublicationType(publication_type_id) if publication_type_id else None
+
             # Crear DSMetaData
             ds_meta = self.dsmetadata_service.create(
                 title=title,
                 description=description,
-                publication_type=PublicationType(publication_type_id),
+                publication_type=publication_type,
                 publication_doi=publication_doi,
                 tags=",".join(tags) if tags else "",
             )
             self.logger.info(f"[LOCAL] DSMetaData created with ID: {ds_meta.id}")
 
             # Crear DataSet
-            dataset = self.dataset_service.create(
-                commit=False, user_id=current_user.id, ds_meta_data_id=ds_meta.id
-            )
+            dataset = self.dataset_service.create(commit=False, user_id=current_user.id, ds_meta_data_id=ds_meta.id)
             self.logger.info(f"[LOCAL] DataSet created with ID: {dataset.id}")
 
             # Crear autores
@@ -552,9 +506,7 @@ class LocalDatasetService:
                     affiliation=affiliation,
                     orcid=orcid,
                 )
-                self.logger.info(
-                    f"[LOCAL] Author #{i} added: {name}, {affiliation}, {orcid}"
-                )
+                self.logger.info(f"[LOCAL] Author #{i} added: {name}, {affiliation}, {orcid}")
                 i += 1
 
             # Guardar en DB
@@ -567,13 +519,9 @@ class LocalDatasetService:
 
             # Mover modelos
             stage_dir, staged_uvls = ingest.prepare_uvls(current_user.temp_folder())
-            created_fms = self.feature_model_service.create_from_uvl_files(
-                dataset, base_dir=stage_dir
-            )
+            created_fms = self.feature_model_service.create_from_uvl_files(dataset, base_dir=stage_dir)
 
-            self.logger.info(
-                f"[LOCAL] {len(created_fms)} feature models created for dataset {dataset.id}"
-            )
+            self.logger.info(f"[LOCAL] {len(created_fms)} feature models created for dataset {dataset.id}")
 
             return dataset, ds_meta, created_fms
 

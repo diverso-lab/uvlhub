@@ -1,13 +1,13 @@
 import time
 from unittest.mock import patch
 
-from app.modules.confirmemail.services import ConfirmemailService
 import pytest
 from flask import url_for
 
 from app import mail_service
-from app.modules.auth.services import AuthenticationService
 from app.modules.auth.repositories import UserRepository
+from app.modules.auth.services import AuthenticationService
+from app.modules.confirmemail.services import ConfirmemailService
 from app.modules.profile.repositories import UserProfileRepository
 
 
@@ -70,9 +70,7 @@ def test_signup_user_no_name(test_client):
     assert b"This field is required" in response.data, response.data
 
 
-@patch(
-    "app.modules.captcha.services.CaptchaService.validate_captcha", return_value=True
-)
+@patch("app.modules.captcha.services.CaptchaService.validate_captcha", return_value=True)
 def test_signup_user_unsuccessful(mock_captcha, test_client):
     email = "test@example.com"
     response = test_client.post(
@@ -89,9 +87,7 @@ def test_signup_user_unsuccessful(mock_captcha, test_client):
     assert response.request.path == url_for("auth.signup"), "Signup was unsuccessful"
 
 
-@patch(
-    "app.modules.captcha.services.CaptchaService.validate_captcha", return_value=True
-)
+@patch("app.modules.captcha.services.CaptchaService.validate_captcha", return_value=True)
 def test_signup_user_successful(mock_captcha, test_client):
     response = test_client.post(
         "/signup/",
@@ -146,9 +142,7 @@ def test_service_create_with_profile_fail_no_password(clean_database):
     assert UserProfileRepository().count() == 0
 
 
-@patch(
-    "app.modules.captcha.services.CaptchaService.validate_captcha", return_value=True
-)
+@patch("app.modules.captcha.services.CaptchaService.validate_captcha", return_value=True)
 def test_signup_send_confirmation_email(mock_captcha, test_client, clean_database):
     data = {
         "name": "Test",
@@ -181,8 +175,7 @@ def test_confirm_user_token_expired(test_client):
 
     with patch(
         "time.time",
-        return_value=time.time()
-        - (ConfirmemailService().CONFIRM_EMAIL_TOKEN_MAX_AGE + 1),
+        return_value=time.time() - (ConfirmemailService().CONFIRM_EMAIL_TOKEN_MAX_AGE + 1),
     ):
         token = ConfirmemailService().get_token_from_email(email)
 

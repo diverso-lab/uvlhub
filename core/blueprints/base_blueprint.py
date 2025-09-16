@@ -1,5 +1,6 @@
-from flask import Blueprint, Response, abort
 import os
+
+from flask import Blueprint, Response, abort
 
 
 class BaseBlueprint(Blueprint):
@@ -26,9 +27,7 @@ class BaseBlueprint(Blueprint):
             url_defaults=url_defaults,
             root_path=root_path,
         )
-        self.module_path = os.path.join(
-            os.getenv("WORKING_DIR", ""), "app", "modules", name
-        )
+        self.module_path = os.path.join(os.getenv("WORKING_DIR", ""), "app", "modules", name)
         self.add_asset_routes()
 
     def add_asset_routes(self):

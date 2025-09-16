@@ -1,4 +1,5 @@
 from sqlalchemy import func
+
 from app.modules.featuremodel.models import FeatureModel
 from core.repositories.BaseRepository import BaseRepository
 

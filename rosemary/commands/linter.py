@@ -1,11 +1,10 @@
-import click
 import os
 import subprocess
 
+import click
 
-@click.command(
-    "linter", help="Runs flake8 linter on the 'app' and 'rosemary' directories."
-)
+
+@click.command("linter", help="Runs flake8 linter on the 'app' and 'rosemary' directories.")
 def linter():
 
     # Define the directories to be checked with flake8
@@ -25,20 +24,19 @@ def linter():
         if result.returncode != 0:
             click.echo(click.style(f"flake8 found issues in {directory}.", fg="red"))
         else:
-            click.echo(
-                click.style(
-                    f"No issues found in {directory}. Congratulations!", fg="green"
-                )
-            )
+            click.echo(click.style(f"No issues found in {directory}. Congratulations!", fg="green"))
 
 
 @click.command(
     "linter:fix",
-    help="Automatically formats code in 'app', 'rosemary', and 'core' directories using black.",
+    help="Automatically formats and cleans code in 'app', 'rosemary', and 'core' directories.",
 )
 def linter_fix():
+    import os
+    import subprocess
 
-    # Define the directories to be formatted
+    import click
+
     working_dir = os.getenv("WORKING_DIR", "")
     directories = [
         os.path.join(working_dir, "app"),
@@ -46,17 +44,28 @@ def linter_fix():
         os.path.join(working_dir, "core"),
     ]
 
-    # Run black to format the code
     for directory in directories:
-        click.echo(f"Running black on {directory}...")
-        result = subprocess.run(["black", directory])
+        click.echo(click.style(f"\nProcessing {directory}...", fg="cyan"))
 
-        # Check if black encountered problems
+        # 1. Remove unused imports & variables
+        subprocess.run(
+            [
+                "autoflake",
+                "--in-place",
+                "--remove-unused-variables",
+                "--remove-all-unused-imports",
+                "--recursive",
+                directory,
+            ]
+        )
+
+        # 2. Sort imports
+        subprocess.run(["isort", directory])
+
+        # 3. Format code with Black
+        result = subprocess.run(["black", "--line-length=120", directory])
+
         if result.returncode != 0:
-            click.echo(
-                click.style(f"Failed to format {directory} with black.", fg="red")
-            )
+            click.echo(click.style(f"Failed on {directory}", fg="red"))
         else:
-            click.echo(
-                click.style(f"Code in {directory} formatted successfully!", fg="green")
-            )
+            click.echo(click.style(f"✔ {directory} cleaned & formatted", fg="green"))

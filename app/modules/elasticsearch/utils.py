@@ -41,12 +41,10 @@ def index_dataset(dataset):
             }
             for a in dataset.ds_meta_data.authors
         ],
-        "tags": (
-            [t.strip() for t in dataset.ds_meta_data.tags.split(",")]
-            if dataset.ds_meta_data.tags
-            else []
+        "tags": ([t.strip() for t in dataset.ds_meta_data.tags.split(",")] if dataset.ds_meta_data.tags else []),
+        "publication_type": (
+            dataset.ds_meta_data.publication_type.name if dataset.ds_meta_data.publication_type else None
         ),
-        "publication_type": dataset.ds_meta_data.publication_type.name,
         "content": (
             f"{dataset.ds_meta_data.title} "
             f"{dataset.ds_meta_data.description} "
@@ -60,9 +58,7 @@ def index_dataset(dataset):
 
     search.index_document(doc_id=f"dataset-{dataset.id}", data=doc)
 
-    logger.info(
-        f"[SEARCH] Dataset {dataset.id} indexed with DOI: {dataset.ds_meta_data.dataset_doi}"
-    )
+    logger.info(f"[SEARCH] Dataset {dataset.id} indexed with DOI: {dataset.ds_meta_data.dataset_doi}")
 
 
 def index_hubfile(hubfile):
@@ -74,9 +70,7 @@ def index_hubfile(hubfile):
     dataset = hubfile.feature_model.dataset if hubfile.feature_model else None
 
     if not dataset or not dataset.ds_meta_data.dataset_doi:
-        print(
-            f"[SKIP] Hubfile {hubfile.id} skipped (no dataset or dataset has no DOI)."
-        )
+        print(f"[SKIP] Hubfile {hubfile.id} skipped (no dataset or dataset has no DOI).")
         return
 
     doc = {
@@ -106,9 +100,7 @@ def reindex_all():
     datasets = DataSet.query.all()
     hubfiles = Hubfile.query.all()
 
-    print(
-        f"[REINDEX] Reindexing {len(datasets)} datasets and {len(hubfiles)} hubfiles..."
-    )
+    print(f"[REINDEX] Reindexing {len(datasets)} datasets and {len(hubfiles)} hubfiles...")
 
     for dataset in datasets:
         index_dataset(dataset)

@@ -1,17 +1,23 @@
 import os
-from app.modules.dataset.decorators import is_dataset_owner
-from app.modules.dataset.services import (
-    DOIMappingService,
-    DSMetaDataService,
-    DataSetService,
+
+from flask import (
+    abort,
+    current_app,
+    jsonify,
+    make_response,
+    redirect,
+    render_template,
+    request,
+    send_from_directory,
+    url_for,
 )
-from app.modules.flamapy.services import FlamapyService
-from flask import current_app, jsonify, make_response, request, send_from_directory
 from flask_login import current_user, login_required
+
+from app.modules.dataset.decorators import is_dataset_owner
+from app.modules.dataset.services import DataSetService, DOIMappingService, DSMetaDataService
+from app.modules.flamapy.services import FlamapyService
 from app.modules.hubfile import hubfile_bp
 from app.modules.hubfile.services import HubfileDownloadRecordService, HubfileService
-from flask import render_template
-from flask import abort, redirect, url_for
 
 hubfile_download_record_service = HubfileDownloadRecordService()
 
@@ -126,9 +132,7 @@ def download_file(file_id):
 
     user_cookie = hubfile_download_record_service.create_cookie(hubfile=hubfile)
 
-    resp = make_response(
-        send_from_directory(directory=file_path, path=filename, as_attachment=True)
-    )
+    resp = make_response(send_from_directory(directory=file_path, path=filename, as_attachment=True))
     resp.set_cookie("file_download_cookie", user_cookie)
 
     return resp
@@ -152,12 +156,8 @@ def view_unsynchronized_file(dataset_id, file_id):
         abort(404)
 
     # 4. Construir ruta al archivo en disco
-    directory_path = os.path.join(
-        "uploads", f"user_{dataset.user_id}", f"dataset_{dataset.id}", "uvl"
-    )
-    file_path = os.path.join(
-        current_app.root_path, "..", directory_path, selected_file.name
-    )
+    directory_path = os.path.join("uploads", f"user_{dataset.user_id}", f"dataset_{dataset.id}", "uvl")
+    file_path = os.path.join(current_app.root_path, "..", directory_path, selected_file.name)
 
     try:
         with open(file_path, "r") as f:
@@ -193,24 +193,15 @@ def view_uvl_with_doi(doi, filename):
 
     # 3. Buscar hubfile por nombre dentro del dataset
     selected_file = next(
-        (
-            hf
-            for fm in dataset.feature_models
-            for hf in fm.hubfiles
-            if hf.name == filename
-        ),
+        (hf for fm in dataset.feature_models for hf in fm.hubfiles if hf.name == filename),
         None,
     )
     if not selected_file:
         abort(404)
 
     # 4. Construir ruta al archivo en disco
-    directory_path = os.path.join(
-        "uploads", f"user_{dataset.user_id}", f"dataset_{dataset.id}", "uvl"
-    )
-    file_path = os.path.join(
-        current_app.root_path, "..", directory_path, selected_file.name
-    )
+    directory_path = os.path.join("uploads", f"user_{dataset.user_id}", f"dataset_{dataset.id}", "uvl")
+    file_path = os.path.join(current_app.root_path, "..", directory_path, selected_file.name)
 
     try:
         with open(file_path, "r") as f:
@@ -233,12 +224,8 @@ def raw_uvl(file_id):
     dataset = selected_file.feature_model.dataset
 
     # Construir ruta absoluta al archivo
-    directory_path = os.path.join(
-        "uploads", f"user_{dataset.user_id}", f"dataset_{dataset.id}", "uvl"
-    )
-    file_path = os.path.join(
-        current_app.root_path, "..", directory_path, selected_file.name
-    )
+    directory_path = os.path.join("uploads", f"user_{dataset.user_id}", f"dataset_{dataset.id}", "uvl")
+    file_path = os.path.join(current_app.root_path, "..", directory_path, selected_file.name)
 
     try:
         with open(file_path, "r") as f:

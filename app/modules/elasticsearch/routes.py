@@ -1,4 +1,5 @@
 from flask import render_template
+
 from app.modules.elasticsearch import elasticsearch_bp
 
 
