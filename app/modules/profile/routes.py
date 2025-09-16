@@ -1,4 +1,4 @@
-from flask import redirect, render_template, request, url_for
+from flask import jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
 from app import db
@@ -57,4 +57,21 @@ def my_profile():
         datasets=user_datasets_pagination.items,
         pagination=user_datasets_pagination,
         total_datasets=total_datasets_count,
+    )
+
+
+@profile_bp.route("/api/me", methods=["GET"])
+@login_required
+def get_my_profile():
+    profile = current_user.profile
+    if not profile:
+        return jsonify({"error": "Profile not found"}), 404
+
+    return jsonify(
+        {
+            "name": profile.name,
+            "surname": profile.surname,
+            "affiliation": profile.affiliation,
+            "orcid": profile.get_orcid(),
+        }
     )

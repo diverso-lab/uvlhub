@@ -151,9 +151,7 @@ class ZenodoService(BaseService):
 
         logger.info("Dataset sending to Zenodo...")
         pub_type = (
-            dataset.ds_meta_data.publication_type.value
-            if dataset.ds_meta_data.publication_type
-            else "Not specified"
+            dataset.ds_meta_data.publication_type.value if dataset.ds_meta_data.publication_type else "Not specified"
         )
 
         logger.info(f"Publication type... {pub_type}")
