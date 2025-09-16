@@ -37,10 +37,12 @@ const stepHandlers = {
     3: {
         onEnter: () => {
             console.log("Entering Step 3");
-            toggleContinueButton(true);
+            validateStep3(); // comprobar al entrar
+            initializeStep3Listeners(); // activar listeners
         },
         onExit: () => {
             console.log("Exiting Step 3");
+            removeStep3Listeners();
         },
     },
     5: {
@@ -50,6 +52,43 @@ const stepHandlers = {
         },
     },
 };
+
+function validateStep3() {
+    const title = document.querySelector('input[name="title"]')?.value.trim();
+    const description = tinymce.get('dataset_editor')?.getContent({ format: 'text' }).trim();
+
+    if (title && description) {
+        toggleContinueButton(true);
+    } else {
+        toggleContinueButton(false);
+    }
+}
+
+function initializeStep3Listeners() {
+    const titleInput = document.querySelector('input[name="title"]');
+    if (titleInput) {
+        titleInput.addEventListener("input", validateStep3);
+    }
+
+    // TinyMCE necesita listener especial
+    if (tinymce.get('dataset_editor')) {
+        tinymce.get('dataset_editor').on('input', validateStep3);
+        tinymce.get('dataset_editor').on('keyup', validateStep3);
+    }
+}
+
+function removeStep3Listeners() {
+    const titleInput = document.querySelector('input[name="title"]');
+    if (titleInput) {
+        titleInput.removeEventListener("input", validateStep3);
+    }
+
+    if (tinymce.get('dataset_editor')) {
+        tinymce.get('dataset_editor').off('input', validateStep3);
+        tinymce.get('dataset_editor').off('keyup', validateStep3);
+    }
+}
+
 
 // Function to enable or disable the Continue button
 function toggleContinueButton(enable) {
