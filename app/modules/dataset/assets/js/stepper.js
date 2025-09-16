@@ -55,8 +55,10 @@ const stepHandlers = {
 function toggleContinueButton(enable) {
     if (enable) {
         continueButton.classList.remove("disabled");
+        continueButton.disabled = false; // ← Esto lo hace de verdad
     } else {
         continueButton.classList.add("disabled");
+        continueButton.disabled = true;  // ← Esto lo bloquea
     }
 }
 
@@ -75,17 +77,30 @@ function handleStepChange() {
 }
 
 // Prevent advancing without files in Step 2
-function handleNextStep(event) {
-    const currentStep = stepper.getCurrentStepIndex();
-    if (currentStep === stepToValidateFiles && myDropzone.files.length === 0) {
-        console.log("Validation failed: No files uploaded.");
-        alert("Please upload at least one file before continuing.");
-        event.preventDefault();
-        return;
+function handleNextStep(stepperObj) {
+  const currentStep = stepperObj.getCurrentStepIndex();
+
+  if (currentStep === stepToValidateFiles) {
+    const files = myDropzone.files;
+
+    // No archivos o hay inválidos => no avanzamos
+    if (
+      files.length === 0 ||
+      files.some(f => f.status === Dropzone.ERROR || f.status === Dropzone.CANCELED)
+    ) {
+      console.log("Validation failed: cannot continue.");
+      // refuerza estado del botón por si acaso
+      updateDropzoneStatus();
+      return; // ← no llamamos a goNext()
     }
-    console.log("Validation passed. Moving to the next step.");
-    stepper.goNext();
+  }
+
+  console.log("Validation passed. Moving to the next step.");
+  stepperObj.goNext();
 }
+
+
+
 
 // Initialize Stepper logic
 export function initializeStepper() {
@@ -106,12 +121,18 @@ export function initializeStepper() {
 
 // Dropzone event listeners
 function initializeDropzoneListeners() {
-    console.log("Initializing Dropzone listeners...");
+  console.log("Initializing Dropzone listeners...");
 
-    myDropzone.on("addedfile", updateDropzoneStatus);
-    myDropzone.on("removedfile", updateDropzoneStatus);
+  myDropzone.on("addedfile", updateDropzoneStatus);
+  myDropzone.on("removedfile", updateDropzoneStatus);
 
-    updateDropzoneStatus();
+  // ⚠️ Imprescindibles para que el botón se desactive cuando el ZIP pasa a ERROR
+  myDropzone.on("error", updateDropzoneStatus);
+  myDropzone.on("success", updateDropzoneStatus);
+  myDropzone.on("canceled", updateDropzoneStatus);
+  myDropzone.on("complete", updateDropzoneStatus); // opcional
+
+  updateDropzoneStatus();
 }
 
 function removeDropzoneListeners() {
@@ -123,8 +144,28 @@ function removeDropzoneListeners() {
 
 function updateDropzoneStatus() {
     console.log("Updating Dropzone status...");
-    toggleContinueButton(myDropzone.files.length > 0);
+
+    const files = myDropzone.files;
+
+    // 1. No archivos => botón deshabilitado
+    if (files.length === 0) {
+        toggleContinueButton(false);
+        return;
+    }
+
+    // 2. Archivos inválidos (ERROR o CANCELED) => botón deshabilitado
+    const hasInvalid = files.some(
+        f => f.status === Dropzone.ERROR || f.status === Dropzone.CANCELED
+    );
+    if (hasInvalid) {
+        toggleContinueButton(false);
+        return;
+    }
+
+    // 3. Todo bien => botón habilitado
+    toggleContinueButton(true);
 }
+
 
 function get_summary() {
     // Recoger valores básicos

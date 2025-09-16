@@ -18,22 +18,46 @@ document.addEventListener("DOMContentLoaded", function () {
         autoProcessQueue: true,
         acceptedFiles: ".uvl,.zip",
         parallelUploads: 20,
-        maxFilesize: 100, // MB
         previewTemplate: previewTemplate,
         previewsContainer: id + " .dropzone-items",
         clickable: id + " .dropzone-select",
         accept: function (file, done) {
+            // límite en bytes (100 MB decimales)
+            const maxZipSize = 100 * 1000 * 1000;
+
+            if (file.name.toLowerCase().endsWith(".zip") && file.size > maxZipSize) {
+                const sizeMB = (file.size / 1000000).toFixed(1); // en MB con 1 decimal
+                done(`ZIP file too big (${sizeMB} MB). Max size is 100 MB.`);
+                return;
+            }
+
             const uvlFiles = this.files.filter(f => f.name?.toLowerCase().endsWith(".uvl"));
             if (uvlFiles.length > 20) {
-                done("You tried to upload more than 20 .uvl files. Please use a ZIP or tarball instead.");
+                done("You tried to upload more than 20 .uvl files. Please use a ZIP instead.");
             } else {
                 done();
             }
         }
+
     });
+
 
     window.myDropzoneReady = true;
     document.dispatchEvent(new Event("myDropzoneReady"));
+
+    myDropzone.on("removedfile", function () {
+    // ¿Quedan archivos con error?
+    const hasErrors = this.files.some(f => f.status === Dropzone.ERROR);
+
+    if (!hasErrors) {
+        const errBox = document.getElementById("upload-error");
+        if (errBox) {
+            errBox.classList.add("d-none");
+            errBox.innerHTML = "";
+        }
+    }
+});
+
 
     /*
      * Botón "Clear all"
@@ -245,6 +269,6 @@ document.addEventListener("DOMContentLoaded", function () {
             errBox.innerHTML = message;
         }
         // 🔕 quitar el archivo rechazado del preview
-        this.removeFile(file);
+        //this.removeFile(file);
     });
 });
