@@ -176,7 +176,7 @@ function get_summary() {
     
 
     const title = document.querySelector('input[name="title"]')?.value.trim() || "No title provided";
-    const description = document.querySelector('textarea[name="description"]')?.value.trim() || "No description provided";
+    const description = tinymce.get('dataset_editor')?.getContent({ format: 'text' }).trim() || "No description provided";
 
     const publicationTypeElement = document.querySelector('select[name="publication_type"]');
     const publicationType = publicationTypeElement 
@@ -200,10 +200,9 @@ function get_summary() {
     const authorsContainer = document.getElementById('authors-container');
     const authorCards = authorsContainer ? authorsContainer.querySelectorAll('.draggable') : [];
     const authors = Array.from(authorCards).map((authorCard) => {
-        const authorId = authorCard.id.replace('author-', '');
-        const name = document.querySelector(`#name_${authorId}`)?.value.trim() || "No name provided";
-        const affiliation = document.querySelector(`#affiliation_${authorId}`)?.value.trim() || "No affiliation provided";
-        const orcid = document.querySelector(`#orcid_${authorId}`)?.value.trim() || "No ORCID provided";
+        const name = authorCard.querySelector('input[name*="[name]"]')?.value.trim() || "No name provided";
+        const affiliation = authorCard.querySelector('input[name*="[affiliation]"]')?.value.trim() || "No affiliation provided";
+        const orcid = authorCard.querySelector('input[name*="[orcid]"]')?.value.trim() || "No ORCID provided";
 
         return { name, affiliation, orcid };
     });
