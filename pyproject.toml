@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rosemary"
-version = "0.1.0"
+version = "1.0.0"
 description = "Rosemary is a CLI to be able to work on UVLHub development more easily."
 readme = "README.md"
 requires-python = ">=3.13"
@@ -39,9 +39,6 @@ target-version = ["py313"]
 line_length = 120
 profile = "black"
 
-[flake8]
+[tool.flake8]
 max-line-length = 120
-extend-ignore = [
-    "E203",  # espacios antes de ':', Black ya lo maneja
-    "W503",  # salto de línea antes de operador binario
-]
+extend-ignore = ["E203", "W503"]

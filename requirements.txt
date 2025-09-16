@@ -30,6 +30,7 @@ elasticsearch==8.18.1
 email_validator==2.2.0
 Faker==37.4.2
 flake8==7.3.0
+Flake8-pyproject==1.2.3
 flamapy==2.0.1
 flamapy-bdd==2.0.1
 flamapy-fm==2.0.1
