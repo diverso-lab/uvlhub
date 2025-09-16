@@ -5,6 +5,7 @@ antlr4-python3-runtime==4.13.1
 astutils==0.0.6
 attrs==25.3.0
 Authlib==1.6.1
+autoflake==2.3.1
 beautifulsoup4==4.13.4
 bidict==0.23.1
 black==25.1.0
@@ -55,6 +56,7 @@ hpack==4.1.0
 hyperframe==6.1.0
 idna==3.10
 iniconfig==2.1.0
+isort==6.0.1
 itsdangerous==2.2.0
 Jinja2==3.1.6
 jsonschema==4.25.0
