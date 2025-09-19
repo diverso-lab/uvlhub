@@ -3,6 +3,102 @@ import Mustache from 'mustache';
 // Configure Mustache delimiters
 Mustache.tags = ['[[', ']]'];
 
+// ----------------- VALIDADORES -----------------
+
+function validateNameInput(input) {
+    const value = input.value.trim();
+    if (value.length < 2) {
+        showFieldError(input, "Name must have at least 2 characters");
+    } else {
+        clearFieldError(input);
+    }
+}
+
+function validateAffiliationInput(input) {
+    const value = input.value.trim();
+    if (value.length > 100) {
+        showFieldError(input, "Affiliation too long (max 100 chars)");
+    } else {
+        clearFieldError(input);
+    }
+}
+
+// ----------------- HELPERS DE ERRORES -----------------
+
+function showFieldError(input, message) {
+    input.classList.add("is-invalid");
+    let feedback = input.nextElementSibling;
+    if (feedback && feedback.classList.contains("invalid-feedback")) {
+        feedback.textContent = message;
+    }
+}
+
+function clearFieldError(input) {
+    input.classList.remove("is-invalid");
+    let feedback = input.nextElementSibling;
+    if (feedback && feedback.classList.contains("invalid-feedback")) {
+        feedback.textContent = "";
+    }
+}
+
+// ----------------- VALIDAR TODOS LOS AUTORES -----------------
+
+export async function validateAllAuthors() {
+    let isValid = true;
+
+    // Validar nombres
+    document.querySelectorAll("#authors-container .author-name").forEach(input => {
+        validateNameInput(input);
+        if (input.classList.contains("is-invalid")) isValid = false;
+    });
+
+    // Validar afiliaciones
+    document.querySelectorAll("#authors-container .author-affiliation").forEach(input => {
+        validateAffiliationInput(input);
+        if (input.classList.contains("is-invalid")) isValid = false;
+    });
+
+    // Validar ORCID (async porque consulta la API)
+    const orcidInputs = document.querySelectorAll("#authors-container .orcid-input");
+
+    for (const input of orcidInputs) {
+        const value = input.value.trim();
+
+        if (value === "") {
+            clearFieldError(input);
+            continue; // vacío = válido
+        }
+
+        const regex = /^\d{4}-\d{4}-\d{4}-\d{3}[0-9X]$/;
+        if (!regex.test(value)) {
+            showFieldError(input, "Invalid ORCID format");
+            isValid = false;
+            continue;
+        }
+
+        // Chequeo contra API pública de ORCID
+        try {
+            const res = await fetch(`https://pub.orcid.org/v3.0/${value}`, {
+                headers: { "Accept": "application/json" }
+            });
+
+            if (res.status === 200) {
+                clearFieldError(input);
+            } else {
+                showFieldError(input, "ORCID not found");
+                isValid = false;
+            }
+        } catch (err) {
+            showFieldError(input, "Error contacting ORCID");
+            isValid = false;
+        }
+    }
+
+    return isValid;
+}
+
+// ----------------- LÓGICA DE AUTORES (Mustache, botones, drag & drop) -----------------
+
 // Generate a unique ID for HTML IDs (not used in form field names)
 function generateUniqueId() {
     return '_' + Math.random().toString(36).slice(2, 11);
@@ -11,28 +107,23 @@ function generateUniqueId() {
 // Global index counter for authors (used in name attributes)
 let authorIndex = 0;
 
-// Initialize logic for adding and removing authors
-
 export function initializeAuthors() {
-    // Button to add authors
+    // Botón "Add author"
     document.getElementById('add-author-btn').addEventListener('click', function () {
         const uniqueId = generateUniqueId();
         const template = document.getElementById('author-template').innerHTML;
 
-        // Render template with both a unique ID and an index
         const rendered = Mustache.render(template, {
             id: uniqueId,
             index: authorIndex
         });
 
-        // Add the new author to the container
         document.getElementById('authors-container').insertAdjacentHTML('beforeend', rendered);
 
-        // Increment index for next author
         authorIndex++;
     });
 
-    // Delegated event to remove authors
+    // Botón "Remove author"
     document.getElementById('authors-container').addEventListener('click', function (e) {
         if (e.target.classList.contains('remove-author') || e.target.closest('.remove-author')) {
             const button = e.target.closest('.remove-author');
@@ -49,9 +140,8 @@ export function initializeAuthors() {
         }
     });
 
-    // Initialize the draggable zone
+    // Drag & drop
     const containers = document.querySelectorAll(".draggable-zone");
-
     new Draggable.Sortable(containers, {
         draggable: ".draggable",
         handle: ".draggable .draggable-handle",
@@ -61,6 +151,7 @@ export function initializeAuthors() {
         }
     });
 
+    // Botón "Add myself"
     document.getElementById('add-myself-btn').addEventListener('click', async function () {
         const btn = this;
         try {
@@ -88,13 +179,13 @@ export function initializeAuthors() {
 
             document.getElementById('authors-container').insertAdjacentHTML('beforeend', rendered);
 
-            // Rellenar campos dentro del bloque recién creado
+            // Rellenar campos del bloque recién creado
             const base = document.getElementById(`author-${uniqueId}`);
             base.querySelector(`input[name="authors${authorIndex}[name]"]`).value = `${data.name} ${data.surname}`;
             base.querySelector(`input[name="authors${authorIndex}[affiliation]"]`).value = data.affiliation || "";
             base.querySelector(`input[name="authors${authorIndex}[orcid]"]`).value = data.orcid || "";
 
-            // Guardar id de "myself" en el botón y deshabilitarlo
+            // Deshabilitar botón "myself" hasta que se borre
             btn.dataset.myselfId = uniqueId;
             btn.disabled = true;
 
@@ -104,4 +195,18 @@ export function initializeAuthors() {
             alert(`Error fetching your profile: ${err.message}`);
         }
     });
+
+    // Validación en blur
+    document.addEventListener("blur", (e) => {
+        if (e.target.classList.contains("author-name")) {
+            validateNameInput(e.target);
+        }
+        if (e.target.classList.contains("author-affiliation")) {
+            validateAffiliationInput(e.target);
+        }
+        if (e.target.classList.contains("orcid-input")) {
+            // lanzamos validación completa (formato + API)
+            validateAllAuthors();
+        }
+    }, true);
 }

@@ -508,21 +508,29 @@
             </div>
         </div>
         <div class="card-body">
-            <!-- Cambiamos los name para que sigan el formato authors[INDEX][campo] -->
             <div class="row mb-3">
                 <div class="col-md-6">
                     <label class="form-label">Name *</label>
-                    <input type="text" name="authors[[index]][name]" class="form-control" placeholder="Enter your name" required>
+                    <input type="text" name="authors[[index]][name]" 
+                           class="form-control author-name" 
+                           placeholder="Enter name" required>
+                    <div class="invalid-feedback"></div>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Affiliation</label>
-                    <input type="text" name="authors[[index]][affiliation]" class="form-control" placeholder="Enter your affiliation">
+                    <input type="text" name="authors[[index]][affiliation]" 
+                           class="form-control author-affiliation" 
+                           placeholder="Enter affiliation">
+                    <div class="invalid-feedback"></div>
                 </div>
             </div>
             <div class="row mb-3">
                 <div class="col-md-12">
                     <label class="form-label">ORCID</label>
-                    <input type="text" name="authors[[index]][orcid]" class="form-control" placeholder="Enter your ORCID">
+                    <input type="text" name="authors[[index]][orcid]" 
+                           class="form-control orcid-input" 
+                           placeholder="0000-0000-0000-0000">
+                    <div class="invalid-feedback"></div>
                 </div>
             </div>
         </div>

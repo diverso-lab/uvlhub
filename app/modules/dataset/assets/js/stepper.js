@@ -1,4 +1,4 @@
-// stepper.js
+import { validateAllAuthors } from './authors.js';
 
 // Select the Stepper element
 const stepperElement = document.querySelector("#stepper_upload_dataset");
@@ -89,15 +89,14 @@ function removeStep3Listeners() {
     }
 }
 
-
 // Function to enable or disable the Continue button
 function toggleContinueButton(enable) {
     if (enable) {
         continueButton.classList.remove("disabled");
-        continueButton.disabled = false; // ← Esto lo hace de verdad
+        continueButton.disabled = false;
     } else {
         continueButton.classList.add("disabled");
-        continueButton.disabled = true;  // ← Esto lo bloquea
+        continueButton.disabled = true;
     }
 }
 
@@ -115,31 +114,36 @@ function handleStepChange() {
     }
 }
 
-// Prevent advancing without files in Step 2
-function handleNextStep(stepperObj) {
-  const currentStep = stepperObj.getCurrentStepIndex();
+// Prevent advancing without validation
+async function handleNextStep(stepperObj) {
+    const currentStep = stepperObj.getCurrentStepIndex();
 
-  if (currentStep === stepToValidateFiles) {
-    const files = myDropzone.files;
+    // Step 2 → Dropzone files
+    if (currentStep === stepToValidateFiles) {
+        const files = myDropzone.files;
 
-    // No archivos o hay inválidos => no avanzamos
-    if (
-      files.length === 0 ||
-      files.some(f => f.status === Dropzone.ERROR || f.status === Dropzone.CANCELED)
-    ) {
-      console.log("Validation failed: cannot continue.");
-      // refuerza estado del botón por si acaso
-      updateDropzoneStatus();
-      return; // ← no llamamos a goNext()
+        if (
+            files.length === 0 ||
+            files.some(f => f.status === Dropzone.ERROR || f.status === Dropzone.CANCELED)
+        ) {
+            console.log("Validation failed: cannot continue.");
+            updateDropzoneStatus();
+            return; // no avanzamos
+        }
     }
-  }
 
-  console.log("Validation passed. Moving to the next step.");
-  stepperObj.goNext();
+    // Step 4 → Authors (async validation)
+    if (currentStep === 4) {
+        const valid = await validateAllAuthors();
+        if (!valid) {
+            console.log("Validation failed: authors have errors.");
+            return; // no avanzamos
+        }
+    }
+
+    console.log("Validation passed. Moving to the next step.");
+    stepperObj.goNext();
 }
-
-
-
 
 // Initialize Stepper logic
 export function initializeStepper() {
@@ -160,18 +164,17 @@ export function initializeStepper() {
 
 // Dropzone event listeners
 function initializeDropzoneListeners() {
-  console.log("Initializing Dropzone listeners...");
+    console.log("Initializing Dropzone listeners...");
 
-  myDropzone.on("addedfile", updateDropzoneStatus);
-  myDropzone.on("removedfile", updateDropzoneStatus);
+    myDropzone.on("addedfile", updateDropzoneStatus);
+    myDropzone.on("removedfile", updateDropzoneStatus);
 
-  // ⚠️ Imprescindibles para que el botón se desactive cuando el ZIP pasa a ERROR
-  myDropzone.on("error", updateDropzoneStatus);
-  myDropzone.on("success", updateDropzoneStatus);
-  myDropzone.on("canceled", updateDropzoneStatus);
-  myDropzone.on("complete", updateDropzoneStatus); // opcional
+    myDropzone.on("error", updateDropzoneStatus);
+    myDropzone.on("success", updateDropzoneStatus);
+    myDropzone.on("canceled", updateDropzoneStatus);
+    myDropzone.on("complete", updateDropzoneStatus);
 
-  updateDropzoneStatus();
+    updateDropzoneStatus();
 }
 
 function removeDropzoneListeners() {
@@ -186,13 +189,11 @@ function updateDropzoneStatus() {
 
     const files = myDropzone.files;
 
-    // 1. No archivos => botón deshabilitado
     if (files.length === 0) {
         toggleContinueButton(false);
         return;
     }
 
-    // 2. Archivos inválidos (ERROR o CANCELED) => botón deshabilitado
     const hasInvalid = files.some(
         f => f.status === Dropzone.ERROR || f.status === Dropzone.CANCELED
     );
@@ -201,18 +202,14 @@ function updateDropzoneStatus() {
         return;
     }
 
-    // 3. Todo bien => botón habilitado
     toggleContinueButton(true);
 }
 
-
 function get_summary() {
-    // Recoger valores básicos
     const datasetTypeElement = document.querySelector('input[name="dataset_type"]:checked');
     const datasetType = datasetTypeElement 
         ? document.querySelector(`label[for="${datasetTypeElement.id}"]`)?.innerText.trim() || "Not selected"
         : "Not selected";
-    
 
     const title = document.querySelector('input[name="title"]')?.value.trim() || "No title provided";
     const description = tinymce.get('dataset_editor')?.getContent({ format: 'text' }).trim() || "No description provided";
@@ -235,7 +232,6 @@ function get_summary() {
         }
     }
 
-    // Recoger autores
     const authorsContainer = document.getElementById('authors-container');
     const authorCards = authorsContainer ? authorsContainer.querySelectorAll('.draggable') : [];
     const authors = Array.from(authorCards).map((authorCard) => {
@@ -246,7 +242,6 @@ function get_summary() {
         return { name, affiliation, orcid };
     });
 
-    // Crear contenido estructurado
     let summaryContent = `
         <h3>Summary</h3>
         <p><strong>Dataset Type:</strong><br>${datasetType}</p>
@@ -281,7 +276,6 @@ function get_summary() {
         summaryContent += '<p>No authors added.</p>';
     }
 
-    // Insertar en el div con ID summary
     const summaryDiv = document.getElementById('summary');
     if (summaryDiv) {
         summaryDiv.innerHTML = summaryContent;
@@ -289,5 +283,3 @@ function get_summary() {
         console.error('Div with ID "summary" not found.');
     }
 }
-
-
