@@ -34,7 +34,6 @@ def edit_profile():
     return render_template("profile/edit.html", form=form, profile=profile)
 
 
-
 @profile_bp.route("/profile/summary")
 @login_required
 def my_profile():
