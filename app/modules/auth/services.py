@@ -43,6 +43,10 @@ class AuthenticationService(BaseService):
             if not surname:
                 raise ValueError("Surname is required.")
 
+            # 🚨 Validación clave
+            if not self.is_email_available(email):
+                raise ValueError("This email is already registered. Try logging in or using ORCID.")
+
             user_data = {
                 "email": email,
                 "password": password,
@@ -58,10 +62,11 @@ class AuthenticationService(BaseService):
             profile_data["user_id"] = user.id
             self.user_profile_repository.create(**profile_data)
             self.repository.session.commit()
+            return user
+
         except Exception as exc:
             self.repository.session.rollback()
             raise exc
-        return user
 
     def update_profile(self, user_profile_id, form):
         if not form.validate():
