@@ -17,8 +17,9 @@ def edit_profile():
     if not profile:
         return redirect(url_for("public.index"))
 
-    form = UserProfileForm()
-    if request.method == "POST":
+    form = UserProfileForm(obj=profile)
+
+    if form.validate_on_submit():
         service = UserProfileService()
         result, errors = service.update_profile(profile.id, form)
         return service.handle_service_response(
@@ -31,6 +32,7 @@ def edit_profile():
         )
 
     return render_template("profile/edit.html", form=form, profile=profile)
+
 
 
 @profile_bp.route("/profile/summary")
