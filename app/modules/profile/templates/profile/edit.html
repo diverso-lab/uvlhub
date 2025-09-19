@@ -51,10 +51,12 @@
 
                     {% if profile.get_orcid() %}
                     <div class="mb-4">
-                        <label class="form-label fw-semibold" for="orcid">ORCID</label>
-                        <input class="form-control" disabled id="orcid" maxlength="19" minlength="19" name="orcid" required type="text" value="{{ profile.get_orcid() }}">
+                        <label class="form-label fw-semibold">ORCID</label>
+                        <input class="form-control" id="orcid" type="text" value="{{ profile.get_orcid() }}" readonly>
+                        <div class="form-text">Your ORCID iD is linked via ORCID Login.</div>
                     </div>
                     {% endif %}
+
 
                     {% if error %}
                     <div class="alert alert-danger d-flex align-items-center p-3 mb-4">
