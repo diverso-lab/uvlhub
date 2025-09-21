@@ -48,42 +48,61 @@ export function addTagToQuery(tag) {
     runSearch();
 }
 
-function runSearch() {
+let currentPage = 1;
+const pageSize = 10;
+let loading = false;
+
+function runSearch(reset = true) {
+    if (reset) {
+        currentPage = 1;
+        document.getElementById('results-container').innerHTML = '';
+    }
+
     const query = document.getElementById('search-query').value;
     const publication_type = document.getElementById('filter-publication-type').value;
     const sorting = document.getElementById('filter-sorting').value;
-    const tags = document.getElementById('filter-tags').value;
-    const dateFrom = document.getElementById('filter-date-from').value;
-    const dateTo = document.getElementById('filter-date-to').value;
 
-    const params = new URLSearchParams();
+    const params = new URLSearchParams({
+        q: query,
+        publication_type: publication_type,
+        sorting: sorting,
+        page: currentPage,
+        size: pageSize
+    });
 
-    if (query) params.append("q", query);
-    if (publication_type) params.append("publication_type", publication_type);
-    if (sorting) params.append("sorting", sorting);
-    if (tags) params.append("tags", tags);
-    if (dateFrom) params.append("date_from", dateFrom);
-    if (dateTo) params.append("date_to", dateTo);
+    if (loading) return;
+    loading = true;
 
     fetch(`/api/v1/search?${params.toString()}`)
         .then(res => res.json())
         .then(data => {
-            renderResults(data);
+            renderResults(data.results, !reset);
+            loading = false;
+            if (data.results.length > 0) currentPage++;
         })
         .catch(err => {
             console.error("Search failed", err);
+            loading = false;
         });
 }
 
+window.addEventListener('scroll', () => {
+    if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200) {
+        runSearch(false); // carga más sin resetear
+    }
+});
 
-function renderResults(data) {
+
+function renderResults(results, append = false) {
     const container = document.getElementById('results-container');
     const notFound = document.getElementById('no-results');
 
-    container.innerHTML = '';
+    if (!append) {
+        container.innerHTML = '';
+    }
 
-    if (!data || data.length === 0) {
-        notFound.classList.remove('d-none');
+    if (!results || results.length === 0) {
+        if (!append) notFound.classList.remove('d-none');
         return;
     }
 
@@ -92,15 +111,13 @@ function renderResults(data) {
     const datasetTemplate = document.getElementById('result-template').innerHTML;
     const hubfileTemplate = document.getElementById('hubfile-template').innerHTML;
 
-    data.forEach(result => {
+    results.forEach(result => {
         let html = '';
-
         if (result.type === 'dataset') {
             html = Mustache.render(datasetTemplate, result);
         } else if (result.type === 'hubfile') {
             html = Mustache.render(hubfileTemplate, result);
         }
-
         container.insertAdjacentHTML('beforeend', html);
     });
 

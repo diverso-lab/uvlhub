@@ -32,7 +32,6 @@ def search():
 
 @explore_bp.route("/api/v1/search")
 def api_search():
-    """Nuevo endpoint usado en explore.bundle.js con filtros extendidos."""
     from app.modules.elasticsearch.services import ElasticsearchService
 
     search_service = ElasticsearchService()
@@ -40,20 +39,24 @@ def api_search():
     query = request.args.get("q", "")
     publication_type = request.args.get("publication_type")
     sorting = request.args.get("sorting", "newest")
+    tags = request.args.get("tags")
     date_from = request.args.get("date_from")
     date_to = request.args.get("date_to")
 
-    # Soporte para tags: "foo,bar" → ["foo", "bar"]
-    tags = request.args.get("tags")
+    page = int(request.args.get("page", 1))
+    size = int(request.args.get("size", 10))
+
     tags_list = [t.strip() for t in tags.split(",") if t.strip()] if tags else []
 
-    results = search_service.search(
+    results, total = search_service.search(
         query=query,
         publication_type=publication_type,
         sorting=sorting,
         tags=tags_list,
         date_from=date_from,
         date_to=date_to,
+        page=page,
+        size=size,
     )
 
-    return jsonify(results)
+    return jsonify({"results": results, "total": total, "page": page, "size": size})

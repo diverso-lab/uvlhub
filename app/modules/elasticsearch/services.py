@@ -158,7 +158,15 @@ class ElasticsearchService(BaseService):
             raise
 
     def search(
-        self, query: str, publication_type=None, sorting="newest", tags=None, date_from=None, date_to=None, size=10
+        self,
+        query: str,
+        publication_type=None,
+        sorting="newest",
+        tags=None,
+        date_from=None,
+        date_to=None,
+        page=1,
+        size=10,
     ):
         try:
             print(
@@ -166,7 +174,8 @@ class ElasticsearchService(BaseService):
                 f"con query: '{query}', "
                 f"tipo: {publication_type}, "
                 f"tags: {tags}, "
-                f"orden: {sorting}"
+                f"orden: {sorting}, "
+                f"página: {page}, tamaño: {size}"
             )
 
             must_clauses = []
@@ -191,11 +200,11 @@ class ElasticsearchService(BaseService):
                     }
                 )
 
-            # Filtro por tipo de publicación (Enum.value → keyword en ES)
+            # Filtro por tipo de publicación
             if publication_type:
                 filter_clauses.append({"term": {"publication_type.keyword": publication_type}})
 
-            # Filtro por tags (acepta lista)
+            # Filtro por tags
             if tags:
                 filter_clauses.append({"terms": {"tags.keyword": tags}})
 
@@ -213,6 +222,9 @@ class ElasticsearchService(BaseService):
                 {"created_at": {"order": "desc"}} if sorting == "newest" else {"created_at": {"order": "asc"}}
             ]
 
+            # Calcular offset
+            from_ = (page - 1) * size
+
             body = {
                 "query": {
                     "bool": {
@@ -223,10 +235,13 @@ class ElasticsearchService(BaseService):
                 "sort": sort_clause,
             }
 
-            result = self.es.search(index=self.index_name, body=body, size=size)
-            print(f"[SUCCESS] Búsqueda completada. Resultados: {len(result['hits']['hits'])}")
+            result = self.es.search(index=self.index_name, body=body, from_=from_, size=size)
+            hits = result["hits"]["hits"]
+            total = result["hits"]["total"]["value"]
 
-            return [self._format_hit(hit) for hit in result["hits"]["hits"]]
+            print(f"[SUCCESS] Búsqueda completada. Página {page}, resultados: {len(hits)}, total: {total}")
+
+            return [self._format_hit(hit) for hit in hits], total
 
         except Exception as e:
             print(f"[ERROR] Fallo en la búsqueda: {e}")
