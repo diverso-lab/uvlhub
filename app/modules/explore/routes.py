@@ -6,20 +6,25 @@ from app.modules.explore import explore_bp
 
 @explore_bp.route("/explore", methods=["GET", "POST"])
 def index():
+    # value = se usa en el filtro (Enum.value) → ej: "conferencepaper"
+    # label = se muestra en el select (bonito) → ej: "Conference Paper"
     publication_type_choices = [(pt.value, pt.name.replace("_", " ").title()) for pt in PublicationType]
-    return render_template("explore/index.html", publication_type_choices=publication_type_choices)
+    return render_template(
+        "explore/index.html",
+        publication_type_choices=publication_type_choices,
+    )
 
 
 @explore_bp.route("/search")
 def search():
-
+    """Legacy endpoint (mantener si hay dependencias en front viejo)."""
     from app.modules.elasticsearch.services import ElasticsearchService
 
     search_service = ElasticsearchService()
 
     query = request.args.get("q", "")
     try:
-        results = search_service.search(query, size=10)
+        results = search_service.search(query=query, size=10)
         return jsonify({"results": results})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -27,7 +32,7 @@ def search():
 
 @explore_bp.route("/api/v1/search")
 def api_search():
-
+    """Nuevo endpoint usado en explore.bundle.js con filtros extendidos."""
     from app.modules.elasticsearch.services import ElasticsearchService
 
     search_service = ElasticsearchService()
@@ -35,7 +40,20 @@ def api_search():
     query = request.args.get("q", "")
     publication_type = request.args.get("publication_type")
     sorting = request.args.get("sorting", "newest")
+    date_from = request.args.get("date_from")
+    date_to = request.args.get("date_to")
 
-    results = search_service.search(query=query, publication_type=publication_type, sorting=sorting)
+    # Soporte para tags: "foo,bar" → ["foo", "bar"]
+    tags = request.args.get("tags")
+    tags_list = [t.strip() for t in tags.split(",") if t.strip()] if tags else []
+
+    results = search_service.search(
+        query=query,
+        publication_type=publication_type,
+        sorting=sorting,
+        tags=tags_list,
+        date_from=date_from,
+        date_to=date_to,
+    )
 
     return jsonify(results)

@@ -15,43 +15,75 @@
 
     <!-- Filters -->
 
-<div class="col-lg-4" id="filters-panel">
-    <div class="card position-sticky" style="top: 85px; z-index: 1;">
-        <div class="card-body">
-            <!-- Filtro: búsqueda -->
-            <input id="search-query" type="text" class="form-control mb-3" placeholder="Search datasets..." autofocus>
+  <div class="col-md-6 col-lg-6 col-sm-12" id="filters-panel">
+      <div class="card position-sticky" style="top: 85px; z-index: 1;">
+          <div class="card-body">
+              <!-- Filtro: búsqueda -->
+              <input id="search-query" type="text" class="form-control mb-3" placeholder="Search datasets..." autofocus>
 
-            <!-- Filtro: tipo de publicación -->
-            <div class="mb-3">
-                <label class="form-label">Publication type</label>
-                <select class="form-select" id="filter-publication-type">
+              <!-- Filtro: tipo de publicación -->
+              <div class="mb-3">
+                  <label class="form-label">Publication type</label>
+                  <select class="form-select" id="filter-publication-type">
                     <option value="">Any</option>
-                    <option value="article">Article</option>
+                    <option value="annotationcollection">Annotation Collection</option>
+                    <option value="book">Book</option>
+                    <option value="section">Book Section</option>
                     <option value="conferencepaper">Conference Paper</option>
+                    <option value="datamanagementplan">Data Management Plan</option>
+                    <option value="article">Journal Article</option>
+                    <option value="patent">Patent</option>
+                    <option value="preprint">Preprint</option>
+                    <option value="deliverable">Project Deliverable</option>
+                    <option value="milestone">Project Milestone</option>
+                    <option value="proposal">Proposal</option>
+                    <option value="report">Report</option>
+                    <option value="softwaredocumentation">Software Documentation</option>
+                    <option value="taxonomictreatment">Taxonomic Treatment</option>
+                    <option value="technicalnote">Technical Note</option>
                     <option value="thesis">Thesis</option>
+                    <option value="workingpaper">Working Paper</option>
                     <option value="other">Other</option>
                 </select>
-            </div>
+              </div>
 
-            <!-- Filtro: orden -->
-            <div class="mb-3">
-                <label class="form-label">Sort by</label>
-                <select class="form-select" id="filter-sorting">
-                    <option value="newest">Newest first</option>
-                    <option value="oldest">Oldest first</option>
-                </select>
-            </div>
+              <!-- Filtro: tags -->
+              <div class="mb-3">
+                <label class="form-label">Tags</label>
+                <input id="filter-tags" 
+                      type="text" 
+                      class="form-control" 
+                      placeholder="Enter tags separated by commas">
+              </div>
 
-            <!-- Botón de limpiar -->
-            <button class="btn btn-outline-primary w-100" id="clear-filters">Clear filters</button>
-        </div>
-    </div>
-</div>
+              <!-- Filtro: fecha -->
+              <div class="mb-3">
+                <label class="form-label">Creation date</label>
+                <div class="d-flex gap-2">
+                  <input id="filter-date-from" type="date" class="form-control" />
+                  <input id="filter-date-to" type="date" class="form-control" />
+                </div>
+              </div>
 
 
+
+              <!-- Filtro: orden -->
+              <div class="mb-3">
+                  <label class="form-label">Sort by</label>
+                  <select class="form-select" id="filter-sorting">
+                      <option value="newest">Newest first</option>
+                      <option value="oldest">Oldest first</option>
+                  </select>
+              </div>
+
+              <!-- Botón de limpiar -->
+              <button class="btn btn-outline-primary w-100" id="clear-filters">Clear filters</button>
+          </div>
+      </div>
+  </div>
 
     <!-- Results -->
-    <div class="col-lg-8">
+    <div class="col-lg-6">
         <div id="results-container"></div>
 
         <!--begin::Empty State-->

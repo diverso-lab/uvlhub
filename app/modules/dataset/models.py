@@ -32,6 +32,28 @@ class PublicationType(Enum):
     OTHER = "other"
 
 
+PUBLICATION_TYPE_LABELS = {
+    PublicationType.ANNOTATION_COLLECTION: "Annotation Collection",
+    PublicationType.BOOK: "Book",
+    PublicationType.BOOK_SECTION: "Book Section",
+    PublicationType.CONFERENCE_PAPER: "Conference Paper",
+    PublicationType.DATA_MANAGEMENT_PLAN: "Data Management Plan",
+    PublicationType.JOURNAL_ARTICLE: "Journal Article",
+    PublicationType.PATENT: "Patent",
+    PublicationType.PREPRINT: "Preprint",
+    PublicationType.PROJECT_DELIVERABLE: "Project Deliverable",
+    PublicationType.PROJECT_MILESTONE: "Project Milestone",
+    PublicationType.PROPOSAL: "Proposal",
+    PublicationType.REPORT: "Report",
+    PublicationType.SOFTWARE_DOCUMENTATION: "Software Documentation",
+    PublicationType.TAXONOMIC_TREATMENT: "Taxonomic Treatment",
+    PublicationType.TECHNICAL_NOTE: "Technical Note",
+    PublicationType.THESIS: "Thesis",
+    PublicationType.WORKING_PAPER: "Working Paper",
+    PublicationType.OTHER: "Other",
+}
+
+
 class Author(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), nullable=False)
@@ -102,7 +124,7 @@ class DataSet(db.Model):
     def get_cleaned_publication_type(self) -> str | None:
         if not self.ds_meta_data.publication_type:
             return None
-        return self.ds_meta_data.publication_type.name.replace("_", " ").title()
+        return PUBLICATION_TYPE_LABELS.get(self.ds_meta_data.publication_type, None)
 
     def get_zenodo_url(self) -> str:
         return f"https://zenodo.org/record/{self.ds_meta_data.deposition_id}" if self.ds_meta_data.dataset_doi else None

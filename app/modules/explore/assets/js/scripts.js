@@ -8,12 +8,18 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function bindFilters() {
-    const filters = ['#search-query', '#filter-publication-type', '#filter-sorting'];
+    const filters = [
+        '#search-query',
+        '#filter-publication-type',
+        '#filter-sorting',
+        '#filter-tags',
+        '#filter-date-from',
+        '#filter-date-to'
+    ];
 
     filters.forEach(selector => {
         const el = document.querySelector(selector);
         if (el) {
-            // Escucha ambos eventos: input (para textos) y change (para selects y select2)
             el.addEventListener('input', runSearch);
             el.addEventListener('change', runSearch);
         }
@@ -23,9 +29,13 @@ function bindFilters() {
         document.getElementById('search-query').value = '';
         document.getElementById('filter-publication-type').value = '';
         document.getElementById('filter-sorting').value = 'newest';
+        document.getElementById('filter-tags').value = '';
+        document.getElementById('filter-date-from').value = '';
+        document.getElementById('filter-date-to').value = '';
         runSearch();
     });
 }
+
 
 
 export function setPublicationTypeFilter(type) {
@@ -42,12 +52,18 @@ function runSearch() {
     const query = document.getElementById('search-query').value;
     const publication_type = document.getElementById('filter-publication-type').value;
     const sorting = document.getElementById('filter-sorting').value;
+    const tags = document.getElementById('filter-tags').value;
+    const dateFrom = document.getElementById('filter-date-from').value;
+    const dateTo = document.getElementById('filter-date-to').value;
 
-    const params = new URLSearchParams({
-        q: query,
-        publication_type: publication_type,
-        sorting: sorting
-    });
+    const params = new URLSearchParams();
+
+    if (query) params.append("q", query);
+    if (publication_type) params.append("publication_type", publication_type);
+    if (sorting) params.append("sorting", sorting);
+    if (tags) params.append("tags", tags);
+    if (dateFrom) params.append("date_from", dateFrom);
+    if (dateTo) params.append("date_to", dateTo);
 
     fetch(`/api/v1/search?${params.toString()}`)
         .then(res => res.json())
@@ -58,6 +74,7 @@ function runSearch() {
             console.error("Search failed", err);
         });
 }
+
 
 function renderResults(data) {
     const container = document.getElementById('results-container');

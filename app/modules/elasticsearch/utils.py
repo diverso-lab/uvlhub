@@ -43,8 +43,9 @@ def index_dataset(dataset):
         ],
         "tags": ([t.strip() for t in dataset.ds_meta_data.tags.split(",")] if dataset.ds_meta_data.tags else []),
         "publication_type": (
-            dataset.ds_meta_data.publication_type.name if dataset.ds_meta_data.publication_type else None
+            dataset.ds_meta_data.publication_type.value if dataset.ds_meta_data.publication_type else None
         ),
+        "publication_type_label": dataset.get_cleaned_publication_type(),
         "content": (
             f"{dataset.ds_meta_data.title} "
             f"{dataset.ds_meta_data.description} "

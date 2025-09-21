@@ -89,6 +89,7 @@ class ElasticsearchService(BaseService):
                                     "type": "text",
                                     "analyzer": "custom_filename_analyzer",
                                 },
+                                "created_at": {"type": "date"},
                                 "doi": {"type": "keyword"},
                                 "authors": {
                                     "type": "nested",  # o "object" si no vas a hacer queries sobre campos internos
@@ -156,36 +157,71 @@ class ElasticsearchService(BaseService):
             print(f"[ERROR] No se pudo eliminar documento '{doc_id}': {e}")
             raise
 
-    def search(self, query: str, publication_type=None, sorting="newest", size=10):
+    def search(
+        self, query: str, publication_type=None, sorting="newest", tags=None, date_from=None, date_to=None, size=10
+    ):
         try:
             print(
                 f"[DEBUG] Buscando en '{self.index_name}' "
                 f"con query: '{query}', "
                 f"tipo: {publication_type}, "
+                f"tags: {tags}, "
                 f"orden: {sorting}"
             )
 
             must_clauses = []
+            filter_clauses = []
 
+            # Texto libre
             if query:
                 must_clauses.append(
                     {
                         "multi_match": {
                             "query": query,
-                            "fields": ["title^3", "authors", "filename^2", "content"],
+                            "fields": [
+                                "title^3",
+                                "authors.name",
+                                "authors.affiliation",
+                                "filename^2",
+                                "content",
+                                "tags",
+                            ],
                             "fuzziness": "AUTO",
                         }
                     }
                 )
 
+            # Filtro por tipo de publicación (Enum.value → keyword en ES)
             if publication_type:
-                must_clauses.append({"term": {"publication_type.keyword": publication_type.lower()}})
+                filter_clauses.append({"term": {"publication_type.keyword": publication_type}})
 
+            # Filtro por tags (acepta lista)
+            if tags:
+                filter_clauses.append({"terms": {"tags.keyword": tags}})
+
+            # Filtro por fechas
+            if date_from or date_to:
+                range_query = {"range": {"created_at": {}}}
+                if date_from:
+                    range_query["range"]["created_at"]["gte"] = f"{date_from}T00:00:00Z"
+                if date_to:
+                    range_query["range"]["created_at"]["lte"] = f"{date_to}T23:59:59Z"
+                filter_clauses.append(range_query)
+
+            # Ordenación
             sort_clause = [
                 {"created_at": {"order": "desc"}} if sorting == "newest" else {"created_at": {"order": "asc"}}
             ]
 
-            body = {"query": {"bool": {"must": must_clauses}}, "sort": sort_clause}
+            body = {
+                "query": {
+                    "bool": {
+                        "must": must_clauses if must_clauses else [{"match_all": {}}],
+                        "filter": filter_clauses,
+                    }
+                },
+                "sort": sort_clause,
+            }
 
             result = self.es.search(index=self.index_name, body=body, size=size)
             print(f"[SUCCESS] Búsqueda completada. Resultados: {len(result['hits']['hits'])}")
