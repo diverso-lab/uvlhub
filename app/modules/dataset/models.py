@@ -36,7 +36,7 @@ class Author(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), nullable=False)
     affiliation = db.Column(db.String(120))
-    orcid = db.Column(db.String(120))
+    orcid = db.Column(db.String(19))
     ds_meta_data_id = db.Column(db.Integer, db.ForeignKey("ds_meta_data.id"))
 
     def to_dict(self):

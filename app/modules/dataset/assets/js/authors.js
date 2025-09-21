@@ -9,6 +9,8 @@ function validateNameInput(input) {
     const value = input.value.trim();
     if (value.length < 2) {
         showFieldError(input, "Name must have at least 2 characters");
+    } else if (value.length > 120) {
+        showFieldError(input, "Name too long (max 120 chars)");
     } else {
         clearFieldError(input);
     }
@@ -16,12 +18,47 @@ function validateNameInput(input) {
 
 function validateAffiliationInput(input) {
     const value = input.value.trim();
-    if (value.length > 100) {
-        showFieldError(input, "Affiliation too long (max 100 chars)");
+    if (value.length > 120) {
+        showFieldError(input, "Affiliation too long (max 120 chars)");
     } else {
         clearFieldError(input);
     }
 }
+
+async function validateOrcidInput(input) {
+    const value = input.value.trim();
+
+    if (value === "") {
+        clearFieldError(input); // vacío es válido
+        return true;
+    }
+
+    // ORCID formato estándar con guiones
+    const regex = /^\d{4}-\d{4}-\d{4}-\d{3}[0-9X]$/;
+    if (!regex.test(value)) {
+        showFieldError(input, "Invalid ORCID format (expected 0000-0000-0000-0000)");
+        return false;
+    }
+
+    // Chequeo contra API pública de ORCID
+    try {
+        const res = await fetch(`https://pub.orcid.org/v3.0/${value}`, {
+            headers: { "Accept": "application/json" }
+        });
+
+        if (res.status === 200) {
+            clearFieldError(input);
+            return true;
+        } else {
+            showFieldError(input, "ORCID not found");
+            return false;
+        }
+    } catch (err) {
+        showFieldError(input, "Error contacting ORCID");
+        return false;
+    }
+}
+
 
 // ----------------- HELPERS DE ERRORES -----------------
 
@@ -59,39 +96,9 @@ export async function validateAllAuthors() {
     });
 
     // Validar ORCID (async porque consulta la API)
-    const orcidInputs = document.querySelectorAll("#authors-container .orcid-input");
-
-    for (const input of orcidInputs) {
-        const value = input.value.trim();
-
-        if (value === "") {
-            clearFieldError(input);
-            continue; // vacío = válido
-        }
-
-        const regex = /^\d{4}-\d{4}-\d{4}-\d{3}[0-9X]$/;
-        if (!regex.test(value)) {
-            showFieldError(input, "Invalid ORCID format");
-            isValid = false;
-            continue;
-        }
-
-        // Chequeo contra API pública de ORCID
-        try {
-            const res = await fetch(`https://pub.orcid.org/v3.0/${value}`, {
-                headers: { "Accept": "application/json" }
-            });
-
-            if (res.status === 200) {
-                clearFieldError(input);
-            } else {
-                showFieldError(input, "ORCID not found");
-                isValid = false;
-            }
-        } catch (err) {
-            showFieldError(input, "Error contacting ORCID");
-            isValid = false;
-        }
+    for (const input of document.querySelectorAll("#authors-container .orcid-input")) {
+        const valid = await validateOrcidInput(input);
+        if (!valid) isValid = false;
     }
 
     return isValid;
