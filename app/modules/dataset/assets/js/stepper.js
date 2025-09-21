@@ -132,6 +132,18 @@ async function handleNextStep(stepperObj) {
         }
     }
 
+    // Step 3 → if the dataset is anonymous, we skip authors (step 4)
+    if (currentStep === 3) {
+        const datasetTypeElement = document.querySelector('input[name="dataset_type"]:checked');
+        if (datasetTypeElement?.value === "zenodo_anonymous") {
+            console.log("Anonymous upload → skipping authors step.");
+            stepperObj.goNext(); // go to step 4
+            stepperObj.goNext(); // go to step 5
+            return;
+        }
+    }
+
+
     // Step 4 → Authors (async validation)
     if (currentStep === 4) {
         const valid = await validateAllAuthors();
