@@ -276,24 +276,31 @@
 								<!--begin::User menu-->
 								<div class="app-navbar-item ms-2 ms-1 ms-lg-3" id="kt_header_user_menu_toggle">
 									<!--begin::Menu wrapper-->
-									<div class="cursor-pointer symbol symbol-35px symbol-md-40px" data-kt-menu-trigger="{default: 'click', lg: 'hover'}" data-kt-menu-attach="parent" data-kt-menu-placement="bottom-end">
-										<img src="{{ url_for('static', filename='media/avatars/blank.png') }}" alt="user" />
+									<div class="cursor-pointer symbol symbol-50px symbol-md-60px bg-light-primary text-primary fw-bold fs-6 d-flex align-items-center justify-content-center rounded-circle"
+										data-kt-menu-trigger="{default: 'click', lg: 'hover'}"
+										data-kt-menu-attach="parent"
+										data-kt-menu-placement="bottom-end">
+										{{ current_user.profile.name[0] }}{{ current_user.profile.surname[0] }}
 									</div>
+
 									<!--begin::User account menu-->
 									<div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-800 menu-state-bg menu-state-color fw-semibold py-4 fs-6 w-275px" data-kt-menu="true">
 										<!--begin::Menu item-->
 										<div class="menu-item px-3">
 											<div class="menu-content d-flex align-items-center px-3">
 												<!--begin::Avatar-->
-												<div class="symbol symbol-50px me-5">
-													<img alt="Logo" src="{{ url_for('static', filename='media/avatars/blank.png') }}" />
+												<div class="symbol symbol-100px me-5 bg-light-primary text-primary fw-bold fs-3 d-flex align-items-center justify-content-center rounded-circle">
+													{{ current_user.profile.name[0] }}{{ current_user.profile.surname[0] }}
 												</div>
 												<!--end::Avatar-->
 												<!--begin::Username-->
 												<div class="d-flex flex-column">
-													<div class="fw-bold d-flex align-items-center fs-5">{{ current_user.profile.surname }}, {{ current_user.profile.name }}
+													<div class="fw-bold d-flex align-items-center fs-5">
+														{{ current_user.profile.surname }}, {{ current_user.profile.name }}
 													</div>
-													<a href="#" class="fw-semibold text-muted text-hover-primary fs-7">{{ current_user.email }}</a>
+													<a href="#" class="fw-semibold text-muted text-hover-primary fs-7">
+														{{ current_user.email }}
+													</a>
 												</div>
 												<!--end::Username-->
 											</div>
