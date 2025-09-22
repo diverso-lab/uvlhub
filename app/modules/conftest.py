@@ -2,6 +2,7 @@ import pytest
 
 from app import create_app, db
 from app.modules.auth.models import User
+from app.modules.profile.models import UserProfile
 
 
 @pytest.fixture(scope="session")
@@ -30,6 +31,10 @@ def test_client(test_app):
             """
             user_test = User(email="test@example.com", password="test1234")
             db.session.add(user_test)
+            db.session.commit()
+
+            profile = UserProfile(user_id=user_test.id, name="Test", surname="User")
+            db.session.add(profile)
             db.session.commit()
 
             print("Rutas registradas:")
