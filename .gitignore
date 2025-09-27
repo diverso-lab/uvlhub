@@ -44,3 +44,6 @@ deployments.log
 
 # Node.js dependencies
 node_modules/
+
+# Config files
+.moduleignore
