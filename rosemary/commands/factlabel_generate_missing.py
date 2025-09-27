@@ -29,7 +29,7 @@ def factlabel_generate_missing():
             task_manager.enqueue_task(
                 "app.modules.hubfile.tasks.compute_factlabel",
                 hubfile_id=hubfile.id,
-                timeout=5,
+                timeout=1,
             )
             count_enqueued += 1
             click.echo(click.style(f"📤 Hubfile {hubfile.id} enqueued for FactLabel", fg="cyan"))
