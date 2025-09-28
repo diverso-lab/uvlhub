@@ -250,19 +250,24 @@
                     <!-- Fact Label a la derecha -->
                     <div class="col-md-6">
                         <div class="bg-light rounded border p-4 h-100">
-                            <img src="{{ url_for('static', filename='media/logos/factlabel_logo.svg') }}"
-                                alt="Fact Label Logo"
-                                height="24"
-                                class="ms-auto mb-2" />
+                            <a href="{{ selected_file.get_factlabel_url() }}" 
+                               target="_blank" 
+                               rel="noopener noreferrer">
+                                <img src="{{ url_for('static', filename='media/logos/factlabel_logo.svg') }}"
+                                    alt="Fact Label Logo"
+                                    height="24"
+                                    class="ms-auto mb-2" />
+                                <i class="ki-outline ki-exit-right-corner"></i>
+                            </a>
                             <div id="FMFactLabelWrapper" class="w-100" style="overflow-y: auto; max-height: 600px;">
-    <svg id="FMFactLabelChart" class="chart w-100" preserveAspectRatio="xMinYMin meet"></svg>
-</div>
+                                <svg id="FMFactLabelChart" class="chart w-100" preserveAspectRatio="xMinYMin meet"></svg>
+                            </div>
 
-<style>
-    #FMFactLabelWrapper, #FMFactLabelChart {
-    width: 100% !important;
-}
-</style>
+                            <style>
+                                #FMFactLabelWrapper, #FMFactLabelChart {
+                                width: 100% !important;
+                            }
+                            </style>
                         </div>
                     </div>
 
