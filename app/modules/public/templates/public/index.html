@@ -55,7 +55,7 @@
                                         data-bs-toggle="tooltip"
                                         data-bs-placement="top"
                                         title="ORCID: {{ author.orcid }}">
-                                        <img src="https://info.orcid.org/wp-content/uploads/2019/11/orcid_16x16.png"
+                                        <img src="{{ url_for('static', filename='media/logos/orcid.svg') }}"
                                             alt="ORCID" class="me-1" width="14" height="14" />
                                         </a>
                                     {% endif %}
