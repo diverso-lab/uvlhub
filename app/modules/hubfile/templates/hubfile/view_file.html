@@ -38,6 +38,19 @@
                         <span class="badge bg-secondary">{{ dataset.get_cleaned_publication_type() }}</span>
                     </div>
 
+                    <!-- Zenodo URL -->
+                    <div class="row mt-3 mb-2">
+                        <div class="col-12 d-flex align-items-center flex-wrap">
+                            {% if dataset.ds_meta_data.dataset_doi %}
+                            <a href="{{ dataset.get_zenodo_url() }}" target="_blank"
+                            class="btn btn-light-info btn-sm px-2 py-1 d-inline-flex align-items-center">
+                                <i class="bi bi-box-arrow-up-right me-2"></i>
+                                View Zenodo publication
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+
                     {% if dataset.ds_meta_data.dataset_doi %}
                     <!-- DOI + Copy icon -->
                     <div class="row mt-3">
@@ -84,59 +97,57 @@
     <div class="row">
 
         <!-- Sidebar: tabla de archivos -->
-<div class="col-md-3 mb-5 mb-md-0">
-    <div class="card card-flush h-100 d-flex flex-column">
+        <div class="col-md-3 mb-5 mb-md-0">
+            <div class="card card-flush h-100 d-flex flex-column">
 
-        <!-- Header con buscador -->
-        <div class="card-header py-5">
-            <div class="card-title w-100"><!-- 👈 fuerza ancho completo -->
-                <div class="d-flex align-items-center position-relative my-1 w-100"><!-- 👈 ancho completo -->
-                    <i class="ki-duotone ki-magnifier fs-3 position-absolute ms-4">
-                        <span class="path1"></span>
-                        <span class="path2"></span>
-                    </i>
-                    <input type="text"
-                           data-file-search
-                           class="form-control form-control-solid w-100 ps-12 small"
-                           placeholder="Search models" />
+                <!-- Header con buscador -->
+                <div class="card-header py-5">
+                    <div class="card-title w-100"><!-- 👈 fuerza ancho completo -->
+                        <div class="d-flex align-items-center position-relative my-1 w-100"><!-- 👈 ancho completo -->
+                            <i class="ki-duotone ki-magnifier fs-3 position-absolute ms-4">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                            </i>
+                            <input type="text"
+                                data-file-search
+                                class="form-control form-control-solid w-100 ps-12 small"
+                                placeholder="Search models" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Body con tabla -->
+                <div class="card-body pt-0 flex-grow-1">
+                    <table class="table align-middle table-row-dashed fs-7 gy-3" id="kt_files_table">
+                        <thead>
+                            <tr class="text-muted fw-bold text-uppercase fs-8">
+                                <th>Name</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for f in hubfiles %}
+                            <tr>
+                                <td class="font-monospace">
+                                    <a href="{{ f.get_url() }}"
+                                    class="{% if f.id == selected_file.id %}fw-bold text-primary{% else %}text-muted{% endif %}">
+                                        {{ f.name }}
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Footer con botón ancho completo -->
+                <div class="mt-auto d-flex justify-content-center pb-4 px-4">
+                    <a href="/datasets/download/{{ dataset.id }}" class="btn btn-sm btn-primary w-100">
+                        <i data-feather="download" class="me-1" style="width: 14px; height: 14px;"></i>
+                        Download all dataset ({{ dataset.get_file_total_size_for_human() }})
+                    </a>
                 </div>
             </div>
         </div>
-
-        <!-- Body con tabla -->
-        <div class="card-body pt-0 flex-grow-1">
-            <table class="table align-middle table-row-dashed fs-7 gy-3" id="kt_files_table">
-                <thead>
-                    <tr class="text-muted fw-bold text-uppercase fs-8">
-                        <th>Name</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for f in hubfiles %}
-                    <tr>
-                        <td class="font-monospace">
-                            <a href="{{ f.get_url() }}"
-                               class="{% if f.id == selected_file.id %}fw-bold text-primary{% else %}text-muted{% endif %}">
-                                {{ f.name }}
-                            </a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Footer con botón ancho completo -->
-        <div class="mt-auto d-flex justify-content-center pb-4 px-4">
-            <a href="/datasets/download/{{ dataset.id }}" class="btn btn-sm btn-primary w-100">
-                <i data-feather="download" class="me-1" style="width: 14px; height: 14px;"></i>
-                Download all dataset ({{ dataset.get_file_total_size_for_human() }})
-            </a>
-        </div>
-    </div>
-</div>
-
-
 
         <!-- Contenido principal con tabs -->
         <div class="col-md-9">
