@@ -57,22 +57,43 @@ document.addEventListener("DOMContentLoaded", function () {
                     return response.json();
                 })
                 .then(data => {
+                    console.log(data.results)
                     if (data.results && data.results.length > 0) {
                         resultsWrapper.classList.remove("d-none");
                         emptyWrapper.classList.add("d-none");
 
+                        let resultsArray = Array.isArray(data.results[0]) ? data.results[0] : data.results;
+
                         resultsContainer.innerHTML = "";
-                        for (const item of data.results) {
-                            const title = item.title || item.filename || "Untitled";
+                        for (const item of resultsArray) {
+                            const title = item.title || item.filename || item.content || "Untitled";
                             const icon = item.type === "dataset" ? "ki-folder" : "ki-file";
 
                             const href = item.type === "dataset"
-                                ? `/doi/${item.dataset_doi}`
-                                : `${item.url}`;
+                                ? (item.dataset_doi ? `/doi/${item.dataset_doi}` : "#")
+                                : (item.url || "#");
 
-                            const subtitle = item.type === "dataset"
-                                ? (`doi/${item.dataset_doi}` || `Dataset ID: ${item.dataset_id}`)
-                                : (item.dataset_title || `Dataset ID: ${item.dataset_id}`);
+                            let subtitle = "";
+                            if (item.type === "dataset") {
+                                if (item.dataset_doi) {
+                                    subtitle = `DOI: ${item.dataset_doi}`;
+                                } else if (item.dataset_id) {
+                                    subtitle = `Dataset ID: ${item.dataset_id}`;
+                                } else {
+                                    subtitle = "Dataset";
+                                }
+                            } else {
+                                // Archivo → pertenece a un dataset
+                                if (item.dataset_title) {
+                                    subtitle = `Belongs to dataset: ${item.dataset_title}`;
+                                } else if (item.dataset_doi) {
+                                    subtitle = `Belongs to dataset: ${item.dataset_doi}`;
+                                } else if (item.dataset_id) {
+                                    subtitle = `Belongs to dataset: ${item.dataset_id}`;
+                                } else {
+                                    subtitle = "File";
+                                }
+                            }
 
                             resultsContainer.innerHTML += `
                                 <div class="d-flex align-items-center mb-5">
@@ -85,11 +106,12 @@ document.addEventListener("DOMContentLoaded", function () {
                                     </div>
                                     <div class="d-flex flex-column">
                                         <a href="${href}" class="fs-6 text-gray-800 text-hover-primary fw-semibold">${title}</a>
-                                        <span class="fs-7 text-muted fw-semibold">${subtitle}</span>
+                                        ${subtitle ? `<span class="fs-7 text-muted fw-semibold">${subtitle}</span>` : ""}
                                     </div>
                                 </div>
                             `;
                         }
+
                     } else {
                         resultsWrapper.classList.add("d-none");
                         emptyWrapper.classList.remove("d-none");
