@@ -89,5 +89,6 @@ def compile_module(module, watch, production):
 
         except subprocess.CalledProcessError as e:
             click.echo(click.style(f"Error compiling {module}: {e}", fg="red"))
+            raise
     else:
         click.echo(click.style(f"No webpack.config.js found in {module}, skipping...", fg="yellow"))
