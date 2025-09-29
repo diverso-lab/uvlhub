@@ -293,6 +293,37 @@
 
     </div>
 
+    <div class="modal fade" id="metricModal" tabindex="-1" aria-labelledby="metricModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content shadow-lg rounded-2xl">
+                <!-- Encabezado -->
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="fw-bold text-primary mb-0" id="metricModalLabel">Metric Details</h5>
+                    <button type="button" class="btn btn-icon btn-sm btn-light" data-bs-dismiss="modal" aria-label="Close">
+                        <i class="ki-duotone ki-cross fs-2">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                        </i>
+                    </button>
+                </div>
+
+                <!-- Cuerpo -->
+                <div class="modal-body pt-3 text-break">
+                    <!-- Aquí se inyectará el contenido -->
+                </div>
+
+                <!-- Footer -->
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light-primary" id="copyButton">
+                        <i class="ki-duotone ki-copy me-2"></i>
+                        Copy
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
 {% endblock %}
 
 {% block scripts %}

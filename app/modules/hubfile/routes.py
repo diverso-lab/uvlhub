@@ -8,6 +8,7 @@ from flask import (
     redirect,
     render_template,
     request,
+    send_file,
     send_from_directory,
     url_for,
 )
@@ -218,20 +219,18 @@ def view_uvl_with_doi(doi, filename):
     )
 
 
-@hubfile_bp.route("/hubfiles/raw/<int:file_id>", methods=["GET"])
-def raw_uvl(file_id):
+@hubfile_bp.route("/hubfiles/raw/<int:file_id>/<path:filename>", methods=["GET"])
+def raw_uvl(file_id, filename):
     selected_file = HubfileService().get_or_404(file_id)
     dataset = selected_file.feature_model.dataset
 
-    # Construir ruta absoluta al archivo
     directory_path = os.path.join("uploads", f"user_{dataset.user_id}", f"dataset_{dataset.id}", "uvl")
     file_path = os.path.join(current_app.root_path, "..", directory_path, selected_file.name)
 
-    try:
-        with open(file_path, "r") as f:
-            content = f.read()
-        return content, 200, {"Content-Type": "text/plain; charset=utf-8"}
-    except FileNotFoundError:
-        return jsonify({"error": "File not found"}), 404
-    except Exception as e:
-        return jsonify({"error": f"Unexpected error: {str(e)}"}), 500
+    # Seguridad: comprobar que coincide
+    if filename != selected_file.name:
+        return jsonify({"error": "Filename mismatch"}), 400
+
+    return send_file(
+        file_path, mimetype="text/plain; charset=utf-8", as_attachment=False, download_name=selected_file.name
+    )

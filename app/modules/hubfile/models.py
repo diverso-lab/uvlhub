@@ -70,21 +70,20 @@ class Hubfile(db.Model):
         with the import correctly encoded.
         On localhost, leave http; on any other host, force https.
         """
-        raw_url = url_for("hubfile.raw_uvl", file_id=self.id, _external=True)
+        raw_url = url_for(
+            "hubfile.raw_uvl", file_id=self.id, filename=self.name, _external=True  # 👈 añadimos filename
+        )
         if "localhost" not in raw_url and "127.0.0.1" not in raw_url:
             raw_url = raw_url.replace("http://", "https://", 1)
         return f"https://ide.flamapy.org/?import={raw_url}"
 
     def get_factlabel_url(self) -> str:
-        """
-        Returns the URL ready to open this hubfile in FM Fact Label,
-        with the import correctly encoded.
-        On localhost, leave http; on any other host, force https.
-        """
-        raw_url = url_for("hubfile.raw_uvl", file_id=self.id, _external=True)
+        raw_url = url_for(
+            "hubfile.raw_uvl", file_id=self.id, filename=self.name, _external=True  # 👈 aquí ya mete el /file1.uvl
+        )
         if "localhost" not in raw_url and "127.0.0.1" not in raw_url:
             raw_url = raw_url.replace("http://", "https://", 1)
-        return f"https://fmfactlabel.github.io/app/?file={raw_url}"
+        return f"https://fmfactlabel.github.io/app/?v=1.8.0&file={raw_url}"
 
     def to_dict(self):
         from flask import url_for

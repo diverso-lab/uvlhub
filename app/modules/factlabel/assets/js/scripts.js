@@ -40,12 +40,9 @@ var ALL_DATA;
 var chart;
 
 var IMPORTS = ['https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@900',
-   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css'];
-
+   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css'];
 
 function drawFMFactLabel(data) {
-   console.log("Inside drawFMFactLabel");
-   console.log(data);
    chart = d3.select(".chart");  // The svg 
 
    // chart.append('defs')
@@ -58,34 +55,40 @@ function drawFMFactLabel(data) {
       .attr('type', 'text/css')
       .text(function (d) { return "@import url('" + d + "');"; });
 
-   // Create a div for mouse hover effect
-   tooltip = d3.select("body").append("div").attr("class", "tooltip").style("opacity", 0)
-      .style("position", "absolute")
-      .style("text-align", "left")
-      .style("padding", "0.1rem")
-      .style("background", "#FFFFFF")
-      .style("color", "#313639")
-      .style("border", "1px solid #313639")
-      .style("border-radius", "8px")
-      .style("pointer-events", "none")
-      .style("font-size", "0.8rem")
+  // Create a div for mouse hover effect
+  tooltip = d3
+    .select("body")
+    .append("div")
+    .attr("class", "tooltip")
+    .style("opacity", 0)
+    .style("position", "absolute")
+    .style("text-align", "left")
+    .style("padding", "0.1rem")
+    .style("background", "#FFFFFF")
+    .style("color", "#313639")
+    .style("border", "1px solid #313639")
+    .style("border-radius", "8px")
+    .style("pointer-events", "none")
+    .style("font-size", "0.8rem");
    
-   // Create a div to show the content detail on mouse click
-   contentDetail = d3.select("body").append("div").attr("class", "contentDetail").style("opacity", 0)
-   .style("position", "absolute")
-   .style("text-align", "left")
-   .style("padding", "0.1rem")
-   .style("background", "#FFFFFF")
-   .style("color", "#313639")
-   .style("border", "1px solid #313639")
-   .style("border-radius", "8px")
-   .style("font-size", "0.8rem")
-   //.style("width", "400px")
-   .on('mouseout', function (event, d) {
-      d3.select(this).transition()
-         .duration('50')
-         .style('opacity', 0);
-   });
+  // Create a div to show the content detail on mouse click
+  contentDetail = d3
+    .select("body")
+    .append("div")
+    .attr("class", "contentDetail")
+    .style("opacity", 0)
+    .style("position", "absolute")
+    .style("text-align", "left")
+    .style("padding", "0.1rem")
+    .style("background", "#FFFFFF")
+    .style("color", "#313639")
+    .style("border", "1px solid #313639")
+    .style("border-radius", "8px")
+    .style("font-size", "0.8rem")
+    //.style("width", "400px")
+    .on("mouseout", function (event, d) {
+      d3.select(this).transition().duration("50").style("opacity", 0);
+    });
 
    ALL_DATA = data
    // Initialize visible properties   
@@ -95,51 +98,23 @@ function drawFMFactLabel(data) {
 
    // Calculate maximum width for the label.
    //var maxWidth = Math.max(calculateTotalMaxWidth(data.metrics), calculateTotalMaxWidth(data.analysis));
-PROPERTY_HEIGHT = textSize("Any text", PROPERTY_FONT_FAMILY, PROPERTY_FONT_SIZE, "bold").height;
-
-maxIndentationWidth = Math.max(
-    calculateMaxIndentationWidth(data.metrics),
-    calculateMaxIndentationWidth(data.analysis)
-);
-maxNameWidth = Math.max(
-    calculateMaxNameWidth(data.metrics),
-    calculateMaxNameWidth(data.analysis)
-);
-maxValueWidth = Math.max(
-    calculateMaxValueWidth(data.metrics),
-    calculateMaxValueWidth(data.analysis)
-);
-maxRatioWidth = Math.max(
-    calculateMaxRatioWidth(data.metrics),
-    calculateMaxRatioWidth(data.analysis)
-);
-
-maxWidth =
-    maxIndentationWidth +
-    maxNameWidth +
-    PROPERTIES_VALUES_SPACE +
-    maxValueWidth +
-    PROPERTIES_RATIO_SPACE +
-    maxRatioWidth +
-    LEFT_MARGING;
-
-// en vez de width fijo, usamos viewBox y width="100%"
-const bboxHeight = 800; // valor temporal, luego lo ajustas con getBBox()
-chart
-    .attr("viewBox", `0 0 ${maxWidth} ${bboxHeight}`)
-    .attr("preserveAspectRatio", "xMinYMin meet")
-    .attr("width", "100%")
-    .attr("height", bboxHeight);
-
+   PROPERTY_HEIGHT = textSize("Any text", PROPERTY_FONT_FAMILY, PROPERTY_FONT_SIZE, "bold").height;// + MARGING_BETWEEN_PROPERTIES;
+   maxIndentationWidth = Math.max(calculateMaxIndentationWidth(data.metrics), calculateMaxIndentationWidth(data.analysis));
+   maxNameWidth = Math.max(calculateMaxNameWidth(data.metrics), calculateMaxNameWidth(data.analysis));
+   maxValueWidth = Math.max(calculateMaxValueWidth(data.metrics), calculateMaxValueWidth(data.analysis));
+   maxRatioWidth = Math.max(calculateMaxRatioWidth(data.metrics), calculateMaxRatioWidth(data.analysis));
+   maxWidth = maxIndentationWidth + maxNameWidth + PROPERTIES_VALUES_SPACE + maxValueWidth + PROPERTIES_RATIO_SPACE + maxRatioWidth + LEFT_MARGING; //textSize("-".repeat(PROPERTY_INDENTATION), PROPERTY_FONT_FAMILY, PROPERTY_FONT_SIZE).width;
+   chart.attr("width", maxWidth);
+   //.attr("height", BAR_HEIGHT * 10 + BAR_HEIGHT * data.metadata.length + BAR_HEIGHT * data.metrics.length); // CAMBIAR EL *10 AJUSTANDOLO BIEN
 
    x = d3.scaleLinear().domain([0, maxWidth]).range([0, maxWidth]);
 
    // Title
-   var titleSize = textSize(get_property(data, "Name").result, TITLE_FONT_FAMILY, TITLE_FONT_SIZE);
+   var titleSize = textSize(get_property(data, "Name").value, TITLE_FONT_FAMILY, TITLE_FONT_SIZE);
    var yTitle = TOP_MARGING;
    var title = chart.append("g").attr("transform", "translate(0," + yTitle + ")");
    title.append("text")
-      .text(get_property(data, 'Name').result)
+      .text(get_property(data, 'Name').value)
       .attr("x", function (d) { return x(maxWidth / 2); })
       //.attr("y", 3)
       .attr("text-anchor", "middle")
@@ -153,7 +128,7 @@ chart
    var indentationDescription = textSize("-".repeat(PROPERTY_INDENTATION), DESCRIPTION_FONT_FAMILY, DESCRIPTION_FONT_SIZE).width;
    var description = chart.append("g").attr("transform", "translate(0," + yDescription + ")");
    description.append("text")
-      .text(get_property(data, 'Description').result)
+      .text(get_property(data, 'Description').value)
       .attr("x", function (d) { return x(indentationDescription) })
       //.attr("y", BAR_HEIGHT / 2)
       .attr("font-family", DESCRIPTION_FONT_FAMILY)
@@ -163,41 +138,41 @@ chart
 
    // Keywords
    var keywordHeight = yDescription + descriptionSize.height + 1;
-   if (get_property(data, 'Tags').result === null) {
+   if (get_property(data, 'Tags').value === null) {
       var keywordsSize = descriptionSize;
    } else {
       var keywords = chart.append("g").attr("transform", "translate(0," + keywordHeight + ")");
-      addMetadata(keywords, "Tags:", get_property(data, 'Tags').result);
+      addMetadata(keywords, "Tags:", get_property(data, 'Tags').value);
       var keywordsSize = keywords.node().getBBox();
    }
 
    // Author
    var authorHeight = keywordHeight + keywordsSize.height;
-   if (get_property(data, 'Author').result === null) {
+   if (get_property(data, 'Author').value === null) {
       var authorSize = { "width": 0, "height": 0 };
    } else {
       var author = chart.append("g").attr("transform", "translate(0," + authorHeight + ")");
-      addMetadata(author, "Author:", get_property(data, 'Author').result);
+      addMetadata(author, "Author:", get_property(data, 'Author').value);
       var authorSize = author.node().getBBox();
    }
 
    // Year
    var yearHeight = authorHeight + authorSize.height;
-   if (get_property(data, 'Year').result === null) {
+   if (get_property(data, 'Year').value === null) {
       var yearSize = { "width": 0, "height": 0 };
    } else {
       var year = chart.append("g").attr("transform", "translate(0," + yearHeight + ")");
-      addMetadata(year, "Year:", get_property(data, 'Year').result);
+      addMetadata(year, "Year:", get_property(data, 'Year').value);
       var yearSize = year.node().getBBox();
    }
 
    // Domain
    var domainHeight = yearHeight + yearSize.height;
-   if (get_property(data, 'Domain').result === null) {
+   if (get_property(data, 'Domain').value === null) {
       var domainSize = { "width": 0, "height": 0 };
    } else {
       var domain = chart.append("g").attr("transform", "translate(0," + domainHeight + ")");
-      addMetadata(domain, "Domain:", get_property(data, 'Domain').result);
+      addMetadata(domain, "Domain:", get_property(data, 'Domain').value);
       var domainSize = domain.node().getBBox();
    }
 
@@ -253,11 +228,13 @@ chart
    var maxHeight = yAnalysis + MARGING_BETWEEN_PROPERTIES + PROPERTY_HEIGHT * data.analysis.length;
    chart.append("rect").attr("id", "border");
    drawBorders(maxWidth, maxHeight);
-const bbox = chart.node().getBBox();
-chart
-    .attr("viewBox", `0 0 ${maxWidth} ${bbox.height + 10}`)
-    .attr("height", bbox.height + 10);
 
+   chart.attr("height", maxHeight);
+
+   // Set the configuration options
+   d3.select("#collapseZeroValues").on("change", function () { collapseZeroValues(data); });
+   d3.select("#collapseSubProperties").on("change", function () { collapseSubProperties(data); });
+   //d3.selectAll("#collapse").on("click", function (d) { collapseProperty(data, d); });
    collapseSubProperties(data);
 }
 
@@ -308,49 +285,46 @@ function updateProperties(data, id) {
             var collapseIconWidth = collapseIcon.node() === null ? 0 : collapseIcon.node().getBBox().width;
 
             // Property name
-            property.append("text")
-               .attr("id", "propertyName")
-               .attr("text-anchor", "start")
-               .attr("x", function (d) { return get_indentation(d) + collapseIconWidth + PROPERTY_INDENTATION; })
-               .attr("y", PROPERTY_HEIGHT / 2)
-               .attr("dy", ".35em")
-               .attr("font-family", PROPERTY_FONT_FAMILY)
-               .attr("font-size", PROPERTY_FONT_SIZE)
-               .attr("font-weight", function (d) { return parseInt(d.level, 10) == 0 ? "bold" : "normal"; })
-               .text(function (d) { return d.name; })
-               .on('mouseover', function (event, d) {
-                  const [posX, posY] = d3.pointer(event, chart.node());
-                  d3.select(this).transition()
-                     .duration('50')
-                     .attr('opacity', 0.85);
+            property
+            .append("text")
+            .attr("id", "propertyName")
+            .attr("text-anchor", "start")
+            .attr("x", function (d) {
+              return (
+                get_indentation(d) + collapseIconWidth + PROPERTY_INDENTATION
+              );
+            })
+            .attr("y", PROPERTY_HEIGHT / 2)
+            .attr("dy", ".35em")
+            .attr("font-family", PROPERTY_FONT_FAMILY)
+            .attr("font-size", PROPERTY_FONT_SIZE)
+            .attr("font-weight", function (d) {
+              return parseInt(d.level, 10) == 0 ? "bold" : "normal";
+            })
+            .attr("cursor", "pointer")
+            .text(function (d) {
+              return d.name;
+            })
+               .on("mouseover", function (event, d) {
+                  d3.select(this).transition().duration("50").attr("opacity", 0.85);
                   //Makes the new div appear on hover:
-                  tooltip.transition()
-                     .duration(50)
-                     .style("opacity", 1);
-                  tooltip.html(d.documentation)
-                     .style("left", (event.pageX + 10) + "px")
-                     .style("top", (event.pageY - 15) + "px");
-               })
-               .on('mouseout', function (event, d) {
-                  d3.select(this).transition()
-                     .duration('50')
-                     .attr('opacity', 1);
+                  tooltip.transition().duration(50).style("opacity", 1);
+                  tooltip
+                    .html(d.description)
+                    .style("left", event.pageX + 10 + "px")
+                    .style("top", event.pageY - 15 + "px");
+                })
+                .on("mouseout", function (event, d) {
+                  d3.select(this).transition().duration("50").attr("opacity", 1);
                   //Makes the new div disappear:
-                  tooltip.transition()
-                     .duration('50')
-                     .style("opacity", 0);
-               })
-               .on("click", function (event, d) { 
-                  tooltip.transition()
-                     .duration('50')
-                     .style("opacity", 0);
-                  contentDetail.transition()
-                     .duration(50)
-                     .style("opacity", 1);
-                  contentDetail.html(d.result)
-                     .style("left", (event.pageX + 10) + "px")
-                     .style("top", (event.pageY - 15) + "px")
-               });
+                  tooltip.transition().duration("50").style("opacity", 0);
+                })
+               .on("click", function (event, d) {
+                  // Hide the tooltip
+                  tooltip.transition().duration("50").style("opacity", 0);
+                  // Show the modal
+                  showMetricModal(d);
+                });
 
             // Property value (size)
             property.append("text")
@@ -416,7 +390,7 @@ function drawBorders(width, height) {
  * @returns The value for the property.
  */
 function get_value(d) {
-   return d.size === null ? d.result : d.size;
+   return d.size === null ? d.value : d.size;
 }
 
 /**
@@ -612,6 +586,10 @@ function calculateMaxIndentationWidth(data) {
 function filterData(data) {
    metrics = data.metrics;
    analysis = data.analysis;
+   if (d3.select("#collapseZeroValues").property("checked")) {
+      metrics = metrics.filter(function (d, i) { return get_value(d) != '0'; });
+      analysis = analysis.filter(function (d, i) { return get_value(d) != '0'; });
+   }
    metrics = metrics.filter(function (d, i) { return VISIBLE_PROPERTIES[d.name]; });
    analysis = analysis.filter(function (d, i) { return VISIBLE_PROPERTIES[d.name]; });
    return { "metadata": data.metadata, "metrics": metrics, "analysis": analysis };
@@ -638,18 +616,33 @@ function collapseZeroValues(data) {
 }
 
 function collapseSubProperties(data) {
-    for (let p of data.metrics) {
-        var children = getChildrenProperties(data.metrics, p, true);
-        for (let c of children) { VISIBLE_PROPERTIES[c.name] = false; }
-        var children = getChildrenProperties(data.analysis, p, true);
-        for (let c of children) { VISIBLE_PROPERTIES[c.name] = false; }
-    }
-    for (let p of data.analysis) {
-        var children = getChildrenProperties(data.metrics, p, true);
-        for (let c of children) { VISIBLE_PROPERTIES[c.name] = false; }
-        var children = getChildrenProperties(data.analysis, p, true);
-        for (let c of children) { VISIBLE_PROPERTIES[c.name] = false; }
-    }
+   if (d3.select("#collapseSubProperties").property("checked")) {
+      for (let p of data.metrics) {
+         var children = getChildrenProperties(data.metrics, p, true);
+         for (let c of children) { VISIBLE_PROPERTIES[c.name] = false; }
+         var children = getChildrenProperties(data.analysis, p, true);
+         for (let c of children) { VISIBLE_PROPERTIES[c.name] = false; }
+      }
+      for (let p of data.analysis) {
+         var children = getChildrenProperties(data.metrics, p, true);
+         for (let c of children) { VISIBLE_PROPERTIES[c.name] = false; }
+         var children = getChildrenProperties(data.analysis, p, true);
+         for (let c of children) { VISIBLE_PROPERTIES[c.name] = false; }
+      }
+   } else {
+      for (let p of data.metrics) {
+         var children = getChildrenProperties(data.metrics, p, true);
+         for (let c of children) { VISIBLE_PROPERTIES[c.name] = true; }
+         var children = getChildrenProperties(data.analysis, p, true);
+         for (let c of children) { VISIBLE_PROPERTIES[c.name] = true; }
+      }
+      for (let p of data.analysis) {
+         var children = getChildrenProperties(data.metrics, p, true);
+         for (let c of children) { VISIBLE_PROPERTIES[c.name] = true; }
+         var children = getChildrenProperties(data.analysis, p, true);
+         for (let c of children) { VISIBLE_PROPERTIES[c.name] = true; }
+      }
+   }
    newData = filterData(data);
    redrawLabel(newData);
 }
@@ -676,6 +669,23 @@ function drawSecondaryRules(data) {
    if (get_property_in_data(data, 'Compound features') !== null) drawSecondaryRule("Compound features");
    if (get_property_in_data(data, 'Root feature') !== null) drawSecondaryRule("Root feature");
    if (get_property_in_data(data, 'Features in constraints') !== null) drawSecondaryRule("Features in constraints");
+   if (get_property_in_data(data, 'Configurations') !== null) drawSecondaryRule("Configurations");
+   
+   // var translate = d3.select("g[id='Compound features']").node() // get the node
+   //    .transform          // get the animated transform list
+   //    .baseVal            // get its base value
+   //    .getItem(0)         // get the first transformation from the list, i.e. your translate
+   //    .matrix             // get the matrix containing the values
+
+   // // console.log(`Translate x: ${translate.e}, y: ${translate.f}`);
+
+   // var property = d3.select("g[id='Compound features']");
+   // //.append("g").attr("class", "secondaryRule").attr("transform", "translate(0," + translate.f - 3 + ")");
+   // property.append("rect")
+   // .attr("x", property.select("#propertyName").attr("x"))
+   // .attr("y", 1)
+   // .attr("height", SECONDARY_RULE_HEIGHT)
+   // .attr("width", maxWidth - property.select("#propertyName").attr("x"));
 }
 
 function drawSecondaryRule(propertyName) {
@@ -687,154 +697,77 @@ function drawSecondaryRule(propertyName) {
    .attr("width", maxWidth - property.select("#propertyName").attr("x"));
 }
 
-/* End of Fact Label code */
+// function calculateTotalMaxWidth(data) {
+//    return Math.max.apply(Math, data.map(function(d) {
+//       indentationWidth = textSize("-".repeat(1 + PROPERTY_INDENTATION * parseInt(d.level, 10)), PROPERTY_FONT_FAMILY, PROPERTY_FONT_SIZE).width;
+//       nameWidth = textSize(d.name, PROPERTY_FONT_FAMILY, PROPERTY_FONT_SIZE).width;
+//       valueWidth = textSize(String(get_value(d)), VALUES_FONT_FAMILY, VALUES_FONT_SIZE).width;
+//       ratioWidth = textSize(String(get_ratio(d)), VALUES_FONT_FAMILY, VALUES_FONT_SIZE).width;
+//       return indentationWidth + nameWidth + valueWidth + ratioWidth;
+//    })) + PROPERTIES_VALUES_SPACE + PROPERTIES_RATIO_SPACE + LEFT_MARGING;
+// };
 
-function viewFactLabel(fileId) {
-   fetch(`/factlabel/view/${fileId}`)
-      .then(response => response.json())
-      .then(data => {
-            //document.getElementById('factlabelButton').href = `/factlabel/view/${fileId}`;
-            var modal = new bootstrap.Modal(document.getElementById('factlabelViewerModal'));
-            modal.show();
-            console.log("Data");
-            console.log(data)
-            drawFMFactLabel(data['content']);
-      })
-      .catch(error => console.error('Error loading fact label:', error));
-}
-
-function showLoading() {
-   document.getElementById("loading").style.display = "initial";
-}
-
-function hideLoading() {
-   document.getElementById("loading").style.display = "none";
-}
-
-
-function copyToClipboard() {
-   const text = document.getElementById('fileContent').textContent;
-   navigator.clipboard.writeText(text).then(() => {
-      console.log('Text copied to clipboard');
-   }).catch(err => {
-      console.error('Failed to copy text: ', err);
-   });
-}
-
-
-// import { get_property } from './fm_fact_label.js';
-
-/**
- * Set-up the save PNG button.
- */
-d3.select('#savePNG').on('click', function () {
-   var chart = d3.select(".chart");
-   chart.selectAll("#collapseIcon").attr("visibility", "hidden");
-   var blob = rasterize(chart.node());
-   blob.then(value => {
-       saveAs(value, get_property(fmData, 'Name').value + ".png");
-   });
-   //chart.selectAll("#collapseIcon").attr("visibility", "visible");
-   newData = filterData(ALL_DATA);
-   redrawLabel(newData);
-});
-
-/**
-* Set-up the save SVG button.
-*/
-d3.select('#saveSVG').on('click', function () {
-   var chart = d3.select(".chart");
-   chart.selectAll("#collapseIcon").attr("visibility", "hidden");
-   var blob = serialize(chart.node());
-   saveAs(blob, get_property(fmData, 'Name').value + ".svg");
-   //chart.selectAll("#collapseIcon").attr("visibility", "visible");
-   newData = filterData(ALL_DATA);
-   redrawLabel(newData);
-});
-
-/**
-* Set-up the save TXT button.
-*/
-d3.select('#saveTXT').on('click', function () {
-   var blob = new Blob([fmCharacterizationStr], { type: "text/plain" });
-   saveAs(blob, get_property(fmData, 'Name').value + ".txt");
-});
-
-/**
-* Set-up the save JSON button.
-*/
-d3.select('#saveJSON').on('click', function () {
-   //var strJson = JSON.stringify(fmCharacterizationStringJson, null, 4);
-   var blob = new Blob([fmCharacterizationJSONStr], { type: "application/json" });
-   saveAs(blob, get_property(fmData, 'Name').value + ".json");
-});
-
-/**
-* Generic code to download a file available in the server.
-* (Not used actually.)
-*/
-function downloadUsingAnchorElement() {
-   const anchor = document.createElement("a");
-   anchor.href = IMG_URL;
-   anchor.download = FILE_NAME;
-   
-   document.body.appendChild(anchor);
-   anchor.click();
-   document.body.removeChild(anchor);
-}
-
-/**
-* Third-party code:
-* - For saving SVG and PNG: https://observablehq.com/@mbostock/saving-svg
-* - FileSaver (for saving files on the clien-side): https://github.com/eligrey/FileSaver.js/
-*/
-
-const xmlns = "http://www.w3.org/2000/xmlns/";
-const xlinkns = "http://www.w3.org/1999/xlink";
-const svgns = "http://www.w3.org/2000/svg";
-
-function serialize(svg) {
-   svg = svg.cloneNode(true);
-   const fragment = window.location.href + "#";
-   const walker = document.createTreeWalker(svg, NodeFilter.SHOW_ELEMENT);
-   while (walker.nextNode()) {
-       for (const attr of walker.currentNode.attributes) {
-           if (attr.value.includes(fragment)) {
-               attr.value = attr.value.replace(fragment, "#");
-           }
+document.addEventListener("DOMContentLoaded", function () {
+   function copyToClipboard(text) {
+     navigator.clipboard.writeText(text).then(
+       function () {
+         const copyButton = document.getElementById("copyButton");
+         copyButton.textContent = "Copied!";
+         copyButton.classList.remove("btn-primary");
+         copyButton.classList.add("btn-success");
+         copyButton.disabled = true;
+ 
+         setTimeout(() => {
+           copyButton.textContent = "Copy";
+           copyButton.classList.remove("btn-success");
+           copyButton.classList.add("btn-primary");
+           copyButton.disabled = false;
+         }, 2000);
+       },
+       function (err) {
+         console.error("Could not copy text: ", err);
        }
+     );
    }
-   svg.setAttributeNS(xmlns, "xmlns", svgns);
-   svg.setAttributeNS(xmlns, "xmlns:xlink", xlinkns);
-   const serializer = new window.XMLSerializer;
-   const string = serializer.serializeToString(svg);
-   return new Blob([string], { type: "image/svg+xml" });
-}
-
-function rasterize(svg) {
-   let resolve, reject;
-   const promise = new Promise((y, n) => (resolve = y, reject = n));
-   const image = new Image;
-   image.onerror = reject;
-   image.onload = () => {
-       const rect = svg.getBoundingClientRect();
-       const context = context2d(rect.width, rect.height);
-       context.drawImage(image, 0, 0, rect.width, rect.height);
-       context.canvas.toBlob(resolve);
-   };
-   image.src = URL.createObjectURL(serialize(svg));
-   return promise;
-}
-
-function context2d(width, height, dpi) {
-   if (dpi == null) dpi = devicePixelRatio;
-   var canvas = document.createElement("canvas");
-   canvas.width = width * dpi;
-   canvas.height = height * dpi;
-   canvas.style.width = width + "px";
-   var context = canvas.getContext("2d");
-   context.scale(dpi, dpi);
-   return context;
-}
+ 
+   // Event listener for the copy button
+   document.getElementById("copyButton").addEventListener("click", function () {
+     const modalBodyText = document.querySelector(
+       "#metricModal .modal-body"
+     ).textContent;
+     text = modalBodyText.split(", ").join("\n");
+     copyToClipboard(text);
+   });
+ });
+ 
+ function showMetricModal(metric) {
+   const modalTitle = document.getElementById("metricModalLabel");
+   const modalBody = document.querySelector("#metricModal .modal-body");
+ 
+   modalTitle.innerHTML = `<b>${metric.name} </b><br><small>${metric.description}</small>`;
+ 
+   if (metric.stats) {
+     modalBody.innerHTML = `
+       <p><strong>Mean:</strong> ${
+         metric.stats.mean !== null ? metric.stats.mean : "N/A"
+       }</p>
+       <p><strong>Median:</strong> ${
+         metric.stats.median !== null ? metric.stats.median : "N/A"
+       }</p>
+       <p><strong>Min:</strong> ${
+         metric.stats.min !== null ? metric.stats.min : "N/A"
+       }</p>
+       <p><strong>Max:</strong> ${
+         metric.stats.max !== null ? metric.stats.max : "N/A"
+       }</p>
+     `;
+   } else {
+     modalBody.innerHTML = metric.value.join(", ");
+   }
+   const metricModal = new bootstrap.Modal(
+     document.getElementById("metricModal")
+   );
+   metricModal.show();
+ }
 
 window.drawFMFactLabel = drawFMFactLabel;

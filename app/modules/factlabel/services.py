@@ -15,13 +15,16 @@ class FactlabelService(BaseService):
         super().__init__(FactlabelRepository())
 
     def get_characterization(self, hubfile: Hubfile) -> Any:
+
         # Obtain metadata
         dataset_metadata = hubfile.get_dataset().get_zenodo_metadata()
         logger.info(f"dataset_metadata: {dataset_metadata}")
 
         # Obtain characterization
         characterization = FMCharacterization.from_path(hubfile.get_path(), light_fact_label=False)
+
         # Fill metadata
+        characterization.metadata.name = hubfile.name
         characterization.metadata.description = dataset_metadata.get("description")
         characterization.metadata.author = dataset_metadata.get("authors")
         characterization.metadata.year = dataset_metadata.get("year")
