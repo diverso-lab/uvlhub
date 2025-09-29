@@ -50,7 +50,7 @@ RUN echo "webhook" > /app/.moduleignore
 RUN pip install --no-cache-dir --upgrade pip
 
 # Install any needed packages specified in requirements.txt
-RUN pip install -r requirements.txt
+RUN pip install --pre -r requirements.txt
 
 # Install Rosemary
 RUN pip install -e ./

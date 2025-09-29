@@ -30,7 +30,11 @@ COPY pyproject.toml ./
 
 # Install Python dependencies
 RUN pip install --no-cache-dir --upgrade pip
-RUN pip install -r requirements.txt
+RUN pip install --pre -r requirements.txt
+
+# Solución temporal en lo que se arregla el empaquetado
+RUN git clone https://github.com/jmhorcas/fm_characterization.git /opt/fm_characterization \
+ && pip install -e /opt/fm_characterization
 
 # Install Node.js dependencies
 RUN npm install

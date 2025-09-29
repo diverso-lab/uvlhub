@@ -250,26 +250,40 @@
                     <!-- Fact Label a la derecha -->
                     <div class="col-md-6">
                         <div class="bg-light rounded border p-4 h-100">
-                            <a href="{{ selected_file.get_factlabel_url() }}" 
-                               target="_blank" 
-                               rel="noopener noreferrer">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <!-- Logo a la izquierda -->
                                 <img src="{{ url_for('static', filename='media/logos/factlabel_logo.svg') }}"
                                     alt="Fact Label Logo"
-                                    height="24"
-                                    class="ms-auto mb-2" />
-                                <i class="ki-outline ki-exit-right-corner"></i>
-                            </a>
+                                    height="24" />
+
+                                <!-- Botón a la derecha -->
+                                <a href="{{ selected_file.get_factlabel_url() }}" 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                class="btn btn-sm btn-secondary d-flex align-items-center"
+                                data-bs-toggle="tooltip"
+                                data-bs-placement="bottom"
+                                title="Open FactLabel in new tab">
+                                    <i class="ki-duotone ki-exit-right-corner">
+                                    <span class="path1"></span>
+                                    <span class="path2"></span>
+                                    </i>
+                                    Open
+                                </a>
+                            </div>
+
                             <div id="FMFactLabelWrapper" class="w-100" style="overflow-y: auto; max-height: 600px;">
                                 <svg id="FMFactLabelChart" class="chart w-100" preserveAspectRatio="xMinYMin meet"></svg>
                             </div>
 
                             <style>
                                 #FMFactLabelWrapper, #FMFactLabelChart {
-                                width: 100% !important;
-                            }
+                                    width: 100% !important;
+                                }
                             </style>
                         </div>
                     </div>
+
 
                     
                 </div>

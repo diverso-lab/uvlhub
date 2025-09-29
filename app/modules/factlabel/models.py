@@ -1,7 +1,3 @@
-from typing import Any, Optional
-
-from flamapy.core.operations import Metrics
-
 from app import db
 
 

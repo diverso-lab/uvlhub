@@ -1,35 +1,53 @@
 import click
 from flask.cli import with_appcontext
 
+from app.modules.hubfile.tasks import compute_factlabel
+
 
 @click.command(
-    "factlabel:generate-missing",
-    help="Enqueue tasks to generate FactLabels for all Hubfiles that do not have one yet.",
+    "factlabel:generate",
+    help="Generate FactLabels for hubfiles. By default, only missing ones. Use --force to regenerate all.",
+)
+@click.option(
+    "--force",
+    is_flag=True,
+    help="Delete all existing FactLabels and regenerate them.",
 )
 @with_appcontext
-def factlabel_generate_missing():
+def factlabel_generate(force):
+    from app import db
     from app.modules.hubfile.models import Hubfile
     from core.managers.task_queue_manager import TaskQueueManager
 
-    click.echo(click.style("🔎 Looking for hubfiles without FactLabel...", fg="cyan"))
+    if force:
+        click.echo(click.style("🗑️ Deleting all existing FactLabels...", fg="cyan"))
+        updated = Hubfile.query.filter(Hubfile.factlabel_json.isnot(None)).update(
+            {Hubfile.factlabel_json: None}, synchronize_session=False
+        )
+        db.session.commit()
+        click.echo(click.style(f"✅ Cleared FactLabels for {updated} hubfiles.", fg="yellow"))
 
-    missing = Hubfile.query.filter((Hubfile.factlabel_json.is_(None)) | (Hubfile.factlabel_json == "")).all()
+        hubfiles = Hubfile.query.all()
+        click.echo(click.style(f"🔄 Regenerating FactLabels for {len(hubfiles)} hubfiles.", fg="cyan"))
+    else:
+        click.echo(click.style("🔎 Looking for hubfiles without FactLabel...", fg="cyan"))
+        hubfiles = Hubfile.query.filter((Hubfile.factlabel_json.is_(None)) | (Hubfile.factlabel_json == "")).all()
 
-    if not missing:
-        click.echo(click.style("✅ All hubfiles already have FactLabels!", fg="green"))
-        return
+        if not hubfiles:
+            click.echo(click.style("✅ All hubfiles already have FactLabels!", fg="green"))
+            return
 
-    click.echo(click.style(f"Found {len(missing)} hubfiles missing FactLabels.", fg="yellow"))
+        click.echo(click.style(f"Found {len(hubfiles)} hubfiles missing FactLabels.", fg="yellow"))
 
     task_manager = TaskQueueManager()
     count_enqueued = 0
 
-    for hubfile in missing:
+    for hubfile in hubfiles:
         try:
             task_manager.enqueue_task(
-                "app.modules.hubfile.tasks.compute_factlabel",
+                compute_factlabel,
                 hubfile_id=hubfile.id,
-                timeout=1,
+                timeout=60,
             )
             count_enqueued += 1
             click.echo(click.style(f"📤 Hubfile {hubfile.id} enqueued for FactLabel", fg="cyan"))
