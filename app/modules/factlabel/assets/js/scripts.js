@@ -1,4 +1,3 @@
-   
 const POINT_TO_PIXEL = 1.3281472327365;
 //const TITLE_FONT_FAMILY = "Franklin Gothic Heavy";
 const TITLE_FONT_FAMILY = "'Libre Franklin', sans-serif";
@@ -202,12 +201,23 @@ chart
       var domainSize = domain.node().getBBox();
    }
 
+   // Language level
+   var languageLevelHeight = domainHeight + domainSize.height;
+   const langProp = get_property(data, 'Language level');
+   if (langProp == null || langProp.value === null) {
+      var languageLevelSize = { "width": 0, "height": 0 };
+   } else {
+      var languageLevel = chart.append("g").attr("transform", "translate(0," + languageLevelHeight + ")");
+      addMetadata(languageLevel, "Language level:", langProp.value);
+      var languageLevelSize = languageLevel.node().getBBox();
+   }
+
    // Reference
-   if (!get_property(data, 'Reference').result == "") {
-      var reference = chart.append("g").attr("transform", "translate(0," + (domainHeight + domainSize.height - MAIN_RULE_HEIGHT - 10) + ")");
+   if (!get_property(data, 'Reference').value == "") {
+      var reference = chart.append("g").attr("transform", "translate(0," + (languageLevelHeight + languageLevelSize.height - MAIN_RULE_HEIGHT - 10) + ")");
       reference.append('a')
          .attr("id", "hrefIcon")
-         .attr("href", get_property(data, 'Reference').result)
+         .attr("href", get_property(data, 'Reference').value)
          .append("text")
          .attr("text-anchor", "end")
          .attr("x", maxWidth - 5)
@@ -220,7 +230,7 @@ chart
    }
 
    // Middle rule 1
-   yRule1 = domainHeight + domainSize.height;
+   yRule1 = languageLevelHeight + languageLevelSize.height;
    chart.append("g").attr("id", "rule1");
    drawRule("rule1", yRule1);
 
