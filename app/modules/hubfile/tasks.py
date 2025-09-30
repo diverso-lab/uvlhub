@@ -83,9 +83,9 @@ def transform_uvl(path, retries=5, delay=2):
 app = create_app()
 
 
-def compute_factlabel(hubfile_id: int):
+def compute_factlabel(hubfile_id: int, light_fact_label: bool = False):
     logger.info(f"[FACTLABEL] Worker DB URL: {db.engine.url}")
-    logger.info(f"[FACTLABEL] Starting computation for Hubfile {hubfile_id}")
+    logger.info(f"[FACTLABEL] Starting computation for Hubfile {hubfile_id} (light={light_fact_label})")
 
     with app.app_context():
         try:
@@ -94,7 +94,7 @@ def compute_factlabel(hubfile_id: int):
                 logger.warning(f"[FACTLABEL] Hubfile {hubfile_id} not found")
                 return
 
-            content = FactlabelService().get_characterization(hubfile)
+            content = FactlabelService().get_characterization(hubfile, light_fact_label=light_fact_label)
             hubfile.factlabel_json = json.dumps(content)
 
             db.session.add(hubfile)

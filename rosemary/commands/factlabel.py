@@ -1,3 +1,4 @@
+# cli/factlabel.py
 import click
 from flask.cli import with_appcontext
 
@@ -13,8 +14,13 @@ from app.modules.hubfile.tasks import compute_factlabel
     is_flag=True,
     help="Delete all existing FactLabels and regenerate them.",
 )
+@click.option(
+    "--light",
+    is_flag=True,
+    help="Generate light FactLabels (light_fact_label=True).",
+)
 @with_appcontext
-def factlabel_generate(force):
+def factlabel_generate(force, light):
     from app import db
     from app.modules.hubfile.models import Hubfile
     from core.managers.task_queue_manager import TaskQueueManager
@@ -47,7 +53,8 @@ def factlabel_generate(force):
             task_manager.enqueue_task(
                 compute_factlabel,
                 hubfile_id=hubfile.id,
-                timeout=60,
+                light_fact_label=light,
+                timeout=1,
             )
             count_enqueued += 1
             click.echo(click.style(f"📤 Hubfile {hubfile.id} enqueued for FactLabel", fg="cyan"))

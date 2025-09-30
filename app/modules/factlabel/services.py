@@ -14,14 +14,12 @@ class FactlabelService(BaseService):
     def __init__(self):
         super().__init__(FactlabelRepository())
 
-    def get_characterization(self, hubfile: Hubfile) -> Any:
-
-        # Obtain metadata
+    def get_characterization(self, hubfile: Hubfile, light_fact_label: bool = False) -> Any:
         dataset_metadata = hubfile.get_dataset().get_zenodo_metadata()
         logger.info(f"dataset_metadata: {dataset_metadata}")
 
-        # Obtain characterization
-        characterization = FMCharacterization.from_path(hubfile.get_path(), light_fact_label=False)
+        # Aquí ya usamos el flag dinámicamente
+        characterization = FMCharacterization.from_path(hubfile.get_path(), light_fact_label=light_fact_label)
 
         # Fill metadata
         characterization.metadata.name = hubfile.name
