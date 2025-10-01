@@ -50,6 +50,12 @@ if [ $(mariadb -u $MARIADB_USER -p$MARIADB_PASSWORD -h $MARIADB_HOSTNAME -P $MAR
     # Seed the database with initial data
     rosemary db:seed -y
 
+    # Index the example UVLs
+    rosemary elasticsearch:reset
+
+    # Generates FM Fact Label visualization for example UVLs
+    rosemary factlabel:generate
+
 else
 
     echo "Database already initialized, updating migrations..."
