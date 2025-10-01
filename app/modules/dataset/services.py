@@ -517,11 +517,7 @@ class LocalDatasetService:
             stage_dir, staged_uvls = ingest.prepare_uvls(current_user.temp_folder())
             self.logger.info(f"[LOCAL] {len(staged_uvls)} UVLs listos en {stage_dir}")
 
-            # Mover modelos
-            stage_dir, staged_uvls = ingest.prepare_uvls(current_user.temp_folder())
             created_fms = self.feature_model_service.create_from_uvl_files(dataset, base_dir=stage_dir)
-
-            self.logger.info(f"[LOCAL] {len(created_fms)} feature models created for dataset {dataset.id}")
 
             return dataset, ds_meta, created_fms
 

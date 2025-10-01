@@ -143,3 +143,8 @@ def hubfile_after_insert_listener(mapper, connection, target):
 
     # Fact Label
     task_manager.enqueue_task("app.modules.hubfile.tasks.compute_factlabel", hubfile_id=target.id, timeout=5)
+
+    # Fact Label (light)
+    task_manager.enqueue_task(
+        "app.modules.hubfile.tasks.compute_factlabel", hubfile_id=target.id, light_fact_label=True, timeout=5
+    )

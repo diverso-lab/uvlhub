@@ -179,21 +179,17 @@ class UploadIngestService:
     # -------- public -------- #
 
     def prepare_uvls(self, temp_root: str) -> Tuple[str, List[str]]:
-        """
-        Prepara y aplana UVLs en temp_root/_uvl_stage.
-        Devuelve (stage_dir, lista_uvls).
-        """
         stage_dir = str(Path(temp_root) / "_uvl_stage")
         extract_root = str(Path(temp_root) / "_extracted_zips")
 
-        # Limpia staging/extract anteriores
+        # Limpieza previa
         shutil.rmtree(stage_dir, ignore_errors=True)
         shutil.rmtree(extract_root, ignore_errors=True)
         Path(stage_dir).mkdir(parents=True, exist_ok=True)
         Path(extract_root).mkdir(parents=True, exist_ok=True)
 
-        # 1) localizar y extraer zips
-        zip_paths = [str(p) for p in Path(temp_root).rglob("*.zip")]
+        # 1) Extraer todos los ZIPs
+        zip_paths = [str(p) for p in Path(temp_root).glob("*.zip")]
         self.logger.info(f"[INGEST] Zips detectados: {len(zip_paths)}")
         for zp in zip_paths:
             subdir = Path(extract_root) / f"{Path(zp).stem}_{uuid.uuid4().hex[:8]}"
@@ -201,21 +197,43 @@ class UploadIngestService:
             self._safe_extract_zip(zp, str(subdir))
             self.logger.info(f"[INGEST] Extraído: {zp} -> {subdir}")
 
-        # 2) recolectar todos los .uvl (en temp_root y en extract_root)
-        def collect_uvls_from(root: str) -> List[Path]:
-            return [p for p in Path(root).rglob("*.uvl") if p.is_file()]
+        # 2) Recolectar UVLs (temp_root SIN extract_root + extract_root)
+        def collect_uvls(root: str, exclude: str = None) -> List[Path]:
+            uvls = []
+            for p in Path(root).rglob("*.uvl"):
+                if p.is_file() and (exclude is None or not str(p).startswith(exclude)):
+                    uvls.append(p)
+            return uvls
 
-        uvl_sources = collect_uvls_from(temp_root) + collect_uvls_from(extract_root)
-        self.logger.info(f"[INGEST] UVLs encontrados (antes de aplanar): {len(uvl_sources)}")
+        uvl_sources = collect_uvls(temp_root, exclude=str(extract_root)) + collect_uvls(extract_root)
+        self.logger.info(f"[INGEST] UVLs encontrados (antes de deduplicar): {len(uvl_sources)}")
 
-        # 3) aplanar en stage_dir con nombres únicos
+        # 3) Deduplicar por hash y copiar a stage_dir con su nombre exacto
+        def file_hash(path: Path) -> str:
+            h = hashlib.sha256()
+            with open(path, "rb") as f:
+                for chunk in iter(lambda: f.read(8192), b""):
+                    h.update(chunk)
+            return h.hexdigest()
+
+        seen = set()
         staged_paths: List[str] = []
         for src in uvl_sources:
-            dest = self._unique_dest(stage_dir, src.name)
-            shutil.copy2(str(src), dest)
-            staged_paths.append(dest)
+            h = file_hash(src)
+            if h in seen:
+                self.logger.info(f"[INGEST] Duplicado ignorado: {src}")
+                continue
+            seen.add(h)
 
-        # 4) validación mínima
+            # añadir parte del hash al nombre si ya existe
+            dest_name = src.name
+            if (Path(stage_dir) / dest_name).exists():
+                dest_name = f"{Path(src.stem)}_{h[:8]}{src.suffix}"
+
+            dest = Path(stage_dir) / dest_name
+            shutil.copy2(src, dest)
+            staged_paths.append(str(dest))
+
         if not staged_paths:
             raise ValueError("No se encontró ningún archivo .uvl tras procesar zips y sueltos.")
 

@@ -37,16 +37,9 @@ class FeatureModelService(BaseService):
         """
         Crea un FeatureModel y Hubfile por cada archivo UVL en el directorio indicado.
         Si no se pasa base_dir, se usan los UVL del directorio temporal del usuario.
-
-        Args:
-            dataset (DataSet): Dataset al que se van a asociar los modelos.
-            base_dir (str, opcional): Directorio desde el que leer los UVL.
-
-        Returns:
-            list[FeatureModel]: Lista de modelos creados.
         """
         user = dataset.user
-        source_dir = base_dir or user.temp_folder()  # 👈 aquí el cambio
+        source_dir = base_dir or user.temp_folder()
 
         working_dir = os.getenv("WORKING_DIR", "")
         dest_dir = os.path.join(
@@ -66,9 +59,10 @@ class FeatureModelService(BaseService):
                 continue
 
             uvl_path = os.path.join(source_dir, filename)
-            original_filename = filename.split("_", 1)[-1] if "_" in filename else filename
 
-            dest_path = os.path.join(dest_dir, original_filename)
+            # 👇 conservar el nombre original
+            dest_path = os.path.join(dest_dir, filename)
+
             shutil.move(uvl_path, dest_path)
             logger.info(f"[FM] Moved {filename} to {dest_path}")
 
