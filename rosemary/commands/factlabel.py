@@ -54,7 +54,7 @@ def factlabel_generate(force, light):
                 compute_factlabel,
                 hubfile_id=hubfile.id,
                 light_fact_label=light,
-                timeout=1,
+                timeout=5,
             )
             count_enqueued += 1
             click.echo(click.style(f"📤 Hubfile {hubfile.id} enqueued for FactLabel", fg="cyan"))
