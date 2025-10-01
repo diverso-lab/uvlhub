@@ -21,8 +21,8 @@ def deploy():
     service = WebhookService()
 
     containers = [
-        service.get_web_container(),
         service.get_worker_container(),
+        service.get_web_container(),
     ]
 
     for container in containers:
@@ -35,10 +35,10 @@ def deploy():
         # Update Rosemary CLI
         service.execute_container_command(container, "pip install -e ./")
 
-        # Log del despliegue
+        # Deployment log
         service.log_deployment(container)
 
-        # Reinicio del contenedor
+        # Container restart
         service.restart_container(container)
 
     return "Deployment successful", 200
