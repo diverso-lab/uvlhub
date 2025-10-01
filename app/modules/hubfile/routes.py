@@ -32,56 +32,79 @@ dataset_service = DataSetService()
 @hubfile_bp.route("/hubfile/upload", methods=["POST"])
 @login_required
 def upload_file():
+    current_app.logger.info("➡️ Entrando en /hubfile/upload")
+
     file = request.files.get("file")
     uuid = request.form.get("uuid")  # Retrieve the UUID sent from the frontend
     temp_folder = current_user.temp_folder()
 
+    current_app.logger.info(f"📂 temp_folder={temp_folder}, uuid={uuid}, file={file.filename if file else None}")
+
     if not file:
+        current_app.logger.warning("⚠️ No file uploaded")
         return jsonify({"message": "No file uploaded"}), 400
 
-    # Validate that the UUID is provided
     if not uuid:
+        current_app.logger.warning("⚠️ UUID is missing")
         return jsonify({"message": "UUID is missing"}), 400
 
-    # Safely create the temporary folder
+    # Crear carpeta temporal
     try:
-        os.makedirs(temp_folder, exist_ok=True)  # Handle concurrency safely
+        os.makedirs(temp_folder, exist_ok=True)
+        current_app.logger.info(f"📁 Carpeta temporal asegurada: {temp_folder}")
     except Exception as e:
+        current_app.logger.exception("❌ Error creando carpeta temporal")
         return jsonify({"message": f"Error creating temp folder: {str(e)}"}), 500
 
-    # Generate a unique filename for the file
+    # Nombre único y path
     unique_filename = f"{uuid}_{file.filename}"
     temp_file_path = os.path.join(temp_folder, unique_filename)
+    current_app.logger.info(f"📝 unique_filename={unique_filename}, temp_file_path={temp_file_path}")
 
-    # Save the file temporarily
+    # Guardar archivo temporalmente
     try:
         file.save(temp_file_path)
+        current_app.logger.info(f"✅ Archivo guardado en {temp_file_path}")
     except Exception as e:
+        current_app.logger.exception("❌ Error guardando archivo")
         return jsonify({"message": f"Error saving file: {str(e)}"}), 500
 
     ext = file.filename.lower().split(".")[-1]
+    current_app.logger.info(f"📦 Detected extension: {ext}")
 
     if ext == "uvl":
-        # Validate the UVL file
         try:
-            validation_result, status_code = flamapy_service.check_uvl(temp_file_path)
-
-            if status_code != 200:
-                os.remove(temp_file_path)
-                return jsonify(validation_result), status_code
+            current_app.logger.info("⚙️ Encolando validación UVL async...")
+            task_info = flamapy_service.check_uvl_async(temp_file_path)
+            current_app.logger.info(f"✅ Tarea encolada correctamente: {task_info}")
+            return (
+                jsonify(
+                    {
+                        "message": f"{ext.upper()} uploaded successfully (validation running in background)",
+                        "filename": unique_filename,
+                        "task_id": task_info["task_id"],
+                    }
+                ),
+                202,
+            )
         except Exception as e:
+            current_app.logger.exception("❌ Error encolando validación UVL")
             if os.path.exists(temp_file_path):
                 os.remove(temp_file_path)
-            return jsonify({"message": f"Error validating UVL: {str(e)}"}), 500
+                current_app.logger.info(f"🗑️ Archivo temporal eliminado tras fallo: {temp_file_path}")
+            return jsonify({"message": f"Error encolando validación UVL: {str(e)}"}), 500
 
     elif ext == "zip":
+        current_app.logger.info("📦 ZIP detectado → no se valida, solo se acepta")
         # Do not validate ZIPs, just accept them
         pass
     else:
-        # Unsupported extension
+        current_app.logger.warning(f"⚠️ Extensión no soportada: {ext}")
         os.remove(temp_file_path)
+        current_app.logger.info(f"🗑️ Archivo eliminado: {temp_file_path}")
         return jsonify({"message": "Unsupported file type"}), 400
 
+    current_app.logger.info(f"✅ Archivo {unique_filename} aceptado con extensión {ext}")
     return (
         jsonify(
             {

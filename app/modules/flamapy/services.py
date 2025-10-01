@@ -10,6 +10,7 @@ from flamapy.metamodels.fm_metamodel.models import FeatureModel
 from flamapy.metamodels.fm_metamodel.operations import FMMetrics
 from flamapy.metamodels.pysat_metamodel.operations import PySATMetrics  # noqa
 from flamapy.metamodels.pysat_metamodel.transformations import FmToPysat  # noqa
+from core.managers.task_queue_manager import TaskQueueManager
 from uvl.UVLCustomLexer import UVLCustomLexer
 from uvl.UVLPythonParser import UVLPythonParser
 
@@ -35,6 +36,14 @@ class FlamapyService(BaseService):
     def get_analysis_results(self, fm_model: FeatureModel) -> list[dict[str, Any]]:
         fm_results = BDDMetrics().execute(fm_model).get_result()
         return fm_results
+
+    def check_uvl_async(self, filepath: str):
+        task = TaskQueueManager().enqueue_task(
+            "app.modules.flamapy.tasks.check_uvl",
+            filepath=filepath,
+            timeout=5
+        )
+        return {"task_id": task.id}
 
     def check_uvl(self, filepath: str):
 

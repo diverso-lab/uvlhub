@@ -33,7 +33,7 @@ class TaskQueueManager:
         :param kwargs: Named arguments required by the task.
         """
         if timeout is None:
-            timeout = self.redis_worker_timeout  # Asigna el timeout de la instancia si no se provee uno.
+            timeout = self.redis_worker_timeout
 
         task_metadata = {
             "task_name": task_name,
@@ -43,6 +43,8 @@ class TaskQueueManager:
         }
         logger.info(f"Enqueueing task: {task_metadata}")
 
-        # Bind the custom task to RQ with timeout
-        self.queue.enqueue(task_name, *args, **kwargs, job_timeout=timeout)
-        logger.info(f"Task '{task_name}' enqueued with arguments: {args}, {kwargs} and timeout: {timeout}")
+        # Enqueue task and return the job
+        job = self.queue.enqueue(task_name, *args, **kwargs, job_timeout=timeout)
+        logger.info(f"Task '{task_name}' enqueued with id={job.id}, args={args}, kwargs={kwargs}, timeout={timeout}")
+
+        return job
