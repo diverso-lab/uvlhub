@@ -20,15 +20,25 @@ def deploy():
 
     service = WebhookService()
 
-    web_container = service.get_web_container()
+    containers = [
+        service.get_web_container(),
+        service.get_worker_container(),
+    ]
 
-    # Pull the latest code in the container
-    service.execute_container_command(web_container, "/app/scripts/git_update.sh")
+    for container in containers:
+        # Pull the latest code
+        service.execute_container_command(container, "/app/scripts/git_update.sh")
 
-    # Log the deployment
-    service.log_deployment(web_container)
+        # Update dependencies
+        service.execute_container_command(container, "pip install --pre -r requirements.txt")
 
-    # Ejecutar el script de reinicio en segundo plano
-    service.restart_container(web_container)
+        # Update Rosemary CLI
+        service.execute_container_command(container, "pip install -e ./")
+
+        # Log del despliegue
+        service.log_deployment(container)
+
+        # Reinicio del contenedor
+        service.restart_container(container)
 
     return "Deployment successful", 200

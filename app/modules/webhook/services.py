@@ -21,6 +21,12 @@ class WebhookService(BaseService):
         except docker.errors.NotFound:
             abort(404, description="Web container not found.")
 
+    def get_worker_container(self):
+        try:
+            return client.containers.get("rq_worker_container")
+        except docker.errors.NotFound:
+            abort(404, description="Worker container not found.")
+
     def get_volume_name(self, container):
         volume_name = next(
             (

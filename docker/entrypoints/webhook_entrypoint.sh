@@ -15,18 +15,8 @@
 # Exit immediately if a command exits with a non-zero status
 set -e
 
-# Updates requirements.txt
-pip install --no-cache-dir --upgrade pip
-pip install --pre -r requirements.txt
-
-# Updates Rosemary
-pip install -e ./
-
 # Compile webpack files
 rosemary webpack:compile
-
-# Apply migrations
-sh ./scripts/apply_migrations.sh
 
 # Start the application using Gunicorn, binding it to port 5000
 # Set the logging level to info and the timeout to 3600 seconds
