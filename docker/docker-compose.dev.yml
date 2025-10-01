@@ -5,20 +5,36 @@ services:
     build:
       context: ../
       dockerfile: docker/images/Dockerfile.dev
-    image: web:latest
     depends_on:
-      - runtime
       - db
       - redis
-    networks:
-      - uvlhub_network
+      - elasticsearch
     env_file:
       - ../.env
     volumes:
       - ../:/app
       - /var/run/docker.sock:/var/run/docker.sock
     command: [ "bash", "-c", "bash /app/docker/entrypoints/development_entrypoint.sh" ]
+    networks:
+      - uvlhub_network
 
+  worker:
+    container_name: rq_worker_container
+    build:
+      context: ../
+      dockerfile: docker/images/Dockerfile.dev
+    depends_on:
+      - db
+      - redis
+    env_file:
+      - ../.env
+    volumes:
+      - ../:/app
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: [ "bash", "-c", "bash /app/docker/entrypoints/worker_entrypoint.sh" ]
+    networks:
+      - uvlhub_network
+      
   nginx:
     container_name: nginx_web_server_container
     image: nginx:1.29.1
@@ -26,8 +42,53 @@ services:
       - "80:80"
     volumes:
       - ./nginx/nginx.dev.conf:/etc/nginx/nginx.conf
+      - ./nginx/html:/usr/share/nginx/html 
     depends_on:
       - web
-    restart: always
     networks:
       - uvlhub_network
+
+  db:
+    container_name: mariadb_container
+    build:
+      context: ../
+      dockerfile: docker/images/Dockerfile.mariadb
+    env_file:
+      - ../.env
+    command: --default-authentication-plugin=mysql_native_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - uvlhub_network
+
+  redis:
+    container_name: redis_container
+    image: "redis:8.2.1"
+    networks:
+      - uvlhub_network
+
+  elasticsearch:
+    container_name: elasticsearch_container
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.18.4
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - xpack.security.transport.ssl.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    networks:
+      - uvlhub_network
+
+volumes:
+  db_data:
+  es_data:
+
+networks:
+  uvlhub_network:
+    driver: bridge
+    name: uvlhub_network

@@ -15,6 +15,9 @@
 # Exit immediately if a command exits with a non-zero status
 set -e
 
+# Wait for the database to be ready by running a script
+sh ./scripts/wait-for-db.sh
+
 # Initialize migrations only if the migrations directory doesn't exist
 if [ ! -d "migrations/versions" ]; then
     # Initialize the migration repository
@@ -35,6 +38,9 @@ if [ $(mariadb -u $MARIADB_USER -p$MARIADB_PASSWORD -h $MARIADB_HOSTNAME -P $MAR
     # Run the migration process to apply all database schema changes
     flask db upgrade
 
+    # Seed the database with initial data
+    rosemary db:seed -y
+
 else
 
     echo "Database already initialized, updating migrations..."
@@ -50,7 +56,3 @@ else
     # Run the migration process to apply all database schema changes
     flask db upgrade
 fi
-
-# Start the application using Gunicorn, binding it to port 80
-# Set the logging level to info and the timeout to 3600 seconds
-exec gunicorn --bind 0.0.0.0:80 app:app --log-level info --timeout 3600

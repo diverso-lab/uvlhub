@@ -15,9 +15,5 @@
 # Exit immediately if a command exits with a non-zero status
 set -e
 
-# Apply migrations
-sh ./scripts/apply_migrations.sh
-
-# Start the application using Gunicorn, binding it to port 5000
-# Set the logging level to info and the timeout to 3600 seconds
-exec gunicorn --workers 3 --bind 0.0.0.0:5000 app:app --log-level info --timeout 3600
+echo "🚀 Starting RQ Worker..."
+exec python docker/redis/worker.py

@@ -1,5 +1,71 @@
-FROM runtime AS dev
+FROM python:3.13
 
-# Copy necessary scripts and set permissions
-COPY --chmod=0755 scripts/wait-for-db.sh ./scripts/
-COPY --chmod=0755 scripts/init-testing-db.sh ./scripts/
+# Environment variables
+ENV PIP_ROOT_USER_ACTION=ignore
+
+# Install system dependencies, Node.js, npm, and Docker CLI
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    # Base system utilities
+    bash \
+    openrc \
+    ca-certificates \
+    gnupg \
+    lsb-release \
+    curl \
+    git \
+    # Build tools
+    gcc \
+    libc-dev \
+    python3-dev \
+    libffi-dev \
+    build-essential \
+    mariadb-client \
+    # Node.js setup
+    && curl -fsSL https://deb.nodesource.com/setup_23.x | bash - \
+    && apt-get install -y --no-install-recommends nodejs \
+    && npm install -g npm@11 npx \
+    # Docker CLI setup
+    && curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" > /etc/apt/sources.list.d/docker.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends docker-ce-cli \
+    # Cleanup
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Security settings in Git
+RUN git config --global --add safe.directory /app
+
+# Create working directory
+WORKDIR /app
+ENV PYTHONPATH=/app
+
+# Copy dependencies first (better caching)
+COPY requirements.txt .
+COPY package.json .
+COPY pyproject.toml ./
+
+# Install Python dependencies
+RUN pip install --no-cache-dir --upgrade pip
+RUN pip install --pre -r requirements.txt
+
+# Install Node.js dependencies
+RUN npm install
+
+# Copy project files
+COPY app/ ./app
+COPY core/ ./core
+COPY rosemary/ ./rosemary
+COPY migrations/ ./migrations
+COPY docker/ ./docker
+COPY --chmod=0755 scripts/ ./scripts/
+
+# Install Rosemary as an 'editable' package
+RUN pip install -e ./
+
+# Remove Python cache
+RUN find . -type d -name "__pycache__" -exec rm -r {} + \
+    && find . -type f -name "*.pyc" -exec rm -f {} +
+
+# Expose application port
+EXPOSE 5000

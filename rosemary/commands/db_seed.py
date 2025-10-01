@@ -46,6 +46,11 @@ def get_module_seeders(module_path, specific_module=None):
 @with_appcontext
 def db_seed(reset, yes, module):
 
+    # 🚨 Prevent seeding in production
+    if os.getenv("FLASK_ENV") == "production":
+        click.echo(click.style("⚠️ Production environment detected. Skipping database seeding.", fg="red"))
+        return
+
     if reset:
         if yes or click.confirm(
             click.style("This will reset the database, do you want " "to continue?", fg="red"),

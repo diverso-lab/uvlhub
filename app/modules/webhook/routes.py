@@ -25,12 +25,6 @@ def deploy():
     # Pull the latest code in the container
     service.execute_container_command(web_container, "/app/scripts/git_update.sh")
 
-    # Update dependencies in the container
-    service.execute_container_command(web_container, "pip install --pre -r requirements.txt")
-
-    # Run migrations in the container
-    service.execute_container_command(web_container, "flask db upgrade")
-
     # Log the deployment
     service.log_deployment(web_container)
 

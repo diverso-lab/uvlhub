@@ -15,62 +15,20 @@
 # Exit immediately if a command exits with a non-zero status
 set -e
 
-# Install Rosemary
-pip install -e ./
-
 # Compile webpack files with hot reloading
 rosemary webpack:compile --watch
-
-# Wait for the database to be ready by running a script
-sh ./scripts/wait-for-db.sh
 
 # Create a specific database for testing by running a script
 sh ./scripts/init-testing-db.sh
 
-# Initialize migrations only if the migrations directory doesn't exist
-if [ ! -d "migrations/versions" ]; then
-    # Initialize the migration repository
-    flask db init
-    flask db migrate
-fi
+# Apply migrations
+sh ./scripts/apply_migrations.sh
 
-# Check if the database is empty
-if [ $(mariadb -u $MARIADB_USER -p$MARIADB_PASSWORD -h $MARIADB_HOSTNAME -P $MARIADB_PORT -D $MARIADB_DATABASE -sse "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '$MARIADB_DATABASE';") -eq 0 ]; then
- 
-    echo "Empty database, migrating..."
+# Index the example UVLs
+rosemary elasticsearch:reset
 
-    # Get the latest migration revision
-    LATEST_REVISION=$(ls -1 migrations/versions/*.py | grep -v "__pycache__" | sort -r | head -n 1 | sed 's/.*\/\(.*\)\.py/\1/')
-
-    echo "Latest revision: $LATEST_REVISION"
-
-    # Run the migration process to apply all database schema changes
-    flask db upgrade
-
-    # Seed the database with initial data
-    rosemary db:seed -y
-
-    # Index the example UVLs
-    rosemary elasticsearch:reset
-
-    # Generates FM Fact Label visualization for example UVLs
-    rosemary factlabel:generate
-
-else
-
-    echo "Database already initialized, updating migrations..."
-
-    # Get the current revision to avoid duplicate stamp
-    CURRENT_REVISION=$(mariadb -u $MARIADB_USER -p$MARIADB_PASSWORD -h $MARIADB_HOSTNAME -P $MARIADB_PORT -D $MARIADB_DATABASE -sse "SELECT version_num FROM alembic_version LIMIT 1;")
-    
-    if [ -z "$CURRENT_REVISION" ]; then
-        # If no current revision, stamp with the latest revision
-        flask db stamp head
-    fi
-
-    # Run the migration process to apply all database schema changes
-    flask db upgrade
-fi
+# Generates FM Fact Label visualization for example UVLs
+rosemary factlabel:generate
 
 # Start the Flask application with specified host and port, enabling reload and debug mode
 exec flask run --host=0.0.0.0 --port=5000 --reload --debug

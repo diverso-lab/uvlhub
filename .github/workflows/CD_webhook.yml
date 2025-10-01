@@ -1,0 +1,32 @@
+# ----------------------------------------------------------------------------
+# Deploy on Webhook Workflow
+# This workflow triggers a deployment webhook only after the "Pytest"
+# workflow has successfully completed on the main branch.
+# ----------------------------------------------------------------------------
+
+name: Deploy on Webhook
+
+on:
+  workflow_run:
+    # Trigger this workflow only after "Pytest" completes
+    workflows: 
+      - "Pytest"
+    types:
+      - completed
+
+jobs:
+  deploy:
+    # Run deployment only if the tests succeeded AND we're on the main branch
+    if: github.event.workflow_run.conclusion == 'success' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+
+    steps:
+      # Step: Trigger the external deployment webhook
+      - name: Trigger Deployment Webhook
+        env:
+          WEBHOOK_DOMAIN: ${{ secrets.WEBHOOK_DOMAIN }}
+          WEBHOOK_TOKEN: ${{ secrets.WEBHOOK_TOKEN }}
+        run: |
+          curl -X POST \
+            https://${{ secrets.WEBHOOK_DOMAIN }}/webhook/deploy \
+            -H "Authorization: Bearer ${{ secrets.WEBHOOK_TOKEN }}"
