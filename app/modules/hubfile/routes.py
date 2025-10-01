@@ -72,38 +72,6 @@ def upload_file():
     ext = file.filename.lower().split(".")[-1]
     current_app.logger.info(f"📦 Detected extension: {ext}")
 
-    if ext == "uvl":
-        try:
-            current_app.logger.info("⚙️ Encolando validación UVL async...")
-            task_info = flamapy_service.check_uvl_async(temp_file_path)
-            current_app.logger.info(f"✅ Tarea encolada correctamente: {task_info}")
-            return (
-                jsonify(
-                    {
-                        "message": f"{ext.upper()} uploaded successfully (validation running in background)",
-                        "filename": unique_filename,
-                        "task_id": task_info["task_id"],
-                    }
-                ),
-                202,
-            )
-        except Exception as e:
-            current_app.logger.exception("❌ Error encolando validación UVL")
-            if os.path.exists(temp_file_path):
-                os.remove(temp_file_path)
-                current_app.logger.info(f"🗑️ Archivo temporal eliminado tras fallo: {temp_file_path}")
-            return jsonify({"message": f"Error encolando validación UVL: {str(e)}"}), 500
-
-    elif ext == "zip":
-        current_app.logger.info("📦 ZIP detectado → no se valida, solo se acepta")
-        # Do not validate ZIPs, just accept them
-        pass
-    else:
-        current_app.logger.warning(f"⚠️ Extensión no soportada: {ext}")
-        os.remove(temp_file_path)
-        current_app.logger.info(f"🗑️ Archivo eliminado: {temp_file_path}")
-        return jsonify({"message": "Unsupported file type"}), 400
-
     current_app.logger.info(f"✅ Archivo {unique_filename} aceptado con extensión {ext}")
     return (
         jsonify(

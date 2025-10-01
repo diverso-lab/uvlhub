@@ -10,11 +10,11 @@ from flamapy.metamodels.fm_metamodel.models import FeatureModel
 from flamapy.metamodels.fm_metamodel.operations import FMMetrics
 from flamapy.metamodels.pysat_metamodel.operations import PySATMetrics  # noqa
 from flamapy.metamodels.pysat_metamodel.transformations import FmToPysat  # noqa
-from core.managers.task_queue_manager import TaskQueueManager
 from uvl.UVLCustomLexer import UVLCustomLexer
 from uvl.UVLPythonParser import UVLPythonParser
 
 from app.modules.flamapy.repositories import FlamapyRepository
+from core.managers.task_queue_manager import TaskQueueManager
 from core.services.BaseService import BaseService
 
 logger = logging.getLogger(__name__)
@@ -38,11 +38,7 @@ class FlamapyService(BaseService):
         return fm_results
 
     def check_uvl_async(self, filepath: str):
-        task = TaskQueueManager().enqueue_task(
-            "app.modules.flamapy.tasks.check_uvl",
-            filepath=filepath,
-            timeout=5
-        )
+        task = TaskQueueManager().enqueue_task("app.modules.flamapy.tasks.check_uvl", filepath=filepath, timeout=5)
         return {"task_id": task.id}
 
     def check_uvl(self, filepath: str):

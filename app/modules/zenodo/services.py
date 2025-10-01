@@ -251,8 +251,12 @@ class ZenodoService(BaseService):
             response = requests.post(upload_url, params=self.params, data=data, files=files)
 
         if response.status_code != 201:
-            logger.error(f"Failed to upload ZIP: {response.content}")
-            raise Exception(f"Error uploading ZIP to Zenodo: {response.json()}")
+            logger.error(f"Failed to upload ZIP: {response.status_code} {response.reason}")
+            try:
+                error_payload = response.json()  # Zenodo a veces sí devuelve JSON de error
+            except ValueError:
+                error_payload = response.text  # pero si no, mostramos el HTML/texto plano
+            raise Exception(f"Error uploading ZIP to Zenodo: {error_payload}")
 
         return response.json()
 
