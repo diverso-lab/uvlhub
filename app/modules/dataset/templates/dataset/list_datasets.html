@@ -25,6 +25,7 @@
                         <th>Title</th>
                         <th>Publication type</th>
                         <th>Dataset DOI</th>
+                        <th>Created at</th>
                         <th>Options</th>
                     </tr>
                 </thead>
@@ -45,6 +46,7 @@
                                 {{ dataset.get_uvlhub_doi() }}
                             </a>
                         </td>
+                        <td>{{ dataset.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
                         <td>
                             <a href="{{ dataset.get_uvlhub_doi() }}" class="btn btn-sm btn-icon btn-light-info me-1" title="View">
                                 <i class="ki-duotone ki-eye fs-2">
@@ -87,6 +89,7 @@
                     <tr class="text-start text-muted fw-bold fs-7 text-uppercase gs-0">
                         <th>Title</th>
                         <th>Publication type</th>
+                        <th>Created at</th>
                         <th>Options</th>
                     </tr>
                 </thead>
@@ -99,6 +102,7 @@
                             </a>
                         </td>
                         <td>{{ dataset.get_publication() }}</td>
+                        <td>{{ dataset.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
                         <td>
                             <a href="{{ url_for('dataset.get_unsynchronized_dataset', dataset_id=dataset.id) }}" class="btn btn-sm btn-icon btn-light-info me-1" title="View">
                                 <i class="ki-duotone ki-eye fs-2">
@@ -231,8 +235,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        $("#synchronizedDatasetsTable").DataTable();
-        $("#unsynchronizedDatasetsTable").DataTable();
+        $("#synchronizedDatasetsTable").DataTable({
+            order: [[3, "desc"]]
+        });
+        $("#unsynchronizedDatasetsTable").DataTable({
+            order: [[2, "desc"]]
+        });
     });
 </script>
 {% endblock %}
