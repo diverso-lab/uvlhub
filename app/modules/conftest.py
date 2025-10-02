@@ -34,9 +34,6 @@ def test_client(test_app):
             db.session.add(profile)
             db.session.commit()
 
-            print("Rutas registradas:")
-            for rule in test_app.url_map.iter_rules():
-                print(rule)
             yield testing_client
 
             db.session.remove()

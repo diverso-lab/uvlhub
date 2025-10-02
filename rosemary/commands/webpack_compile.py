@@ -78,8 +78,7 @@ def compile_module(module, watch, production):
         # Use Popen to execute the command without blocking the console
         try:
             if watch:
-                # Execute in the background without blocking the console, redirecting only stderr to os.devnull
-                subprocess.Popen(webpack_command, shell=True, stdout=None, stderr=subprocess.DEVNULL)
+                subprocess.Popen(webpack_command, shell=True)
                 click.echo(click.style(f"Started watching {module} in {mode} mode!", fg="blue"))
 
             else:
