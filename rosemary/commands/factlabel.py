@@ -44,9 +44,7 @@ def factlabel_generate(force, light, timeout):
         click.echo(click.style(f"🔄 Regenerating FactLabels for {len(hubfiles)} hubfiles.", fg="cyan"))
     else:
         click.echo(click.style("🔎 Looking for hubfiles without FactLabel...", fg="cyan"))
-        hubfiles = Hubfile.query.filter(
-            (Hubfile.factlabel_json.is_(None)) | (Hubfile.factlabel_json == "")
-        ).all()
+        hubfiles = Hubfile.query.filter((Hubfile.factlabel_json.is_(None)) | (Hubfile.factlabel_json == "")).all()
 
         if not hubfiles:
             click.echo(click.style("✅ All hubfiles already have FactLabels!", fg="green"))
@@ -82,9 +80,7 @@ def factlabel_generate(force, light, timeout):
 def factlabel_pending():
     from app.modules.hubfile.models import Hubfile
 
-    missing = Hubfile.query.filter(
-        (Hubfile.factlabel_json.is_(None)) | (Hubfile.factlabel_json == "")
-    ).count()
+    missing = Hubfile.query.filter((Hubfile.factlabel_json.is_(None)) | (Hubfile.factlabel_json == "")).count()
 
     if missing == 0:
         click.echo(click.style("✅ No pending FactLabels. All hubfiles are up to date!", fg="green"))
