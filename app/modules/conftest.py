@@ -11,8 +11,6 @@ def test_app():
     test_app = create_app("testing")
 
     with test_app.app_context():
-        # Imprimir los blueprints registrados
-        print("TESTING SUITE (1): Blueprints registrados:", test_app.blueprints)
         yield test_app
 
 
@@ -21,7 +19,6 @@ def test_client(test_app):
 
     with test_app.test_client() as testing_client:
         with test_app.app_context():
-            print("TESTING SUITE (2): Blueprints registrados:", test_app.blueprints)
 
             db.drop_all()
             db.create_all()

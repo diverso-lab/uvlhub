@@ -41,7 +41,7 @@ def test_create_hubfile_calls_enqueue_tasks(test_client):
         )
 
         # Verificar número de llamadas
-        assert mock_enqueue_task.call_count == 2
+        assert mock_enqueue_task.call_count == 3
 
         # Verificar que se llamó a transform_uvl
         mock_enqueue_task.assert_any_call(
