@@ -1,23 +1,16 @@
 <div align="center">
 
-  <a href="https://github.com/diverso-lab/uvlhub/actions/workflows/CI_pytest.yml">
-    <img alt="Pytest Testing Suite"
-         src="https://github.com/diverso-lab/uvlhub/actions/workflows/CI_pytest.yml/badge.svg?branch=main">
-  </a>
-  <a href="https://github.com/diverso-lab/uvlhub/actions/workflows/CI_commits.yml">
-    <img alt="Commits Syntax Checker"
-         src="https://github.com/diverso-lab/uvlhub/actions/workflows/CI_commits.yml/badge.svg?branch=main">
-  </a>
-  <a href="https://github.com/diverso-lab/uvlhub/actions/workflows/CI_lint.yml">
-    <img alt="Lint"
-         src="https://github.com/diverso-lab/uvlhub/actions/workflows/CI_lint.yml/badge.svg?branch=main">
-  </a>
-  <a href="https://github.com/diverso-lab/uvlhub/actions/workflows/CD_webhook.yml">
-    <img alt="Webhook Deployment"
-         src="https://github.com/diverso-lab/uvlhub/actions/workflows/CD_webhook.yml/badge.svg?branch=main">
-  </a>
-  
+  <!-- CI Workflows -->
+  <a href="">[![Pytest Testing Suite](https://github.com/diverso-lab/uvlhub/actions/workflows/CI_pytest.yml/badge.svg?branch=main)](https://github.com/diverso-lab/uvlhub/actions/workflows/CI_pytest.yml)</a>
+  <a href="">[![Commits Syntax Checker](https://github.com/diverso-lab/uvlhub/actions/workflows/CI_commits.yml/badge.svg?branch=main)](https://github.com/diverso-lab/uvlhub/actions/workflows/CI_commits.yml)</a>
+  <a href="">[![Lint](https://github.com/diverso-lab/uvlhub/actions/workflows/CI_lint.yml/badge.svg?branch=main)](https://github.com/diverso-lab/uvlhub/actions/workflows/CI_lint.yml)</a>
+
+  <!-- CD Workflows -->
+  <a href="">[![DockerHub Deployment](https://github.com/diverso-lab/uvlhub/actions/workflows/CD_dockerhub.yml/badge.svg)](https://github.com/diverso-lab/uvlhub/actions/workflows/CD_dockerhub.yml)</a>
+  <a href="">[![Webhook Deployment](https://github.com/diverso-lab/uvlhub/actions/workflows/CD_webhook.yml/badge.svg?branch=main)](https://github.com/diverso-lab/uvlhub/actions/workflows/CD_webhook.yml)</a>
+
 </div>
+
 
 <div style="text-align: center; margin-top: 10px">
   <img src="https://www.uvlhub.io/static/media/logos/default.svg" alt="Logo">
