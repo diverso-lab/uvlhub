@@ -19,7 +19,7 @@
   
 </div>
 
-<div style="text-align: center;">
+<div style="text-align: center; margin-top: 10px">
   <img src="https://www.uvlhub.io/static/media/logos/default.svg" alt="Logo">
 </div>
 
