@@ -4,8 +4,33 @@ Mustache.tags = ['[[', ']]'];
 
 document.addEventListener('DOMContentLoaded', () => {
     bindFilters();
-    runSearch();  // initial load
+    setupDateValidation();
+    runSearch(); // initial load
 });
+
+function setupDateValidation() {
+    const fromInput = document.getElementById('filter-date-from');
+    const toInput = document.getElementById('filter-date-to');
+    const dateError = document.getElementById('date-error');
+
+    if (!fromInput || !toInput) return;
+
+    const validate = () => {
+        const from = new Date(fromInput.value);
+        const to = new Date(toInput.value);
+
+        if (fromInput.value && toInput.value && to < from) {
+            dateError.classList.remove('d-none');
+            toInput.classList.add('is-invalid');
+        } else {
+            dateError.classList.add('d-none');
+            toInput.classList.remove('is-invalid');
+        }
+    };
+
+    fromInput.addEventListener('change', validate);
+    toInput.addEventListener('change', validate);
+}
 
 function bindFilters() {
     const filters = [
@@ -53,14 +78,34 @@ const pageSize = 10;
 let loading = false;
 
 function runSearch(reset = true) {
+    const fromInput = document.getElementById('filter-date-from');
+    const toInput = document.getElementById('filter-date-to');
+    const dateError = document.getElementById('date-error');
+
+    // Validación del rango de fechas
+    const fromDate = fromInput.value ? new Date(fromInput.value) : null;
+    const toDate = toInput.value ? new Date(toInput.value) : null;
+
+    if (fromDate && toDate && toDate < fromDate) {
+        dateError?.classList.remove('d-none');
+        toInput.classList.add('is-invalid');
+        return;
+    } else {
+        dateError?.classList.add('d-none');
+        toInput.classList.remove('is-invalid');
+    }
+
     if (reset) {
         currentPage = 1;
         document.getElementById('results-container').innerHTML = '';
     }
 
-    const query = document.getElementById('search-query').value;
+    const query = document.getElementById('search-query').value.trim();
     const publication_type = document.getElementById('filter-publication-type').value;
     const sorting = document.getElementById('filter-sorting').value;
+    const tags = document.getElementById('filter-tags').value.trim();
+    const date_from = fromInput.value;
+    const date_to = toInput.value;
 
     const params = new URLSearchParams({
         q: query,
@@ -69,6 +114,10 @@ function runSearch(reset = true) {
         page: currentPage,
         size: pageSize
     });
+
+    if (tags) params.append('tags', tags);
+    if (date_from) params.append('date_from', date_from);
+    if (date_to) params.append('date_to', date_to);
 
     if (loading) return;
     loading = true;
@@ -85,6 +134,7 @@ function runSearch(reset = true) {
             loading = false;
         });
 }
+
 
 window.addEventListener('scroll', () => {
     if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200) {

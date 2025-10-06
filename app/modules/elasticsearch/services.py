@@ -1,4 +1,5 @@
 import time
+from datetime import datetime
 
 from elasticsearch import ApiError, BadRequestError, ConnectionError, Elasticsearch, NotFoundError
 
@@ -210,12 +211,23 @@ class ElasticsearchService(BaseService):
 
             # Filtro por fechas
             if date_from or date_to:
-                range_query = {"range": {"created_at": {}}}
-                if date_from:
-                    range_query["range"]["created_at"]["gte"] = f"{date_from}T00:00:00Z"
-                if date_to:
-                    range_query["range"]["created_at"]["lte"] = f"{date_to}T23:59:59Z"
-                filter_clauses.append(range_query)
+                try:
+                    range_query = {"range": {"created_at": {}}}
+
+                    if date_from:
+                        # Normalizar y validar formato
+                        dt_from = datetime.strptime(date_from, "%Y-%m-%d")
+                        range_query["range"]["created_at"]["gte"] = dt_from.strftime("%Y-%m-%dT00:00:00Z")
+
+                    if date_to:
+                        dt_to = datetime.strptime(date_to, "%Y-%m-%d")
+                        range_query["range"]["created_at"]["lte"] = dt_to.strftime("%Y-%m-%dT23:59:59Z")
+
+                    if "gte" in range_query["range"]["created_at"] or "lte" in range_query["range"]["created_at"]:
+                        filter_clauses.append(range_query)
+
+                except ValueError as e:
+                    print(f"[WARN] Formato de fecha inválido recibido: from={date_from}, to={date_to}. Error: {e}")
 
             # Ordenación
             sort_clause = [

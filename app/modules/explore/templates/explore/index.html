@@ -58,14 +58,23 @@
 
               <!-- Filtro: fecha -->
               <div class="mb-3">
-                <label class="form-label">Creation date</label>
-                <div class="d-flex gap-2">
-                  <input id="filter-date-from" type="date" class="form-control" />
-                  <input id="filter-date-to" type="date" class="form-control" />
+                <label class="form-label mb-0">Creation date</label>
+                <div class="d-flex">
+                  <div class="flex-fill">
+                    <label class="form-text d-block">From</label>
+                    <input id="filter-date-from" type="date" class="form-control" />
+                  </div>
+                  <div class="flex-fill">
+                    <label class="form-text d-block">To</label>
+                    <input id="filter-date-to" type="date" class="form-control" />
+                  </div>
                 </div>
+                <div id="date-error" class="text-danger small mt-1 d-none">⚠️ End date must be after start date</div>
               </div>
 
-
+              <div id="date-error" class="text-danger small mt-1 d-none">
+                ⚠️ End date must be after start date
+              </div>
 
               <!-- Filtro: orden -->
               <div class="mb-3">
