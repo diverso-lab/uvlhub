@@ -1,7 +1,6 @@
 import logging
 from typing import Any
 from bs4 import BeautifulSoup
-
 from fmfactlabel import FMCharacterization
 
 from app.modules.factlabel.repositories import FactlabelRepository
