@@ -22,9 +22,7 @@ from app.modules.hubfile.repositories import (
 from app.modules.statistics.services import StatisticsService
 from core.services.BaseService import BaseService
 
-UUID_PREFIX_RE = re.compile(
-    r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}_'
-)
+UUID_PREFIX_RE = re.compile(r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}_")
 
 
 class HubfileService(BaseService):
@@ -251,4 +249,3 @@ class UploadIngestService:
 
         self.logger.info(f"[INGEST] UVLs en staging: {len(staged_paths)} (dir: {stage_dir})")
         return stage_dir, sorted(staged_paths)
-
