@@ -8,12 +8,44 @@ export function initializeTinyMCE() {
   tinymce.init({
     selector: '#dataset_editor',
     plugins: 'lists link',
-    toolbar: 'undo redo | bold italic | bullist numlist | link',
-    base_url: '/dataset/dist', // Ruta base para los recursos de TinyMCE del módulo
-    skin: 'default',
-    skin_url: '/dataset/dist/skins/ui/oxide', // Ruta para los skins
-    content_css: '/dataset/dist/skins/content/default/content.css', // Ruta para el CSS de contenido
-    license_key: 'gpl', // Acepta la licencia GPL
+    toolbar: 'undo redo | bold italic underline | bullist numlist | link removeformat',
+    menubar: false,
+    branding: false,
+    license_key: 'gpl',
+
+    base_url: '/dataset/dist',
+    skin_url: '/dataset/dist/skins/ui/oxide',
+    content_css: false, // 🚫 Desactivamos el CSS por defecto de TinyMCE
+
+    // 🔹 Usamos las variables de Keen para respetar el tema (light/dark)
+    content_style: `
+      body {
+        font-family: var(--bs-body-font-family);
+        font-size: var(--bs-body-font-size);
+        color: var(--bs-body-color);
+        background-color: transparent;
+        line-height: 1.5;
+      }
+      a {
+        color: var(--bs-primary);
+        text-decoration: underline;
+      }
+      ul, ol {
+        margin-left: 1rem;
+      }
+      p {
+        margin-bottom: 0.5rem;
+      }
+    `,
+
+    // 🔒 Evita estilos inline o fuentes personalizadas
+    valid_elements: 'p,strong,em,b,i,ul,ol,li,a[href|title|target]',
+    invalid_styles: {
+      '*': 'color,font,font-size,font-family,background,background-color'
+    },
+    // Evita que al pegar texto con formato traiga estilos externos
+    paste_as_text: true,
+
     setup: (editor) => {
       editor.on('change', () => {
         console.log('TinyMCE Content:', editor.getContent());
