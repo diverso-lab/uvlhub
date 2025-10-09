@@ -2,6 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from app import create_app
 from app.modules.dataset.services import DataSetService
 
 
@@ -19,27 +20,19 @@ def test_client(test_client):
 
 
 # Test unitario que devuelve el DOI
-@patch("os.getenv")  # Mockear la llamada a os.getenv
-def test_get_uvlhub_doi(mock_getenv):
+def test_get_uvlhub_doi():
+    app = create_app("testing")
 
-    # Configurar el valor de retorno del mock para DOMAIN
-    mock_getenv.return_value = "uvlhub.io"
-
-    # Crear un mock del dataset y ds_meta_data
     mock_dataset = MagicMock()
     mock_dataset.ds_meta_data.dataset_doi = "10.1234/test_doi"
 
-    # Crear una instancia del servicio
     service = DataSetService()
 
-    # Ejecutar la función
-    result = service.get_uvlhub_doi(mock_dataset)
+    with app.app_context():
+        app.config["SERVER_NAME"] = "uvlhub.io"  # ✅ aquí
+        result = service.get_uvlhub_doi(mock_dataset)
 
-    # Verificar que devuelve la URL esperada
     assert result == "http://uvlhub.io/doi/10.1234/test_doi"
-
-    # Verificar que getenv fue llamado correctamente
-    mock_getenv.assert_called_once_with("SERVER_NAME", "localhost")
 
 
 # Test de integración para un DOI válido que devuelve un dataset
