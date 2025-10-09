@@ -9,7 +9,6 @@ logger = logging.getLogger(__name__)
 
 
 class TaskQueueManager:
-
     _instance = None
 
     def __new__(cls, *args, **kwargs):
@@ -19,19 +18,30 @@ class TaskQueueManager:
         return cls._instance
 
     def _initialize(self):
-        self.queue = Queue(connection=current_app.config["SESSION_REDIS"])
-        self.redis_worker_timeout = current_app.config["REDIS_WORKER_TIMEOUT"]
+        redis_conn = current_app.config.get("SESSION_REDIS")
+
+        # 🔹 Si estamos en modo testing o no hay conexión real, usar fakeredis
+        if current_app.config.get("TESTING") or redis_conn is None:
+            try:
+                import fakeredis
+
+                redis_conn = fakeredis.FakeStrictRedis()
+                logger.info("Using FakeRedis for TaskQueueManager (testing mode).")
+            except ImportError:
+                logger.warning("fakeredis not installed, tests may fail without Redis.")
+        else:
+            # Si es un string, convierte a conexión redis real
+            import redis
+
+            if isinstance(redis_conn, str):
+                redis_conn = redis.from_url(redis_conn)
+
+        # ✅ Crear la cola RQ con la conexión apropiada
+        self.queue = Queue(connection=redis_conn)
+        self.redis_worker_timeout = current_app.config.get("REDIS_WORKER_TIMEOUT", 180)
         logger.info("TaskQueueManager initialized with Redis connection.")
 
     def enqueue_task(self, task_name: str, *args, timeout=None, **kwargs):
-        """
-        Method to queue a custom task.
-
-        :param task_name: Full name of the method or function to queue (e.g. ‘app.modules.hubfile.process_task_worker’).
-        :param args: Positional arguments required by the task.
-        :param timeout: Maximum task execution time in seconds (default: 180s).
-        :param kwargs: Named arguments required by the task.
-        """
         if timeout is None:
             timeout = self.redis_worker_timeout
 
@@ -43,7 +53,6 @@ class TaskQueueManager:
         }
         logger.info(f"Enqueueing task: {task_metadata}")
 
-        # Enqueue task and return the job
         job = self.queue.enqueue(task_name, *args, **kwargs, job_timeout=timeout)
         logger.info(f"Task '{task_name}' enqueued with id={job.id}, args={args}, kwargs={kwargs}, timeout={timeout}")
 

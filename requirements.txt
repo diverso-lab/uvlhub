@@ -29,6 +29,7 @@ elastic-transport==8.17.1
 elasticsearch==8.18.1
 email_validator==2.2.0
 Faker==37.4.2
+fakeredis==2.32.0
 flake8==7.3.0
 Flake8-pyproject==1.2.3
 flamapy==2.1.0.dev0
@@ -105,6 +106,7 @@ pyzmq==27.0.0
 redis==6.2.0
 referencing==0.36.2
 requests==2.32.4
+rosemary==1.0.0
 rpds-py==0.26.0
 rq==2.4.1
 selenium==4.34.2

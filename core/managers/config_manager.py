@@ -60,6 +60,7 @@ class TestingConfig(Config):
     WTF_CSRF_ENABLED = False
     SESSION_TYPE = "filesystem"
     SESSION_FILE_DIR = "/tmp/flask_sessions"
+    REDIS_URL = "fakeredis://"
 
 
 class ProductionConfig(Config):
