@@ -48,6 +48,16 @@
                         {% endfor %}
                     </div>
 
+                    <!-- Confirm Password -->
+                    <div class="mb-4">
+                        {{ form.confirm_password.label(class="form-label fw-semibold") }}
+                        {{ form.confirm_password(class="form-control", placeholder="Confirm your password") }}
+                        {% for error in form.confirm_password.errors %}
+                            <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+
                     <!-- CAPTCHA -->
                     <div class="card shadow-sm mb-4">
                         <div class="card-body">

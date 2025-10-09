@@ -5,10 +5,11 @@ from flask import abort, current_app, url_for
 from itsdangerous import BadTimeSignature, SignatureExpired, URLSafeTimedSerializer
 from werkzeug.security import generate_password_hash
 
-from app import db, mail_service
+from app import db
 from app.modules.auth.models import User
 from app.modules.reset.models import ResetToken
 from app.modules.reset.repositories import ResetRepository
+from core.managers.task_queue_manager import TaskQueueManager
 from core.services.BaseService import BaseService
 
 
@@ -20,7 +21,6 @@ class ResetService(BaseService):
         return URLSafeTimedSerializer(current_app.config["SECRET_KEY"])
 
     def send_reset_password_mail(self, email: str) -> str:
-
         token = None
 
         user = User.query.filter_by(email=email).first()
@@ -28,16 +28,41 @@ class ResetService(BaseService):
             s = self.get_serializer()
             token = s.dumps(email, salt="email-confirm")
             link = url_for("reset.reset_password", token=token, _external=True)
-            body = f"Your link to reset your password is {link}"
-            mail_service.send_email("Password Reset Request", [email], body)
+
+            # 🧩 Encolar tarea en vez de enviar directamente
+            task_manager = TaskQueueManager()
+            task_manager.enqueue_task(
+                "app.modules.reset.tasks.send_reset_password_email",
+                email=email,
+                link=link,
+                timeout=10,
+            )
 
         return token
 
+    def reset_and_notify(self, email: str, password: str, token: str):
+        """Resetea la contraseña, marca el token y lanza la notificación en background."""
+        self.reset_password(email=email, password=password)
+        self.mark_token_as_used(token)
+
+        task_manager = TaskQueueManager()
+        task_manager.enqueue_task(
+            "app.modules.reset.tasks.send_reset_confirmation_email",
+            email=email,
+            timeout=10,
+        )
+
     def add_token(self, token: str):
-        if token is not None:
-            reset_token = ResetToken(token=token)
-            db.session.add(reset_token)
-            db.session.commit()
+        if token is None:
+            return
+
+        existing = ResetToken.query.filter_by(token=token).first()
+        if existing:
+            return
+
+        reset_token = ResetToken(token=token)
+        db.session.add(reset_token)
+        db.session.commit()
 
     def get_email_by_token(self, token: str) -> str:
         s = self.get_serializer()

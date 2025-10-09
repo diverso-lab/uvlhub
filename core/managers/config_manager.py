@@ -40,6 +40,8 @@ class Config:
     REDIS_URL = os.getenv("REDIS_URL", "redis://redis:6379")
     SESSION_REDIS = redis.from_url(REDIS_URL)
     REDIS_WORKER_TIMEOUT = os.getenv("REDIS_WORKER_TIMEOUT", 180)
+    SERVER_NAME = os.getenv("SERVER_NAME", "localhost")
+    PREFERRED_URL_SCHEME = os.getenv("PREFERRED_URL_SCHEME", "http")
 
 
 class DevelopmentConfig(Config):

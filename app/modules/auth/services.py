@@ -43,25 +43,20 @@ class AuthenticationService(BaseService):
             if not surname:
                 raise ValueError("Surname is required.")
 
-            # 🚨 Validación clave
             if not self.is_email_available(email):
                 raise ValueError("This email is already registered. Try logging in or using ORCID.")
 
-            user_data = {
-                "email": email,
-                "password": password,
-                "active": False,
-            }
+            # Crear usuario
+            user = User(email=email, active=True)
+            user.set_password(password)
+            self.repository.session.add(user)
+            self.repository.session.flush()  # garantiza que user.id esté disponible
 
-            profile_data = {
-                "name": name,
-                "surname": surname,
-            }
-
-            user = self.create(commit=False, **user_data)
-            profile_data["user_id"] = user.id
-            self.user_profile_repository.create(**profile_data)
+            # Crear perfil
+            profile = UserProfile(user_id=user.id, name=name, surname=surname)
+            self.repository.session.add(profile)
             self.repository.session.commit()
+
             return user
 
         except Exception as exc:

@@ -93,9 +93,6 @@ def create_app(config_name="development"):
         # Add the application version manually
         env_vars["APP_VERSION"] = get_app_version()
 
-        # Ensure DOMAIN variable has a default value if not set
-        env_vars["DOMAIN"] = os.getenv("DOMAIN", "localhost")
-
         # Set Boolean variables for the environment
         flask_env = os.getenv("FLASK_ENV")
         env_vars["DEVELOPMENT"] = flask_env == "development"

@@ -39,7 +39,7 @@ def test_get_uvlhub_doi(mock_getenv):
     assert result == "http://uvlhub.io/doi/10.1234/test_doi"
 
     # Verificar que getenv fue llamado correctamente
-    mock_getenv.assert_called_once_with("DOMAIN", "localhost")
+    mock_getenv.assert_called_once_with("SERVER_NAME", "localhost")
 
 
 # Test de integración para un DOI válido que devuelve un dataset

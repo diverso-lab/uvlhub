@@ -284,8 +284,9 @@ class DataSetService(BaseService):
         return self.dsmetadata_repository.update(id, **kwargs)
 
     def get_uvlhub_doi(self, dataset: DataSet) -> str:
-        domain = os.getenv("DOMAIN", "localhost")
-        return f"http://{domain}/doi/{dataset.ds_meta_data.dataset_doi}"
+        server_name = current_app.config.get("SERVER_NAME")
+        preferred_url_scheme = current_app.config.get("PREFERRED_URL_SCHEME")
+        return f"{preferred_url_scheme}://{server_name}/doi/{dataset.ds_meta_data.dataset_doi}"
 
     def zip_dataset(self, dataset: DataSet) -> str:
         working_dir = os.getenv("WORKING_DIR", "")

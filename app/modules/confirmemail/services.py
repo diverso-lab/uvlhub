@@ -55,7 +55,7 @@ class ConfirmemailService(BaseService):
         except BadTimeSignature:
             raise Exception("The confirmation link has been tampered with.")
 
-        user = authentication_service.get_by_email(email, active=False)
+        user = authentication_service.get_by_email(email)
         user.active = True
         self.repository.session.commit()
         return user

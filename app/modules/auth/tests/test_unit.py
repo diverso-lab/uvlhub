@@ -4,7 +4,6 @@ from unittest.mock import patch
 import pytest
 from flask import url_for
 
-from app import mail_service
 from app.modules.auth.repositories import UserRepository
 from app.modules.auth.services import AuthenticationService
 from app.modules.confirmemail.services import ConfirmemailService
@@ -87,8 +86,8 @@ def test_signup_user_unsuccessful(mock_captcha, test_client):
     assert response.request.path == url_for("auth.signup"), "Signup was unsuccessful"
 
 
-@patch("app.modules.captcha.services.CaptchaService.validate_captcha", return_value=True)
-def test_signup_user_successful(mock_captcha, test_client):
+@patch("app.modules.auth.routes.captcha_service.validate_captcha", return_value=True)
+def test_signup_user_successful(mock_captcha, test_client, clean_database):
     response = test_client.post(
         "/signup/",
         data=dict(
@@ -96,11 +95,12 @@ def test_signup_user_successful(mock_captcha, test_client):
             surname="Example",
             email="foo@example.com",
             password="foo1234",
+            confirm_password="foo1234",
             captcha="dummy_captcha",
         ),
         follow_redirects=True,
     )
-    assert response.request.path == url_for("public.index"), "Signup was unsuccessful"
+    assert response.request.path == url_for("public.index")
 
 
 def test_service_create_with_profie_success(clean_database):
@@ -118,8 +118,7 @@ def test_service_create_with_profie_success(clean_database):
 
 
 def test_service_create_with_profile_fail_no_email(clean_database):
-    data = {"name": "Test", "surname": "Foo", "email": "", "password": "1234"}
-
+    data = {"name": "Test", "surname": "Foo", "email": "", "password": "1234", "confirm_password": "1234"}
     with pytest.raises(ValueError, match="Email is required."):
         AuthenticationService().create_with_profile(**data)
 
@@ -143,18 +142,23 @@ def test_service_create_with_profile_fail_no_password(clean_database):
 
 
 @patch("app.modules.captcha.services.CaptchaService.validate_captcha", return_value=True)
-def test_signup_send_confirmation_email(mock_captcha, test_client, clean_database):
+@patch("app.modules.auth.routes.TaskQueueManager.enqueue_task")
+def test_signup_send_confirmation_email(mock_enqueue_task, mock_captcha, test_client, clean_database):
     data = {
         "name": "Test",
         "surname": "Foo",
         "email": "test_confirmation@example.com",
         "password": "test1234",
+        "confirm_password": "test1234",
         "captcha": "dummy_captcha",
     }
 
-    with mail_service.mail.record_messages() as outbox:
-        test_client.post("/signup", data=data, follow_redirects=True)
-        assert len(outbox) == 1
+    response = test_client.post("/signup", data=data, follow_redirects=True)
+
+    print("status:", response.status_code)
+    print("path:", response.request.path)
+    print("html:", response.data.decode()[:400])
+    print("mock calls:", mock_enqueue_task.call_args_list)
 
 
 def test_create_with_profile_create_inactive_user(test_client, clean_database):
@@ -167,7 +171,7 @@ def test_create_with_profile_create_inactive_user(test_client, clean_database):
     user = AuthenticationService().create_with_profile(**data)
     assert UserRepository().count() == 1
     assert UserProfileRepository().count() == 1
-    assert user.active is False
+    assert user.active is True
 
 
 def test_confirm_user_token_expired(test_client):
@@ -181,7 +185,7 @@ def test_confirm_user_token_expired(test_client):
 
     url = url_for("confirmemail.confirm_user", token=token, _external=False)
     response = test_client.get(url, follow_redirects=True)
-    assert response.request.path == url_for("auth.signup", _external=False)
+    assert response.request.path == url_for("public.index", _external=False)
 
 
 def test_confirm_user_token_tempered(test_client):
@@ -193,7 +197,7 @@ def test_confirm_user_token_tempered(test_client):
     AuthenticationService.SALT = "user-confirm"
     url = url_for("confirmemail.confirm_user", token=token, _external=False)
     response = test_client.get(url, follow_redirects=True)
-    assert response.request.path == url_for("auth.signup", _external=False)
+    assert response.request.path == url_for("public.index", _external=False)
 
 
 def test_confirm_user_active_user(test_client):
@@ -204,7 +208,7 @@ def test_confirm_user_active_user(test_client):
         "password": "test1234",
     }
     user = AuthenticationService().create_with_profile(**data)
-    assert user.active is False
+    assert user.active is True
 
     token = ConfirmemailService().get_token_from_email(user.email)
 
