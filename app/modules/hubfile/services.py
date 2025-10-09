@@ -1,5 +1,6 @@
 import hashlib
 import os
+import re
 import shutil
 import uuid
 import zipfile
@@ -20,6 +21,10 @@ from app.modules.hubfile.repositories import (
 )
 from app.modules.statistics.services import StatisticsService
 from core.services.BaseService import BaseService
+
+UUID_PREFIX_RE = re.compile(
+    r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}_'
+)
 
 
 class HubfileService(BaseService):
@@ -146,6 +151,10 @@ class UploadIngestService:
     def __init__(self, logger):
         self.logger = logger
 
+    def _strip_uuid_prefix(self, name: str) -> str:
+        """Elimina prefijos UUID_ de los nombres de archivo, si existen."""
+        return UUID_PREFIX_RE.sub("", name)
+
     # -------- utils -------- #
 
     def _safe_extract_zip(self, zip_path: str, dest_dir: str) -> None:
@@ -218,6 +227,7 @@ class UploadIngestService:
 
         seen = set()
         staged_paths: List[str] = []
+
         for src in uvl_sources:
             h = file_hash(src)
             if h in seen:
@@ -225,10 +235,12 @@ class UploadIngestService:
                 continue
             seen.add(h)
 
-            # añadir parte del hash al nombre si ya existe
-            dest_name = src.name
+            # 🔹 Eliminar prefijo UUID si existe
+            dest_name = self._strip_uuid_prefix(src.name)
+
+            # 🔹 Solo añadir sufijo hash si ya existe otro archivo con mismo nombre
             if (Path(stage_dir) / dest_name).exists():
-                dest_name = f"{Path(src.stem)}_{h[:8]}{src.suffix}"
+                dest_name = f"{Path(dest_name).stem}_{h[:8]}{Path(dest_name).suffix}"
 
             dest = Path(stage_dir) / dest_name
             shutil.copy2(src, dest)
@@ -239,3 +251,4 @@ class UploadIngestService:
 
         self.logger.info(f"[INGEST] UVLs en staging: {len(staged_paths)} (dir: {stage_dir})")
         return stage_dir, sorted(staged_paths)
+
