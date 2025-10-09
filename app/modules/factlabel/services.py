@@ -1,5 +1,6 @@
 import logging
 from typing import Any
+from bs4 import BeautifulSoup
 
 from fmfactlabel import FMCharacterization
 
@@ -23,7 +24,9 @@ class FactlabelService(BaseService):
 
         # Fill metadata
         characterization.metadata.name = hubfile.name
-        characterization.metadata.description = dataset_metadata.get("description")
+        html = dataset_metadata.get("description") or ""
+        description = BeautifulSoup(html, "html.parser").get_text().strip()
+        characterization.metadata.description = description
         characterization.metadata.author = dataset_metadata.get("authors")
         characterization.metadata.year = dataset_metadata.get("year")
         characterization.metadata.tags = dataset_metadata.get("tags")
