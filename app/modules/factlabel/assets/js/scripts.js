@@ -45,6 +45,8 @@ var IMPORTS = ['https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@900
 function drawFMFactLabel(data) {
    chart = d3.select(".chart");  // The svg 
 
+   chart.style("color", "var(--bs-body-color)");
+
    // chart.append('defs')
    //    .append('style')
    //    .attr('type', 'text/css')
@@ -56,39 +58,28 @@ function drawFMFactLabel(data) {
       .text(function (d) { return "@import url('" + d + "');"; });
 
   // Create a div for mouse hover effect
-  tooltip = d3
-    .select("body")
-    .append("div")
-    .attr("class", "tooltip")
-    .style("opacity", 0)
-    .style("position", "absolute")
-    .style("text-align", "left")
-    .style("padding", "0.1rem")
-    .style("background", "#FFFFFF")
-    .style("color", "#313639")
-    .style("border", "1px solid #313639")
-    .style("border-radius", "8px")
-    .style("pointer-events", "none")
-    .style("font-size", "0.8rem");
-   
-  // Create a div to show the content detail on mouse click
-  contentDetail = d3
-    .select("body")
-    .append("div")
-    .attr("class", "contentDetail")
-    .style("opacity", 0)
-    .style("position", "absolute")
-    .style("text-align", "left")
-    .style("padding", "0.1rem")
-    .style("background", "#FFFFFF")
-    .style("color", "#313639")
-    .style("border", "1px solid #313639")
-    .style("border-radius", "8px")
-    .style("font-size", "0.8rem")
-    //.style("width", "400px")
-    .on("mouseout", function (event, d) {
-      d3.select(this).transition().duration("50").style("opacity", 0);
-    });
+   tooltip = d3
+   .select("body")
+   .append("div")
+   .attr("class", "tooltip bg-body text-body border rounded shadow-sm p-2 small")
+   .style("opacity", 0)
+   .style("position", "absolute")
+   .style("pointer-events", "none");
+
+   contentDetail = d3
+   .select("body")
+   .append("div")
+   .attr(
+      "class",
+      "contentDetail bg-body text-body border rounded shadow-sm p-2 small"
+   )
+   .style("opacity", 0)
+   .style("position", "absolute")
+   .style("pointer-events", "none")
+   .on("mouseout", function (event, d) {
+      d3.select(this).transition().duration(50).style("opacity", 0);
+   });
+
 
    ALL_DATA = data
    // Initialize visible properties   
@@ -109,19 +100,55 @@ function drawFMFactLabel(data) {
 
    x = d3.scaleLinear().domain([0, maxWidth]).range([0, maxWidth]);
 
-   // Title
-   var titleSize = textSize(get_property(data, "Name").value, TITLE_FONT_FAMILY, TITLE_FONT_SIZE);
-   var yTitle = TOP_MARGING;
-   var title = chart.append("g").attr("transform", "translate(0," + yTitle + ")");
-   title.append("text")
-      .text(get_property(data, 'Name').value)
-      .attr("x", function (d) { return x(maxWidth / 2); })
-      //.attr("y", 3)
-      .attr("text-anchor", "middle")
-      .attr("dominant-baseline", "central")
-      .attr("font-family", TITLE_FONT_FAMILY)
-      .attr("font-size", TITLE_FONT_SIZE)
-      .attr("font-weight", "bold");
+// ==== TITLE ==== //
+var titleText = get_property(data, 'Name').value;
+var yTitle = TOP_MARGING;
+var title = chart.append("g").attr("transform", "translate(0," + yTitle + ")");
+var titleElement = title.append("text")
+  .attr("x", x(maxWidth / 2))
+  .attr("text-anchor", "middle")
+  .attr("font-family", TITLE_FONT_FAMILY)
+  .attr("font-size", TITLE_FONT_SIZE)
+  .attr("font-weight", "bold")
+  .attr("fill", "currentColor"); // 👈 se adapta automáticamente al tema Keen
+
+// Función auxiliar: divide nombres largos (incluso sin espacios)
+function smartWrapText(textNode, text, maxWidth) {
+  const avgCharWidth = textSize("ABCDEFGHIJKLMNOPQRSTUVWXYZ", TITLE_FONT_FAMILY, TITLE_FONT_SIZE).width / 26;
+  const maxChars = Math.floor(maxWidth / avgCharWidth);
+
+  let chunks = [];
+  for (let i = 0; i < text.length; i += maxChars) {
+    chunks.push(text.slice(i, i + maxChars));
+  }
+
+  const lineHeight = 1.1;
+  const initialDy = chunks.length > 1 ? "0.4em" : "1em"; // 👈 ajuste fino según nº de líneas
+
+  chunks.forEach((chunk, index) => {
+    textNode.append("tspan")
+      .text(chunk)
+      .attr("x", x(maxWidth / 2))
+      .attr("dy", index === 0 ? initialDy : `${lineHeight}em`)
+      .attr("text-anchor", "middle");
+  });
+}
+
+// Límite de ancho (ajuste automático)
+const MAX_TITLE_WIDTH = maxWidth * 0.9;
+const textWidth = textSize(titleText, TITLE_FONT_FAMILY, TITLE_FONT_SIZE).width;
+
+if (textWidth > MAX_TITLE_WIDTH) {
+  smartWrapText(titleElement, titleText, MAX_TITLE_WIDTH);
+} else {
+  titleElement.text(titleText)
+    .attr("dy", "0.7em");
+}
+
+var titleSize = title.node().getBBox();
+
+
+
 
    // Description
    var yDescription = yTitle + titleSize.height + 1;
@@ -133,7 +160,8 @@ function drawFMFactLabel(data) {
       //.attr("y", BAR_HEIGHT / 2)
       .attr("font-family", DESCRIPTION_FONT_FAMILY)
       .attr("font-size", DESCRIPTION_FONT_SIZE)
-      .call(wrap, maxWidth - indentationDescription);
+      .call(wrap, maxWidth - indentationDescription)
+      .attr("fill", "currentColor");
    var descriptionSize = description.node().getBBox();
 
    // Keywords
@@ -199,6 +227,7 @@ function drawFMFactLabel(data) {
          .attr("dy", ".35em")
          .attr("y", PROPERTY_HEIGHT / 2)
          .attr('font-family', 'FontAwesome')
+         .attr("fill", "currentColor")
          .attr('font-size', "12pt")
          .text(HREF_ICON)
          .attr("cursor", "pointer");
@@ -243,6 +272,7 @@ function addMetadata(element, key, value) {
       .text(key)
       .attr("x", function (d) { return x(PROPERTY_INDENTATION * 3) })
       .attr("font-family", DESCRIPTION_FONT_FAMILY)
+      .attr("fill", "currentColor")
       .attr("font-size", DESCRIPTION_FONT_SIZE)
       .attr("font-weight", "bold");
    element.append("text")
@@ -250,6 +280,7 @@ function addMetadata(element, key, value) {
       .attr("x", function (d) { return x(6 * PROPERTY_INDENTATION + textSize(key, DESCRIPTION_FONT_FAMILY, DESCRIPTION_FONT_SIZE).width); })
       .attr("font-family", DESCRIPTION_FONT_FAMILY)
       .attr("font-size", DESCRIPTION_FONT_SIZE)
+      .attr("fill", "currentColor")
       .call(wrap, maxWidth - (6 * PROPERTY_INDENTATION + textSize(key, DESCRIPTION_FONT_FAMILY, DESCRIPTION_FONT_SIZE).width));
 }
 
@@ -268,7 +299,7 @@ function updateProperties(data, id) {
                .attr("dy", ".35em")
                .attr("width", function (d) { return get_indentation(d); })
                .attr("height", PROPERTY_HEIGHT)
-               .attr("fill", "white");
+               .attr("fill", "transparent");
 
             var collapseIcon = property.append('text')
                .attr("id", "collapseIcon")
@@ -276,6 +307,7 @@ function updateProperties(data, id) {
                .attr("dy", ".35em")
                .attr("y", PROPERTY_HEIGHT / 2)
                .attr('font-family', 'FontAwesome')
+               .attr("fill", "currentColor")
                .attr('font-size', COLLAPSEICON_FONT_SIZE)
                .text(function (d) { return hasChildrenProperties(d) && getChildrenProperties(data, d, false).length == 0 ? COLLAPSED_ICON : EXPANDED_ICON; })
                .attr("visibility", function (d) { return hasChildrenProperties(d) ? "visible" : "hidden"; })
@@ -298,6 +330,7 @@ function updateProperties(data, id) {
             .attr("dy", ".35em")
             .attr("font-family", PROPERTY_FONT_FAMILY)
             .attr("font-size", PROPERTY_FONT_SIZE)
+            .attr("fill", "currentColor")
             .attr("font-weight", function (d) {
               return parseInt(d.level, 10) == 0 ? "bold" : "normal";
             })
@@ -334,6 +367,7 @@ function updateProperties(data, id) {
                .attr("y", PROPERTY_HEIGHT / 2)
                .attr("dy", ".35em")
                .attr("font-family", PROPERTY_FONT_FAMILY)
+               .attr("fill", "currentColor")
                .attr("font-size", VALUES_FONT_SIZE)
                .attr("font-weight", "bold")
                .text(function (d) { return get_value(d); });
@@ -346,6 +380,7 @@ function updateProperties(data, id) {
                .attr("y", PROPERTY_HEIGHT / 2)
                .attr("dy", ".35em")
                .attr("font-family", PROPERTY_FONT_FAMILY)
+               .attr("fill", "currentColor")
                .attr("font-size", VALUES_FONT_SIZE)
                .attr("font-weight", "bold")
                .text(function (d) { return get_ratio(d); });
@@ -365,23 +400,26 @@ function updateProperties(data, id) {
    drawSecondaryRules(data)
 }
 
-function drawRule(id, yPosition) {
-   d3.select("#" + id)
-      .attr("transform", "translate(0," + yPosition + ")")
-      .append("rect")
-      .attr("height", MAIN_RULE_HEIGHT)
-      .attr("width", maxWidth);
+function drawBorders(width, height) {
+  const strokeColor = "#7a7a7a"; // gris neutro visible en ambos modos
+  d3.select("#border")
+    .attr("x", 0)
+    .attr("y", 0)
+    .attr("width", width)
+    .attr("height", height)
+    .style("stroke", strokeColor)
+    .style("fill", "none")
+    .style("stroke-width", "3pt");
 }
 
-function drawBorders(width, height) {
-   d3.select("#border")
-      .attr("x", 0)
-      .attr("y", 0)
-      .attr("width", width)
-      .attr("height", height)
-      .style("stroke", "black")
-      .style("fill", "none")
-      .style("stroke-width", "3pt");
+function drawRule(id, yPosition) {
+  const strokeColor = "#7a7a7a"; // mismo gris
+  d3.select("#" + id)
+    .attr("transform", "translate(0," + yPosition + ")")
+    .append("rect")
+    .attr("height", MAIN_RULE_HEIGHT)
+    .attr("width", maxWidth)
+    .attr("fill", strokeColor);
 }
 
 /**
@@ -489,7 +527,7 @@ function wrap(text, width) {
  */
 function textSize(text, fontFamily, fontSize, fontWeight = "normal") {
    var container = d3.select('body').append('svg');
-   container.append('text').text(text).attr("font-family", fontFamily).attr("font-size", fontSize).attr("font-weight", fontWeight);
+   container.append('text').text(text).attr("font-family", fontFamily).attr("font-size", fontSize).attr("font-weight", fontWeight).attr("fill", "currentColor");
    var size = container.node().getBBox();
    container.remove();
    return { width: size.width, height: size.height };
