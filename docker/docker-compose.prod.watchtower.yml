@@ -104,6 +104,16 @@ services:
     networks:
       - uvlhub_network
 
+  cleaner:
+    image: docker:cli
+    container_name: docker_cleaner_container
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: ["sh", "-c", "while true; do docker image prune -af --filter 'until=24h'; sleep 86400; done"]
+    restart: always
+    networks:
+      - uvlhub_network
+
 volumes:
   db_data:
   es_data:
