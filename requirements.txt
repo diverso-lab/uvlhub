@@ -106,7 +106,6 @@ pyzmq==27.0.0
 redis==6.2.0
 referencing==0.36.2
 requests==2.32.4
-rosemary==1.0.0
 rpds-py==0.26.0
 rq==2.4.1
 selenium==4.34.2
