@@ -20,9 +20,7 @@ class FactlabelService(BaseService):
         logger.info(f"dataset_metadata: {dataset_metadata}")
 
         # Generate the characterization (factlabel)
-        characterization = FMCharacterization.from_path(
-            hubfile.get_path(), light_fact_label=light_fact_label
-        )
+        characterization = FMCharacterization.from_path(hubfile.get_path(), light_fact_label=light_fact_label)
 
         # === Metadata ===
         characterization.metadata.name = hubfile.name
@@ -47,4 +45,3 @@ class FactlabelService(BaseService):
         characterization.metadata.domains = dataset_metadata.get("domain")
 
         return characterization.to_json()
-

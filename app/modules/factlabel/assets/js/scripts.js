@@ -489,29 +489,39 @@ function get_property_in_data(data, propertyName) {
  * @param {String} width Width used for wrapping.
  */
 function wrap(text, width) {
-   text.each(function () {
-      var text = d3.select(this),
-         words = text.text().split(/\s+/).reverse(),
-         word,
-         line = [],
-         lineNumber = 0, //<-- 0!
-         lineHeight = 1.2, // ems
-         x = text.attr("x"), //<-- include the x!
-         y = text.attr("y"),
-         dy = text.attr("dy") ? text.attr("dy") : 0; //<-- null check
-      tspan = text.text(null).append("tspan").attr("x", x).attr("y", y).attr("dy", dy + "em");
-      while (word = words.pop()) {
-         line.push(word);
-         tspan.text(line.join(" "));
-         if (tspan.node().getComputedTextLength() > width) {
-            line.pop();
-            tspan.text(line.join(" "));
-            line = [word];
-            tspan = text.append("tspan").attr("x", x).attr("y", y).attr("dy", ++lineNumber * lineHeight + dy + "em").text(word);
-         }
+  text.each(function () {
+    const textSel = d3.select(this);
+    const words = (textSel.text() || "").split(/\s+/).filter(Boolean);
+    let line = [];
+    const lineHeight = 1.2; // em
+    const x = +textSel.attr("x") || 0;
+    const y = +textSel.attr("y") || 0;
+
+    // primera línea: fijamos x,y y dy = 0
+    let tspan = textSel.text(null)
+      .append("tspan")
+      .attr("x", x)
+      .attr("y", y)
+      .attr("dy", "0em");
+
+    for (const word of words) {
+      line.push(word);
+      tspan.text(line.join(" "));
+      if (tspan.node().getComputedTextLength() > width) {
+        line.pop();
+        tspan.text(line.join(" "));
+        line = [word];
+
+        // líneas siguientes: NO pongas 'y', solo 'x' y un dy constante
+        tspan = textSel.append("tspan")
+          .attr("x", x)
+          .attr("dy", lineHeight + "em")
+          .text(word);
       }
-   });
+    }
+  });
 }
+
 
 /**
  * Measure text size in pixels with D3.js
