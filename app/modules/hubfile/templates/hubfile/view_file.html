@@ -38,14 +38,22 @@
                         <span class="badge bg-secondary">{{ dataset.get_cleaned_publication_type() }}</span>
                     </div>
 
-                    <!-- Zenodo URL -->
+                    <!-- DOI Buttons -->
                     <div class="row mt-3 mb-2">
-                        <div class="col-12 d-flex align-items-center flex-wrap">
+                        <div class="col-12 d-flex align-items-center flex-wrap gap-2">
                             {% if dataset.ds_meta_data.dataset_doi %}
                             <a href="{{ dataset.get_zenodo_url() }}" target="_blank"
-                            class="btn btn-light-info btn-sm px-2 py-1 d-inline-flex align-items-center">
-                                <i class="bi bi-box-arrow-up-right me-2"></i>
-                                View Zenodo publication
+                            class="btn btn-light btn-sm px-2 py-1 d-inline-flex align-items-center">
+                            <i class="bi bi-box-arrow-up-right me-2"></i>
+                            View Zenodo publication
+                            </a>
+                            {% endif %}
+
+                            {% if dataset.ds_meta_data.publication_doi %}
+                            <a href="{{ dataset.ds_meta_data.publication_doi }}" target="_blank"
+                            class="btn btn-light btn-sm px-2 py-1 d-inline-flex align-items-center">
+                            <i class="bi bi-box-arrow-up-right me-2"></i>
+                            View associated publication
                             </a>
                             {% endif %}
                         </div>
