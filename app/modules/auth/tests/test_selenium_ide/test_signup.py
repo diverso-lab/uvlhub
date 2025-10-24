@@ -15,7 +15,7 @@ class TestSignup:
 
     def test_signup(self):
         self.driver.get(get_host_for_selenium_testing())
-        self.driver.find_element(By.LINK_TEXT, "Sign Up").click()
+        self.driver.find_element(By.LINK_TEXT, "Sign up").click()
         self.driver.find_element(By.ID, "email").send_keys("user1@example.com")
         self.driver.find_element(By.ID, "password").send_keys("1234")
         self.driver.find_element(By.ID, "name").click()
