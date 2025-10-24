@@ -1,6 +1,7 @@
+import importlib
 import inspect
 import os
-import importlib
+
 import click
 from flask.cli import with_appcontext
 
@@ -38,22 +39,21 @@ def get_module_seeders(module_path, specific_module=None):
     return seeders
 
 
-@click.command(
-    "db:seed", help="Populates the database with the seeders defined in each module."
-)
+@click.command("db:seed", help="Populates the database with the seeders defined in each module.")
 @click.option("--reset", is_flag=True, help="Reset the database before seeding.")
-@click.option(
-    "-y", "--yes", is_flag=True, help="Confirm the operation without prompting."
-)
+@click.option("-y", "--yes", is_flag=True, help="Confirm the operation without prompting.")
 @click.argument("module", required=False)
 @with_appcontext
 def db_seed(reset, yes, module):
 
+    # 🚨 Prevent seeding in production
+    if os.getenv("FLASK_ENV") == "production":
+        click.echo(click.style("⚠️ Production environment detected. Skipping database seeding.", fg="red"))
+        return
+
     if reset:
         if yes or click.confirm(
-            click.style(
-                "This will reset the database, do you want " "to continue?", fg="red"
-            ),
+            click.style("This will reset the database, do you want " "to continue?", fg="red"),
             abort=True,
         ):
             click.echo(click.style("Resetting the database...", fg="yellow"))
@@ -68,28 +68,19 @@ def db_seed(reset, yes, module):
     success = True  # Flag to control the successful flow of the operation
 
     if module:
-        click.echo(
-            click.style(f"Seeding data for the '{module}' module...", fg="green")
-        )
+        click.echo(click.style(f"Seeding data for the '{module}' module...", fg="green"))
     else:
         click.echo(click.style("Seeding data for all modules...", fg="green"))
 
     for seeder in seeders:
         try:
             seeder.run()
-            click.echo(
-                click.style(f"{seeder.__class__.__name__} performed.", fg="blue")
-            )
+            click.echo(click.style(f"{seeder.__class__.__name__} performed.", fg="blue"))
         except Exception as e:
+            click.echo(click.style(f"Error running seeder {seeder.__class__.__name__}: {e}", fg="red"))
             click.echo(
                 click.style(
-                    f"Error running seeder {seeder.__class__.__name__}: {e}", fg="red"
-                )
-            )
-            click.echo(
-                click.style(
-                    f"Rolled back the transaction of {seeder.__class__.__name__} to keep the session "
-                    f"clean.",
+                    f"Rolled back the transaction of {seeder.__class__.__name__} to keep the session " f"clean.",
                     fg="yellow",
                 )
             )

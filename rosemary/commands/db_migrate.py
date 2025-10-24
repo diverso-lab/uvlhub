@@ -1,4 +1,5 @@
 import subprocess
+
 import click
 from flask.cli import with_appcontext
 
@@ -14,8 +15,7 @@ def db_migrate():
     else:
         click.echo(
             click.style(
-                "Note: No new migrations needed or an error occurred "
-                "while generating migrations.",
+                "Note: No new migrations needed or an error occurred " "while generating migrations.",
                 fg="yellow",
             )
         )
@@ -28,8 +28,7 @@ def db_migrate():
     else:
         click.echo(
             click.style(
-                "Error applying migrations. This may be due to the database "
-                "being already up-to-date.",
+                "Error applying migrations. This may be due to the database " "being already up-to-date.",
                 fg="yellow",
             )
         )

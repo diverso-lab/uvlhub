@@ -1,9 +1,8 @@
 FROM locustio/locust
 
 WORKDIR /app
+ENV PYTHONPATH=/app
 
 RUN pip install python-dotenv faker bs4
-
-ENV PYTHONPATH=/app
 
 CMD ["-f", "/app/core/bootstraps/locustfile_bootstrap.py"]

@@ -1,0 +1,36 @@
+{% extends "base_template.html" %}
+
+{% set title = "Your API Key" %}
+
+{% block breadcrumb %}
+
+<ol class="breadcrumb text-muted fs-6 fw-semibold">
+    <li class="breadcrumb-item"><a href="/" class="">Home</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('apikeys.list_api_keys') }}" class="">API keys</a></li>
+    <li class="breadcrumb-item text-muted">Your API Key</li>
+</ol>
+
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        <p class="text-danger">⚠️ This key will be shown only once. Copy and store it securely.</p>
+
+        <div class="alert bg-dark text-white fw-bold fs-5 text-monospace py-4 px-5 rounded">
+            {{ token }}
+        </div>
+
+        {% set scope_list = scopes if scopes is defined else api_key.scopes.split(",") %}
+
+        <h5 class="mt-4">Scopes:</h5>
+        <ul>
+            {% for scope in scope_list %}
+                <li>{{ scope }}</li>
+            {% endfor %}
+        </ul>
+
+        <a href="{{ url_for('apikeys.list_api_keys') }}" class="btn btn-secondary mt-3">Back to list</a>
+    </div>
+</div>
+{% endblock %}

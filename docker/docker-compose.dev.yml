@@ -2,20 +2,16 @@ services:
 
   web:
     container_name: web_app_container
-    image: drorganvidez/uvlhub:dev
-    env_file:
-      - ../.env
-    expose:
-      - "5000"
-    ports:
-      - "5000:5000"
-    depends_on:
-      - db
-      - redis
-      - selenium-hub
     build:
       context: ../
       dockerfile: docker/images/Dockerfile.dev
+    depends_on:
+      - db
+      - redis
+      - elasticsearch
+      - selenium-hub
+    env_file:
+      - ../.env
     volumes:
       - ../:/app
       - /var/run/docker.sock:/var/run/docker.sock
@@ -23,13 +19,44 @@ services:
     networks:
       - uvlhub_network
 
-  db:
-    container_name: mariadb_container
+  worker:
+    container_name: rq_worker_container
+    build:
+      context: ../
+      dockerfile: docker/images/Dockerfile.dev
+    depends_on:
+      - db
+      - redis
     env_file:
       - ../.env
+    volumes:
+      - ../:/app
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: [ "bash", "-c", "bash /app/docker/entrypoints/worker_entrypoint.sh" ]
+    networks:
+      - uvlhub_network
+      
+  nginx:
+    container_name: nginx_web_server_container
+    image: nginx:1.29.1
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.dev.conf:/etc/nginx/nginx.conf
+      - ./nginx/html:/usr/share/nginx/html 
+    depends_on:
+      - web
+    networks:
+      - uvlhub_network
+
+  db:
+    container_name: mariadb_container
     build:
       context: ../
       dockerfile: docker/images/Dockerfile.mariadb
+    env_file:
+      - ../.env
+    command: --default-authentication-plugin=mysql_native_password
     ports:
       - "3306:3306"
     volumes:
@@ -37,38 +64,32 @@ services:
     networks:
       - uvlhub_network
 
-  nginx:
-    container_name: nginx_web_server_container
-    image: nginx:latest
-    volumes:
-      - ./nginx/nginx.dev.conf:/etc/nginx/nginx.conf
-      - ./nginx/html:/usr/share/nginx/html
-    ports:
-      - "80:80"
-    depends_on:
-      - web
-    networks:
-      - uvlhub_network
-
   redis:
-    image: "redis:latest"
     container_name: redis_container
+    image: "redis:8.2.1"
     networks:
       - uvlhub_network
 
-  worker:
-    container_name: rq_worker_container
-    env_file:
-      - ../.env
-    depends_on:
-      - redis
-    build:
-      context: ../
-      dockerfile: docker/images/Dockerfile.worker
+  elasticsearch:
+    container_name: elasticsearch_container
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.18.4
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - xpack.security.transport.ssl.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
     volumes:
-      - ../app/:/app/app
-      - ../core/:/app/core
-      - ../uploads/:/app/uploads
+      - es_data:/usr/share/elasticsearch/data
+    networks:
+      - uvlhub_network
+
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - "8025:8025"
+      - "1025:1025"
     networks:
       - uvlhub_network
 
@@ -114,6 +135,7 @@ services:
 
 volumes:
   db_data:
+  es_data:
 
 networks:
   uvlhub_network:

@@ -1,5 +1,6 @@
 import os
 import subprocess
+
 import click
 import core.selenium.common as driver_selector
 import docker
@@ -17,78 +18,46 @@ def selenium(module, driver, video):
         modules_dir = os.path.join(working_dir, "app/modules")
         driver_selector.set_service_driver(driver)
 
-        def validate_module(module):
-            """Check if the module exists and if the selenium test file exists."""
-            if module:
-                module_path = os.path.join(modules_dir, module)
-                if not os.path.exists(module_path):
-                    raise click.UsageError(f"Module '{module}' does not exist.")
-                selenium_test_path = os.path.join(module_path, "tests", "test_selenium.py")
-                if not os.path.exists(selenium_test_path):
-                    raise click.UsageError(
-                        f"Selenium test for module '{module}' does not exist at path "
-                        f"'{selenium_test_path}'."
-                    )
+    def validate_module(module):
+        """Check if the module exists."""
+        if module:
+            module_path = os.path.join(modules_dir, module)
+            if not os.path.exists(module_path):
+                raise click.UsageError(f"Module '{module}' does not exist.")
+            selenium_test_path = os.path.join(module_path, "tests", "test_selenium.py")
+            if not os.path.exists(selenium_test_path):
+                raise click.UsageError(
+                    f"Selenium test for module '{module}' does not exist at path " f"'{selenium_test_path}'."
+                )
 
-        def run_selenium_tests_in_local(module):
-            """Run the Selenium tests in the local environment."""
-            if module:
-                selenium_test_path = os.path.join(modules_dir, module, "tests", "test_selenium.py")
-                test_command = ["python", selenium_test_path]
-            else:
-                selenium_test_paths = []
-                for module in os.listdir(modules_dir):
-                    tests_dir = os.path.join(modules_dir, module, "tests")
-                    selenium_test_path = os.path.join(tests_dir, "test_selenium.py")
-                    if os.path.exists(selenium_test_path):
-                        selenium_test_paths.append(selenium_test_path)
-                test_command = ["python"] + selenium_test_paths
+    def run_selenium_tests_in_local(module):
+        """Run the Selenium tests."""
+        if module:
+            selenium_test_path = os.path.join(modules_dir, module, "tests", "test_selenium.py")
+            test_command = ["python", selenium_test_path]
+        else:
+            selenium_test_paths = []
+            for module in os.listdir(modules_dir):
+                tests_dir = os.path.join(modules_dir, module, "tests")
+                selenium_test_path = os.path.join(tests_dir, "test_selenium.py")
+                if os.path.exists(selenium_test_path):
+                    selenium_test_paths.append(selenium_test_path)
+            test_command = ["python"] + selenium_test_paths
 
-            click.echo(f"Running Selenium tests with command: {' '.join(test_command)}")
-            subprocess.run(test_command, check=True)
+        click.echo(f"Running Selenium tests with command: {' '.join(test_command)}")
+        subprocess.run(test_command, check=True)
 
-        def run_docker_selenium_tests(module):
-            client = docker.from_env()
-            """Run the Selenium tests in a Docker container."""
-            if module:
-                selenium_test_path = os.path.join(modules_dir, module, "tests", "test_selenium.py")
-                test_command = ["pytest", selenium_test_path]
-            else:
-                selenium_test_paths = []
-                for module in os.listdir(modules_dir):
-                    tests_dir = os.path.join(modules_dir, module, "tests")
-                    selenium_test_path = os.path.join(tests_dir, "test_selenium.py")
-                    if os.path.exists(selenium_test_path):
-                        selenium_test_paths.append(selenium_test_path)
-                test_command = ["pytest"] + selenium_test_paths
-            docker_dir = os.path.join(working_dir, "docker/")
-            docker_compose_file = os.path.join(docker_dir, "docker-compose-video.yml")
-            service_name = "firefox_video"
-            try:
-                # Check if the container already exists
-                if os.environ.get("SERVICE_DRIVER", "firefox") == 'firefox':
-                    client.containers.get("firefox-video")
-                    click.echo("firefox-video container is already running.")
-                elif os.environ.get("SERVICE_DRIVER", "firefox") == 'chrome':
-                    client.containers.get("chrome-video")
-                    click.echo("chrome-video container is already running.")
-                else:
-                    click.echo(click.style("Driver not supported, choosing firefox.", fg='red'))
-            except docker.errors.NotFound:
-                # Container does not exist, proceed to create it (happy path)
-                if os.environ.get("SERVICE_DRIVER", "firefox") == 'chrome':
-                    service_name = "chrome_video"
-                click.echo("Creating firefox-video container. Please be patient this make take a bit")
-                subprocess.run(f"docker compose -f {docker_compose_file} up -d {service_name}", check=True, shell=True)
-                pass
+    # Validate module if provided
+    if module:
+        validate_module(module)
 
-            click.echo("Selenium-grid is running at http://localhost:4444")
-            click.echo(
-                click.style("Remember test are collected first, and then runned, please be patient",
-                            fg="yellow")
-            )
-            click.echo(
-                click.style("Please check your sessions in http://localhost:4444/ui/#/sessions after test collection is finished", fg="green")
+    if working_dir == "/app/":
+
+        click.echo(
+            click.style(
+                "Currently it is not possible to run this "
+                "command from a Docker environment, do you want to implement it yourself? ^^",
+                fg="red",
             )
             click.echo(f"Running Selenium tests with command: {' '.join(test_command)}")
             subprocess.run(test_command, check=True)

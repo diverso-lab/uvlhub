@@ -1,0 +1,24 @@
+# ----------------------------------------------------------------------------
+# Commits Syntax Checker Workflow
+# This workflow validates commit messages against the Conventional Commits specification.
+# It runs on every push and pull request to ensure consistent commit history.
+# ----------------------------------------------------------------------------
+
+name: Commits Syntax Checker
+
+on:
+  # Trigger the workflow on every push to any branch
+  push:
+  # Trigger the workflow on every pull request (opened, synchronized, or updated)
+  pull_request:
+
+jobs:
+  check:
+    name: Conventional Commits
+    runs-on: ubuntu-24.04
+
+    steps:
+      
+      # Step to validate commit messages following the Conventional Commits standard
+      - name: Validate commit messages
+        uses: webiny/action-conventional-commits@v1.3.0

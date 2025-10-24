@@ -1,68 +1,85 @@
-# Use an official Python runtime as a parent image, Alpine version for a lighter footprint
-FROM python:3.12-slim
+FROM python:3.13
 
-# Install necessary packages
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends mariadb-client \
-    && apt-get install -y --no-install-recommends gcc libc-dev python3-dev libffi-dev \
-    && apt-get install -y --no-install-recommends curl \
-    && apt-get install -y --no-install-recommends bash \
-    && apt-get install -y --no-install-recommends openrc \
-    && apt-get install -y --no-install-recommends build-essential 
+# Environment variables
+ENV PIP_ROOT_USER_ACTION=ignore
 
-# Install Node.js and NPM
-RUN curl -fsSL https://deb.nodesource.com/setup_23.x | bash - \
+# Install system dependencies, Node.js, npm, and Docker CLI
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    # Base system utilities
+    bash \
+    openrc \
+    ca-certificates \
+    gnupg \
+    lsb-release \
+    curl \
+    git \
+    # Build tools
+    gcc \
+    libc-dev \
+    python3-dev \
+    libffi-dev \
+    build-essential \
+    mariadb-client \
+    # Node.js setup
+    && curl -fsSL https://deb.nodesource.com/setup_23.x | bash - \
     && apt-get install -y --no-install-recommends nodejs \
-    && npm install -g npm@11
-
-# Clean up
-RUN apt-get clean \
+    && npm install -g npm@11 npx \
+    # Docker CLI setup
+    && curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" > /etc/apt/sources.list.d/docker.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends docker-ce-cli \
+    # Cleanup
+    && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Set the working directory in the container to /app
-WORKDIR /app
 
-# Copy files
+# Create working directory
+WORKDIR /app
+ENV PYTHONPATH=/app
+
+# Copy dependencies first (better caching)
+COPY requirements.txt .
+COPY package.json .
+COPY pyproject.toml ./
+
+# Install Python dependencies
+RUN pip install --no-cache-dir --upgrade pip
+RUN pip install --pre -r requirements.txt
+
+# Install Node.js dependencies
+RUN npm install
+
+# Copy project files
 COPY app/ ./app
 COPY core/ ./core
 COPY rosemary/ ./rosemary
 COPY migrations/ ./migrations
+COPY docker/ ./docker
+COPY --chmod=0755 scripts/ ./scripts/
 
-# Copy requirements.txt into the working directory /app
-COPY requirements.txt .
-
-# Removes cache at the build stage
-RUN find . -type d -name "__pycache__" -exec rm -r {} + && \
-    find . -type f -name "*.pyc" -exec rm -f {} +
-
-# Copy the wait-for-db.sh script and set execution permissions
-COPY --chmod=0755 scripts/wait-for-db.sh ./scripts/
+# Install Rosemary as an 'editable' package
+RUN pip install -e ./
 
 # Create the .moduleignore file with the module 'webhook' inside
 RUN echo "webhook" > /app/.moduleignore
 
-# Update pip
-RUN pip install --no-cache-dir --upgrade pip
+# Remove Python cache
+RUN find . -type d -name "__pycache__" -exec rm -r {} + \
+    && find . -type f -name "*.pyc" -exec rm -f {} +
 
-# Install any needed packages specified in requirements.txt
-RUN pip install -r requirements.txt
+##############
+# PRODUCTION #
+##############
 
-# Install Rosemary
-COPY setup.py .
-RUN pip install -e ./
+ENV NODE_ENV=production
 
-# Install npm dependencies
-COPY package.json .
-RUN npm install
-
-# Compile webpack files
+# Webpack compilation
 RUN rosemary webpack:compile
 
-# Add an argument for version tag
+# Add version argument
 ARG VERSION_TAG
-
-# Create the .version file with the content of VERSION_TAG
 RUN echo $VERSION_TAG > /app/.version
 
-# Expose port 5000
+# Expose application port
 EXPOSE 5000

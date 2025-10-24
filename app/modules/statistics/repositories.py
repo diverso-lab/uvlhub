@@ -10,24 +10,28 @@ class StatisticsRepository(BaseRepository):
         statistics = self.model.query.first()
         if statistics is None:
             # If no registry exists, create a new registry with default values
-            statistics = Statistics(datasets_viewed=0, feature_models_viewed=0,
-                                    datasets_downloaded=0, feature_models_downloaded=0)
+            statistics = Statistics(
+                datasets_viewed=0,
+                feature_models_viewed=0,
+                datasets_downloaded=0,
+                feature_models_downloaded=0,
+            )
             self.session.add(statistics)
             self.session.commit()
         return statistics
 
     # Incremental methods
     def increment_datasets_viewed(self) -> int:
-        return self._increment_field('datasets_viewed')
+        return self._increment_field("datasets_viewed")
 
     def increment_feature_models_viewed(self) -> int:
-        return self._increment_field('feature_models_viewed')
+        return self._increment_field("feature_models_viewed")
 
     def increment_datasets_downloaded(self) -> int:
-        return self._increment_field('datasets_downloaded')
+        return self._increment_field("datasets_downloaded")
 
     def increment_feature_models_downloaded(self) -> int:
-        return self._increment_field('feature_models_downloaded')
+        return self._increment_field("feature_models_downloaded")
 
     def _increment_field(self, field_name: str) -> int:
         statistics = self.get_statistics()

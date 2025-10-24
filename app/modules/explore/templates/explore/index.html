@@ -1,155 +1,315 @@
 {% extends "base_template.html" %}
+{% set title = "Explore" %}
 
-{% block title %}Explore{% endblock %}
+{% block breadcrumb %}
+
+<ol class="breadcrumb text-muted fs-6 fw-semibold">
+    <li class="breadcrumb-item"><a href="/" class="">Home</a></li>
+    <li class="breadcrumb-item text-muted">Explore</li>
+</ol>
+
+{% endblock %}
 
 {% block content %}
+<div class="row g-4">
 
-    <h1 class="h2 mb-3"><b>Explore</b></h1>
+    <!-- Results -->
+  <div class="col-lg-6">
+      <div id="results-container"></div>
 
-    <div class="row">
+      <!--begin::Empty State-->
+      <div id="no-results" class="text-center d-none mt-5" data-kt-search-element="empty">
+          <div class="pt-10 pb-10">
+              <i class="ki-duotone ki-search-list fs-4x opacity-50">
+                  <span class="path1"></span>
+                  <span class="path2"></span>
+                  <span class="path3"></span>
+              </i>
+          </div>
+          <div class="pb-15 fw-semibold">
+              <h3 class="text-gray-600 fs-5 mb-2">No results found</h3>
+              <div class="text-muted fs-7">Please try again with a different query</div>
+          </div>
+      </div>
+      <!--end::Empty State-->
+  </div>
 
-        <h3 class="h3 mb-3">
-                <span id="results_number"></span>
-            </h3>
+  <!-- Filters -->
+  <div class="col-md-6 col-lg-6 col-sm-12" id="filters-panel">
+      <div class="card position-sticky" style="top: 85px; z-index: 1;">
+          <div class="card-body">
+              <!-- Filtro: búsqueda -->
+              <input id="search-query" type="text" class="form-control mb-3" placeholder="Search datasets..." autofocus>
 
-        <div class="col-lg-7 scrollable-column">
+              <!-- Filtro: tipo de publicación -->
+              <div class="mb-3">
+                  <label class="form-label">Publication type</label>
+                  <select class="form-select" id="filter-publication-type">
+                    <option value="">Any</option>
+                    <option value="annotationcollection">Annotation Collection</option>
+                    <option value="book">Book</option>
+                    <option value="section">Book Section</option>
+                    <option value="conferencepaper">Conference Paper</option>
+                    <option value="datamanagementplan">Data Management Plan</option>
+                    <option value="article">Journal Article</option>
+                    <option value="patent">Patent</option>
+                    <option value="preprint">Preprint</option>
+                    <option value="deliverable">Project Deliverable</option>
+                    <option value="milestone">Project Milestone</option>
+                    <option value="proposal">Proposal</option>
+                    <option value="report">Report</option>
+                    <option value="softwaredocumentation">Software Documentation</option>
+                    <option value="taxonomictreatment">Taxonomic Treatment</option>
+                    <option value="technicalnote">Technical Note</option>
+                    <option value="thesis">Thesis</option>
+                    <option value="workingpaper">Working Paper</option>
+                    <option value="other">Other</option>
+                </select>
+              </div>
 
+              <!-- Filtro: tags -->
+              <div class="mb-3">
+                <label class="form-label">Tags</label>
+                <input id="filter-tags" 
+                      type="text" 
+                      class="form-control" 
+                      placeholder="Enter tags separated by commas">
+              </div>
 
-            <div class="row">
-
-                <div id="results"></div>
-
-                <div class="col text-center" id="results_not_found">
-                    <img src="{{ url_for('static', filename='img/items/not_found.svg') }}"
-                         style="width: 50%; max-width: 100px; height: auto; margin-top: 30px"/>
-                    <p style="margin-top: 20px">
-                        We have not found any datasets that meet your search criteria. <br>How about trying some others?
-                    </p>
+              <!-- Filtro: fecha -->
+              <div class="mb-3">
+                <label class="form-label mb-0">Creation date</label>
+                <div class="d-flex">
+                  <div class="flex-fill">
+                    <label class="form-text d-block">From</label>
+                    <input id="filter-date-from" type="date" class="form-control" />
+                  </div>
+                  <div class="flex-fill">
+                    <label class="form-text d-block">To</label>
+                    <input id="filter-date-to" type="date" class="form-control" />
+                  </div>
                 </div>
+                <div id="date-error" class="text-danger small mt-1 d-none">⚠️ End date must be after start date</div>
+              </div>
 
-                <div id="results_not_found" style="text-align: center;">
+              <div id="date-error" class="text-danger small mt-1 d-none">
+                ⚠️ End date must be after start date
+              </div>
 
-                </div>
+              <!-- Filtro: orden -->
+              <div class="mb-3">
+                  <label class="form-label">Sort by</label>
+                  <select class="form-select" id="filter-sorting">
+                      <option value="newest">Newest first</option>
+                      <option value="oldest">Oldest first</option>
+                  </select>
+              </div>
+
+              <!-- Botón de limpiar -->
+              <button class="btn btn-outline-primary w-100" id="clear-filters">Clear filters</button>
+          </div>
+      </div>
+  </div>
 
 
-            </div>
+</div>
+
+<!-- Mustache template -->
+<script id="result-template" type="x-tmpl-mustache">
+<div class="row">
+  <div class="col-12 mb-5">
+    <div class="card">
+      <div class="card-body">
+
+        <!-- Título + badge -->
+        <div class="d-flex align-items-center justify-content-between">
+          <h2 class="mb-0">
+            <a href="[[url]]">
+              [[title]]
+            </a>
+          </h2>
+          <span class="badge bg-secondary">[[publication_type_label]]</span>
         </div>
 
-        <div class="col-lg-5 fixed-column" id="filters">
+        <!-- Fecha -->
+        <p class="text-muted mt-2 mb-1">
+          [[created_at]]
+        </p>
 
-            {{ form.hidden_tag() }}
+        <!-- Autores -->
+        <div class="row mb-3">
+          <div class="col-12">
+            <ul class="list-unstyled mb-0" style="font-size: 0.85rem;">
+              [[#authors]]
+              <li class="d-flex align-items-center mb-1" style="line-height: 1.2;">
+                
+                <i class="ki-duotone ki-user">
+                <span class="path1"></span>
+                <span class="path2"></span>
+                </i> &nbsp;
 
-            <div class="row">
-
-                <div class="col-12">
-
-                    <div class="row">
-
-                        <div class="col-12">
-                            <div class="mb-3">
-                                <label class="form-label" for="query">
-                                    Search for datasets by title, description, authors, tags, UVL files...
-                                </label>
-                                <input class="form-control" id="query" name="query" required="" type="text"
-                                       value="" autofocus>
-                            </div>
-                        </div>
-
-                        <div class="col-lg-6">
-                            <div class="mb-3">
-                                <label class="form-label" for="publication_type">Filter by publication
-                                    type</label>
-                                <select class="form-control" id="publication_type" name="publication_type"
-                                        required="">
-                                    <option value="any">Any</option>
-                                    <option value="none">None</option>
-                                    <option value="annotationcollection">Annotation Collection</option>
-                                    <option value="book">Book</option>
-                                    <option value="section">Book Section</option>
-                                    <option value="conferencepaper">Conference Paper</option>
-                                    <option value="datamanagementplan">Data Management Plan</option>
-                                    <option value="article">Journal Article</option>
-                                    <option value="patent">Patent</option>
-                                    <option value="preprint">Preprint</option>
-                                    <option value="deliverable">Project Deliverable</option>
-                                    <option value="milestone">Project Milestone</option>
-                                    <option value="proposal">Proposal</option>
-                                    <option value="report">Report</option>
-                                    <option value="softwaredocumentation">Software Documentation</option>
-                                    <option value="taxonomictreatment">Taxonomic Treatment</option>
-                                    <option value="technicalnote">Technical Note</option>
-                                    <option value="thesis">Thesis</option>
-                                    <option value="workingpaper">Working Paper</option>
-                                    <option value="other">Other</option>
-                                </select>
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                    <div class="row">
-
-                        <div class="col-6">
-
-                            <div>
-                                Sort results by creation date
-                                <label class="form-check">
-                                    <input class="form-check-input" type="radio" value="newest" name="sorting"
-                                           checked="">
-                                    <span class="form-check-label">
-                                      Newest first
-                                    </span>
-                                </label>
-                                <label class="form-check">
-                                    <input class="form-check-input" type="radio" value="oldest" name="sorting">
-                                    <span class="form-check-label">
-                                      Oldest first
-                                    </span>
-                                </label>
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                    <div class="row">
-
-                        <div class="col-12">
-
-                            <div class="mt-3">
-
-                                <div id="authors">
-
-                                </div>
-
-                                <button id="clear-filters" class="btn btn-outline-primary">
-                                    <i data-feather="x-circle" style="vertical-align: middle; margin-top: -2px"></i>
-                                    Clear filters
-                                </button>
-
-
-                            </div>
-
-                        </div>
-                    </div>
-
-                </div>
-
-            </div>
-
-            <div class="row">
-
-            </div>
-
+                <span class="me-2">[[name]]</span>
+                [[#affiliation]]
+                <span class="badge bg-light text-muted me-2" style="font-size: 0.75rem;">
+                  [[affiliation]]
+                </span>
+                [[/affiliation]]
+                [[#orcid]]
+                <a href="https://orcid.org/[[orcid]]"
+                   target="_blank"
+                   class="text-success d-flex align-items-center"
+                   data-bs-toggle="tooltip"
+                   data-bs-placement="top"
+                   title="ORCID: [[orcid]]">
+                  <img src="{{ url_for('static', filename='media/logos/orcid.svg') }}"
+                       alt="ORCID" class="me-1" width="14" height="14" />
+                </a>
+                [[/orcid]]
+              </li>
+              [[/authors]]
+            </ul>
+          </div>
         </div>
 
+        <!-- Descripción -->
+        <div class="row mb-2">
+          <div class="col-12">
+            <p class="card-text">[[{description}]]</p>
+          </div>
+        </div>
 
+        <!-- Tags -->
+        <div class="row mb-3">
+          <div class="col-12">
+            [[#tags]]
+            <span class="badge bg-secondary">[[.]]</span>
+            [[/tags]]
+          </div>
+        </div>
+
+        <!-- Botones: View / Download -->
+        <div class="row mt-4">
+          <div class="col-12">
+            <a href="[[url]]"
+               class="btn btn-outline-secondary btn-xs me-2 d-inline-flex align-items-center"
+               style="font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 4px;">
+              <i class="ki-duotone ki-eye">
+                <span class="path1"></span>
+                <span class="path2"></span>
+                <span class="path3"></span>
+              </i>
+              View
+            </a>
+
+            <a href="/datasets/download/[[id]]"
+               class="btn btn-outline-secondary btn-xs d-inline-flex align-items-center"
+               style="font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 4px;">
+               <i class="ki-duotone ki-folder-down">
+                <span class="path1"></span>
+                <span class="path2"></span>
+               </i>
+              Download ([[total_size_in_human_format]])
+            </a>
+          </div>
+        </div>
+
+        <!-- DOI -->
+        <div class="row mt-3">
+          <div class="col-12 d-flex align-items-center flex-wrap">
+            <span class="px-3 py-1 bg-dark text-white fw-bold rounded-start" style="font-family: monospace;">
+              DOI
+            </span>
+
+            <a href="[[url]]"
+               target="_blank"
+               class="px-3 py-1 text-white fw-semibold text-decoration-none rounded-end me-2"
+               style="background: linear-gradient(90deg, #2176bd 0%, #2980b9 100%); font-family: monospace;">
+              [[url]]
+            </a>
+
+            <i data-feather="clipboard"
+               class="center-button-icon"
+               style="cursor: pointer"
+               onclick="copyText('dataset_doi_[[id]]')"
+               data-bs-toggle="tooltip"
+               title="Copy DOI">
+            </i>
+
+            <div id="dataset_doi_[[id]]" style="display: none;">[[url]]</div>
+          </div>
+        </div>
+
+      </div>
     </div>
+  </div>
+</div>
+</script>
+
+<script id="hubfile-template" type="x-tmpl-mustache">
+<div class="row">
+  <div class="col-12 mb-5">
+    <div class="card">
+      <div class="card-body">
+
+        <!-- Nombre del archivo + badge -->
+        <div class="d-flex align-items-center justify-content-between">
+          <h2 class="mb-0" style="word-break: break-all;">
+            <a href="[[url]]">
+              [[filename]]
+            </a>
+          </h2>
+          <span class="badge bg-primary">UVL file</span>
+        </div>
+
+
+        <!-- Dataset relacionado -->
+        <p class="text-muted mt-2 mb-1">
+          Belongs to
+          <a href="[[dataset_doi]]">
+            [[dataset_title]]
+          </a>
+        </p>
+
+        <!-- Tamaño + Checksum -->
+        <div class="d-flex flex-wrap align-items-center mb-3" style="gap: 1rem;">
+          <span class="badge bg-light text-muted">
+            Size: [[size_in_human_format]]
+          </span>
+        </div>
+
+        <!-- Botones: View / Download -->
+        <div class="mt-3">
+          <a href="/hubfiles/[[id]]"
+             class="btn btn-outline-secondary btn-xs me-2 d-inline-flex align-items-center"
+             style="font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 4px;">
+            <i class="ki-duotone ki-eye">
+              <span class="path1"></span>
+              <span class="path2"></span>
+              <span class="path3"></span>
+            </i>
+            View
+          </a>
+
+          <a href="/hubfiles/download/[[id]]"
+             class="btn btn-outline-secondary btn-xs d-inline-flex align-items-center"
+             style="font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 4px;">
+            <i class="ki-duotone ki-folder-down">
+              <span class="path1"></span>
+              <span class="path2"></span>
+            </i>
+            Download ([[size_in_human_format]])
+          </a>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+</script>
 
 
 {% endblock %}
 
 {% block scripts %}
-    <script src="{{ url_for('explore.assets', subfolder='js', filename='scripts.js') }}"></script>
+<script src="{{ url_for('explore.assets', subfolder='dist', filename='explore.bundle.js') }}"></script>
 {% endblock %}

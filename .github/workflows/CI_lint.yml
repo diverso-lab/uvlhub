@@ -1,0 +1,47 @@
+# ----------------------------------------------------------------------------
+# Python Lint Workflow
+# This workflow runs linting and code style checks on every push and pull request.
+# It ensures the codebase follows PEP8, Black formatting, and import ordering standards.
+# ----------------------------------------------------------------------------
+
+name: Python Lint
+
+on:
+  # Trigger on every push to any branch
+  push:
+  # Trigger on every pull request (opened, updated, or synchronized)
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-24.04
+
+    steps:
+      
+      # Step 1: Checkout the repository code
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      # Step 2: Set up Python environment (3.12)
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      # Step 3: Install linting and formatting tools
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8 flake8-pyproject black isort
+
+      # Step 4: Run flake8 for PEP8 linting
+      - name: Lint with flake8
+        run: flake8 app rosemary core
+
+      # Step 5: Verify code formatting with Black
+      - name: Check formatting with black
+        run: black --check app rosemary core
+
+      # Step 6: Verify import ordering with isort
+      - name: Check import order with isort
+        run: isort --check-only app rosemary core

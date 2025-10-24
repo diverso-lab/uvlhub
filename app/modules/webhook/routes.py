@@ -1,6 +1,8 @@
-from flask import request, abort
 import os
+
 from dotenv import load_dotenv
+from flask import abort, request
+
 from app.modules.webhook import webhook_bp
 from app.modules.webhook.services import WebhookService
 
@@ -18,21 +20,25 @@ def deploy():
 
     service = WebhookService()
 
-    web_container = service.get_web_container()
+    containers = [
+        service.get_worker_container(),
+        service.get_web_container(),
+    ]
 
-    # Pull the latest code in the container
-    service.execute_container_command(web_container, "/app/scripts/git_update.sh")
+    for container in containers:
+        # Pull the latest code
+        service.execute_container_command(container, "/app/scripts/git_update.sh")
 
-    # Update dependencies in the container
-    service.execute_container_command(web_container, "pip install -r requirements.txt")
+        # Update dependencies
+        service.execute_container_command(container, "pip install --pre -r requirements.txt")
 
-    # Run migrations in the container
-    service.execute_container_command(web_container, "flask db upgrade")
+        # Update Rosemary CLI
+        service.execute_container_command(container, "pip install -e ./")
 
-    # Log the deployment
-    service.log_deployment(web_container)
+        # Deployment log
+        service.log_deployment(container)
 
-    # Ejecutar el script de reinicio en segundo plano
-    service.restart_container(web_container)
+        # Container restart
+        service.restart_container(container)
 
     return "Deployment successful", 200

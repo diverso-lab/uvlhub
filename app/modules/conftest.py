@@ -2,6 +2,7 @@ import pytest
 
 from app import create_app, db
 from app.modules.auth.models import User
+from app.modules.profile.models import UserProfile
 
 
 @pytest.fixture(scope="session")
@@ -10,8 +11,6 @@ def test_app():
     test_app = create_app("testing")
 
     with test_app.app_context():
-        # Imprimir los blueprints registrados
-        print("TESTING SUITE (1): Blueprints registrados:", test_app.blueprints)
         yield test_app
 
 
@@ -20,7 +19,6 @@ def test_client(test_app):
 
     with test_app.test_client() as testing_client:
         with test_app.app_context():
-            print("TESTING SUITE (2): Blueprints registrados:", test_app.blueprints)
 
             db.drop_all()
             db.create_all()
@@ -32,9 +30,10 @@ def test_client(test_app):
             db.session.add(user_test)
             db.session.commit()
 
-            print("Rutas registradas:")
-            for rule in test_app.url_map.iter_rules():
-                print(rule)
+            profile = UserProfile(user_id=user_test.id, name="Test", surname="User")
+            db.session.add(profile)
+            db.session.commit()
+
             yield testing_client
 
             db.session.remove()
@@ -64,9 +63,7 @@ def login(test_client, email, password):
     Returns:
         response: POST login request response.
     """
-    response = test_client.post(
-        "/login", data=dict(email=email, password=password), follow_redirects=True
-    )
+    response = test_client.post("/login", data=dict(email=email, password=password), follow_redirects=True)
     return response
 
 

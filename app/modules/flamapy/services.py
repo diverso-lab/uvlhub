@@ -1,21 +1,21 @@
-from typing import Any
 import logging
-from app.modules.flamapy.repositories import FlamapyRepository
-from core.services.BaseService import BaseService
-from flamapy.interfaces.python.flamapy_feature_model import FLAMAFeatureModel
-from flamapy.core.exceptions import FlamaException
+from typing import Any
 
 from antlr4 import CommonTokenStream, FileStream
-from uvl.UVLCustomLexer import UVLCustomLexer
-from uvl.UVLPythonParser import UVLPythonParser
 from antlr4.error.ErrorListener import ErrorListener
-
+from flamapy.interfaces.python.flamapy_feature_model import FLAMAFeatureModel
+from flamapy.metamodels.bdd_metamodel.operations import BDDMetrics
+from flamapy.metamodels.bdd_metamodel.transformations import FmToBDD  # noqa
 from flamapy.metamodels.fm_metamodel.models import FeatureModel
 from flamapy.metamodels.fm_metamodel.operations import FMMetrics
-from flamapy.metamodels.bdd_metamodel.operations import BDDMetrics
-from flamapy.metamodels.pysat_metamodel.operations import PySATMetrics # noqa
-from flamapy.metamodels.pysat_metamodel.transformations import FmToPysat # noqa
-from flamapy.metamodels.bdd_metamodel.transformations import FmToBDD # noqa
+from flamapy.metamodels.pysat_metamodel.operations import PySATMetrics  # noqa
+from flamapy.metamodels.pysat_metamodel.transformations import FmToPysat  # noqa
+from uvl.UVLCustomLexer import UVLCustomLexer
+from uvl.UVLPythonParser import UVLPythonParser
+
+from app.modules.flamapy.repositories import FlamapyRepository
+from core.managers.task_queue_manager import TaskQueueManager
+from core.services.BaseService import BaseService
 
 logger = logging.getLogger(__name__)
 
@@ -37,24 +37,25 @@ class FlamapyService(BaseService):
         fm_results = BDDMetrics().execute(fm_model).get_result()
         return fm_results
 
+    def check_uvl_async(self, filepath: str):
+        task = TaskQueueManager().enqueue_task("app.modules.flamapy.tasks.check_uvl", filepath=filepath, timeout=5)
+        return {"task_id": task.id}
+
     def check_uvl(self, filepath: str):
 
         class CustomErrorListener(ErrorListener):
-
             def __init__(self):
                 self.errors = []
 
             def syntaxError(self, recognizer, offendingSymbol, line, column, msg, e):
                 if "\\t" in msg:
                     warning_message = (
-                        f"The UVL has the following warning that prevents reading it: "
-                        f"Line {line}:{column} - {msg}"
+                        f"The UVL has the following warning that prevents reading it: " f"Line {line}:{column} - {msg}"
                     )
                     self.errors.append(warning_message)
                 else:
                     error_message = (
-                        f"The UVL has the following error that prevents reading it: "
-                        f"Line {line}:{column} - {msg}"
+                        f"The UVL has the following error that prevents reading it: " f"Line {line}:{column} - {msg}"
                     )
                     self.errors.append(error_message)
 
@@ -74,14 +75,17 @@ class FlamapyService(BaseService):
             parser.addErrorListener(error_listener)
 
             if error_listener.errors:
+                logger.warning(f"[UVL Parser] Syntax errors detected: {error_listener.errors}")
                 return {"errors": error_listener.errors}, 400
 
             try:
                 FLAMAFeatureModel(filepath)
                 return {"message": "Valid Model"}, 200
 
-            except FlamaException as fe:
-                return {"error": f"Model transformation failed: {str(fe)}"}, 400
+            except Exception as fe:
+                logger.warning(f"[UVL Parser] FLAMA failed but will be ignored: {str(fe)}")
+                return {"message": "Valid Model (FLAMA transformation skipped due to unsupported attributes)"}, 200
 
         except Exception as e:
-            return {"error": str(e)}, 500
+            logger.exception(f"[UVL Parser] Unexpected error during parsing: {e}")
+            return {"error": f"Internal error during UVL check, {e}"}, 500

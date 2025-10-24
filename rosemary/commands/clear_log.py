@@ -1,22 +1,26 @@
-import click
+import glob
 import os
 
+import click
 
-@click.command("clear:log", help="Clears the 'app.log' file.")
+
+@click.command("clear:log", help="Clears all 'app.log' files (including rotated ones).")
 def clear_log():
-    log_file_path = os.path.join(os.getenv("WORKING_DIR", ""), "app.log")
+    workdir = os.getenv("WORKING_DIR", "")
+    log_pattern = os.path.join(workdir, "app.log*")
+    log_files = glob.glob(log_pattern)
 
-    # Check if the log file exists
-    if os.path.exists(log_file_path):
+    if not log_files:
+        click.echo(click.style("No 'app.log' files found.", fg="yellow"))
+        return
+
+    deleted = 0
+    for log_file in log_files:
         try:
-            # Deletes the log file
-            os.remove(log_file_path)
-            click.echo(
-                click.style(
-                    "The 'app.log' file has been successfully cleared.", fg="green"
-                )
-            )
+            os.remove(log_file)
+            deleted += 1
         except Exception as e:
-            click.echo(click.style(f"Error clearing the 'app.log' file: {e}", fg="red"))
-    else:
-        click.echo(click.style("The 'app.log' file does not exist.", fg="yellow"))
+            click.echo(click.style(f"Error deleting '{log_file}': {e}", fg="red"))
+
+    if deleted > 0:
+        click.echo(click.style(f"✅ Deleted {deleted} log file(s).", fg="green"))

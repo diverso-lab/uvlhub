@@ -10,7 +10,7 @@ class Statistics(db.Model):
 
     def __repr__(self):
         return (
-            f'Statistics<id={self.id}, datasets_viewed={self.datasets_viewed}, '
-            f'feature_models_viewed={self.feature_models_viewed}, datasets_downloaded={self.datasets_downloaded}, '
-            f'feature_models_downloaded={self.feature_models_downloaded}>'
+            f"Statistics<id={self.id}, datasets_viewed={self.datasets_viewed}, "
+            f"feature_models_viewed={self.feature_models_viewed}, datasets_downloaded={self.datasets_downloaded}, "
+            f"feature_models_downloaded={self.feature_models_downloaded}>"
         )

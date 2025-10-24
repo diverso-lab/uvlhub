@@ -1,0 +1,40 @@
+# ----------------------------------------------------------------------------
+# Publish image in Docker Hub Workflow
+# This workflow builds and pushes a Docker image to Docker Hub whenever
+# a new release is published on GitHub.
+# ----------------------------------------------------------------------------
+
+name: Publish image in Docker Hub
+
+on:
+  release:
+    # Trigger only when a release is published
+    types: [published]
+
+jobs:
+  push_to_registry:
+    runs-on: ubuntu-24.04
+
+    steps:
+      
+      # Step 1: Check out the repository code
+      - uses: actions/checkout@v5
+
+      # Step 2: Log in to Docker Hub using secrets
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3.6.0
+        with:
+          username: ${{ secrets.DOCKER_USER }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # Step 3: Build and push the Docker image
+      - name: Build and push Docker image
+        run: |
+          TAG=${{ github.event.release.tag_name }}
+          IMAGE=${{ secrets.DOCKER_USER }}/uvlhub
+
+          docker build --build-arg VERSION_TAG=$TAG -t $IMAGE:$TAG -f docker/images/Dockerfile.prod .
+          docker push $IMAGE:$TAG
+
+          docker tag $IMAGE:$TAG $IMAGE:latest
+          docker push $IMAGE:latest

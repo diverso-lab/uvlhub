@@ -1,0 +1,40 @@
+{% extends "base_template.html" %}
+{% set title = "Generate API key" %}
+
+{% block breadcrumb %}
+
+<ol class="breadcrumb text-muted fs-6 fw-semibold">
+    <li class="breadcrumb-item"><a href="/" class="">Home</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('apikeys.list_api_keys') }}" class="">API keys</a></li>
+    <li class="breadcrumb-item text-muted">Generate API key</li>
+</ol>
+
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 col-lg-6">
+        <div class="card">
+            <div class="card-body">
+                <form method="post">
+                    <p class="mb-4 text-muted">Choose the permissions you want this key to have:</p>
+
+                    <div class="form-check form-switch mb-5">
+                        <input class="form-check-input" type="checkbox" name="scopes" value="read_dataset" id="read_dataset" checked>
+                        <label class="form-check-label" for="read_dataset">
+                            Read access to dataset files
+                        </label>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="ki-duotone ki-shield-check fs-5 me-2"></i>
+                            Generate API Key
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

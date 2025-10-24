@@ -1,76 +1,71 @@
-# Use an official Python runtime as a parent image
-FROM python:3.12-slim
+FROM python:3.13
 
-# Set this environment variable to suppress the "Running as root" warning from pip
+# Environment variables
 ENV PIP_ROOT_USER_ACTION=ignore
 
-# Install necessary packages
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends mariadb-client \
-    && apt-get install -y --no-install-recommends gcc libc-dev python3-dev libffi-dev \
-    && apt-get install -y --no-install-recommends curl \
-    && apt-get install -y --no-install-recommends bash \
-    && apt-get install -y --no-install-recommends openrc \
-    && apt-get install -y --no-install-recommends build-essential 
-
-# Install Docker CLI
-RUN apt-get install -y --no-install-recommends ca-certificates gnupg lsb-release \
+# Install system dependencies, Node.js, npm, and Docker CLI
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    # Base system utilities
+    bash \
+    openrc \
+    ca-certificates \
+    gnupg \
+    lsb-release \
+    curl \
+    git \
+    # Build tools
+    gcc \
+    libc-dev \
+    python3-dev \
+    libffi-dev \
+    build-essential \
+    mariadb-client \
+    # Node.js setup
+    && curl -fsSL https://deb.nodesource.com/setup_23.x | bash - \
+    && apt-get install -y --no-install-recommends nodejs \
+    && npm install -g npm@11 npx \
+    # Docker CLI setup
     && curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg \
     && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" > /etc/apt/sources.list.d/docker.list \
     && apt-get update \
-    && apt-get install -y --no-install-recommends docker-ce-cli 
-
-RUN mkdir -p ~/.docker/cli-plugins/ \
-    && LATEST_VERSION=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/') \
-    && curl -SL "https://github.com/docker/compose/releases/download/${LATEST_VERSION}/docker-compose-$(uname -s)-$(uname -m)" -o ~/.docker/cli-plugins/docker-compose \
-    && chmod +x ~/.docker/cli-plugins/docker-compose
-
-# Install Node.js and NPM
-RUN curl -fsSL https://deb.nodesource.com/setup_23.x | bash - \
-    && apt-get install -y --no-install-recommends nodejs \
-    && npm install -g npm@11
-
-# Clean up
-RUN apt-get clean \
+    && apt-get install -y --no-install-recommends docker-ce-cli \
+    # Cleanup
+    && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
-        
-# Set the working directory in the container to /app
+
+# Security settings in Git
+RUN git config --global --add safe.directory /app
+
+# Create working directory
 WORKDIR /app
+ENV PYTHONPATH=/app
 
-# Copy requirements.txt to the /app working directory
+# Copy dependencies first (better caching)
 COPY requirements.txt .
-
-# Removes cache at the build stage
-RUN find . -type d -name "__pycache__" -exec rm -r {} + && \
-    find . -type f -name "*.pyc" -exec rm -f {} +
-
-# Copy the wait-for-db.sh script and set execution permissions
-COPY --chmod=0755 scripts/wait-for-db.sh ./scripts/
-
-# Copy the init-testing-db.sh script and set execution permissions
-COPY --chmod=0755 scripts/init-testing-db.sh ./scripts/
-
-# Copy files
-COPY app ./app
-COPY core ./core
-COPY rosemary/ ./rosemary
-COPY setup.py ./
-COPY docker/ ./docker
-COPY .moduleignore ./
-RUN mkdir -p /tmp  && chmod -R 777 /tmp && mkdir -p /tmp/videos && chmod -R 777 /tmp/videos
-
-# Update pip
-RUN pip install --no-cache-dir --upgrade pip
-
-# Install any needed packages specified in requirements.txt
-RUN pip install -r requirements.txt
-
-# Install Rosemary
-RUN pip install -e ./
-
-# Install npm dependencies
 COPY package.json .
+COPY pyproject.toml ./
+
+# Install Python dependencies
+RUN pip install --no-cache-dir --upgrade pip
+RUN pip install --pre -r requirements.txt
+
+# Install Node.js dependencies
 RUN npm install
 
-# Expose port 5000 for the Flask app
+# Copy project files
+COPY app/ ./app
+COPY core/ ./core
+COPY rosemary/ ./rosemary
+COPY migrations/ ./migrations
+COPY docker/ ./docker
+COPY --chmod=0755 scripts/ ./scripts/
+
+# Install Rosemary as an 'editable' package
+RUN pip install -e ./
+
+# Remove Python cache
+RUN find . -type d -name "__pycache__" -exec rm -r {} + \
+    && find . -type f -name "*.pyc" -exec rm -f {} +
+
+# Expose application port
 EXPOSE 5000

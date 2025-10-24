@@ -1,7 +1,8 @@
 # rosemary/commands/env.py
 
-import click
 import os
+
+import click
 from dotenv import dotenv_values
 
 

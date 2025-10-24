@@ -5,87 +5,96 @@ services:
     image: drorganvidez/uvlhub:latest
     env_file:
       - ../.env
-    expose:
-      - "5000"
-    ports:
-      - "5000:5000"
-    depends_on:
-      - db
-      - redis
-    restart: always
     volumes:
       - ./entrypoints/production_entrypoint.sh:/app/entrypoint.sh
       - ../scripts:/app/scripts
       - ../migrations:/app/migrations
       - ../uploads:/app/uploads
-      - ../.moduleignore:/app/.moduleignore
+      - ../docker:/app/docker
     command: [ "bash", "-c", "bash /app/entrypoint.sh" ]
+    restart: always
+    depends_on:
+      - db
+      - redis
+      - elasticsearch
     networks:
       - uvlhub_network
 
-  db:
-    container_name: mariadb_container
+  worker:
+    container_name: rq_worker_container
+    image: drorganvidez/uvlhub:latest
     env_file:
       - ../.env
-    image: mariadb:latest
-    command: --default-authentication-plugin=mysql_native_password
-    restart: always
-    ports:
-      - "3306:3306"
     volumes:
-      - db_data:/var/lib/mysql
+      - ./entrypoints/worker_entrypoint.sh:/app/entrypoint.sh
+      - ../scripts:/app/scripts
+      - ../migrations:/app/migrations
+      - ../uploads:/app/uploads
+      - ../docker:/app/docker
+    command: [ "bash", "-c", "bash /app/entrypoint.sh" ]
+    restart: always
+    depends_on:
+      - db
+      - redis
     networks:
       - uvlhub_network
 
   nginx:
     container_name: nginx_web_server_container
-    image: nginx:latest
-    volumes:
-      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf
-      - ./nginx/html:/usr/share/nginx/html
+    image: nginx:1.29.1
     ports:
       - "80:80"
+    volumes:
+      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf
+      - ./nginx/html:/usr/share/nginx/html 
     depends_on:
       - web
     restart: always
     networks:
       - uvlhub_network
 
-  redis:
-    image: "redis:latest"
-    container_name: redis_container
+  db:
+    container_name: mariadb_container
+    build:
+      context: ../
+      dockerfile: docker/images/Dockerfile.mariadb
+    env_file:
+      - ../.env
+    command: --default-authentication-plugin=mysql_native_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
     restart: always
     networks:
       - uvlhub_network
 
-  worker:
-    container_name: rq_worker_container
-    env_file:
-      - ../.env
-    depends_on:
-      - redis
-    build:
-      context: ../
-      dockerfile: docker/images/Dockerfile.worker
-    volumes:
-      - ../app/:/app/app
-      - ../core/:/app/core
-      - ../uploads/:/app/uploads
+  redis:
+    container_name: redis_container
+    image: "redis:8.2.1"
+    restart: always
     networks:
       - uvlhub_network
 
-  watchtower:
-    container_name: watchtower_container
-    image: containrrr/watchtower
+  elasticsearch:
+    container_name: elasticsearch_container
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.18.4
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - xpack.security.transport.ssl.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    command: --cleanup --interval 120 web_app_container
+      - es_data:/usr/share/elasticsearch/data
     restart: always
     networks:
       - uvlhub_network
 
 volumes:
   db_data:
+  es_data:
 
 networks:
   uvlhub_network:

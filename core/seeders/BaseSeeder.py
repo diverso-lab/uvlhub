@@ -1,5 +1,7 @@
-from sqlalchemy.exc import IntegrityError
 from datetime import datetime
+
+from sqlalchemy.exc import IntegrityError
+
 from app import db
 
 
@@ -10,9 +12,7 @@ class BaseSeeder:
         self.db = db
 
     def run(self):
-        raise NotImplementedError(
-            "The 'run' method must be implemented by the child class."
-        )
+        raise NotImplementedError("The 'run' method must be implemented by the child class.")
 
     def json_serializer(self, obj):
         """Helper function to convert non-serializable objects like datetime."""
@@ -50,9 +50,7 @@ class BaseSeeder:
 
         except IntegrityError as e:
             self.db.session.rollback()
-            raise Exception(
-                f"Failed to insert data into `{model.__tablename__}` table. Error: {e}"
-            )
+            raise Exception(f"Failed to insert data into `{model.__tablename__}` table. Error: {e}")
 
         # After committing, the `data` objects should have their IDs assigned.
         return data
