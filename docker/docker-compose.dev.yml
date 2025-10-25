@@ -86,6 +86,7 @@ services:
       - uvlhub_network
 
   mailhog:
+    container_name: mailhog_container
     image: mailhog/mailhog
     ports:
       - "8025:8025"
@@ -94,8 +95,8 @@ services:
       - uvlhub_network
 
   selenium-hub:
+    container_name: selenium_hub_container
     image: selenium/hub:latest
-    container_name: selenium-hub
     ports:
       - "4442:4442"
       - "4443:4443"
@@ -103,31 +104,27 @@ services:
     networks:
       - uvlhub_network
 
-  chrome:
+  selenium-chrome:
+    container_name: selenium_chrome_container
     image: selenium/node-chrome:latest
-    container_name: selenium-chrome
     shm_size: 2gb
-    environment:
-      - SE_EVENT_BUS_HOST=selenium-hub
-      - SE_EVENT_BUS_PUBLISH_PORT=4442
-      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
-      - VNC_NO_PASSWORD=1
-      - SE_NODE_MAX_SESSIONS=1
+    ports:
+      - "5900:5900"
+    env_file:
+      - ../.env.selenium
     depends_on:
       - selenium-hub
     networks:
       - uvlhub_network
 
-  firefox:
+  selenium-firefox:
+    container_name: selenium_firefox_container
     image: selenium/node-firefox:latest
-    container_name: selenium-firefox
     shm_size: 2gb
-    environment:
-      - SE_EVENT_BUS_HOST=selenium-hub
-      - SE_EVENT_BUS_PUBLISH_PORT=4442
-      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
-      - VNC_NO_PASSWORD=1
-      - SE_NODE_MAX_SESSIONS=1
+    ports:
+      - "5901:5900"
+    env_file:
+      - ../.env.selenium
     depends_on:
       - selenium-hub
     networks:
