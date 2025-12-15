@@ -231,14 +231,24 @@ class DSDownloadRecord(db.Model):
 
 
 class DSViewRecord(db.Model):
+    __tablename__ = "ds_view_record"
+
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
-    dataset_id = db.Column(db.Integer, db.ForeignKey("datasets.id"))
-    view_date = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.utc))
-    view_cookie = db.Column(db.String(36), nullable=False)
 
-    def __repr__(self):
-        return f"<View id={self.id} dataset_id={self.dataset_id} date={self.view_date} cookie={self.view_cookie}>"
+    dataset_id = db.Column(
+        db.Integer,
+        db.ForeignKey("datasets.id"),
+        nullable=False
+    )
+
+    view_date = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=lambda: datetime.now(pytz.utc)
+    )
+
+    view_cookie = db.Column(db.String(36), nullable=False)
 
 
 class DOIMapping(db.Model):
