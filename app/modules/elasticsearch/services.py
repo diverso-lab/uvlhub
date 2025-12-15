@@ -158,6 +158,24 @@ class ElasticsearchService(BaseService):
             print(f"[ERROR] No se pudo eliminar documento '{doc_id}': {e}")
             raise
 
+    def delete_by_dataset_id(self, dataset_id: int):
+        try:
+            print(f"[DEBUG] Deleting Elasticsearch docs for dataset_id={dataset_id}")
+            self.es.delete_by_query(
+                index=self.index_name,
+                body={
+                    "query": {
+                        "term": {
+                            "dataset_id": dataset_id
+                        }
+                    }
+                }
+            )
+            print(f"[SUCCESS] Elasticsearch docs deleted for dataset_id={dataset_id}")
+        except Exception as e:
+            print(f"[ERROR] Failed to delete ES docs for dataset_id={dataset_id}: {e}")
+            raise
+
     def search(
         self,
         query: str,

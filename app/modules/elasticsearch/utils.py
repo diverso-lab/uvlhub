@@ -28,6 +28,7 @@ def index_dataset(dataset):
     doc = {
         "type": "dataset",
         "id": dataset.id,
+        "dataset_id": dataset.id,
         "title": dataset.ds_meta_data.title,
         "description": dataset.ds_meta_data.description,
         "publication_doi": dataset.ds_meta_data.publication_doi,
