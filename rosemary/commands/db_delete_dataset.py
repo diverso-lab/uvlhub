@@ -6,11 +6,11 @@ from dotenv import load_dotenv
 
 from app import create_app, db
 from app.modules.dataset.models import (
+    Author,
     DataSet,
+    DSDownloadRecord,
     DSMetaData,
     DSViewRecord,
-    DSDownloadRecord,
-    Author,
 )
 from app.modules.elasticsearch.services import ElasticsearchService
 
@@ -42,12 +42,7 @@ def delete_dataset(doi, yes):
     with app.app_context():
 
         # 1. localizar dataset por DOI
-        dataset = (
-            db.session.query(DataSet)
-            .join(DSMetaData)
-            .filter(DSMetaData.dataset_doi == doi)
-            .one_or_none()
-        )
+        dataset = db.session.query(DataSet).join(DSMetaData).filter(DSMetaData.dataset_doi == doi).one_or_none()
 
         if dataset is None:
             click.echo(f"No dataset found with DOI: {doi}")
@@ -106,19 +101,17 @@ def delete_dataset(doi, yes):
         # --- 4. BORRADO EN BASE DE DATOS ---
         try:
             # borrar vistas
-            db.session.query(DSViewRecord).filter(
-                DSViewRecord.dataset_id == dataset.id
-            ).delete(synchronize_session=False)
+            db.session.query(DSViewRecord).filter(DSViewRecord.dataset_id == dataset.id).delete(
+                synchronize_session=False
+            )
 
             # borrar descargas
-            db.session.query(DSDownloadRecord).filter(
-                DSDownloadRecord.dataset_id == dataset.id
-            ).delete(synchronize_session=False)
+            db.session.query(DSDownloadRecord).filter(DSDownloadRecord.dataset_id == dataset.id).delete(
+                synchronize_session=False
+            )
 
             # borrar autores
-            db.session.query(Author).filter(
-                Author.ds_meta_data_id == ds_meta_data.id
-            ).delete(synchronize_session=False)
+            db.session.query(Author).filter(Author.ds_meta_data_id == ds_meta_data.id).delete(synchronize_session=False)
 
             # borrar dataset (borra feature_models por cascade)
             db.session.delete(dataset)
