@@ -3,6 +3,7 @@ import shutil
 
 import click
 from dotenv import load_dotenv
+from sqlalchemy import select
 
 from app import create_app, db
 from app.modules.dataset.models import (
@@ -13,6 +14,7 @@ from app.modules.dataset.models import (
     DSViewRecord,
 )
 from app.modules.elasticsearch.services import ElasticsearchService
+from app.modules.hubfile.models import Hubfile, HubfileDownloadRecord, HubfileViewRecord
 
 
 def delete_dataset_uploads(dataset, uploads_root="uploads"):
@@ -99,25 +101,45 @@ def delete_dataset(doi, yes):
             return
 
         # --- 4. BORRADO EN BASE DE DATOS ---
+
         try:
-            # borrar vistas
-            db.session.query(DSViewRecord).filter(DSViewRecord.dataset_id == dataset.id).delete(
-                synchronize_session=False
-            )
+            with db.session.no_autoflush:
 
-            # borrar descargas
-            db.session.query(DSDownloadRecord).filter(DSDownloadRecord.dataset_id == dataset.id).delete(
-                synchronize_session=False
-            )
+                # --- vistas de dataset ---
+                db.session.query(DSViewRecord).filter(DSViewRecord.dataset_id == dataset.id).delete(
+                    synchronize_session=False
+                )
 
-            # borrar autores
-            db.session.query(Author).filter(Author.ds_meta_data_id == ds_meta_data.id).delete(synchronize_session=False)
+                # --- descargas de dataset ---
+                db.session.query(DSDownloadRecord).filter(DSDownloadRecord.dataset_id == dataset.id).delete(
+                    synchronize_session=False
+                )
 
-            # borrar dataset (borra feature_models por cascade)
-            db.session.delete(dataset)
+                # --- autores ---
+                db.session.query(Author).filter(Author.ds_meta_data_id == ds_meta_data.id).delete(
+                    synchronize_session=False
+                )
 
-            # borrar metadata (borra metrics por cascade)
-            db.session.delete(ds_meta_data)
+                # --- ids de hubfiles del dataset ---
+                hubfile_ids = select(Hubfile.id).where(
+                    Hubfile.feature_model_id.in_(fm.id for fm in dataset.feature_models)
+                )
+
+                # --- vistas de hubfiles ---
+                db.session.query(HubfileViewRecord).filter(HubfileViewRecord.file_id.in_(hubfile_ids)).delete(
+                    synchronize_session=False
+                )
+
+                # --- descargas de hubfiles ---
+                db.session.query(HubfileDownloadRecord).filter(HubfileDownloadRecord.file_id.in_(hubfile_ids)).delete(
+                    synchronize_session=False
+                )
+
+                # --- dataset (cascade: feature_models + hubfiles) ---
+                db.session.delete(dataset)
+
+                # --- metadata (cascade: metrics) ---
+                db.session.delete(ds_meta_data)
 
             db.session.commit()
 
