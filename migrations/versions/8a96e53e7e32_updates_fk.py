@@ -23,9 +23,6 @@ def upgrade():
                existing_type=mysql.INTEGER(display_width=11),
                nullable=False)
 
-    with op.batch_alter_table('feature_model', schema=None) as batch_op:
-        batch_op.create_index(batch_op.f('ix_feature_model_dataset_id'), ['dataset_id'], unique=False)
-
     # ### end Alembic commands ###
 
 
