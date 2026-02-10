@@ -23,7 +23,6 @@ ConfigArgParse==1.7.1
 coverage==7.10.7
 croniter==6.0.0
 cryptography==46.0.2
-dd==0.5.7
 dnspython==2.8.0
 docker==7.1.0
 elastic-transport==8.17.1

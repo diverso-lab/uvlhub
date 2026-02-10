@@ -68,7 +68,6 @@
         "mustache": "^4.2.0",
         "nodemon": "^3.1.10",
         "nouislider": "^15.8.1",
-        "npm": "11.6.2",
         "npm-check-updates": "19.0.0",
         "npm-watch": "^0.13.0",
         "pdfmake": "0.2.20",
