@@ -7,7 +7,7 @@ name = "rosemary"
 version = "1.0.0"
 description = "Rosemary is a CLI to be able to work on UVLHub development more easily."
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.12"
 dependencies = [
     "click",
     "python-dotenv",

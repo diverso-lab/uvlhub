@@ -1,0 +1,33 @@
+{% extends "generator/index.html" %}
+{% block title %}Finishing{% endblock %}
+
+{% block wizard_content %}
+<div class="row justify-content-center">
+  <div class="col-md-8 text-center">
+    <h3 class="mb-4">Finishing</h3>
+    <p class="mb-4">
+      Your feature models are being generated. If download does not start refresh this page.
+    </p>
+    <!-- <button type="submit" id="generate-zip-btn" class="btn btn-primary" >
+      <i class="fa fa-download"></i> Generate &amp; Download ZIP
+    </button> -->
+    <div id="generate-status" class="mt-3 fw-bold"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+
+  <script type="module">
+    import { loadPyodide } from "{{ url_for('static', filename='pyodide/pyodide.mjs') }}";
+    window.loadPyodide = loadPyodide;
+  </script>
+
+  <script type="module"
+          src="{{ url_for('generator.assets', subfolder='dist', filename='generator.bundle.js') }}">
+  </script>
+
+  <script src="{{ url_for('static', filename='pyodide/pyodide.js') }}"></script>
+  <script type="module" src="{{ url_for('generator.assets', subfolder='js', filename='scripts.js') }}"></script>
+
+{% endblock %}
