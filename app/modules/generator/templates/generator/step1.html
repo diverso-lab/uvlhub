@@ -32,7 +32,7 @@
         <!-- Satisfiable -->
         <div class="mb-3 form-check">
             <input class="form-check-input" type="checkbox" id="ensure_satisfiable" name="ensure_satisfiable"
-                   {% if values.get('ensure_satisfiable', 'on') %} checked {% endif %}>
+                {% if values.get('ensure_satisfiable') %} checked {% endif %}>
             <label class="form-check-label" for="ensure_satisfiable">Ensure satisfiable</label>
         </div>
 

@@ -74,6 +74,7 @@ const randomCheckbox = document.getElementById('random_attributes');
 const randomSettings = document.getElementById('random-attributes-settings');
 const manualSection = document.getElementById('manual-attributes-section');
 const manualAttributesList = document.getElementById('manual-attributes-list');
+const savedAttributes = {{ values.get('attributes_list', []) | tojson }};
 
 // Función para alternar visibilidad entre sección “random” y sección “manual”
 function toggleAttributeSections() {
@@ -236,8 +237,42 @@ toggleAttributeSections();
 
 // Si venimos de GET con random_attributes desmarcado, agregamos al menos una tarjeta
 if (!randomCheckbox.checked) {
-    addAttributeCard();
+    if (savedAttributes.length > 0) {
+        savedAttributes.forEach((attr, idx) => {
+            addAttributeCard(); // crea card idx
+            const card = manualAttributesList.children[idx];
+
+            // name
+            card.querySelector(`[name="attr_name_${idx}"]`).value = attr.name || "";
+
+            // type
+            const typeSelect = card.querySelector(`[name="attr_type_${idx}"]`);
+            typeSelect.value = (attr.type || "Integer").toLowerCase();
+            updateValueField(card, typeSelect.value, idx);
+
+            // attach prob
+            card.querySelector(`[name="attr_attach_prob_${idx}"]`).value = attr.attach_probability ?? 0.7;
+
+            // use_in_constraints
+            const uic = card.querySelector(`[name="attr_use_in_constraints_${idx}"]`);
+            uic.checked = !!attr.use_in_constraints;
+
+            // values según tipo
+            const t = typeSelect.value;
+            if (t === "boolean") {
+                const vals = attr.value || [];
+                if (vals.includes(true)) card.querySelector(`[name="attr_value_true_${idx}"]`).checked = true;
+                if (vals.includes(false)) card.querySelector(`[name="attr_value_false_${idx}"]`).checked = true;
+            } else if (t === "integer" || t === "real" || t === "string") {
+                if (attr.min_value != null) card.querySelector(`[name="attr_min_value_${idx}"]`).value = attr.min_value;
+                if (attr.max_value != null) card.querySelector(`[name="attr_max_value_${idx}"]`).value = attr.max_value;
+            }
+        });
+    } else {
+        addAttributeCard();
+    }
 }
+
 </script>
 {% endblock %}
 

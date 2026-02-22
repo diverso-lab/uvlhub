@@ -22,6 +22,32 @@ from flask import jsonify
 generator_service = GeneratorService()
 
 
+def save_step_state(step: int, form, checkbox_fields=None):
+    """Guarda en sesión los valores del formulario de un step (para repintar al volver)."""
+    checkbox_fields = checkbox_fields or []
+    wizard = session.get("wizard", {})
+
+    data = dict(form)  # MultiDict -> dict (solo 1 valor por key)
+
+    # Normaliza checkboxes: si no vienen, es False
+    for cb in checkbox_fields:
+        data[cb] = cb in form
+
+    wizard[str(step)] = data
+    session["wizard"] = wizard
+
+
+
+def load_step_state(step: int, defaults: dict):
+    """Carga valores guardados del step (si existen) mezclados con defaults."""
+    wizard = session.get("wizard", {})
+    saved = wizard.get(str(step), {})
+    out = defaults.copy()
+    out.update(saved)
+    return out
+
+
+
 def validate_step1_form(form):
     """Valida los campos del formulario de step1 y devuelve (errores, valores)."""
     errors = {}
@@ -34,7 +60,7 @@ def validate_step1_form(form):
     try:
         num_models = int(num_models_val)
         if not (1 <= num_models <= 10000):
-            errors["num_models_val"] = "Number of models must be between 1 and 10,000."
+            errors["num_models_val"] = "Number of models must be between 1 and 1,000."
     except Exception:
         errors["num_models_val"] = "Number of models must be an integer."
 
@@ -59,14 +85,11 @@ def step1():
     if request.method == "POST":
         errors, values = validate_step1_form(request.form)
 
-        # Si hay errores en la validación inicial
         if errors:
-            print(f"[VALIDACIÓN STEP1] Errores detectados: {errors}")
             return render_template(
                 "generator/step1.html", current_step=1, errors=errors, values=values
             )
 
-        # Si pasa la validación, intentamos construir Params (llama a __post_init__)
         try:
             params = Params(
                 NUM_MODELS=int(request.form.get("num_models_val")),
@@ -74,12 +97,9 @@ def step1():
                 ENSURE_SATISFIABLE="ensure_satisfiable" in request.form,
                 NAME_PREFIX=request.form.get("name_prefix", ""),
                 INCLUDE_FEATURE_COUNT_SUFFIX="feature_count_suffix" in request.form,
-                INCLUDE_CONSTRAINT_COUNT_SUFFIX="constraint_count_suffix"
-                in request.form,
+                INCLUDE_CONSTRAINT_COUNT_SUFFIX="constraint_count_suffix" in request.form,
             )
         except ValueError as e:
-            # Error lanzado por __post_init__, lo mostramos en consola y frontend
-            print(f"[Params __post_init__ ERROR] {e}")
             errors["global"] = str(e)
             return render_template(
                 "generator/step1.html",
@@ -88,22 +108,26 @@ def step1():
                 values=request.form,
             )
 
-        # Sin errores: guardamos en sesión y redirigimos
         session["params"] = params.__dict__
         return redirect(url_for("generator.step2"))
 
-    # GET: valores por defecto
-    default_values = {
-        "num_models_val": 5,
-        "seed": 42,
-        "name_prefix": "",
-        "ensure_satisfiable": "on",
-        "feature_count_suffix": "",
-        "constraint_count_suffix": "",
+    # ✅ GET: si hay params en sesión, los usamos para repintar el formulario
+    params_dict = session.get("params", {})
+
+    values = {
+        "num_models_val": params_dict.get("NUM_MODELS", 5),
+        "seed": params_dict.get("SEED", 42),
+        "name_prefix": params_dict.get("NAME_PREFIX", ""),
+        # Para checkboxes: usamos claves presentes si True
+        "ensure_satisfiable": "on" if params_dict.get("ENSURE_SATISFIABLE", True) else "",
+        "feature_count_suffix": "on" if params_dict.get("INCLUDE_FEATURE_COUNT_SUFFIX", False) else "",
+        "constraint_count_suffix": "on" if params_dict.get("INCLUDE_CONSTRAINT_COUNT_SUFFIX", False) else "",
     }
+
     return render_template(
-        "generator/step1.html", current_step=1, errors={}, values=default_values
+        "generator/step1.html", current_step=1, errors={}, values=values
     )
+
 
 
 def validate_step2_form(form):
@@ -116,13 +140,13 @@ def validate_step2_form(form):
     try:
         min_features = int(min_features_val)
         if not (1 <= min_features <= 10000):
-            errors["num_features_min"] = "Min. features must be between 1 and 10,000."
+            errors["num_features_min"] = "Min. features must be between 1 and 1,000."
     except Exception:
         errors["num_features_min"] = "Min. features must be an integer."
     try:
         max_features = int(max_features_val)
         if not (1 <= max_features <= 10000):
-            errors["num_features_max"] = "Max. features must be between 1 and 10,000."
+            errors["num_features_max"] = "Max. features must be between 1 and 1,000."
     except Exception:
         errors["num_features_max"] = "Max. features must be an integer."
 
@@ -215,14 +239,12 @@ def validate_step2_form(form):
     #     )
 
     # Distribución de relaciones (groups)
-    rel_fields = [
-        "dist_optional",
-        "dist_mandatory",
-        "dist_alternative",
-        "dist_or",
-        "dist_group_cardinality",
-    ]
+    rel_fields = ["dist_optional","dist_mandatory","dist_alternative","dist_or"]
+    if "group_cardinality" in form:
+        rel_fields.append("dist_group_cardinality")
+
     rel_values = []
+
     for f in rel_fields:
         val = form.get(f, "").strip()
         try:
@@ -283,7 +305,33 @@ def validate_step2_form(form):
 @generator_bp.route("/generator/step2", methods=["GET", "POST"])
 def step2():
     if request.method == "POST":
-        
+        nav = request.form.get("nav", "next")
+
+        save_step_state(
+            2,
+            request.form,
+            checkbox_fields=["boolean_level", "group_cardinality"]
+        )
+
+        if nav == "prev":
+            # Guardar también en params (best-effort) para que no se pierda si vuelves y luego avanzas
+            params_dict = session.get("params", {}) or {}
+            params_dict["GROUP_CARDINALITY"] = ("group_cardinality" in request.form)
+            params_dict["MIN_FEATURES"] = int(request.form.get("num_features_min", params_dict.get("MIN_FEATURES", 10)))
+            params_dict["MAX_FEATURES"] = int(request.form.get("num_features_max", params_dict.get("MAX_FEATURES", 50)))
+            params_dict["MAX_TREE_DEPTH"] = int(request.form.get("max_tree_depth", params_dict.get("MAX_TREE_DEPTH", 5)))
+            params_dict["DIST_OPTIONAL"] = float(request.form.get("dist_optional", params_dict.get("DIST_OPTIONAL", 0.3)))
+            params_dict["DIST_MANDATORY"] = float(request.form.get("dist_mandatory", params_dict.get("DIST_MANDATORY", 0.3)))
+            params_dict["DIST_ALTERNATIVE"] = float(request.form.get("dist_alternative", params_dict.get("DIST_ALTERNATIVE", 0.2)))
+            params_dict["DIST_OR"] = float(request.form.get("dist_or", params_dict.get("DIST_OR", 0.2)))
+            params_dict["DIST_GROUP_CARDINALITY"] = float(request.form.get("dist_group_cardinality", params_dict.get("DIST_GROUP_CARDINALITY", 0.0)))
+            params_dict["GROUP_CARDINALITY_MIN"] = int(request.form.get("group_cardinality_min", params_dict.get("GROUP_CARDINALITY_MIN", 10)))
+            params_dict["GROUP_CARDINALITY_MAX"] = int(request.form.get("group_cardinality_max", params_dict.get("GROUP_CARDINALITY_MAX", 50)))
+            session["params"] = params_dict
+
+            return redirect(url_for("generator.step1"))
+
+
         errors, values = validate_step2_form(request.form)
         if errors:
             print(f"[VALIDACIÓN STEP2] Errores detectados: {errors}")
@@ -356,44 +404,49 @@ def step2():
 
         return redirect(url_for("generator.step3"))
 
-    current_step = 2
-    default_values = {
-        "num_features_min": 10,
-        "num_features_max": 50,
-        "boolean_level": True,
-        "group_cardinality": True,
-        # "arithmetic_level": False,
-        # "feature_cardinality": False,
-        # "aggregate_functions": False,
-        # "type_level": False,
-        # "string_constraints": False,
-        # "dist_boolean": 0.7,
-        # "dist_integer": 0.1,
-        # "dist_real": 0.1,
-        # "dist_string": 0.1,
-        "prob_fc": 0.1,
-        "min_feature_cardinality": 2,
-        "max_feature_cardinality": 5,
-        "max_tree_depth": 5,
-        "dist_optional": 0.3,
-        "dist_mandatory": 0.3,
-        "dist_alternative": 0.2,
-        "dist_or": 0.2,
-        "dist_group_cardinality": 0.0,
-        "group_cardinality_min": 10,
-        "group_cardinality_max": 50,
-        "dist_total": "1.0000",
+    # ✅ GET
+    params_dict = session.get("params", {})
+
+    values = {
+        # checkboxes (en HTML son boolean_level y group_cardinality)
+        "boolean_level": True,  # siempre true si quieres forzarlo
+        "group_cardinality": params_dict.get("GROUP_CARDINALITY", True),
+
+        # features
+        "num_features_min": params_dict.get("MIN_FEATURES", 10),
+        "num_features_max": params_dict.get("MAX_FEATURES", 50),
+        "max_tree_depth": params_dict.get("MAX_TREE_DEPTH", 5),
+
+        # feature cardinality attach prob (aunque esté comentado en HTML, lo dejo)
+        "prob_fc": params_dict.get("PROB_FEATURE_CARDINALITY", 0.1),
+
+        # groups
+        "dist_optional": params_dict.get("DIST_OPTIONAL", 0.3),
+        "dist_mandatory": params_dict.get("DIST_MANDATORY", 0.3),
+        "dist_alternative": params_dict.get("DIST_ALTERNATIVE", 0.2),
+        "dist_or": params_dict.get("DIST_OR", 0.2),
+
+        # group cardinality
+        "dist_group_cardinality": params_dict.get("DIST_GROUP_CARDINALITY", 0.0),
+        "group_cardinality_min": params_dict.get("GROUP_CARDINALITY_MIN", 10),
+        "group_cardinality_max": params_dict.get("GROUP_CARDINALITY_MAX", 50),
+
+        # sum displays
         "rel_dist_total": "1.0000",
     }
+
+    values = load_step_state(2, values)
+
     return render_template(
         "generator/step2.html",
-        current_step=current_step,
+        current_step=2,
         errors={},
-        values=default_values,
+        values=values,
     )
 
 
 def validate_step3_form(form, max_features: int = 10000):
+
     errors = {}
     values = {}
 
@@ -645,6 +698,48 @@ def step3():
         return "Error: Params missing in session", 400
 
     if request.method == "POST":
+        nav = request.form.get("nav", "next")
+
+        save_step_state(
+            3,
+            request.form,
+            checkbox_fields=["aggregate_functions", "type_level", "string_constraints"]
+        )
+        
+        if nav == "prev":
+            params_dict = session.get("params", {}) or {}
+
+            params_dict["MIN_CONSTRAINTS"] = int(request.form.get("num_constraints_min", params_dict.get("MIN_CONSTRAINTS", 1)))
+            params_dict["MAX_CONSTRAINTS"] = int(request.form.get("num_constraints_max", params_dict.get("MAX_CONSTRAINTS", 10)))
+            params_dict["EXTRA_CONSTRAINT_REPRESENTATIVENESS"] = int(request.form.get("extra_constraint_repr", params_dict.get("EXTRA_CONSTRAINT_REPRESENTATIVENESS", 1)))
+            params_dict["MIN_VARS_PER_CONSTRAINT"] = int(request.form.get("vars_per_ctc_min", params_dict.get("MIN_VARS_PER_CONSTRAINT", 1)))
+            params_dict["MAX_VARS_PER_CONSTRAINT"] = int(request.form.get("vars_per_ctc_max", params_dict.get("MAX_VARS_PER_CONSTRAINT", 10)))
+
+            params_dict["PROB_NOT"] = float(request.form.get("prob_not", params_dict.get("PROB_NOT", 0.3)))
+            params_dict["PROB_AND"] = float(request.form.get("prob_and", params_dict.get("PROB_AND", 0.7)))
+            params_dict["PROB_OR_CT"] = float(request.form.get("prob_or", params_dict.get("PROB_OR_CT", 0.1)))
+            params_dict["PROB_IMPLICATION"] = float(request.form.get("prob_implies", params_dict.get("PROB_IMPLICATION", 0.1)))
+            params_dict["PROB_EQUIVALENCE"] = float(request.form.get("prob_equiv", params_dict.get("PROB_EQUIVALENCE", 0.1)))
+
+            params_dict["PROB_SUM_FUNCTION"] = float(request.form.get("prob_sum", params_dict.get("PROB_SUM_FUNCTION", 0.0)))
+            params_dict["PROB_AVG_FUNCTION"] = float(request.form.get("prob_avg", params_dict.get("PROB_AVG_FUNCTION", 0.0)))
+
+            params_dict["PROB_SUM"] = float(request.form.get("prob_plus", params_dict.get("PROB_SUM", 0.7)))
+            params_dict["PROB_SUBSTRACT"] = float(request.form.get("prob_minus", params_dict.get("PROB_SUBSTRACT", 0.2)))
+            params_dict["PROB_MULTIPLY"] = float(request.form.get("prob_times", params_dict.get("PROB_MULTIPLY", 0.1)))
+            params_dict["PROB_DIVIDE"] = float(request.form.get("prob_div", params_dict.get("PROB_DIVIDE", 0.0)))
+
+            params_dict["PROB_EQUALS"] = float(request.form.get("prob_eq", params_dict.get("PROB_EQUALS", 0.1)))
+            params_dict["PROB_LESS"] = float(request.form.get("prob_lt", params_dict.get("PROB_LESS", 0.2)))
+            params_dict["PROB_GREATER"] = float(request.form.get("prob_gt", params_dict.get("PROB_GREATER", 0.7)))
+            params_dict["PROB_LESS_EQUALS"] = float(request.form.get("prob_leq", params_dict.get("PROB_LESS_EQUALS", 0.0)))
+            params_dict["PROB_GREATER_EQUALS"] = float(request.form.get("prob_geq", params_dict.get("PROB_GREATER_EQUALS", 0.0)))
+
+            params_dict["PROB_LEN_FUNCTION"] = float(request.form.get("prob_len", params_dict.get("PROB_LEN_FUNCTION", 0.7)))
+
+            session["params"] = params_dict
+            return redirect(url_for("generator.step2"))
+
         # Extraer max_features de params_dict
         max_feats = params_dict.get("MAX_FEATURES", 10000)
 
@@ -763,11 +858,18 @@ def step3():
         "string_constraints": params_dict.get("STRING_CONSTRAINTS", False),
     }
 
+    values = load_step_state(3, default_values)
+
+    print("WIZARD3 =", session.get("wizard", {}).get("3"))
+    print("DEFAULTS =", default_values)
+    print("VALUES   =", values)
+
+
     return render_template(
         "generator/step3.html",
         current_step=current_step,
         errors={},
-        values=default_values,
+        values=values,
     )
 
 
@@ -864,6 +966,16 @@ def validate_step4_form(form):
 @generator_bp.route("/generator/step4", methods=["GET", "POST"])
 def step4():
     if request.method == "POST":
+
+        nav = request.form.get("nav", "next")
+        save_step_state(4, request.form, checkbox_fields=["random_attributes"])
+        if nav == "prev":
+            # lo mínimo: guardar el flag random en params_dict
+            params_dict = session.get("params", {}) or {}
+            params_dict["RANDOM_ATTRIBUTES"] = ("random_attributes" in request.form)
+            session["params"] = params_dict
+            return redirect(url_for("generator.step3"))
+
         params_dict = session.get("params")
         if not params_dict:
             return "Error: Params missing in session", 400
@@ -956,13 +1068,18 @@ def step4():
         "random_attributes": params_dict.get("RANDOM_ATTRIBUTES", True),
         "min_attributes": params_dict.get("MIN_ATTRIBUTES", 1),
         "max_attributes": params_dict.get("MAX_ATTRIBUTES", 5),
+        "attributes_list": params_dict.get("ATTRIBUTES_LIST", []), 
     }
+    
+    values = load_step_state(4, default_values)
+
     return render_template(
         "generator/step4.html",
         current_step=current_step,
         errors={},
-        values=default_values,
+        values=values,
     )
+
 
 
 
@@ -976,6 +1093,10 @@ def step4():
 @generator_bp.route("/generator/step5", methods=["GET", "POST"])
 def step5():
     if request.method == "POST":
+        nav = request.form.get("nav", "next")
+        if nav == "prev":
+            return redirect(url_for("generator.step4"))
+        
         params_dict = session.get("params")
         if not params_dict:
             return "Error: Params missing in session", 400
@@ -1011,8 +1132,8 @@ def step5():
                     Attribute(name=name, domain=domain, default_value=default_value)
                 )
             # params.ATTRIBUTES_LIST = rebuilt_attrs
-            params_dict["ATTRIBUTES_LIST"] = rebuilt_attrs
-            session['params'] = params_dict
+            # params_dict["ATTRIBUTES_LIST"] = rebuilt_attrs
+            # session['params'] = params_dict
             print("AAAAAAAAAAAAAAAAAAAAAAAAA")
             print(session['params'])
 

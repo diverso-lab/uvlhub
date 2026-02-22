@@ -24,18 +24,29 @@
     </div>
     <div class="wizard-content">
         <form id="generator-wizard-step1" method="POST" action="{{ url_for('generator.step' ~ current_step) }}">
+            <input type="hidden" id="nav_action" name="nav" value="next">
+
             {% block wizard_content %}
             {% endblock %}
             <div class="d-flex justify-content-between mt-4">
-                {% if current_step > 1 %}
-                    <a href="{{ url_for('generator.step' ~ (current_step - 1)) }}" class="btn btn-outline-secondary">Previous</a>
-                {% else %}
-                    <button type="button" class="btn btn-outline-secondary" disabled>Previous</button>
-                {% endif %}
-                
-                {% if current_step < 5 %}
-                    <button type="submit" class="btn btn-primary">Next &gt;</button>
-                {% endif %}
+            {% if current_step > 1 %}
+            <button type="button"
+                    class="btn btn-outline-secondary"
+                    onclick="document.getElementById('nav_action').value='prev'; this.closest('form').submit();">
+                Previous
+            </button>
+            {% else %}
+            <button type="button" class="btn btn-outline-secondary" disabled>Previous</button>
+            {% endif %}
+
+            {% if current_step < 5 %}
+            <button type="button"
+                    class="btn btn-primary"
+                    onclick="document.getElementById('nav_action').value='next'; this.closest('form').submit();">
+                Next &gt;
+            </button>
+            {% endif %}
+
             </div>
         </form>
     </div>
