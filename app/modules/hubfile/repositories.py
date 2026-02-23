@@ -35,6 +35,21 @@ class HubfileRepository(BaseRepository):
 class HubfileViewRecordRepository(BaseRepository):
     def __init__(self):
         super().__init__(HubfileViewRecord)
+    
+    def the_record_exists(self, hubfile: Hubfile, user_cookie: str):
+        return self.model.query.filter_by(
+            user_id=current_user.id if current_user.is_authenticated else None,
+            file_id=hubfile.id,
+            view_cookie=user_cookie
+        ).first()
+
+    def create_new_record(self, hubfile: Hubfile, user_cookie: str) -> HubfileViewRecord:
+        return self.create(
+            user_id=current_user.id if current_user.is_authenticated else None,
+            file_id=hubfile.id,
+            view_date=datetime.now(pytz.utc),
+            view_cookie=user_cookie
+        )
 
 
 class HubfileDownloadRecordRepository(BaseRepository):

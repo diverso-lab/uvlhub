@@ -18,8 +18,13 @@ from app.modules.dataset.decorators import is_dataset_owner
 from app.modules.dataset.services import DataSetService, DOIMappingService, DSMetaDataService
 from app.modules.flamapy.services import FlamapyService
 from app.modules.hubfile import hubfile_bp
-from app.modules.hubfile.services import HubfileDownloadRecordService, HubfileService
+from app.modules.hubfile.services import (
+    HubfileDownloadRecordService, 
+    HubfileService,
+    HubfileViewRecordService,
+)
 
+hubfile_view_record_service = HubfileViewRecordService()
 hubfile_download_record_service = HubfileDownloadRecordService()
 
 flamapy_service = FlamapyService()
@@ -157,13 +162,16 @@ def view_unsynchronized_file(dataset_id, file_id):
     except Exception as e:
         content = f"[Error reading file: {e}]"
 
-    return render_template(
+    user_cookie = hubfile_view_record_service.create_cookie(hubfile=selected_file)
+    resp = make_response(render_template(
         "hubfile/view_file.html",
         selected_file=selected_file,
         hubfiles=dataset.files(),
         dataset=dataset,
         uvl_content=content,
-    )
+    ))
+    resp.set_cookie("file_view_cookie", user_cookie)
+    return resp
 
 
 @hubfile_bp.route("/doi/<path:doi>/files/<string:filename>", methods=["GET"])
@@ -201,13 +209,16 @@ def view_uvl_with_doi(doi, filename):
     except Exception as e:
         content = f"[Error reading file: {e}]"
 
-    return render_template(
+    user_cookie = hubfile_view_record_service.create_cookie(hubfile=selected_file)
+    resp = make_response(render_template(
         "hubfile/view_file.html",
         selected_file=selected_file,
         hubfiles=dataset.files(),
         dataset=dataset,
         uvl_content=content,
-    )
+    ))
+    resp.set_cookie("file_view_cookie", user_cookie)
+    return resp
 
 
 @hubfile_bp.route("/hubfiles/raw/<int:file_id>/<path:filename>", methods=["GET"])

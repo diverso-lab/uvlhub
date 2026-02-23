@@ -13,7 +13,7 @@ from flask_login import current_user
 from app import db
 from app.modules.auth.models import User
 from app.modules.dataset.models import DataSet
-from app.modules.hubfile.models import Hubfile
+from app.modules.hubfile.models import Hubfile, HubfileViewRecord
 from app.modules.hubfile.repositories import (
     HubfileDownloadRecordRepository,
     HubfileRepository,
@@ -134,6 +134,30 @@ class HubfileDownloadRecordService(BaseService):
         if not existing_record:
             self.create_new_record(hubfile=hubfile, user_cookie=user_cookie)
             self.statistics_service.increment_feature_models_downloaded()
+
+        return user_cookie
+
+
+class HubfileViewRecordService(BaseService):
+    def __init__(self):
+        super().__init__(HubfileViewRecordRepository())
+        self.statistics_service = StatisticsService()
+
+    def the_record_exists(self, hubfile: Hubfile, user_cookie: str):
+        return self.repository.the_record_exists(hubfile=hubfile, user_cookie=user_cookie)
+
+    def create_new_record(self, hubfile: Hubfile, user_cookie: str) -> HubfileViewRecord:
+        return self.repository.create_new_record(hubfile=hubfile, user_cookie=user_cookie)
+
+    def create_cookie(self, hubfile: Hubfile) -> str:
+        user_cookie = request.cookies.get("file_view_cookie")
+        if not user_cookie:
+            user_cookie = str(uuid.uuid4())
+
+        existing = self.the_record_exists(hubfile=hubfile, user_cookie=user_cookie)
+        if not existing:
+            self.create_new_record(hubfile=hubfile, user_cookie=user_cookie)
+            self.statistics_service.increment_feature_models_viewed()
 
         return user_cookie
 
