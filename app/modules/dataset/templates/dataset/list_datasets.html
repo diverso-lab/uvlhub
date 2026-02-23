@@ -117,6 +117,14 @@
                                     <span class="path2"></span>
                                 </i>
                             </a>
+                            <a href="{{ url_for('dataset.edit_metadata', dataset_id=dataset.id) }}" 
+                                class="btn btn-sm btn-icon btn-light-primary me-1" 
+                                title="Edit Metadata">
+                                    <i class="ki-duotone ki-pencil fs-2">
+                                        <span class="path1"></span>
+                                        <span class="path2"></span>
+                                    </i>
+                                </a>
                             <a href="javascript:void(0);" 
                                 class="btn btn-sm btn-light-primary me-1 btn-sync d-inline-flex align-items-center"
                                 data-dataset-id="{{ dataset.id }}" 
