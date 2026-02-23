@@ -19,17 +19,24 @@
 
             <div class="card">
                 <div class="card-body">
+                    
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <span class="badge bg-secondary">{{ dataset.get_cleaned_publication_type() }}</span>
+                            <p class="text-muted mt-2 mb-1">
+                                {{ dataset.created_at.strftime('%B %d, %Y at %I:%M %p') }}
+                            </p>
+                        </div>
 
-                    <div class="d-flex align-items-center justify-content-between">
-                        <span class="badge bg-secondary">{{ dataset.get_cleaned_publication_type() }}</span>
+                        {% if dataset.user_id == current_user.id and not dataset.ds_meta_data.dataset_doi %}
+                            <a href="{{ url_for('dataset.edit_metadata', dataset_id=dataset.id) }}" 
+                               class="btn btn-sm btn-primary">
+                                <i class="fa fa-edit me-1"></i> Edit Metadata
+                            </a>
+                        {% endif %}
                     </div>
 
-                    <p class="text-muted mt-2 mb-1">
-                        {{ dataset.created_at.strftime('%B %d, %Y at %I:%M %p') }}
-                    </p>
-
-                    <!-- Autores estilo Zenodo -->
-                    <div class="row mb-3">
+                    <div class="row mb-3 mt-4">
                         <div class="col-12">
                             <ul class="list-unstyled mb-0" style="font-size: 0.85rem;">
                             {% for author in dataset.ds_meta_data.authors %}
@@ -153,7 +160,7 @@
             <div class="card-toolbar flex-row-fluid justify-content-end gap-5">
                 <a href="/datasets/download/{{ dataset.id }}" class="btn btn-primary">
                     <i data-feather="download" class="me-1" style="width: 14px; height: 14px;"></i>
-                                Download dataset ({{ dataset.get_file_total_size_for_human() }})
+                    Download dataset ({{ dataset.get_file_total_size_for_human() }})
                 </a>
             </div>
         </div>
@@ -219,8 +226,8 @@
                                 <!-- View page link -->
 <a href="{{ file.get_url()}}"
    class="btn btn-sm btn-light btn-active-light-secondary me-1">
-    <i class="ki-duotone ki-eye fs-5"></i> View
-</a>
+                                    <i class="ki-duotone ki-eye fs-5"></i> View
+                                </a>
 
 
                             </div>
