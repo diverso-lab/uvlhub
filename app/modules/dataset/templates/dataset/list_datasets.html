@@ -55,6 +55,14 @@
                                     <span class="path3"></span>
                                 </i>
                             </a>
+                            <a href="{{ url_for('dataset.edit_metadata', dataset_id=dataset.id) }}" 
+                               class="btn btn-sm btn-icon btn-light-primary me-1" 
+                               title="Edit Metadata">
+                                <i class="ki-duotone ki-pencil fs-2">
+                                    <span class="path1"></span>
+                                    <span class="path2"></span>
+                                </i>
+                            </a>
                             <a href="{{ url_for('dataset.download_dataset', dataset_id=dataset.id) }}" class="btn btn-sm btn-icon btn-light-success" title="Download">
                                 <i class="ki-duotone ki-folder-down fs-2">
                                     <span class="path1"></span>
