@@ -272,14 +272,7 @@
 
                     <div class="fv-row mb-10">
                         <label class="form-label d-flex align-items-center gap-2">Publication DOI</label>
-                        {% if is_edit %}
-                            <input type="hidden" name="publication_doi" value="{{ dataset.ds_meta_data.publication_doi if dataset else '' }}">
-                            <div class="form-control form-control-solid bg-light text-muted">
-                                {{ dataset.ds_meta_data.publication_doi if dataset and dataset.ds_meta_data.publication_doi else 'No DOI assigned' }}
-                            </div>
-                        {% else %}
-                            <input name="publication_doi" class="form-control" value="{{ dataset.ds_meta_data.publication_doi if dataset else '' }}">
-                        {% endif %}
+                        <input name="publication_doi" class="form-control" value="{{ dataset.ds_meta_data.publication_doi if dataset else '' }}">
                     </div>
 
                     <div class="fv-row mb-10">

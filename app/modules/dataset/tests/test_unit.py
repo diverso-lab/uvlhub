@@ -97,6 +97,7 @@ def test_update_metadata_from_request_success():
         [
             ("title", "Updated dataset"),
             ("description", "Updated description"),
+            ("publication_doi", "10.9999/new-doi"),
             ("publication_type", "datamanagementplan"),
             ("dataset_type", "zenodo_anonymous"),
             ("tags[]", "tag1"),
@@ -117,6 +118,7 @@ def test_update_metadata_from_request_success():
 
     assert dataset.ds_meta_data.title == "Updated dataset"
     assert dataset.ds_meta_data.description == "Updated description"
+    assert dataset.ds_meta_data.publication_doi == "10.9999/new-doi"
     assert dataset.ds_meta_data.tags == "tag1,tag2"
     assert dataset.ds_meta_data.dataset_anonymous is True
     assert dataset.ds_meta_data.publication_type.value == "datamanagementplan"

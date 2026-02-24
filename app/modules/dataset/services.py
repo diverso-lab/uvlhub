@@ -223,6 +223,7 @@ class DataSetService(BaseService):
     def _apply_metadata_from_form(self, dataset: DataSet, form_data) -> None:
         dataset.ds_meta_data.title = form_data.get("title", "").strip()
         dataset.ds_meta_data.description = form_data.get("description", "")
+        dataset.ds_meta_data.publication_doi = (form_data.get("publication_doi", "") or "").strip()
         dataset.ds_meta_data.tags = self._parse_tags_from_form(form_data)
         dataset.ds_meta_data.dataset_anonymous = form_data.get("dataset_type", "draft") == "zenodo_anonymous"
 
