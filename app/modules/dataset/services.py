@@ -2,6 +2,7 @@ import hashlib
 import logging
 import os
 import re
+import shutil
 import tempfile
 import uuid
 import zipfile
@@ -235,6 +236,15 @@ class DataSetService(BaseService):
         except ValueError:
             dataset.ds_meta_data.publication_type = PublicationType.OTHER
 
+    def _get_requested_dataset_type(self, form_data) -> str:
+        dataset_type = (form_data.get("dataset_type") or "draft").strip()
+        allowed_types = {"draft", "zenodo", "zenodo_anonymous"}
+        if dataset_type not in allowed_types:
+            raise DatasetMetadataValidationError(
+                f"Invalid dataset type '{dataset_type}'. Allowed values: draft, zenodo, zenodo_anonymous."
+            )
+        return dataset_type
+
     def _replace_authors_from_form(self, dataset: DataSet, form_data) -> None:
         authors = self._parse_authors_from_form(form_data)
         seen_author_keys = set()
@@ -278,12 +288,71 @@ class DataSetService(BaseService):
             )
             dataset.ds_meta_data.authors.append(new_author)
 
-    def update_metadata_from_request(self, dataset: DataSet, form_data) -> None:
+    def _sync_metadata_in_zenodo_if_needed(self, dataset: DataSet, zenodo_service) -> None:
+        if not dataset.ds_meta_data.dataset_doi:
+            return
+
+        deposition_id = dataset.ds_meta_data.deposition_id
+        if not deposition_id:
+            raise DatasetMetadataUpdateError("Dataset is synchronized but missing Zenodo deposition_id.")
+
+        metadata = zenodo_service.build_metadata(
+            dataset, anonymous=dataset.ds_meta_data.dataset_anonymous
+        )
+        zenodo_service.update_deposition(deposition_id, metadata)
+
+    def _publish_dataset_to_zenodo(self, dataset: DataSet, zenodo_service) -> None:
+        anonymous = bool(dataset.ds_meta_data.dataset_anonymous)
+        deposition = zenodo_service.create_new_deposition(dataset, anonymous=anonymous)
+        deposition_id = deposition.get("id")
+        if not deposition_id:
+            raise DatasetMetadataUpdateError("Zenodo did not return a deposition id.")
+
+        zip_path = self.zip_dataset(dataset)
         try:
+            zenodo_service.upload_zip(dataset, deposition_id, zip_path)
+        finally:
+            if zip_path and os.path.exists(zip_path):
+                temp_dir = os.path.dirname(zip_path)
+                shutil.rmtree(temp_dir, ignore_errors=True)
+
+        zenodo_service.publish_deposition(deposition_id)
+        doi = zenodo_service.get_doi(deposition_id)
+        if not doi:
+            raise DatasetMetadataUpdateError("Zenodo did not return a DOI after publishing.")
+
+        dataset.ds_meta_data.deposition_id = deposition_id
+        dataset.ds_meta_data.dataset_doi = doi
+
+    def _transition_dataset_state_if_needed(self, dataset: DataSet, dataset_type: str, zenodo_service) -> None:
+        wants_sync = dataset_type in {"zenodo", "zenodo_anonymous"}
+        is_synced = bool(dataset.ds_meta_data.dataset_doi)
+
+        if not wants_sync:
+            dataset.ds_meta_data.dataset_doi = None
+            dataset.ds_meta_data.deposition_id = None
+            return
+
+        if zenodo_service is None:
+            raise DatasetMetadataUpdateError("Zenodo service is required to synchronize the dataset.")
+
+        if is_synced:
+            self._sync_metadata_in_zenodo_if_needed(dataset, zenodo_service)
+            return
+
+        self._publish_dataset_to_zenodo(dataset, zenodo_service)
+
+    def update_metadata_from_request(self, dataset: DataSet, form_data, zenodo_service=None) -> None:
+        try:
+            dataset_type = self._get_requested_dataset_type(form_data)
             self._apply_metadata_from_form(dataset, form_data)
             self._replace_authors_from_form(dataset, form_data)
+            self._transition_dataset_state_if_needed(dataset, dataset_type, zenodo_service)
             self.repository.session.commit()
         except DatasetMetadataValidationError:
+            self.repository.session.rollback()
+            raise
+        except DatasetMetadataUpdateError:
             self.repository.session.rollback()
             raise
         except Exception as exc:
