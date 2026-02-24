@@ -168,9 +168,7 @@ class DataSetService(BaseService):
             )
             with urllib_request.urlopen(req, timeout=5) as response:
                 if response.status != 200:
-                    raise DatasetMetadataValidationError(
-                        f"Could not validate ORCID (status {response.status})."
-                    )
+                    raise DatasetMetadataValidationError(f"Could not validate ORCID (status {response.status}).")
         except urllib_error.HTTPError as exc:
             if exc.code == 404:
                 raise DatasetMetadataValidationError("ORCID not found.")
@@ -297,9 +295,7 @@ class DataSetService(BaseService):
         if not deposition_id:
             raise DatasetMetadataUpdateError("Dataset is synchronized but missing Zenodo deposition_id.")
 
-        metadata = zenodo_service.build_metadata(
-            dataset, anonymous=dataset.ds_meta_data.dataset_anonymous
-        )
+        metadata = zenodo_service.build_metadata(dataset, anonymous=dataset.ds_meta_data.dataset_anonymous)
         zenodo_service.update_deposition(deposition_id, metadata)
 
     def _publish_dataset_to_zenodo(self, dataset: DataSet, zenodo_service) -> None:

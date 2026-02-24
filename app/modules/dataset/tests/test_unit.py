@@ -1,14 +1,14 @@
-from urllib.error import HTTPError
 from unittest.mock import MagicMock, patch
+from urllib.error import HTTPError
 
 import pytest
 from werkzeug.datastructures import MultiDict
 
 from app import create_app
 from app.modules.dataset.services import (
-    DataSetService,
     DatasetMetadataUpdateError,
     DatasetMetadataValidationError,
+    DataSetService,
 )
 
 
@@ -111,9 +111,11 @@ def test_update_metadata_from_request_success():
         ]
     )
 
-    with patch.object(service, "zip_dataset", return_value="C:\\tmp\\dataset_1.zip"), patch(
-        "app.modules.dataset.services.os.path.exists", return_value=True
-    ), patch("app.modules.dataset.services.shutil.rmtree"):
+    with (
+        patch.object(service, "zip_dataset", return_value="C:\\tmp\\dataset_1.zip"),
+        patch("app.modules.dataset.services.os.path.exists", return_value=True),
+        patch("app.modules.dataset.services.shutil.rmtree"),
+    ):
         service.update_metadata_from_request(dataset, form_data, zenodo_service=zenodo_service)
 
     assert dataset.ds_meta_data.title == "Updated dataset"
@@ -371,9 +373,11 @@ def test_update_metadata_from_request_unsynced_dataset_to_zenodo_publishes_and_s
     zenodo_service.publish_deposition = MagicMock()
     zenodo_service.get_doi.return_value = "10.5072/zenodo.101"
 
-    with patch.object(service, "zip_dataset", return_value="C:\\tmp\\dataset_1.zip"), patch(
-        "app.modules.dataset.services.os.path.exists", return_value=True
-    ), patch("app.modules.dataset.services.shutil.rmtree"):
+    with (
+        patch.object(service, "zip_dataset", return_value="C:\\tmp\\dataset_1.zip"),
+        patch("app.modules.dataset.services.os.path.exists", return_value=True),
+        patch("app.modules.dataset.services.shutil.rmtree"),
+    ):
         form_data = MultiDict(
             [("title", "Updated dataset"), ("description", "Updated description"), ("dataset_type", "zenodo")]
         )

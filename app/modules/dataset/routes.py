@@ -3,19 +3,31 @@ import os
 import shutil
 import tempfile
 from datetime import datetime
-from flask import abort, current_app, jsonify, make_response, redirect, render_template, request, send_file, url_for, flash
+
+from flask import (
+    abort,
+    current_app,
+    flash,
+    jsonify,
+    make_response,
+    redirect,
+    render_template,
+    request,
+    send_file,
+    url_for,
+)
 from flask_login import current_user, login_required
 
 from app.modules.apikeys.decorators import require_api_key
 from app.modules.dataset import dataset_bp
 from app.modules.dataset.decorators import is_dataset_owner
 from app.modules.dataset.forms import DataSetForm
-from app.modules.dataset.models import DataSet
+from app.modules.dataset.models import DataSet, PublicationType
 from app.modules.dataset.services import (
     AuthorService,
-    DataSetService,
     DatasetMetadataUpdateError,
     DatasetMetadataValidationError,
+    DataSetService,
     DOIMappingService,
     DSDownloadRecordService,
     DSMetaDataService,
@@ -28,7 +40,6 @@ from app.modules.featuremodel.services import FeatureModelService
 from app.modules.hubfile.models import Hubfile
 from app.modules.hubfile.services import HubfileService
 from app.modules.zenodo.services import ZenodoDatasetService, ZenodoService
-from app.modules.dataset.models import PublicationType
 
 logger = logging.getLogger(__name__)
 
@@ -119,7 +130,8 @@ def create_dataset():
     hubfile_service.clear_temp()
     return render_template("dataset/create_and_edit_dataset.html", form=form)
 
-@dataset_bp.route('/dataset/edit/<int:dataset_id>', methods=['GET', 'POST'])
+
+@dataset_bp.route("/dataset/edit/<int:dataset_id>", methods=["GET", "POST"])
 @login_required
 def edit_metadata(dataset_id):
     dataset = dataset_service.get_or_404(dataset_id)
@@ -127,7 +139,7 @@ def edit_metadata(dataset_id):
     if dataset.user_id != current_user.id:
         abort(403)
 
-    if request.method == 'POST':
+    if request.method == "POST":
         is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
         try:
             dataset_service.update_metadata_from_request(dataset, request.form, zenodo_service=zenodo_service)
@@ -149,9 +161,16 @@ def edit_metadata(dataset_id):
                 return jsonify({"message": f"Unexpected error updating metadata: {exc}"}), 400
             flash(f"Unexpected error updating metadata: {exc}", "danger")
 
-        return redirect(url_for('dataset.list_dataset'))
+        return redirect(url_for("dataset.list_dataset"))
 
-    return render_template('dataset/create_and_edit_dataset.html', dataset=dataset, is_edit = True, form=form, PublicationType=PublicationType)
+    return render_template(
+        "dataset/create_and_edit_dataset.html",
+        dataset=dataset,
+        is_edit=True,
+        form=form,
+        PublicationType=PublicationType,
+    )
+
 
 @dataset_bp.route("/datasets/list", methods=["GET"])
 @login_required
