@@ -279,3 +279,92 @@ def test_update_metadata_from_request_draft_sets_dataset_anonymous_false():
 
     assert dataset.ds_meta_data.dataset_anonymous is False
     service.repository.session.commit.assert_called_once()
+
+
+def test_update_metadata_from_request_synced_dataset_updates_zenodo_deposition():
+    service = DataSetService()
+    service.repository.session = MagicMock()
+    dataset = _mock_dataset_for_edit()
+    dataset.ds_meta_data.dataset_doi = "10.1234/demo"
+    dataset.ds_meta_data.deposition_id = 99
+
+    zenodo_service = MagicMock()
+    zenodo_service.build_metadata.return_value = {"title": "Updated dataset"}
+    zenodo_service.update_deposition = MagicMock()
+
+    form_data = MultiDict(
+        [("title", "Updated dataset"), ("description", "Updated description"), ("dataset_type", "zenodo")]
+    )
+
+    service.update_metadata_from_request(dataset, form_data, zenodo_service=zenodo_service)
+
+    zenodo_service.build_metadata.assert_called_once()
+    zenodo_service.update_deposition.assert_called_once_with(99, {"title": "Updated dataset"})
+    service.repository.session.commit.assert_called_once()
+
+
+def test_update_metadata_from_request_synced_dataset_without_deposition_id_raises_error():
+    service = DataSetService()
+    service.repository.session = MagicMock()
+    dataset = _mock_dataset_for_edit()
+    dataset.ds_meta_data.dataset_doi = "10.1234/demo"
+    dataset.ds_meta_data.deposition_id = None
+
+    zenodo_service = MagicMock()
+    form_data = MultiDict(
+        [("title", "Updated dataset"), ("description", "Updated description"), ("dataset_type", "zenodo")]
+    )
+
+    with pytest.raises(DatasetMetadataUpdateError, match="missing Zenodo deposition_id"):
+        service.update_metadata_from_request(dataset, form_data, zenodo_service=zenodo_service)
+
+    service.repository.session.rollback.assert_called_once()
+
+
+def test_update_metadata_from_request_synced_dataset_to_draft_clears_zenodo_fields():
+    service = DataSetService()
+    service.repository.session = MagicMock()
+    dataset = _mock_dataset_for_edit()
+    dataset.ds_meta_data.dataset_doi = "10.1234/demo"
+    dataset.ds_meta_data.deposition_id = 99
+
+    zenodo_service = MagicMock()
+    form_data = MultiDict(
+        [("title", "Updated dataset"), ("description", "Updated description"), ("dataset_type", "draft")]
+    )
+
+    service.update_metadata_from_request(dataset, form_data, zenodo_service=zenodo_service)
+
+    assert dataset.ds_meta_data.dataset_doi is None
+    assert dataset.ds_meta_data.deposition_id is None
+    zenodo_service.update_deposition.assert_not_called()
+    service.repository.session.commit.assert_called_once()
+
+
+def test_update_metadata_from_request_unsynced_dataset_to_zenodo_publishes_and_sets_doi():
+    service = DataSetService()
+    service.repository.session = MagicMock()
+    dataset = _mock_dataset_for_edit()
+    dataset.ds_meta_data.dataset_doi = None
+    dataset.ds_meta_data.deposition_id = None
+
+    zenodo_service = MagicMock()
+    zenodo_service.create_new_deposition.return_value = {"id": 101}
+    zenodo_service.upload_zip = MagicMock()
+    zenodo_service.publish_deposition = MagicMock()
+    zenodo_service.get_doi.return_value = "10.5072/zenodo.101"
+
+    with patch.object(service, "zip_dataset", return_value="C:\\tmp\\dataset_1.zip"), patch(
+        "app.modules.dataset.services.os.path.exists", return_value=True
+    ), patch("app.modules.dataset.services.shutil.rmtree"):
+        form_data = MultiDict(
+            [("title", "Updated dataset"), ("description", "Updated description"), ("dataset_type", "zenodo")]
+        )
+        service.update_metadata_from_request(dataset, form_data, zenodo_service=zenodo_service)
+
+    zenodo_service.create_new_deposition.assert_called_once()
+    zenodo_service.upload_zip.assert_called_once_with(dataset, 101, "C:\\tmp\\dataset_1.zip")
+    zenodo_service.publish_deposition.assert_called_once_with(101)
+    assert dataset.ds_meta_data.deposition_id == 101
+    assert dataset.ds_meta_data.dataset_doi == "10.5072/zenodo.101"
+    service.repository.session.commit.assert_called_once()
