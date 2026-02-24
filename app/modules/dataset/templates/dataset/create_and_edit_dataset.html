@@ -157,7 +157,15 @@
                     <!--end::Heading-->
                     <!--begin::Input group-->
                     <div class="fv-row">
-                        {% set current_type = 'zenodo_anonymous' if dataset and dataset.ds_meta_data.dataset_anonymous else ('draft' if dataset else 'zenodo') %}
+                        {% if dataset %}
+                            {% if dataset.ds_meta_data.dataset_doi %}
+                                {% set current_type = 'zenodo_anonymous' if dataset.ds_meta_data.dataset_anonymous else 'zenodo' %}
+                            {% else %}
+                                {% set current_type = 'draft' %}
+                            {% endif %}
+                        {% else %}
+                            {% set current_type = 'zenodo' %}
+                        {% endif %}
                         {% for type_val, type_label, icon in [
                             ('zenodo', 'Permanent upload to Zenodo', 'ki-check-circle'),
                             ('zenodo_anonymous', 'Permanent (anonymous) upload to Zenodo', 'ki-eye-slash'),
