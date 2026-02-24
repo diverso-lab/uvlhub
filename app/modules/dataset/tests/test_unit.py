@@ -73,6 +73,11 @@ def _mock_dataset_for_edit():
     dataset.ds_meta_data = MagicMock()
     dataset.ds_meta_data.id = 1
     dataset.ds_meta_data.authors = []
+    dataset.ds_meta_data.dataset_doi = None
+    dataset.ds_meta_data.deposition_id = None
+    dataset.ds_meta_data.publication_type = None
+    dataset.ds_meta_data.dataset_anonymous = False
+    dataset.ds_meta_data.tags = ""
     return dataset
 
 
@@ -82,6 +87,11 @@ def test_update_metadata_from_request_success():
     service.author_repository.create = MagicMock(side_effect=lambda **kwargs: kwargs)
     service._validate_orcid = MagicMock(side_effect=["0000-0002-1825-0097", ""])
     dataset = _mock_dataset_for_edit()
+    zenodo_service = MagicMock()
+    zenodo_service.create_new_deposition.return_value = {"id": 101}
+    zenodo_service.upload_zip = MagicMock()
+    zenodo_service.publish_deposition = MagicMock()
+    zenodo_service.get_doi.return_value = "10.5072/zenodo.101"
 
     form_data = MultiDict(
         [
@@ -100,7 +110,10 @@ def test_update_metadata_from_request_success():
         ]
     )
 
-    service.update_metadata_from_request(dataset, form_data)
+    with patch.object(service, "zip_dataset", return_value="C:\\tmp\\dataset_1.zip"), patch(
+        "app.modules.dataset.services.os.path.exists", return_value=True
+    ), patch("app.modules.dataset.services.shutil.rmtree"):
+        service.update_metadata_from_request(dataset, form_data, zenodo_service=zenodo_service)
 
     assert dataset.ds_meta_data.title == "Updated dataset"
     assert dataset.ds_meta_data.description == "Updated description"
@@ -108,6 +121,8 @@ def test_update_metadata_from_request_success():
     assert dataset.ds_meta_data.dataset_anonymous is True
     assert dataset.ds_meta_data.publication_type.value == "datamanagementplan"
     assert len(dataset.ds_meta_data.authors) == 2
+    assert dataset.ds_meta_data.deposition_id == 101
+    assert dataset.ds_meta_data.dataset_doi == "10.5072/zenodo.101"
     service.repository.session.commit.assert_called_once()
 
 
