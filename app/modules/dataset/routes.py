@@ -127,14 +127,10 @@ def edit_metadata(dataset_id):
     if dataset.user_id != current_user.id:
         abort(403)
 
-    if dataset.ds_meta_data.dataset_doi:
-        flash('Cannot edit metadata of a synchronized dataset.', 'danger')
-        return redirect(url_for('dataset.list_dataset'))
-
     if request.method == 'POST':
         is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
         try:
-            dataset_service.update_metadata_from_request(dataset, request.form)
+            dataset_service.update_metadata_from_request(dataset, request.form, zenodo_service=zenodo_service)
             if is_ajax:
                 return jsonify({"message": "Dataset updated successfully"}), 200
             flash("Dataset updated successfully!", "success")
