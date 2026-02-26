@@ -1,10 +1,14 @@
 import hashlib
 import logging
 import os
+import re
+import shutil
 import tempfile
 import uuid
 import zipfile
 from typing import List, Optional
+from urllib import error as urllib_error
+from urllib import request as urllib_request
 from zipfile import ZipFile
 
 import bleach
@@ -33,6 +37,15 @@ from app.modules.statistics.services import StatisticsService
 from core.services.BaseService import BaseService
 
 logger = logging.getLogger(__name__)
+ORCID_REGEX = re.compile(r"^\d{4}-\d{4}-\d{4}-\d{3}[0-9X]$")
+
+
+class DatasetMetadataValidationError(Exception):
+    pass
+
+
+class DatasetMetadataUpdateError(Exception):
+    pass
 
 
 def calculate_checksum_and_size(file_path):
@@ -114,46 +127,234 @@ class DataSetService(BaseService):
     def count_dsmetadata(self) -> int:
         return self.dsmetadata_repository.count()
 
-    def update_from_form(self, form: DataSetForm, current_user: User, dataset: DataSet) -> DataSet:
-        main_author = {
-            "name": f"{current_user.profile.surname}, {current_user.profile.name}",
-            "affiliation": current_user.profile.affiliation,
-            "orcid": current_user.profile.get_orcid(),
-        }
+    def _normalize_text(self, value: str) -> str:
+        return " ".join((value or "").strip().lower().split())
+
+    def _normalize_orcid(self, value: str) -> str:
+        raw = (value or "").strip()
+        if not raw:
+            return ""
+        raw = re.sub(r"^https?://orcid\.org/", "", raw, flags=re.IGNORECASE)
+        return raw.upper()
+
+    def _is_valid_orcid_checksum(self, orcid: str) -> bool:
+        digits = orcid.replace("-", "")
+        if not re.match(r"^\d{15}[\dX]$", digits):
+            return False
+        total = 0
+        for idx in range(15):
+            total = (total + int(digits[idx])) * 2
+        remainder = total % 11
+        result = (12 - remainder) % 11
+        check_digit = "X" if result == 10 else str(result)
+        return digits[15] == check_digit
+
+    def _validate_orcid(self, orcid: str) -> str:
+        normalized = self._normalize_orcid(orcid)
+        if not normalized:
+            return ""
+
+        if not ORCID_REGEX.match(normalized):
+            raise DatasetMetadataValidationError("Invalid ORCID format. Expected: 0000-0000-0000-0000.")
+
+        if not self._is_valid_orcid_checksum(normalized):
+            raise DatasetMetadataValidationError("Invalid ORCID checksum.")
+
         try:
+            req = urllib_request.Request(
+                f"https://pub.orcid.org/v3.0/{normalized}",
+                headers={"Accept": "application/json"},
+                method="GET",
+            )
+            with urllib_request.urlopen(req, timeout=5) as response:
+                if response.status != 200:
+                    raise DatasetMetadataValidationError(f"Could not validate ORCID (status {response.status}).")
+        except urllib_error.HTTPError as exc:
+            if exc.code == 404:
+                raise DatasetMetadataValidationError("ORCID not found.")
+            raise DatasetMetadataValidationError(f"Could not validate ORCID (status {exc.code}).")
+        except DatasetMetadataValidationError:
+            raise
+        except Exception:
+            raise DatasetMetadataValidationError("Could not validate ORCID due to network error.")
 
-            # Update dataset metadata
-            logger.info(f"Updating dsmetadata...: {form.get_dsmetadata()}")
-            dsmetadata = self.dsmetadata_repository.update(id=dataset.ds_meta_data.id, **form.get_dsmetadata())
+        return normalized
 
-            # Update authors
-            dsmetadata_info = form.get_dsmetadata()
-            is_anonymous = dsmetadata_info.get("dataset_anonymous", False)
+    def _parse_tags_from_form(self, form_data) -> str:
+        tags = form_data.getlist("tags[]")
+        if not tags:
+            raw_tags = form_data.get("tags", "")
+            tags = [tag.strip() for tag in raw_tags.split(",") if tag.strip()]
+        return ",".join(tags)
 
-            self.author_repository.delete_by_column(column_name="ds_meta_data_id", value=dataset.ds_meta_data.id)
+    def _parse_authors_from_form(self, form_data) -> list[dict]:
+        authors = []
+        idx = 0
+        while True:
+            name = form_data.get(f"authors[{idx}][name]")
+            if name is None:
+                break
+            authors.append(
+                {
+                    "name": name,
+                    "affiliation": form_data.get(f"authors[{idx}][affiliation]", ""),
+                    "orcid": form_data.get(f"authors[{idx}][orcid]", ""),
+                }
+            )
+            idx += 1
 
-            if is_anonymous:
-                author_list = form.get_anonymous_authors()
+        if authors:
+            return authors
+
+        author_names = form_data.getlist("author_names[]")
+        author_affiliations = form_data.getlist("author_affiliations[]")
+        author_orcids = form_data.getlist("author_orcids[]")
+        return [
+            {
+                "name": name,
+                "affiliation": aff,
+                "orcid": orcid,
+            }
+            for name, aff, orcid in zip(author_names, author_affiliations, author_orcids)
+        ]
+
+    def _apply_metadata_from_form(self, dataset: DataSet, form_data) -> None:
+        dataset.ds_meta_data.title = form_data.get("title", "").strip()
+        dataset.ds_meta_data.description = form_data.get("description", "")
+        dataset.ds_meta_data.publication_doi = (form_data.get("publication_doi", "") or "").strip()
+        dataset.ds_meta_data.tags = self._parse_tags_from_form(form_data)
+        dataset.ds_meta_data.dataset_anonymous = form_data.get("dataset_type", "draft") == "zenodo_anonymous"
+
+        pub_type = form_data.get("publication_type")
+        if not pub_type:
+            dataset.ds_meta_data.publication_type = None
+            return
+
+        try:
+            dataset.ds_meta_data.publication_type = PublicationType(pub_type)
+        except ValueError:
+            dataset.ds_meta_data.publication_type = PublicationType.OTHER
+
+    def _get_requested_dataset_type(self, form_data) -> str:
+        dataset_type = (form_data.get("dataset_type") or "draft").strip()
+        allowed_types = {"draft", "zenodo", "zenodo_anonymous"}
+        if dataset_type not in allowed_types:
+            raise DatasetMetadataValidationError(
+                f"Invalid dataset type '{dataset_type}'. Allowed values: draft, zenodo, zenodo_anonymous."
+            )
+        return dataset_type
+
+    def _replace_authors_from_form(self, dataset: DataSet, form_data) -> None:
+        authors = self._parse_authors_from_form(form_data)
+        seen_author_keys = set()
+        seen_orcids = set()
+
+        dataset.ds_meta_data.authors.clear()
+
+        for author in authors:
+            name = (author.get("name") or "").strip()
+            if not name:
+                continue
+
+            affiliation = (author.get("affiliation") or "").strip()
+            normalized_name = self._normalize_text(name)
+            normalized_affiliation = self._normalize_text(affiliation)
+            normalized_orcid = self._normalize_orcid(author.get("orcid"))
+
+            if normalized_orcid:
+                if normalized_orcid in seen_orcids:
+                    raise DatasetMetadataValidationError(
+                        f"Duplicate author detected: ORCID {normalized_orcid} is already in the list."
+                    )
+                seen_orcids.add(normalized_orcid)
             else:
-                other_authors = form.get_authors()
-                if other_authors:
-                    author_list = other_authors
-                else:
-                    author_list = [main_author]
+                author_key = (normalized_name, normalized_affiliation)
+                if author_key in seen_author_keys:
+                    raise DatasetMetadataValidationError("Duplicate author detected: same name and affiliation.")
+                seen_author_keys.add(author_key)
 
-            for author_data in author_list:
-                author = self.author_repository.create(commit=False, ds_meta_data_id=dsmetadata.id, **author_data)
-                dsmetadata.authors.append(author)
+            try:
+                sanitized_orcid = self._validate_orcid(author.get("orcid"))
+            except DatasetMetadataValidationError as exc:
+                raise DatasetMetadataValidationError(f"Invalid ORCID for author '{name}': {exc}")
 
-            #   Save updated data in local
+            new_author = self.author_repository.create(
+                commit=False,
+                name=name,
+                affiliation=affiliation,
+                orcid=sanitized_orcid,
+                ds_meta_data_id=dataset.ds_meta_data.id,
+            )
+            dataset.ds_meta_data.authors.append(new_author)
+
+    def _sync_metadata_in_zenodo_if_needed(self, dataset: DataSet, zenodo_service) -> None:
+        if not dataset.ds_meta_data.dataset_doi:
+            return
+
+        deposition_id = dataset.ds_meta_data.deposition_id
+        if not deposition_id:
+            raise DatasetMetadataUpdateError("Dataset is synchronized but missing Zenodo deposition_id.")
+
+        metadata = zenodo_service.build_metadata(dataset, anonymous=dataset.ds_meta_data.dataset_anonymous)
+        zenodo_service.update_deposition(deposition_id, metadata)
+
+    def _publish_dataset_to_zenodo(self, dataset: DataSet, zenodo_service) -> None:
+        anonymous = bool(dataset.ds_meta_data.dataset_anonymous)
+        deposition = zenodo_service.create_new_deposition(dataset, anonymous=anonymous)
+        deposition_id = deposition.get("id")
+        if not deposition_id:
+            raise DatasetMetadataUpdateError("Zenodo did not return a deposition id.")
+
+        zip_path = self.zip_dataset(dataset)
+        try:
+            zenodo_service.upload_zip(dataset, deposition_id, zip_path)
+        finally:
+            if zip_path and os.path.exists(zip_path):
+                temp_dir = os.path.dirname(zip_path)
+                shutil.rmtree(temp_dir, ignore_errors=True)
+
+        zenodo_service.publish_deposition(deposition_id)
+        doi = zenodo_service.get_doi(deposition_id)
+        if not doi:
+            raise DatasetMetadataUpdateError("Zenodo did not return a DOI after publishing.")
+
+        dataset.ds_meta_data.deposition_id = deposition_id
+        dataset.ds_meta_data.dataset_doi = doi
+
+    def _transition_dataset_state_if_needed(self, dataset: DataSet, dataset_type: str, zenodo_service) -> None:
+        wants_sync = dataset_type in {"zenodo", "zenodo_anonymous"}
+        is_synced = bool(dataset.ds_meta_data.dataset_doi)
+
+        if not wants_sync:
+            dataset.ds_meta_data.dataset_doi = None
+            dataset.ds_meta_data.deposition_id = None
+            return
+
+        if zenodo_service is None:
+            raise DatasetMetadataUpdateError("Zenodo service is required to synchronize the dataset.")
+
+        if is_synced:
+            self._sync_metadata_in_zenodo_if_needed(dataset, zenodo_service)
+            return
+
+        self._publish_dataset_to_zenodo(dataset, zenodo_service)
+
+    def update_metadata_from_request(self, dataset: DataSet, form_data, zenodo_service=None) -> None:
+        try:
+            dataset_type = self._get_requested_dataset_type(form_data)
+            self._apply_metadata_from_form(dataset, form_data)
+            self._replace_authors_from_form(dataset, form_data)
+            self._transition_dataset_state_if_needed(dataset, dataset_type, zenodo_service)
             self.repository.session.commit()
-
-        except Exception as exc:
-            logger.info(f"Exception updating dataset from form...: {exc}")
+        except DatasetMetadataValidationError:
             self.repository.session.rollback()
-            raise exc
-
-        return self.get_by_id(dataset.id)
+            raise
+        except DatasetMetadataUpdateError:
+            self.repository.session.rollback()
+            raise
+        except Exception as exc:
+            self.repository.session.rollback()
+            raise DatasetMetadataUpdateError(str(exc))
 
     def create_from_form(self, form: DataSetForm, current_user: User) -> DataSet:
 

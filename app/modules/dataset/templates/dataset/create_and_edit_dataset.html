@@ -1,12 +1,12 @@
 {% extends "base_template.html" %}
 
-{% set title = "Upload dataset" %}
+{% set title = "Edit metadata" if is_edit else "Upload dataset" %}
 
 {% block breadcrumb %}
 
 <ol class="breadcrumb text-muted fs-6 fw-semibold">
     <li class="breadcrumb-item"><a href="/" class="">Home</a></li>
-    <li class="breadcrumb-item text-muted">Upload dataset</li>
+    <li class="breadcrumb-item text-muted">{{ title }}</li>
 </ol>
 
 {% endblock %}
@@ -76,7 +76,7 @@
                         <!--begin::Icon-->
                         <div class="stepper-icon w-40px h-40px">
                             <i class="ki-duotone ki-check fs-2 stepper-check"></i>
-                            <span class="stepper-number">3</span>
+                            <span class="stepper-number">{% if is_edit %}2{% else %}3{% endif %}</span>
                         </div>
                         <!--end::Icon-->
                         <!--begin::Label-->
@@ -98,7 +98,7 @@
                         <!--begin::Icon-->
                         <div class="stepper-icon w-40px h-40px">
                             <i class="ki-duotone ki-check fs-2 stepper-check"></i>
-                            <span class="stepper-number">4</span>
+                            <span class="stepper-number">{% if is_edit %}3{% else %}4{% endif %}</span>
                         </div>
                         <!--end::Icon-->
                         <!--begin::Label-->
@@ -120,12 +120,12 @@
                         <!--begin::Icon-->
                         <div class="stepper-icon w-40px h-40px">
                             <i class="ki-duotone ki-check fs-2 stepper-check"></i>
-                            <span class="stepper-number">5</span>
+                            <span class="stepper-number">{% if is_edit %}4{% else %}5{% endif %}</span>
                         </div>
                         <!--end::Icon-->
                         <!--begin::Label-->
                         <div class="stepper-label">
-                            <h3 class="stepper-title">Upload dataset</h3>
+                            <h3 class="stepper-title">{% if is_edit %}Save dataset{% else %}Upload dataset{% endif %}</h3>
                         </div>
                         <!--end::Label-->
                     </div>
@@ -141,8 +141,9 @@
     <!--begin::Content-->
     <div class="card d-flex flex-row-fluid flex-center">
         <!--begin::Form-->
-        <div class="card-body py-20 w-100 mw-xl-700px px-9" novalidate="novalidate">
+        <div class="card-body py-20 w-100 mw-xl-700px px-9" novalidate="novalidate" id="dataset_form_container">
 
+            {# ── STEP 1 — Dataset type ── #}
             <div class="current" data-kt-stepper-element="content">
                 <!--begin::Wrapper-->
                 <div class="w-100">
@@ -156,73 +157,49 @@
                     <!--end::Heading-->
                     <!--begin::Input group-->
                     <div class="fv-row">
-                        <div class="row">
-
-                            <div class="col-lg-12">
-                                <input type="radio" class="btn-check" name="dataset_type" value="zenodo" checked="checked" id="zenodo" />
-                                <label class="btn btn-outline btn-outline-dashed btn-active-light-primary p-7 d-flex align-items-center mb-10" for="zenodo">
-                                    <i class="ki-duotone ki-check-circle fs-3x me-5">
-                                        <span class="path1"></span>
-                                        <span class="path2"></span>
-                                        <span class="path3"></span>
-                                        <span class="path4"></span>
-                                        <span class="path5"></span>
-                                    </i>
-                                    <span class="d-block fw-semibold text-start">
-                                        <span class="text-gray-900 fw-bold d-block fs-4 mb-2">Permanent upload to Zenodo</span>
-                                        <span class="text-muted fw-semibold fs-6">Your dataset is ready to be uploaded to Zenodo permanently</span>
-                                    </span>
-                                </label>
-                            </div>
-
-                            <div class="col-lg-12">
-                                <input type="radio" class="btn-check" name="dataset_type" value="zenodo_anonymous" id="zenodo_anonymous" />
-                                <label class="btn btn-outline btn-outline-dashed btn-active-light-primary p-7 d-flex align-items-center mb-10" for="zenodo_anonymous">
-                                    <i class="ki-duotone ki-eye-slash fs-3x me-5">
-                                        <span class="path1"></span>
-                                        <span class="path2"></span>
-                                        <span class="path3"></span>
-                                        <span class="path4"></span>
-                                    </i>
-                                    <span class="d-block fw-semibold text-start">
-                                        <span class="text-gray-900 fw-bold d-block fs-4 mb-2">Permanent (anonymous) upload to Zenodo</span>
-                                        <span class="text-muted fw-semibold fs-6">
-                                            Your dataset is ready to be uploaded to Zenodo permanently, but you are currently in a double-blind peer review process. Therefore, you need the dataset to remain anonymous until the paper is published.</span>
-                                    </span>
-                                </label>
-                            </div>
-
-                            <div class="col-lg-12">
-                                <input type="radio" class="btn-check" name="dataset_type" value="draft" id="draft" />
-                                <label class="btn btn-outline btn-outline-dashed btn-active-light-primary p-7 d-flex align-items-center mb-10" for="draft">
-                                    <i class="ki-duotone ki-pencil fs-3x me-5">
-                                        <span class="path1"></span>
-                                        <span class="path2"></span>
-                                    </i>
-                                    <span class="d-block fw-semibold text-start">
-                                        <span class="text-gray-900 fw-bold d-block fs-4 mb-2">Draft</span>
-                                        <span class="text-muted fw-semibold fs-6">
-                                            You want to start uploading the dataset but it's not ready yet - no problem! You can complete it later. Your dataset will not be uploaded to Zenodo, it will be saved locally and will not be visible to the public.                                    </span>
-                                </label>
-                            </div>
-
+                        {% if dataset %}
+                            {% if dataset.ds_meta_data.dataset_doi %}
+                                {% set current_type = 'zenodo_anonymous' if dataset.ds_meta_data.dataset_anonymous else 'zenodo' %}
+                            {% else %}
+                                {% set current_type = 'draft' %}
+                            {% endif %}
+                        {% else %}
+                            {% set current_type = 'zenodo' %}
+                        {% endif %}
+                        {% for type_val, type_label, icon in [
+                            ('zenodo', 'Permanent upload to Zenodo', 'ki-check-circle'),
+                            ('zenodo_anonymous', 'Permanent (anonymous) upload to Zenodo', 'ki-eye-slash'),
+                            ('draft', 'Draft', 'ki-pencil')
+                        ] %}
+                        <div class="col-lg-12">
+                            <input type="radio" class="btn-check" name="dataset_type" value="{{ type_val }}" id="{{ type_val }}"
+                                {% if current_type == type_val %}checked
+                                {% elif loop.first and current_type not in ['zenodo', 'zenodo_anonymous', 'draft'] %}checked{% endif %} />
+                            <label class="btn btn-outline btn-outline-dashed btn-active-light-primary p-7 d-flex align-items-center mb-10" for="{{ type_val }}">
+                                <i class="ki-duotone {{ icon }} fs-3x me-5">
+                                    <span class="path1"></span>
+                                    <span class="path2"></span>
+                                    <span class="path3"></span>
+                                    <span class="path4"></span>
+                                    <span class="path5"></span>
+                                </i>
+                                <span class="d-block fw-semibold text-start">
+                                    <span class="text-gray-900 fw-bold d-block fs-4 mb-2">{{ type_label }}</span>
+                                </span>
+                            </label>
                         </div>
+                        {% endfor %}
                     </div>
                 </div>
             </div>
-            <!--end::Step 1-->
-            <!--begin::Step 2-->
-            <div data-kt-stepper-element="content">
-                <!--begin::Wrapper-->
+
+            {# ── STEP 2 — Upload UVL ── #}
+            <div data-kt-stepper-element="content" {% if is_edit %}style="display:none"{% endif %}>
                 <div class="w-100">
                     <!--begin::Heading-->
                     <div class="pb-10 pb-lg-15">
                         <!--begin::Title-->
                         <h2 class="fw-bold text-gray-900">Upload UVL files</h2>
-                        <div class="text-muted fw-semibold fs-6">
-                            You can upload as many UVL files as you want.
-                            All files will be automatically checked by our built-in syntax analyzer to ensure they are valid.
-                        </div>
                     </div>
 
                     <div class="mb-0 fv-row">
@@ -232,68 +209,34 @@
             
                                 <!--begin::Col-->
                                     <!--begin::Dropzone-->
-                                    <div class="dropzone dropzone-queue mb-2" id="uvl_dropzone">
+                            <div class="dropzone dropzone-queue mb-2" id="uvl_dropzone">
                                         <!--begin::Controls-->
-                                        <div class="dropzone-panel mb-lg-0 mb-2">
-                                            <a class="dropzone-select btn btn-sm btn-primary me-2">Attach files</a>
-                                                <a id="clear-all-btn" href="javascript:void(0)" class="btn btn-sm btn-danger">Clear all</a>
-                                        </div>
-                                        <!--end::Controls-->
-
-                                        <div class="dropzone-error" data-dz-errormessage></div>
-            
-                                        <!--begin::Items-->
-                                        <div class="dropzone-items wm-200px">
-                                            <div class="dropzone-item" style="display:none">
+                                <div class="dropzone-panel mb-lg-0 mb-2">
+                                    <a class="dropzone-select btn btn-sm btn-primary me-2">Attach files</a>
+                                    <a id="clear-all-btn" href="javascript:void(0)" class="btn btn-sm btn-danger">Clear all</a>
+                                </div>
+                                <!--end::Controls-->
+                                <div class="dropzone-items wm-200px">
+                                    <div class="dropzone-item" style="display:none">
                                                 <!--begin::File-->
-                                                <div class="dropzone-file">
-                                                    <div class="dropzone-filename" title="some_image_file_name.jpg">
-                                                        <span data-dz-name>some_image_file_name.jpg</span>
-                                                        <strong>(<span data-dz-size>340kb</span>)</strong>
-                                                    </div>
-            
-                                                    
-                                                </div>
-                                                <!--end::File-->
-            
-                                                <!--begin::Progress-->
-                                                <div class="dropzone-progress">
-                                                    <div class="progress">
-                                                        <div
-                                                            class="progress-bar bg-primary"
-                                                            role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" data-dz-uploadprogress>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <!--end::Progress-->
-            
-                                                <!--begin::Toolbar-->
-                                                <div class="dropzone-toolbar">
-                                                    <span class="dropzone-delete" data-dz-remove><i class="bi bi-x fs-1"></i></span>
-                                                </div>
-                                                <!--end::Toolbar-->
+                                        <div class="dropzone-file">
+                                            <div class="dropzone-filename">
+                                                <span data-dz-name></span>
                                             </div>
                                         </div>
-                                        <!--end::Items-->
+                                                <!--begin::Toolbar-->
+                                        <div class="dropzone-toolbar">
+                                            <span class="dropzone-delete" data-dz-remove><i class="bi bi-x fs-1"></i></span>
+                                        </div>
                                     </div>
-                                    <!--end::Dropzone-->
-
-                                    <!--begin::Hint-->
-                                    <span class="form-text text-muted">The maximum file size is 100 MB and the maximum number of files is 20. If you wish to upload more files, please prepare a ZIP or tarball folder with your UVL models.</span>
-                                    <!--end::Hint-->
-                                
-                                <!--end::Col-->
-                            
-                            <!--end::Input group-->
+                                </div>
+                            </div>
                         </form>
-
                     </div>
-
                 </div>
-                <!--end::Wrapper-->
             </div>
-            <!--end::Step 2-->
-            <!--begin::Step 3-->
+
+            {# ── STEP 3 — Dataset info ── #}
             <div data-kt-stepper-element="content">
                 <!--begin::Wrapper-->
                 <div class="w-100">
@@ -302,186 +245,396 @@
                         <!--begin::Title-->
                         <h2 class="fw-bold text-gray-900">Setup dataset info</h2>
                         <!--end::Title-->
-                        <!--begin::Notice-->
-                        <div class="text-muted fw-semibold fs-6">
-                            Provide a title, description, publication details and tags to complete your dataset metadata.
-                        </div>
-                        <!--end::Notice-->
                     </div>
-                    <!--end::Heading-->
-                    <!--begin::Input group-->
-
 
                     <div class="fv-row mb-10">
                         <label class="form-label required">Title</label>
-                        <input type="text" name="title" class="form-control mb-2" placeholder="Enter a title">
-                        <div class="text-muted fs-7">Set a dataset title. Recommended to be simple and precise keywords.</div>
+                        <input type="text" name="title" class="form-control mb-2" value="{{ dataset.ds_meta_data.title if dataset else '' }}">
                     </div>
-        
+
                     <div class="fv-row mb-10">
                         <label class="form-label required">Description</label>
                         <div data-bs-theme="light">
-                            <textarea name="description" id="dataset_editor">
-                            </textarea>
+                            <textarea name="description" id="dataset_editor">{{ dataset.ds_meta_data.description if dataset else '' }}</textarea>
                         </div>
                     </div>
 
                     <div class="fv-row mb-10">
-                        
                         <label class="form-label">Publication type</label>
-                        <span class="ms-1" data-bs-toggle="tooltip" title="In Zenodo, it categorizes uploaded content (articles, datasets, software, presentations, etc.) to simplify organization and discovery">
-                            <i class="ki-duotone ki-information-5 text-gray-500 fs-6">
-                                <span class="path1"></span>
-                                <span class="path2"></span>
-                                <span class="path3"></span>
-                            </i>
-                        </span>
-
-                        <select name="{{ form.publication_type.name }}" 
-                                class="form-select form-select-lg form-select-solid" 
-                                data-control="select2" 
-                                data-placeholder="Select a publication type..." 
-                                data-allow-clear="false" 
-                                data-hide-search="false">
+                        <select name="publication_type" class="form-select" data-control="select2">
                             <option></option>
                             {% for value, label in form.publication_type.choices %}
-                                <option value="{{ value }}" 
-                                        {% if form.publication_type.data == value %}selected{% endif %}>
-                                    {{ label }}
-                                </option>
+                                <option value="{{ value }}" {% if dataset and dataset.ds_meta_data.publication_type and dataset.ds_meta_data.publication_type.value == value %}selected{% endif %}>{{ label }}</option>
                             {% endfor %}
                         </select>
                         
                     </div>
 
                     <div class="fv-row mb-10">
-                        <label class="form-label">Publication DOI</label>
-                        <span class="ms-1" data-bs-toggle="tooltip" title="If this dataset is already associated with a publication, enter the DOI resource so that it can be identified">
-                            <i class="ki-duotone ki-information-5 text-gray-500 fs-6">
-                                <span class="path1"></span>
-                                <span class="path2"></span>
-                                <span class="path3"></span>
-                            </i>
-                        </span>
-                        <input name="publication_doi" class="form-control form-control-lg form-control-solid">
+                        <label class="form-label d-flex align-items-center gap-2">Publication DOI</label>
+                        <input name="publication_doi" class="form-control" value="{{ dataset.ds_meta_data.publication_doi if dataset else '' }}">
                     </div>
 
                     <div class="fv-row mb-10">
                         <label class="form-label">Tags</label>
-                        <span class="ms-1" data-bs-toggle="tooltip" title="Define keywords that are representative of your dataset. This will help the search">
-                            <i class="ki-duotone ki-information-5 text-gray-500 fs-6">
-                                <span class="path1"></span>
-                                <span class="path2"></span>
-                                <span class="path3"></span>
-                            </i>
-                        </span>
-                        <input class="form-control form-control-solid" placeholder="Separate tags by commas" id="tags"/>
+                        <input name="tags" class="form-control" id="tags" value="{{ dataset.ds_meta_data.tags if dataset else '' }}"/>
                     </div>
 
                 </div>
                 <!--end::Wrapper-->
             </div>
-            <!--end::Step 3-->
-            <!--begin::Step 4-->
+
+            {# ── STEP 4 — Authors ── #}
             <div data-kt-stepper-element="content">
                 <!--begin::Wrapper-->
                 <div class="w-100">
 
                     <div class="pb-10 pb-lg-15">
                         <h2 class="fw-bold text-gray-900">Setup authors</h2>
-                        <div class="text-muted fw-semibold fs-6">
-                            Add the authors of the dataset, including their name, affiliation and ORCID if available.
-                        </div>
                     </div>
-
-                    <div class="row draggable-zone" id="authors-container" tabindex="0">
-            
-                    </div>
-
+                    <div class="row draggable-zone" id="authors-container"></div>
                     <div class="mb-0 fv-row">
-                        <button type="button" id="add-author-btn" class="btn btn-lg btn-light-primary me-3">
-                            <i class="ki-duotone ki-plus-square fs-4 me-1">
-                                <span class="path1"></span>
-                                <span class="path2"></span>
-                                <span class="path3"></span>
-                            </i>Add author</button>
-                            <button type="button" id="add-myself-btn" class="btn btn-lg btn-light-success me-3">
-    <i class="ki-duotone ki-user fs-4 me-1">
-        <span class="path1"></span>
-        <span class="path2"></span>
-    </i>Add myself
-</button>
+                        <button type="button" id="add-author-btn" class="btn btn-lg btn-light-primary me-3">Add author</button>
+                        <button type="button" id="add-myself-btn" class="btn btn-lg btn-light-success me-3">Add myself</button>
                     </div>
                     
 
                 </div>
                 <!--end::Wrapper-->
             </div>
-            <!--end::Step 4-->
-            <!--begin::Step 5-->
+
+            {# ── STEP 5 — Summary / Save ── #}
             <div data-kt-stepper-element="content">
                 <!--begin::Wrapper-->
                 <div class="w-100">
-                    <!--begin::Heading-->
                     <div class="pb-8 pb-lg-10">
-                        <!--begin::Title-->
-                        <h2 class="fw-bold text-gray-900">Upload dataset</h2>
-                        <!--end::Title-->
+                        <h2 class="fw-bold text-gray-900">{% if is_edit %}Save dataset{% else %}Upload dataset{% endif %}</h2>
                     </div>
-                    <!--end::Heading-->
-                    <!--begin::Body-->
-                    <div class="mb-0">
-
-                        <div id="summary">
-
-                        </div>
-
-                    </div>
-                    <!--end::Body-->
+                    <div id="summary"></div>
                 </div>
                 <!--end::Wrapper-->
             </div>
-            <!--end::Step 5-->
+
             <div id="upload-error" class="alert alert-danger mt-5 d-none" role="alert"></div>
-            <!--begin::Actions-->
+
             <div class="d-flex flex-stack pt-10">
-                <!--begin::Wrapper-->
                 <div class="mr-2">
-                    <button type="button" class="btn btn-lg btn-light-primary me-3" data-kt-stepper-action="previous">
-                    <i class="ki-duotone ki-arrow-left fs-4 me-1">
-                        <span class="path1"></span>
-                        <span class="path2"></span>
-                    </i>Back</button>
+                    <button type="button" class="btn btn-lg btn-light-primary me-3" data-kt-stepper-action="previous">Back</button>
                 </div>
-                <!--end::Wrapper-->
-                <!--begin::Wrapper-->
                 <div>
                     <button type="button" class="btn btn-lg btn-primary me-3" data-kt-stepper-action="submit">
-                        <span class="indicator-label">Submit 
-                        <i class="ki-duotone ki-arrow-right fs-3 ms-2 me-0">
-                            <span class="path1"></span>
-                            <span class="path2"></span>
-                        </i></span>
-                        <span class="indicator-progress">Please wait... 
-                        <span class="spinner-border spinner-border-sm align-middle ms-2"></span></span>
+                        <span class="indicator-label">{% if is_edit %}Update metadata{% else %}Submit{% endif %}</span>
+                        <span class="indicator-progress">Please wait...</span>
                     </button>
-                    <button type="button" class="btn btn-lg btn-primary" data-kt-stepper-action="next" id="continue_button">Continue
-                    <i class="ki-duotone ki-arrow-right fs-4 ms-1 me-0">
-                        <span class="path1"></span>
-                        <span class="path2"></span>
-                    </i></button>
+                    <button type="button" class="btn btn-lg btn-primary" data-kt-stepper-action="next" id="continue_button">Continue</button>
                 </div>
-                <!--end::Wrapper-->
             </div>
-            <!--end::Actions-->
+
         </div>
-        <!--end::Form-->
     </div>
-    <!--end::Content-->
 </div>
 
+<script>
+    var isEditMode = {{ 'true' if is_edit else 'false' }};
+
+    /**
+     * CORRECCIÓN 1: Prevenir errores de "myDropzone is not defined"
+     * Inicializamos un objeto simulado para que los scripts externos no rompan al intentar acceder a él.
+     */
+    window.myDropzone = window.myDropzone || {
+        files: [],
+        enqueueFile: function() {},
+        removeAllFiles: function() {},
+        on: function() {},
+        removeFile: function() {}
+    };
+
+    {% if is_edit %}
+    document.addEventListener('DOMContentLoaded', function () {
+
+        // ── 1. Saltar paso UVL automáticamente ──────────────────────────────
+        var stepperEl = document.querySelector('#stepper_upload_dataset');
+        if (stepperEl) {
+            var navItems = Array.from(stepperEl.querySelectorAll('[data-kt-stepper-element="nav"]'));
+            var uvlNavItem = navItems[1];
+            if (uvlNavItem) {
+                var observer = new MutationObserver(function () {
+                    if (!uvlNavItem.classList.contains('current')) return;
+                    var goingForward = navItems[0].classList.contains('completed');
+                    setTimeout(function () {
+                        var instance = KTStepper.getInstance(stepperEl);
+                        if (!instance) return;
+                        goingForward ? instance.goNext() : instance.goPrevious();
+                    }, 0);
+                });
+                observer.observe(uvlNavItem, { attributes: true, attributeFilter: ['class'] });
+            }
+        }
+
+        // ── 2. Interceptar submit para edición ──────────────────────────────
+        var submitBtn = document.querySelector('[data-kt-stepper-action="submit"]');
+        var continueBtn = document.querySelector('[data-kt-stepper-action="next"]');
+        var errorContainer = document.getElementById('upload-error');
+        var datasetId = {{ dataset.id | tojson if dataset else 'null' }};
+        var editUrl = {{ url_for('dataset.edit_metadata', dataset_id=dataset.id) | tojson if dataset else 'null' }};
+        var existingAuthors = [
+            {% if dataset and dataset.ds_meta_data and dataset.ds_meta_data.authors %}
+                {% for author in dataset.ds_meta_data.authors %}
+                {
+                    name: {{ author.name | tojson }},
+                    affiliation: {{ author.affiliation | default('', true) | tojson }},
+                    orcid: {{ author.orcid | default('', true) | tojson }}
+                }{% if not loop.last %},{% endif %}
+                {% endfor %}
+            {% endif %}
+        ];
+
+        function escapeHtml(value) {
+            return String(value || '').replace(/[&<>"']/g, function (char) {
+                return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char];
+            });
+        }
+
+        function renderAuthorCard(author, index) {
+            var id = 'existing_' + index;
+            return '' +
+                '<div class="col-lg-12 draggable mb-10" tabindex="0" id="author-' + id + '">' +
+                    '<div class="card card-bordered shadow-sm">' +
+                        '<div class="card-header">' +
+                            '<div class="card-toolbar">' +
+                                '<a href="#" class="btn btn-icon btn-sm btn-hover-light-primary draggable-handle">' +
+                                    '<i class="ki-duotone ki-abstract-14 fs-2x"><span class="path1"></span><span class="path2"></span></i>' +
+                                '</a>' +
+                            '</div>' +
+                            '<div class="card-title">' +
+                                '<button type="button" class="btn btn-sm btn-light-danger remove-author" data-id="' + id + '">Remove author</button>' +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="card-body">' +
+                            '<div class="row mb-3">' +
+                                '<div class="col-md-6">' +
+                                    '<label class="form-label">Name *</label>' +
+                                    '<input type="text" name="authors[' + index + '][name]" class="form-control author-name" value="' + escapeHtml(author.name) + '" required>' +
+                                    '<div class="invalid-feedback"></div>' +
+                                '</div>' +
+                                '<div class="col-md-6">' +
+                                    '<label class="form-label">Affiliation</label>' +
+                                    '<input type="text" name="authors[' + index + '][affiliation]" class="form-control author-affiliation" value="' + escapeHtml(author.affiliation) + '">' +
+                                    '<div class="invalid-feedback"></div>' +
+                                '</div>' +
+                            '</div>' +
+                            '<div class="row mb-3">' +
+                                '<div class="col-md-12">' +
+                                    '<label class="form-label">ORCID</label>' +
+                                    '<input type="text" name="authors[' + index + '][orcid]" class="form-control orcid-input" value="' + escapeHtml(author.orcid) + '">' +
+                                    '<div class="invalid-feedback"></div>' +
+                                '</div>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>';
+        }
+
+        function normalizeText(value) {
+            return String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
+        }
+
+        function normalizeOrcid(value) {
+            return String(value || '').trim().replace(/^https?:\/\/orcid\.org\//i, '').toUpperCase();
+        }
+
+        function getDuplicateAuthorMessage() {
+            var rows = Array.from(document.querySelectorAll('#authors-container .draggable'));
+            var seenNameOrcid = new Set();
+            var seenOrcid = new Set();
+            var seenNameAffiliation = new Set();
+
+            for (var i = 0; i < rows.length; i++) {
+                var name = normalizeText(rows[i].querySelector('input[name$="[name]"]')?.value);
+                var affiliation = normalizeText(rows[i].querySelector('input[name$="[affiliation]"]')?.value);
+                var orcid = normalizeOrcid(rows[i].querySelector('input[name$="[orcid]"]')?.value);
+                if (!name) continue;
+
+                if (orcid) {
+                    var nameOrcidKey = 'name-orcid:' + name + '|' + orcid;
+                    if (seenNameOrcid.has(nameOrcidKey)) {
+                        return 'Duplicate author: same name and ORCID.';
+                    }
+                    seenNameOrcid.add(nameOrcidKey);
+
+                    var orcidKey = 'orcid:' + orcid;
+                    if (seenOrcid.has(orcidKey)) {
+                        return 'Duplicate author: ORCID is already in the list.';
+                    }
+                    seenOrcid.add(orcidKey);
+                } else {
+                    var nameAffiliationKey = 'name-aff:' + name + '|' + affiliation;
+                    if (seenNameAffiliation.has(nameAffiliationKey)) {
+                        return 'Duplicate author: same name and affiliation.';
+                    }
+                    seenNameAffiliation.add(nameAffiliationKey);
+                }
+            }
+
+            return '';
+        }
+
+        if (submitBtn && datasetId) {
+            var authorsContainer = document.getElementById('authors-container');
+            if (authorsContainer && existingAuthors.length) {
+                authorsContainer.innerHTML = existingAuthors.map(function (author, index) {
+                    return renderAuthorCard(author, index);
+                }).join('');
+            }
+
+            if (continueBtn) {
+                continueBtn.addEventListener('click', function (e) {
+                    var stepperEl = document.querySelector('#stepper_upload_dataset');
+                    var stepperInstance = stepperEl ? KTStepper.getInstance(stepperEl) : null;
+                    var currentStep = stepperInstance ? stepperInstance.getCurrentStepIndex() : null;
+
+                    // En edición el paso de autores sigue siendo el 4 (el UVL está oculto pero existe en el DOM)
+                    if (currentStep === 4) {
+                        var duplicateMessage = getDuplicateAuthorMessage();
+                        if (duplicateMessage) {
+                            e.preventDefault();
+                            e.stopImmediatePropagation();
+                            errorContainer.innerHTML = '&#10060; ' + duplicateMessage;
+                            errorContainer.classList.remove('d-none');
+                        } else {
+                            errorContainer.classList.add('d-none');
+                            errorContainer.innerHTML = '';
+                        }
+                    }
+                }, true);
+            }
+
+            var addMyselfBtn = document.getElementById('add-myself-btn');
+            if (addMyselfBtn) {
+                addMyselfBtn.addEventListener('click', async function (e) {
+                    try {
+                        var meResponse = await fetch('/api/me');
+                        if (!meResponse.ok) return;
+                        var me = await meResponse.json();
+                        var meName = normalizeText((me.name || '') + ' ' + (me.surname || ''));
+                        var meAffiliation = normalizeText(me.affiliation || '');
+                        var meOrcid = normalizeOrcid(me.orcid || '');
+                        var exists = Array.from(document.querySelectorAll('#authors-container .draggable')).some(function (row) {
+                            var rowName = normalizeText(row.querySelector('input[name$="[name]"]')?.value);
+                            var rowAffiliation = normalizeText(row.querySelector('input[name$="[affiliation]"]')?.value);
+                            var rowOrcid = normalizeOrcid(row.querySelector('input[name$="[orcid]"]')?.value);
+                            return (meOrcid && rowOrcid && meOrcid === rowOrcid) || (rowName === meName && rowAffiliation === meAffiliation);
+                        });
+
+                        if (exists) {
+                            e.preventDefault();
+                            e.stopImmediatePropagation();
+                            errorContainer.innerHTML = '&#10060; You are already in the author list.';
+                            errorContainer.classList.remove('d-none');
+                        }
+                    } catch (_) {}
+                }, true);
+            }
+
+            submitBtn.addEventListener('click', async function (e) {
+                /**
+                 * CORRECCIÓN 2: Evitar doble envío y comportamientos por defecto del navegador.
+                 */
+                e.preventDefault();
+                e.stopImmediatePropagation();
+
+                errorContainer.classList.add('d-none');
+                errorContainer.innerHTML = '';
+
+                var duplicateMessage = getDuplicateAuthorMessage();
+                if (duplicateMessage) {
+                    errorContainer.innerHTML = '&#10060; ' + duplicateMessage;
+                    errorContainer.classList.remove('d-none');
+                    return;
+                }
+
+                var originalHTML = submitBtn.innerHTML;
+                submitBtn.disabled = true;
+                if (continueBtn) continueBtn.disabled = true;
+                submitBtn.innerHTML = 'Please wait... <span class="spinner-border spinner-border-sm align-middle ms-2"></span>';
+
+                var formData = new FormData();
+                var checked = document.querySelector('input[name="dataset_type"]:checked');
+                formData.append('dataset_type', checked ? checked.value : 'draft');
+                formData.append('title', document.querySelector('input[name="title"]')?.value || '');
+                formData.append('description', typeof tinymce !== 'undefined' ? tinymce.get('dataset_editor')?.getContent() : '');
+                formData.append('publication_type', document.querySelector('select[name="publication_type"]')?.value || '');
+                
+                var doiInput = document.querySelector('input[name="publication_doi"]');
+                formData.append('publication_doi', doiInput ? doiInput.value : '');
+
+                var tagsRaw = document.querySelector('#tags')?.value || '';
+                try {
+                    JSON.parse(tagsRaw).forEach(function(tag) { formData.append('tags[]', tag.value); });
+                } catch (_) {
+                    tagsRaw.split(',').map(function(t) { return t.trim(); }).filter(Boolean).forEach(function(t) { formData.append('tags[]', t); });
+                }
+
+                var idx = 0;
+                document.querySelectorAll('#authors-container input[name$="[name]"]').forEach(function(nameInput) {
+                    var root = nameInput.closest('.draggable');
+                    var name = nameInput.value.trim();
+                    if (!name) return;
+                    formData.append('authors[' + idx + '][name]', name);
+                    formData.append('authors[' + idx + '][affiliation]', root.querySelector('input[name$="[affiliation]"]')?.value.trim() || '');
+                    formData.append('authors[' + idx + '][orcid]', root.querySelector('input[name$="[orcid]"]')?.value.trim() || '');
+                    idx++;
+                });
+
+                try {
+                    /**
+                     * CORRECCIÓN 3: Ajuste de URL y manejo de errores 404.
+                     * Si el servidor responde 404, prueba cambiar a: '/datasets/edit/' + datasetId
+                     */
+                    var response = await fetch(editUrl, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        }
+                    });
+
+                    var result = null;
+                    var responseText = '';
+                    try {
+                        result = await response.clone().json();
+                    } catch (_) {
+                        responseText = await response.text();
+                    }
+
+                    if (response.ok) {
+                        window.location.href = '/datasets/list';
+                    } else {
+                        var serverMessage = (result && (result.message || result.error))
+                            ? (result.message || result.error)
+                            : (responseText ? responseText.substring(0, 300) : ('HTTP ' + response.status));
+                        errorContainer.innerHTML = '&#10060; Error updating dataset: ' + serverMessage;
+                        errorContainer.classList.remove('d-none');
+                    }
+                } catch (err) {
+                    errorContainer.innerHTML = '&#10060; ' + (err?.message || 'Error connecting to the server. Please try again.');
+                    errorContainer.classList.remove('d-none');
+                } finally {
+                    submitBtn.innerHTML = originalHTML;
+                    submitBtn.disabled = false;
+                    if (continueBtn) continueBtn.disabled = false;
+                }
+
+            }, true);
+        }
+
+    });
+    {% endif %}
+</script>
+
 {% endblock %}
-    
+
 {% block scripts %}
 
 <script src="{{ url_for('hubfile.assets', subfolder='dist', filename='hubfile.bundle.js') }}"></script>
@@ -494,42 +647,30 @@
         <div class="card-header">
             <div class="card-toolbar">
                 <a href="#" class="btn btn-icon btn-sm btn-hover-light-primary draggable-handle">
-                    <i class="ki-duotone ki-abstract-14 fs-2x">
-                        <span class="path1"></span><span class="path2"></span>
-                    </i>
+                    <i class="ki-duotone ki-abstract-14 fs-2x"><span class="path1"></span><span class="path2"></span></i>
                 </a>
             </div>
             <div class="card-title">
-                <button type="button" class="btn btn-sm btn-light-danger me-3 remove-author" data-id="[[id]]">
-                    <i class="ki-duotone ki-minus-square fs-4 me-1">
-                        <span class="path1"></span><span class="path2"></span><span class="path3"></span>
-                    </i>Remove author
-                </button>
+                <button type="button" class="btn btn-sm btn-light-danger remove-author" data-id="[[id]]">Remove author</button>
             </div>
         </div>
         <div class="card-body">
             <div class="row mb-3">
                 <div class="col-md-6">
                     <label class="form-label">Name *</label>
-                    <input type="text" name="authors[[index]][name]" 
-                           class="form-control author-name" 
-                           placeholder="Enter name" required>
+                    <input type="text" name="authors[[index]][name]" class="form-control author-name" value="[[name]]" required>
                     <div class="invalid-feedback"></div>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Affiliation</label>
-                    <input type="text" name="authors[[index]][affiliation]" 
-                           class="form-control author-affiliation" 
-                           placeholder="Enter affiliation">
+                    <input type="text" name="authors[[index]][affiliation]" class="form-control author-affiliation" value="[[affiliation]]">
                     <div class="invalid-feedback"></div>
                 </div>
             </div>
             <div class="row mb-3">
                 <div class="col-md-12">
                     <label class="form-label">ORCID</label>
-                    <input type="text" name="authors[[index]][orcid]" 
-                           class="form-control orcid-input" 
-                           placeholder="0000-0000-0000-0000">
+                    <input type="text" name="authors[[index]][orcid]" class="form-control orcid-input" value="[[orcid]]">
                     <div class="invalid-feedback"></div>
                 </div>
             </div>

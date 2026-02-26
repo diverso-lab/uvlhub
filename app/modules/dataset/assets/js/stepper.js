@@ -219,6 +219,7 @@ function updateDropzoneStatus() {
 
 function get_summary() {
     const datasetTypeElement = document.querySelector('input[name="dataset_type"]:checked');
+    const isAnonymousUpload = datasetTypeElement?.value === "zenodo_anonymous";
     const datasetType = datasetTypeElement 
         ? document.querySelector(`label[for="${datasetTypeElement.id}"]`)?.innerText.trim() || "Not selected"
         : "Not selected";
@@ -257,6 +258,11 @@ function get_summary() {
     let summaryContent = `
         <h3>Summary</h3>
         <p><strong>Dataset Type:</strong><br>${datasetType}</p>
+        ${
+            isAnonymousUpload
+                ? '<div class="alert alert-warning py-3"><strong>Anonymous upload:</strong> enabled.</div>'
+                : ''
+        }
         <p><strong>Title:</strong> ${title}</p>
         <p><strong>Description:</strong> ${description}</p>
         <p><strong>Publication Type:</strong> ${publicationType}</p>
@@ -269,7 +275,9 @@ function get_summary() {
         <h4>Authors</h4>
     `;
 
-    if (authors.length > 0) {
+    if (isAnonymousUpload) {
+        summaryContent += '<p><strong>Anonymous:</strong> Enabled. Author details will be hidden in publication.</p>';
+    } else if (authors.length > 0) {
         summaryContent += '<ul>';
         authors.forEach((author, index) => {
             summaryContent += `

@@ -137,27 +137,7 @@ class ZenodoService(BaseService):
             raise Exception("Failed to get depositions")
         return response.json()
 
-    def create_new_deposition(self, dataset: DataSet, anonymous: bool = False) -> dict:
-        """
-        Create a new deposition in Zenodo.
-
-        Args:
-            dataset (DataSet): The DataSet object containing the metadata of the deposition.
-            anonymous (bool): Whether to anonymize the creators metadata.
-
-        Returns:
-            dict: The response in JSON format with the details of the created deposition.
-        """
-
-        logger.info("Dataset sending to Zenodo...")
-        pub_type = (
-            dataset.ds_meta_data.publication_type.value if dataset.ds_meta_data.publication_type else "Not specified"
-        )
-
-        logger.info(f"Publication type... {pub_type}")
-
-        logger.info(f"Anonymous upload: {anonymous}")
-
+    def build_metadata(self, dataset: DataSet, anonymous: bool = False) -> dict:
         pub_type = dataset.ds_meta_data.publication_type.value if dataset.ds_meta_data.publication_type else None
 
         upload_type = "dataset" if pub_type == "none" else "publication"
@@ -181,7 +161,7 @@ class ZenodoService(BaseService):
             else dataset.ds_meta_data.tags.replace(", ", ",").split(",") + ["uvlhub"]
         )
 
-        metadata = {
+        return {
             "title": dataset.ds_meta_data.title,
             "upload_type": upload_type,
             "publication_type": publication_type,
@@ -191,6 +171,29 @@ class ZenodoService(BaseService):
             "access_right": "open",
             "license": "CC-BY-4.0",
         }
+
+    def create_new_deposition(self, dataset: DataSet, anonymous: bool = False) -> dict:
+        """
+        Create a new deposition in Zenodo.
+
+        Args:
+            dataset (DataSet): The DataSet object containing the metadata of the deposition.
+            anonymous (bool): Whether to anonymize the creators metadata.
+
+        Returns:
+            dict: The response in JSON format with the details of the created deposition.
+        """
+
+        logger.info("Dataset sending to Zenodo...")
+        pub_type = (
+            dataset.ds_meta_data.publication_type.value if dataset.ds_meta_data.publication_type else "Not specified"
+        )
+
+        logger.info(f"Publication type... {pub_type}")
+
+        logger.info(f"Anonymous upload: {anonymous}")
+
+        metadata = self.build_metadata(dataset, anonymous=anonymous)
 
         data = {"metadata": metadata}
 
