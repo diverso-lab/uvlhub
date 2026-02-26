@@ -1,4 +1,4 @@
-from flask import render_template
+from flask import jsonify, render_template, request
 
 
 class ErrorHandlerManager:
@@ -14,6 +14,8 @@ class ErrorHandlerManager:
         @self.app.errorhandler(404)
         def not_found_error(e):
             self.app.logger.warning("Page Not Found: %s", str(e))
+            if request.path.startswith("/api/"):
+                return jsonify({"error": "Not found"}), 404
             return render_template("404.html"), 404
 
         @self.app.errorhandler(401)

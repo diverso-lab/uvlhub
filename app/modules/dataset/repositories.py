@@ -1,19 +1,12 @@
-from datetime import datetime
 import logging
-from flask_login import current_user
+from datetime import datetime
 from typing import List, Optional
 
 import pytz
+from flask_login import current_user
 from sqlalchemy import desc
 
-from app.modules.dataset.models import (
-    Author,
-    DOIMapping,
-    DSDownloadRecord,
-    DSMetaData,
-    DSViewRecord,
-    DataSet,
-)
+from app.modules.dataset.models import Author, DataSet, DOIMapping, DSDownloadRecord, DSMetaData, DSViewRecord
 from core.repositories.BaseRepository import BaseRepository
 
 logger = logging.getLogger(__name__)
@@ -37,11 +30,11 @@ class DSDownloadRecordRepository(BaseRepository):
 
     def create_new_record(self, dataset: DataSet, user_cookie: str) -> DSDownloadRecord:
         return self.create(
-                user_id=current_user.id if current_user.is_authenticated else None,
-                dataset_id=dataset.id,
-                download_date=datetime.now(pytz.utc),
-                download_cookie=user_cookie,
-            )
+            user_id=current_user.id if current_user.is_authenticated else None,
+            dataset_id=dataset.id,
+            download_date=datetime.now(pytz.utc),
+            download_cookie=user_cookie,
+        )
 
 
 class DSMetaDataRepository(BaseRepository):
@@ -65,11 +58,11 @@ class DSViewRecordRepository(BaseRepository):
 
     def create_new_record(self, dataset: DataSet, user_cookie: str) -> DSViewRecord:
         return self.create(
-                user_id=current_user.id if current_user.is_authenticated else None,
-                dataset_id=dataset.id,
-                view_date=datetime.now(pytz.utc),
-                view_cookie=user_cookie,
-            )
+            user_id=current_user.id if current_user.is_authenticated else None,
+            dataset_id=dataset.id,
+            view_date=datetime.now(pytz.utc),
+            view_cookie=user_cookie,
+        )
 
 
 class DataSetRepository(BaseRepository):
@@ -82,9 +75,10 @@ class DataSetRepository(BaseRepository):
             return True
         return False
 
-    '''
+    """
         Synchronised dataset
-    '''
+    """
+
     def get_synchronized_datasets(self) -> List[DataSet]:
         return (
             self.model.query.join(DSMetaData)
@@ -96,9 +90,7 @@ class DataSetRepository(BaseRepository):
     def get_synchronized_datasets_by_user(self, current_user_id: int) -> List[DataSet]:
         return (
             self.model.query.join(DSMetaData)
-            .filter(
-                DataSet.user_id == current_user_id, DSMetaData.dataset_doi.isnot(None)
-            )
+            .filter(DataSet.user_id == current_user_id, DSMetaData.dataset_doi.isnot(None))
             .order_by(self.model.created_at.desc())
             .all()
         )
@@ -106,20 +98,21 @@ class DataSetRepository(BaseRepository):
     def get_synchronized_dataset_by_user(self, current_user_id: int, dataset_id: int) -> DataSet:
         return (
             self.model.query.join(DSMetaData)
-            .filter(DataSet.user_id == current_user_id, DataSet.id == dataset_id, DSMetaData.dataset_doi.isnot(None))
+            .filter(
+                DataSet.user_id == current_user_id,
+                DataSet.id == dataset_id,
+                DSMetaData.dataset_doi.isnot(None),
+            )
             .first()
         )
 
     def count_synchronized_datasets(self) -> int:
-        return (
-            self.model.query.join(DSMetaData)
-            .filter(DSMetaData.dataset_doi.isnot(None))
-            .count()
-        )
+        return self.model.query.join(DSMetaData).filter(DSMetaData.dataset_doi.isnot(None)).count()
 
-    '''
+    """
         Unsynchronised dataset
-    '''
+    """
+
     def get_unsynchronized_datasets(self) -> List[DataSet]:
         return (
             self.model.query.join(DSMetaData)
@@ -131,9 +124,7 @@ class DataSetRepository(BaseRepository):
     def get_unsynchronized_datasets_by_user(self, current_user_id: int) -> List[DataSet]:
         return (
             self.model.query.join(DSMetaData)
-            .filter(
-                DataSet.user_id == current_user_id, DSMetaData.dataset_doi.is_(None)
-            )
+            .filter(DataSet.user_id == current_user_id, DSMetaData.dataset_doi.is_(None))
             .order_by(self.model.created_at.desc())
             .all()
         )
@@ -150,15 +141,12 @@ class DataSetRepository(BaseRepository):
         )
 
     def count_unsynchronized_datasets(self):
-        return (
-            self.model.query.join(DSMetaData)
-            .filter(DSMetaData.dataset_doi.is_(None))
-            .count()
-        )
+        return self.model.query.join(DSMetaData).filter(DSMetaData.dataset_doi.is_(None)).count()
 
-    '''
+    """
         Top X datasets...
-    '''
+    """
+
     def latest_synchronized(self) -> List[DataSet]:
         return (
             self.model.query.join(DSMetaData)

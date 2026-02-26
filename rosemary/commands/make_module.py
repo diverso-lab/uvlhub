@@ -1,7 +1,8 @@
+import os
 import stat
+
 import click
 from jinja2 import Environment, FileSystemLoader, select_autoescape
-import os
 
 
 def pascalcase(s):
@@ -43,19 +44,19 @@ def make_module(name):
     directories = {"templates"}
 
     files_and_templates = {
-        '__init__.py': 'module_init.py.j2',
-        'routes.py': 'module_routes.py.j2',
-        'models.py': 'module_models.py.j2',
-        'repositories.py': 'module_repositories.py.j2',
-        'services.py': 'module_services.py.j2',
-        'forms.py': 'module_forms.py.j2',
-        'seeders.py': 'module_seeders.py.j2',
-        os.path.join('templates', name, 'index.html'): 'module_templates_index.html.j2',
-        'assets/js/scripts.js': 'module_scripts.js.j2',
-        'assets/js/webpack.config.js': 'module_webpack.config.js.j2',
-        'tests/test_unit.py': 'module_tests_test_unit.py.j2',
-        'tests/locustfile.py': 'module_tests_locustfile.py.j2',
-        'tests/test_selenium.py': 'module_tests_test_selenium.py.j2'
+        "__init__.py": "module_init.py.j2",
+        "routes.py": "module_routes.py.j2",
+        "models.py": "module_models.py.j2",
+        "repositories.py": "module_repositories.py.j2",
+        "services.py": "module_services.py.j2",
+        "forms.py": "module_forms.py.j2",
+        "seeders.py": "module_seeders.py.j2",
+        os.path.join("templates", name, "index.html"): "module_templates_index.html.j2",
+        "assets/js/scripts.js": "module_scripts.js.j2",
+        "assets/js/webpack.config.js": "module_webpack.config.js.j2",
+        "tests/test_unit.py": "module_tests_test_unit.py.j2",
+        "tests/locustfile.py": "module_tests_locustfile.py.j2",
+        "tests/test_selenium.py": "module_tests_test_selenium.py.j2",
     }
 
     # Create the necessary directories, explicitly excluding 'tests' from the creation of subfolders.
@@ -66,8 +67,8 @@ def make_module(name):
     os.makedirs(os.path.join(module_path, "tests"), exist_ok=True)
 
     # Create 'assets' directory directly under module_path
-    os.makedirs(os.path.join(module_path, 'assets', 'css'), exist_ok=True)
-    os.makedirs(os.path.join(module_path, 'assets', 'js'), exist_ok=True)
+    os.makedirs(os.path.join(module_path, "assets", "css"), exist_ok=True)
+    os.makedirs(os.path.join(module_path, "assets", "js"), exist_ok=True)
 
     # Create empty __init__.py file directly in the 'tests' directory.
     open(os.path.join(module_path, "tests", "__init__.py"), "a").close()
@@ -82,9 +83,7 @@ def make_module(name):
                 {"module_name": name},
             )
         else:
-            open(
-                os.path.join(module_path, filename), "a"
-            ).close()  # Create empty file if there is no template.
+            open(os.path.join(module_path, filename), "a").close()  # Create empty file if there is no template.
 
     click.echo(click.style(f"Module '{name}' created successfully.", fg="green"))
 
@@ -102,22 +101,14 @@ def make_module(name):
         for dir_ in dirs:
             dir_path = os.path.join(root, dir_)
             os.chown(dir_path, uid, gid)
-            os.chmod(
-                dir_path, stat.S_IRWXU | stat.S_IRWXG | stat.S_IROTH | stat.S_IXOTH
-            )
+            os.chmod(dir_path, stat.S_IRWXU | stat.S_IRWXG | stat.S_IROTH | stat.S_IXOTH)
 
         for file_ in files:
             file_path = os.path.join(root, file_)
             os.chown(file_path, uid, gid)
             os.chmod(
                 file_path,
-                stat.S_IRUSR
-                | stat.S_IWUSR
-                | stat.S_IRGRP
-                | stat.S_IWGRP
-                | stat.S_IROTH,
+                stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH,
             )
 
-    click.echo(
-        click.style(f"Module '{name}' permissions changed successfully.", fg="green")
-    )
+    click.echo(click.style(f"Module '{name}' permissions changed successfully.", fg="green"))

@@ -1,4 +1,5 @@
 import os
+
 import redis
 
 
@@ -36,9 +37,11 @@ class Config:
     SESSION_TYPE = "redis"
     SESSION_PERMANENT = False
     SESSION_USE_SIGNER = True
-    REDIS_URL = os.getenv("REDIS_URL", 'redis://redis:6379')
+    REDIS_URL = os.getenv("REDIS_URL", "redis://redis:6379")
     SESSION_REDIS = redis.from_url(REDIS_URL)
     REDIS_WORKER_TIMEOUT = os.getenv("REDIS_WORKER_TIMEOUT", 180)
+    SERVER_NAME = os.getenv("SERVER_NAME", "localhost")
+    PREFERRED_URL_SCHEME = os.getenv("PREFERRED_URL_SCHEME", "http")
 
 
 class DevelopmentConfig(Config):
@@ -57,6 +60,7 @@ class TestingConfig(Config):
     WTF_CSRF_ENABLED = False
     SESSION_TYPE = "filesystem"
     SESSION_FILE_DIR = "/tmp/flask_sessions"
+    REDIS_URL = "fakeredis://"
 
 
 class ProductionConfig(Config):

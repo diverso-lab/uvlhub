@@ -1,4 +1,5 @@
 import os
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -26,7 +27,7 @@ def get_host_for_testing(test_type: str) -> str:
         },
         "selenium": {
             "": "http://localhost:5000",
-            "/app/": "http://localhost",
+            "/app/": "http://web:5000",
             "/vagrant/": "http://localhost:5000",
         },
     }

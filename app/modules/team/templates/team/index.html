@@ -1,38 +1,60 @@
 {% extends "base_template.html" %}
 
-{% block title %}View dataset{% endblock %}
+{% set title = "Team" %}
+
+{% block breadcrumb %}
+
+<ol class="breadcrumb text-muted fs-6 fw-semibold">
+    <li class="breadcrumb-item"><a href="/" class="">Home</a></li>
+    <li class="breadcrumb-item text-muted">Team</li>
+</ol>
+
+{% endblock %}
 
 {% block content %}
 
-    <h1 class="h3 mb-3"><b>Team</b></h1>
-
-
     <div class="row row-cols-1 row-cols-lg-3 row-cols-md-2 row-cols-12 g-4">
 
-        <div class="col">
+<div class="col">
 
-            <div class="card h-100">
-                <img src="{{ url_for('static', filename='img/logos/university_of_seville.svg') }}"
-                     class="card-img-top custom-img" alt="University of Seville">
-                <div class="card-body custom-card-body">
-                    <h5 class="card-title">University of Seville, Spain</h5>
-                    <p class="card-text">
-                        Performs active development of the application and is responsible for code maintenance,
-                        deployment, operation of services and new functionalities.
-                    </p>
-                </div>
-                <div class="card-footer">
-                    <a href="http://www.us.es" target="_blank">www.us.es</a>
+    <div class="card h-100 p-4">
+        <img src="{{ url_for('static', filename='media/logos/university_of_seville.svg') }}"
+             class="card-img-top mb-4 logo-img" alt="University of Seville">
+
+        <div class="card-body custom-card-body">
+            <h5 class="card-title">University of Seville, Spain</h5>
+            <p class="card-text">
+                Performs active development of the application and is responsible for code maintenance,
+                deployment, operation of services and new functionalities.
+            </p>
+
+            <!-- Perfil personal -->
+            <div class="d-flex align-items-center mt-4">
+                <img src="{{ url_for('static', filename='media/team/david_romero_organvidez.jpg') }}"
+                     alt="David Romero" class="rounded-circle me-3" style="width: 64px; height: 64px; object-fit: cover;">
+                <div>
+                    <div class="fw-bold">David Romero-Organvidez</div>
+                    <div class="text-muted">PhD Student / Project leader</div>
+                    <a href="mailto:david.romero@us.es" class="text-decoration-none">drorganvidez@us.es</a>
                 </div>
             </div>
+            <!-- /Perfil personal -->
 
         </div>
 
+        <div class="card-footer">
+            <a href="http://www.us.es" target="_blank">www.us.es</a>
+        </div>
+    </div>
+
+</div>
+
+
         <div class="col">
 
-            <div class="card h-100">
-                <img src="{{ url_for('static', filename='img/logos/university_of_malaga.svg') }}"
-                     class="card-img-top custom-img" alt="University of Malaga">
+            <div class="card h-100 p-4">
+                <img src="{{ url_for('static', filename='media/logos/university_of_malaga.svg') }}"
+                     class="card-img-top mb-4 logo-img" alt="University of Malaga">
                 <div class="card-body custom-card-body">
                     <h5 class="card-title">University of Malaga, Spain</h5>
                     <p class="card-text">
@@ -48,9 +70,9 @@
 
         <div class="col">
 
-            <div class="card h-100">
-                <img src="{{ url_for('static', filename='img/logos/university_of_ulm.svg') }}"
-                     class="card-img-top custom-img" alt="University of Ulm">
+            <div class="card h-100 p-4">
+                <img src="{{ url_for('static', filename='media/logos/university_of_ulm.svg') }}"
+                     class="card-img-top mb-4 logo-img" alt="University of Ulm">
                 <div class="card-body custom-card-body">
                     <h5 class="card-title">University of Ulm, Germany</h5>
                     <p class="card-text">

@@ -1,44 +1,51 @@
+import hashlib
 import logging
 import os
-import hashlib
+import re
 import shutil
 import tempfile
-from typing import List, Optional
 import uuid
+import zipfile
+from typing import List, Optional
+from urllib import error as urllib_error
+from urllib import request as urllib_request
 from zipfile import ZipFile
 
-from flask import request
+import bleach
+from flask import current_app, request
 
+from app import db
 from app.modules.auth.models import User
-from app.modules.auth.services import AuthenticationService
 from app.modules.dataset.forms import AuthorForm, DataSetForm, FeatureModelForm
-from app.modules.dataset.models import (
-    DSDownloadRecord,
-    DSViewRecord,
-    DataSet,
-    DSMetaData,
-)
+from app.modules.dataset.models import DataSet, DSDownloadRecord, DSMetaData, DSViewRecord, PublicationType
 from app.modules.dataset.repositories import (
     AuthorRepository,
+    DataSetRepository,
     DOIMappingRepository,
     DSDownloadRecordRepository,
     DSMetaDataRepository,
     DSViewRecordRepository,
-    DataSetRepository,
 )
-from app.modules.featuremodel.repositories import (
-    FMMetaDataRepository,
-    FeatureModelRepository,
-)
+from app.modules.featuremodel.repositories import FeatureModelRepository
 from app.modules.hubfile.repositories import (
     HubfileDownloadRecordRepository,
     HubfileRepository,
     HubfileViewRecordRepository,
 )
+from app.modules.hubfile.services import UploadIngestService
 from app.modules.statistics.services import StatisticsService
 from core.services.BaseService import BaseService
 
 logger = logging.getLogger(__name__)
+ORCID_REGEX = re.compile(r"^\d{4}-\d{4}-\d{4}-\d{3}[0-9X]$")
+
+
+class DatasetMetadataValidationError(Exception):
+    pass
+
+
+class DatasetMetadataUpdateError(Exception):
+    pass
 
 
 def calculate_checksum_and_size(file_path):
@@ -55,32 +62,23 @@ class DataSetService(BaseService):
         self.feature_model_repository = FeatureModelRepository()
         self.author_repository = AuthorRepository()
         self.dsmetadata_repository = DSMetaDataRepository()
-        self.fmmetadata_repository = FMMetaDataRepository()
         self.dsdownloadrecord_repository = DSDownloadRecordRepository()
         self.hubfiledownloadrecord_repository = HubfileDownloadRecordRepository()
         self.hubfilerepository = HubfileRepository()
         self.dsviewrecord_repostory = DSViewRecordRepository()
         self.hubfileviewrecord_repository = HubfileViewRecordRepository()
 
-    def move_feature_models(self, dataset: DataSet):
-        current_user = AuthenticationService().get_authenticated_user()
-        source_dir = current_user.temp_folder()
-
-        working_dir = os.getenv("WORKING_DIR", "")
-        dest_dir = os.path.join(working_dir, "uploads", f"user_{current_user.id}", f"dataset_{dataset.id}", "uvl")
-
-        os.makedirs(dest_dir, exist_ok=True)
-
-        for feature_model in dataset.feature_models:
-            uvl_filename = feature_model.fm_meta_data.uvl_filename
-            shutil.move(os.path.join(source_dir, uvl_filename), dest_dir)
+    def create_basic_dataset(self, user: User) -> DataSet:
+        dataset = self.create(commit=False, user_id=user.id, ds_meta_data_id=None)
+        return dataset
 
     def is_synchronized(self, dataset_id: int) -> bool:
         return self.repository.is_synchronized(dataset_id)
 
-    '''
+    """
         Synchronised dataset
-    '''
+    """
+
     def get_synchronized_datasets(self) -> List[DataSet]:
         return self.repository.get_synchronized_datasets()
 
@@ -93,9 +91,10 @@ class DataSetService(BaseService):
     def count_synchronized_datasets(self) -> int:
         return self.repository.count_synchronized_datasets()
 
-    '''
+    """
         Unsynchronised dataset
-    '''
+    """
+
     def get_unsynchronized_datasets(self) -> List[DataSet]:
         return self.repository.get_unsynchronized_datasets()
 
@@ -108,9 +107,9 @@ class DataSetService(BaseService):
     def count_unsynchronized_datasets(self) -> int:
         return self.repository.count_unsynchronized_datasets()
 
-    '''
+    """
         Top X datasets...
-    '''
+    """
 
     def latest_synchronized(self) -> List[DataSet]:
         return self.repository.latest_synchronized()
@@ -128,52 +127,234 @@ class DataSetService(BaseService):
     def count_dsmetadata(self) -> int:
         return self.dsmetadata_repository.count()
 
-    def update_from_form(self, form: DataSetForm, current_user: User, dataset: DataSet) -> DataSet:
-        main_author = {
-            "name": f"{current_user.profile.surname}, {current_user.profile.name}",
-            "affiliation": current_user.profile.affiliation,
-            "orcid": current_user.profile.get_orcid(),
-        }
+    def _normalize_text(self, value: str) -> str:
+        return " ".join((value or "").strip().lower().split())
+
+    def _normalize_orcid(self, value: str) -> str:
+        raw = (value or "").strip()
+        if not raw:
+            return ""
+        raw = re.sub(r"^https?://orcid\.org/", "", raw, flags=re.IGNORECASE)
+        return raw.upper()
+
+    def _is_valid_orcid_checksum(self, orcid: str) -> bool:
+        digits = orcid.replace("-", "")
+        if not re.match(r"^\d{15}[\dX]$", digits):
+            return False
+        total = 0
+        for idx in range(15):
+            total = (total + int(digits[idx])) * 2
+        remainder = total % 11
+        result = (12 - remainder) % 11
+        check_digit = "X" if result == 10 else str(result)
+        return digits[15] == check_digit
+
+    def _validate_orcid(self, orcid: str) -> str:
+        normalized = self._normalize_orcid(orcid)
+        if not normalized:
+            return ""
+
+        if not ORCID_REGEX.match(normalized):
+            raise DatasetMetadataValidationError("Invalid ORCID format. Expected: 0000-0000-0000-0000.")
+
+        if not self._is_valid_orcid_checksum(normalized):
+            raise DatasetMetadataValidationError("Invalid ORCID checksum.")
+
         try:
-
-            # Update dataset metadata
-            logger.info(f"Updating dsmetadata...: {form.get_dsmetadata()}")
-            dsmetadata = self.dsmetadata_repository.update(
-                id=dataset.ds_meta_data.id, **form.get_dsmetadata()
+            req = urllib_request.Request(
+                f"https://pub.orcid.org/v3.0/{normalized}",
+                headers={"Accept": "application/json"},
+                method="GET",
             )
+            with urllib_request.urlopen(req, timeout=5) as response:
+                if response.status != 200:
+                    raise DatasetMetadataValidationError(f"Could not validate ORCID (status {response.status}).")
+        except urllib_error.HTTPError as exc:
+            if exc.code == 404:
+                raise DatasetMetadataValidationError("ORCID not found.")
+            raise DatasetMetadataValidationError(f"Could not validate ORCID (status {exc.code}).")
+        except DatasetMetadataValidationError:
+            raise
+        except Exception:
+            raise DatasetMetadataValidationError("Could not validate ORCID due to network error.")
 
-            # Update authors
-            dsmetadata_info = form.get_dsmetadata()
-            is_anonymous = dsmetadata_info.get("dataset_anonymous", False)
+        return normalized
 
-            self.author_repository.delete_by_column(
-                column_name="ds_meta_data_id", value=dataset.ds_meta_data.id
+    def _parse_tags_from_form(self, form_data) -> str:
+        tags = form_data.getlist("tags[]")
+        if not tags:
+            raw_tags = form_data.get("tags", "")
+            tags = [tag.strip() for tag in raw_tags.split(",") if tag.strip()]
+        return ",".join(tags)
+
+    def _parse_authors_from_form(self, form_data) -> list[dict]:
+        authors = []
+        idx = 0
+        while True:
+            name = form_data.get(f"authors[{idx}][name]")
+            if name is None:
+                break
+            authors.append(
+                {
+                    "name": name,
+                    "affiliation": form_data.get(f"authors[{idx}][affiliation]", ""),
+                    "orcid": form_data.get(f"authors[{idx}][orcid]", ""),
+                }
             )
+            idx += 1
 
-            if is_anonymous:
-                author_list = form.get_anonymous_authors()
+        if authors:
+            return authors
+
+        author_names = form_data.getlist("author_names[]")
+        author_affiliations = form_data.getlist("author_affiliations[]")
+        author_orcids = form_data.getlist("author_orcids[]")
+        return [
+            {
+                "name": name,
+                "affiliation": aff,
+                "orcid": orcid,
+            }
+            for name, aff, orcid in zip(author_names, author_affiliations, author_orcids)
+        ]
+
+    def _apply_metadata_from_form(self, dataset: DataSet, form_data) -> None:
+        dataset.ds_meta_data.title = form_data.get("title", "").strip()
+        dataset.ds_meta_data.description = form_data.get("description", "")
+        dataset.ds_meta_data.publication_doi = (form_data.get("publication_doi", "") or "").strip()
+        dataset.ds_meta_data.tags = self._parse_tags_from_form(form_data)
+        dataset.ds_meta_data.dataset_anonymous = form_data.get("dataset_type", "draft") == "zenodo_anonymous"
+
+        pub_type = form_data.get("publication_type")
+        if not pub_type:
+            dataset.ds_meta_data.publication_type = None
+            return
+
+        try:
+            dataset.ds_meta_data.publication_type = PublicationType(pub_type)
+        except ValueError:
+            dataset.ds_meta_data.publication_type = PublicationType.OTHER
+
+    def _get_requested_dataset_type(self, form_data) -> str:
+        dataset_type = (form_data.get("dataset_type") or "draft").strip()
+        allowed_types = {"draft", "zenodo", "zenodo_anonymous"}
+        if dataset_type not in allowed_types:
+            raise DatasetMetadataValidationError(
+                f"Invalid dataset type '{dataset_type}'. Allowed values: draft, zenodo, zenodo_anonymous."
+            )
+        return dataset_type
+
+    def _replace_authors_from_form(self, dataset: DataSet, form_data) -> None:
+        authors = self._parse_authors_from_form(form_data)
+        seen_author_keys = set()
+        seen_orcids = set()
+
+        dataset.ds_meta_data.authors.clear()
+
+        for author in authors:
+            name = (author.get("name") or "").strip()
+            if not name:
+                continue
+
+            affiliation = (author.get("affiliation") or "").strip()
+            normalized_name = self._normalize_text(name)
+            normalized_affiliation = self._normalize_text(affiliation)
+            normalized_orcid = self._normalize_orcid(author.get("orcid"))
+
+            if normalized_orcid:
+                if normalized_orcid in seen_orcids:
+                    raise DatasetMetadataValidationError(
+                        f"Duplicate author detected: ORCID {normalized_orcid} is already in the list."
+                    )
+                seen_orcids.add(normalized_orcid)
             else:
-                other_authors = form.get_authors()
-                if other_authors:
-                    author_list = other_authors
-                else:
-                    author_list = [main_author]
+                author_key = (normalized_name, normalized_affiliation)
+                if author_key in seen_author_keys:
+                    raise DatasetMetadataValidationError("Duplicate author detected: same name and affiliation.")
+                seen_author_keys.add(author_key)
 
-            for author_data in author_list:
-                author = self.author_repository.create(
-                    commit=False, ds_meta_data_id=dsmetadata.id, **author_data
-                )
-                dsmetadata.authors.append(author)
+            try:
+                sanitized_orcid = self._validate_orcid(author.get("orcid"))
+            except DatasetMetadataValidationError as exc:
+                raise DatasetMetadataValidationError(f"Invalid ORCID for author '{name}': {exc}")
 
-            #   Save updated data in local
+            new_author = self.author_repository.create(
+                commit=False,
+                name=name,
+                affiliation=affiliation,
+                orcid=sanitized_orcid,
+                ds_meta_data_id=dataset.ds_meta_data.id,
+            )
+            dataset.ds_meta_data.authors.append(new_author)
+
+    def _sync_metadata_in_zenodo_if_needed(self, dataset: DataSet, zenodo_service) -> None:
+        if not dataset.ds_meta_data.dataset_doi:
+            return
+
+        deposition_id = dataset.ds_meta_data.deposition_id
+        if not deposition_id:
+            raise DatasetMetadataUpdateError("Dataset is synchronized but missing Zenodo deposition_id.")
+
+        metadata = zenodo_service.build_metadata(dataset, anonymous=dataset.ds_meta_data.dataset_anonymous)
+        zenodo_service.update_deposition(deposition_id, metadata)
+
+    def _publish_dataset_to_zenodo(self, dataset: DataSet, zenodo_service) -> None:
+        anonymous = bool(dataset.ds_meta_data.dataset_anonymous)
+        deposition = zenodo_service.create_new_deposition(dataset, anonymous=anonymous)
+        deposition_id = deposition.get("id")
+        if not deposition_id:
+            raise DatasetMetadataUpdateError("Zenodo did not return a deposition id.")
+
+        zip_path = self.zip_dataset(dataset)
+        try:
+            zenodo_service.upload_zip(dataset, deposition_id, zip_path)
+        finally:
+            if zip_path and os.path.exists(zip_path):
+                temp_dir = os.path.dirname(zip_path)
+                shutil.rmtree(temp_dir, ignore_errors=True)
+
+        zenodo_service.publish_deposition(deposition_id)
+        doi = zenodo_service.get_doi(deposition_id)
+        if not doi:
+            raise DatasetMetadataUpdateError("Zenodo did not return a DOI after publishing.")
+
+        dataset.ds_meta_data.deposition_id = deposition_id
+        dataset.ds_meta_data.dataset_doi = doi
+
+    def _transition_dataset_state_if_needed(self, dataset: DataSet, dataset_type: str, zenodo_service) -> None:
+        wants_sync = dataset_type in {"zenodo", "zenodo_anonymous"}
+        is_synced = bool(dataset.ds_meta_data.dataset_doi)
+
+        if not wants_sync:
+            dataset.ds_meta_data.dataset_doi = None
+            dataset.ds_meta_data.deposition_id = None
+            return
+
+        if zenodo_service is None:
+            raise DatasetMetadataUpdateError("Zenodo service is required to synchronize the dataset.")
+
+        if is_synced:
+            self._sync_metadata_in_zenodo_if_needed(dataset, zenodo_service)
+            return
+
+        self._publish_dataset_to_zenodo(dataset, zenodo_service)
+
+    def update_metadata_from_request(self, dataset: DataSet, form_data, zenodo_service=None) -> None:
+        try:
+            dataset_type = self._get_requested_dataset_type(form_data)
+            self._apply_metadata_from_form(dataset, form_data)
+            self._replace_authors_from_form(dataset, form_data)
+            self._transition_dataset_state_if_needed(dataset, dataset_type, zenodo_service)
             self.repository.session.commit()
-
-        except Exception as exc:
-            logger.info(f"Exception updating dataset from form...: {exc}")
+        except DatasetMetadataValidationError:
             self.repository.session.rollback()
-            raise exc
-
-        return self.get_by_id(dataset.id)
+            raise
+        except DatasetMetadataUpdateError:
+            self.repository.session.rollback()
+            raise
+        except Exception as exc:
+            self.repository.session.rollback()
+            raise DatasetMetadataUpdateError(str(exc))
 
     def create_from_form(self, form: DataSetForm, current_user: User) -> DataSet:
 
@@ -185,8 +366,20 @@ class DataSetService(BaseService):
             "orcid": current_user.profile.get_orcid(),
         }
         try:
-            logger.info(f"Creating dsmetadata...: {form.get_dsmetadata()}")
-            dsmetadata = self.dsmetadata_repository.create(**form.get_dsmetadata())
+            dsmetadata_data = form.get_dsmetadata()
+
+            # Limpiar HTML en el campo description
+            raw_description = dsmetadata_data.get("description", "")
+            clean_description = bleach.clean(
+                raw_description,
+                tags=["b", "i", "u", "a", "p", "br"],
+                attributes={"a": ["href", "title", "target"]},
+                strip=True,
+            )
+            dsmetadata_data["description"] = clean_description
+
+            logger.info(f"Creating dsmetadata...: {dsmetadata_data}")
+            dsmetadata = self.dsmetadata_repository.create(**dsmetadata_data)
 
             dsmetadata_info = form.get_dsmetadata()
             is_anonymous = dsmetadata_info.get("dataset_anonymous", False)
@@ -201,29 +394,21 @@ class DataSetService(BaseService):
                     author_list = [main_author]
 
             for author_data in author_list:
-                author = self.author_repository.create(
-                    commit=False, ds_meta_data_id=dsmetadata.id, **author_data
-                )
+                author = self.author_repository.create(commit=False, ds_meta_data_id=dsmetadata.id, **author_data)
                 dsmetadata.authors.append(author)
 
-            dataset = self.create(
-                commit=False, user_id=current_user.id, ds_meta_data_id=dsmetadata.id
-            )
+            dataset = self.create(commit=False, user_id=current_user.id, ds_meta_data_id=dsmetadata.id)
 
             feature_model_count = 0
             for feature_model in form.feature_models:
                 uvl_filename = feature_model.uvl_filename.data
-                fmmetadata = self.fmmetadata_repository.create(
-                    commit=False, **feature_model.get_fmmetadata()
-                )
+                fmmetadata = self.fmmetadata_repository.create(commit=False, **feature_model.get_fmmetadata())
                 for author_data in feature_model.get_authors():
-                    author = self.author_repository.create(
-                        commit=False, fm_meta_data_id=fmmetadata.id, **author_data
-                    )
+                    author = self.author_repository.create(commit=False, fm_meta_data_id=fmmetadata.id, **author_data)
                     fmmetadata.authors.append(author)
 
                 fm = self.feature_model_repository.create(
-                    commit=False, data_set_id=dataset.id, fm_meta_data_id=fmmetadata.id
+                    commit=False, dataset_id=dataset.id, fm_meta_data_id=fmmetadata.id
                 )
 
                 feature_model_count += 1
@@ -300,31 +485,25 @@ class DataSetService(BaseService):
         return self.dsmetadata_repository.update(id, **kwargs)
 
     def get_uvlhub_doi(self, dataset: DataSet) -> str:
-        domain = os.getenv("DOMAIN", "localhost")
-        return f"http://{domain}/doi/{dataset.ds_meta_data.dataset_doi}"
+        server_name = current_app.config.get("SERVER_NAME")
+        preferred_url_scheme = current_app.config.get("PREFERRED_URL_SCHEME")
+        return f"{preferred_url_scheme}://{server_name}/doi/{dataset.ds_meta_data.dataset_doi}"
 
     def zip_dataset(self, dataset: DataSet) -> str:
-        working_dir = os.getenv('WORKING_DIR', '')
-        file_path = os.path.join(working_dir, "uploads", f"user_{dataset.user_id}", f"dataset_{dataset.id}")
+        working_dir = os.getenv("WORKING_DIR", "")
+        dataset_dir = os.path.join(working_dir, "uploads", f"user_{dataset.user_id}", f"dataset_{dataset.id}")
 
         temp_dir = tempfile.mkdtemp()
         zip_path = os.path.join(temp_dir, f"dataset_{dataset.id}.zip")
 
         with ZipFile(zip_path, "w") as zipf:
-            for subdir, dirs, files in os.walk(file_path):
+            for subdir, _, files in os.walk(dataset_dir):
                 for file in files:
                     full_path = os.path.join(subdir, file)
+                    relative_path = os.path.relpath(full_path, dataset_dir)
+                    zipf.write(full_path, arcname=relative_path)
 
-                    relative_path = os.path.relpath(full_path, file_path)
-
-                    zipf.write(
-                        full_path,
-                        arcname=os.path.join(
-                            os.path.basename(zip_path[:-4]), relative_path
-                        ),
-                    )
-
-        return temp_dir
+        return zip_path
 
     def zip_all_datasets(self, zip_path: str):
         with ZipFile(zip_path, "w") as zipf:
@@ -349,6 +528,30 @@ class DataSetService(BaseService):
                                             arcname=os.path.join(dataset_dir, relative_path),
                                         )
 
+    def zip_from_storage(self, dataset):
+        dataset_folder = os.path.join(
+            os.getenv("WORKING_DIR", ""),
+            "uploads",
+            f"user_{dataset.user_id}",
+            f"dataset_{dataset.id}",
+            "uvl",
+        )
+
+        if not os.path.exists(dataset_folder):
+            current_app.logger.warning(f"[ZIP] Dataset folder not found: {dataset_folder}")
+            return None  # Lo manejarás con abort(404) fuera
+
+        temp_dir = tempfile.mkdtemp()
+        zip_path = os.path.join(temp_dir, f"dataset_{dataset.id}.zip")
+
+        with zipfile.ZipFile(zip_path, "w") as zipf:
+            for filename in os.listdir(dataset_folder):
+                file_path = os.path.join(dataset_folder, filename)
+                arcname = filename
+                zipf.write(file_path, arcname=arcname)
+
+        return zip_path
+
 
 class AuthorService(BaseService):
     def __init__(self):
@@ -372,9 +575,7 @@ class DSDownloadRecordService(BaseService):
         if not user_cookie:
             user_cookie = str(uuid.uuid4())
 
-        existing_record = self.the_record_exists(
-            dataset=dataset, user_cookie=user_cookie
-        )
+        existing_record = self.the_record_exists(dataset=dataset, user_cookie=user_cookie)
 
         if not existing_record:
             self.create_new_record(dataset=dataset, user_cookie=user_cookie)
@@ -411,9 +612,7 @@ class DSViewRecordService(BaseService):
         if not user_cookie:
             user_cookie = str(uuid.uuid4())
 
-        existing_record = self.the_record_exists(
-            dataset=dataset, user_cookie=user_cookie
-        )
+        existing_record = self.the_record_exists(dataset=dataset, user_cookie=user_cookie)
 
         if not existing_record:
             self.create_new_record(dataset=dataset, user_cookie=user_cookie)
@@ -448,3 +647,83 @@ class SizeService:
             return f"{round(size / (1024 ** 2), 2)} MB"
         else:
             return f"{round(size / (1024 ** 3), 2)} GB"
+
+
+class LocalDatasetService:
+    def __init__(
+        self,
+        dsmetadata_service,
+        dataset_service,
+        author_service,
+        feature_model_service,
+        logger,
+    ):
+        self.dsmetadata_service = dsmetadata_service
+        self.dataset_service = dataset_service
+        self.author_service = author_service
+        self.feature_model_service = feature_model_service
+        self.logger = logger
+
+    def create_local_dataset(self, form, current_user):
+        try:
+            title = form.get("title")
+            description = form.get("description")
+            publication_type_id = form.get("publication_type")
+            publication_doi = form.get("publication_doi")
+            tags = form.getlist("tags[]")
+
+            self.logger.info(
+                f"[LOCAL] Metadata - title: {title}, description: {description}, "
+                f"publication_type_id: {publication_type_id}, publication_doi: {publication_doi}, tags: {tags}"
+            )
+
+            publication_type = PublicationType(publication_type_id) if publication_type_id else None
+
+            # Crear DSMetaData
+            ds_meta = self.dsmetadata_service.create(
+                title=title,
+                description=description,
+                publication_type=publication_type,
+                publication_doi=publication_doi,
+                tags=",".join(tags) if tags else "",
+            )
+            self.logger.info(f"[LOCAL] DSMetaData created with ID: {ds_meta.id}")
+
+            # Crear DataSet
+            dataset = self.dataset_service.create(commit=False, user_id=current_user.id, ds_meta_data_id=ds_meta.id)
+            self.logger.info(f"[LOCAL] DataSet created with ID: {dataset.id}")
+
+            # Crear autores
+            i = 0
+            while True:
+                name = form.get(f"authors[{i}][name]")
+                if not name:
+                    break
+                affiliation = form.get(f"authors[{i}][affiliation]")
+                orcid = form.get(f"authors[{i}][orcid]")
+
+                self.author_service.create(
+                    ds_meta_data_id=ds_meta.id,
+                    name=name,
+                    affiliation=affiliation,
+                    orcid=orcid,
+                )
+                self.logger.info(f"[LOCAL] Author #{i} added: {name}, {affiliation}, {orcid}")
+                i += 1
+
+            # Guardar en DB
+            db.session.commit()
+            self.logger.info(f"[LOCAL] Dataset {dataset.id} committed to DB")
+
+            ingest = UploadIngestService(self.logger)
+            stage_dir, staged_uvls = ingest.prepare_uvls(current_user.temp_folder())
+            self.logger.info(f"[LOCAL] {len(staged_uvls)} UVLs listos en {stage_dir}")
+
+            created_fms = self.feature_model_service.create_from_uvl_files(dataset, base_dir=stage_dir)
+
+            return dataset, ds_meta, created_fms
+
+        except Exception as exc:
+            db.session.rollback()
+            self.logger.exception(f"[LOCAL ERROR] {exc}")
+            raise

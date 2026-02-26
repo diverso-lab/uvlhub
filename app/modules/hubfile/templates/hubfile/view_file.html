@@ -1,0 +1,452 @@
+{% extends "base_template.html" %}
+
+{% set title = dataset.ds_meta_data.title  %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb text-muted fs-6 fw-semibold">
+    <li class="breadcrumb-item"><a href="/" class="">Home</a></li>
+
+    {% if dataset.ds_meta_data.dataset_doi %}
+        <li class="breadcrumb-item">
+            <a href="{{ dataset.get_uvlhub_doi() }}" class="">
+                {{ dataset.ds_meta_data.title }}
+            </a>
+        </li>
+    {% else %}
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('dataset.get_unsynchronized_dataset', dataset_id=dataset.id) }}" class="">
+                {{ dataset.ds_meta_data.title }}
+            </a>
+        </li>
+    {% endif %}
+
+    <li class="breadcrumb-item text-muted">{{ selected_file.name }}</li>
+</ol>
+{% endblock %}
+
+
+{% block content %}
+
+    <div class="row">
+
+        <div class="col-12 mb-5">
+
+            <div class="card">
+                <div class="card-body">
+
+                    <div class="d-flex align-items-center justify-content-between">
+                        <span class="badge bg-secondary">{{ dataset.get_cleaned_publication_type() }}</span>
+                    </div>
+
+                    <!-- DOI Buttons -->
+                    <div class="row mt-3 mb-2">
+                        <div class="col-12 d-flex align-items-center flex-wrap gap-2">
+                            {% if dataset.ds_meta_data.dataset_doi %}
+                            <a href="{{ dataset.get_zenodo_url() }}" target="_blank"
+                            class="btn btn-light btn-sm px-2 py-1 d-inline-flex align-items-center">
+                            <i class="bi bi-box-arrow-up-right me-2"></i>
+                            View Zenodo publication
+                            </a>
+                            {% endif %}
+
+                            {% if dataset.ds_meta_data.publication_doi %}
+                            <a href="{{ dataset.ds_meta_data.publication_doi }}" target="_blank"
+                            class="btn btn-light btn-sm px-2 py-1 d-inline-flex align-items-center">
+                            <i class="bi bi-box-arrow-up-right me-2"></i>
+                            View associated publication
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% if dataset.ds_meta_data.dataset_doi %}
+                    <!-- DOI + Copy icon -->
+                    <div class="row mt-3">
+                        <div class="col-12 d-flex align-items-center flex-wrap">
+                            <!-- Etiqueta DOI -->
+                            <span class="px-3 py-1 bg-dark text-white fw-bold rounded-start" style="font-family: monospace;">
+                            DOI
+                            </span>
+
+                            <!-- Enlace al DOI -->
+                            <a href="{{ dataset.get_uvlhub_doi() }}"
+                            target="_blank"
+                            class="px-3 py-1 text-white fw-semibold text-decoration-none rounded-end me-2"
+                            style="background: linear-gradient(90deg, #2176bd 0%, #2980b9 100%); font-family: monospace;">
+                            {{ dataset.get_uvlhub_doi_path() }}
+                            </a>
+
+                            <!-- Copiar DOI -->
+                            <i data-feather="clipboard"
+                            class="center-button-icon"
+                            style="cursor: pointer"
+                            onclick="copyText('dataset_doi_uvlhub_{{ dataset.id }}')"
+                            data-bs-toggle="tooltip"
+                            title="Copy DOI">
+                            </i>
+
+                            <!-- Texto oculto para copiar -->
+                            <div id="dataset_doi_uvlhub_{{ dataset.id }}" style="display: none;">
+                            {{ dataset.get_uvlhub_doi() }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="row">
+
+        <!-- Sidebar: tabla de archivos -->
+        <div class="col-md-3 mb-5 mb-md-0">
+            <div class="card card-flush h-100 d-flex flex-column">
+
+                <!-- Header con buscador -->
+                <div class="card-header py-5">
+                    <div class="card-title w-100"><!-- 👈 fuerza ancho completo -->
+                        <div class="d-flex align-items-center position-relative my-1 w-100"><!-- 👈 ancho completo -->
+                            <i class="ki-duotone ki-magnifier fs-3 position-absolute ms-4">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                            </i>
+                            <input type="text"
+                                data-file-search
+                                class="form-control form-control-solid w-100 ps-12 small"
+                                placeholder="Search models" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Body con tabla -->
+                <div class="card-body pt-0 flex-grow-1">
+                    <table class="table align-middle table-row-dashed fs-7 gy-3" id="kt_files_table">
+                        <thead>
+                            <tr class="text-muted fw-bold text-uppercase fs-8">
+                                <th>Name</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for f in hubfiles %}
+                            <tr>
+                                <td class="font-monospace">
+                                    <a href="{{ f.get_url() }}"
+                                    class="{% if f.id == selected_file.id %}fw-bold text-primary{% else %}text-muted{% endif %}">
+                                        {{ f.name }}
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Footer con botón ancho completo -->
+                <div class="mt-auto d-flex justify-content-center pb-4 px-4">
+                    <a href="/datasets/download/{{ dataset.id }}" class="btn btn-sm btn-primary w-100">
+                        <i data-feather="download" class="me-1" style="width: 14px; height: 14px;"></i>
+                        Download all dataset ({{ dataset.get_file_total_size_for_human() }})
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contenido principal con tabs -->
+        <div class="col-md-9">
+
+            
+            <div class="card">
+
+                
+            <ul class="nav nav-tabs nav-line-tabs nav-line-tabs-2x fs-6 px-4 pt-4" id="fileTabs" role="tablist" style="border-bottom: none;">
+
+                <li class="nav-item" role="presentation">
+                    <span class="nav-link disabled fw-bold d-flex align-items-center fs-5">
+                        <i class="ki-duotone ki-file fs-2 mr-2">
+                    <span class="path1"></span>
+                    <span class="path2"></span>
+                    </i> &nbsp;
+                        {{ selected_file.name }}
+                    </span>
+                </li>
+
+
+                <li class="nav-item ms-auto dropdown" role="presentation">
+                    <a class="btn btn-sm btn-secondary dropdown-toggle d-flex align-items-center"
+                    href="#"
+                    id="exportDropdown"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false">
+                        <i class="ki-duotone ki-file-right">
+                        <span class="path1"></span>
+                        <span class="path2"></span>
+                        </i>
+                        Export
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="exportDropdown">
+                        <li>
+                            <a class="dropdown-item" href="{{ url_for('hubfile.download_file', file_id=selected_file.id) }}">
+                                UVL
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="{{ url_for('flamapy.to_glencoe', file_id=selected_file.id) }}">
+                                Glencoe
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="{{ url_for('flamapy.to_cnf', file_id=selected_file.id) }}">
+                                DIMACS
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="{{ url_for('flamapy.to_splot', file_id=selected_file.id) }}">
+                                SPLOT
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+
+                <li class="nav-item ms-2" role="presentation">
+                    <a href="{{ selected_file.get_ide_url() }}" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    class="btn btn-sm btn-secondary d-flex align-items-center">
+                        <img src="{{ url_for('static', filename='media/logos/flamapy_ide.svg') }}" 
+                            alt="Flamapy IDE"  
+                            height="18" 
+                            class="me-2" />
+                        <i class="ki-outline ki-exit-right-corner"></i>
+                    </a>
+                </li>
+            </ul>
+
+
+                <div class="row p-4">
+                    <!-- UVL a la izquierda -->
+                    <div class="col-md-6">
+                        <div class="bg-light rounded border p-4 h-100">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <!-- Logo a la izquierda -->
+                                    <img src="{{ url_for('static', filename='media/logos/uvl_logo.svg') }}"
+                                        alt="UVL Logo"
+                                        height="24" />
+
+                                    <!-- Botón a la derecha -->
+                                    <a href="javascript:void(0);"
+                                    onclick="copyCurrentUVL(this)"
+                                    class="btn btn-sm btn-secondary d-flex align-items-center"
+                                    data-bs-toggle="tooltip"
+                                    data-bs-placement="bottom"
+                                    title="Copy to clipboard">
+                                        <i class="ki-duotone ki-copy me-1"></i>
+                                        Copy
+                                    </a>
+                                </div>
+                            <pre class="m-0" style="white-space: pre-wrap; font-size: 0.85rem;">{{ uvl_content }}</pre>
+
+                        </div>
+                    </div>
+                    
+                    <!-- Fact Label a la derecha -->
+                    <div class="col-md-6">
+                        <div class="bg-light rounded border p-4 h-100">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <!-- Logo -->
+                                <img src="{{ url_for('static', filename='media/logos/factlabel_logo.svg') }}"
+                                    alt="Fact Label Logo"
+                                    height="24" />
+
+                                <!-- Botón -->
+                                <a href="{{ selected_file.get_factlabel_url() }}" 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                class="btn btn-sm btn-secondary d-flex align-items-center"
+                                data-bs-toggle="tooltip"
+                                data-bs-placement="bottom"
+                                title="Open FactLabel in new tab">
+                                    <i class="ki-duotone ki-exit-right-corner">
+                                        <span class="path1"></span>
+                                        <span class="path2"></span>
+                                    </i>
+                                    Open
+                                </a>
+                            </div>
+
+                            <!-- 🔹 Añade aquí los checkboxes que espera factlabel.bundle.js -->
+                            <div class="d-flex gap-3 align-items-center mb-3">
+                                <div class="form-check form-check-sm">
+                                    <input class="form-check-input" type="checkbox" id="collapseZeroValues" checked>
+                                    <label class="form-check-label small" for="collapseZeroValues">
+                                        Collapse zero values
+                                    </label>
+                                </div>
+                                <div class="form-check form-check-sm">
+                                    <input class="form-check-input" type="checkbox" id="collapseSubProperties" checked>
+                                    <label class="form-check-label small" for="collapseSubProperties">
+                                        Collapse sub-properties
+                                    </label>
+                                </div>
+                            </div>
+                            <!-- 🔹 Fin del bloque nuevo -->
+
+                            <div id="FMFactLabelWrapper" class="w-100" style="overflow-y: auto; max-height: 600px;">
+                                <svg id="FMFactLabelChart" class="chart w-100" preserveAspectRatio="xMinYMin meet"></svg>
+                            </div>
+
+                            <style>
+                                #FMFactLabelWrapper, #FMFactLabelChart {
+                                    width: 100% !important;
+                                }
+                            </style>
+                        </div>
+                    </div>
+
+
+
+                    
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <div class="modal fade" id="metricModal" tabindex="-1" aria-labelledby="metricModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content shadow-lg rounded-2xl">
+                <!-- Encabezado -->
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="fw-bold text-primary mb-0" id="metricModalLabel">Metric Details</h5>
+                    <button type="button" class="btn btn-icon btn-sm btn-light" data-bs-dismiss="modal" aria-label="Close">
+                        <i class="ki-duotone ki-cross fs-2">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                        </i>
+                    </button>
+                </div>
+
+                <!-- Cuerpo -->
+                <div class="modal-body pt-3 text-break">
+                    <!-- Aquí se inyectará el contenido -->
+                </div>
+
+                <!-- Footer -->
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light-primary" id="copyButton">
+                        <i class="ki-duotone ki-copy me-2"></i>
+                        Copy
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script src="{{ url_for('factlabel.assets', subfolder='dist', filename='factlabel.bundle.js') }}"></script>
+
+<script>
+
+document.addEventListener('DOMContentLoaded', function () {
+    feather.replace();
+
+    // Cargar Fact Label automáticamente
+    renderFactLabel({{ selected_file.id }});
+});
+
+function renderFactLabel(fileId) {
+    fetch(`/factlabel/view/${fileId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                drawFMFactLabel(data.content); // Fact Label disponible
+            } else {
+                console.warn("FM FactLabel not yet available:", data.error);
+                d3.select("#FMFactLabelChart")
+                  .append("text")
+                  .attr("x", "50%")
+                  .attr("y", "50%")
+                  .attr("text-anchor", "middle")
+                  .attr("dominant-baseline", "middle")
+                  .attr("font-size", "14px")
+                  .attr("fill", "#999")
+                  .text("FM FactLabel not yet available");
+            }
+        })
+        .catch(error => {
+            console.error("Fetch error:", error);
+            d3.select("#FMFactLabelChart")
+              .append("text")
+              .attr("x", "50%")
+              .attr("y", "50%")
+              .attr("text-anchor", "middle")
+              .attr("dominant-baseline", "middle")
+              .attr("font-size", "14px")
+              .attr("fill", "red")
+              .text("Error loading FM FactLabel");
+        });
+}
+
+
+$(function () {
+    const table = $('#kt_files_table').DataTable({
+        pageLength: 15,
+        ordering: false,
+        lengthChange: false,
+        info: false,
+        language: {
+            paginate: {
+                previous: '<i class="ki-duotone ki-left fs-5"></i>',
+                next: '<i class="ki-duotone ki-right fs-5"></i>'
+            }
+        },
+        dom: 'tp' // sin buscador automático de DataTables, solo tabla + paginación
+    });
+
+    const searchInput = document.querySelector('[data-file-search]');
+    if (searchInput) {
+        searchInput.addEventListener('input', function () {
+            table.search(this.value).draw();
+        });
+    }
+});
+
+function copyCurrentUVL(buttonEl) {
+    const content = `{{ uvl_content | escape | replace('\n', '\\n') | replace('"', '\\"') }}`;
+
+    navigator.clipboard.writeText(content).then(() => {
+        // Cambia el tooltip temporalmente
+        const tooltip = bootstrap.Tooltip.getInstance(buttonEl) || new bootstrap.Tooltip(buttonEl);
+        tooltip.setContent({ '.tooltip-inner': 'Copied!' });
+        tooltip.show();
+
+        // Restaurar texto tras 1.5 segundos
+        setTimeout(() => {
+            tooltip.setContent({ '.tooltip-inner': 'Copy to clipboard' });
+        }, 1500);
+    });
+}
+
+// Activar tooltips al cargar
+document.addEventListener('DOMContentLoaded', function () {
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+        new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
+    feather.replace();
+});
+
+</script>
+{% endblock %}

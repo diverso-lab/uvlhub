@@ -3,4 +3,4 @@ from wtforms import SubmitField
 
 
 class StatisticsForm(FlaskForm):
-    submit = SubmitField('Save statistics')
+    submit = SubmitField("Save statistics")

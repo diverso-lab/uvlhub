@@ -18,11 +18,6 @@ app.log.*
 build/
 dist/
 
-# Webpack bundles and source maps
-*.bundle.js
-*.bundle.js.map
-*.map
-
 # Python egg info
 rosemary.egg-info/
 
@@ -45,6 +40,13 @@ nginx.prod.ssl.conf
 .version
 entrypoint.sh
 deployments.log
+.last_env
 
 # Node.js dependencies
 node_modules/
+
+# Selenium videos generated with selenium-grid
+docker/tmp/videos/
+
+# Config files
+.moduleignore

@@ -1,11 +1,12 @@
+import subprocess
+from datetime import datetime
+
 import pytz
+from flask import abort
+
+import docker
 from app.modules.webhook.repositories import WebhookRepository
 from core.services.BaseService import BaseService
-
-from flask import abort
-import subprocess
-import docker
-from datetime import datetime
 
 client = docker.from_env()
 
@@ -19,6 +20,12 @@ class WebhookService(BaseService):
             return client.containers.get("web_app_container")
         except docker.errors.NotFound:
             abort(404, description="Web container not found.")
+
+    def get_worker_container(self):
+        try:
+            return client.containers.get("rq_worker_container")
+        except docker.errors.NotFound:
+            abort(404, description="Worker container not found.")
 
     def get_volume_name(self, container):
         volume_name = next(
@@ -58,17 +65,13 @@ class WebhookService(BaseService):
     def execute_container_command(self, container, command, workdir="/app"):
         exit_code, output = container.exec_run(command, workdir=workdir)
         if exit_code != 0:
-            abort(
-                500, description=f"Container command failed: {output.decode('utf-8')}"
-            )
+            abort(500, description=f"Container command failed: {output.decode('utf-8')}")
         return output.decode("utf-8")
 
     def log_deployment(self, container):
         log_entry = f"Deployment successful at {datetime.now(pytz.utc)}\n"
         log_file_path = "/app/deployments.log"
-        self.execute_container_command(
-            container, f"sh -c 'echo \"{log_entry}\" >> {log_file_path}'"
-        )
+        self.execute_container_command(container, f"sh -c 'echo \"{log_entry}\" >> {log_file_path}'")
 
     def restart_container(self, container):
         subprocess.Popen(["/bin/sh", "/app/scripts/restart_container.sh", container.id])

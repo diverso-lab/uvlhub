@@ -1,11 +1,12 @@
-import click
-import shutil
 import os
+import shutil
 import subprocess
+
+import click
 from flask.cli import with_appcontext
-from app import create_app, db
 from sqlalchemy import MetaData
 
+from app import create_app, db
 from rosemary.commands.clear_uploads import clear_uploads
 
 
@@ -18,9 +19,7 @@ from rosemary.commands.clear_uploads import clear_uploads
     is_flag=True,
     help="Remove all tables including 'alembic_version', clear migrations folder, and recreate migrations.",
 )
-@click.option(
-    "-y", "--yes", is_flag=True, help="Confirm the operation without prompting."
-)
+@click.option("-y", "--yes", is_flag=True, help="Confirm the operation without prompting.")
 @with_appcontext
 def db_reset(clear_migrations, yes):
     app = create_app()
@@ -65,9 +64,7 @@ def db_reset(clear_migrations, yes):
                 subprocess.run(["flask", "db", "init"], check=True)
                 subprocess.run(["flask", "db", "migrate"], check=True)
                 subprocess.run(["flask", "db", "upgrade"], check=True)
-                click.echo(
-                    click.style("Database recreated from new migrations.", fg="green")
-                )
+                click.echo(click.style("Database recreated from new migrations.", fg="green"))
             except subprocess.CalledProcessError as e:
                 click.echo(click.style(f"Error during migrations reset: {e}", fg="red"))
                 return

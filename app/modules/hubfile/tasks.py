@@ -1,8 +1,14 @@
+import json
 import logging
 import os
-from flamapy.metamodels.fm_metamodel.transformations import UVLReader, GlencoeWriter, SPLOTWriter
-from flamapy.metamodels.pysat_metamodel.transformations import FmToPysat, DimacsWriter
 import time
+
+from flamapy.metamodels.fm_metamodel.transformations import GlencoeWriter, SPLOTWriter, UVLReader
+from flamapy.metamodels.pysat_metamodel.transformations import DimacsWriter, FmToPysat
+
+from app import create_app, db
+from app.modules.factlabel.services import FactlabelService
+from app.modules.hubfile.models import Hubfile
 
 logger = logging.getLogger(__name__)
 
@@ -72,3 +78,29 @@ def transform_uvl(path, retries=5, delay=2):
         logger.info(f"CNF file created at: {cnf_path}")
     except Exception as e:
         logger.error(f"Error in CNF transformation: {e}")
+
+
+app = create_app()
+
+
+def compute_factlabel(hubfile_id: int, light_fact_label: bool = False):
+    logger.info(f"[FACTLABEL] Worker DB URL: {db.engine.url}")
+    logger.info(f"[FACTLABEL] Starting computation for Hubfile {hubfile_id} (light={light_fact_label})")
+
+    with app.app_context():
+        try:
+            hubfile = db.session.get(Hubfile, hubfile_id)
+            if not hubfile:
+                logger.warning(f"[FACTLABEL] Hubfile {hubfile_id} not found")
+                return
+
+            content = FactlabelService().get_characterization(hubfile, light_fact_label=light_fact_label)
+            hubfile.factlabel_json = json.dumps(content)
+
+            db.session.add(hubfile)
+            db.session.commit()
+
+            logger.info(f"[FACTLABEL] ✅ FactLabel computed and stored for Hubfile {hubfile_id}")
+        except Exception as e:
+            logger.exception(f"[FACTLABEL] Error computing FactLabel for Hubfile {hubfile_id}: {e}")
+            db.session.rollback()

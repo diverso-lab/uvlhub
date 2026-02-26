@@ -1,18 +1,19 @@
 import os
 
-from flask import Flask
-
-from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
+from flasgger import Swagger
+from flask import Flask
+from flask_cors import CORS
 from flask_migrate import Migrate
 from flask_session import Session
+from flask_sqlalchemy import SQLAlchemy
 
 from app.modules.mail.services import MailService
 from core.configuration.configuration import get_app_version
-from core.managers.module_manager import ModuleManager
 from core.managers.config_manager import ConfigManager
 from core.managers.error_handler_manager import ErrorHandlerManager
 from core.managers.logging_manager import LoggingManager
+from core.managers.module_manager import ModuleManager
 
 # Load environment variables
 load_dotenv()
@@ -59,6 +60,23 @@ def create_app(config_name="development"):
     logging_manager = LoggingManager(app)
     logging_manager.setup_logging()
 
+    # CORS
+    CORS(app, resources={r"/hubfiles/raw/*": {"origins": "*"}})
+
+    # Swagger API
+    swagger_template = {
+        "swagger": "2.0",
+        "info": {
+            "title": "UVLHub Rest API (v1)",
+            "description": "API to access datasets, files and metadata.",
+            "version": "1.0.0",
+        },
+        "securityDefinitions": {"ApiKeyAuth": {"type": "apiKey", "name": "X-API-Key", "in": "header"}},
+        "security": [{"ApiKeyAuth": []}],
+    }
+
+    Swagger(app, template=swagger_template)
+
     # Initialize error handler manager
     error_handler_manager = ErrorHandlerManager(app)
     error_handler_manager.register_error_handlers()
@@ -75,15 +93,19 @@ def create_app(config_name="development"):
         # Add the application version manually
         env_vars["APP_VERSION"] = get_app_version()
 
-        # Ensure DOMAIN variable has a default value if not set
-        env_vars["DOMAIN"] = os.getenv("DOMAIN", "localhost")
-
         # Set Boolean variables for the environment
         flask_env = os.getenv("FLASK_ENV")
         env_vars["DEVELOPMENT"] = flask_env == "development"
         env_vars["PRODUCTION"] = flask_env == "production"
 
         return env_vars
+
+    @app.template_filter("format_thousands")
+    def format_thousands(value):
+        try:
+            return f"{int(value):,}".replace(",", " ")  # espacio fino U+202F
+        except (ValueError, TypeError):
+            return value
 
     return app
 

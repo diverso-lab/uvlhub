@@ -1,0 +1,61 @@
+name: Pytest
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  pytest:
+    runs-on: ubuntu-24.04
+
+    env:
+      MARIADB_ROOT_PASSWORD: uvlhub_root_password
+      MARIADB_DATABASE: uvlhubdb_test
+      MARIADB_TEST_DATABASE: uvlhubdb_test
+      MARIADB_USER: uvlhub_user
+      MARIADB_PASSWORD: uvlhub_password
+      MARIADB_HOSTNAME: 127.0.0.1
+      MARIADB_PORT: 3306
+      FLASK_ENV: testing
+
+      # Critical: make constraints apply to build isolation envs too
+      PIP_CONSTRAINT: constraints.txt
+
+    services:
+      mariadb:
+        image: mariadb:12.0.2
+        env:
+          MARIADB_ROOT_PASSWORD: ${{ env.MARIADB_ROOT_PASSWORD }}
+          MARIADB_DATABASE: ${{ env.MARIADB_DATABASE }}
+          MARIADB_USER: ${{ env.MARIADB_USER }}
+          MARIADB_PASSWORD: ${{ env.MARIADB_PASSWORD }}
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mariadb-admin ping -u root -p$MARIADB_ROOT_PASSWORD"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Delete rosemary editable mode
+        run: sed -i '/rosemary @ file:\/\/\/app/d' requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          # constraints.txt must contain: setuptools<82
+          pip install -r requirements.txt -c constraints.txt
+
+      - name: Run Tests
+        run: pytest app/modules/ --ignore-glob='*selenium*'

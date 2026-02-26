@@ -1,4 +1,4 @@
-from flask import flash, redirect, url_for, render_template
+from flask import flash, redirect, render_template, url_for
 
 
 class BaseService:
@@ -23,9 +23,7 @@ class BaseService:
     def delete(self, id):
         return self.repository.delete(id)
 
-    def handle_service_response(
-        self, result, errors, success_url_redirect, success_msg, error_template, form
-    ):
+    def handle_service_response(self, result, errors, success_url_redirect, success_msg, error_template, form):
         if result:
             flash(success_msg, "success")
             return redirect(url_for(success_url_redirect))

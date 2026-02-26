@@ -1,15 +1,12 @@
-import click
-import subprocess
 import os
+import subprocess
+
+import click
 
 
-@click.command(
-    "test", help="Runs pytest on the blueprints directory or a specific module."
-)
+@click.command("test", help="Runs pytest on the blueprints directory or a specific module.")
 @click.argument("module_name", required=False)
-@click.option(
-    "-k", "keyword", help="Only run tests that match the given substring expression."
-)
+@click.option("-k", "keyword", help="Only run tests that match the given substring expression.")
 def test(module_name, keyword):
     base_path = os.path.join(os.getenv("WORKING_DIR", ""), "app/modules")
     test_path = base_path

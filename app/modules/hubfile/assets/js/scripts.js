@@ -1,277 +1,274 @@
 import { FeatureModel } from "uvl-parser";
 
-// 
+document.addEventListener("DOMContentLoaded", function () {
+    Dropzone.autoDiscover = false;
 
-let valid = true;
-let invalid_uvl_message = '';
+    const id = "#uvl_dropzone";
+    const zoneEl = document.querySelector(id);
 
-let dropzone = Dropzone.options.myDropzone = {
-    url: "/hubfile/upload",
-    paramName: 'file',
-    maxFilesize: 10,
-    acceptedFiles: '.uvl',
-    init: function () {
+    // Template de preview
+    const previewNode = zoneEl.querySelector(".dropzone-item");
+    previewNode.id = "";
+    const previewTemplate = previewNode.parentNode.innerHTML;
+    previewNode.parentNode.removeChild(previewNode);
 
-        let fileList = document.getElementById('file-list');
-        let dropzoneText = document.getElementById('dropzone-text');
-        let alerts = document.getElementById('alerts');
+    // Crear Dropzone
+    window.myDropzone = new Dropzone(id, {
+        url: "/hubfile/upload",
+        autoProcessQueue: true,
+        acceptedFiles: ".uvl,.zip",
+        parallelUploads: 20,
+        previewTemplate: previewTemplate,
+        previewsContainer: id + " .dropzone-items",
+        clickable: id + " .dropzone-select",
+        accept: function (file, done) {
+            // límite en bytes (100 MB decimales)
+            const maxZipSize = 100 * 1000 * 1000;
 
-        if (hubfiles) {
-            for (let i = 0; i < hubfiles.length; i++) {
-                let hubfile = hubfiles[i];
-                fetch(hubfile.url)
-                .then(response => response.blob())
-                .then(blob => {
-                    let file = new File([blob], hubfile.name, {type: 'uvl'});
-                    this.addFile(file);
-                })
+            if (file.name.toLowerCase().endsWith(".zip") && file.size > maxZipSize) {
+                const sizeMB = (file.size / 1000000).toFixed(1); // en MB con 1 decimal
+                done(`ZIP file too big (${sizeMB} MB). Max size is 100 MB.`);
+                return;
+            }
+
+            const uvlFiles = this.files.filter(f => f.name?.toLowerCase().endsWith(".uvl"));
+            if (uvlFiles.length > 20) {
+                done("You tried to upload more than 20 .uvl files. Please use a ZIP instead.");
+            } else {
+                done();
             }
         }
-            
-        this.on('addedfile', function (file) {
 
-            let ext = file.name.split('.').pop();
-            if (ext !== 'uvl') {
-                this.removeFile(file);
-        
-                let alert = document.createElement('p');
-                alert.textContent = 'Invalid file extension: ' + file.name;
-                alerts.appendChild(alert);
-                alerts.style.display = 'block';
-            } else {
-                // Read the file as text to pass it to the UVL parser
-                let reader = new FileReader();
-                reader.onload = function(event) {
-                    const fileContent = event.target.result;  // This contains the UVL file content
-        
-                    // Now, use uvl-parser to parse the content
-                    try {
-                        const featureModel = new FeatureModel(fileContent);
-                        const tree = featureModel.getFeatureModel();  // This is your parsed UVL tree
-        
-                        console.log("Parsed UVL Feature Model:", tree);
-                        valid = true;
-        
-                        
-                        // You can now manipulate `tree` or display it in the UI as needed
-                    } catch (error) {
-                        // Verificar si el error es debido a `Error.captureStackTrace`
-                        if (error.message.includes("Error.captureStackTrace is not a function")) {
-                            console.warn("Error.captureStackTrace is not supported in this environment.");
-                            valid = false;
-                            let alert = document.createElement('p');
-                            alert.innerHTML = 'Syntax error in <b>' + file.name + '</b>';
-                            alerts.appendChild(alert);
-                            alerts.style.display = 'block';
-                        } else {
-                            // Si es un error de sintaxis en el UVL, mostrar mensaje personalizado
-                            valid = false;
-                            console.error("Error parsing UVL file:", error.message);
-                            invalid_uvl_message = error.message;
-                            
-                            // Muestra el mensaje de error de sintaxis en el UI
-                            let alert = document.createElement('p');
-                            alert.innerHTML = 'Syntax error in <b>' + file.name + '</b><br>&nbsp;>&nbsp;>&nbsp;>&nbsp;' + error.message;
-                            alerts.appendChild(alert);
-                            alerts.style.display = 'block';
-                        }
-                    }
-                };
-                reader.readAsText(file);  // Read the file as text
-            }
-        
-        });
-        
-        this.on('error', function (file, response) {
-            console.error("Error uploading file: ", response);
-            let alert = document.createElement('p');
-            alert.textContent = 'Error uploading file: ' + file.name;
-            alerts.appendChild(alert);
-            alerts.style.display = 'block';
-        });
+    });
 
-        this.on('success', function (file, response) {
 
-            if(valid){
-                let dropzone = this;
+    window.myDropzoneReady = true;
+    document.dispatchEvent(new Event("myDropzoneReady"));
 
-                showUploadDataset();
+    myDropzone.on("removedfile", function () {
+    // ¿Quedan archivos con error?
+    const hasErrors = this.files.some(f => f.status === Dropzone.ERROR);
 
-                console.log("File uploaded: ", response);
-                // actions when UVL model is uploaded
-                let listItem = document.createElement('li');
-                let h4Element = document.createElement('h4');
-                h4Element.textContent = response.filename;
-                listItem.appendChild(h4Element);
-
-                // generate incremental id for form
-                let formUniqueId = generateIncrementalId();
-
-                /*
-                    ##########################################
-                    FORM BUTTON
-                    ##########################################
-                */
-                let formButton = document.createElement('button');
-                formButton.innerHTML = 'Show info';
-                formButton.classList.add('info-button', 'btn', 'btn-outline-secondary', "btn-sm");
-                formButton.style.borderRadius = '5px';
-                formButton.id = formUniqueId + "_button";
-
-                formButton.addEventListener('click', function () {
-                    if (formContainer.style.display === "none") {
-                        formContainer.style.display = "block";
-                        formButton.innerHTML = 'Hide info';
-                    } else {
-                        formContainer.style.display = "none";
-                        formButton.innerHTML = 'Add info';
-                    }
-                });
-
-                // append space
-                let space = document.createTextNode(" ");
-                listItem.appendChild(space);
-
-                /*
-                    ##########################################
-                    REMOVE BUTTON
-                    ##########################################
-                */
-
-                // remove button
-                let removeButton = document.createElement('button');
-                removeButton.innerHTML = 'Delete model';
-                removeButton.classList.add("remove-button", "btn", "btn-outline-danger", "btn-sm", "remove-button");
-                removeButton.style.borderRadius = '5px';
-
-                // append space
-                space = document.createTextNode(" ");
-                listItem.appendChild(space);
-
-                removeButton.addEventListener('click', function () {
-                    fileList.removeChild(listItem);
-                    this.removeFile(file);
-
-                    // Ajax request
-                    let xhr = new XMLHttpRequest();
-                    xhr.open('POST', '/hubfile/delete', true);
-                    xhr.setRequestHeader('Content-Type', 'application/json');
-                    xhr.onload = function () {
-                        if (xhr.status === 200) {
-                            console.log('Deleted file from server');
-
-                            if (dropzone.files.length === 0) {
-                                document.getElementById("submit_dataset").style.display = "none";
-                                cleanUploadErrors();
-                            }
-
-                        }
-                    };
-                    xhr.send(JSON.stringify({file: file.name}));
-                }.bind(this));
-
-                /*
-                    ##########################################
-                    APPEND BUTTONS
-                    ##########################################
-                */
-                listItem.appendChild(formButton);
-                listItem.appendChild(removeButton);
-
-                /*
-                    ##########################################
-                    UVL FORM
-                    ##########################################
-                */
-
-                // create specific form for UVL
-                let formContainer = document.createElement('div');
-                formContainer.id = formUniqueId + "_form";
-                formContainer.classList.add('uvl_form', "mt-3");
-                formContainer.style.display = "none";
-
-                formContainer.innerHTML = `
-                    <div class="row">
-                        <input type="hidden" value="${response.filename}" name="feature_models-${formUniqueId}-uvl_filename">
-                        <div class="col-12">
-                            <div class="row">
-                                <div class="col-12">
-                                    <div class="mb-3">
-                                        <label class="form-label">Title</label>
-                                        <input type="text" class="form-control" name="feature_models-${formUniqueId}-title">
-                                    </div>
-                                </div>
-                                <div class="col-12">
-                                    <div class="mb-3">
-                                        <label class="form-label">Description</label>
-                                        <textarea rows="4" class="form-control" name="feature_models-${formUniqueId}-desc"></textarea>
-                                    </div>
-                                </div>
-                                <div class="col-lg-6 col-12">
-                                    <div class="mb-3">
-                                        <label class="form-label" for="publication_type">Publication type</label>
-                                        <select class="form-control" name="feature_models-${formUniqueId}-publication_type">
-                                            <option value="none">None</option>
-                                            <option value="annotationcollection">Annotation Collection</option>
-                                            <option value="book">Book</option>
-                                            <option value="section">Book Section</option>
-                                            <option value="conferencepaper">Conference Paper</option>
-                                            <option value="datamanagementplan">Data Management Plan</option>
-                                            <option value="article">Journal Article</option>
-                                            <option value="patent">Patent</option>
-                                            <option value="preprint">Preprint</option>
-                                            <option value="deliverable">Project Deliverable</option>
-                                            <option value="milestone">Project Milestone</option>
-                                            <option value="proposal">Proposal</option>
-                                            <option value="report">Report</option>
-                                            <option value="softwaredocumentation">Software Documentation</option>
-                                            <option value="taxonomictreatment">Taxonomic Treatment</option>
-                                            <option value="technicalnote">Technical Note</option>
-                                            <option value="thesis">Thesis</option>
-                                            <option value="workingpaper">Working Paper</option>
-                                            <option value="other">Other</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="col-lg-6 col-6">
-                                    <div class="mb-3">
-                                        <label class="form-label" for="publication_doi">Publication DOI</label>
-                                        <input class="form-control" name="feature_models-${formUniqueId}-publication_doi" type="text" value="">
-                                    </div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="mb-3">
-                                        <label class="form-label">Tags (separated by commas)</label>
-                                        <input type="text" class="form-control" name="feature_models-${formUniqueId}-tags">
-                                    </div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="mb-3">
-                                        <label class="form-label">UVL version</label>
-                                        <input type="text" class="form-control" name="feature_models-${formUniqueId}-uvl_version">
-                                    </div>
-                                </div>
-                                <div class="col-12">
-                                    <div class="mb-3">
-                                        <label class="form-label">Authors</label>
-                                        <div id="` + formContainer.id + `_authors">
-                                        </div>
-                                        <button type="button" class="add_author_to_uvl btn btn-secondary" id="` + formContainer.id + `_authors_button">Add author</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    `;
-
-                listItem.appendChild(formContainer);
-                fileList.appendChild(listItem);
-            }
-
-            
-
-        });
-
-        
+    if (!hasErrors) {
+        const errBox = document.getElementById("upload-error");
+        if (errBox) {
+            errBox.classList.add("d-none");
+            errBox.innerHTML = "";
+        }
     }
-};
+});
+
+
+    /*
+     * Botón "Clear all"
+     */
+    const clearBtn = document.getElementById("clear-all-btn");
+    if (clearBtn) {
+        clearBtn.style.display = "none";
+
+        clearBtn.addEventListener("click", function (e) {
+            e.preventDefault();
+
+            // 🚀 Limpieza en el backend
+            fetch("/hubfile/clear_temp", { method: "POST" })
+                .catch(err => console.error("Error limpiando backend:", err));
+
+            // 🧹 Limpieza visual
+            myDropzone.removeAllFiles(true);
+            updateStep2Summary();
+            updatePagination(myDropzone.files);
+            clearBtn.style.display = "none";
+
+            // 🔕 Ocultar mensaje de error
+            const errBox = document.getElementById("upload-error");
+            if (errBox) {
+                errBox.classList.add("d-none");
+                errBox.innerHTML = "";
+            }
+        });
+
+        myDropzone.on("addedfile", function () {
+            if (myDropzone.files.length > 0) {
+                clearBtn.style.display = "inline-block";
+            }
+        });
+
+        myDropzone.on("removedfile", function () {
+            if (myDropzone.files.length === 0) {
+                clearBtn.style.display = "none";
+            }
+        });
+    }
+
+    /*
+     * Paginación
+     */
+    const filesPerPage = 5;
+    let currentPage = 1;
+    let totalPages = 1;
+    let paginationContainer = document.querySelector(".pagination");
+    if (!paginationContainer) {
+        paginationContainer = document.createElement("ul");
+        paginationContainer.classList.add("pagination", "mt-3");
+        document.querySelector("#uvl_dropzone").parentNode.appendChild(paginationContainer);
+    }
+
+    function updatePagination(files) {
+        const totalFiles = files.length;
+        totalPages = Math.ceil(totalFiles / filesPerPage);
+        if (currentPage > totalPages) currentPage = totalPages || 1;
+
+        files.forEach((file, index) => {
+            const start = (currentPage - 1) * filesPerPage;
+            const end = currentPage * filesPerPage;
+            file.previewElement.style.display = index >= start && index < end ? "" : "none";
+        });
+
+        renderPagination();
+    }
+
+    function renderPagination() {
+        paginationContainer.innerHTML = "";
+        if (myDropzone.files.length === 0) {
+            paginationContainer.style.display = "none";
+            return;
+        } else {
+            paginationContainer.style.display = "flex";
+        }
+
+        const prevButton = document.createElement("li");
+        prevButton.classList.add("page-item", "previous");
+        if (currentPage === 1) prevButton.classList.add("disabled");
+        prevButton.innerHTML = `<a href="#" class="page-link"><i class="previous"></i></a>`;
+        prevButton.addEventListener("click", e => {
+            e.preventDefault();
+            if (currentPage > 1) {
+                currentPage--;
+                updatePagination(myDropzone.files);
+            }
+        });
+        paginationContainer.appendChild(prevButton);
+
+        for (let i = 1; i <= totalPages; i++) {
+            const pageButton = document.createElement("li");
+            pageButton.classList.add("page-item");
+            if (i === currentPage) pageButton.classList.add("active");
+            pageButton.innerHTML = `<a href="#" class="page-link">${i}</a>`;
+            pageButton.addEventListener("click", e => {
+                e.preventDefault();
+                currentPage = i;
+                updatePagination(myDropzone.files);
+            });
+            paginationContainer.appendChild(pageButton);
+        }
+
+        const nextButton = document.createElement("li");
+        nextButton.classList.add("page-item", "next");
+        if (currentPage === totalPages || totalPages === 0) nextButton.classList.add("disabled");
+        nextButton.innerHTML = `<a href="#" class="page-link"><i class="next"></i></a>`;
+        nextButton.addEventListener("click", e => {
+            e.preventDefault();
+            if (currentPage < totalPages) {
+                currentPage++;
+                updatePagination(myDropzone.files);
+            }
+        });
+        paginationContainer.appendChild(nextButton);
+    }
+
+    function updateStep2Summary() {
+        const step2SummaryDiv = document.getElementById("step_2_summary");
+        const fileCount = myDropzone.files.length;
+        if (fileCount > 0) {
+            step2SummaryDiv.innerHTML = `
+                <span class="badge badge-circle badge-outline badge-primary">${fileCount}</span>
+                UVL file${fileCount > 1 ? "s" : ""} uploaded
+            `;
+        } else {
+            step2SummaryDiv.innerHTML = "No UVL files uploaded yet";
+        }
+    }
+
+    /*
+     * Validación de archivos .uvl en sintaxis
+     */
+    myDropzone.on("addedfile", function (file) {
+        // Guardar UUID
+        file.upload = file.upload || {};
+        if (!file.upload.uuid) file.upload.uuid = crypto.randomUUID();
+
+        const ext = (file.name.split(".").pop() || "").toLowerCase();
+
+        if (ext === "uvl") {
+            const reader = new FileReader();
+            reader.onload = event => {
+                try {
+                    const fm = new FeatureModel(event.target.result);
+                    fm.getFeatureModel();
+
+                    const ok = document.createElement("div");
+                    ok.classList.add("dropzone-file-success");
+                    ok.innerHTML = `<span class="badge bg-success">Valid syntax</span>`;
+                    file.previewElement.querySelector(".dropzone-file").appendChild(ok);
+
+                    updateStep2Summary();
+                } catch (error) {
+                    const persistentError = document.createElement("div");
+                    persistentError.classList.add("alert", "alert-danger", "mt-2", "p-2");
+                    persistentError.innerHTML = `<strong>Error:</strong> Syntax error: ${error.message}`;
+                    file.previewElement.querySelector(".dropzone-file").appendChild(persistentError);
+                    file.previewElement.classList.add("dropzone-invalid");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        updatePagination(this.files);
+    });
+
+    // Adjuntar uuid en la subida
+    myDropzone.on("sending", function (file, xhr, formData) {
+        file.upload = file.upload || {};
+        formData.append("uuid", file.upload.uuid);
+    });
+
+    // Marcar subidos
+    myDropzone.on("success", function (file, response) {
+        // ✅ confiar en que el backend devuelve siempre { filename: "..." }
+        file.serverFilename = response.filename;
+        file.uploadedToServer = true;
+    });
+
+    // Eliminar en servidor
+    myDropzone.on("removedfile", function (file) {
+        if (!file.uploadedToServer) return;
+
+        fetch("/hubfile/delete", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                filename: file.serverFilename,
+                uuid: file.upload.uuid
+            }),
+        })
+            .then(res => {
+                if (!res.ok) throw new Error("Error deleting file from server");
+                updatePagination(myDropzone.files);
+                updateStep2Summary();
+            })
+            .catch(err => console.error("Error deleting the file:", err));
+    });
+
+    /*
+     * Mostrar banner cuando se rechacen archivos
+     */
+    myDropzone.on("error", function (file, message) {
+        const errBox = document.getElementById("upload-error");
+        if (errBox) {
+            errBox.classList.remove("d-none");
+            errBox.innerHTML = message;
+        }
+        // 🔕 quitar el archivo rechazado del preview
+        //this.removeFile(file);
+    });
+});

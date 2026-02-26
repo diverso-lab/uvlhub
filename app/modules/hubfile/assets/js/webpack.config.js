@@ -1,4 +1,5 @@
 const path = require('path');
+const webpack = require('webpack');
 
 module.exports = {
   entry: path.resolve(__dirname, './scripts.js'),
@@ -8,7 +9,19 @@ module.exports = {
   },
   resolve: {
     fallback: {
-      'fs' : false
-    }
+      fs: false,
+    },
   },
+  module: {
+    rules: [
+      {
+        test: /\.js$/,
+        loader: 'string-replace-loader',
+        options: {
+          search: 'console.error(\'Error: \' + e);',
+          replace: '', // Elimina esta línea
+        },
+      },
+    ],
+  }
 };

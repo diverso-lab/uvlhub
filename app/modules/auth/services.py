@@ -1,8 +1,8 @@
 import os
 
-from flask_login import login_user
-from flask_login import current_user
+from flask_login import current_user, login_user
 
+from app import db
 from app.modules.auth.models import User
 from app.modules.auth.repositories import UserRepository
 from app.modules.profile.models import UserProfile
@@ -43,32 +43,42 @@ class AuthenticationService(BaseService):
             if not surname:
                 raise ValueError("Surname is required.")
 
-            user_data = {
-                "email": email,
-                "password": password,
-                "active": False,
-            }
+            if not self.is_email_available(email):
+                raise ValueError("This email is already registered. Try logging in or using ORCID.")
 
-            profile_data = {
-                "name": name,
-                "surname": surname,
-            }
+            # Crear usuario
+            user = User(email=email, active=True)
+            user.set_password(password)
+            self.repository.session.add(user)
+            self.repository.session.flush()  # garantiza que user.id esté disponible
 
-            user = self.create(commit=False, **user_data)
-            profile_data["user_id"] = user.id
-            self.user_profile_repository.create(**profile_data)
+            # Crear perfil
+            profile = UserProfile(user_id=user.id, name=name, surname=surname)
+            self.repository.session.add(profile)
             self.repository.session.commit()
+
+            return user
+
         except Exception as exc:
             self.repository.session.rollback()
             raise exc
-        return user
 
     def update_profile(self, user_profile_id, form):
-        if form.validate():
-            updated_instance = self.update(user_profile_id, **form.data)
-            return updated_instance, None
+        if not form.validate():
+            return None, form.errors
 
-        return None, form.errors
+        profile = UserProfile.query.get(user_profile_id)
+        if not profile:
+            return None, {"error": "Profile not found"}
+
+        # Solo actualizamos los campos que el usuario puede editar
+        profile.name = form.name.data
+        profile.surname = form.surname.data
+        profile.affiliation = form.affiliation.data
+
+        # 🚫 No tocar ORCID: se gestiona exclusivamente vía login OAuth
+        db.session.commit()
+        return profile, None
 
     def get_authenticated_user(self) -> User | None:
         if current_user.is_authenticated:

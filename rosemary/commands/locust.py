@@ -1,14 +1,14 @@
 import os
-import subprocess
-import click
-import docker
 import signal
+import subprocess
+
+import click
 import psutil
 
+import docker
 
-@click.command(
-    "locust", help="Launches Locust for load testing based on the environment."
-)
+
+@click.command("locust", help="Launches Locust for load testing based on the environment.")
 @click.argument("module", required=False)
 def locust(module):
 
@@ -27,8 +27,7 @@ def locust(module):
             locustfile_path = os.path.join(module_path, "tests", "locustfile.py")
             if not os.path.exists(locustfile_path):
                 raise click.UsageError(
-                    f"Locustfile for module '{module}' does not exist at path "
-                    f"'{locustfile_path}'."
+                    f"Locustfile for module '{module}' does not exist at path " f"'{locustfile_path}'."
                 )
 
     def run_docker_locust(volume_name, module):
@@ -42,9 +41,7 @@ def locust(module):
         except docker.errors.NotFound:
             pass  # Container does not exist, proceed to create it
 
-        click.echo(
-            f"Starting Locust in Docker environment on port 8089 with volume: {volume_name}..."
-        )
+        click.echo(f"Starting Locust in Docker environment on port 8089 with volume: {volume_name}...")
 
         # Build Locust's image
         build_command = [
@@ -84,9 +81,7 @@ def locust(module):
 
         click.echo(f"Docker Run command: {' '.join(up_command)}")
         subprocess.run(up_command, check=True)
-        click.echo(
-            click.style("Locust is running at http://localhost:8089", fg="green")
-        )
+        click.echo(click.style("Locust is running at http://localhost:8089", fg="green"))
 
     def is_locust_running():
         """Check if Locust is already running."""
@@ -103,9 +98,7 @@ def locust(module):
 
         locustfile_path = os.path.join(core_dir, "bootstraps/locustfile_bootstrap.py")
         if module:
-            locustfile_path = os.path.join(
-                modules_dir, module, "tests", "locustfile.py"
-            )
+            locustfile_path = os.path.join(modules_dir, module, "tests", "locustfile.py")
         locust_command = ["locust", "-f", locustfile_path]
         click.echo(f"Locust command: {' '.join(locust_command)}")
         subprocess.Popen(
@@ -114,9 +107,7 @@ def locust(module):
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
-        click.echo(
-            click.style("Locust is running at http://localhost:8089", fg="green")
-        )
+        click.echo(click.style("Locust is running at http://localhost:8089", fg="green"))
 
     def run_local_locust(module):
         """Run Locust in the local environment."""

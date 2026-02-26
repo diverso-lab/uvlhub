@@ -1,68 +1,85 @@
-# Use an official Python runtime as a parent image, Alpine version for a lighter footprint
-FROM python:3.12-slim
+FROM python:3.13
 
-# Install necessary packages
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends mariadb-client \
-    && apt-get install -y --no-install-recommends gcc libc-dev python3-dev libffi-dev \
-    && apt-get install -y --no-install-recommends curl \
-    && apt-get install -y --no-install-recommends bash \
-    && apt-get install -y --no-install-recommends openrc \
-    && apt-get install -y --no-install-recommends build-essential 
+# -------------------------
+# Environment (keep up top)
+# -------------------------
+ENV DEBIAN_FRONTEND=noninteractive \
+    PIP_ROOT_USER_ACTION=ignore \
+    PYTHONPATH=/app \
+    PIP_CONSTRAINT=/app/constraints.txt
+    
 
-# Install Node.js and NPM
-RUN curl -fsSL https://deb.nodesource.com/setup_23.x | bash - \
-    && apt-get install -y --no-install-recommends nodejs \
-    && npm install -g npm@11
-
-# Clean up
-RUN apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-# Set the working directory in the container to /app
 WORKDIR /app
 
-# Copy files
+# --------------------------------------------
+# System deps + Node.js (LTS) + Docker CLI
+# (no inline comments inside apt-get lists)
+# --------------------------------------------
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+      bash openrc ca-certificates gnupg curl git \
+      gcc libc-dev python3-dev libffi-dev build-essential \
+      mariadb-client \
+ && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+ && apt-get update \
+ && apt-get install -y --no-install-recommends nodejs \
+ && node -v \
+ && npm -v \
+ && npm install -g npm@11 npx \
+ && curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg \
+ && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(. /etc/os-release && echo "$VERSION_CODENAME") stable" \
+    > /etc/apt/sources.list.d/docker.list \
+ && apt-get update \
+ && apt-get install -y --no-install-recommends docker-ce-cli \
+ && apt-get clean \
+ && rm -rf /var/lib/apt/lists/*
+
+# Security settings in Git
+RUN git config --global --add safe.directory /app
+
+# -------------------------
+# Dependency manifests first
+# -------------------------
+COPY constraints.txt .
+COPY requirements.txt .
+COPY package.json .
+COPY pyproject.toml ./
+
+# Python deps (constraints applied via PIP_CONSTRAINT env)
+RUN pip install --no-cache-dir --upgrade pip \
+ && pip install --no-cache-dir --pre -r requirements.txt
+
+# Node deps
+RUN npm install
+
+# -------------------------
+# Project files
+# -------------------------
 COPY app/ ./app
 COPY core/ ./core
 COPY rosemary/ ./rosemary
 COPY migrations/ ./migrations
+COPY docker/ ./docker
+COPY --chmod=0755 scripts/ ./scripts/
 
-# Copy requirements.txt into the working directory /app
-COPY requirements.txt .
-
-# Removes cache at the build stage
-RUN find . -type d -name "__pycache__" -exec rm -r {} + && \
-    find . -type f -name "*.pyc" -exec rm -f {} +
-
-# Copy the wait-for-db.sh script and set execution permissions
-COPY --chmod=0755 scripts/wait-for-db.sh ./scripts/
+# Install Rosemary as editable
+RUN pip install -e ./
 
 # Create the .moduleignore file with the module 'webhook' inside
 RUN echo "webhook" > /app/.moduleignore
 
-# Update pip
-RUN pip install --no-cache-dir --upgrade pip
+# Remove Python cache
+RUN find . -type d -name "__pycache__" -exec rm -r {} + \
+ && find . -type f -name "*.pyc" -exec rm -f {} +
 
-# Install any needed packages specified in requirements.txt
-RUN pip install -r requirements.txt
-
-# Install Rosemary
-COPY setup.py .
-RUN pip install -e ./
-
-# Install npm dependencies
-COPY package.json .
-RUN npm install
-
-# Compile webpack files
+# -------------------------
+# PRODUCTION build steps
+# -------------------------
 RUN rosemary webpack:compile
 
-# Add an argument for version tag
+ENV NODE_ENV=production
+
 ARG VERSION_TAG
+RUN echo "$VERSION_TAG" > /app/.version
 
-# Create the .version file with the content of VERSION_TAG
-RUN echo $VERSION_TAG > /app/.version
-
-# Expose port 5000
 EXPOSE 5000

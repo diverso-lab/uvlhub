@@ -1,10 +1,11 @@
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from selenium.common.exceptions import NoSuchElementException
 import time
 
+from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+
 from core.environment.host import get_host_for_selenium_testing
-from core.selenium.common import initialize_driver, close_driver
+from core.selenium.common import close_driver, initialize_driver
 
 
 def test_login_and_check_element():
@@ -35,10 +36,7 @@ def test_login_and_check_element():
 
         try:
 
-            driver.find_element(
-                By.XPATH,
-                "//h1[contains(@class, 'h2 mb-3') and contains(., 'Latest datasets')]",
-            )
+            driver.find_element(By.XPATH, "//a[contains(., 'Explore more datasets')]")
             print("Test passed!")
 
         except NoSuchElementException:

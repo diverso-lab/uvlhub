@@ -1,13 +1,13 @@
 import os
-from app.modules.auth.services import AuthenticationService
+
+from dotenv import load_dotenv
 from flask import current_app, url_for
 from itsdangerous import BadTimeSignature, SignatureExpired, URLSafeTimedSerializer
-from dotenv import load_dotenv
 
 from app import mail_service
+from app.modules.auth.services import AuthenticationService
 from app.modules.confirmemail.repositories import ConfirmemailRepository
 from core.services.BaseService import BaseService
-
 
 # Load environment variables
 load_dotenv()
@@ -19,8 +19,8 @@ class ConfirmemailService(BaseService):
     def __init__(self):
         super().__init__(ConfirmemailRepository())
         self.repository = ConfirmemailRepository()
-        self.CONFIRM_EMAIL_SALT = os.getenv('CONFIRM_EMAIL_SALT', 'sample_salt')
-        self.CONFIRM_EMAIL_TOKEN_MAX_AGE = os.getenv('CONFIRM_EMAIL_TOKEN_MAX_AGE', 3600)
+        self.CONFIRM_EMAIL_SALT = os.getenv("CONFIRM_EMAIL_SALT", "sample_salt")
+        self.CONFIRM_EMAIL_TOKEN_MAX_AGE = os.getenv("CONFIRM_EMAIL_TOKEN_MAX_AGE", 3600)
 
     def get_serializer(self):
         return URLSafeTimedSerializer(current_app.config["SECRET_KEY"])
@@ -55,7 +55,7 @@ class ConfirmemailService(BaseService):
         except BadTimeSignature:
             raise Exception("The confirmation link has been tampered with.")
 
-        user = authentication_service.get_by_email(email, active=False)
+        user = authentication_service.get_by_email(email)
         user.active = True
         self.repository.session.commit()
         return user

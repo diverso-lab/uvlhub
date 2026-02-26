@@ -21,6 +21,4 @@ def test_sample_assertion(test_client):
     confirm that the tests in this module can be executed.
     """
     greeting = "Hello, World!"
-    assert (
-        greeting == "Hello, World!"
-    ), "The greeting does not coincide with 'Hello, World!'"
+    assert greeting == "Hello, World!", "The greeting does not coincide with 'Hello, World!'"
