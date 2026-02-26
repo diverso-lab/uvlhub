@@ -19,7 +19,7 @@ from app.modules.dataset.services import DataSetService, DOIMappingService, DSMe
 from app.modules.flamapy.services import FlamapyService
 from app.modules.hubfile import hubfile_bp
 from app.modules.hubfile.services import (
-    HubfileDownloadRecordService, 
+    HubfileDownloadRecordService,
     HubfileService,
     HubfileViewRecordService,
 )
@@ -163,13 +163,15 @@ def view_unsynchronized_file(dataset_id, file_id):
         content = f"[Error reading file: {e}]"
 
     user_cookie = hubfile_view_record_service.create_cookie(hubfile=selected_file)
-    resp = make_response(render_template(
-        "hubfile/view_file.html",
-        selected_file=selected_file,
-        hubfiles=dataset.files(),
-        dataset=dataset,
-        uvl_content=content,
-    ))
+    resp = make_response(
+        render_template(
+            "hubfile/view_file.html",
+            selected_file=selected_file,
+            hubfiles=dataset.files(),
+            dataset=dataset,
+            uvl_content=content,
+        )
+    )
     resp.set_cookie("file_view_cookie", user_cookie)
     return resp
 
@@ -210,13 +212,15 @@ def view_uvl_with_doi(doi, filename):
         content = f"[Error reading file: {e}]"
 
     user_cookie = hubfile_view_record_service.create_cookie(hubfile=selected_file)
-    resp = make_response(render_template(
-        "hubfile/view_file.html",
-        selected_file=selected_file,
-        hubfiles=dataset.files(),
-        dataset=dataset,
-        uvl_content=content,
-    ))
+    resp = make_response(
+        render_template(
+            "hubfile/view_file.html",
+            selected_file=selected_file,
+            hubfiles=dataset.files(),
+            dataset=dataset,
+            uvl_content=content,
+        )
+    )
     resp.set_cookie("file_view_cookie", user_cookie)
     return resp
 
