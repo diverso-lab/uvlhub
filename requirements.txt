@@ -111,7 +111,6 @@ pyzmq==27.1.0
 redis==7.2.1
 referencing==0.37.0
 requests==2.32.5
--e git+ssh://git@github.com/diverso-lab/uvlhub.git@12f6171f6a699506188a14e9fb3b4c896f87f94a#egg=rosemary
 rpds-py==0.30.0
 rq==2.7.0
 selenium==4.41.0
