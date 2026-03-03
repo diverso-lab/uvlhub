@@ -185,8 +185,13 @@ def list_dataset():
 @dataset_bp.route("/datasets/download/<int:dataset_id>", methods=["GET"])
 def download_dataset(dataset_id):
     dataset = dataset_service.get_or_404(dataset_id)
+    selected_formats = request.args.getlist("formats")
+    selected_formats = selected_formats if selected_formats else None
 
-    zip_path = dataset_service.zip_from_storage(dataset)
+    try:
+        zip_path = dataset_service.zip_from_storage(dataset, formats=selected_formats)
+    except ValueError as exc:
+        abort(400, description=str(exc))
 
     if not zip_path or not os.path.exists(zip_path):
         abort(404, description="ZIP file not found.")
@@ -200,13 +205,16 @@ def download_dataset(dataset_id):
 
 @dataset_bp.route("/datasets/download/all", methods=["GET"])
 def download_all_dataset():
+    selected_formats = request.args.getlist("formats")
+    selected_formats = selected_formats if selected_formats else None
+
     # Crear un directorio temporal
     temp_dir = tempfile.mkdtemp()
     zip_path = os.path.join(temp_dir, "all_datasets.zip")
 
     try:
         # Generar el archivo ZIP
-        dataset_service.zip_all_datasets(zip_path)
+        dataset_service.zip_all_datasets_by_formats(zip_path, formats=selected_formats)
 
         # Crear el nombre del archivo con la fecha
         current_date = datetime.now().strftime("%Y_%m_%d")
@@ -214,6 +222,8 @@ def download_all_dataset():
 
         # Enviar el archivo como respuesta
         return send_file(zip_path, as_attachment=True, download_name=zip_filename)
+    except ValueError as exc:
+        abort(400, description=str(exc))
     finally:
         # Asegurar que la carpeta temporal se elimine después de que Flask sirva el archivo
         if os.path.exists(temp_dir):
