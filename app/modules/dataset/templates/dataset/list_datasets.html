@@ -63,12 +63,51 @@
                                     <span class="path2"></span>
                                 </i>
                             </a>
-                            <a href="{{ url_for('dataset.download_dataset', dataset_id=dataset.id) }}" class="btn btn-sm btn-icon btn-light-success" title="Download">
-                                <i class="ki-duotone ki-folder-down fs-2">
-                                    <span class="path1"></span>
-                                    <span class="path2"></span>
-                                </i>
-                            </a>
+                            <div class="position-relative d-inline-block">
+                                <button class="btn btn-sm btn-icon btn-light-success"
+                                        title="Download"
+                                        data-kt-menu-trigger="click"
+                                        data-kt-menu-placement="bottom-end"
+                                        data-kt-menu-attach="parent">
+                                    <i class="ki-duotone ki-folder-down fs-2">
+                                        <span class="path1"></span>
+                                        <span class="path2"></span>
+                                    </i>
+                                </button>
+                                <div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-title-gray-700 menu-icon-gray-500 fw-semibold py-4 px-4 fs-base w-200px" data-kt-menu="true" data-download-menu>
+                                    <div class="menu-item px-0 py-1">
+                                        <label class="form-check form-check-custom form-check-solid align-items-center m-0">
+                                            <input class="form-check-input me-3 download-format-checkbox" type="checkbox" value="uvl" checked />
+                                            <span class="menu-title">UVL</span>
+                                        </label>
+                                    </div>
+                                    <div class="menu-item px-0 py-1">
+                                        <label class="form-check form-check-custom form-check-solid align-items-center m-0">
+                                            <input class="form-check-input me-3 download-format-checkbox" type="checkbox" value="glencoe" checked />
+                                            <span class="menu-title">Glencoe</span>
+                                        </label>
+                                    </div>
+                                    <div class="menu-item px-0 py-1">
+                                        <label class="form-check form-check-custom form-check-solid align-items-center m-0">
+                                            <input class="form-check-input me-3 download-format-checkbox" type="checkbox" value="dimacs" checked />
+                                            <span class="menu-title">DIMACS</span>
+                                        </label>
+                                    </div>
+                                    <div class="menu-item px-0 py-1">
+                                        <label class="form-check form-check-custom form-check-solid align-items-center m-0">
+                                            <input class="form-check-input me-3 download-format-checkbox" type="checkbox" value="splot" checked />
+                                            <span class="menu-title">SPLOT</span>
+                                        </label>
+                                    </div>
+                                    <div class="separator my-3"></div>
+                                    <button type="button"
+                                            class="btn btn-light-primary btn-sm w-100"
+                                            data-download-formats-action
+                                            data-download-base-url="{{ url_for('dataset.download_dataset', dataset_id=dataset.id) }}">
+                                        Download
+                                    </button>
+                                </div>
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}
@@ -119,12 +158,51 @@
                                     <span class="path3"></span>
                                 </i></i>
                             </a>
-                            <a href="{{ url_for('dataset.download_dataset', dataset_id=dataset.id) }}" class="btn btn-sm btn-icon btn-light-success" title="Download">
-                                <i class="ki-duotone ki-folder-down fs-2">
-                                    <span class="path1"></span>
-                                    <span class="path2"></span>
-                                </i>
-                            </a>
+                            <div class="position-relative d-inline-block">
+                                <button class="btn btn-sm btn-icon btn-light-success"
+                                        title="Download"
+                                        data-kt-menu-trigger="click"
+                                        data-kt-menu-placement="bottom-end"
+                                        data-kt-menu-attach="parent">
+                                    <i class="ki-duotone ki-folder-down fs-2">
+                                        <span class="path1"></span>
+                                        <span class="path2"></span>
+                                    </i>
+                                </button>
+                                <div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-title-gray-700 menu-icon-gray-500 fw-semibold py-4 px-4 fs-base w-200px" data-kt-menu="true" data-download-menu>
+                                    <div class="menu-item px-0 py-1">
+                                        <label class="form-check form-check-custom form-check-solid align-items-center m-0">
+                                            <input class="form-check-input me-3 download-format-checkbox" type="checkbox" value="uvl" checked />
+                                            <span class="menu-title">UVL</span>
+                                        </label>
+                                    </div>
+                                    <div class="menu-item px-0 py-1">
+                                        <label class="form-check form-check-custom form-check-solid align-items-center m-0">
+                                            <input class="form-check-input me-3 download-format-checkbox" type="checkbox" value="glencoe" checked />
+                                            <span class="menu-title">Glencoe</span>
+                                        </label>
+                                    </div>
+                                    <div class="menu-item px-0 py-1">
+                                        <label class="form-check form-check-custom form-check-solid align-items-center m-0">
+                                            <input class="form-check-input me-3 download-format-checkbox" type="checkbox" value="dimacs" checked />
+                                            <span class="menu-title">DIMACS</span>
+                                        </label>
+                                    </div>
+                                    <div class="menu-item px-0 py-1">
+                                        <label class="form-check form-check-custom form-check-solid align-items-center m-0">
+                                            <input class="form-check-input me-3 download-format-checkbox" type="checkbox" value="splot" checked />
+                                            <span class="menu-title">SPLOT</span>
+                                        </label>
+                                    </div>
+                                    <div class="separator my-3"></div>
+                                    <button type="button"
+                                            class="btn btn-light-primary btn-sm w-100"
+                                            data-download-formats-action
+                                            data-download-base-url="{{ url_for('dataset.download_dataset', dataset_id=dataset.id) }}">
+                                        Download
+                                    </button>
+                                </div>
+                            </div>
                             <a href="{{ url_for('dataset.edit_metadata', dataset_id=dataset.id) }}" 
                                 class="btn btn-sm btn-icon btn-light-primary me-1" 
                                 title="Edit Metadata">

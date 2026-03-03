@@ -255,17 +255,46 @@
 
 								<!--begin::Download all-->
 								<div class="app-navbar-item me-2">
-								<a href="{{url_for('dataset.download_all_dataset')}}" 
-									class="btn btn-light-secondary d-flex align-items-center gap-2 px-4 py-2 fw-bold" 
-									id="download-all-button"
-									data-bs-toggle="tooltip" 
-									data-bs-placement="bottom" 
-									title="Download all datasets">
-								<i class="ki-duotone ki-cloud-download fs-2">
-								<span class="path1"></span>
-								<span class="path2"></span>
-								</i> <span class="d-none d-md-inline">Download all</span>
-									</a>
+									<button class="btn btn-light-secondary d-flex align-items-center gap-2 px-4 py-2 fw-bold"
+										id="download-all-button"
+										data-kt-menu-trigger="{default:'click', lg: 'hover'}"
+										data-kt-menu-attach="parent"
+										data-kt-menu-placement="bottom-end">
+										<i class="ki-duotone ki-cloud-download fs-2">
+											<span class="path1"></span>
+											<span class="path2"></span>
+										</i>
+										<span class="d-none d-md-inline">Download all</span>
+									</button>
+
+									<div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-title-gray-700 menu-icon-gray-500 fw-semibold py-4 px-4 fs-base w-200px" data-kt-menu="true" data-download-menu>
+										<div class="menu-item px-0 py-1">
+											<label class="form-check form-check-custom form-check-solid align-items-center m-0">
+												<input class="form-check-input me-3 download-format-checkbox" type="checkbox" value="uvl" checked />
+												<span class="menu-title">UVL</span>
+											</label>
+										</div>
+										<div class="menu-item px-0 py-1">
+											<label class="form-check form-check-custom form-check-solid align-items-center m-0">
+												<input class="form-check-input me-3 download-format-checkbox" type="checkbox" value="glencoe" checked />
+												<span class="menu-title">Glencoe</span>
+											</label>
+										</div>
+										<div class="menu-item px-0 py-1">
+											<label class="form-check form-check-custom form-check-solid align-items-center m-0">
+												<input class="form-check-input me-3 download-format-checkbox" type="checkbox" value="dimacs" checked />
+												<span class="menu-title">DIMACS</span>
+											</label>
+										</div>
+										<div class="menu-item px-0 py-1">
+											<label class="form-check form-check-custom form-check-solid align-items-center m-0">
+												<input class="form-check-input me-3 download-format-checkbox" type="checkbox" value="splot" checked />
+												<span class="menu-title">SPLOT</span>
+											</label>
+										</div>
+										<div class="separator my-3"></div>
+										<button type="button" class="btn btn-light-primary btn-sm w-100" data-download-formats-action data-download-base-url="{{ url_for('dataset.download_all_dataset') }}">Download</button>
+									</div>
 								</div>
 								<!--end::Download all-->
 
@@ -769,6 +798,46 @@ function copyCitation(preId, event) {
     });
 }
 </script>
+
+		<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const downloadMenus = Array.from(document.querySelectorAll('[data-download-menu]'));
+
+    downloadMenus.forEach((menu) => {
+        const downloadButton = menu.querySelector('[data-download-formats-action]');
+        const baseUrl = downloadButton?.dataset.downloadBaseUrl;
+        const formatCheckboxes = Array.from(menu.querySelectorAll('.download-format-checkbox'));
+
+        if (!downloadButton || !baseUrl || formatCheckboxes.length === 0) {
+            return;
+        }
+
+        const updateButtonState = () => {
+            downloadButton.disabled = !formatCheckboxes.some((checkbox) => checkbox.checked);
+        };
+
+        formatCheckboxes.forEach((checkbox) => {
+            checkbox.addEventListener('change', updateButtonState);
+        });
+
+        downloadButton.addEventListener('click', () => {
+            const selectedFormats = formatCheckboxes
+                .filter((checkbox) => checkbox.checked)
+                .map((checkbox) => checkbox.value);
+
+            if (selectedFormats.length === 0) {
+                return;
+            }
+
+            const downloadUrl = new URL(baseUrl, window.location.origin);
+            selectedFormats.forEach((format) => downloadUrl.searchParams.append('formats', format));
+            window.location.href = downloadUrl.toString();
+        });
+
+        updateButtonState();
+    });
+});
+		</script>
 
 		<!--begin::Javascript-->
 
