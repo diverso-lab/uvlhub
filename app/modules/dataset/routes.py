@@ -260,6 +260,56 @@ def subdomain_index(doi):
     return resp
 
 
+@dataset_bp.route("/doi/<path:doi>/files/raw/<path:filename>", methods=["GET"])
+@dataset_bp.route("/doi/<path:doi>/files/raw/<path:filename>/", methods=["GET"])
+def doi_file_raw(doi, filename):
+
+    new_doi = doi_mapping_service.get_new_doi(doi)
+    if new_doi:
+        return redirect(
+            url_for("dataset.doi_file_raw", doi=new_doi, filename=filename),
+            code=302,
+        )
+
+    ds_meta_data = dsmetadata_service.filter_by_doi(doi)
+    if not ds_meta_data:
+        abort(404)
+
+    dataset = ds_meta_data.dataset
+
+    selected_file = None
+    for fm in dataset.feature_models:
+        for hf in fm.hubfiles:
+            if hf.name == filename:
+                selected_file = hf
+                break
+        if selected_file:
+            break
+
+    if not selected_file:
+        abort(404, description="File not found in this DOI dataset")
+
+    file_path = os.path.join(
+        current_app.root_path,
+        "..",
+        "uploads",
+        f"user_{dataset.user_id}",
+        f"dataset_{dataset.id}",
+        "uvl",
+        selected_file.name,
+    )
+
+    if not os.path.exists(file_path):
+        abort(404, description="File missing on disk")
+
+    return send_file(
+        file_path,
+        mimetype="text/plain; charset=utf-8",
+        as_attachment=False,
+        download_name=selected_file.name,
+    )
+
+
 @dataset_bp.route("/datasets/unsynchronized/<int:dataset_id>/", methods=["GET"])
 @login_required
 @is_dataset_owner
