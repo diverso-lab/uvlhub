@@ -190,8 +190,13 @@ def list_dataset():
 @dataset_bp.route("/datasets/download/<int:dataset_id>", methods=["GET"])
 def download_dataset(dataset_id):
     dataset = dataset_service.get_or_404(dataset_id)
+    selected_formats = request.args.getlist("formats")
+    selected_formats = selected_formats if selected_formats else None
 
-    zip_path = dataset_service.zip_from_storage(dataset)
+    try:
+        zip_path = dataset_service.zip_from_storage(dataset, formats=selected_formats)
+    except ValueError as exc:
+        abort(400, description=str(exc))
 
     if not zip_path or not os.path.exists(zip_path):
         abort(404, description="ZIP file not found.")
@@ -293,13 +298,16 @@ def dataset_qr_by_doi(doi):
 
 @dataset_bp.route("/datasets/download/all", methods=["GET"])
 def download_all_dataset():
+    selected_formats = request.args.getlist("formats")
+    selected_formats = selected_formats if selected_formats else None
+
     # Crear un directorio temporal
     temp_dir = tempfile.mkdtemp()
     zip_path = os.path.join(temp_dir, "all_datasets.zip")
 
     try:
         # Generar el archivo ZIP
-        dataset_service.zip_all_datasets(zip_path)
+        dataset_service.zip_all_datasets_by_formats(zip_path, formats=selected_formats)
 
         # Crear el nombre del archivo con la fecha
         current_date = datetime.now().strftime("%Y_%m_%d")
@@ -307,6 +315,8 @@ def download_all_dataset():
 
         # Enviar el archivo como respuesta
         return send_file(zip_path, as_attachment=True, download_name=zip_filename)
+    except ValueError as exc:
+        abort(400, description=str(exc))
     finally:
         # Asegurar que la carpeta temporal se elimine después de que Flask sirva el archivo
         if os.path.exists(temp_dir):
@@ -341,6 +351,56 @@ def subdomain_index(doi):
     resp.set_cookie("view_cookie", user_cookie)
 
     return resp
+
+
+@dataset_bp.route("/doi/<path:doi>/files/raw/<path:filename>", methods=["GET"])
+@dataset_bp.route("/doi/<path:doi>/files/raw/<path:filename>/", methods=["GET"])
+def doi_file_raw(doi, filename):
+
+    new_doi = doi_mapping_service.get_new_doi(doi)
+    if new_doi:
+        return redirect(
+            url_for("dataset.doi_file_raw", doi=new_doi, filename=filename),
+            code=302,
+        )
+
+    ds_meta_data = dsmetadata_service.filter_by_doi(doi)
+    if not ds_meta_data:
+        abort(404)
+
+    dataset = ds_meta_data.dataset
+
+    selected_file = None
+    for fm in dataset.feature_models:
+        for hf in fm.hubfiles:
+            if hf.name == filename:
+                selected_file = hf
+                break
+        if selected_file:
+            break
+
+    if not selected_file:
+        abort(404, description="File not found in this DOI dataset")
+
+    file_path = os.path.join(
+        current_app.root_path,
+        "..",
+        "uploads",
+        f"user_{dataset.user_id}",
+        f"dataset_{dataset.id}",
+        "uvl",
+        selected_file.name,
+    )
+
+    if not os.path.exists(file_path):
+        abort(404, description="File missing on disk")
+
+    return send_file(
+        file_path,
+        mimetype="text/plain; charset=utf-8",
+        as_attachment=False,
+        download_name=selected_file.name,
+    )
 
 
 @dataset_bp.route("/datasets/unsynchronized/<int:dataset_id>/", methods=["GET"])

@@ -179,10 +179,49 @@
                 </div>
             </div>
             <div class="card-toolbar flex-row-fluid justify-content-end gap-5">
-                <a href="/datasets/download/{{ dataset.id }}" class="btn btn-primary">
-                    <i data-feather="download" class="me-1" style="width: 14px; height: 14px;"></i>
-                    Download dataset ({{ dataset.get_file_total_size_for_human() }})
-                </a>
+                <div class="position-relative">
+                    <button class="btn btn-primary"
+                            data-kt-menu-trigger="click"
+                            data-kt-menu-placement="bottom-end"
+                            data-kt-menu-attach="parent">
+                        <i data-feather="download" class="me-1" style="width: 14px; height: 14px;"></i>
+                        Download dataset ({{ dataset.get_file_total_size_for_human() }})
+                    </button>
+
+                    <div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-title-gray-700 menu-icon-gray-500 fw-semibold py-4 px-4 fs-base w-200px" data-kt-menu="true" data-download-menu>
+                        <div class="menu-item px-0 py-1">
+                            <label class="form-check form-check-custom form-check-solid align-items-center m-0">
+                                <input class="form-check-input me-3 download-format-checkbox" type="checkbox" value="uvl" checked />
+                                <span class="menu-title">UVL</span>
+                            </label>
+                        </div>
+                        <div class="menu-item px-0 py-1">
+                            <label class="form-check form-check-custom form-check-solid align-items-center m-0">
+                                <input class="form-check-input me-3 download-format-checkbox" type="checkbox" value="glencoe" checked />
+                                <span class="menu-title">Glencoe</span>
+                            </label>
+                        </div>
+                        <div class="menu-item px-0 py-1">
+                            <label class="form-check form-check-custom form-check-solid align-items-center m-0">
+                                <input class="form-check-input me-3 download-format-checkbox" type="checkbox" value="dimacs" checked />
+                                <span class="menu-title">DIMACS</span>
+                            </label>
+                        </div>
+                        <div class="menu-item px-0 py-1">
+                            <label class="form-check form-check-custom form-check-solid align-items-center m-0">
+                                <input class="form-check-input me-3 download-format-checkbox" type="checkbox" value="splot" checked />
+                                <span class="menu-title">SPLOT</span>
+                            </label>
+                        </div>
+                        <div class="separator my-3"></div>
+                        <button type="button"
+                                class="btn btn-light-primary btn-sm w-100"
+                                data-download-formats-action
+                                data-download-base-url="{{ url_for('dataset.download_dataset', dataset_id=dataset.id) }}">
+                            Download
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 

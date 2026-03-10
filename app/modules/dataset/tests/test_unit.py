@@ -7,6 +7,7 @@ from werkzeug.datastructures import MultiDict
 from werkzeug.exceptions import NotFound
 
 from app import create_app
+from app.modules.dataset import routes as dataset_routes
 from app.modules.dataset.services import (
     DatasetMetadataUpdateError,
     DatasetMetadataValidationError,
@@ -462,3 +463,116 @@ def test_update_metadata_from_request_unsynced_dataset_to_zenodo_publishes_and_s
     assert dataset.ds_meta_data.deposition_id == 101
     assert dataset.ds_meta_data.dataset_doi == "10.5072/zenodo.101"
     service.repository.session.commit.assert_called_once()
+
+
+def test_resolve_download_formats_defaults_to_all_available():
+    service = DataSetService()
+    result = service.resolve_download_formats(None)
+    assert result == list(service.AVAILABLE_DOWNLOAD_FORMATS)
+
+
+def test_resolve_download_formats_rejects_invalid_formats():
+    service = DataSetService()
+    with pytest.raises(ValueError, match="Invalid format"):
+        service.resolve_download_formats(["uvl", "invalid_format"])
+
+
+def test_resolve_download_formats_rejects_empty_selection():
+    service = DataSetService()
+    with pytest.raises(ValueError, match="No download formats selected"):
+        service.resolve_download_formats(["   "])
+
+
+def test_zip_from_storage_filters_files_by_selected_formats(tmp_path, monkeypatch):
+    service = DataSetService()
+    dataset = MagicMock()
+    dataset.user_id = 42
+    dataset.id = 99
+
+    base = tmp_path / "uploads" / "user_42" / "dataset_99"
+    (base / "uvl").mkdir(parents=True)
+    (base / "glencoe").mkdir(parents=True)
+    (base / "dimacs").mkdir(parents=True)
+
+    (base / "uvl" / "model.uvl").write_text("uvl", encoding="utf-8")
+    (base / "glencoe" / "model.json").write_text("json", encoding="utf-8")
+    (base / "dimacs" / "model.cnf").write_text("cnf", encoding="utf-8")
+
+    monkeypatch.setenv("WORKING_DIR", str(tmp_path))
+
+    zip_path = service.zip_from_storage(dataset, formats=["uvl", "dimacs"])
+    assert zip_path is not None
+
+    import zipfile
+
+    with zipfile.ZipFile(zip_path, "r") as zipf:
+        names = set(zipf.namelist())
+    assert "uvl/model.uvl" in names
+    assert "dimacs/model.cnf" in names
+    assert "glencoe/model.json" not in names
+
+
+def test_zip_all_datasets_by_formats_only_includes_selected_format(tmp_path, monkeypatch):
+    service = DataSetService()
+    monkeypatch.chdir(tmp_path)
+
+    ds10 = tmp_path / "uploads" / "user_1" / "dataset_10"
+    ds10.joinpath("uvl").mkdir(parents=True)
+    ds10.joinpath("glencoe").mkdir(parents=True)
+    ds10.joinpath("uvl", "a.uvl").write_text("a", encoding="utf-8")
+    ds10.joinpath("glencoe", "a.json").write_text("a", encoding="utf-8")
+
+    ds11 = tmp_path / "uploads" / "user_1" / "dataset_11"
+    ds11.joinpath("glencoe").mkdir(parents=True)
+    ds11.joinpath("glencoe", "b.json").write_text("b", encoding="utf-8")
+
+    service.is_synchronized = MagicMock(side_effect=lambda dataset_id: dataset_id == 10)
+
+    zip_path = tmp_path / "bulk.zip"
+    service.zip_all_datasets_by_formats(str(zip_path), formats=["glencoe"])
+
+    import zipfile
+
+    with zipfile.ZipFile(zip_path, "r") as zipf:
+        names = set(zipf.namelist())
+    assert "dataset_10/glencoe/a.json" in names
+    assert "dataset_10/uvl/a.uvl" not in names
+    assert not any(name.startswith("dataset_11/") for name in names)
+
+
+def test_download_dataset_route_passes_selected_formats_to_service():
+    app = create_app("testing")
+    dataset = MagicMock()
+    dataset.id = 5
+
+    with app.test_request_context("/datasets/download/5?formats=uvl&formats=dimacs"):
+        with (
+            patch.object(dataset_routes.dataset_service, "get_or_404", return_value=dataset),
+            patch.object(
+                dataset_routes.dataset_service, "zip_from_storage", return_value="C:\\tmp\\dataset_5.zip"
+            ) as p_zip,
+            patch("app.modules.dataset.routes.os.path.exists", return_value=True),
+            patch.object(dataset_routes.ds_download_record_service, "create_cookie", return_value="cookie-1"),
+            patch("app.modules.dataset.routes.send_file", return_value=Response("ok", status=200)),
+        ):
+            response = dataset_routes.download_dataset(5)
+
+    assert response.status_code == 200
+    p_zip.assert_called_once_with(dataset, formats=["uvl", "dimacs"])
+
+
+def test_download_all_dataset_route_passes_selected_formats_to_service():
+    app = create_app("testing")
+
+    with app.test_request_context("/datasets/download/all?formats=uvl&formats=splot"):
+        with (
+            patch.object(dataset_routes.dataset_service, "zip_all_datasets_by_formats") as p_zip_all,
+            patch("app.modules.dataset.routes.send_file", return_value=Response("ok", status=200)),
+            patch("app.modules.dataset.routes.os.path.exists", return_value=False),
+            patch("app.modules.dataset.routes.shutil.rmtree"),
+        ):
+            response = dataset_routes.download_all_dataset()
+
+    assert response.status_code == 200
+    _, kwargs = p_zip_all.call_args
+    assert kwargs["formats"] == ["uvl", "splot"]

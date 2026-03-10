@@ -57,6 +57,8 @@ def calculate_checksum_and_size(file_path):
 
 
 class DataSetService(BaseService):
+    AVAILABLE_DOWNLOAD_FORMATS = ("uvl", "glencoe", "dimacs", "splot")
+
     def __init__(self):
         super().__init__(DataSetRepository())
         self.feature_model_repository = FeatureModelRepository()
@@ -505,7 +507,26 @@ class DataSetService(BaseService):
 
         return zip_path
 
+    def resolve_download_formats(self, formats: Optional[List[str]]) -> List[str]:
+        if formats is None:
+            return list(self.AVAILABLE_DOWNLOAD_FORMATS)
+
+        normalized_formats = [fmt.strip().lower() for fmt in formats if fmt and fmt.strip()]
+        invalid_formats = sorted(set(normalized_formats) - set(self.AVAILABLE_DOWNLOAD_FORMATS))
+        if invalid_formats:
+            raise ValueError(f"Invalid format(s): {', '.join(invalid_formats)}")
+
+        selected_formats = [fmt for fmt in self.AVAILABLE_DOWNLOAD_FORMATS if fmt in normalized_formats]
+        if not selected_formats:
+            raise ValueError("No download formats selected.")
+
+        return selected_formats
+
     def zip_all_datasets(self, zip_path: str):
+        self.zip_all_datasets_by_formats(zip_path, self.AVAILABLE_DOWNLOAD_FORMATS)
+
+    def zip_all_datasets_by_formats(self, zip_path: str, formats: Optional[List[str]] = None):
+        selected_formats = self.resolve_download_formats(formats)
         with ZipFile(zip_path, "w") as zipf:
             for user_dir in os.listdir("uploads"):
                 user_path = os.path.join("uploads", user_dir)
@@ -518,37 +539,46 @@ class DataSetService(BaseService):
                             dataset_id = int(dataset_dir.split("_")[1])
 
                             if self.is_synchronized(dataset_id):
-                                for subdir, dirs, files in os.walk(dataset_path):
-                                    for file in files:
-                                        full_path = os.path.join(subdir, file)
+                                for fmt in selected_formats:
+                                    format_path = os.path.join(dataset_path, fmt)
+                                    if not os.path.isdir(format_path):
+                                        continue
 
-                                        relative_path = os.path.relpath(full_path, dataset_path)
-                                        zipf.write(
-                                            full_path,
-                                            arcname=os.path.join(dataset_dir, relative_path),
-                                        )
+                                    for subdir, _, files in os.walk(format_path):
+                                        for file in files:
+                                            full_path = os.path.join(subdir, file)
+                                            relative_path = os.path.relpath(full_path, format_path)
+                                            zipf.write(
+                                                full_path,
+                                                arcname=os.path.join(dataset_dir, fmt, relative_path),
+                                            )
 
-    def zip_from_storage(self, dataset):
-        dataset_folder = os.path.join(
-            os.getenv("WORKING_DIR", ""),
-            "uploads",
-            f"user_{dataset.user_id}",
-            f"dataset_{dataset.id}",
-            "uvl",
+    def zip_from_storage(self, dataset, formats: Optional[List[str]] = None):
+        dataset_base_path = os.path.join(
+            os.getenv("WORKING_DIR", ""), "uploads", f"user_{dataset.user_id}", f"dataset_{dataset.id}"
         )
-
-        if not os.path.exists(dataset_folder):
-            current_app.logger.warning(f"[ZIP] Dataset folder not found: {dataset_folder}")
-            return None  # Lo manejarás con abort(404) fuera
+        selected_formats = self.resolve_download_formats(formats)
 
         temp_dir = tempfile.mkdtemp()
         zip_path = os.path.join(temp_dir, f"dataset_{dataset.id}.zip")
+        written_files = 0
 
         with zipfile.ZipFile(zip_path, "w") as zipf:
-            for filename in os.listdir(dataset_folder):
-                file_path = os.path.join(dataset_folder, filename)
-                arcname = filename
-                zipf.write(file_path, arcname=arcname)
+            for fmt in selected_formats:
+                format_path = os.path.join(dataset_base_path, fmt)
+                if not os.path.isdir(format_path):
+                    continue
+
+                for subdir, _, files in os.walk(format_path):
+                    for filename in files:
+                        file_path = os.path.join(subdir, filename)
+                        arcname = os.path.join(fmt, os.path.relpath(file_path, format_path))
+                        zipf.write(file_path, arcname=arcname)
+                        written_files += 1
+
+        if written_files == 0:
+            current_app.logger.warning(f"[ZIP] No files found for selected formats in dataset {dataset.id}")
+            return None
 
         return zip_path
 
