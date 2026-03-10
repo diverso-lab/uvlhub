@@ -1,4 +1,4 @@
-{% extends "base_template.html" %}
+﻿{% extends "base_template.html" %}
 {% set title = "Explore" %}
 
 {% block breadcrumb %}
@@ -38,10 +38,10 @@
   <div class="col-md-6 col-lg-6 col-sm-12" id="filters-panel">
       <div class="card position-sticky" style="top: 85px; z-index: 1;">
           <div class="card-body">
-              <!-- Filtro: búsqueda -->
+              <!-- Filtro: bÃºsqueda -->
               <input id="search-query" type="text" class="form-control mb-3" placeholder="Search datasets..." autofocus>
 
-              <!-- Filtro: tipo de publicación -->
+              <!-- Filtro: tipo de publicaciÃ³n -->
               <div class="mb-3">
                   <label class="form-label">Publication type</label>
                   <select class="form-select" id="filter-publication-type">
@@ -89,11 +89,11 @@
                     <input id="filter-date-to" type="date" class="form-control" />
                   </div>
                 </div>
-                <div id="date-error" class="text-danger small mt-1 d-none">⚠️ End date must be after start date</div>
+                <div id="date-error" class="text-danger small mt-1 d-none">âš ï¸ End date must be after start date</div>
               </div>
 
               <div id="date-error" class="text-danger small mt-1 d-none">
-                ⚠️ End date must be after start date
+                âš ï¸ End date must be after start date
               </div>
 
               <!-- Filtro: orden -->
@@ -105,7 +105,7 @@
                   </select>
               </div>
 
-              <!-- Botón de limpiar -->
+              <!-- BotÃ³n de limpiar -->
               <button class="btn btn-outline-primary w-100" id="clear-filters">Clear filters</button>
           </div>
       </div>
@@ -121,7 +121,7 @@
     <div class="card">
       <div class="card-body">
 
-        <!-- Título + badge -->
+        <!-- TÃ­tulo + badge -->
         <div class="d-flex align-items-center justify-content-between">
           <h2 class="mb-0">
             <a href="[[url]]">
@@ -171,7 +171,7 @@
           </div>
         </div>
 
-        <!-- Descripción -->
+        <!-- DescripciÃ³n -->
         <div class="row mb-2">
           <div class="col-12">
             <p class="card-text">[[{description}]]</p>
@@ -235,6 +235,16 @@
                title="Copy DOI">
             </i>
 
+            <a href="/datasets/[[id]]/qr"
+               class="ms-2"
+               style="cursor: pointer;"
+               data-bs-toggle="tooltip"
+               title="Download QR">
+              <img src="/datasets/[[id]]/qr"
+                   alt="QR"
+                   style="width: 18px; height: 18px; border-radius: 2px;">
+            </a>
+
             <div id="dataset_doi_[[id]]" style="display: none;">[[url]]</div>
           </div>
         </div>
@@ -270,7 +280,7 @@
           </a>
         </p>
 
-        <!-- Tamaño + Checksum -->
+        <!-- TamaÃ±o + Checksum -->
         <div class="d-flex flex-wrap align-items-center mb-3" style="gap: 1rem;">
           <span class="badge bg-light text-muted">
             Size: [[size_in_human_format]]
@@ -313,3 +323,4 @@
 {% block scripts %}
 <script src="{{ url_for('explore.assets', subfolder='dist', filename='explore.bundle.js') }}"></script>
 {% endblock %}
+

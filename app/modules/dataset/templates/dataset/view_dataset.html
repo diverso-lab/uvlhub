@@ -111,6 +111,7 @@
                             View associated publication
                             </a>
                             {% endif %}
+
                         </div>
                     </div>
 
@@ -140,6 +141,16 @@
                             data-bs-toggle="tooltip"
                             title="Copy DOI">
                             </i>
+
+                            <a href="{{ url_for('dataset.dataset_qr_by_id', dataset_id=dataset.id) }}"
+                            class="ms-2"
+                            style="cursor: pointer;"
+                            data-bs-toggle="tooltip"
+                            title="Download QR">
+                                <img src="{{ url_for('dataset.dataset_qr_by_id', dataset_id=dataset.id) }}"
+                                alt="QR"
+                                style="width: 18px; height: 18px; border-radius: 2px;">
+                            </a>
 
                             <!-- Texto oculto para copiar -->
                             <div id="dataset_doi_uvlhub_{{ dataset.id }}" style="display: none;">
