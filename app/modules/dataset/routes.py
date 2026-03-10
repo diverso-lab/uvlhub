@@ -3,7 +3,9 @@ import os
 import shutil
 import tempfile
 from datetime import datetime
+from io import BytesIO
 
+import qrcode
 from flask import (
     abort,
     current_app,
@@ -17,6 +19,9 @@ from flask import (
     url_for,
 )
 from flask_login import current_user, login_required
+from PIL import Image, ImageDraw
+from qrcode.image.styledpil import StyledPilImage
+from qrcode.image.styles.moduledrawers.pil import RoundedModuleDrawer
 
 from app.modules.apikeys.decorators import require_api_key
 from app.modules.dataset import dataset_bp
@@ -196,6 +201,94 @@ def download_dataset(dataset_id):
     resp = make_response(send_file(zip_path, as_attachment=True, mimetype="application/zip"))
     resp.set_cookie("download_cookie", user_cookie)
     return resp
+
+
+def _build_dataset_qr_response(dataset: DataSet):
+    if not dataset.ds_meta_data.dataset_doi:
+        abort(404, description="QR available only for synchronized datasets with DOI.")
+
+    target_url = url_for("dataset.subdomain_index", doi=dataset.ds_meta_data.dataset_doi, _external=True)
+    qr = qrcode.QRCode(
+        version=None,
+        error_correction=qrcode.constants.ERROR_CORRECT_H,
+        box_size=10,
+        border=5,
+    )
+    qr.add_data(target_url)
+    qr.make(fit=True)
+
+    img = qr.make_image(
+        image_factory=StyledPilImage,
+        module_drawer=RoundedModuleDrawer(radius_ratio=0.9),
+        fill_color="black",
+        back_color="white",
+    ).convert("RGBA")
+
+    logo_path = os.path.join(current_app.root_path, "static", "media", "logos", "uvlhub_ball.png")
+    if os.path.exists(logo_path):
+        logo = Image.open(logo_path).convert("RGBA")
+        qr_width, qr_height = img.size
+
+        logo_size = max(40, qr_width // 5)
+        logo.thumbnail((logo_size, logo_size), Image.Resampling.LANCZOS)
+
+        padding = max(4, logo_size // 12)
+        logo_background = Image.new(
+            "RGBA",
+            (logo.width + (2 * padding), logo.height + (2 * padding)),
+            (0, 0, 0, 0),
+        )
+        bg_draw = ImageDraw.Draw(logo_background)
+        bg_radius = max(6, logo_background.width // 5)
+        bg_draw.rounded_rectangle(
+            [(0, 0), (logo_background.width - 1, logo_background.height - 1)],
+            radius=bg_radius,
+            fill=(255, 255, 255, 255),
+        )
+
+        rounded_logo = Image.new("RGBA", logo.size, (0, 0, 0, 0))
+        logo_mask = Image.new("L", logo.size, 0)
+        logo_mask_draw = ImageDraw.Draw(logo_mask)
+        logo_radius = max(4, logo.width // 5)
+        logo_mask_draw.rounded_rectangle(
+            [(0, 0), (logo.width - 1, logo.height - 1)],
+            radius=logo_radius,
+            fill=255,
+        )
+        rounded_logo.paste(logo, (0, 0), logo_mask)
+
+        bg_position = ((qr_width - logo_background.width) // 2, (qr_height - logo_background.height) // 2)
+        img.paste(logo_background, bg_position, logo_background)
+
+        logo_position = ((qr_width - rounded_logo.width) // 2, (qr_height - rounded_logo.height) // 2)
+        img.paste(rounded_logo, logo_position, rounded_logo)
+
+    img_io = BytesIO()
+    img.save(img_io, format="PNG")
+    img_io.seek(0)
+
+    return send_file(
+        img_io,
+        mimetype="image/png",
+        as_attachment=True,
+        download_name=f"dataset_{dataset.id}_qr.png",
+    )
+
+
+@dataset_bp.route("/datasets/<int:dataset_id>/qr", methods=["GET"])
+@dataset_bp.route("/datasets/<int:dataset_id>/qr/", methods=["GET"])
+def dataset_qr_by_id(dataset_id):
+    dataset = dataset_service.get_or_404(dataset_id)
+    return _build_dataset_qr_response(dataset)
+
+
+@dataset_bp.route("/doi/<path:doi>/qr", methods=["GET"])
+@dataset_bp.route("/doi/<path:doi>/qr/", methods=["GET"])
+def dataset_qr_by_doi(doi):
+    ds_meta_data = dsmetadata_service.filter_by_doi(doi)
+    if not ds_meta_data:
+        abort(404, description="Dataset not found for the given DOI.")
+    return _build_dataset_qr_response(ds_meta_data.dataset)
 
 
 @dataset_bp.route("/datasets/download/all", methods=["GET"])
