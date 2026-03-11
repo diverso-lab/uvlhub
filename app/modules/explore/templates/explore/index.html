@@ -235,15 +235,14 @@
                title="Copy DOI">
             </i>
 
-            <a href="/datasets/[[id]]/qr"
-               class="ms-2"
-               style="cursor: pointer;"
-               data-bs-toggle="tooltip"
-               title="Download QR">
-              <img src="/datasets/[[id]]/qr"
-                   alt="QR"
-                   style="width: 18px; height: 18px; border-radius: 2px;">
-            </a>
+<a href="/datasets/[[id]]/qr"
+   class="ms-2 d-inline-flex align-items-center text-dark text-decoration-none"
+   data-bs-toggle="tooltip"
+   title="Download QR">
+
+  <i class="fa-solid fa-qrcode" style="font-size: 18px; line-height: 1;"></i>
+
+</a>
 
             <div id="dataset_doi_[[id]]" style="display: none;">[[url]]</div>
           </div>

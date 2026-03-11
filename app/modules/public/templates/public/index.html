@@ -173,15 +173,11 @@
                                     data-bs-toggle="tooltip"
                                     title="Copy DOI">
                                   </i>
-
                                   <a href="{{ url_for('dataset.dataset_qr_by_id', dataset_id=dataset.id) }}"
-                                    class="ms-2"
-                                    style="cursor: pointer;"
-                                    data-bs-toggle="tooltip"
-                                    title="Download QR">
-                                    <img src="{{ url_for('dataset.dataset_qr_by_id', dataset_id=dataset.id) }}"
-                                    alt="QR"
-                                    style="width: 18px; height: 18px; border-radius: 2px;">
+                                  class="ms-2 d-inline-flex align-items-center text-dark text-decoration-none"
+                                  data-bs-toggle="tooltip"
+                                  title="Download QR">
+                                      <i class="fa-solid fa-qrcode" style="font-size: 18px; line-height: 1;"></i>
                                   </a>
                                 </div>
 
