@@ -1,4 +1,4 @@
-{% extends "base_template.html" %}
+﻿{% extends "base_template.html" %}
 
 {% set title = "Top datasets with the most feature models" %}
 
@@ -173,6 +173,12 @@
                                     data-bs-toggle="tooltip"
                                     title="Copy DOI">
                                   </i>
+                                  <a href="{{ url_for('dataset.dataset_qr_by_id', dataset_id=dataset.id) }}"
+                                  class="ms-2 d-inline-flex align-items-center text-dark text-decoration-none"
+                                  data-bs-toggle="tooltip"
+                                  title="Download QR">
+                                      <i class="fa-solid fa-qrcode" style="font-size: 18px; line-height: 1;"></i>
+                                  </a>
                                 </div>
 
                                 <!-- Texto oculto para copiar -->
@@ -334,7 +340,7 @@
                         </div>
 
                         <p>
-                          David Romero-Organvidez, José A. Galindo, Chico Sundermann, Jose-Miguel Horcas, David Benavides. 
+                          David Romero-Organvidez, JosÃ© A. Galindo, Chico Sundermann, Jose-Miguel Horcas, David Benavides. 
                           <i>UVLHub: A feature model data repository using UVL and open science principles</i>,
                           Journal of Systems and Software,
                           2024,
@@ -344,7 +350,7 @@
                         </p>
 
                         <p>
-                          David Benavides, Chico Sundermann, Kevin Feichtinger, José A. Galindo, Rick Rabiser and Thomas Thüm,
+                          David Benavides, Chico Sundermann, Kevin Feichtinger, JosÃ© A. Galindo, Rick Rabiser and Thomas ThÃ¼m,
                           <i>Uvl: Feature Modelling with the Universal Variability Language.</i>,
                           Journal of Systems and Software,
                           Volume 225,
@@ -373,3 +379,5 @@
 {% block scripts %}
     <script src="{{ url_for('public.assets', subfolder='js', filename='scripts.js') }}"></script>
 {% endblock %}
+
+

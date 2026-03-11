@@ -4,6 +4,7 @@ from urllib.error import HTTPError
 import pytest
 from flask import Response
 from werkzeug.datastructures import MultiDict
+from werkzeug.exceptions import NotFound
 
 from app import create_app
 from app.modules.dataset import routes as dataset_routes
@@ -68,6 +69,77 @@ def test_subdomain_index_not_found(test_client):
 
     # Verificar que devuelve 404 cuando no se encuentra el dataset
     assert response.status_code == 404
+
+
+def _mock_dataset_for_qr(dataset_id=1, doi="10.1234/test-doi"):
+    dataset = MagicMock()
+    dataset.id = dataset_id
+    dataset.ds_meta_data = MagicMock()
+    dataset.ds_meta_data.dataset_doi = doi
+    return dataset
+
+
+def test_dataset_qr_by_id_success():
+    pytest.importorskip("qrcode")
+    dataset_routes = __import__("app.modules.dataset.routes", fromlist=["routes"])
+    app = create_app("testing")
+    with (
+        patch("app.modules.dataset.routes.dataset_service.get_or_404") as mock_get_or_404,
+        patch("app.modules.dataset.routes._build_dataset_qr_response") as mock_build_qr,
+    ):
+        mock_get_or_404.return_value = _mock_dataset_for_qr(dataset_id=7, doi="10.1234/dataset7")
+        mock_build_qr.return_value = Response(b"qr-image", mimetype="image/png", status=200)
+        with app.test_request_context("/datasets/7/qr"):
+            response = dataset_routes.dataset_qr_by_id(7)
+
+    assert response.status_code == 200
+    assert response.mimetype == "image/png"
+    assert response.data == b"qr-image"
+    mock_get_or_404.assert_called_once_with(7)
+    mock_build_qr.assert_called_once()
+
+
+def test_dataset_qr_by_id_without_doi_returns_404():
+    pytest.importorskip("qrcode")
+    dataset_routes = __import__("app.modules.dataset.routes", fromlist=["routes"])
+    app = create_app("testing")
+    with patch("app.modules.dataset.routes.dataset_service.get_or_404") as mock_get_or_404:
+        mock_get_or_404.return_value = _mock_dataset_for_qr(dataset_id=8, doi=None)
+        with app.test_request_context("/datasets/8/qr"):
+            with pytest.raises(NotFound):
+                dataset_routes.dataset_qr_by_id(8)
+
+
+def test_dataset_qr_by_doi_success():
+    pytest.importorskip("qrcode")
+    dataset_routes = __import__("app.modules.dataset.routes", fromlist=["routes"])
+    app = create_app("testing")
+    dataset = _mock_dataset_for_qr(dataset_id=9, doi="10.1234/dataset9")
+    with (
+        patch("app.modules.dataset.routes.dsmetadata_service.filter_by_doi") as mock_filter_by_doi,
+        patch("app.modules.dataset.routes._build_dataset_qr_response") as mock_build_qr,
+    ):
+        mock_filter_by_doi.return_value = MagicMock(dataset=dataset)
+        mock_build_qr.return_value = Response(b"qr-image", mimetype="image/png", status=200)
+        with app.test_request_context("/doi/10.1234/dataset9/qr"):
+            response = dataset_routes.dataset_qr_by_doi("10.1234/dataset9")
+
+    assert response.status_code == 200
+    assert response.mimetype == "image/png"
+    assert response.data == b"qr-image"
+    mock_filter_by_doi.assert_called_once_with("10.1234/dataset9")
+    mock_build_qr.assert_called_once_with(dataset)
+
+
+def test_dataset_qr_by_doi_not_found_returns_404():
+    pytest.importorskip("qrcode")
+    dataset_routes = __import__("app.modules.dataset.routes", fromlist=["routes"])
+    app = create_app("testing")
+    with patch("app.modules.dataset.routes.dsmetadata_service.filter_by_doi") as mock_filter_by_doi:
+        mock_filter_by_doi.return_value = None
+        with app.test_request_context("/doi/10.1234/non-existent/qr"):
+            with pytest.raises(NotFound):
+                dataset_routes.dataset_qr_by_doi("10.1234/non-existent")
 
 
 def _mock_dataset_for_edit():

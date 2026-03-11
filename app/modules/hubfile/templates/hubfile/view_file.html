@@ -1,4 +1,4 @@
-{% extends "base_template.html" %}
+﻿{% extends "base_template.html" %}
 
 {% set title = dataset.ds_meta_data.title  %}
 
@@ -85,6 +85,13 @@
                             title="Copy DOI">
                             </i>
 
+                            <a href="{{ url_for('dataset.dataset_qr_by_id', dataset_id=dataset.id) }}"
+                            class="ms-2 d-inline-flex align-items-center text-dark text-decoration-none"
+                            data-bs-toggle="tooltip"
+                            title="Download QR">
+                                <i class="fa-solid fa-qrcode" style="font-size: 18px; line-height: 1;"></i>
+                            </a>
+
                             <!-- Texto oculto para copiar -->
                             <div id="dataset_doi_uvlhub_{{ dataset.id }}" style="display: none;">
                             {{ dataset.get_uvlhub_doi() }}
@@ -110,8 +117,8 @@
 
                 <!-- Header con buscador -->
                 <div class="card-header py-5">
-                    <div class="card-title w-100"><!-- 👈 fuerza ancho completo -->
-                        <div class="d-flex align-items-center position-relative my-1 w-100"><!-- 👈 ancho completo -->
+                    <div class="card-title w-100"><!-- ðŸ‘ˆ fuerza ancho completo -->
+                        <div class="d-flex align-items-center position-relative my-1 w-100"><!-- ðŸ‘ˆ ancho completo -->
                             <i class="ki-duotone ki-magnifier fs-3 position-absolute ms-4">
                                 <span class="path1"></span>
                                 <span class="path2"></span>
@@ -147,7 +154,7 @@
                     </table>
                 </div>
 
-                <!-- Footer con botón ancho completo -->
+                <!-- Footer con botÃ³n ancho completo -->
                 <div class="mt-auto d-flex justify-content-center pb-4 px-4">
                     <div class="position-relative w-100">
                         <button class="btn btn-sm btn-primary w-100"
@@ -278,7 +285,7 @@
                                         alt="UVL Logo"
                                         height="24" />
 
-                                    <!-- Botón a la derecha -->
+                                    <!-- BotÃ³n a la derecha -->
                                     <a href="javascript:void(0);"
                                     onclick="copyCurrentUVL(this)"
                                     class="btn btn-sm btn-secondary d-flex align-items-center"
@@ -303,7 +310,7 @@
                                     alt="Fact Label Logo"
                                     height="24" />
 
-                                <!-- Botón -->
+                                <!-- BotÃ³n -->
                                 <a href="{{ selected_file.get_factlabel_url() }}" 
                                 target="_blank" 
                                 rel="noopener noreferrer"
@@ -319,7 +326,7 @@
                                 </a>
                             </div>
 
-                            <!-- 🔹 Añade aquí los checkboxes que espera factlabel.bundle.js -->
+                            <!-- ðŸ”¹ AÃ±ade aquÃ­ los checkboxes que espera factlabel.bundle.js -->
                             <div class="d-flex gap-3 align-items-center mb-3">
                                 <div class="form-check form-check-sm">
                                     <input class="form-check-input" type="checkbox" id="collapseZeroValues" checked>
@@ -334,7 +341,7 @@
                                     </label>
                                 </div>
                             </div>
-                            <!-- 🔹 Fin del bloque nuevo -->
+                            <!-- ðŸ”¹ Fin del bloque nuevo -->
 
                             <div id="FMFactLabelWrapper" class="w-100" style="overflow-y: auto; max-height: 600px;">
                                 <svg id="FMFactLabelChart" class="chart w-100" preserveAspectRatio="xMinYMin meet"></svg>
@@ -374,7 +381,7 @@
 
                 <!-- Cuerpo -->
                 <div class="modal-body pt-3 text-break">
-                    <!-- Aquí se inyectará el contenido -->
+                    <!-- AquÃ­ se inyectarÃ¡ el contenido -->
                 </div>
 
                 <!-- Footer -->
@@ -400,7 +407,7 @@
 document.addEventListener('DOMContentLoaded', function () {
     feather.replace();
 
-    // Cargar Fact Label automáticamente
+    // Cargar Fact Label automÃ¡ticamente
     renderFactLabel({{ selected_file.id }});
 });
 
@@ -450,7 +457,7 @@ $(function () {
                 next: '<i class="ki-duotone ki-right fs-5"></i>'
             }
         },
-        dom: 'tp' // sin buscador automático de DataTables, solo tabla + paginación
+        dom: 'tp' // sin buscador automÃ¡tico de DataTables, solo tabla + paginaciÃ³n
     });
 
     const searchInput = document.querySelector('[data-file-search]');
@@ -489,3 +496,5 @@ document.addEventListener('DOMContentLoaded', function () {
 
 </script>
 {% endblock %}
+
+

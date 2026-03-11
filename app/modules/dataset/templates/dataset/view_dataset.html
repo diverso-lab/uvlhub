@@ -111,14 +111,14 @@
                             View associated publication
                             </a>
                             {% endif %}
+
                         </div>
                     </div>
 
-                    {% if dataset.ds_meta_data.dataset_doi %}
+                                        {% if dataset.ds_meta_data.dataset_doi %}
                     <!-- DOI + Copy icon -->
                     <div class="row mt-3">
                         <div class="col-12 d-flex align-items-center flex-wrap">
-                            
                             <!-- Etiqueta DOI -->
                             <span class="px-3 py-1 bg-dark text-white fw-bold rounded-start" style="font-family: monospace;">
                             DOI
@@ -141,6 +141,13 @@
                             title="Copy DOI">
                             </i>
 
+                            <a href="{{ url_for('dataset.dataset_qr_by_id', dataset_id=dataset.id) }}"
+                            class="ms-2 d-inline-flex align-items-center text-dark text-decoration-none"
+                            data-bs-toggle="tooltip"
+                            title="Download QR">
+                                <i class="fa-solid fa-qrcode" style="font-size: 18px; line-height: 1;"></i>
+                            </a>
+
                             <!-- Texto oculto para copiar -->
                             <div id="dataset_doi_uvlhub_{{ dataset.id }}" style="display: none;">
                             {{ dataset.get_uvlhub_doi() }}
@@ -148,6 +155,7 @@
                         </div>
                     </div>
                     {% endif %}
+
 
                 </div>
             </div>
