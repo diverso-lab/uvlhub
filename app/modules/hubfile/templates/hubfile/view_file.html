@@ -117,8 +117,8 @@
 
                 <!-- Header con buscador -->
                 <div class="card-header py-5">
-                    <div class="card-title w-100"><!-- ðŸ‘ˆ fuerza ancho completo -->
-                        <div class="d-flex align-items-center position-relative my-1 w-100"><!-- ðŸ‘ˆ ancho completo -->
+                    <div class="card-title w-100">
+                        <div class="d-flex align-items-center position-relative my-1 w-100">
                             <i class="ki-duotone ki-magnifier fs-3 position-absolute ms-4">
                                 <span class="path1"></span>
                                 <span class="path2"></span>
@@ -154,7 +154,7 @@
                     </table>
                 </div>
 
-                <!-- Footer con botÃ³n ancho completo -->
+                <!-- Footer con Botón Botóneto -->
                 <div class="mt-auto d-flex justify-content-center pb-4 px-4">
                     <div class="position-relative w-100">
                         <button class="btn btn-sm btn-primary w-100"
@@ -285,7 +285,7 @@
                                         alt="UVL Logo"
                                         height="24" />
 
-                                    <!-- BotÃ³n a la derecha -->
+                                    <!-- Botón a la derecha -->
                                     <a href="javascript:void(0);"
                                     onclick="copyCurrentUVL(this)"
                                     class="btn btn-sm btn-secondary d-flex align-items-center"
@@ -310,7 +310,7 @@
                                     alt="Fact Label Logo"
                                     height="24" />
 
-                                <!-- BotÃ³n -->
+                                <!-- Botón -->
                                 <a href="{{ selected_file.get_factlabel_url() }}" 
                                 target="_blank" 
                                 rel="noopener noreferrer"
@@ -326,7 +326,6 @@
                                 </a>
                             </div>
 
-                            <!-- ðŸ”¹ AÃ±ade aquÃ­ los checkboxes que espera factlabel.bundle.js -->
                             <div class="d-flex gap-3 align-items-center mb-3">
                                 <div class="form-check form-check-sm">
                                     <input class="form-check-input" type="checkbox" id="collapseZeroValues" checked>
@@ -381,7 +380,7 @@
 
                 <!-- Cuerpo -->
                 <div class="modal-body pt-3 text-break">
-                    <!-- AquÃ­ se inyectarÃ¡ el contenido -->
+                    <!-- Aquí­ se inyectará el contenido -->
                 </div>
 
                 <!-- Footer -->
@@ -457,7 +456,7 @@ $(function () {
                 next: '<i class="ki-duotone ki-right fs-5"></i>'
             }
         },
-        dom: 'tp' // sin buscador automÃ¡tico de DataTables, solo tabla + paginaciÃ³n
+        dom: 'tp' // sin buscador automático de DataTables, solo tabla + paginación
     });
 
     const searchInput = document.querySelector('[data-file-search]');
