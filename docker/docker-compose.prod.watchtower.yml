@@ -99,6 +99,8 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     command: --cleanup --interval 120 web_app_container rq_worker_container
     restart: always
+    environment:
+      DOCKER_API_VERSION: "1.44"
     depends_on:
       - web
     networks:
