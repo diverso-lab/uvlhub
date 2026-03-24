@@ -640,7 +640,9 @@ def test_import_dataset_route_returns_400_when_remote_import_fails(test_client):
         "_import_remote_uvl_to_temp",
         side_effect=DatasetMetadataValidationError("The imported resource must be a .uvl file."),
     ):
-        response = test_client.get("/dataset/import/?import=https://www.uvlhub.io/doi/10.5281/zenodo.1/files/raw/model.txt")
+        response = test_client.get(
+            "/dataset/import/?import=https://www.uvlhub.io/doi/10.5281/zenodo.1/files/raw/model.txt"
+        )
 
     assert response.status_code == 400
     assert b"The imported resource must be a .uvl file." in response.data

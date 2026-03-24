@@ -165,8 +165,9 @@ def test_signup_user_successful(mock_captcha, test_client, clean_database):
 
 @patch("app.modules.auth.routes.captcha_service.validate_captcha", return_value=True)
 def test_signup_redirects_to_next_when_present(mock_captcha, test_client, clean_database):
+    next_url = "/dataset/import/%3Fimport%3Dhttps://www.uvlhub.io/doi/10.5281/zenodo.1/files/raw/editor_model.uvl"
     response = test_client.post(
-        "/signup/?next=/dataset/import/%3Fimport%3Dhttps://www.uvlhub.io/doi/10.5281/zenodo.1/files/raw/editor_model.uvl",
+        f"/signup/?next={next_url}",
         data=dict(
             name="Foo",
             surname="Example",

@@ -185,8 +185,9 @@ def test_orcid_flow_redirects_to_next_when_present(test_client, monkeypatch):
     _inject_orcid_service(monkeypatch, dummy)
     calls = _patch_login_user(monkeypatch)
 
+    next_url = "/dataset/import/%3Fimport%3Dhttps://www.uvlhub.io/doi/10.5281/zenodo.1/files/raw/editor_model.uvl"
     login_resp = test_client.get(
-        "/orcid/login?next=/dataset/import/%3Fimport%3Dhttps://www.uvlhub.io/doi/10.5281/zenodo.1/files/raw/editor_model.uvl",
+        f"/orcid/login?next={next_url}",
         follow_redirects=False,
     )
     assert login_resp.status_code in (301, 302)
