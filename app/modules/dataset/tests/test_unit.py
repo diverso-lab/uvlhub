@@ -576,3 +576,121 @@ def test_download_all_dataset_route_passes_selected_formats_to_service():
     assert response.status_code == 200
     _, kwargs = p_zip_all.call_args
     assert kwargs["formats"] == ["uvl", "splot"]
+
+
+def test_import_remote_uvl_to_temp_downloads_file(tmp_path):
+    user = MagicMock()
+    user.temp_folder.return_value = str(tmp_path / "temp")
+
+    remote_response = MagicMock()
+    remote_response.read.return_value = b"features\n    Root"
+    urlopen_context = MagicMock()
+    urlopen_context.__enter__.return_value = remote_response
+
+    with patch.object(dataset_routes.urllib_request, "urlopen", return_value=urlopen_context):
+        imported_file = dataset_routes._import_remote_uvl_to_temp(
+            "https://www.uvlhub.io/doi/10.5281/zenodo.1/files/raw/editor_model.uvl",
+            user,
+        )
+
+    assert imported_file["name"] == "editor_model.uvl"
+    assert imported_file["serverFilename"].endswith("_editor_model.uvl")
+
+    saved_path = tmp_path / "temp" / imported_file["serverFilename"]
+    assert saved_path.exists()
+    assert saved_path.read_text(encoding="utf-8") == "features\n    Root"
+
+
+def test_import_dataset_route_renders_create_form_with_preloaded_file(test_client):
+    test_client.post(
+        "/login",
+        data=dict(email="test@example.com", password="test1234"),
+        follow_redirects=True,
+    )
+
+    imported_file = {
+        "name": "editor_model.uvl",
+        "serverFilename": "1234_editor_model.uvl",
+        "size": 21,
+        "uuid": "1234",
+    }
+
+    with patch.object(dataset_routes, "_import_remote_uvl_to_temp", return_value=imported_file) as mock_import:
+        response = test_client.get(
+            "/dataset/import/?import=https://www.uvlhub.io/doi/10.5281/zenodo.1/files/raw/editor_model.uvl"
+        )
+
+    assert response.status_code == 200
+    assert b"window.initialDropzoneFiles" in response.data
+    assert b"editor_model.uvl" in response.data
+    mock_import.assert_called_once()
+
+    test_client.get("/logout", follow_redirects=True)
+
+
+def test_import_dataset_route_returns_400_when_remote_import_fails(test_client):
+    test_client.post(
+        "/login",
+        data=dict(email="test@example.com", password="test1234"),
+        follow_redirects=True,
+    )
+
+    with patch.object(
+        dataset_routes,
+        "_import_remote_uvl_to_temp",
+        side_effect=DatasetMetadataValidationError("The imported resource must be a .uvl file."),
+    ):
+        response = test_client.get("/dataset/import/?import=https://www.uvlhub.io/doi/10.5281/zenodo.1/files/raw/model.txt")
+
+    assert response.status_code == 400
+    assert b"The imported resource must be a .uvl file." in response.data
+
+    test_client.get("/logout", follow_redirects=True)
+
+
+def test_api_upload_dataset_requires_authentication(test_client):
+    response = test_client.post(
+        "/api/v1/datasets/upload",
+        json={"title": "Imported model", "uvl_content": "features\n    Root"},
+    )
+
+    assert response.status_code == 401
+    payload = response.get_json()
+    assert payload["authenticated"] is False
+    assert "orcid_url" in payload
+
+
+def test_api_upload_dataset_creates_draft_when_authenticated(test_client):
+    dataset = MagicMock()
+    dataset.id = 77
+
+    test_client.post(
+        "/login",
+        data=dict(email="test@example.com", password="test1234"),
+        follow_redirects=True,
+    )
+
+    with patch.object(
+        dataset_routes.dataset_service, "create_draft_from_uvl_import", return_value=(dataset, [MagicMock()])
+    ) as mock_create:
+        response = test_client.post(
+            "/api/v1/datasets/upload",
+            json={
+                "title": "Imported model",
+                "filename": "editor_model.uvl",
+                "description": "Imported from IDE",
+                "uvl_content": "features\n    Root",
+            },
+        )
+
+    assert response.status_code == 201
+    payload = response.get_json()
+    assert payload["dataset_id"] == 77
+    assert payload["feature_models_created"] == 1
+    mock_create.assert_called_once()
+    _, kwargs = mock_create.call_args
+    assert kwargs["title"] == "Imported model"
+    assert kwargs["filename"] == "editor_model.uvl"
+    assert kwargs["description"] == "Imported from IDE"
+
+    test_client.get("/logout", follow_redirects=True)

@@ -35,6 +35,38 @@ def test_login_success(test_client):
     test_client.get("/logout", follow_redirects=True)
 
 
+def test_login_redirects_to_next_when_present(test_client):
+    response = test_client.post(
+        "/login?next=/dataset/import/%3Fimport%3Dhttps://www.uvlhub.io/doi/10.5281/zenodo.1/files/raw/editor_model.uvl",
+        data=dict(
+            email="test@example.com",
+            password="test1234",
+            next="/dataset/import/?import=https://www.uvlhub.io/doi/10.5281/zenodo.1/files/raw/editor_model.uvl",
+        ),
+        follow_redirects=False,
+    )
+
+    assert response.status_code in (301, 302)
+    assert response.headers["Location"].endswith(
+        "/dataset/import/?import=https://www.uvlhub.io/doi/10.5281/zenodo.1/files/raw/editor_model.uvl"
+    )
+
+    test_client.get("/logout", follow_redirects=True)
+
+
+def test_login_ignores_unsafe_next_url(test_client):
+    response = test_client.post(
+        "/login?next=https://evil.example.com",
+        data=dict(email="test@example.com", password="test1234", next="https://evil.example.com"),
+        follow_redirects=False,
+    )
+
+    assert response.status_code in (301, 302)
+    assert response.headers["Location"].endswith(url_for("public.index"))
+
+    test_client.get("/logout", follow_redirects=True)
+
+
 def test_login_unsuccessful_bad_email(test_client):
     response = test_client.post(
         "/login",
@@ -55,6 +87,34 @@ def test_login_unsuccessful_bad_password(test_client):
     )
 
     assert response.request.path == url_for("auth.login"), "Login was unsuccessful"
+
+    test_client.get("/logout", follow_redirects=True)
+
+
+def test_auth_status_requires_authentication(test_client):
+    response = test_client.get("/api/v1/auth/status")
+
+    assert response.status_code == 401
+    payload = response.get_json()
+    assert payload["authenticated"] is False
+    assert "login_url" in payload
+    assert "signup_url" in payload
+    assert "orcid_url" in payload
+
+
+def test_auth_status_returns_user_when_authenticated(test_client):
+    test_client.post(
+        "/login",
+        data=dict(email="test@example.com", password="test1234"),
+        follow_redirects=True,
+    )
+
+    response = test_client.get("/api/v1/auth/status")
+
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert payload["authenticated"] is True
+    assert payload["user"]["email"] == "test@example.com"
 
     test_client.get("/logout", follow_redirects=True)
 
@@ -101,6 +161,28 @@ def test_signup_user_successful(mock_captcha, test_client, clean_database):
         follow_redirects=True,
     )
     assert response.request.path == url_for("public.index")
+
+
+@patch("app.modules.auth.routes.captcha_service.validate_captcha", return_value=True)
+def test_signup_redirects_to_next_when_present(mock_captcha, test_client, clean_database):
+    response = test_client.post(
+        "/signup/?next=/dataset/import/%3Fimport%3Dhttps://www.uvlhub.io/doi/10.5281/zenodo.1/files/raw/editor_model.uvl",
+        data=dict(
+            name="Foo",
+            surname="Example",
+            email="foo-next@example.com",
+            password="foo1234",
+            confirm_password="foo1234",
+            captcha="dummy_captcha",
+            next="/dataset/import/?import=https://www.uvlhub.io/doi/10.5281/zenodo.1/files/raw/editor_model.uvl",
+        ),
+        follow_redirects=False,
+    )
+
+    assert response.status_code in (301, 302)
+    assert response.headers["Location"].endswith(
+        "/dataset/import/?import=https://www.uvlhub.io/doi/10.5281/zenodo.1/files/raw/editor_model.uvl"
+    )
 
 
 def test_service_create_with_profie_success(clean_database):

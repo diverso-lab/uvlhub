@@ -61,7 +61,17 @@ def create_app(config_name="development"):
     logging_manager.setup_logging()
 
     # CORS
-    CORS(app, resources={r"/hubfiles/raw/*": {"origins": "*"}})
+    cors_resources = {r"/hubfiles/raw/*": {"origins": "*"}}
+    ide_origins = app.config.get("FLAMAPY_IDE_ORIGINS", [])
+    cors_resources.update(
+        {
+            r"/api/v1/auth/status": {"origins": ide_origins, "supports_credentials": True},
+            r"/api/v1/datasets/upload": {"origins": ide_origins, "supports_credentials": True},
+            r"/hubfiles/raw/*": {"origins": "*"},
+            r"https://www.uvlhub.io/*": {"origins": "*", "supports_credentials": True},
+        }
+    )
+    CORS(app, resources=cors_resources)
 
     # Swagger API
     swagger_template = {

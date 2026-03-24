@@ -2,8 +2,12 @@ import logging
 import os
 import shutil
 import tempfile
+import uuid
 from datetime import datetime
 from io import BytesIO
+from urllib import error as urllib_error
+from urllib import parse as urllib_parse
+from urllib import request as urllib_request
 
 import qrcode
 from flask import (
@@ -22,8 +26,10 @@ from flask_login import current_user, login_required
 from PIL import Image, ImageDraw
 from qrcode.image.styledpil import StyledPilImage
 from qrcode.image.styles.moduledrawers.pil import RoundedModuleDrawer
+from werkzeug.utils import secure_filename
 
 from app.modules.apikeys.decorators import require_api_key
+from app.modules.auth.services import AuthenticationService
 from app.modules.dataset import dataset_bp
 from app.modules.dataset.decorators import is_dataset_owner
 from app.modules.dataset.forms import DataSetForm
@@ -57,6 +63,59 @@ doi_mapping_service = DOIMappingService()
 ds_view_record_service = DSViewRecordService()
 ds_download_record_service = DSDownloadRecordService()
 hubfile_service = HubfileService()
+authentication_service = AuthenticationService()
+
+
+def _import_remote_uvl_to_temp(import_url: str, user) -> dict:
+    normalized_url = (import_url or "").strip()
+    if not normalized_url:
+        raise DatasetMetadataValidationError("Missing import URL.")
+
+    parsed_url = urllib_parse.urlparse(normalized_url)
+    if parsed_url.scheme not in {"http", "https"}:
+        raise DatasetMetadataValidationError("Import URL must use HTTP or HTTPS.")
+
+    original_name = os.path.basename(urllib_parse.unquote(parsed_url.path)) or "imported_model.uvl"
+    safe_name = secure_filename(original_name) or "imported_model.uvl"
+    if not safe_name.lower().endswith(".uvl"):
+        raise DatasetMetadataValidationError("The imported resource must be a .uvl file.")
+
+    request_headers = {"User-Agent": "UVLHub dataset import"}
+    remote_request = urllib_request.Request(normalized_url, headers=request_headers)
+
+    try:
+        with urllib_request.urlopen(remote_request, timeout=15) as remote_response:
+            raw_content = remote_response.read()
+    except urllib_error.HTTPError as exc:
+        raise DatasetMetadataValidationError(f"Unable to import the remote UVL file (HTTP {exc.code}).") from exc
+    except urllib_error.URLError as exc:
+        raise DatasetMetadataValidationError("Unable to reach the remote UVL URL.") from exc
+
+    if not raw_content:
+        raise DatasetMetadataValidationError("The imported UVL file is empty.")
+
+    try:
+        decoded_content = raw_content.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise DatasetMetadataValidationError("The imported UVL file must be UTF-8 encoded.") from exc
+
+    temp_root = user.temp_folder()
+    shutil.rmtree(temp_root, ignore_errors=True)
+    os.makedirs(temp_root, exist_ok=True)
+
+    import_uuid = str(uuid.uuid4())
+    server_filename = f"{import_uuid}_{safe_name}"
+    temp_path = os.path.join(temp_root, server_filename)
+    with open(temp_path, "w", encoding="utf-8", newline="\n") as imported_file:
+        imported_file.write(decoded_content)
+
+    return {
+        "name": safe_name,
+        "serverFilename": server_filename,
+        "size": os.path.getsize(temp_path),
+        "uuid": import_uuid,
+        "sourceUrl": normalized_url,
+    }
 
 
 @dataset_bp.route("/datasets/upload", methods=["GET", "POST"])
@@ -133,7 +192,44 @@ def create_dataset():
         return jsonify({"error": f"Invalid dataset_type: {dataset_type}"}), 400
 
     hubfile_service.clear_temp()
-    return render_template("dataset/create_and_edit_dataset.html", form=form)
+    return render_template("dataset/create_and_edit_dataset.html", form=form, preloaded_temp_files=[])
+
+
+@dataset_bp.route("/dataset/import", methods=["GET"])
+@dataset_bp.route("/dataset/import/", methods=["GET"])
+@login_required
+def import_dataset():
+    form = DataSetForm()
+    import_url = (request.args.get("import") or "").strip()
+    preloaded_temp_files = []
+    import_error = None
+    status_code = 200
+
+    if import_url:
+        shutil.rmtree(current_user.temp_folder(), ignore_errors=True)
+        os.makedirs(current_user.temp_folder(), exist_ok=True)
+        try:
+            preloaded_temp_files.append(_import_remote_uvl_to_temp(import_url, current_user))
+        except DatasetMetadataValidationError as exc:
+            logger.warning("[DATASET IMPORT] Validation error importing %s: %s", import_url, exc)
+            import_error = str(exc)
+            status_code = 400
+        except Exception as exc:
+            logger.exception("[DATASET IMPORT] Unexpected error importing %s", import_url)
+            import_error = f"Unexpected error importing dataset: {exc}"
+            status_code = 400
+    else:
+        hubfile_service.clear_temp()
+
+    return (
+        render_template(
+            "dataset/create_and_edit_dataset.html",
+            form=form,
+            preloaded_temp_files=preloaded_temp_files,
+            import_error=import_error,
+        ),
+        status_code,
+    )
 
 
 @dataset_bp.route("/dataset/edit/<int:dataset_id>", methods=["GET", "POST"])
@@ -174,6 +270,7 @@ def edit_metadata(dataset_id):
         is_edit=True,
         form=form,
         PublicationType=PublicationType,
+        preloaded_temp_files=[],
     )
 
 
@@ -455,6 +552,104 @@ def sync_dataset(dataset_id):
 
 
 # REST API
+
+
+@dataset_bp.route("/api/v1/datasets/upload", methods=["POST"])
+def api_upload_dataset():
+    """
+    Create a draft dataset from a UVL model
+    ---
+    tags:
+      - Datasets
+    consumes:
+      - multipart/form-data
+      - application/json
+    parameters:
+      - name: title
+        in: formData
+        type: string
+        required: false
+        description: Draft dataset title. If omitted, the filename stem is used.
+      - name: description
+        in: formData
+        type: string
+        required: false
+        description: Optional draft description.
+      - name: filename
+        in: formData
+        type: string
+        required: false
+        description: Original UVL filename.
+      - name: uvl_file
+        in: formData
+        type: file
+        required: false
+        description: UVL file to import.
+      - name: uvl_content
+        in: formData
+        type: string
+        required: false
+        description: Raw UVL content when no file is provided.
+    responses:
+      201:
+        description: Draft dataset created successfully
+      400:
+        description: Invalid import payload
+      401:
+        description: Authentication required
+    """
+
+    authenticated_user = authentication_service.get_authenticated_user()
+    if not authenticated_user:
+        payload, status_code = authentication_service.get_flamapy_ide_auth_status_payload()
+        return jsonify(payload), status_code
+
+    payload = request.get_json(silent=True) if request.is_json else {}
+    uploaded_file = request.files.get("uvl_file") or request.files.get("file")
+
+    title = (payload or {}).get("title") or request.form.get("title")
+    description = (payload or {}).get("description") or request.form.get("description") or ""
+    filename = (payload or {}).get("filename") or request.form.get("filename")
+    uvl_content = (payload or {}).get("uvl_content") or request.form.get("uvl_content")
+
+    if uploaded_file:
+        filename = uploaded_file.filename or filename
+        try:
+            uvl_content = uploaded_file.read().decode("utf-8")
+        except UnicodeDecodeError:
+            return jsonify({"error": "UVL file must be UTF-8 encoded."}), 400
+
+    if not title:
+        inferred_filename = filename or "model.uvl"
+        title = os.path.splitext(os.path.basename(inferred_filename))[0].replace("_", " ").strip() or "Imported model"
+
+    try:
+        dataset, created_fms = dataset_service.create_draft_from_uvl_import(
+            current_user=authenticated_user,
+            title=title,
+            uvl_content=uvl_content,
+            filename=filename,
+            description=description,
+        )
+    except DatasetMetadataValidationError as exc:
+        return jsonify({"error": str(exc)}), 400
+    except Exception as exc:
+        logger.exception("[API UPLOAD] Unexpected error importing UVL from flamapyIDE")
+        return jsonify({"error": f"Unexpected error creating dataset: {exc}"}), 400
+
+    return (
+        jsonify(
+            {
+                "message": "Dataset draft created successfully.",
+                "dataset_id": dataset.id,
+                "feature_models_created": len(created_fms),
+                "edit_url": url_for("dataset.edit_metadata", dataset_id=dataset.id, _external=True),
+                "view_url": url_for("dataset.get_unsynchronized_dataset", dataset_id=dataset.id, _external=True),
+                "list_url": url_for("dataset.list_dataset", _external=True),
+            }
+        ),
+        201,
+    )
 
 
 @dataset_bp.route("/api/v1/datasets", methods=["GET"])

@@ -13,6 +13,8 @@ from zipfile import ZipFile
 
 import bleach
 from flask import current_app, request
+from werkzeug.datastructures import MultiDict
+from werkzeug.utils import secure_filename
 
 from app import db
 from app.modules.auth.models import User
@@ -73,6 +75,74 @@ class DataSetService(BaseService):
     def create_basic_dataset(self, user: User) -> DataSet:
         dataset = self.create(commit=False, user_id=user.id, ds_meta_data_id=None)
         return dataset
+
+    def create_draft_from_uvl_import(
+        self,
+        current_user: User,
+        title: str,
+        uvl_content: str,
+        filename: str = None,
+        description: str = "",
+    ) -> tuple[DataSet, list]:
+        clean_title = " ".join((title or "").split())
+        if not clean_title:
+            raise DatasetMetadataValidationError("Title is required.")
+
+        if not (uvl_content or "").strip():
+            raise DatasetMetadataValidationError("UVL content is required.")
+
+        clean_description = (description or "").strip() or "Imported from flamapyIDE."
+
+        base_filename = filename or f"{clean_title}.uvl"
+        safe_filename = secure_filename(base_filename) or "model.uvl"
+        if not safe_filename.lower().endswith(".uvl"):
+            safe_filename = f"{safe_filename}.uvl"
+
+        temp_root = current_user.temp_folder()
+        os.makedirs(temp_root, exist_ok=True)
+        import_dir = tempfile.mkdtemp(prefix="flamapy_", dir=temp_root)
+        import_path = os.path.join(import_dir, safe_filename)
+
+        try:
+            with open(import_path, "w", encoding="utf-8", newline="\n") as imported_file:
+                imported_file.write(uvl_content)
+
+            import_form = MultiDict(
+                [
+                    ("title", clean_title),
+                    ("description", clean_description),
+                    ("publication_type", ""),
+                    ("publication_doi", ""),
+                ]
+            )
+            profile = getattr(current_user, "profile", None)
+            if profile and (profile.name or profile.surname):
+                author_parts = [part.strip() for part in [profile.surname, profile.name] if part and part.strip()]
+                author_name = ", ".join(author_parts) if len(author_parts) > 1 else author_parts[0]
+                import_form.add("authors[0][name]", author_name)
+                import_form.add("authors[0][affiliation]", (profile.affiliation or "").strip())
+                import_form.add("authors[0][orcid]", profile.get_orcid() if hasattr(profile, "get_orcid") else "")
+
+            from app.modules.featuremodel.services import FeatureModelService
+
+            local_service = LocalDatasetService(
+                dsmetadata_service=DSMetaDataService(),
+                dataset_service=self,
+                author_service=AuthorService(),
+                feature_model_service=FeatureModelService(),
+                logger=logger,
+            )
+            dataset, _, created_fms = local_service.create_local_dataset(
+                import_form,
+                current_user,
+                temp_root=import_dir,
+            )
+            return dataset, created_fms
+        except Exception:
+            self.repository.session.rollback()
+            raise
+        finally:
+            shutil.rmtree(import_dir, ignore_errors=True)
 
     def is_synchronized(self, dataset_id: int) -> bool:
         return self.repository.is_synchronized(dataset_id)
@@ -694,7 +764,7 @@ class LocalDatasetService:
         self.feature_model_service = feature_model_service
         self.logger = logger
 
-    def create_local_dataset(self, form, current_user):
+    def create_local_dataset(self, form, current_user, temp_root: str = None):
         try:
             title = form.get("title")
             description = form.get("description")
@@ -746,10 +816,13 @@ class LocalDatasetService:
             self.logger.info(f"[LOCAL] Dataset {dataset.id} committed to DB")
 
             ingest = UploadIngestService(self.logger)
-            stage_dir, staged_uvls = ingest.prepare_uvls(current_user.temp_folder())
+            ingest_root = temp_root or current_user.temp_folder()
+            stage_dir, staged_uvls = ingest.prepare_uvls(ingest_root)
             self.logger.info(f"[LOCAL] {len(staged_uvls)} UVLs listos en {stage_dir}")
 
             created_fms = self.feature_model_service.create_from_uvl_files(dataset, base_dir=stage_dir)
+            dataset.feature_model_count = len(created_fms)
+            db.session.commit()
 
             return dataset, ds_meta, created_fms
 

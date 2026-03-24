@@ -1,4 +1,4 @@
-from flask import flash, redirect, render_template, request, url_for
+from flask import flash, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_user, logout_user
 from pymysql import IntegrityError
 
@@ -20,8 +20,9 @@ confirmemail_service = ConfirmemailService()
 
 @auth_bp.route("/signup/", methods=["GET", "POST"])
 def signup():
+    next_url = authentication_service.get_safe_next_url()
     if current_user.is_authenticated:
-        return redirect(url_for("public.index"))
+        return redirect(next_url or url_for("public.index"))
 
     form = SignupForm()
 
@@ -30,12 +31,12 @@ def signup():
 
         if not authentication_service.is_email_available(email):
             flash(f"The email '{email}' is already registered.", "danger")
-            return render_template("auth/signup_form.html", form=form)
+            return render_template("auth/signup_form.html", form=form, next_url=next_url)
 
         user_input = request.form.get("captcha", "")
         if not captcha_service.validate_captcha(user_input):
             flash("Please complete the CAPTCHA correctly.", "danger")
-            return render_template("auth/signup_form.html", form=form)
+            return render_template("auth/signup_form.html", form=form, next_url=next_url)
 
         try:
             user = authentication_service.create_with_profile(**form.data)
@@ -47,33 +48,40 @@ def signup():
             task_manager = TaskQueueManager()
             task_manager.enqueue_task("app.modules.auth.tasks.send_confirmation_email", email=user.email, timeout=10)
 
-            return redirect(url_for("public.index"))
+            return redirect(next_url or url_for("public.index"))
 
         except IntegrityError:
             db.session.rollback()
             flash("An error occurred while creating your account.", "danger")
 
-    return render_template("auth/signup_form.html", form=form)
+    return render_template("auth/signup_form.html", form=form, next_url=next_url)
 
 
 @auth_bp.route("/login", methods=["GET", "POST"])
 @guest_required
 def login():
+    next_url = authentication_service.get_safe_next_url()
     if current_user.is_authenticated:
-        return redirect(url_for("public.index"))
+        return redirect(next_url or url_for("public.index"))
 
     form = LoginForm()
     if request.method == "POST" and form.validate_on_submit():
 
         if authentication_service.login(form.email.data, form.password.data):
-            return redirect(url_for("public.index"))
+            return redirect(next_url or url_for("public.index"))
 
-        return render_template("auth/login_form.html", form=form, error="Invalid credentials")
+        return render_template("auth/login_form.html", form=form, error="Invalid credentials", next_url=next_url)
 
-    return render_template("auth/login_form.html", form=form)
+    return render_template("auth/login_form.html", form=form, next_url=next_url)
 
 
 @auth_bp.route("/logout")
 def logout():
     logout_user()
     return redirect(url_for("public.index"))
+
+
+@auth_bp.route("/api/v1/auth/status", methods=["GET"])
+def auth_status():
+    payload, status_code = authentication_service.get_flamapy_ide_auth_status_payload()
+    return jsonify(payload), status_code

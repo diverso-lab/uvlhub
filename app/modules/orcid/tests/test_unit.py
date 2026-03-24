@@ -175,6 +175,31 @@ def test_orcid_authorize_success_calls_login_user_and_redirects(test_client, mon
     assert location  # non-empty redirect target
 
 
+def test_orcid_flow_redirects_to_next_when_present(test_client, monkeypatch):
+    dummy = DummyOrcidService(
+        {
+            "userinfo_return": ({"sub": "0000-0000-0000-0000"}, None),
+            "user_return": (object(), None),
+        }
+    )
+    _inject_orcid_service(monkeypatch, dummy)
+    calls = _patch_login_user(monkeypatch)
+
+    login_resp = test_client.get(
+        "/orcid/login?next=/dataset/import/%3Fimport%3Dhttps://www.uvlhub.io/doi/10.5281/zenodo.1/files/raw/editor_model.uvl",
+        follow_redirects=False,
+    )
+    assert login_resp.status_code in (301, 302)
+
+    resp = test_client.get("/orcid/authorize", follow_redirects=False)
+
+    assert calls["count"] == 1
+    assert resp.status_code in (301, 302)
+    assert resp.headers.get("Location", "").endswith(
+        "/dataset/import/?import=https://www.uvlhub.io/doi/10.5281/zenodo.1/files/raw/editor_model.uvl"
+    )
+
+
 def test_orcid_authorize_never_500_on_known_failures(test_client, monkeypatch):
     """
     Regression test: the intermittent issue you described is usually login_user(None) or unhandled exceptions.

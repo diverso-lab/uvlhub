@@ -11,6 +11,7 @@
             <div class="card-body">
                 <form method="post" novalidate>
                     {{ form.hidden_tag() }}
+                    <input type="hidden" name="next" value="{{ next_url | default('', true) }}">
 
                     <!-- Name -->
                     <div class="mb-4">
@@ -89,7 +90,7 @@
                     <div class="d-flex align-items-center justify-content-between mb-4">
                         {{ form.submit(class="btn btn-primary me-3") }}
                         <span class="text-muted">or</span>
-                        <a href="{{ url_for('orcid.login') }}"
+                        <a href="{{ url_for('orcid.login', next=next_url) if next_url else url_for('orcid.login') }}"
                            class="btn btn-orcid d-flex align-items-center"
                            style="border-radius: 6px;">
                             Sign up with ORCID
@@ -110,7 +111,7 @@
                     <div class="text-muted small">
                         <div class="mb-2">
                             Already have an account?
-                            <a href="{{ url_for('auth.login') }}" class="fw-semibold">Login</a>
+                            <a href="{{ url_for('auth.login', next=next_url) if next_url else url_for('auth.login') }}" class="fw-semibold">Login</a>
                         </div>
                         <div>
                             Forgot your password?

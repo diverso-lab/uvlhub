@@ -189,6 +189,45 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
+    function addImportedBadge(file, label = "Imported") {
+        if (!file?.previewElement) {
+            return;
+        }
+
+        const fileContainer = file.previewElement.querySelector(".dropzone-file");
+        if (!fileContainer || fileContainer.querySelector(".dropzone-imported-badge")) {
+            return;
+        }
+
+        const importedBadge = document.createElement("div");
+        importedBadge.classList.add("dropzone-file-success", "dropzone-imported-badge");
+        importedBadge.innerHTML = `<span class="badge bg-info">${label}</span>`;
+        fileContainer.appendChild(importedBadge);
+    }
+
+    function preloadUploadedFile(fileInfo) {
+        const mockFile = {
+            name: fileInfo.name,
+            size: fileInfo.size || 0,
+            accepted: true,
+            status: Dropzone.SUCCESS,
+            uploadedToServer: true,
+            serverFilename: fileInfo.serverFilename,
+            preloaded: true,
+            upload: {
+                uuid: fileInfo.uuid || null
+            }
+        };
+
+        myDropzone.files.push(mockFile);
+        myDropzone.emit("addedfile", mockFile);
+        addImportedBadge(mockFile);
+        myDropzone.emit("success", mockFile, { filename: fileInfo.serverFilename });
+        myDropzone.emit("complete", mockFile);
+        updateStep2Summary();
+        updatePagination(myDropzone.files);
+    }
+
     /*
      * Validación de archivos .uvl en sintaxis
      */
@@ -198,6 +237,12 @@ document.addEventListener("DOMContentLoaded", function () {
         if (!file.upload.uuid) file.upload.uuid = crypto.randomUUID();
 
         const ext = (file.name.split(".").pop() || "").toLowerCase();
+
+        if (file.preloaded || !(file instanceof Blob)) {
+            updateStep2Summary();
+            updatePagination(this.files);
+            return;
+        }
 
         if (ext === "uvl") {
             const reader = new FileReader();
@@ -271,4 +316,6 @@ document.addEventListener("DOMContentLoaded", function () {
         // 🔕 quitar el archivo rechazado del preview
         //this.removeFile(file);
     });
+    const initialDropzoneFiles = Array.isArray(window.initialDropzoneFiles) ? window.initialDropzoneFiles : [];
+    initialDropzoneFiles.forEach(preloadUploadedFile);
 });

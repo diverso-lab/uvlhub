@@ -39,9 +39,18 @@ class Config:
     SESSION_USE_SIGNER = True
     REDIS_URL = os.getenv("REDIS_URL", "redis://redis:6379")
     SESSION_REDIS = redis.from_url(REDIS_URL)
+    SESSION_COOKIE_SAMESITE = os.getenv("SESSION_COOKIE_SAMESITE", "Lax")
+    SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", "false").lower() == "true"
+    REMEMBER_COOKIE_SAMESITE = os.getenv("REMEMBER_COOKIE_SAMESITE", SESSION_COOKIE_SAMESITE)
+    REMEMBER_COOKIE_SECURE = os.getenv("REMEMBER_COOKIE_SECURE", str(SESSION_COOKIE_SECURE)).lower() == "true"
     REDIS_WORKER_TIMEOUT = os.getenv("REDIS_WORKER_TIMEOUT", 180)
     SERVER_NAME = os.getenv("SERVER_NAME", "localhost")
     PREFERRED_URL_SCHEME = os.getenv("PREFERRED_URL_SCHEME", "http")
+    FLAMAPY_IDE_ORIGINS = [
+        origin.strip()
+        for origin in os.getenv("FLAMAPY_IDE_ORIGINS", "https://ide.flamapy.org").split(",")
+        if origin.strip()
+    ]
 
 
 class DevelopmentConfig(Config):

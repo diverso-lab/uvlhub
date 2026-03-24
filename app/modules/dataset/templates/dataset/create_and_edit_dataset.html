@@ -315,7 +315,7 @@
                 <!--end::Wrapper-->
             </div>
 
-            <div id="upload-error" class="alert alert-danger mt-5 d-none" role="alert"></div>
+            <div id="upload-error" class="alert alert-danger mt-5 {% if not import_error %}d-none{% endif %}" role="alert">{{ import_error | default('', true) }}</div>
 
             <div class="d-flex flex-stack pt-10">
                 <div class="mr-2">
@@ -336,6 +336,7 @@
 
 <script>
     var isEditMode = {{ 'true' if is_edit else 'false' }};
+    window.initialDropzoneFiles = {{ preloaded_temp_files | default([], true) | tojson }};
 
     /**
      * CORRECCIÓN 1: Prevenir errores de "myDropzone is not defined"
