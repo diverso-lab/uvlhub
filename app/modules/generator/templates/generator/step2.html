@@ -20,10 +20,12 @@
                             <td>
                                 <div class="form-check">
                                     <input class="form-check-input"
+                                        disabled
                                         type="checkbox"
                                         id="boolean_level"
                                         name="boolean_level"
-                                        {% if values.get('boolean_level', False) %}checked{% endif %}>
+                                        {% if values.get('boolean_level', True) %}checked{% endif %}>
+                                        <input type="hidden" name="boolean_level" value="on">
                                     <label class="form-check-label" for="boolean_level">Boolean level</label>
                                 </div>
                             </td>
@@ -278,7 +280,7 @@
                         </div>
                         <div class="col-auto">
                             <label class="form-label mb-0">Min:</label>
-                            <input type="number" class="form-control" id="group_cardinality_min" name="group_cardinality_min" min="1" value="{{ values.get('group_cardinality_min', 10) }}">
+                            <input type="number" class="form-control" id="group_cardinality_min" name="group_cardinality_min" min="1" max="{{ values.get('num_features_max', 10000) }}" value="{{ values.get('group_cardinality_min', 10) }}">
                             {% if errors.get('group_cardinality_min') %}
                                 <div class="text-danger">{{ errors['group_cardinality_min'] }}</div>
                             {% endif %}
@@ -287,14 +289,14 @@
                         </div>
                         <div class="col-auto">
                             <label class="form-label mb-0">Max:</label>
-                            <input type="number" class="form-control" id="group_cardinality_max" name="group_cardinality_max" min="1" value="{{ values.get('group_cardinality_max', 50) }}">
+                            <input type="number" class="form-control" id="group_cardinality_max" name="group_cardinality_max" min="1" max="{{ values.get('num_features_max', 10000) }}" value="{{ values.get('group_cardinality_max', 50) }}">
                             {% if errors.get('group_cardinality_max') %}
                                 <div class="text-danger">{{ errors['group_cardinality_max'] }}</div>
                             {% endif %}
                         </div>
                     </div>
                     <div class="form-text">
-                        Note: must be inside the interval of features.
+                        Note: min must be less than or equal to max, and both must be inside the interval of features.
                     </div>
                 </div>
             </div>

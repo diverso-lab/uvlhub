@@ -5,52 +5,184 @@
 {% block content %}
 <div class="wizard-container">
     <h2><strong>Generate</strong> random feature models</h2>
-    <div class="wizard-tabs">
-        {% set steps = [
-            'General information',
-            'Feature tree',
-            'Constraints',
-            'Attributes',
-            'Finishing'
-        ] %}
-        <ul class="wizard-tabs-list">
-            {% for step in steps %}
-                {% set i = loop.index %}
-                <li class="wizard-tab{% if current_step == i %} active-tab{% endif %}">
+
+    {% set steps = [
+        'General information',
+        'Feature tree',
+        'Constraints',
+        'Attributes',
+        'Finishing'
+    ] %}
+
+    <div class="wizard-steps mb-5">
+        {% for step in steps %}
+            {% set i = loop.index %}
+            <div class="wizard-step
+                        {% if i < current_step %}completed{% elif i == current_step %}active{% else %}pending{% endif %}">
+                
+                <div class="wizard-step-top">
+                    <div class="wizard-step-circle">
+                        {{ i }}
+                    </div>
+
+                    {% if not loop.last %}
+                        <div class="wizard-step-line"></div>
+                    {% endif %}
+                </div>
+
+                <div class="wizard-step-label">
                     {{ step }}
-                </li>
-            {% endfor %}
-        </ul>
+                </div>
+            </div>
+        {% endfor %}
     </div>
+
     <div class="wizard-content">
         <form id="generator-wizard-step1" method="POST" action="{{ url_for('generator.step' ~ current_step) }}">
             <input type="hidden" id="nav_action" name="nav" value="next">
 
             {% block wizard_content %}
             {% endblock %}
+
             <div class="d-flex justify-content-between mt-4">
-            {% if current_step > 1 %}
-            <button type="button"
-                    class="btn btn-outline-secondary"
-                    onclick="document.getElementById('nav_action').value='prev'; this.closest('form').submit();">
-                Previous
-            </button>
-            {% else %}
-            <button type="button" class="btn btn-outline-secondary" disabled>Previous</button>
-            {% endif %}
+                {% if current_step > 1 %}
+                <button type="button"
+                        class="btn btn-outline-secondary"
+                        onclick="document.getElementById('nav_action').value='prev'; this.closest('form').submit();">
+                    Previous
+                </button>
+                {% else %}
+                <button type="button" class="btn btn-outline-secondary" disabled>Previous</button>
+                {% endif %}
 
-            {% if current_step < 5 %}
-            <button type="button"
-                    class="btn btn-primary"
-                    onclick="document.getElementById('nav_action').value='next'; this.closest('form').submit();">
-                Next &gt;
-            </button>
-            {% endif %}
-
+                {% if current_step < 5 %}
+                <button type="button"
+                        class="btn btn-primary"
+                        onclick="document.getElementById('nav_action').value='next'; this.closest('form').submit();">
+                    Next &gt;
+                </button>
+                {% endif %}
             </div>
         </form>
     </div>
 </div>
+
+<style>
+.wizard-steps {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0;
+    width: 100%;
+    margin-top: 1.5rem;
+}
+
+.wizard-step {
+    flex: 1;
+    min-width: 0;
+    text-align: center;
+    position: relative;
+}
+
+.wizard-step-top {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.wizard-step-circle {
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    border-radius: 50%;
+    border: 2px solid #d9dbe3;
+    background: #ffffff;
+    color: #7e8299;
+    font-weight: 700;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    transition: all 0.2s ease;
+}
+
+.wizard-step-line {
+    height: 2px;
+    background: #d9dbe3;
+    flex: 1;
+    margin-left: 10px;
+    margin-right: -50%;
+    z-index: 1;
+}
+
+.wizard-step-label {
+    margin-top: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #7e8299;
+    line-height: 1.3;
+    padding: 0 8px;
+    word-break: break-word;
+}
+
+/* Step activo */
+.wizard-step.active .wizard-step-circle {
+    background: #009ef7;
+    border-color: #009ef7;
+    color: #ffffff;
+    box-shadow: 0 0 0 4px rgba(0, 158, 247, 0.12);
+}
+
+.wizard-step.active .wizard-step-label {
+    color: #181c32;
+}
+
+/* Steps completados */
+.wizard-step.completed .wizard-step-circle {
+    background: #50cd89;
+    border-color: #50cd89;
+    color: #ffffff;
+}
+
+.wizard-step.completed .wizard-step-label {
+    color: #181c32;
+}
+
+.wizard-step.completed .wizard-step-line {
+    background: #50cd89;
+}
+
+/* Pending */
+.wizard-step.pending .wizard-step-circle {
+    background: #ffffff;
+    border-color: #d9dbe3;
+    color: #7e8299;
+}
+
+.wizard-step.pending .wizard-step-label {
+    color: #a1a5b7;
+}
+
+/* Ajuste para que la última no intente estirar línea visualmente */
+.wizard-step:last-child .wizard-step-line {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .wizard-step-label {
+        font-size: 12px;
+    }
+
+    .wizard-step-circle {
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+        font-size: 13px;
+    }
+}
+</style>
 {% endblock %}
 
 {% block scripts %}

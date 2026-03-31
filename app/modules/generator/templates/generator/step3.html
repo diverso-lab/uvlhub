@@ -3,6 +3,11 @@
 {% block title %}Generate random feature models{% endblock %}
 
 {% block wizard_content %}
+
+{% if errors.get('global') %}
+    <div class="alert alert-danger">{{ errors['global'] }}</div>
+{% endif %}
+
 <div class="row justify-content-center">
     <div class="col-md-8">
 
@@ -52,13 +57,54 @@
             </div>
         </div>
 
+        
+        <!-- Variables per constraint -->
+        <div class="mb-3">
+            <label class="form-label">Variables per constraint</label>
+            <div class="d-flex align-items-center gap-3">
+                <span>Min:</span>
+                <input
+                    type="number"
+                    class="form-control"
+                    style="width: 100px;"
+                    min="1"
+                    max="{{ values.get('max_features', 10000) }}"
+                    id="vars_per_ctc_min"
+                    name="vars_per_ctc_min"
+                    value="{{ values.get('vars_per_ctc_min', 1) }}"
+                >
+                {% if errors.get('vars_per_ctc_min') %}
+                    <div class="text-danger">{{ errors['vars_per_ctc_min'] }}</div>
+                {% endif %}
+
+                <span>Max:</span>
+                <input
+                    type="number"
+                    class="form-control"
+                    style="width: 100px;"
+                    min="1"
+                    max="{{ values.get('max_features', 10000) }}"
+                    id="vars_per_ctc_max"
+                    name="vars_per_ctc_max"
+                    value="{{ values.get('vars_per_ctc_max', 10) }}"
+                >
+                {% if errors.get('vars_per_ctc_max') %}
+                    <div class="text-danger">{{ errors['vars_per_ctc_max'] }}</div>
+                {% endif %}
+                <span class="text-muted ms-2" style="font-size: 13px;">
+                    Min must be less than or equal to Max. Max variables per constraint cannot exceed max number of features:
+                    <strong>{{ values.get('max_features', 10000) }}</strong>
+                </span>
+            </div>
+        </div>
+
         <!-- Extra Constraint Representativeness -->
         <div class="mb-3">
             <label class="form-label">
                 Extra Constraint Representativeness:
                 <small>
                     Max times a feature can appear in each constraint
-                    (must be integer &lt; max vars per constraint)
+                    (must be less or equal max vars per constraint)
                 </small>
             </label>
             <input
@@ -75,44 +121,6 @@
             {% endif %}
         </div>
 
-        <!-- Variables per constraint -->
-        <div class="mb-3">
-            <label class="form-label">Variables per constraint</label>
-            <div class="d-flex align-items-center gap-3">
-                <span>Min:</span>
-                <input
-                    type="number"
-                    class="form-control"
-                    style="width: 100px;"
-                    min="1"
-                    max="10000"
-                    id="vars_per_ctc_min"
-                    name="vars_per_ctc_min"
-                    value="{{ values.get('vars_per_ctc_min', 1) }}"
-                >
-                {% if errors.get('vars_per_ctc_min') %}
-                    <div class="text-danger">{{ errors['vars_per_ctc_min'] }}</div>
-                {% endif %}
-
-                <span>Max:</span>
-                <input
-                    type="number"
-                    class="form-control"
-                    style="width: 100px;"
-                    min="1"
-                    max="10000"
-                    id="vars_per_ctc_max"
-                    name="vars_per_ctc_max"
-                    value="{{ values.get('vars_per_ctc_max', 10) }}"
-                >
-                {% if errors.get('vars_per_ctc_max') %}
-                    <div class="text-danger">{{ errors['vars_per_ctc_max'] }}</div>
-                {% endif %}
-                <span class="text-muted ms-2" style="font-size: 13px;">
-                    Max variables per constraint cannot exceed max number of features
-                </span>
-            </div>
-        </div>
 
         {# 
         <!-- Distribution -->
@@ -443,6 +451,15 @@
 {% block scripts %}
 <script>
 document.addEventListener("DOMContentLoaded", function () {
+    const maxVars = document.getElementById("vars_per_ctc_max");
+    if (maxVars) {
+    maxVars.addEventListener("input", () => {
+        const hardMax = parseInt(maxVars.getAttribute("max") || "10000", 10);
+        const v = parseInt(maxVars.value || "0", 10);
+        if (v > hardMax) maxVars.value = hardMax;
+    });
+    }
+    
     function updateSum(ids, total_id) {
         let sum = 0.0;
         ids.forEach(function (id) {
