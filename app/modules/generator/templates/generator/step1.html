@@ -7,13 +7,10 @@
     <div class="col-md-6">
         <!-- Número de modelos -->
         <div class="mb-3">
-            <label for="num_models" class="form-label">Number of models</label>
-            <input type="range" class="form-range" min="1" max="1000" step="1" id="num_models"
-                   name="num_models" value="{{ values.get('num_models_val', 5) }}"
-                   oninput="num_models_val.value = num_models.value">
-            <input type="number" id="num_models_val" name="num_models_val" min="1" max="1000" 
-                   value="{{ values.get('num_models_val', 5) }}" class="form-control mt-1" style="width: 100px;"
-                   oninput="num_models.value = num_models_val.value">
+            <label for="num_models_val" class="form-label">Number of models</label>
+            <input type="number" id="num_models_val" name="num_models_val" min="1"
+                value="{{ values.get('num_models_val', 5) }}"
+                class="form-control mt-1" style="width: 100px;">
             {% if errors.get('num_models_val') %}
                 <div class="text-danger">{{ errors['num_models_val'] }}</div>
             {% endif %}

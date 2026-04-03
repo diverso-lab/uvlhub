@@ -3,6 +3,9 @@
 {% block title %}Generate random feature models{% endblock %}
 
 {% block wizard_content %}
+{% if errors.get('global') %}
+    <div class="alert alert-danger">{{ errors['global'] }}</div>
+{% endif %}
 <div class="row justify-content-center">
     <div class="col-md-8">
         <h3 class="mb-3">Language levels</h3>
@@ -40,7 +43,7 @@
                                 </div>
                             </td>
                         </tr>
-                        <!-- <tr>
+                        <tr>
                             <td>
                                 <div class="form-check">
                                     <input class="form-check-input"
@@ -58,7 +61,7 @@
                                         id="feature_cardinality"
                                         name="feature_cardinality"
                                         {% if values.get('feature_cardinality', False) %}checked{% endif %}>
-                                    <label class="form-check-label" for="feature_cardinality">Feature cardinality</label>
+                                    <label class="form-check-label">Feature cardinality</label>
                                 </div>
                                 <div class="form-check">
                                     <input class="form-check-input"
@@ -66,10 +69,11 @@
                                         id="aggregate_functions"
                                         name="aggregate_functions"
                                         {% if values.get('aggregate_functions', False) %}checked{% endif %}>
-                                    <label class="form-check-label" for="aggregate_functions">Aggregate functions</label>
+                                    <label class="form-check-label">Aggregate functions</label>
                                 </div>
                             </td>
                         </tr>
+
                         <tr>
                             <td>
                                 <div class="form-check">
@@ -78,7 +82,7 @@
                                         id="type_level"
                                         name="type_level"
                                         {% if values.get('type_level', False) %}checked{% endif %}>
-                                    <label class="form-check-label" for="type_level">Type level</label>
+                                    <label class="form-check-label">Type level</label>
                                 </div>
                             </td>
                             <td>
@@ -88,10 +92,10 @@
                                         id="string_constraints"
                                         name="string_constraints"
                                         {% if values.get('string_constraints', False) %}checked{% endif %}>
-                                    <label class="form-check-label" for="string_constraints">String constraints</label>
+                                    <label class="form-check-label">String constraints</label>
                                 </div>
                             </td>
-                        </tr> -->
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -100,7 +104,7 @@
                 <p style="font-size: 14px;">
                     <strong>Note:</strong> in UVL, Boolean level is the minimum required level. Arithmetic level includes Boolean level, and Type level includes every one of them.<br>
                     <br>
-                    If a minor level is selected, its respective major level will be automatically selected.
+                    You must select a major level to select any of its minor levels.
                 </p>
             </div>
         </div>
@@ -112,12 +116,12 @@
                 <label class="form-label">Number of features</label>
                 <div class="d-flex align-items-center gap-3">
                     <span>Min:</span>
-                    <input type="number" class="form-control" style="width: 100px;" min="1" max="10000" id="num_features_min" name="num_features_min" value="{{ values.get('num_features_min', 3000) }}">
+                    <input type="number" class="form-control" style="width: 100px;" min="1" id="num_features_min" name="num_features_min" value="{{ values.get('num_features_min', 3000) }}">
                     {% if errors.get('num_features_min') %}
                         <div class="text-danger">{{ errors['num_features_min'] }}</div>
                     {% endif %}
                     <span>Max:</span>
-                    <input type="number" class="form-control" style="width: 100px;" min="1" max="10000" id="num_features_max" name="num_features_max" value="{{ values.get('num_features_max', 8500) }}">
+                    <input type="number" class="form-control" style="width: 100px;" min="1" id="num_features_max" name="num_features_max" value="{{ values.get('num_features_max', 8500) }}">
                     {% if errors.get('num_features_max') %}
                         <div class="text-danger">{{ errors['num_features_max'] }}</div>
                     {% endif %}
@@ -309,6 +313,69 @@
 {% block scripts %}
 <script>
 document.addEventListener("DOMContentLoaded", function () {
+    // ================================
+    // Language levels logic
+    // ================================
+    function updateLevelDependencies() {
+        const arithmetic = document.getElementById("arithmetic_level");
+        const featureCard = document.getElementById("feature_cardinality");
+        const aggregate = document.getElementById("aggregate_functions");
+
+        const type = document.getElementById("type_level");
+        const stringC = document.getElementById("string_constraints");
+
+        // Arithmetic → minors
+        if (!arithmetic.checked) {
+            featureCard.checked = false;
+            aggregate.checked = false;
+            featureCard.disabled = true;
+            aggregate.disabled = true;
+        } else {
+            featureCard.disabled = false;
+            aggregate.disabled = false;
+        }
+
+        // Type → string
+        if (!type.checked) {
+            stringC.checked = false;
+            stringC.disabled = true;
+        } else {
+            stringC.disabled = false;
+        }
+    }
+
+    // Auto-enable major if minor checked
+    function autoEnableMajors() {
+        const arithmetic = document.getElementById("arithmetic_level");
+        const featureCard = document.getElementById("feature_cardinality");
+        const aggregate = document.getElementById("aggregate_functions");
+
+        const type = document.getElementById("type_level");
+        const stringC = document.getElementById("string_constraints");
+
+        if (featureCard.checked || aggregate.checked) {
+            arithmetic.checked = true;
+        }
+
+        if (stringC.checked) {
+            type.checked = true;
+        }
+
+        updateLevelDependencies();
+    }
+
+    // Listeners
+    ["arithmetic_level", "type_level"].forEach(id => {
+        document.getElementById(id)?.addEventListener("change", updateLevelDependencies);
+    });
+
+    ["feature_cardinality", "aggregate_functions", "string_constraints"].forEach(id => {
+        document.getElementById(id)?.addEventListener("change", autoEnableMajors);
+    });
+
+    // Init
+    updateLevelDependencies();
+
     // Mostrar/ocultar Group cardinality block
     function toggleGroupCardinalityBlock() {
         var groupCheckbox = document.getElementById("group_cardinality");

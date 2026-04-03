@@ -78,8 +78,8 @@ def validate_step1_form(form):
     # Validar NUM_MODELS
     try:
         num_models = int(num_models_val)
-        if not (1 <= num_models <= 1000):
-            errors["num_models_val"] = "Number of models must be between 1 and 1,000."
+        if num_models < 1:
+            errors["num_models_val"] = "Number of models must be at least 1."
     except Exception:
         errors["num_models_val"] = "Number of models must be an integer."
 
@@ -159,16 +159,16 @@ def validate_step2_form(form):
 
     try:
         min_features = int(min_features_val)
-        if not (1 <= min_features <= 10000):
-            errors["num_features_min"] = "Min. features must be between 1 and 10,000."
+        if min_features < 1:
+            errors["num_features_min"] = "Min. features must be at least 1."
     except Exception:
         min_features = None
         errors["num_features_min"] = "Min. features must be an integer."
 
     try:
         max_features = int(max_features_val)
-        if not (1 <= max_features <= 10000):
-            errors["num_features_max"] = "Max. features must be between 1 and 10,000."
+        if max_features < 1:
+            errors["num_features_max"] = "Max. features must be at least 1."
     except Exception:
         max_features = None
         errors["num_features_max"] = "Max. features must be an integer."
@@ -264,8 +264,10 @@ def validate_step2_form(form):
     #     )
 
     # Distribución de relaciones (groups)
-    rel_fields = ["dist_optional","dist_mandatory","dist_alternative","dist_or"]
-    if "group_cardinality" in form:
+    rel_fields = ["dist_optional", "dist_mandatory", "dist_alternative", "dist_or"]
+    group_cardinality_enabled = "group_cardinality" in form
+
+    if group_cardinality_enabled:
         rel_fields.append("dist_group_cardinality")
 
     rel_values = []
@@ -289,9 +291,6 @@ def validate_step2_form(form):
             f"Current sum: {rel_total:.4f}. The total must be 1.0."
         )
     values["rel_dist_total"] = f"{rel_total:.4f}"
-
-    # Group cardinality min/max
-    group_cardinality_enabled = "group_cardinality" in form
 
     if group_cardinality_enabled:
         group_card_min_val = form.get("group_cardinality_min", "").strip()
@@ -349,7 +348,15 @@ def step2():
         save_step_state(
             2,
             request.form,
-            checkbox_fields=["boolean_level", "group_cardinality"]
+            checkbox_fields=[
+                "boolean_level",
+                "group_cardinality",
+                "arithmetic_level",
+                "feature_cardinality",
+                "aggregate_functions",
+                "type_level",
+                "string_constraints",
+            ]
         )
 
         if nav == "prev":
@@ -363,9 +370,28 @@ def step2():
             params_dict["DIST_MANDATORY"] = float(request.form.get("dist_mandatory", params_dict.get("DIST_MANDATORY", 0.3)))
             params_dict["DIST_ALTERNATIVE"] = float(request.form.get("dist_alternative", params_dict.get("DIST_ALTERNATIVE", 0.2)))
             params_dict["DIST_OR"] = float(request.form.get("dist_or", params_dict.get("DIST_OR", 0.2)))
-            params_dict["DIST_GROUP_CARDINALITY"] = float(request.form.get("dist_group_cardinality", params_dict.get("DIST_GROUP_CARDINALITY", 0.0)))
-            params_dict["GROUP_CARDINALITY_MIN"] = int(request.form.get("group_cardinality_min", params_dict.get("GROUP_CARDINALITY_MIN", 10)))
-            params_dict["GROUP_CARDINALITY_MAX"] = int(request.form.get("group_cardinality_max", params_dict.get("GROUP_CARDINALITY_MAX", 50)))
+            if "group_cardinality" in request.form:
+                params_dict["DIST_GROUP_CARDINALITY"] = float(
+                    request.form.get(
+                        "dist_group_cardinality",
+                        params_dict.get("DIST_GROUP_CARDINALITY", 0.0)
+                    )
+                )
+                params_dict["GROUP_CARDINALITY_MIN"] = int(
+                    request.form.get(
+                        "group_cardinality_min",
+                        params_dict.get("GROUP_CARDINALITY_MIN", 10)
+                    )
+                )
+                params_dict["GROUP_CARDINALITY_MAX"] = int(
+                    request.form.get(
+                        "group_cardinality_max",
+                        params_dict.get("GROUP_CARDINALITY_MAX", 50)
+                    )
+                )
+            else:
+                params_dict["DIST_GROUP_CARDINALITY"] = 0.0            
+            
             session["params"] = params_dict
 
             return redirect(url_for("generator.step1"))
@@ -386,11 +412,11 @@ def step2():
 
         # Niveles de lenguaje
         params_dict["GROUP_CARDINALITY"] = "group_cardinality" in request.form
-        # params_dict["ARITHMETIC_LEVEL"] = "arithmetic_level" in request.form
-        # params_dict["TYPE_LEVEL"] = "type_level" in request.form
-        # params_dict["FEATURE_CARDINALITY"] = "feature_cardinality" in request.form
-        # params_dict["AGGREGATE_FUNCTIONS"] = "aggregate_functions" in request.form
-        # params_dict["STRING_CONSTRAINTS"] = "string_constraints" in request.form
+        params_dict["ARITHMETIC_LEVEL"] = "arithmetic_level" in request.form
+        params_dict["TYPE_LEVEL"] = "type_level" in request.form
+        params_dict["FEATURE_CARDINALITY"] = "feature_cardinality" in request.form
+        params_dict["AGGREGATE_FUNCTIONS"] = "aggregate_functions" in request.form
+        params_dict["STRING_CONSTRAINTS"] = "string_constraints" in request.form
 
         params_dict["MIN_FEATURES"] = int(request.form.get("num_features_min", 1))
         params_dict["MAX_FEATURES"] = int(request.form.get("num_features_max", 10))
@@ -411,15 +437,20 @@ def step2():
         params_dict["DIST_OR"] = float(request.form.get("dist_or", 0.0))
 
         # Group cardinality
-        params_dict["DIST_GROUP_CARDINALITY"] = float(
-            request.form.get("dist_group_cardinality", 0.1)
-        )
-        params_dict["GROUP_CARDINALITY_MIN"] = int(
-            request.form.get("group_cardinality_min", 1)
-        )
-        params_dict["GROUP_CARDINALITY_MAX"] = int(
-            request.form.get("group_cardinality_max", 10)
-        )
+        if "group_cardinality" in request.form:
+            params_dict["DIST_GROUP_CARDINALITY"] = float(
+                request.form.get("dist_group_cardinality", 0.0)
+            )
+            params_dict["GROUP_CARDINALITY_MIN"] = int(
+                request.form.get("group_cardinality_min", 1)
+            )
+            params_dict["GROUP_CARDINALITY_MAX"] = int(
+                request.form.get("group_cardinality_max", 10)
+            )
+        else:
+            params_dict["DIST_GROUP_CARDINALITY"] = 0.0
+            params_dict["GROUP_CARDINALITY_MIN"] = params_dict.get("GROUP_CARDINALITY_MIN", 1)
+            params_dict["GROUP_CARDINALITY_MAX"] = params_dict.get("GROUP_CARDINALITY_MAX", 1)
 
         # Feature cardinality y attach_prob
         params_dict["PROB_FEATURE_CARDINALITY"] = float(
@@ -432,11 +463,19 @@ def step2():
         #     request.form.get("max_feature_cardinality", 5)
         # )
 
-        # Checkbox (nivel de lenguaje) – Boolean, Arithmetic, etc (si algún día habilitas)
-        params_dict["GROUP_CARDINALITY"] = "group_cardinality" in request.form
 
-        # Actualiza el objeto Params
-        params = Params(**params_dict)
+        try:
+            params = Params(**params_dict)
+        except Exception as e:
+            print("[STEP2 ERROR reconstruyendo Params]", e)
+            errors["global"] = str(e)
+            return render_template(
+                "generator/step2.html",
+                current_step=2,
+                errors=errors,
+                values=values,
+            )
+
         session["params"] = params.__dict__
 
         print(params)
@@ -450,6 +489,11 @@ def step2():
         # checkboxes (en HTML son boolean_level y group_cardinality)
         "boolean_level": True,  # siempre true si quieres forzarlo
         "group_cardinality": params_dict.get("GROUP_CARDINALITY", True),
+        "arithmetic_level": params_dict.get("ARITHMETIC_LEVEL", False),
+        "feature_cardinality": params_dict.get("FEATURE_CARDINALITY", False),
+        "aggregate_functions": params_dict.get("AGGREGATE_FUNCTIONS", False),
+        "type_level": params_dict.get("TYPE_LEVEL", False),
+        "string_constraints": params_dict.get("STRING_CONSTRAINTS", False),
 
         # features
         "num_features_min": params_dict.get("MIN_FEATURES", 10),
@@ -505,8 +549,6 @@ def validate_step3_form(form, max_features: int = 10000):
         max_constraints = int(max_constraints_val)
         if max_constraints < 1:
             errors["num_constraints_max"] = "Max. constraints must be at least 1."
-        elif max_constraints > 10000:
-            errors["num_constraints_max"] = "Max. constraints must be at most 10,000."
     except Exception:
         max_constraints = None
         errors["num_constraints_max"] = "Max. constraints must be an integer."
@@ -921,22 +963,39 @@ def step3():
 
     values = load_step_state(3, default_values)
 
-    # 👇 si el usuario tenía guardado en wizard un número mayor, lo capamos
+    # Estos flags deben venir SIEMPRE del step2 (params), no de un estado viejo del wizard
+    values["aggregate_functions"] = params_dict.get("AGGREGATE_FUNCTIONS", False)
+    values["type_level"] = params_dict.get("TYPE_LEVEL", False)
+    values["string_constraints"] = params_dict.get("STRING_CONSTRAINTS", False)
+
+    # si el usuario tenía guardado en wizard un número mayor, lo capamos
     try:
-        values["vars_per_ctc_max"] = str(min(int(values.get("vars_per_ctc_max", max_feats)), max_feats))
+        values["vars_per_ctc_max"] = str(
+            min(int(values.get("vars_per_ctc_max", max_feats)), max_feats)
+        )
     except Exception:
         values["vars_per_ctc_max"] = str(max_feats)
 
     # aseguramos que el template lo tenga siempre
     values["max_features"] = max_feats
 
-    return render_template("generator/step3.html", current_step=3, errors={}, values=values)
+    return render_template(
+        "generator/step3.html",
+        current_step=3,
+        errors={},
+        values=values,
+    )
 
 
 
-def validate_step4_form(form):
+def validate_step4_form(form, params_dict=None):
     errors = {}
     values = {}
+    params_dict = params_dict or {}
+
+    arithmetic_level_enabled = bool(params_dict.get("ARITHMETIC_LEVEL", False))
+    type_level_enabled = bool(params_dict.get("TYPE_LEVEL", False))
+    string_constraints_enabled = bool(params_dict.get("STRING_CONSTRAINTS", False))
 
     random_checked = "random_attributes" in form
     values["random_attributes"] = random_checked
@@ -1001,6 +1060,27 @@ def validate_step4_form(form):
             name = (form.get(f"attr_name_{i}", "") or "").strip()
             if not name:
                 errors[f"attr_name_{i}"] = "Attribute name is required."
+
+        # Validar use_in_constraints según el tipo y los levels activos
+        for i in range(len(attr_names)):
+            type_lc = (form.get(f"attr_type_{i}", "") or "").strip().lower()
+            use_in_constraints = form.get(f"attr_use_in_constraints_{i}") == "on"
+
+            if not use_in_constraints:
+                continue
+
+            if type_lc == "boolean":
+                pass
+            elif type_lc in ("integer", "real"):
+                if not arithmetic_level_enabled:
+                    errors[f"attr_use_in_constraints_{i}"] = (
+                        "Use in constraints is only available for Integer and Real attributes when Arithmetic level is enabled."
+                    )
+            elif type_lc == "string":
+                if not (type_level_enabled and string_constraints_enabled):
+                    errors[f"attr_use_in_constraints_{i}"] = (
+                        "Use in constraints is only available for String attributes when Type level and String constraints are enabled."
+                    )
 
         # Validar por cada atributo
         for i, t in enumerate(attr_types):
@@ -1125,8 +1205,27 @@ def step4():
                 for i in range(n_attrs):
                     name = request.form.get(f"attr_name_{i}", "")
                     type_ = request.form.get(f"attr_type_{i}", "").strip().lower()
-                    attach_prob = float(request.form.get(f"attr_attach_prob_{i}", 1.0))
-                    use_in_constraints = request.form.get(f"attr_use_in_constraints_{i}") == "on"
+
+                    attach_prob_raw = (request.form.get(f"attr_attach_prob_{i}", "") or "").strip()
+                    try:
+                        attach_prob = float(attach_prob_raw) if attach_prob_raw != "" else 1.0
+                    except Exception:
+                        attach_prob = 1.0
+
+                    raw_use_in_constraints = request.form.get(f"attr_use_in_constraints_{i}") == "on"
+
+                    if type_ == "boolean":
+                        use_in_constraints = raw_use_in_constraints
+                    elif type_ in ["integer", "real"]:
+                        use_in_constraints = raw_use_in_constraints and params_dict.get("ARITHMETIC_LEVEL", False)
+                    elif type_ == "string":
+                        use_in_constraints = (
+                            raw_use_in_constraints
+                            and params_dict.get("TYPE_LEVEL", False)
+                            and params_dict.get("STRING_CONSTRAINTS", False)
+                        )
+                    else:
+                        use_in_constraints = False
 
                     if type_ == "boolean":
                         values_list = []
@@ -1171,7 +1270,7 @@ def step4():
         if not params_dict:
             return "Error: Params missing in session", 400
 
-        errors, values = validate_step4_form(request.form)
+        errors, values = validate_step4_form(request.form, params_dict)
 
         if errors:
             return render_template(
@@ -1206,8 +1305,27 @@ def step4():
             for i in range(n_attrs):
                 name = request.form.get(f"attr_name_{i}", "")
                 type_ = request.form.get(f"attr_type_{i}", "").strip().lower()
-                attach_prob = float(request.form.get(f"attr_attach_prob_{i}", 1.0))
-                use_in_constraints = request.form.get(f"attr_use_in_constraints_{i}") == "on"
+
+                attach_prob_raw = (request.form.get(f"attr_attach_prob_{i}", "") or "").strip()
+                try:
+                    attach_prob = float(attach_prob_raw) if attach_prob_raw != "" else 1.0
+                except Exception:
+                    attach_prob = 1.0
+
+                raw_use_in_constraints = request.form.get(f"attr_use_in_constraints_{i}") == "on"
+
+                if type_ == "boolean":
+                    use_in_constraints = raw_use_in_constraints
+                elif type_ in ["integer", "real"]:
+                    use_in_constraints = raw_use_in_constraints and params_dict.get("ARITHMETIC_LEVEL", False)
+                elif type_ == "string":
+                    use_in_constraints = (
+                        raw_use_in_constraints
+                        and params_dict.get("TYPE_LEVEL", False)
+                        and params_dict.get("STRING_CONSTRAINTS", False)
+                    )
+                else:
+                    use_in_constraints = False
 
                 if type_ == "boolean":
                     values_list = []
@@ -1276,6 +1394,9 @@ def step4():
         current_step=current_step,
         errors={},
         values=values,
+        arithmetic_level=params_dict.get("ARITHMETIC_LEVEL", False),
+        type_level=params_dict.get("TYPE_LEVEL", False),
+        string_constraints=params_dict.get("STRING_CONSTRAINTS", False),
     )
 
 

@@ -57,6 +57,8 @@
 
         <!-- Sección para entrada manual de atributos: inicialmente oculta -->
         <div id="manual-attributes-section" style="display: none;">
+            <div id="manual-attributes-global-error" class="alert alert-danger py-2 mb-3" style="display:none;"></div>
+
             <div class="mb-3">
                 <button type="button" class="btn btn-outline-primary" id="add-attribute-btn">Add</button>
                 <button type="button" class="btn btn-outline-danger" id="delete-attribute-btn">Delete last one</button>
@@ -72,7 +74,6 @@
 
 {% block scripts %}
 <script>
-// Referencias a los elementos
 const randomCheckbox = document.getElementById('random_attributes');
 const randomSettings = document.getElementById('random-attributes-settings');
 const manualSection = document.getElementById('manual-attributes-section');
@@ -80,6 +81,11 @@ const manualAttributesList = document.getElementById('manual-attributes-list');
 const savedAttributes = {{ values.get('attributes_list', []) | tojson }};
 const serverErrors = {{ errors | tojson }};
 const values = {{ values | tojson }};
+
+const arithmeticLevelEnabled = {{ 1 if session.get('params', {}).get('ARITHMETIC_LEVEL', False) else 0 }};
+const typeLevelEnabled = {{ 1 if session.get('params', {}).get('TYPE_LEVEL', False) else 0 }};
+const stringConstraintsEnabled = {{ 1 if session.get('params', {}).get('STRING_CONSTRAINTS', False) else 0 }};
+const manualAttributesGlobalError = document.getElementById('manual-attributes-global-error');
 
 // Función para alternar visibilidad entre sección “random” y sección “manual”
 function toggleAttributeSections() {
@@ -101,6 +107,7 @@ document.getElementById('delete-attribute-btn').addEventListener('click', functi
     const cards = manualAttributesList.getElementsByClassName('manual-attribute-card');
     if (cards.length > 0) {
         cards[cards.length - 1].remove();
+        updateManualAttributesGlobalError();
     }
 });
 
@@ -117,6 +124,78 @@ function validateBooleanCheckboxes(card) {
         errorDiv.textContent = '';
         return true;
     }
+}
+
+function countIncompleteManualCards() {
+    const cards = document.querySelectorAll('.manual-attribute-card');
+    let incompleteCount = 0;
+
+    cards.forEach((card, idx) => {
+        let incomplete = false;
+
+        const nameInput = card.querySelector(`[name="attr_name_${idx}"]`);
+        const typeSelect = card.querySelector(`[name="attr_type_${idx}"]`);
+        const attachProbInput = card.querySelector(`[name="attr_attach_prob_${idx}"]`);
+
+        const nameVal = nameInput ? nameInput.value.trim() : '';
+        const typeVal = typeSelect ? typeSelect.value : '';
+        const attachProbVal = attachProbInput ? attachProbInput.value.trim() : '';
+
+        if (!nameVal) {
+            incomplete = true;
+        }
+
+        if (!attachProbVal) {
+            incomplete = true;
+        }
+
+        if (typeVal === 'boolean') {
+            const trueBox = card.querySelector(`[name="attr_value_true_${idx}"]`);
+            const falseBox = card.querySelector(`[name="attr_value_false_${idx}"]`);
+            const hasAnyBoolValue = (trueBox && trueBox.checked) || (falseBox && falseBox.checked);
+
+            if (!hasAnyBoolValue) {
+                incomplete = true;
+            }
+        } else if (typeVal === 'integer' || typeVal === 'real' || typeVal === 'string') {
+            const minInput = card.querySelector(`[name="attr_min_value_${idx}"]`);
+            const maxInput = card.querySelector(`[name="attr_max_value_${idx}"]`);
+
+            const minVal = minInput ? minInput.value.trim() : '';
+            const maxVal = maxInput ? maxInput.value.trim() : '';
+
+            if (!minVal || !maxVal) {
+                incomplete = true;
+            }
+        }
+
+        if (incomplete) {
+            incompleteCount++;
+        }
+    });
+
+    return incompleteCount;
+}
+
+function updateManualAttributesGlobalError() {
+    if (randomCheckbox.checked) {
+        manualAttributesGlobalError.style.display = 'none';
+        manualAttributesGlobalError.textContent = '';
+        return 0;
+    }
+
+    const incompleteCount = countIncompleteManualCards();
+
+    if (incompleteCount > 0) {
+        manualAttributesGlobalError.style.display = 'block';
+        manualAttributesGlobalError.textContent =
+            `There are ${incompleteCount} attribute card(s) with missing required fields. Please complete them before continuing.`;
+    } else {
+        manualAttributesGlobalError.style.display = 'none';
+        manualAttributesGlobalError.textContent = '';
+    }
+
+    return incompleteCount;
 }
 
 // Función auxiliar para actualizar el campo “Value” según el tipo seleccionado
@@ -207,7 +286,7 @@ function addAttributeCard() {
                 required>
             <div class="text-danger attr-attach-prob-error mb-2" style="font-size:0.95em;"></div>
         </div>
-        <div class="form-check mb-2">
+        <div class="form-check mb-1">
             <input class="form-check-input"
                 type="checkbox"
                 name="attr_use_in_constraints_${idx}"
@@ -217,29 +296,46 @@ function addAttributeCard() {
                 Use in constraints
             </label>
         </div>
+        <div class="text-danger attr-use-in-constraints-error mb-1" style="font-size:0.95em;"></div>
+        <div class="text-muted attr-use-in-constraints-hint mb-2" style="font-size:0.9em;"></div>
     `;
     manualAttributesList.appendChild(card);
 
     // Inicializar campo “Value” con tipo por defecto (integer)
     updateValueField(card, 'integer', idx);
+    updateUseInConstraintsAvailability(card, 'integer', idx);
 
     // Cuando cambie el <select> de tipo, actualizamos el campo Value
     card.querySelector('.attr-type-select').addEventListener('change', function() {
         updateValueField(card, this.value, idx);
+        updateUseInConstraintsAvailability(card, this.value, idx);
     });
+    card.addEventListener('input', updateManualAttributesGlobalError);
+    card.addEventListener('change', updateManualAttributesGlobalError);
+
+    updateManualAttributesGlobalError();
 }
 
 // Validar al hacer submit que todos los Boolean tengan al menos una opción seleccionada
 document.querySelector('form').addEventListener('submit', function(e) {
     let valid = true;
-    document.querySelectorAll('.manual-attribute-card').forEach((card, idx) => {
-        const typeSelect = card.querySelector('.attr-type-select');
-        if (typeSelect.value === 'boolean') {
-            if (!validateBooleanCheckboxes(card)) {
-                valid = false;
+
+    if (!randomCheckbox.checked) {
+        document.querySelectorAll('.manual-attribute-card').forEach((card, idx) => {
+            const typeSelect = card.querySelector('.attr-type-select');
+            if (typeSelect && typeSelect.value === 'boolean') {
+                if (!validateBooleanCheckboxes(card)) {
+                    valid = false;
+                }
             }
+        });
+
+        const incompleteCount = updateManualAttributesGlobalError();
+        if (incompleteCount > 0) {
+            valid = false;
         }
-    });
+    }
+
     if (!valid) {
         e.preventDefault();
     }
@@ -269,6 +365,7 @@ if (!randomCheckbox.checked) {
             typeSelect.value = typeVal;
 
             updateValueField(card, typeVal, idx);
+            updateUseInConstraintsAvailability(card, typeVal, idx);
 
             // attach prob
             card.querySelector(`[name="attr_attach_prob_${idx}"]`).value =
@@ -297,11 +394,12 @@ if (!randomCheckbox.checked) {
                 }
             }
 
-            // 🔴 ERRORES
+            // ERRORES
             const minMaxError = serverErrors[`attr_minmax_${idx}`];
             const boolError = serverErrors[`attr_value_bool_${idx}`];
             const nameError = serverErrors[`attr_name_${idx}`];
             const attachProbError = serverErrors[`attr_attach_prob_${idx}`];
+            const useInConstraintsError = serverErrors[`attr_use_in_constraints_${idx}`];
 
             if (attachProbError) {
                 card.querySelector('.attr-attach-prob-error').textContent = attachProbError;
@@ -319,6 +417,10 @@ if (!randomCheckbox.checked) {
                 card.querySelector('.attr-bool-error').textContent = boolError;
             }
 
+            if (useInConstraintsError) {
+                card.querySelector('.attr-use-in-constraints-error').textContent = useInConstraintsError;
+            }
+
             idx++;
         } else {
             break;
@@ -331,6 +433,41 @@ if (!randomCheckbox.checked) {
     }
 }
 
+updateManualAttributesGlobalError();
+
+function updateUseInConstraintsAvailability(card, type, idx) {
+    const checkbox = card.querySelector(`[name="attr_use_in_constraints_${idx}"]`);
+    const hintDiv = card.querySelector('.attr-use-in-constraints-hint');
+
+    if (!checkbox) return;
+
+    let enabled = false;
+    let message = '';
+
+    if (type === 'boolean') {
+        enabled = true;
+    } else if (type === 'integer' || type === 'real') {
+        enabled = !!arithmeticLevelEnabled;
+        if (!enabled) {
+            message = 'Only available if Arithmetic level is enabled in step 2.';
+        }
+    } else if (type === 'string') {
+        enabled = !!typeLevelEnabled && !!stringConstraintsEnabled;
+        if (!enabled) {
+            message = 'Only available if Type level and String constraints are enabled in step 2.';
+        }
+    }
+
+    checkbox.disabled = !enabled;
+
+    if (!enabled) {
+        checkbox.checked = false;
+    }
+
+    if (hintDiv) {
+        hintDiv.textContent = message;
+    }
+}
 </script>
 {% endblock %}
 

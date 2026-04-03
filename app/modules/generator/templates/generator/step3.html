@@ -14,10 +14,22 @@
         <!-- ─────────────────────────────────────────────────────────────────────── -->
         <!-- Checkbox oculto para “Aggregate functions”                             -->
         <input type="checkbox"
-               id="aggregate_functions"
-               name="aggregate_functions"
-               style="display: none;"
-               {% if values.get('aggregate_functions', False) %}checked{% endif %}>
+            id="aggregate_functions"
+            name="aggregate_functions"
+            style="display: none;"
+            {% if values.get('aggregate_functions', False) %}checked{% endif %}>
+
+        <input type="checkbox"
+            id="type_level"
+            name="type_level"
+            style="display: none;"
+            {% if values.get('type_level', False) %}checked{% endif %}>
+
+        <input type="checkbox"
+            id="string_constraints"
+            name="string_constraints"
+            style="display: none;"
+            {% if values.get('string_constraints', False) %}checked{% endif %}>
 
         <h3 class="mb-3">Constraints</h3>
 
@@ -31,7 +43,6 @@
                     class="form-control"
                     style="width: 100px;"
                     min="1"
-                    max="10000"
                     id="num_constraints_min"
                     name="num_constraints_min"
                     value="{{ values.get('num_constraints_min', 1) }}"
@@ -46,7 +57,6 @@
                     class="form-control"
                     style="width: 100px;"
                     min="1"
-                    max="10000"
                     id="num_constraints_max"
                     name="num_constraints_max"
                     value="{{ values.get('num_constraints_max', 10) }}"
@@ -311,6 +321,7 @@
                         value="{{ values.get('prob_div', 0.0) }}"
                     >
                 </div>
+                {% if values.get('aggregate_functions', False) %}
                 <div class="col">
                     <label>sum()</label>
                     <input
@@ -337,9 +348,10 @@
                         value="{{ values.get('prob_avg', 0.0) }}"
                     >
                 </div>
+                {% endif %}
             </div>
             <div class="mt-2"
-                 style="font-weight:bold; color:{% if values.get('arithmetic_sum', '1.0000') != '1.0000' %}red{% else %}green{% endif %};">
+                style="font-weight:bold; color:{% if values.get('arithmetic_sum', '1.0000') != '1.0000' %}red{% else %}green{% endif %};">
                 Current sum: <span id="arithmetic_sum">{{ values.get('arithmetic_sum', '1.0000') }}</span>
             </div>
             {% if errors.get('arithmetic_sum') %}
@@ -422,6 +434,7 @@
         </div>
 
         <!-- Type level constraints -->
+        {% if values.get('string_constraints', False) %}
         <div class="mb-3">
             <label class="form-label">
                 Type level constraints
@@ -435,6 +448,7 @@
                     min="0"
                     max="1"
                     class="form-control d-inline-block"
+                    id="prob_len"
                     name="prob_len"
                     value="{{ values.get('prob_len', 0.7) }}"
                     style="width: 90px;"
@@ -444,6 +458,7 @@
                 {% endif %}
             </div>
         </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
@@ -492,19 +507,29 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Arithmetic level + aggregate
     function updateArithmeticSum() {
-        let agg_cb = document.getElementById('aggregate_functions');
-        let ids = ['prob_plus', 'prob_minus', 'prob_times', 'prob_div'];
-        if (agg_cb && agg_cb.checked) {
-            ids.push('prob_sum', 'prob_avg');
+        const aggCb = document.getElementById('aggregate_functions');
+        const ids = ['prob_plus', 'prob_minus', 'prob_times', 'prob_div'];
+
+        if (aggCb && aggCb.checked) {
+            if (document.getElementsByName('prob_sum').length) ids.push('prob_sum');
+            if (document.getElementsByName('prob_avg').length) ids.push('prob_avg');
         }
+
         updateSum(ids, 'arithmetic_sum');
     }
+
     ['prob_plus', 'prob_minus', 'prob_times', 'prob_div', 'prob_sum', 'prob_avg'].forEach(id => {
-        let input = document.getElementsByName(id)[0];
-        if (input) input.addEventListener('input', updateArithmeticSum);
+        const input = document.getElementsByName(id)[0];
+        if (input) {
+            input.addEventListener('input', updateArithmeticSum);
+        }
     });
-    let agg_cb = document.getElementById('aggregate_functions');
-    if (agg_cb) agg_cb.addEventListener('change', updateArithmeticSum);
+
+    const aggCb = document.getElementById('aggregate_functions');
+    if (aggCb) {
+        aggCb.addEventListener('change', updateArithmeticSum);
+    }
+
     updateArithmeticSum();
 
     // Comparison ops
