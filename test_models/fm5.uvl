@@ -1,0 +1,33 @@
+features
+	F0 
+		[0..2]
+			F3 
+				mandatory
+					F4 
+						or
+							F11 {Capacity 30}
+							F10 
+								optional
+									F12 {Enabled true}
+			F2 {Capacity 30}
+				mandatory
+					F5 {Enabled true}
+						[0..2]
+							F9 
+								optional
+									F13 {Enabled true}
+							F8 
+								or
+									F15 
+									F14 
+		optional
+			F1 
+				alternative
+					F7 
+					F6 {Enabled true}
+constraints
+	F6 <=> F13
+	! F9 <=> ! F7
+	! F14 <=> F2
+	! F12 <=> ! F14
+	! F12 <=> F7
