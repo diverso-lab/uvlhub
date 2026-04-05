@@ -24,8 +24,9 @@ migrate = Migrate()
 mail_service = MailService()
 sess = Session()
 
+
 def create_app(config_name="development"):
-    app = Flask(__name__, static_folder='static')
+    app = Flask(__name__, static_folder="static")
 
     # Load configuration according to environment
     config_manager = ConfigManager(app)
@@ -48,7 +49,6 @@ def create_app(config_name="development"):
     # Initialize session with the app
     sess.init_app(app)
 
-    # ... (el resto igual)
     # Register modules
     module_manager = ModuleManager(app)
     module_manager.register_modules()
@@ -78,7 +78,13 @@ def create_app(config_name="development"):
             "description": "API to access datasets, files and metadata.",
             "version": "1.0.0",
         },
-        "securityDefinitions": {"ApiKeyAuth": {"type": "apiKey", "name": "X-API-Key", "in": "header"}},
+        "securityDefinitions": {
+            "ApiKeyAuth": {
+                "type": "apiKey",
+                "name": "X-API-Key",
+                "in": "header",
+            }
+        },
         "security": [{"ApiKeyAuth": []}],
     }
 
@@ -95,7 +101,6 @@ def create_app(config_name="development"):
         env_vars = {key: os.getenv(key) for key in os.environ}
         env_vars["APP_VERSION"] = get_app_version()
 
-        # Set Boolean variables for the environment
         flask_env = os.getenv("FLASK_ENV")
         env_vars["DEVELOPMENT"] = flask_env == "development"
         env_vars["PRODUCTION"] = flask_env == "production"
@@ -104,10 +109,11 @@ def create_app(config_name="development"):
     @app.template_filter("format_thousands")
     def format_thousands(value):
         try:
-            return f"{int(value):,}".replace(",", " ")  # espacio fino U+202F
+            return f"{int(value):,}".replace(",", " ")
         except (ValueError, TypeError):
             return value
 
     return app
+
 
 app = create_app()
