@@ -1,13 +1,12 @@
 # pyodide_wrapper.py
 
 import json
-import io
 import tempfile
 import shutil
 import os
 from fm_generator.FMGenerator.models.config import Params
 from fm_generator.FMGenerator.models.models import FmgeneratorModel
-from flamapy.metamodels.fm_metamodel.transformations.uvl_writer import UVLWriter
+
 
 def generate_models(params_json: str) -> str:
     """
@@ -40,5 +39,3 @@ def generate_models(params_json: str) -> str:
 
     # 6) Devolver el JSON con todas las cadenas UVL
     return json.dumps(results)
-
-
