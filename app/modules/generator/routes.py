@@ -3,9 +3,6 @@ from app.modules.generator import generator_bp
 # from fm_generator.src.fm_generator.FMGenerator.models.config import Params
 # from fm_generator.src.fm_generator.FMGenerator.models.models import FmgeneratorModel
 
-from fm_generator.FMGenerator.models.config import Params
-from fm_generator.FMGenerator.models.models import FmgeneratorModel
-
 import os
 from flask import send_file
 import tempfile
@@ -110,6 +107,8 @@ def step1():
             )
 
         try:
+            from fm_generator.FMGenerator.models.config import Params
+
             params = Params(
                 NUM_MODELS=int(request.form.get("num_models_val")),
                 SEED=int(request.form.get("seed")),
@@ -129,24 +128,7 @@ def step1():
 
         session["params"] = params.__dict__
         return redirect(url_for("generator.step2"))
-
-    # ✅ GET: si hay params en sesión, los usamos para repintar el formulario
-    params_dict = session.get("params", {})
-
-    values = {
-        "num_models_val": params_dict.get("NUM_MODELS", 5),
-        "seed": params_dict.get("SEED", 42),
-        "name_prefix": params_dict.get("NAME_PREFIX", ""),
-        # Para checkboxes: usamos claves presentes si True
-        "ensure_satisfiable": "on" if params_dict.get("ENSURE_SATISFIABLE", True) else "",
-        "feature_count_suffix": "on" if params_dict.get("INCLUDE_FEATURE_COUNT_SUFFIX", False) else "",
-        "constraint_count_suffix": "on" if params_dict.get("INCLUDE_CONSTRAINT_COUNT_SUFFIX", False) else "",
-    }
-
-    return render_template(
-        "generator/step1.html", current_step=1, errors={}, values=values
-    )
-
+    
 
 
 def validate_step2_form(form):
@@ -339,7 +321,7 @@ def validate_step2_form(form):
 
 
 
-# Paso 2: genera y descarga el zip en POST
+
 @generator_bp.route("/generator/step2", methods=["GET", "POST"])
 def step2():
     if request.method == "POST":
@@ -465,6 +447,7 @@ def step2():
 
 
         try:
+            from fm_generator.FMGenerator.models.config import Params
             params = Params(**params_dict)
         except Exception as e:
             print("[STEP2 ERROR reconstruyendo Params]", e)
@@ -678,7 +661,15 @@ def validate_step3_form(form, max_features: int = 10000):
         )
     values["boolop_sum"] = f"{prob_sum_boolean:.4f}"
 
+
     # 6) ARITHMETIC LEVEL + AGGREGATE FUNCTIONS
+    arithmetic_level_checked = form.get("arithmetic_level") in [
+        "on",
+        "true",
+        "1",
+        True,
+    ]
+
     aggregate_functions_checked = form.get("aggregate_functions") in [
         "on",
         "true",
@@ -686,74 +677,82 @@ def validate_step3_form(form, max_features: int = 10000):
         True,
     ]
 
-    try:
-        prob_plus = float(form.get("prob_plus", "0"))
-        prob_minus = float(form.get("prob_minus", "0"))
-        prob_times = float(form.get("prob_times", "0"))
-        prob_div = float(form.get("prob_div", "0"))
-    except Exception:
-        for f in ["prob_plus", "prob_minus", "prob_times", "prob_div"]:
-            if f not in errors:
-                errors[f] = "Value must be a decimal between 0 and 1."
-        prob_plus = prob_minus = prob_times = prob_div = 0.0
-
-    if aggregate_functions_checked:
+    if arithmetic_level_checked:
         try:
-            prob_sum = float(form.get("prob_sum", "0"))
-            prob_avg = float(form.get("prob_avg", "0"))
+            prob_plus = float(form.get("prob_plus", "0"))
+            prob_minus = float(form.get("prob_minus", "0"))
+            prob_times = float(form.get("prob_times", "0"))
+            prob_div = float(form.get("prob_div", "0"))
         except Exception:
-            for f in ["prob_sum", "prob_avg"]:
+            for f in ["prob_plus", "prob_minus", "prob_times", "prob_div"]:
                 if f not in errors:
                     errors[f] = "Value must be a decimal between 0 and 1."
+            prob_plus = prob_minus = prob_times = prob_div = 0.0
+
+        if aggregate_functions_checked:
+            try:
+                prob_sum = float(form.get("prob_sum", "0"))
+                prob_avg = float(form.get("prob_avg", "0"))
+            except Exception:
+                for f in ["prob_sum", "prob_avg"]:
+                    if f not in errors:
+                        errors[f] = "Value must be a decimal between 0 and 1."
+                prob_sum = prob_avg = 0.0
+        else:
             prob_sum = prob_avg = 0.0
-    else:
-        prob_sum = prob_avg = 0.0
 
-    arithmetic_sum = prob_plus + prob_minus + prob_times + prob_div
-    arithmetic_fields = ["prob_plus", "prob_minus", "prob_times", "prob_div"]
-    agg_fields = ["prob_sum", "prob_avg"]
+        arithmetic_sum = prob_plus + prob_minus + prob_times + prob_div
+        arithmetic_fields = ["prob_plus", "prob_minus", "prob_times", "prob_div"]
+        agg_fields = ["prob_sum", "prob_avg"]
 
-    if aggregate_functions_checked:
-        arithmetic_sum += prob_sum + prob_avg
-        fields_to_check = arithmetic_fields + agg_fields
-    else:
-        fields_to_check = arithmetic_fields
+        if aggregate_functions_checked:
+            arithmetic_sum += prob_sum + prob_avg
+            fields_to_check = arithmetic_fields + agg_fields
+        else:
+            fields_to_check = arithmetic_fields
 
-    if abs(arithmetic_sum - 1.0) > 0.001:
-        for f in fields_to_check:
-            if f not in errors:
-                errors[f] = (
-                    "The sum of Arithmetic level constraints{} must be exactly 1.0.".format(
-                        " (including aggregate functions)"
-                        if aggregate_functions_checked
-                        else ""
+        if abs(arithmetic_sum - 1.0) > 0.001:
+            for f in fields_to_check:
+                if f not in errors:
+                    errors[f] = (
+                        "The sum of Arithmetic level constraints{} must be exactly 1.0.".format(
+                            " (including aggregate functions)"
+                            if aggregate_functions_checked
+                            else ""
+                        )
                     )
-                )
-        errors["arithmetic_sum"] = (
-            f"Current sum: {arithmetic_sum:.4f}. The total must be 1.0."
-        )
-    values["arithmetic_sum"] = f"{arithmetic_sum:.4f}"
+            errors["arithmetic_sum"] = (
+                f"Current sum: {arithmetic_sum:.4f}. The total must be 1.0."
+            )
 
-    # 7) COMPARISON OPERATORS (suman 1.0)
-    try:
-        prob_eq = float(form.get("prob_eq", "0"))
-        prob_lt = float(form.get("prob_lt", "0"))
-        prob_gt = float(form.get("prob_gt", "0"))
-        prob_leq = float(form.get("prob_leq", "0"))
-        prob_geq = float(form.get("prob_geq", "0"))
-    except Exception:
-        for f in ["prob_eq", "prob_lt", "prob_gt", "prob_leq", "prob_geq"]:
-            if f not in errors:
-                errors[f] = "Value must be a decimal between 0 and 1."
-        prob_eq = prob_lt = prob_gt = prob_leq = prob_geq = 0.0
+        values["arithmetic_sum"] = f"{arithmetic_sum:.4f}"
+    else:
+        values["arithmetic_sum"] = "1.0000"
 
-    cmp_sum = prob_eq + prob_lt + prob_gt + prob_leq + prob_geq
-    if abs(cmp_sum - 1.0) > 0.001:
-        for f in ["prob_eq", "prob_lt", "prob_gt", "prob_leq", "prob_geq"]:
-            if f not in errors:
-                errors[f] = "The sum of comparison operators must be exactly 1.0."
-        errors["cmp_sum"] = f"Current sum: {cmp_sum:.4f}. The total must be 1.0."
-    values["cmp_sum"] = f"{cmp_sum:.4f}"
+    # 7) COMPARISON OPERATORS (solo si Arithmetic level está activo)
+    if arithmetic_level_checked:
+        try:
+            prob_eq = float(form.get("prob_eq", "0"))
+            prob_lt = float(form.get("prob_lt", "0"))
+            prob_gt = float(form.get("prob_gt", "0"))
+            prob_leq = float(form.get("prob_leq", "0"))
+            prob_geq = float(form.get("prob_geq", "0"))
+        except Exception:
+            for f in ["prob_eq", "prob_lt", "prob_gt", "prob_leq", "prob_geq"]:
+                if f not in errors:
+                    errors[f] = "Value must be a decimal between 0 and 1."
+            prob_eq = prob_lt = prob_gt = prob_leq = prob_geq = 0.0
+
+        cmp_sum = prob_eq + prob_lt + prob_gt + prob_leq + prob_geq
+        if abs(cmp_sum - 1.0) > 0.001:
+            for f in ["prob_eq", "prob_lt", "prob_gt", "prob_leq", "prob_geq"]:
+                if f not in errors:
+                    errors[f] = "The sum of comparison operators must be exactly 1.0."
+            errors["cmp_sum"] = f"Current sum: {cmp_sum:.4f}. The total must be 1.0."
+
+        values["cmp_sum"] = f"{cmp_sum:.4f}"
+    else:
+        values["cmp_sum"] = "1.0000"
 
     # 8) TYPE LEVEL / STRING CONSTRAINTS
     type_level_checked = form.get("type_level") in ["on", "true", "1", True]
@@ -821,14 +820,30 @@ def step3():
             params_dict["PROB_MULTIPLY"] = float(request.form.get("prob_times", params_dict.get("PROB_MULTIPLY", 0.1)))
             params_dict["PROB_DIVIDE"] = float(request.form.get("prob_div", params_dict.get("PROB_DIVIDE", 0.0)))
 
-            params_dict["PROB_EQUALS"] = float(request.form.get("prob_eq", params_dict.get("PROB_EQUALS", 0.1)))
-            params_dict["PROB_LESS"] = float(request.form.get("prob_lt", params_dict.get("PROB_LESS", 0.2)))
-            params_dict["PROB_GREATER"] = float(request.form.get("prob_gt", params_dict.get("PROB_GREATER", 0.7)))
-            params_dict["PROB_LESS_EQUALS"] = float(request.form.get("prob_leq", params_dict.get("PROB_LESS_EQUALS", 0.0)))
-            params_dict["PROB_GREATER_EQUALS"] = float(request.form.get("prob_geq", params_dict.get("PROB_GREATER_EQUALS", 0.0)))
+            arithmetic_level_enabled = bool(params_dict.get("ARITHMETIC_LEVEL", False))
 
-            params_dict["PROB_LEN_FUNCTION"] = float(request.form.get("prob_len", params_dict.get("PROB_LEN_FUNCTION", 0.7)))
+            if arithmetic_level_enabled:
+                params_dict["PROB_EQUALS"] = float(request.form.get("prob_eq", params_dict.get("PROB_EQUALS", 0.1)))
+                params_dict["PROB_LESS"] = float(request.form.get("prob_lt", params_dict.get("PROB_LESS", 0.2)))
+                params_dict["PROB_GREATER"] = float(request.form.get("prob_gt", params_dict.get("PROB_GREATER", 0.7)))
+                params_dict["PROB_LESS_EQUALS"] = float(request.form.get("prob_leq", params_dict.get("PROB_LESS_EQUALS", 0.0)))
+                params_dict["PROB_GREATER_EQUALS"] = float(request.form.get("prob_geq", params_dict.get("PROB_GREATER_EQUALS", 0.0)))
+            else:
+                params_dict["PROB_EQUALS"] = 0.0
+                params_dict["PROB_LESS"] = 0.0
+                params_dict["PROB_GREATER"] = 0.0
+                params_dict["PROB_LESS_EQUALS"] = 0.0
+                params_dict["PROB_GREATER_EQUALS"] = 0.0
 
+            type_level_enabled = bool(params_dict.get("TYPE_LEVEL", False))
+            string_constraints_enabled = bool(params_dict.get("STRING_CONSTRAINTS", False))
+
+            if type_level_enabled and string_constraints_enabled:
+                params_dict["PROB_LEN_FUNCTION"] = float(
+                    request.form.get("prob_len", params_dict.get("PROB_LEN_FUNCTION", 0.7))
+                )
+            else:
+                params_dict["PROB_LEN_FUNCTION"] = 0.0
             session["params"] = params_dict
             return redirect(url_for("generator.step2"))
 
@@ -837,6 +852,7 @@ def step3():
 
         errors, values = validate_step3_form(request.form, max_feats)
 
+        values["arithmetic_level"] = ("arithmetic_level" in request.form)
         values["aggregate_functions"] = ("aggregate_functions" in request.form)
         values["type_level"] = ("type_level" in request.form)
         values["string_constraints"] = ("string_constraints" in request.form)
@@ -870,25 +886,51 @@ def step3():
         params_dict["PROB_IMPLICATION"] = float(request.form.get("prob_implies", 0.1))
         params_dict["PROB_EQUIVALENCE"] = float(request.form.get("prob_equiv", 0.1))
 
-        # Aggregate functions
-        params_dict["PROB_SUM_FUNCTION"] = float(request.form.get("prob_sum", 0.0))
-        params_dict["PROB_AVG_FUNCTION"] = float(request.form.get("prob_avg", 0.0))
+        arithmetic_level_enabled = bool(params_dict.get("ARITHMETIC_LEVEL", False))
+        aggregate_functions_enabled = bool(params_dict.get("AGGREGATE_FUNCTIONS", False))
 
-        # Arithmetic level
-        params_dict["PROB_SUM"] = float(request.form.get("prob_plus", 0.7))
-        params_dict["PROB_SUBSTRACT"] = float(request.form.get("prob_minus", 0.2))
-        params_dict["PROB_MULTIPLY"] = float(request.form.get("prob_times", 0.1))
-        params_dict["PROB_DIVIDE"] = float(request.form.get("prob_div", 0.0))
+        if arithmetic_level_enabled:
+            params_dict["PROB_SUM"] = float(request.form.get("prob_plus", 0.7))
+            params_dict["PROB_SUBSTRACT"] = float(request.form.get("prob_minus", 0.2))
+            params_dict["PROB_MULTIPLY"] = float(request.form.get("prob_times", 0.1))
+            params_dict["PROB_DIVIDE"] = float(request.form.get("prob_div", 0.0))
+
+            if aggregate_functions_enabled:
+                params_dict["PROB_SUM_FUNCTION"] = float(request.form.get("prob_sum", 0.0))
+                params_dict["PROB_AVG_FUNCTION"] = float(request.form.get("prob_avg", 0.0))
+            else:
+                params_dict["PROB_SUM_FUNCTION"] = 0.0
+                params_dict["PROB_AVG_FUNCTION"] = 0.0
+        else:
+            params_dict["PROB_SUM"] = 0.0
+            params_dict["PROB_SUBSTRACT"] = 0.0
+            params_dict["PROB_MULTIPLY"] = 0.0
+            params_dict["PROB_DIVIDE"] = 0.0
+            params_dict["PROB_SUM_FUNCTION"] = 0.0
+            params_dict["PROB_AVG_FUNCTION"] = 0.0
 
         # Comparison operators
-        params_dict["PROB_EQUALS"] = float(request.form.get("prob_eq", 0.0))
-        params_dict["PROB_LESS"] = float(request.form.get("prob_lt", 0.2))
-        params_dict["PROB_GREATER"] = float(request.form.get("prob_gt", 0.7))
-        params_dict["PROB_LESS_EQUALS"] = float(request.form.get("prob_leq", 0.0))
-        params_dict["PROB_GREATER_EQUALS"] = float(request.form.get("prob_geq", 0.0))
+        if arithmetic_level_enabled:
+            params_dict["PROB_EQUALS"] = float(request.form.get("prob_eq", 0.1))
+            params_dict["PROB_LESS"] = float(request.form.get("prob_lt", 0.2))
+            params_dict["PROB_GREATER"] = float(request.form.get("prob_gt", 0.7))
+            params_dict["PROB_LESS_EQUALS"] = float(request.form.get("prob_leq", 0.0))
+            params_dict["PROB_GREATER_EQUALS"] = float(request.form.get("prob_geq", 0.0))
+        else:
+            params_dict["PROB_EQUALS"] = 0.0
+            params_dict["PROB_LESS"] = 0.0
+            params_dict["PROB_GREATER"] = 0.0
+            params_dict["PROB_LESS_EQUALS"] = 0.0
+            params_dict["PROB_GREATER_EQUALS"] = 0.0
 
         # Type level
-        params_dict["PROB_LEN_FUNCTION"] = float(request.form.get("prob_len", 0.7))
+        type_level_enabled = bool(params_dict.get("TYPE_LEVEL", False))
+        string_constraints_enabled = bool(params_dict.get("STRING_CONSTRAINTS", False))
+
+        if type_level_enabled and string_constraints_enabled:
+            params_dict["PROB_LEN_FUNCTION"] = float(request.form.get("prob_len", 0.7))
+        else:
+            params_dict["PROB_LEN_FUNCTION"] = 0.0
 
         # En step3 solo guardamos el estado; no reconstruimos Params aquí
         # porque params_dict puede contener todavía datos del step4.
@@ -924,6 +966,7 @@ def step3():
         "arithmetic_sum": "1.0000",
         "cmp_sum": "1.0000",
 
+        "arithmetic_level": params_dict.get("ARITHMETIC_LEVEL", False),
         "aggregate_functions": params_dict.get("AGGREGATE_FUNCTIONS", False),
         "type_level": params_dict.get("TYPE_LEVEL", False),
         "string_constraints": params_dict.get("STRING_CONSTRAINTS", False),
@@ -954,16 +997,22 @@ def step3():
             "prob_gt": params_dict.get("PROB_GREATER", STEP3_UI_DEFAULTS["prob_gt"]),
             "prob_leq": params_dict.get("PROB_LESS_EQUALS", STEP3_UI_DEFAULTS["prob_leq"]),
             "prob_geq": params_dict.get("PROB_GREATER_EQUALS", STEP3_UI_DEFAULTS["prob_geq"]),
-
-            "prob_len": params_dict.get("PROB_LEN_FUNCTION", STEP3_UI_DEFAULTS["prob_len"]),
+            "prob_len": (
+                params_dict.get("PROB_LEN_FUNCTION", STEP3_UI_DEFAULTS["prob_len"])
+                if params_dict.get("TYPE_LEVEL", False) and params_dict.get("STRING_CONSTRAINTS", False)
+                else 0.0
+            ),
         })
     else:
         # primera vez que entras a step3: IGNORA params_dict para estos campos
         default_values.update(STEP3_UI_DEFAULTS)
+        if not (params_dict.get("TYPE_LEVEL", False) and params_dict.get("STRING_CONSTRAINTS", False)):
+            default_values["prob_len"] = 0.0
 
     values = load_step_state(3, default_values)
 
     # Estos flags deben venir SIEMPRE del step2 (params), no de un estado viejo del wizard
+    values["arithmetic_level"] = params_dict.get("ARITHMETIC_LEVEL", False)
     values["aggregate_functions"] = params_dict.get("AGGREGATE_FUNCTIONS", False)
     values["type_level"] = params_dict.get("TYPE_LEVEL", False)
     values["string_constraints"] = params_dict.get("STRING_CONSTRAINTS", False)
@@ -1367,6 +1416,7 @@ def step4():
         session["params"] = params_dict
 
         try:
+            from fm_generator.FMGenerator.models.config import Params
             params = Params(**params_dict)
         except Exception as e:
             print("[STEP4 ERROR reconstruyendo Params]", e)
@@ -1415,6 +1465,7 @@ def step5():
             return "Error: Params missing in session", 400
 
         # Reconstruye el objeto Params (y lista de Attribute si toca, como en step4)
+        from fm_generator.FMGenerator.models.config import Params
         params = Params(**params_dict)
 
         # Reconstruimos ATTRIBUTES_LIST
@@ -1450,20 +1501,6 @@ def step5():
             print("AAAAAAAAAAAAAAAAAAAAAAAAA")
             print(session['params'])
 
-        # Genera los modelos y el zip SOLO aquí
-        # temp_dir = tempfile.mkdtemp()
-        # output_dir = os.path.join(temp_dir, "models_output")
-        # os.makedirs(output_dir, exist_ok=True)
-        # fm_generator = FmgeneratorModel(params)
-        # fm_generator.generate_models(output_dir)
-        # zip_path = os.path.join(temp_dir, "feature_models.zip")
-        # generator_service.zip_generated_models(output_dir, zip_path)
-        # zip_filename = f"fms.zip"
-        # try:
-        #     return send_file(zip_path, as_attachment=True, download_name=zip_filename)
-        # finally:
-        #     if os.path.exists(temp_dir):
-        #         shutil.rmtree(temp_dir)
 
     current_step = 5
     return render_template("generator/step5.html", current_step=current_step)

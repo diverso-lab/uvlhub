@@ -266,6 +266,7 @@
         </div>
 
         <!-- Arithmetic level constraints -->
+        {% if values.get('arithmetic_level', False) %}
         <div class="mb-3">
             <label class="form-label">
                 Arithmetic level constraints
@@ -321,6 +322,7 @@
                         value="{{ values.get('prob_div', 0.0) }}"
                     >
                 </div>
+
                 {% if values.get('aggregate_functions', False) %}
                 <div class="col">
                     <label>sum()</label>
@@ -350,16 +352,20 @@
                 </div>
                 {% endif %}
             </div>
+
             <div class="mt-2"
                 style="font-weight:bold; color:{% if values.get('arithmetic_sum', '1.0000') != '1.0000' %}red{% else %}green{% endif %};">
                 Current sum: <span id="arithmetic_sum">{{ values.get('arithmetic_sum', '1.0000') }}</span>
             </div>
+
             {% if errors.get('arithmetic_sum') %}
                 <div class="text-danger">{{ errors['arithmetic_sum'] }}</div>
             {% endif %}
         </div>
+        {% endif %}
 
         <!-- Comparison operators -->
+        {% if values.get('arithmetic_level', False) %}
         <div class="mb-3">
             <label class="form-label">Comparison operators</label>
             <div class="row">
@@ -425,13 +431,14 @@
                 </div>
             </div>
             <div class="mt-2"
-                 style="font-weight:bold; color:{% if values.get('cmp_sum', '1.0000') != '1.0000' %}red{% else %}green{% endif %};">
+                style="font-weight:bold; color:{% if values.get('cmp_sum', '1.0000') != '1.0000' %}red{% else %}green{% endif %};">
                 Current sum: <span id="cmp_sum">{{ values.get('cmp_sum', '1.0000') }}</span>
             </div>
             {% if errors.get('cmp_sum') %}
                 <div class="text-danger">{{ errors['cmp_sum'] }}</div>
             {% endif %}
         </div>
+        {% endif %}
 
         <!-- Type level constraints -->
         {% if values.get('string_constraints', False) %}
@@ -476,13 +483,19 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     
     function updateSum(ids, total_id) {
+        const totalEl = document.getElementById(total_id);
+        if (!totalEl) return;
+
         let sum = 0.0;
         ids.forEach(function (id) {
-            let els = document.getElementsByName(id);
-            if (els.length) sum += parseFloat(els[0].value) || 0;
+            const els = document.getElementsByName(id);
+            if (els.length) {
+                sum += parseFloat(els[0].value) || 0;
+            }
         });
-        document.getElementById(total_id).innerText = sum.toFixed(4);
-        document.getElementById(total_id).parentElement.style.color =
+
+        totalEl.innerText = sum.toFixed(4);
+        totalEl.parentElement.style.color =
             (Math.abs(sum - 1.0) < 0.001) ? 'green' : 'red';
     }
 
@@ -518,28 +531,31 @@ document.addEventListener("DOMContentLoaded", function () {
         updateSum(ids, 'arithmetic_sum');
     }
 
-    ['prob_plus', 'prob_minus', 'prob_times', 'prob_div', 'prob_sum', 'prob_avg'].forEach(id => {
-        const input = document.getElementsByName(id)[0];
-        if (input) {
-            input.addEventListener('input', updateArithmeticSum);
+    if (document.getElementById('arithmetic_sum')) {
+        ['prob_plus', 'prob_minus', 'prob_times', 'prob_div', 'prob_sum', 'prob_avg'].forEach(id => {
+            const input = document.getElementsByName(id)[0];
+            if (input) {
+                input.addEventListener('input', updateArithmeticSum);
+            }
+        });
+
+        const aggCb = document.getElementById('aggregate_functions');
+        if (aggCb) {
+            aggCb.addEventListener('change', updateArithmeticSum);
         }
-    });
 
-    const aggCb = document.getElementById('aggregate_functions');
-    if (aggCb) {
-        aggCb.addEventListener('change', updateArithmeticSum);
+        updateArithmeticSum();
     }
-
-    updateArithmeticSum();
 
     // Comparison ops
     let cmp_ids = ['prob_eq', 'prob_lt', 'prob_gt', 'prob_leq', 'prob_geq'];
-    cmp_ids.forEach(id => {
-        let el = document.getElementsByName(id)[0];
-        if (el) el.addEventListener('input', () => updateSum(cmp_ids, 'cmp_sum'));
-    });
-    updateSum(cmp_ids, 'cmp_sum');
-});
+    if (document.getElementById('cmp_sum')) {
+        cmp_ids.forEach(id => {
+            let el = document.getElementsByName(id)[0];
+            if (el) el.addEventListener('input', () => updateSum(cmp_ids, 'cmp_sum'));
+        });
+        updateSum(cmp_ids, 'cmp_sum');
+    }});
 </script>
 <!--<script src="{{ url_for('generator.assets', subfolder='js', filename='scripts.js') }}"></script>
 -->

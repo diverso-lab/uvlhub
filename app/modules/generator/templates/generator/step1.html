@@ -60,19 +60,3 @@
 </div>
 {% endblock %}
 
-{% block scripts %}
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-    const num_models = document.getElementById('num_models');
-    const num_models_val = document.getElementById('num_models_val');
-    // Asegúrate de que ambos estén sincronizados
-    num_models_val.value = num_models.value;
-    num_models.addEventListener('input', function() {
-        num_models_val.value = num_models.value;
-    });
-    num_models_val.addEventListener('input', function() {
-        num_models.value = num_models_val.value;
-    });
-});
-</script>
-{% endblock %}
