@@ -1,5 +1,8 @@
+<<<<<<< HEAD
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
+=======
+>>>>>>> cf1220c93be57f9d958e0ea590c58c50617ba390
 // app/modules/generator/assets/js/scripts.js
 
 // Importamos Pyodide desde tu carpeta estática
@@ -7,6 +10,11 @@ import { saveAs } from "file-saver";
 // const JSZip  = globalThis.JSZip;
 // const saveAs = globalThis.saveAs;
 
+<<<<<<< HEAD
+=======
+import JSZip from "jszip";
+import { saveAs } from "file-saver";
+>>>>>>> cf1220c93be57f9d958e0ea590c58c50617ba390
 
 console.log("Hi, I am a script loaded from the step5 of generator module")
 
@@ -37,12 +45,23 @@ class NavigatorExecutor {
       'astutils-0.0.6-py3-none-any.whl',
       'blinker-1.9.0-py3-none-any.whl',
       'dd-0.5.7-py3-none-any.whl',
+<<<<<<< HEAD
       'flamapy_bdd-2.5.0-py3-none-any.whl',
       'flamapy_configurator-2.0.1-py3-none-any.whl',
       'flamapy_fm-2.5.0-py3-none-any.whl',
       'flamapy_fw-2.5.0-py3-none-any.whl',
       'flamapy_sat-2.5.0-py3-none-any.whl',
       'flamapy-2.5.0-py3-none-any.whl',
+=======
+      'flamapy_bdd-2.0.1-py3-none-any.whl',
+      'flamapy_configurator-2.0.1-py3-none-any.whl',
+      'flamapy_fm-2.0.1-py3-none-any.whl',
+      'flamapy_fm-2.0.2.dev0-py3-none-any.whl',
+      'flamapy_fw-2.0.1-py3-none-any.whl',
+      'flamapy_fw-2.0.2.dev0-py3-none-any.whl',
+      'flamapy_sat-2.0.1-py3-none-any.whl',
+      'flamapy-2.0.1-py3-none-any.whl',
+>>>>>>> cf1220c93be57f9d958e0ea590c58c50617ba390
       'flask-3.1.0-py3-none-any.whl',
       'fm_generator-0.0.1-py3-none-any.whl',
       'graphviz-0.20-py3-none-any.whl',
@@ -130,4 +149,8 @@ executor.loadFlamapy()
 
 
 // Exportamos la clase por si la necesitas en otros scripts
+<<<<<<< HEAD
 // export { NavigatorExecutor };
+=======
+export { NavigatorExecutor };
+>>>>>>> cf1220c93be57f9d958e0ea590c58c50617ba390

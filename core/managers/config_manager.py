@@ -34,7 +34,7 @@ class Config:
     TIMEZONE = "Europe/Madrid"
     TEMPLATES_AUTO_RELOAD = True
     UPLOAD_FOLDER = "uploads"
-    SESSION_TYPE = "redis"
+    SESSION_TYPE = "redis"  # Esto puedes dejarlo, pero lo puedes sobreescribir luego en __init__.py
     SESSION_PERMANENT = False
     SESSION_USE_SIGNER = True
     REDIS_URL = os.getenv("REDIS_URL", "redis://redis:6379")
