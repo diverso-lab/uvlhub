@@ -6,7 +6,7 @@ module.exports = {
   output: {
     filename: 'generator.bundle.js',
     path: path.resolve(__dirname, '../dist'),
-    module: true,        // <-- Emitimos un ES module
+    module: true
   },
   mode: 'development',
   devtool: 'source-map',
@@ -14,25 +14,34 @@ module.exports = {
   experiments: {
     topLevelAwait: true,
     asyncWebAssembly: true,
-    outputModule: true,  // <-- Esto + output.module: true
+    outputModule: true
   },
 
   resolve: {
-    alias: { pyodide: path.resolve(__dirname, '../../../../static/pyodide') },
-    fallback: { fs: false, 'fs/promises': false, child_process: false,
-                crypto: false, url: false, vm: false, path: false },
-    extensions: ['.mjs','.js','.json','.wasm'],
-    mainFields: ['browser','module','main'],
+    alias: {
+      pyodide: path.resolve(__dirname, '../../../../static/pyodide')
+    },
+    fallback: {
+      fs: false,
+      'fs/promises': false,
+      child_process: false,
+      crypto: false,
+      url: false,
+      vm: false,
+      path: false
+    },
+    extensions: ['.mjs', '.js', '.json', '.wasm'],
+    mainFields: ['browser', 'module', 'main'],
   },
 
   module: {
     rules: [
       { test: /\.wasm$/, type: 'webassembly/async' },
-      { test: /\.mjs$/, resolve: { fullySpecified: false } },
+      { test: /\.m?js$/, resolve: { fullySpecified: false } },
     ]
   },
+
   plugins: [
     new webpack.IgnorePlugin({ resourceRegExp: /^node:/ })
   ]
 };
-
