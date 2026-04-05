@@ -37,6 +37,7 @@ def create_app(config_name="development"):
     if redis_url:
         app.config["SESSION_TYPE"] = "redis"
         import redis
+
         app.config["SESSION_REDIS"] = redis.from_url(redis_url)
     else:
         # Fallback: usa sesiones en el sistema de archivos
@@ -62,6 +63,7 @@ def create_app(config_name="development"):
     @login_manager.user_loader
     def load_user(user_id):
         from app.modules.auth.models import User
+
         return User.query.get(int(user_id))
 
     logging_manager = LoggingManager(app)

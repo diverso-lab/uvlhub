@@ -3,4 +3,4 @@ from wtforms import SubmitField
 
 
 class GeneratorForm(FlaskForm):
-    submit = SubmitField('Save generator')
+    submit = SubmitField("Save generator")

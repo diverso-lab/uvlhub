@@ -1,9 +1,10 @@
 # pyodide_wrapper.py
 
 import json
-import tempfile
-import shutil
 import os
+import shutil
+import tempfile
+
 from fm_generator.FMGenerator.models.config import Params
 from fm_generator.FMGenerator.models.models import FmgeneratorModel
 
