@@ -1,3 +1,5 @@
+from app.modules.dataset.models import DSDownloadRecord, DSViewRecord
+from app.modules.hubfile.models import HubfileDownloadRecord, HubfileViewRecord
 from app.modules.statistics.models import Statistics
 from core.repositories.BaseRepository import BaseRepository
 
@@ -57,3 +59,18 @@ class StatisticsRepository(BaseRepository):
     def get_feature_models_downloaded(self) -> int:
         statistics = self.get_statistics()
         return statistics.feature_models_downloaded
+
+    def refresh_statistics(self) -> Statistics:
+        statistics = self.get_statistics()
+        datasets_viewed = self.session.query(DSViewRecord).count()
+        feature_models_viewed = self.session.query(HubfileViewRecord).count()
+        datasets_downloaded = self.session.query(DSDownloadRecord).count()
+        feature_models_downloaded = self.session.query(HubfileDownloadRecord).count()
+
+        statistics.datasets_viewed = datasets_viewed
+        statistics.feature_models_viewed = feature_models_viewed
+        statistics.datasets_downloaded = datasets_downloaded
+        statistics.feature_models_downloaded = feature_models_downloaded
+
+        self.session.commit()
+        return statistics
