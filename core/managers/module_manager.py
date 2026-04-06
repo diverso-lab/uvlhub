@@ -46,8 +46,8 @@ class ModuleManager:
                         if isinstance(getattr(routes_module, item), Blueprint):
                             blueprint = getattr(routes_module, item)
                             self.app.register_blueprint(blueprint)
-                except ModuleNotFoundError as e:
-                    print(f"Error registering modules: Could not load the module " f"for Module '{module_name}': {e}")
+                except Exception as e:
+                    print(f"Error registering module '{module_name}': {type(e).__name__}: {e}")
 
     def register_module(self, module_name):
         module_path = os.path.join(self.modules_dir, module_name)
