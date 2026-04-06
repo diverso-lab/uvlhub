@@ -38,9 +38,15 @@ To download changes from fm_generator plugin, please do from the root of the pro
 ```
 cd fm_generator
 git pull origin main
+git submodule update --init --recursive
 ```
 You also need to install some dependencies with npm:
 ```
 npm install jszip file-saver
+npm install
+```
+To let pyodide work properly:
+```
+npx webpack --config app/modules/generator/assets/js/webpack.config.js
 ```
 Then, keep on the next step naturally from the official documentation.
