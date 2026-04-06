@@ -265,10 +265,11 @@
                     target="_blank" 
                     rel="noopener noreferrer"
                     class="btn btn-sm btn-secondary d-flex align-items-center">
-                        <img src="{{ url_for('static', filename='media/logos/flamapy_ide.svg') }}" 
-                            alt="Flamapy IDE"  
-                            height="18" 
-                            class="me-2" />
+                        <span class="logo-badge logo-badge--compact me-2">
+                            <img src="{{ url_for('static', filename='media/logos/flamapy_ide.svg') }}" 
+                                alt="Flamapy IDE"
+                                class="logo-badge__image" />
+                        </span>
                         <i class="ki-outline ki-exit-right-corner"></i>
                     </a>
                 </li>
@@ -281,9 +282,11 @@
                         <div class="bg-light rounded border p-4 h-100">
                                 <div class="d-flex align-items-center justify-content-between mb-2">
                                     <!-- Logo a la izquierda -->
-                                    <img src="{{ url_for('static', filename='media/logos/uvl_logo.svg') }}"
-                                        alt="UVL Logo"
-                                        height="24" />
+                                    <div class="logo-badge logo-badge--panel">
+                                        <img src="{{ url_for('static', filename='media/logos/uvl_logo.svg') }}"
+                                            alt="UVL Logo"
+                                            class="logo-badge__image" />
+                                    </div>
 
                                     <!-- Botón a la derecha -->
                                     <a href="javascript:void(0);"
@@ -306,9 +309,11 @@
                         <div class="bg-light rounded border p-4 h-100">
                             <div class="d-flex align-items-center justify-content-between mb-2">
                                 <!-- Logo -->
-                                <img src="{{ url_for('static', filename='media/logos/factlabel_logo.svg') }}"
-                                    alt="Fact Label Logo"
-                                    height="24" />
+                                <div class="logo-badge logo-badge--panel">
+                                    <img src="{{ url_for('static', filename='media/logos/factlabel_logo.svg') }}"
+                                        alt="Fact Label Logo"
+                                        class="logo-badge__image" />
+                                </div>
 
                                 <!-- Botón -->
                                 <a href="{{ selected_file.get_factlabel_url() }}" 
@@ -495,5 +500,4 @@ document.addEventListener('DOMContentLoaded', function () {
 
 </script>
 {% endblock %}
-
 
