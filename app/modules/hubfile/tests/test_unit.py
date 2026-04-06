@@ -56,3 +56,16 @@ def test_create_hubfile_calls_enqueue_tasks(test_client):
             hubfile_id=hubfile.id,
             timeout=5,
         )
+
+
+def test_explore_hubfile_view_link_uses_result_url(test_client):
+    response = test_client.get("/explore")
+    assert response.status_code == 200
+    html = response.data.decode()
+    start = html.index('<script id="hubfile-template"')
+    end = html.index("</script>", start)
+    hubfile_block = html[start:end]
+
+    assert 'href="/hubfiles/[[id]]"' not in hubfile_block
+    assert 'href="/hubfiles/download/[[id]]"' in hubfile_block
+    assert 'href="[[url]]"' in hubfile_block
