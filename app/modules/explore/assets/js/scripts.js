@@ -8,6 +8,14 @@ document.addEventListener('DOMContentLoaded', () => {
     runSearch(); // initial load
 });
 
+function debounce(fn, delay=300) {
+    let timeoutId;
+    return (...args) => {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => fn(...args), delay);
+    };
+}
+
 function setupDateValidation() {
     const fromInput = document.getElementById('filter-date-from');
     const toInput = document.getElementById('filter-date-to');
@@ -32,21 +40,20 @@ function setupDateValidation() {
     toInput.addEventListener('change', validate);
 }
 
-function bindFilters() {
-    const filters = [
-        '#search-query',
-        '#filter-publication-type',
-        '#filter-sorting',
-        '#filter-tags',
-        '#filter-date-from',
-        '#filter-date-to'
-    ];
+const debouncedSearch = debounce(() => runSearch(true), 300);
 
-    filters.forEach(selector => {
+function bindFilters() {
+    ['#search-query', '#filter-tags'].forEach(selector => {
         const el = document.querySelector(selector);
         if (el) {
-            el.addEventListener('input', runSearch);
-            el.addEventListener('change', runSearch);
+            el.addEventListener('input', debouncedSearch);
+        }
+    });
+
+    ['#filter-publication-type', '#filter-sorting', '#filter-date-from', '#filter-date-to'].forEach(selector => {
+        const el = document.querySelector(selector);
+        if (el) {
+            el.addEventListener('change', () => runSearch(true));
         }
     });
 
@@ -57,9 +64,10 @@ function bindFilters() {
         document.getElementById('filter-tags').value = '';
         document.getElementById('filter-date-from').value = '';
         document.getElementById('filter-date-to').value = '';
-        runSearch();
+        runSearch(true);
     });
 }
+
 
 
 
@@ -75,14 +83,15 @@ export function addTagToQuery(tag) {
 
 let currentPage = 1;
 const pageSize = 10;
-let loading = false;
+let isFetching = false;
+let activeController = null;
+let latestRequestId = 0;
 
 function runSearch(reset = true) {
     const fromInput = document.getElementById('filter-date-from');
     const toInput = document.getElementById('filter-date-to');
     const dateError = document.getElementById('date-error');
 
-    // Validación del rango de fechas
     const fromDate = fromInput.value ? new Date(fromInput.value) : null;
     const toDate = toInput.value ? new Date(toInput.value) : null;
 
@@ -90,14 +99,18 @@ function runSearch(reset = true) {
         dateError?.classList.remove('d-none');
         toInput.classList.add('is-invalid');
         return;
-    } else {
-        dateError?.classList.add('d-none');
-        toInput.classList.remove('is-invalid');
     }
+
+    dateError?.classList.add('d-none');
+    toInput.classList.remove('is-invalid');
 
     if (reset) {
         currentPage = 1;
-        document.getElementById('results-container').innerHTML = '';
+        if (activeController) {
+            activeController.abort();
+        }
+    } else if (isFetching) {
+        return;
     }
 
     const query = document.getElementById('search-query').value.trim();
@@ -119,21 +132,37 @@ function runSearch(reset = true) {
     if (date_from) params.append('date_from', date_from);
     if (date_to) params.append('date_to', date_to);
 
-    if (loading) return;
-    loading = true;
+    const requestId = ++latestRequestId;
+    const controller = new AbortController();
+    activeController = controller;
+    isFetching = true;
 
-    fetch(`/api/v1/search?${params.toString()}`)
+    fetch(`/api/v1/search?${params.toString()}`, { signal: controller.signal })
         .then(res => res.json())
         .then(data => {
+            if (requestId !== latestRequestId) {
+                return;
+            }
+
             renderResults(data.results, !reset);
-            loading = false;
-            if (data.results.length > 0) currentPage++;
+
+            if (data.results.length > 0) {
+                currentPage++;
+            }
         })
         .catch(err => {
-            console.error("Search failed", err);
-            loading = false;
+            if (err.name !== 'AbortError') {
+                console.error('Search failed', err);
+            }
+        })
+        .finally(() => {
+            if (activeController === controller) {
+                activeController = null;
+                isFetching = false;
+            }
         });
 }
+
 
 
 window.addEventListener('scroll', () => {
