@@ -1,11 +1,11 @@
 import os
 
+import redis
 from dotenv import load_dotenv
 from flasgger import Swagger
 from flask import Flask
 from flask_cors import CORS
 from flask_migrate import Migrate
-from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
 
 from app.modules.mail.services import MailService
@@ -14,6 +14,7 @@ from core.managers.config_manager import ConfigManager
 from core.managers.error_handler_manager import ErrorHandlerManager
 from core.managers.logging_manager import LoggingManager
 from core.managers.module_manager import ModuleManager
+from flask_session import Session
 
 # Load environment variables
 load_dotenv()
@@ -36,8 +37,6 @@ def create_app(config_name="development"):
     redis_url = os.getenv("REDIS_URL")
     if redis_url:
         app.config["SESSION_TYPE"] = "redis"
-        import redis
-
         app.config["SESSION_REDIS"] = redis.from_url(redis_url)
     else:
         # Fallback: usa sesiones en el sistema de archivos
