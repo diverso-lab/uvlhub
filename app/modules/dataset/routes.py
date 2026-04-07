@@ -243,9 +243,39 @@ def edit_metadata(dataset_id):
     if request.method == "POST":
         is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
         try:
-            dataset_service.update_metadata_from_request(dataset, request.form, zenodo_service=zenodo_service)
+            update_result = dataset_service.update_metadata_from_request(
+                dataset,
+                request.form,
+                zenodo_service=zenodo_service,
+            )
+            if update_result.get("sync_deferred"):
+                warning_message = (
+                    "Dataset metadata updated locally. Zenodo is currently unavailable, "
+                    "so synchronization is still pending."
+                )
+                flash(warning_message, "warning")
+                if is_ajax:
+                    return (
+                        jsonify(
+                            {
+                                "message": warning_message,
+                                "metadata_synced": False,
+                                "sync_deferred": True,
+                            }
+                        ),
+                        200,
+                    )
             if is_ajax:
-                return jsonify({"message": "Dataset updated successfully"}), 200
+                return (
+                    jsonify(
+                        {
+                            "message": "Dataset updated successfully",
+                            "metadata_synced": update_result.get("metadata_synced", True),
+                            "sync_deferred": False,
+                        }
+                    ),
+                    200,
+                )
             flash("Dataset updated successfully!", "success")
         except DatasetMetadataValidationError as exc:
             if is_ajax:

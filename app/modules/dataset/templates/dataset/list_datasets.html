@@ -39,6 +39,9 @@
                             {% if dataset.is_anonymous() %}
                                 <span class="badge badge-light-warning ms-2">Anonymous</span>
                             {% endif %}
+                            {% if not dataset.is_metadata_synchronized() %}
+                                <span class="badge badge-light-danger ms-2">Pending Zenodo sync</span>
+                            {% endif %}
                         </td>
                         <td>{{ dataset.get_publication() }}</td>
                         <td>

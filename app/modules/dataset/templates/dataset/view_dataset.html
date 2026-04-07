@@ -15,6 +15,14 @@
 
     <div class="row">
 
+        {% if dataset.ds_meta_data.dataset_doi and not dataset.is_metadata_synchronized() %}
+        <div class="col-12 mb-5">
+            <div class="alert alert-warning">
+                Metadata changes are saved locally. Zenodo is currently unavailable, so the public record is pending synchronization.
+            </div>
+        </div>
+        {% endif %}
+
         <div class="col-12 mb-5">
 
             <div class="card">
