@@ -192,47 +192,57 @@ def validate_step2_form(form):
     #             errors[f] = "The sum of all distributions must be exactly 1.0."
     #     errors["dist_total"] = f"Current sum: {total_dist:.4f}. The total must be 1.0."
 
-    # Attach probability (prob_fc)
-    prob_fc_val = form.get("prob_fc")
-    if prob_fc_val is not None:
+    # Feature cardinality probability
+    feature_cardinality_enabled = "feature_cardinality" in form
+
+    if feature_cardinality_enabled:
+        prob_fc_val = form.get("prob_fc", "").strip()
         try:
-            ap = float(prob_fc_val.strip())
-            if not (0.01 <= ap <= 1.0):
-                errors["attach_probability"] = "Attach probability must be between 0.01 and 1."
+            ap = float(prob_fc_val)
+            if not (0.0 <= ap <= 1.0):
+                errors["attach_probability"] = "Feature cardinality probability must be between 0 and 1."
         except Exception:
-            errors["attach_probability"] = "Attach probability must be a decimal between 0.01 and 1."
+            errors["attach_probability"] = "Feature cardinality probability must be a decimal between 0 and 1."
 
     # Feature cardinality min/max
-    # min_fc_val = form.get("min_feature_cardinality", "").strip()
-    # max_fc_val = form.get("max_feature_cardinality", "").strip()
-    # try:
-    #     min_fc = int(min_fc_val)
-    #     if not (1 <= min_fc <= 10000):
-    #         errors["min_feature_cardinality"] = (
-    #             "Min. feature cardinality must be between 1 and 10,000."
-    #         )
-    # except Exception:
-    #     errors["min_feature_cardinality"] = (
-    #         "Min. feature cardinality must be an integer."
-    #     )
-    # try:
-    #     max_fc = int(max_fc_val)
-    #     if not (1 <= max_fc <= 10000):
-    #         errors["max_feature_cardinality"] = (
-    #             "Max. feature cardinality must be between 1 and 10,000."
-    #         )
-    # except Exception:
-    #     errors["max_feature_cardinality"] = (
-    #         "Max. feature cardinality must be an integer."
-    #     )
-    # if (
-    #     "min_feature_cardinality" not in errors
-    #     and "max_feature_cardinality" not in errors
-    #     and min_fc > max_fc
-    # ):
-    #     errors["max_feature_cardinality"] = (
-    #         "Max. feature cardinality must be greater than or equal to min."
-    #     )
+    if feature_cardinality_enabled:
+        min_fc_val = form.get("min_feature_cardinality", "").strip()
+        max_fc_val = form.get("max_feature_cardinality", "").strip()
+
+        try:
+            min_fc = int(min_fc_val)
+            if not (1 <= min_fc <= 10000):
+                errors["min_feature_cardinality"] = (
+                    "Min. feature cardinality must be between 1 and 10,000."
+                )
+        except Exception:
+            min_fc = None
+            errors["min_feature_cardinality"] = (
+                "Min. feature cardinality must be an integer."
+            )
+
+        try:
+            max_fc = int(max_fc_val)
+            if not (1 <= max_fc <= 10000):
+                errors["max_feature_cardinality"] = (
+                    "Max. feature cardinality must be between 1 and 10,000."
+                )
+        except Exception:
+            max_fc = None
+            errors["max_feature_cardinality"] = (
+                "Max. feature cardinality must be an integer."
+            )
+
+        if (
+            "min_feature_cardinality" not in errors
+            and "max_feature_cardinality" not in errors
+            and min_fc is not None
+            and max_fc is not None
+            and min_fc > max_fc
+        ):
+            errors["max_feature_cardinality"] = (
+                "Max. feature cardinality must be greater than or equal to min."
+            )
 
     # Distribución de relaciones (groups)
     rel_fields = ["dist_optional", "dist_mandatory", "dist_alternative", "dist_or"]
@@ -325,6 +335,7 @@ def step2():
             # vuelves y luego avanzas
             params_dict = session.get("params", {}) or {}
             params_dict["GROUP_CARDINALITY"] = "group_cardinality" in request.form
+            params_dict["FEATURE_CARDINALITY"] = "feature_cardinality" in request.form
             params_dict["MIN_FEATURES"] = int(request.form.get("num_features_min", params_dict.get("MIN_FEATURES", 10)))
             params_dict["MAX_FEATURES"] = int(request.form.get("num_features_max", params_dict.get("MAX_FEATURES", 50)))
             params_dict["MAX_TREE_DEPTH"] = int(
@@ -352,6 +363,17 @@ def step2():
                 )
             else:
                 params_dict["DIST_GROUP_CARDINALITY"] = 0.0
+
+            if "feature_cardinality" in request.form:
+                params_dict["PROB_FEATURE_CARDINALITY"] = float(
+                    request.form.get("prob_fc", params_dict.get("PROB_FEATURE_CARDINALITY", 0.1))
+                )
+                params_dict["MIN_FEATURE_CARDINALITY"] = int(
+                    request.form.get("min_feature_cardinality", params_dict.get("MIN_FEATURE_CARDINALITY", 2))
+                )
+                params_dict["MAX_FEATURE_CARDINALITY"] = int(
+                    request.form.get("max_feature_cardinality", params_dict.get("MAX_FEATURE_CARDINALITY", 5))
+                )
 
             session["params"] = params_dict
 
@@ -402,14 +424,15 @@ def step2():
             params_dict["GROUP_CARDINALITY_MIN"] = params_dict.get("GROUP_CARDINALITY_MIN", 1)
             params_dict["GROUP_CARDINALITY_MAX"] = params_dict.get("GROUP_CARDINALITY_MAX", 1)
 
-        # Feature cardinality y attach_prob
-        params_dict["PROB_FEATURE_CARDINALITY"] = float(request.form.get("prob_fc", 0.05))
-        # params_dict["MIN_FEATURE_CARDINALITY"] = int(
-        #     request.form.get("min_feature_cardinality", 2)
-        # )
-        # params_dict["MAX_FEATURE_CARDINALITY"] = int(
-        #     request.form.get("max_feature_cardinality", 5)
-        # )
+        # Feature cardinality
+        if "feature_cardinality" in request.form:
+            params_dict["PROB_FEATURE_CARDINALITY"] = float(request.form.get("prob_fc", 0.1))
+            params_dict["MIN_FEATURE_CARDINALITY"] = int(request.form.get("min_feature_cardinality", 2))
+            params_dict["MAX_FEATURE_CARDINALITY"] = int(request.form.get("max_feature_cardinality", 5))
+        else:
+            params_dict["PROB_FEATURE_CARDINALITY"] = 0.0
+            params_dict["MIN_FEATURE_CARDINALITY"] = params_dict.get("MIN_FEATURE_CARDINALITY", 2)
+            params_dict["MAX_FEATURE_CARDINALITY"] = params_dict.get("MAX_FEATURE_CARDINALITY", 5)
 
         # En step2 solo guardamos el estado; no reconstruimos Params aquí
         # porque eso puede disparar validaciones de steps posteriores.
@@ -435,9 +458,9 @@ def step2():
         "num_features_min": params_dict.get("MIN_FEATURES", 10),
         "num_features_max": params_dict.get("MAX_FEATURES", 50),
         "max_tree_depth": params_dict.get("MAX_TREE_DEPTH", 5),
-        # feature cardinality attach prob (aunque esté comentado en HTML, lo
-        # dejo)
         "prob_fc": params_dict.get("PROB_FEATURE_CARDINALITY", 0.1),
+        "min_feature_cardinality": params_dict.get("MIN_FEATURE_CARDINALITY", 2),
+        "max_feature_cardinality": params_dict.get("MAX_FEATURE_CARDINALITY", 5),
         # groups
         "dist_optional": params_dict.get("DIST_OPTIONAL", 0.3),
         "dist_mandatory": params_dict.get("DIST_MANDATORY", 0.3),

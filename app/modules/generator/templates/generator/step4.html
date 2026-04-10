@@ -8,6 +8,12 @@
 
         <h3 class="mb-3">Attributes</h3>
 
+        {% if errors.get('global') %}
+            <div class="alert alert-danger mb-3">
+                {{ errors['global'] }}
+            </div>
+        {% endif %}
+
         <!-- Checkbox “Random attributes” -->
         <div class="form-check mb-3">
             <input
