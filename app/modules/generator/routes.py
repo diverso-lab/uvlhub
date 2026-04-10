@@ -411,23 +411,11 @@ def step2():
         #     request.form.get("max_feature_cardinality", 5)
         # )
 
-        try:
-            from fm_generator.FMGenerator.models.config import Params
+        # En step2 solo guardamos el estado; no reconstruimos Params aquí
+        # porque eso puede disparar validaciones de steps posteriores.
+        session["params"] = params_dict
 
-            params = Params(**params_dict)
-        except Exception as e:
-            print("[STEP2 ERROR reconstruyendo Params]", e)
-            errors["global"] = str(e)
-            return render_template(
-                "generator/step2.html",
-                current_step=2,
-                errors=errors,
-                values=values,
-            )
-
-        session["params"] = params.__dict__
-
-        print(params)
+        print("[STEP2] params guardados en sesión:", params_dict)
 
         return redirect(url_for("generator.step3"))
 
@@ -640,6 +628,17 @@ def validate_step3_form(form, max_features: int = 10000):
                     errors[f] = "Value must be a decimal between 0 and 1."
             prob_plus = prob_minus = prob_times = prob_div = 0.0
 
+        arithmetic_sum = prob_plus + prob_minus + prob_times + prob_div
+        arithmetic_fields = ["prob_plus", "prob_minus", "prob_times", "prob_div"]
+
+        if abs(arithmetic_sum - 1.0) > 0.001:
+            for f in arithmetic_fields:
+                if f not in errors:
+                    errors[f] = "The sum of arithmetic operators must be exactly 1.0."
+            errors["arithmetic_sum"] = f"Current sum: {arithmetic_sum:.4f}. The total must be 1.0."
+
+        values["arithmetic_sum"] = f"{arithmetic_sum:.4f}"
+
         if aggregate_functions_checked:
             try:
                 prob_sum = float(form.get("prob_sum", "0"))
@@ -649,30 +648,20 @@ def validate_step3_form(form, max_features: int = 10000):
                     if f not in errors:
                         errors[f] = "Value must be a decimal between 0 and 1."
                 prob_sum = prob_avg = 0.0
+
+            aggregate_sum = prob_sum + prob_avg
+            if aggregate_sum > 1.001:
+                for f in ["prob_sum", "prob_avg"]:
+                    if f not in errors:
+                        errors[f] = "The sum of aggregate functions must be less than or equal to 1.0."
+                errors["aggregate_sum"] = f"Current sum: {aggregate_sum:.4f}. The total must be less than or equal to 1.0."
+
+            values["aggregate_sum"] = f"{aggregate_sum:.4f}"
         else:
-            prob_sum = prob_avg = 0.0
-
-        arithmetic_sum = prob_plus + prob_minus + prob_times + prob_div
-        arithmetic_fields = ["prob_plus", "prob_minus", "prob_times", "prob_div"]
-        agg_fields = ["prob_sum", "prob_avg"]
-
-        if aggregate_functions_checked:
-            arithmetic_sum += prob_sum + prob_avg
-            fields_to_check = arithmetic_fields + agg_fields
-        else:
-            fields_to_check = arithmetic_fields
-
-        if abs(arithmetic_sum - 1.0) > 0.001:
-            for f in fields_to_check:
-                if f not in errors:
-                    errors[f] = "The sum of Arithmetic level constraints{} must be exactly 1.0.".format(
-                        " (including aggregate functions)" if aggregate_functions_checked else ""
-                    )
-            errors["arithmetic_sum"] = f"Current sum: {arithmetic_sum:.4f}. The total must be 1.0."
-
-        values["arithmetic_sum"] = f"{arithmetic_sum:.4f}"
+            values["aggregate_sum"] = "0.0000"
     else:
         values["arithmetic_sum"] = "1.0000"
+        values["aggregate_sum"] = "0.0000"
 
     # 7) COMPARISON OPERATORS (solo si Arithmetic level está activo)
     if arithmetic_level_checked:
@@ -915,6 +904,7 @@ def step3():
         "ctc_dist_total": "1.0000",
         "boolop_sum": "1.0000",
         "arithmetic_sum": "1.0000",
+        "aggregate_sum": "0.0000",
         "cmp_sum": "1.0000",
         "arithmetic_level": params_dict.get("ARITHMETIC_LEVEL", False),
         "aggregate_functions": params_dict.get("AGGREGATE_FUNCTIONS", False),
