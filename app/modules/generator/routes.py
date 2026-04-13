@@ -1121,11 +1121,7 @@ def validate_step4_form(form, params_dict=None):
                         "Real attributes when Arithmetic level is enabled."
                     )
             elif type_lc == "string":
-                if not (type_level_enabled and string_constraints_enabled):
-                    errors[f"attr_use_in_constraints_{i}"] = (
-                        "Use in constraints is only available for String attributes when "
-                        "Type level and String constraints are enabled."
-                    )
+                pass
 
         # Validar por cada atributo
         for i, t in enumerate(attr_types):
@@ -1267,11 +1263,7 @@ def step4():
                     elif type_ in ["integer", "real"]:
                         use_in_constraints = raw_use_in_constraints and params_dict.get("ARITHMETIC_LEVEL", False)
                     elif type_ == "string":
-                        use_in_constraints = (
-                            raw_use_in_constraints
-                            and params_dict.get("TYPE_LEVEL", False)
-                            and params_dict.get("STRING_CONSTRAINTS", False)
-                        )
+                        use_in_constraints = raw_use_in_constraints
                     else:
                         use_in_constraints = False
 

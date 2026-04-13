@@ -458,10 +458,7 @@ function updateUseInConstraintsAvailability(card, type, idx) {
             message = 'Only available if Arithmetic level is enabled in step 2.';
         }
     } else if (type === 'string') {
-        enabled = !!typeLevelEnabled && !!stringConstraintsEnabled;
-        if (!enabled) {
-            message = 'Only available if Type level and String constraints are enabled in step 2.';
-        }
+        enabled = true;
     }
 
     checkbox.disabled = !enabled;
