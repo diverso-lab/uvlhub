@@ -172,25 +172,32 @@ def validate_step2_form(form):
     except Exception:
         errors["max_tree_depth"] = "Maximum tree depth must be an integer."
 
-    # Distribuciones de features
-    # dist_fields = ["dist_boolean", "dist_integer", "dist_real", "dist_string"]
-    # dist_values = []
-    # for f in dist_fields:
-    #     val = form.get(f, "").strip()
-    #     try:
-    #         v = float(val)
-    #         if not (0.0 <= v <= 1.0):
-    #             errors[f] = "Value must be between 0 and 1."
-    #         dist_values.append(v)
-    #     except Exception:
-    #         errors[f] = "Value must be a decimal between 0 and 1."
-    #         dist_values.append(0.0)
-    # total_dist = sum(dist_values)
-    # if abs(total_dist - 1.0) > 0.001:
-    #     for f in dist_fields:
-    #         if f not in errors:
-    #             errors[f] = "The sum of all distributions must be exactly 1.0."
-    #     errors["dist_total"] = f"Current sum: {total_dist:.4f}. The total must be 1.0."
+    # Type level feature distributions
+    type_level_enabled = "type_level" in form
+
+    if type_level_enabled:
+        type_fields = ["dist_boolean", "dist_integer", "dist_real", "dist_string"]
+        type_values = []
+
+        for f in type_fields:
+            val = form.get(f, "").strip()
+            try:
+                v = float(val)
+                if not (0.0 <= v <= 1.0):
+                    errors[f] = "Value must be between 0 and 1."
+                type_values.append(v)
+            except Exception:
+                errors[f] = "Value must be a decimal between 0 and 1."
+                type_values.append(0.0)
+
+        type_total = sum(type_values)
+        if type_total > 1.001:
+            for f in type_fields:
+                if f not in errors:
+                    errors[f] = "The sum of type distributions must be less than or equal to 1.0."
+            errors["type_dist_total"] = f"Current sum: {type_total:.4f}. The total must be less than or equal to 1.0."
+
+        values["type_dist_total"] = f"{type_total:.4f}"
 
     # Feature cardinality probability
     feature_cardinality_enabled = "feature_cardinality" in form
@@ -351,6 +358,21 @@ def step2():
                 request.form.get("dist_alternative", params_dict.get("DIST_ALTERNATIVE", 0.2))
             )
             params_dict["DIST_OR"] = float(request.form.get("dist_or", params_dict.get("DIST_OR", 0.2)))
+            
+            if "type_level" in request.form:
+                params_dict["DIST_BOOLEAN"] = float(
+                    request.form.get("dist_boolean", params_dict.get("DIST_BOOLEAN", 0.0))
+                )
+                params_dict["DIST_INTEGER"] = float(
+                    request.form.get("dist_integer", params_dict.get("DIST_INTEGER", 0.0))
+                )
+                params_dict["DIST_REAL"] = float(
+                    request.form.get("dist_real", params_dict.get("DIST_REAL", 0.0))
+                )
+                params_dict["DIST_STRING"] = float(
+                    request.form.get("dist_string", params_dict.get("DIST_STRING", 0.0))
+                )
+
             if "group_cardinality" in request.form:
                 params_dict["DIST_GROUP_CARDINALITY"] = float(
                     request.form.get("dist_group_cardinality", params_dict.get("DIST_GROUP_CARDINALITY", 0.0))
@@ -400,10 +422,17 @@ def step2():
 
         params_dict["MIN_FEATURES"] = int(request.form.get("num_features_min", 1))
         params_dict["MAX_FEATURES"] = int(request.form.get("num_features_max", 10))
-        # params_dict["DIST_BOOLEAN"] = float(request.form.get("dist_boolean", 0.7))
-        # params_dict["DIST_INTEGER"] = float(request.form.get("dist_integer", 0.2))
-        # params_dict["DIST_REAL"] = float(request.form.get("dist_real", 0.0))
-        # params_dict["DIST_STRING"] = float(request.form.get("dist_string", 0.0))
+
+        if "type_level" in request.form:
+            params_dict["DIST_BOOLEAN"] = float(request.form.get("dist_boolean", 0.0))
+            params_dict["DIST_INTEGER"] = float(request.form.get("dist_integer", 0.0))
+            params_dict["DIST_REAL"] = float(request.form.get("dist_real", 0.0))
+            params_dict["DIST_STRING"] = float(request.form.get("dist_string", 0.0))
+        else:
+            params_dict["DIST_BOOLEAN"] = 0.0
+            params_dict["DIST_INTEGER"] = 0.0
+            params_dict["DIST_REAL"] = 0.0
+            params_dict["DIST_STRING"] = 0.0
 
         # Tree depth
         params_dict["MAX_TREE_DEPTH"] = int(request.form.get("max_tree_depth", 5))
@@ -458,6 +487,11 @@ def step2():
         "num_features_min": params_dict.get("MIN_FEATURES", 10),
         "num_features_max": params_dict.get("MAX_FEATURES", 50),
         "max_tree_depth": params_dict.get("MAX_TREE_DEPTH", 5),
+        "dist_boolean": params_dict.get("DIST_BOOLEAN", 0.0),
+        "dist_integer": params_dict.get("DIST_INTEGER", 0.0),
+        "dist_real": params_dict.get("DIST_REAL", 0.0),
+        "dist_string": params_dict.get("DIST_STRING", 0.0),
+        "type_dist_total": "0.0000",
         "prob_fc": params_dict.get("PROB_FEATURE_CARDINALITY", 0.1),
         "min_feature_cardinality": params_dict.get("MIN_FEATURE_CARDINALITY", 2),
         "max_feature_cardinality": params_dict.get("MAX_FEATURE_CARDINALITY", 5),

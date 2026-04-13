@@ -130,7 +130,7 @@
             <div class="mb-3">
                 <label class="form-label">Maximum tree depth:</label>
                 <input type="number" class="form-control" style="width: 80px; display: inline-block;" name="max_tree_depth" id="max_tree_depth"
-                       value="{{ values.get('max_tree_depth', 5) }}" min="1">
+                        value="{{ values.get('max_tree_depth', 5) }}" min="1">
                 {% if errors.get('max_tree_depth') %}
                     <div class="text-danger">{{ errors['max_tree_depth'] }}</div>
                 {% endif %}
@@ -139,49 +139,54 @@
                 </small>
             </div>
 
-            <!-- Distribución -->
-            <!-- 
-            <div class="mb-3">
-                <label class="form-label">Distribution (as a per unit value, only if Type level is selected) CURRENTLY UNAVAILABLE</label>
-                <div class="row">
-                    <div class="col">
-                        <label class="form-label">Boolean:</label>
-                        <input type="number" step="0.01" min="0" max="1" class="form-control" id="dist_boolean" name="dist_boolean" value="{{ values.get('dist_boolean', 0.7) }}">
-                        {% if errors.get('dist_boolean') %}
-                            <div class="text-danger">{{ errors['dist_boolean'] }}</div>
-                        {% endif %}
+            <div id="type_level_block" class="mb-3">
+                <label class="form-label">Type level feature distributions</label>
+                <div class="p-3 border rounded" style="background: #fafbfc;">
+                    <div class="row">
+                        <div class="col">
+                            <label class="form-label">Boolean:</label>
+                            <input type="number" step="0.01" min="0" max="1" class="form-control" id="dist_boolean" name="dist_boolean" value="{{ values.get('dist_boolean', 0.0) }}">
+                            {% if errors.get('dist_boolean') %}
+                                <div class="text-danger">{{ errors['dist_boolean'] }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col">
+                            <label class="form-label">Integer:</label>
+                            <input type="number" step="0.01" min="0" max="1" class="form-control" id="dist_integer" name="dist_integer" value="{{ values.get('dist_integer', 0.0) }}">
+                            {% if errors.get('dist_integer') %}
+                                <div class="text-danger">{{ errors['dist_integer'] }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col">
+                            <label class="form-label">Float:</label>
+                            <input type="number" step="0.01" min="0" max="1" class="form-control" id="dist_real" name="dist_real" value="{{ values.get('dist_real', 0.0) }}">
+                            {% if errors.get('dist_real') %}
+                                <div class="text-danger">{{ errors['dist_real'] }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col">
+                            <label class="form-label">String:</label>
+                            <input type="number" step="0.01" min="0" max="1" class="form-control" id="dist_string" name="dist_string" value="{{ values.get('dist_string', 0.0) }}">
+                            {% if errors.get('dist_string') %}
+                                <div class="text-danger">{{ errors['dist_string'] }}</div>
+                            {% endif %}
+                        </div>
                     </div>
-                    <div class="col">
-                        <label class="form-label">Integer:</label>
-                        <input type="number" step="0.01" min="0" max="1" class="form-control" id="dist_integer" name="dist_integer" value="{{ values.get('dist_integer', 0.1) }}">
-                        {% if errors.get('dist_integer') %}
-                            <div class="text-danger">{{ errors['dist_integer'] }}</div>
-                        {% endif %}
+
+                    <div class="mt-2" id="type_dist_sum_display"
+                        style="font-weight:bold; color:{% if (values.get('type_dist_total', '0.0000')|float) > 1.0 %}red{% else %}green{% endif %};">
+                        Type dist sum: <span id="type_dist_sum">{{ values.get('type_dist_total', '0.0000') }}</span>
                     </div>
-                    <div class="col">
-                        <label class="form-label">Real:</label>
-                        <input type="number" step="0.01" min="0" max="1" class="form-control" id="dist_real" name="dist_real" value="{{ values.get('dist_real', 0.1) }}">
-                        {% if errors.get('dist_real') %}
-                            <div class="text-danger">{{ errors['dist_real'] }}</div>
-                        {% endif %}
-                    </div>
-                    <div class="col">
-                        <label class="form-label">String:</label>
-                        <input type="number" step="0.01" min="0" max="1" class="form-control" id="dist_string" name="dist_string" value="{{ values.get('dist_string', 0.1) }}">
-                        {% if errors.get('dist_string') %}
-                            <div class="text-danger">{{ errors['dist_string'] }}</div>
-                        {% endif %}
-                    </div>
+
+                    {% if errors.get('type_dist_total') %}
+                        <div class="text-danger">{{ errors['type_dist_total'] }}</div>
+                    {% endif %}
+
+                    <small class="text-muted d-block mt-2">
+                        Note: the sum does not need to be 1.0. The remaining probability corresponds to regular Boolean-level features without explicit type.
+                    </small>
                 </div>
-                <div class="mt-2" id="dist_sum_display"
-                    style="font-weight:bold; color:{% if values.get('dist_total', '1.0000') != '1.0000' %}red{% else %}green{% endif %};">
-                    Current sum: <span id="dist_sum">{{ values.get('dist_total', '1.0000') }}</span>
-                </div>
-                {% if errors.get('dist_total') %}
-                    <div class="text-danger">{{ errors['dist_total'] }}</div>
-                {% endif %}
             </div>
-            -->
 
             <!-- Feature cardinality -->
             <div id="feature_cardinality_block" class="mb-3">
@@ -329,6 +334,11 @@ document.addEventListener("DOMContentLoaded", function () {
         const type = document.getElementById("type_level");
         const stringC = document.getElementById("string_constraints");
 
+        const typeBlock = document.getElementById("type_level_block");
+        if (typeBlock) {
+            typeBlock.style.display = type.checked ? "" : "none";
+        }
+
         // Arithmetic → minors
         if (!arithmetic.checked) {
             featureCard.checked = false;
@@ -415,6 +425,28 @@ document.addEventListener("DOMContentLoaded", function () {
         toggleFeatureCardinalityBlock();
     }
 
+    function updateTypeDistSum() {
+        let fields = ['dist_boolean', 'dist_integer', 'dist_real', 'dist_string'];
+        let sum = 0;
+
+        fields.forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) {
+                sum += parseFloat(el.value) || 0;
+            }
+        });
+
+        var sumEl = document.getElementById('type_dist_sum');
+        var displayEl = document.getElementById('type_dist_sum_display');
+
+        if (sumEl) {
+            sumEl.innerText = sum.toFixed(4);
+        }
+        if (displayEl) {
+            displayEl.style.color = (sum <= 1.001) ? 'green' : 'red';
+        }
+    }
+
     // Actualiza la suma según si el checkbox está marcado y el valor de dist_group_cardinality
     function updateRelSum() {
         let fields = ['dist_optional', 'dist_mandatory', 'dist_alternative', 'dist_or'];
@@ -441,7 +473,15 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
+    ['dist_boolean', 'dist_integer', 'dist_real', 'dist_string'].forEach(function(id){
+        var el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', updateTypeDistSum);
+        }
+    });
+
     updateRelSum(); // Inicial
+    updateTypeDistSum();
 });
 </script>
 {% endblock %}
