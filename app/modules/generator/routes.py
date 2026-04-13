@@ -191,11 +191,11 @@ def validate_step2_form(form):
                 type_values.append(0.0)
 
         type_total = sum(type_values)
-        if type_total > 1.001:
-            for f in type_fields:
-                if f not in errors:
-                    errors[f] = "The sum of type distributions must be less than or equal to 1.0."
-            errors["type_dist_total"] = f"Current sum: {type_total:.4f}. The total must be less than or equal to 1.0."
+        if abs(type_total - 1.0) > 0.001:
+            errors["type_dist_total"] = (
+                f"The sum of type distributions must be exactly 1.0. "
+                f"Current sum: {type_total:.4f}."
+            )
 
         values["type_dist_total"] = f"{type_total:.4f}"
 

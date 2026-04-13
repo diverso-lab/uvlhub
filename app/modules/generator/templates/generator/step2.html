@@ -174,7 +174,7 @@
                     </div>
 
                     <div class="mt-2" id="type_dist_sum_display"
-                        style="font-weight:bold; color:{% if (values.get('type_dist_total', '0.0000')|float) > 1.0 %}red{% else %}green{% endif %};">
+                        style="font-weight:bold; color:{% if values.get('type_dist_total', '0.0000') != '1.0000' %}red{% else %}green{% endif %};">
                         Type dist sum: <span id="type_dist_sum">{{ values.get('type_dist_total', '0.0000') }}</span>
                     </div>
 
@@ -183,7 +183,7 @@
                     {% endif %}
 
                     <small class="text-muted d-block mt-2">
-                        Note: the sum does not need to be 1.0. The remaining probability corresponds to regular Boolean-level features without explicit type.
+                        Note: the sum of Boolean, Integer, Float and String distributions must be exactly 1.0.
                     </small>
                 </div>
             </div>
@@ -443,7 +443,7 @@ document.addEventListener("DOMContentLoaded", function () {
             sumEl.innerText = sum.toFixed(4);
         }
         if (displayEl) {
-            displayEl.style.color = (sum <= 1.001) ? 'green' : 'red';
+            displayEl.style.color = (Math.abs(sum - 1.0) < 0.001) ? 'green' : 'red';
         }
     }
 
