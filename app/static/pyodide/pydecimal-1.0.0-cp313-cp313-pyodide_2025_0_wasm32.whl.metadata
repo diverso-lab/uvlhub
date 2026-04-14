@@ -1,0 +1,5 @@
+Metadata-Version: 2.4
+Name: pydecimal
+Version: 1.0.0
+Summary: Unvendored pydecimal for Pyodide
+Author: Pyodide

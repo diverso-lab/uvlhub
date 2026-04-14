@@ -1,0 +1,5 @@
+Metadata-Version: 2.4
+Name: test-dummy
+Version: 1.0.0
+Summary: Just a dummy package for testing Pyodide package loading logics
+Author: Pyodide

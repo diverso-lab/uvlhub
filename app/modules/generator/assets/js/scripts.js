@@ -19,60 +19,66 @@ class NavigatorExecutor {
   /**
    * Carga Pyodide, micropip y todos los wheels desde /static/js
    */
-  async loadFlamapy() {
-    // 1) Carga Pyodide
-    const pythonFile = await fetch("/static/js/fmgen_wrapper.py");
-    console.log("🚀 Loading Pyodide…");
-    const pyodide = await window.loadPyodide({
-      indexURL: '/static/pyodide'
-    });
-    await pyodide.loadPackage('micropip');
-    await pyodide.loadPackage('packaging');
-    console.log("📦 micropip + packaging ready");
+async loadFlamapy() {
+  const pythonFile = await fetch("/static/js/fmgen_wrapper.py");
 
-    // 2) Instala todos los wheels en bloque
-    const wheels = [
-      'afmparser-1.0.3-py3-none-any.whl',
-      'antlr4_python3_runtime-4.13.1-py3-none-any.whl',
-      'astutils-0.0.6-py3-none-any.whl',
-      'blinker-1.9.0-py3-none-any.whl',
-      'dd-0.5.7-py3-none-any.whl',
-      'flamapy_bdd-2.5.0-py3-none-any.whl',
-      'flamapy_configurator-2.0.1-py3-none-any.whl',
-      'flamapy_fm-2.5.0-py3-none-any.whl',
-      'flamapy_fw-2.5.0-py3-none-any.whl',
-      'flamapy_sat-2.5.0-py3-none-any.whl',
-      'flamapy-2.5.0-py3-none-any.whl',
-      'flask-3.1.0-py3-none-any.whl',
-      'fm_generator-0.0.1-py3-none-any.whl',
-      'graphviz-0.20-py3-none-any.whl',
-      'itsdangerous-2.2.0-py3-none-any.whl',
-      'networkx-3.4.2-py3-none-any.whl',
-      'ply-3.11-py2.py3-none-any.whl',
-      'pydot-4.0.0-py3-none-any.whl',
-      'setuptools-80.9.0-py3-none-any.whl',
-      'six-1.17.0-py2.py3-none-any.whl',
-      'uvlparser-2.0.1-py3-none-any.whl',
-      'werkzeug-3.1.3-py3-none-any.whl'
-    ];
+  console.log("🚀 Loading Pyodide...");
+  const pyodide = await window.loadPyodide({
+    indexURL: "/static/pyodide/"
+  });
 
-    console.log("📦 Installing wheels…");
-    for (let wheel of wheels) {
-      const url = `/static/js/${wheel}`;
-      await pyodide.runPythonAsync(`
-        import micropip
-        await micropip.install("${url}", deps=False)
-        print("✅ Installed ${wheel}")
-      `);
-    }
+  console.log("Loading micropip, packaging");
+  await pyodide.loadPackage("micropip");
+  await pyodide.loadPackage("packaging");
 
-    console.log("✅ All wheels installed");
-    this.pyodide = pyodide;
+  console.log("Loading python-sat, six");
+  await pyodide.loadPackage("six");
+  await pyodide.loadPackage("python-sat");
 
-    await pyodide.runPythonAsync(await pythonFile.text())
-      .then(() => console.log("Wrapper detected"))
-      .catch((e) => console.error("There was an error trying to find the wrapper", e))
+  console.log("📦 micropip + packaging + python-sat ready");
+
+  const wheels = [
+    'afmparser-1.0.3-py3-none-any.whl',
+    'antlr4_python3_runtime-4.13.1-py3-none-any.whl',
+    'astutils-0.0.6-py3-none-any.whl',
+    'blinker-1.9.0-py3-none-any.whl',
+    'dd-0.5.7-py3-none-any.whl',
+    'flamapy_bdd-2.5.0-py3-none-any.whl',
+    'flamapy_configurator-2.0.1-py3-none-any.whl',
+    'flamapy_fm-2.5.0-py3-none-any.whl',
+    'flamapy_fw-2.5.0-py3-none-any.whl',
+    'flamapy_sat-2.5.0-py3-none-any.whl',
+    'flamapy-2.5.0-py3-none-any.whl',
+    'flask-3.1.0-py3-none-any.whl',
+    'fm_generator-0.0.1-py3-none-any.whl',
+    'graphviz-0.20-py3-none-any.whl',
+    'itsdangerous-2.2.0-py3-none-any.whl',
+    'networkx-3.4.2-py3-none-any.whl',
+    'ply-3.11-py2.py3-none-any.whl',
+    'pydot-4.0.0-py3-none-any.whl',
+    'setuptools-80.9.0-py3-none-any.whl',
+    'six-1.17.0-py2.py3-none-any.whl',
+    'uvlparser-2.0.1-py3-none-any.whl',
+    'werkzeug-3.1.3-py3-none-any.whl'
+  ];
+
+  console.log("📦 Installing wheels...");
+  for (let wheel of wheels) {
+    const url = `/static/js/${wheel}`;
+    await pyodide.runPythonAsync(`
+import micropip
+await micropip.install("${url}", deps=False)
+print("✅ Installed ${wheel}")
+    `);
   }
+
+  console.log("✅ All wheels installed");
+  this.pyodide = pyodide;
+
+  await pyodide.runPythonAsync(await pythonFile.text())
+    .then(() => console.log("Wrapper detected"))
+    .catch((e) => console.error("There was an error trying to find the wrapper", e));
+}
 
 
   async generateModels() {
