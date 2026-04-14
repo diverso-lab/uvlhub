@@ -518,8 +518,8 @@ def step2():
     )
 
 
-def validate_step3_form(form, max_features: int = 10000):
-
+def validate_step3_form(form, max_features: int = 10000, params_dict=None):
+    params_dict = params_dict or {}
     errors = {}
     values = {}
 
@@ -659,19 +659,8 @@ def validate_step3_form(form, max_features: int = 10000):
     values["boolop_sum"] = f"{prob_sum_boolean:.4f}"
 
     # 6) ARITHMETIC LEVEL + AGGREGATE FUNCTIONS
-    arithmetic_level_checked = form.get("arithmetic_level") in [
-        "on",
-        "true",
-        "1",
-        True,
-    ]
-
-    aggregate_functions_checked = form.get("aggregate_functions") in [
-        "on",
-        "true",
-        "1",
-        True,
-    ]
+    arithmetic_level_checked = bool(params_dict.get("ARITHMETIC_LEVEL", False))
+    aggregate_functions_checked = bool(params_dict.get("AGGREGATE_FUNCTIONS", False))
 
     if arithmetic_level_checked:
         try:
@@ -746,13 +735,8 @@ def validate_step3_form(form, max_features: int = 10000):
         values["cmp_sum"] = "1.0000"
 
     # 8) TYPE LEVEL / STRING CONSTRAINTS
-    type_level_checked = form.get("type_level") in ["on", "true", "1", True]
-    string_constraints_checked = form.get("string_constraints") in [
-        "on",
-        "true",
-        "1",
-        True,
-    ]
+    type_level_checked = bool(params_dict.get("TYPE_LEVEL", False))
+    string_constraints_checked = bool(params_dict.get("STRING_CONSTRAINTS", False))
 
     if string_constraints_checked and type_level_checked:
         try:
@@ -863,12 +847,12 @@ def step3():
         # Extraer max_features de params_dict
         max_feats = params_dict.get("MAX_FEATURES", 10000)
 
-        errors, values = validate_step3_form(request.form, max_feats)
+        errors, values = validate_step3_form(request.form, max_feats, params_dict)
 
-        values["arithmetic_level"] = "arithmetic_level" in request.form
-        values["aggregate_functions"] = "aggregate_functions" in request.form
-        values["type_level"] = "type_level" in request.form
-        values["string_constraints"] = "string_constraints" in request.form
+        values["arithmetic_level"] = bool(params_dict.get("ARITHMETIC_LEVEL", False))
+        values["aggregate_functions"] = bool(params_dict.get("AGGREGATE_FUNCTIONS", False))
+        values["type_level"] = bool(params_dict.get("TYPE_LEVEL", False))
+        values["string_constraints"] = bool(params_dict.get("STRING_CONSTRAINTS", False))
 
         if errors:
             print(f"[VALIDACIÓN STEP3] Errores detectados: {errors}")
