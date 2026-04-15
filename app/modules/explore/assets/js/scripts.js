@@ -86,6 +86,12 @@ const pageSize = 10;
 let isFetching = false;
 let activeController = null;
 let latestRequestId = 0;
+let hasMore = true;
+
+// Track mouse button state to prevent DOM clearing mid-click
+let isMouseDown = false;
+document.addEventListener('mousedown', () => { isMouseDown = true; });
+document.addEventListener('mouseup', () => { isMouseDown = false; });
 
 function runSearch(reset = true) {
     const fromInput = document.getElementById('filter-date-from');
@@ -106,10 +112,11 @@ function runSearch(reset = true) {
 
     if (reset) {
         currentPage = 1;
+        hasMore = true;
         if (activeController) {
             activeController.abort();
         }
-    } else if (isFetching) {
+    } else if (isFetching || !hasMore) {
         return;
     }
 
@@ -144,7 +151,11 @@ function runSearch(reset = true) {
                 return;
             }
 
-            renderResults(data.results, !reset);
+            const append = !reset;
+            if (data.results.length < pageSize) {
+                hasMore = false;
+            }
+            renderResults(data.results, append);
 
             if (data.results.length > 0) {
                 currentPage++;
@@ -173,6 +184,16 @@ window.addEventListener('scroll', () => {
 
 
 function renderResults(results, append = false) {
+    // If the user has a mouse button held down (mid-click), defer the render
+    // so we don't destroy the link element between mousedown and mouseup.
+    if (!append && isMouseDown) {
+        document.addEventListener('mouseup', function handler() {
+            document.removeEventListener('mouseup', handler);
+            renderResults(results, append);
+        }, { once: true });
+        return;
+    }
+
     const container = document.getElementById('results-container');
     const notFound = document.getElementById('no-results');
 
