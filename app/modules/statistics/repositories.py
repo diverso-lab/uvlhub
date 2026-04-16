@@ -69,22 +69,14 @@ class StatisticsRepository(BaseRepository):
         statistics = self.get_statistics()
 
         synchronized_dataset_ids = (
-            self.session.query(DataSet.id)
-            .join(DSMetaData)
-            .filter(DSMetaData.dataset_doi.isnot(None))
-            .scalar_subquery()
+            self.session.query(DataSet.id).join(DSMetaData).filter(DSMetaData.dataset_doi.isnot(None)).scalar_subquery()
         )
 
         statistics.datasets_counter = (
-            self.session.query(DataSet)
-            .join(DSMetaData)
-            .filter(DSMetaData.dataset_doi.isnot(None))
-            .count()
+            self.session.query(DataSet).join(DSMetaData).filter(DSMetaData.dataset_doi.isnot(None)).count()
         )
         statistics.feature_models_counter = (
-            self.session.query(FeatureModel)
-            .filter(FeatureModel.dataset_id.in_(synchronized_dataset_ids))
-            .count()
+            self.session.query(FeatureModel).filter(FeatureModel.dataset_id.in_(synchronized_dataset_ids)).count()
         )
         statistics.datasets_viewed = self.session.query(DSViewRecord).count()
         statistics.feature_models_viewed = self.session.query(HubfileViewRecord).count()
