@@ -13,6 +13,8 @@ class StatisticsRepository(BaseRepository):
         if statistics is None:
             # If no registry exists, create a new registry with default values
             statistics = Statistics(
+                datasets_counter=0,
+                feature_models_counter=0,
                 datasets_viewed=0,
                 feature_models_viewed=0,
                 datasets_downloaded=0,
@@ -61,16 +63,33 @@ class StatisticsRepository(BaseRepository):
         return statistics.feature_models_downloaded
 
     def refresh_statistics(self) -> Statistics:
-        statistics = self.get_statistics()
-        datasets_viewed = self.session.query(DSViewRecord).count()
-        feature_models_viewed = self.session.query(HubfileViewRecord).count()
-        datasets_downloaded = self.session.query(DSDownloadRecord).count()
-        feature_models_downloaded = self.session.query(HubfileDownloadRecord).count()
+        from app.modules.dataset.models import DataSet, DSMetaData
+        from app.modules.featuremodel.models import FeatureModel
 
-        statistics.datasets_viewed = datasets_viewed
-        statistics.feature_models_viewed = feature_models_viewed
-        statistics.datasets_downloaded = datasets_downloaded
-        statistics.feature_models_downloaded = feature_models_downloaded
+        statistics = self.get_statistics()
+
+        synchronized_dataset_ids = (
+            self.session.query(DataSet.id)
+            .join(DSMetaData)
+            .filter(DSMetaData.dataset_doi.isnot(None))
+            .scalar_subquery()
+        )
+
+        statistics.datasets_counter = (
+            self.session.query(DataSet)
+            .join(DSMetaData)
+            .filter(DSMetaData.dataset_doi.isnot(None))
+            .count()
+        )
+        statistics.feature_models_counter = (
+            self.session.query(FeatureModel)
+            .filter(FeatureModel.dataset_id.in_(synchronized_dataset_ids))
+            .count()
+        )
+        statistics.datasets_viewed = self.session.query(DSViewRecord).count()
+        statistics.feature_models_viewed = self.session.query(HubfileViewRecord).count()
+        statistics.datasets_downloaded = self.session.query(DSDownloadRecord).count()
+        statistics.feature_models_downloaded = self.session.query(HubfileDownloadRecord).count()
 
         self.session.commit()
         return statistics
