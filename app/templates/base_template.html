@@ -439,6 +439,22 @@
 										<!--begin:Menu item-->
 										<div class="menu-item">
 											<!--begin:Menu link-->
+											<a class="menu-link {{ 'active' if request.endpoint == 'statistics.index' else '' }}" href="{{ url_for('statistics.index') }}">
+												<span class="menu-icon">
+													<i class="ki-duotone ki-chart-line-up fs-2">
+														<span class="path1"></span>
+														<span class="path2"></span>
+													</i>
+												</span>
+												<span class="menu-title">Dashboard</span>
+											</a>
+											<!--end:Menu link-->
+										</div>
+										<!--end:Menu item-->
+
+										<!--begin:Menu item-->
+										<div class="menu-item">
+											<!--begin:Menu link-->
 											<a class="menu-link {{ 'active' if request.endpoint == 'team.index' else '' }}" href="{{ url_for('team.index') }}">
 												<span class="menu-icon">
 													<i class="ki-duotone ki-people fs-2">
