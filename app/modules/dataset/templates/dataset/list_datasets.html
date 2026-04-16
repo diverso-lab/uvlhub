@@ -150,6 +150,7 @@
                             <a href="{{ url_for('dataset.get_unsynchronized_dataset', dataset_id=dataset.id) }}">
                                 {{ dataset.ds_meta_data.title }}
                             </a>
+                            <span class="badge badge-light-info ms-2">Unsynchronized</span>
                         </td>
                         <td>{{ dataset.get_publication() }}</td>
                         <td>{{ dataset.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
