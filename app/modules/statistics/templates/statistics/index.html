@@ -1,6 +1,45 @@
 {% extends "base_template.html" %}
 {% set title = "Dashboard" %}
 
+{% macro _top_table(title_, rows, value_label, badge_class, icon) -%}
+<div class="card h-100">
+    <div class="card-header">
+        <h3 class="card-title">
+            <i data-feather="{{ icon }}" class="me-2"></i>
+            {{ title_ }}
+        </h3>
+    </div>
+    <div class="card-body p-0">
+        {% if rows %}
+        <table class="table table-row-dashed align-middle mb-0">
+            <thead>
+                <tr class="text-muted fw-bold fs-7 text-uppercase">
+                    <th class="ps-6">Dataset</th>
+                    <th class="text-end pe-6">{{ value_label }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                <tr>
+                    <td class="ps-6">
+                        <a href="{{ row.doi_url }}" class="text-gray-800 text-hover-primary fw-semibold">
+                            {{ row.title }}
+                        </a>
+                    </td>
+                    <td class="text-end pe-6">
+                        <span class="badge {{ badge_class }}">{{ row.value }}</span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="text-muted p-6 mb-0">No data available.</p>
+        {% endif %}
+    </div>
+</div>
+{%- endmacro %}
+
 {% block breadcrumb %}
 <ol class="breadcrumb text-muted fs-6 fw-semibold">
     <li class="breadcrumb-item"><a href="/">Home</a></li>
@@ -16,7 +55,7 @@
         <div class="card text-center h-100">
             <div class="card-body py-4">
                 <i data-feather="database" class="mb-2 text-primary" style="width:28px;height:28px;"></i>
-                <div class="fs-2 fw-bold">{{ total_datasets }}</div>
+                <div class="fs-2 fw-bold">{{ dashboard.total_datasets }}</div>
                 <div class="text-muted fs-7">Datasets</div>
             </div>
         </div>
@@ -25,7 +64,7 @@
         <div class="card text-center h-100">
             <div class="card-body py-4">
                 <i data-feather="file" class="mb-2 text-info" style="width:28px;height:28px;"></i>
-                <div class="fs-2 fw-bold">{{ total_feature_models }}</div>
+                <div class="fs-2 fw-bold">{{ dashboard.total_feature_models }}</div>
                 <div class="text-muted fs-7">Feature models</div>
             </div>
         </div>
@@ -34,7 +73,7 @@
         <div class="card text-center h-100">
             <div class="card-body py-4">
                 <i data-feather="users" class="mb-2 text-warning" style="width:28px;height:28px;"></i>
-                <div class="fs-2 fw-bold">{{ total_authors }}</div>
+                <div class="fs-2 fw-bold">{{ dashboard.total_authors }}</div>
                 <div class="text-muted fs-7">Authors</div>
             </div>
         </div>
@@ -43,7 +82,7 @@
         <div class="card text-center h-100">
             <div class="card-body py-4">
                 <i data-feather="eye" class="mb-2 text-success" style="width:28px;height:28px;"></i>
-                <div class="fs-2 fw-bold">{{ total_views }}</div>
+                <div class="fs-2 fw-bold">{{ dashboard.total_views }}</div>
                 <div class="text-muted fs-7">Dataset views</div>
             </div>
         </div>
@@ -52,7 +91,7 @@
         <div class="card text-center h-100">
             <div class="card-body py-4">
                 <i data-feather="download" class="mb-2 text-danger" style="width:28px;height:28px;"></i>
-                <div class="fs-2 fw-bold">{{ total_downloads }}</div>
+                <div class="fs-2 fw-bold">{{ dashboard.total_downloads }}</div>
                 <div class="text-muted fs-7">Downloads</div>
             </div>
         </div>
@@ -61,14 +100,14 @@
         <div class="card text-center h-100">
             <div class="card-body py-4">
                 <i data-feather="layers" class="mb-2 text-secondary" style="width:28px;height:28px;"></i>
-                <div class="fs-2 fw-bold">{{ avg_models_per_dataset }}</div>
+                <div class="fs-2 fw-bold">{{ dashboard.avg_models_per_dataset }}</div>
                 <div class="text-muted fs-7">Avg models/dataset</div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Timeline -->
+<!-- Uploads chart -->
 <div class="card mb-6">
     <div class="card-header">
         <h3 class="card-title">
@@ -77,8 +116,8 @@
         </h3>
     </div>
     <div class="card-body">
-        {% if timeline_labels %}
-        <canvas id="timelineChart" height="80"></canvas>
+        {% if dashboard.months %}
+        <canvas id="uploadsChart" height="80"></canvas>
         {% else %}
         <p class="text-muted mb-0">No data available for the last 12 months.</p>
         {% endif %}
@@ -86,91 +125,17 @@
 </div>
 
 <div class="row g-4 mb-6">
-
-    <!-- Top datasets by feature models -->
     <div class="col-lg-6">
-        <div class="card h-100">
-            <div class="card-header">
-                <h3 class="card-title">
-                    <i data-feather="award" class="me-2 text-primary"></i>
-                    Datasets with most feature models
-                </h3>
-            </div>
-            <div class="card-body p-0">
-                {% if top_datasets_by_models %}
-                <table class="table table-row-dashed align-middle mb-0">
-                    <thead>
-                        <tr class="text-muted fw-bold fs-7 text-uppercase">
-                            <th class="ps-6">Dataset</th>
-                            <th class="text-end pe-6">Models</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for dataset, count in top_datasets_by_models %}
-                        <tr>
-                            <td class="ps-6">
-                                <a href="{{ dataset.get_uvlhub_doi() }}" class="text-gray-800 text-hover-primary fw-semibold">
-                                    {{ dataset.ds_meta_data.title | truncate(50) }}
-                                </a>
-                            </td>
-                            <td class="text-end pe-6">
-                                <span class="badge badge-light-primary">{{ count }}</span>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                {% else %}
-                <p class="text-muted p-6 mb-0">No data available.</p>
-                {% endif %}
-            </div>
-        </div>
+        {{ _top_table("Datasets with most feature models", dashboard.top_by_models, "Models",
+                      "badge-light-primary", "award") }}
     </div>
-
-    <!-- Top datasets by features -->
     <div class="col-lg-6">
-        <div class="card h-100">
-            <div class="card-header">
-                <h3 class="card-title">
-                    <i data-feather="zap" class="me-2 text-warning"></i>
-                    Datasets with most features
-                </h3>
-            </div>
-            <div class="card-body p-0">
-                {% if top_datasets_by_features %}
-                <table class="table table-row-dashed align-middle mb-0">
-                    <thead>
-                        <tr class="text-muted fw-bold fs-7 text-uppercase">
-                            <th class="ps-6">Dataset</th>
-                            <th class="text-end pe-6">Features</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for dataset, n_features in top_datasets_by_features %}
-                        <tr>
-                            <td class="ps-6">
-                                <a href="{{ dataset.get_uvlhub_doi() }}" class="text-gray-800 text-hover-primary fw-semibold">
-                                    {{ dataset.ds_meta_data.title | truncate(50) }}
-                                </a>
-                            </td>
-                            <td class="text-end pe-6">
-                                <span class="badge badge-light-warning">{{ n_features }}</span>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                {% else %}
-                <p class="text-muted p-6 mb-0">No data available.</p>
-                {% endif %}
-            </div>
-        </div>
+        {{ _top_table("Datasets with most features", dashboard.top_by_features, "Features",
+                      "badge-light-warning", "zap") }}
     </div>
 </div>
 
 <div class="row g-4 mb-6">
-
-    <!-- Datasets by publication type -->
     <div class="col-lg-6">
         <div class="card h-100">
             <div class="card-header">
@@ -180,7 +145,7 @@
                 </h3>
             </div>
             <div class="card-body p-0">
-                {% if datasets_by_type %}
+                {% if dashboard.publication_types %}
                 <table class="table table-row-dashed align-middle mb-0">
                     <thead>
                         <tr class="text-muted fw-bold fs-7 text-uppercase">
@@ -189,11 +154,9 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for pub_type, count in datasets_by_type %}
+                        {% for pub_type, count in dashboard.publication_types %}
                         <tr>
-                            <td class="ps-6 fw-semibold text-gray-700">
-                                {{ pub_type.name.replace('_', ' ').title() }}
-                            </td>
+                            <td class="ps-6 fw-semibold text-gray-700">{{ pub_type }}</td>
                             <td class="text-end pe-6">
                                 <span class="badge badge-light-info">{{ count }}</span>
                             </td>
@@ -207,50 +170,13 @@
             </div>
         </div>
     </div>
-
-    <!-- Latest datasets -->
     <div class="col-lg-6">
-        <div class="card h-100">
-            <div class="card-header">
-                <h3 class="card-title">
-                    <i data-feather="clock" class="me-2 text-success"></i>
-                    Most recently uploaded datasets
-                </h3>
-            </div>
-            <div class="card-body p-0">
-                {% if latest_datasets %}
-                <table class="table table-row-dashed align-middle mb-0">
-                    <thead>
-                        <tr class="text-muted fw-bold fs-7 text-uppercase">
-                            <th class="ps-6">Dataset</th>
-                            <th class="text-end pe-6">Date</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for dataset in latest_datasets %}
-                        <tr>
-                            <td class="ps-6">
-                                <a href="{{ dataset.get_uvlhub_doi() }}" class="text-gray-800 text-hover-primary fw-semibold">
-                                    {{ dataset.ds_meta_data.title | truncate(45) }}
-                                </a>
-                            </td>
-                            <td class="text-end pe-6 text-muted fs-7">
-                                {{ dataset.created_at.strftime('%d %b %Y') }}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                {% else %}
-                <p class="text-muted p-6 mb-0">No datasets found.</p>
-                {% endif %}
-            </div>
-        </div>
+        {{ _top_table("Most recently uploaded datasets", dashboard.latest_datasets, "Date",
+                      "badge-light-success", "clock") }}
     </div>
-
 </div>
 
-<!-- Activity chart: downloads and views per month -->
+<!-- Activity chart -->
 <div class="card mb-6">
     <div class="card-header">
         <h3 class="card-title">
@@ -259,7 +185,7 @@
         </h3>
     </div>
     <div class="card-body">
-        {% if all_months %}
+        {% if dashboard.months %}
         <canvas id="activityChart" height="80"></canvas>
         {% else %}
         <p class="text-muted mb-0">No activity data available for the last 12 months.</p>
@@ -267,199 +193,34 @@
     </div>
 </div>
 
-<!-- Top views / downloads / configurations -->
 <div class="row g-4 mb-6">
-
-    <!-- Top 5 most viewed -->
     <div class="col-lg-4">
-        <div class="card h-100">
-            <div class="card-header">
-                <h3 class="card-title">
-                    <i data-feather="trending-up" class="me-2 text-success"></i>
-                    Trending Datasets
-                </h3>
-            </div>
-            <div class="card-body p-0">
-                {% if top_datasets_by_views %}
-                <table class="table table-row-dashed align-middle mb-0">
-                    <thead>
-                        <tr class="text-muted fw-bold fs-7 text-uppercase">
-                            <th class="ps-6">Dataset</th>
-                            <th class="text-end pe-6">Views</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for dataset, count in top_datasets_by_views %}
-                        <tr>
-                            <td class="ps-6">
-                                <a href="{{ dataset.get_uvlhub_doi() }}" class="text-gray-800 text-hover-primary fw-semibold">
-                                    {{ dataset.ds_meta_data.title | truncate(40) }}
-                                </a>
-                            </td>
-                            <td class="text-end pe-6">
-                                <span class="badge badge-light-success">{{ count }}</span>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                {% else %}
-                <p class="text-muted p-6 mb-0">No data available.</p>
-                {% endif %}
-            </div>
-        </div>
+        {{ _top_table("Most viewed datasets", dashboard.top_by_views, "Views",
+                      "badge-light-success", "eye") }}
     </div>
-
-    <!-- Top 5 most downloaded -->
     <div class="col-lg-4">
-        <div class="card h-100">
-            <div class="card-header">
-                <h3 class="card-title">
-                    <i data-feather="download" class="me-2 text-danger"></i>
-                    Most Downloaded Datasets
-                </h3>
-            </div>
-            <div class="card-body p-0">
-                {% if top_datasets_by_downloads %}
-                <table class="table table-row-dashed align-middle mb-0">
-                    <thead>
-                        <tr class="text-muted fw-bold fs-7 text-uppercase">
-                            <th class="ps-6">Dataset</th>
-                            <th class="text-end pe-6">Downloads</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for dataset, count in top_datasets_by_downloads %}
-                        <tr>
-                            <td class="ps-6">
-                                <a href="{{ dataset.get_uvlhub_doi() }}" class="text-gray-800 text-hover-primary fw-semibold">
-                                    {{ dataset.ds_meta_data.title | truncate(40) }}
-                                </a>
-                            </td>
-                            <td class="text-end pe-6">
-                                <span class="badge badge-light-danger">{{ count }}</span>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                {% else %}
-                <p class="text-muted p-6 mb-0">No data available.</p>
-                {% endif %}
-            </div>
-        </div>
+        {{ _top_table("Most downloaded datasets", dashboard.top_by_downloads, "Downloads",
+                      "badge-light-danger", "download") }}
     </div>
-
-    <!-- Top 5 by configurations (number_of_models) -->
     <div class="col-lg-4">
-        <div class="card h-100">
-            <div class="card-header">
-                <h3 class="card-title">
-                    <i data-feather="sliders" class="me-2 text-secondary"></i>
-                    Most Configurable Datasets
-                </h3>
-            </div>
-            <div class="card-body p-0">
-                {% if top_datasets_by_configurations %}
-                <table class="table table-row-dashed align-middle mb-0">
-                    <thead>
-                        <tr class="text-muted fw-bold fs-7 text-uppercase">
-                            <th class="ps-6">Dataset</th>
-                            <th class="text-end pe-6">Configs</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for dataset, n_models in top_datasets_by_configurations %}
-                        <tr>
-                            <td class="ps-6">
-                                <a href="{{ dataset.get_uvlhub_doi() }}" class="text-gray-800 text-hover-primary fw-semibold">
-                                    {{ dataset.ds_meta_data.title | truncate(40) }}
-                                </a>
-                            </td>
-                            <td class="text-end pe-6">
-                                <span class="badge badge-light-secondary">{{ n_models }}</span>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                {% else %}
-                <p class="text-muted p-6 mb-0">No data available.</p>
-                {% endif %}
-            </div>
-        </div>
+        {{ _top_table("Most configurable datasets", dashboard.top_by_configurations, "Configs",
+                      "badge-light-secondary", "sliders") }}
     </div>
-
 </div>
+
+{# Serialise the chart series as JSON so the bundled scripts.js can pick them
+   up without needing any server-side string interpolation inside <script>. #}
+<script id="dashboard-data" type="application/json">
+{
+    "months": {{ dashboard.months | tojson }},
+    "uploads": {{ dashboard.uploads_per_month | tojson }},
+    "views": {{ dashboard.views_per_month | tojson }},
+    "downloads": {{ dashboard.downloads_per_month | tojson }}
+}
+</script>
 
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-{% if timeline_labels %}
-<script>
-const ctx = document.getElementById('timelineChart').getContext('2d');
-new Chart(ctx, {
-    type: 'bar',
-    data: {
-        labels: {{ timeline_labels | tojson }},
-        datasets: [{
-            label: 'Datasets uploaded',
-            data: {{ timeline_data | tojson }},
-            backgroundColor: 'rgba(54, 153, 255, 0.2)',
-            borderColor: 'rgba(54, 153, 255, 1)',
-            borderWidth: 2,
-            borderRadius: 4,
-        }]
-    },
-    options: {
-        responsive: true,
-        plugins: { legend: { display: false } },
-        scales: {
-            y: { beginAtZero: true, ticks: { stepSize: 1 } }
-        }
-    }
-});
-</script>
-{% endif %}
-{% if all_months %}
-<script>
-const actCtx = document.getElementById('activityChart').getContext('2d');
-new Chart(actCtx, {
-    type: 'line',
-    data: {
-        labels: {{ all_months | tojson }},
-        datasets: [
-            {
-                label: 'Downloads',
-                data: {{ activity_downloads | tojson }},
-                backgroundColor: 'rgba(246, 78, 96, 0.1)',
-                borderColor: 'rgba(246, 78, 96, 1)',
-                borderWidth: 2,
-                tension: 0.3,
-                fill: true,
-                pointRadius: 4,
-            },
-            {
-                label: 'Views',
-                data: {{ activity_views | tojson }},
-                backgroundColor: 'rgba(80, 205, 137, 0.1)',
-                borderColor: 'rgba(80, 205, 137, 1)',
-                borderWidth: 2,
-                tension: 0.3,
-                fill: true,
-                pointRadius: 4,
-            }
-        ]
-    },
-    options: {
-        responsive: true,
-        plugins: { legend: { display: true, position: 'top' } },
-        scales: {
-            y: { beginAtZero: true, ticks: { stepSize: 1 } }
-        }
-    }
-});
-</script>
-{% endif %}
+<script type="module" src="{{ url_for('statistics.assets', subfolder='dist', filename='statistics.bundle.js') }}"></script>
 {% endblock %}
