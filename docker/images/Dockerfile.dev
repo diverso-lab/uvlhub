@@ -17,7 +17,6 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends nodejs \
     && node -v \
     && npm -v \
-    && npm install -g npm@11 npx \
     && curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg \
     && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(. /etc/os-release && echo "$VERSION_CODENAME") stable" \
         > /etc/apt/sources.list.d/docker.list \
@@ -45,6 +44,8 @@ COPY docker/ ./docker
 COPY --chmod=0755 scripts/ ./scripts/
 
 RUN pip install -e ./
+
+RUN pip install --no-cache-dir -e ./app/modules/generator/vendor
 
 RUN find . -type d -name "__pycache__" -exec rm -r {} + \
  && find . -type f -name "*.pyc" -exec rm -f {} +

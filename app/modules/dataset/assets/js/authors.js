@@ -112,7 +112,7 @@ function generateUniqueId() {
 }
 
 // Global index counter for authors (used in name attributes)
-let authorIndex = 0;
+let authorIndex = Number(window.initialAuthorIndex || 0);
 
 export function initializeAuthors() {
     // Botón "Add author"
@@ -122,7 +122,9 @@ export function initializeAuthors() {
 
         const rendered = Mustache.render(template, {
             id: uniqueId,
-            index: authorIndex
+            nameField: `authors[${authorIndex}][name]`,
+            affiliationField: `authors[${authorIndex}][affiliation]`,
+            orcidField: `authors[${authorIndex}][orcid]`
         });
 
         document.getElementById('authors-container').insertAdjacentHTML('beforeend', rendered);
@@ -181,16 +183,18 @@ export function initializeAuthors() {
             const template = document.getElementById('author-template').innerHTML;
             const rendered = Mustache.render(template, {
                 id: uniqueId,
-                index: authorIndex
+                nameField: `authors[${authorIndex}][name]`,
+                affiliationField: `authors[${authorIndex}][affiliation]`,
+                orcidField: `authors[${authorIndex}][orcid]`
             });
 
             document.getElementById('authors-container').insertAdjacentHTML('beforeend', rendered);
 
             // Rellenar campos del bloque recién creado
             const base = document.getElementById(`author-${uniqueId}`);
-            base.querySelector(`input[name="authors${authorIndex}[name]"]`).value = `${data.name} ${data.surname}`;
-            base.querySelector(`input[name="authors${authorIndex}[affiliation]"]`).value = data.affiliation || "";
-            base.querySelector(`input[name="authors${authorIndex}[orcid]"]`).value = data.orcid || "";
+            base.querySelector('.author-name').value = `${data.name} ${data.surname}`;
+            base.querySelector('.author-affiliation').value = data.affiliation || "";
+            base.querySelector('.orcid-input').value = data.orcid || "";
 
             // Deshabilitar botón "myself" hasta que se borre
             btn.dataset.myselfId = uniqueId;

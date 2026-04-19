@@ -23,15 +23,7 @@ class FeatureModelService(BaseService):
         return self.hubfile_service.total_hubfile_downloads()
 
     def count_feature_models(self):
-
-        from app.modules.dataset.services import DataSetService
-
-        dataset_service = DataSetService()
-        synchronized_datasets = dataset_service.get_synchronized_datasets()
-
-        total_feature_models = sum(dataset.feature_model_count for dataset in synchronized_datasets)
-
-        return total_feature_models
+        return self.repository.count_feature_models()
 
     def create_from_uvl_files(self, dataset, base_dir: str = None) -> list[FeatureModel]:
         """

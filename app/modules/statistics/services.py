@@ -35,3 +35,6 @@ class StatisticsService(BaseService):
 
     def get_feature_models_downloaded(self) -> int:
         return self.repository.get_feature_models_downloaded()
+
+    def refresh_statistics(self) -> Statistics:
+        return self.repository.refresh_statistics()

@@ -13,6 +13,7 @@ from app.modules.dataset.services import (
     DatasetMetadataValidationError,
     DataSetService,
 )
+from app.modules.zenodo.services import ZenodoUnavailableError
 
 
 @pytest.fixture(scope="module")
@@ -151,6 +152,7 @@ def _mock_dataset_for_edit():
     dataset.ds_meta_data.deposition_id = None
     dataset.ds_meta_data.publication_type = None
     dataset.ds_meta_data.dataset_anonymous = False
+    dataset.ds_meta_data.metadata_synced = True
     dataset.ds_meta_data.tags = ""
     return dataset
 
@@ -190,7 +192,7 @@ def test_update_metadata_from_request_success():
         patch("app.modules.dataset.services.os.path.exists", return_value=True),
         patch("app.modules.dataset.services.shutil.rmtree"),
     ):
-        service.update_metadata_from_request(dataset, form_data, zenodo_service=zenodo_service)
+        result = service.update_metadata_from_request(dataset, form_data, zenodo_service=zenodo_service)
 
     assert dataset.ds_meta_data.title == "Updated dataset"
     assert dataset.ds_meta_data.description == "Updated description"
@@ -201,6 +203,8 @@ def test_update_metadata_from_request_success():
     assert len(dataset.ds_meta_data.authors) == 2
     assert dataset.ds_meta_data.deposition_id == 101
     assert dataset.ds_meta_data.dataset_doi == "10.5072/zenodo.101"
+    assert dataset.ds_meta_data.metadata_synced is True
+    assert result == {"metadata_synced": True, "sync_deferred": False}
     service.repository.session.commit.assert_called_once()
 
 
@@ -389,10 +393,37 @@ def test_update_metadata_from_request_synced_dataset_updates_zenodo_deposition()
         [("title", "Updated dataset"), ("description", "Updated description"), ("dataset_type", "zenodo")]
     )
 
-    service.update_metadata_from_request(dataset, form_data, zenodo_service=zenodo_service)
+    result = service.update_metadata_from_request(dataset, form_data, zenodo_service=zenodo_service)
 
     zenodo_service.build_metadata.assert_called_once()
     zenodo_service.update_deposition.assert_called_once_with(99, {"title": "Updated dataset"})
+    assert dataset.ds_meta_data.metadata_synced is True
+    assert result == {"metadata_synced": True, "sync_deferred": False}
+    service.repository.session.commit.assert_called_once()
+
+
+def test_update_metadata_from_request_synced_dataset_saves_locally_when_zenodo_is_unavailable():
+    service = DataSetService()
+    service.repository.session = MagicMock()
+    dataset = _mock_dataset_for_edit()
+    dataset.id = 42
+    dataset.ds_meta_data.dataset_doi = "10.1234/demo"
+    dataset.ds_meta_data.deposition_id = 99
+
+    zenodo_service = MagicMock()
+    zenodo_service.build_metadata.return_value = {"title": "Updated dataset"}
+    zenodo_service.update_deposition.side_effect = ZenodoUnavailableError("Zenodo is currently unavailable.")
+
+    form_data = MultiDict(
+        [("title", "Updated dataset"), ("description", "Updated description"), ("dataset_type", "zenodo")]
+    )
+
+    result = service.update_metadata_from_request(dataset, form_data, zenodo_service=zenodo_service)
+
+    assert dataset.ds_meta_data.title == "Updated dataset"
+    assert dataset.ds_meta_data.description == "Updated description"
+    assert dataset.ds_meta_data.metadata_synced is False
+    assert result == {"metadata_synced": False, "sync_deferred": True}
     service.repository.session.commit.assert_called_once()
 
 
@@ -430,6 +461,7 @@ def test_update_metadata_from_request_synced_dataset_to_draft_clears_zenodo_fiel
 
     assert dataset.ds_meta_data.dataset_doi is None
     assert dataset.ds_meta_data.deposition_id is None
+    assert dataset.ds_meta_data.metadata_synced is True
     zenodo_service.update_deposition.assert_not_called()
     service.repository.session.commit.assert_called_once()
 
@@ -462,7 +494,26 @@ def test_update_metadata_from_request_unsynced_dataset_to_zenodo_publishes_and_s
     zenodo_service.publish_deposition.assert_called_once_with(101)
     assert dataset.ds_meta_data.deposition_id == 101
     assert dataset.ds_meta_data.dataset_doi == "10.5072/zenodo.101"
+    assert dataset.ds_meta_data.metadata_synced is True
     service.repository.session.commit.assert_called_once()
+
+
+def test_update_metadata_from_request_unsynced_dataset_to_zenodo_still_fails_when_zenodo_is_unavailable():
+    service = DataSetService()
+    service.repository.session = MagicMock()
+    dataset = _mock_dataset_for_edit()
+
+    zenodo_service = MagicMock()
+    zenodo_service.create_new_deposition.side_effect = ZenodoUnavailableError("Zenodo is currently unavailable.")
+
+    form_data = MultiDict(
+        [("title", "Updated dataset"), ("description", "Updated description"), ("dataset_type", "zenodo")]
+    )
+
+    with pytest.raises(DatasetMetadataUpdateError, match="Zenodo is currently unavailable"):
+        service.update_metadata_from_request(dataset, form_data, zenodo_service=zenodo_service)
+
+    service.repository.session.rollback.assert_called_once()
 
 
 def test_resolve_download_formats_defaults_to_all_available():

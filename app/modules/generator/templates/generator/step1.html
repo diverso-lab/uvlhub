@@ -1,0 +1,49 @@
+{% extends "generator/index.html" %}
+{% from "generator/_macros.html" import info, number_field, check_field %}
+
+{% block title %}Generate random feature models{% endblock %}
+
+{% block wizard_content %}
+<div class="row g-8">
+    <div class="col-xl-8">
+
+        {{ number_field('num_models_val', 'Number of models',
+            'How many random feature models to generate in this batch.',
+            values, errors, default=5, min=1) }}
+
+        {{ number_field('seed', 'Seed',
+            'Random seed used to make runs reproducible. Same seed + same parameters = same models.',
+            values, errors, default=42, min=1) }}
+
+        <div class="mb-7">
+            <label for="name_prefix" class="form-label d-flex align-items-center">
+                Name prefix
+                {{ info("Prefix used when naming the generated UVL files (e.g. 'fm' produces fm_0.uvl, fm_1.uvl…).") }}
+            </label>
+            <input type="text" id="name_prefix" name="name_prefix"
+                   placeholder="fm"
+                   value="{{ values.get('name_prefix', '') }}"
+                   class="form-control form-control-solid">
+        </div>
+
+        <div class="separator separator-dashed my-7"></div>
+
+        <div class="d-flex flex-column gap-4">
+            {{ check_field('ensure_satisfiable', 'Ensure satisfiable',
+                'If on, the generator rejects unsatisfiable models and keeps sampling until it gets a valid one.',
+                values) }}
+            {{ check_field('feature_count_suffix', 'Append feature count to filename',
+                "Adds '_Nf' to each filename, where N is the number of features of that model.",
+                values) }}
+            {{ check_field('constraint_count_suffix', 'Append constraint count to filename',
+                "Adds '_Nc' to each filename, where N is the number of cross-tree constraints of that model.",
+                values) }}
+        </div>
+
+        {% if errors.get('global') %}
+            <div class="alert alert-danger mt-7">{{ errors['global'] }}</div>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}

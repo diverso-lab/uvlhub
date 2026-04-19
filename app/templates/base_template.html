@@ -471,6 +471,22 @@
 										</div>
 										<!--end:Menu item-->
 
+										<!--begin:Menu item-->
+										<div class="menu-item">
+											<!--begin:Menu link-->
+											<a class="menu-link {{ 'active' if request.endpoint and request.endpoint.startswith('generator.') else '' }}" href="{{ url_for('generator.landing') }}">
+												<span class="menu-icon">
+													<i class="ki-duotone ki-abstract-26 fs-2">
+														<span class="path1"></span>
+														<span class="path2"></span>
+													</i>
+												</span>
+												<span class="menu-title">Generate models</span>
+											</a>
+											<!--end:Menu link-->
+										</div>
+										<!--end:Menu item-->
+
 										{% if current_user.is_anonymous %}
 
 										<div class="menu-item pt-5">

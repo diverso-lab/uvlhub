@@ -34,11 +34,31 @@ packages = ["rosemary"]
 [tool.black]
 line-length = 120
 target-version = ["py313"]
+# Skip vendored third-party sources — we track them but don't own their style.
+extend-exclude = '''
+/(
+    .*/vendor
+  | .*/node_modules
+  | .*/migrations
+)/
+'''
 
 [tool.isort]
 line_length = 120
 profile = "black"
+extend_skip_glob = [
+    "*/vendor/*",
+    "*/node_modules/*",
+    "*/migrations/*",
+]
 
 [tool.flake8]
 max-line-length = 120
 extend-ignore = ["E203", "W503"]
+# Additive to flake8's built-in excludes. `vendor/` holds bundled third-party
+# source distributed as wheels; style debt there isn't ours to fix.
+extend-exclude = [
+    "*/vendor/*",
+    "*/node_modules/*",
+    "*/migrations/*",
+]
