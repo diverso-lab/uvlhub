@@ -28,6 +28,7 @@ from qrcode.image.styledpil import StyledPilImage
 from qrcode.image.styles.moduledrawers.pil import RoundedModuleDrawer
 from werkzeug.utils import secure_filename
 
+from app import db
 from app.modules.apikeys.decorators import require_api_key
 from app.modules.auth.services import AuthenticationService
 from app.modules.dataset import dataset_bp
@@ -243,9 +244,39 @@ def edit_metadata(dataset_id):
     if request.method == "POST":
         is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
         try:
-            dataset_service.update_metadata_from_request(dataset, request.form, zenodo_service=zenodo_service)
+            update_result = dataset_service.update_metadata_from_request(
+                dataset,
+                request.form,
+                zenodo_service=zenodo_service,
+            )
+            if update_result.get("sync_deferred"):
+                warning_message = (
+                    "Dataset metadata updated locally. Zenodo is currently unavailable, "
+                    "so synchronization is still pending."
+                )
+                flash(warning_message, "warning")
+                if is_ajax:
+                    return (
+                        jsonify(
+                            {
+                                "message": warning_message,
+                                "metadata_synced": False,
+                                "sync_deferred": True,
+                            }
+                        ),
+                        200,
+                    )
             if is_ajax:
-                return jsonify({"message": "Dataset updated successfully"}), 200
+                return (
+                    jsonify(
+                        {
+                            "message": "Dataset updated successfully",
+                            "metadata_synced": update_result.get("metadata_synced", True),
+                            "sync_deferred": False,
+                        }
+                    ),
+                    200,
+                )
             flash("Dataset updated successfully!", "success")
         except DatasetMetadataValidationError as exc:
             if is_ajax:
@@ -517,6 +548,29 @@ def get_unsynchronized_dataset(dataset_id):
         abort(404)
 
     return render_template("dataset/view_dataset.html", dataset=dataset, hubfiles=hubfiles)
+
+
+@dataset_bp.route("/datasets/retry-sync/<int:dataset_id>", methods=["POST"])
+@login_required
+@is_dataset_owner
+def retry_sync_dataset(dataset_id):
+    dataset = dataset_service.get_or_404(dataset_id)
+
+    if not dataset.ds_meta_data.dataset_doi:
+        return jsonify({"error": "Dataset is not synchronized with Zenodo yet"}), 400
+
+    if dataset.ds_meta_data.metadata_synced:
+        return jsonify({"error": "Dataset metadata is already in sync"}), 400
+
+    try:
+        dataset_service._sync_metadata_in_zenodo_if_needed(dataset, zenodo_service)
+        dataset.ds_meta_data.metadata_synced = True
+        db.session.commit()
+    except Exception as exc:
+        logger.exception(f"[RETRY SYNC ERROR] {exc}")
+        return jsonify({"error": f"Zenodo sync failed: {exc}"}), 500
+
+    return jsonify({"message": "Metadata successfully synced to Zenodo"}), 200
 
 
 @dataset_bp.route("/datasets/sync/<int:dataset_id>", methods=["POST", "GET"])
