@@ -13,6 +13,7 @@ services:
       - ../.env
     volumes:
       - ../:/app
+      - /app/node_modules
       - /var/run/docker.sock:/var/run/docker.sock
     command: [ "bash", "-c", "bash /app/docker/entrypoints/webhook_entrypoint.sh" ]
     restart: always
@@ -31,6 +32,7 @@ services:
       - ../.env
     volumes:
       - ../:/app
+      - /app/node_modules
       - /var/run/docker.sock:/var/run/docker.sock
     command: [ "bash", "-c", "bash /app/docker/entrypoints/worker_entrypoint.sh" ]
     restart: always
