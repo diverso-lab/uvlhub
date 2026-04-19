@@ -64,6 +64,9 @@ COPY --chmod=0755 scripts/ ./scripts/
 # Install Rosemary as editable
 RUN pip install -e ./
 
+# Install vendored fm_generator (server-side use in app/modules/generator/routes.py)
+RUN pip install --no-cache-dir -e ./app/modules/generator/vendor
+
 # Create the .moduleignore file with the module 'webhook' inside
 RUN echo "webhook" > /app/.moduleignore
 
