@@ -9,6 +9,7 @@ Pyodide, install ~20 wheels, and load the wrapper. Once the runtime promise
 resolves, the browser-side stack is healthy — the actual `generate_models`
 call is already exercised server-side by `test_wizard_flow.py`.
 """
+
 import pytest
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
@@ -25,14 +26,12 @@ def _submit_next(driver, expected_url_fragment, wait):
     We bypass `button.click()` because on steps 1-4 the Pyodide loading modal
     sits on top of the Next button and intercepts pointer events."""
     before = driver.current_url
-    driver.execute_script(
-        """
+    driver.execute_script("""
         const btn = document.querySelector("button[name='nav'][value='next']");
         const form = btn && btn.form;
         if (!form) throw new Error("next button or parent form missing");
         form.requestSubmit(btn);
-        """
-    )
+        """)
     try:
         wait.until(EC.url_contains(expected_url_fragment))
     except TimeoutException:
@@ -102,16 +101,12 @@ def test_wizard_reaches_step5_with_pyodide_ready():
         # Wait for Pyodide to finish booting. The bundle stores a Promise at
         # window.__generatorRuntime and resolves it once wheels + wrapper are
         # loaded; catching the resolution is the contract we care about.
-        pyodide_wait.until(
-            lambda d: d.execute_script(
-                """
+        pyodide_wait.until(lambda d: d.execute_script("""
                 const rt = window.__generatorRuntime;
                 if (!rt) return false;
                 return rt.then(() => window.__pyodideReady = true, () => window.__pyodideError = true),
                        !!window.__pyodideReady || !!window.__pyodideError;
-                """
-            )
-        )
+                """))
         boot_error = driver.execute_script("return window.__pyodideError === true;")
         assert not boot_error, "Pyodide bootstrap rejected — check browser console"
         has_runtime = driver.execute_script(
