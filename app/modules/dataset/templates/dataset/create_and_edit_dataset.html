@@ -47,7 +47,7 @@
                 </div>
                 <!--end::Step 1-->
                 <!--begin::Step 2-->
-                <div class="stepper-item" data-kt-stepper-element="nav">
+                <div class="stepper-item" data-kt-stepper-element="nav" {% if is_edit %}style="display:none"{% endif %}>
                     <!--begin::Wrapper-->
                     <div class="stepper-wrapper">
                         <!--begin::Icon-->
@@ -335,8 +335,9 @@
 </div>
 
 <script>
-    var isEditMode = {{ 'true' if is_edit else 'false' }};
+    window.isEditMode = {{ 'true' if is_edit else 'false' }};
     window.initialDropzoneFiles = {{ preloaded_temp_files | default([], true) | tojson }};
+    window.initialAuthorIndex = {{ dataset.ds_meta_data.authors | length if dataset and dataset.ds_meta_data and dataset.ds_meta_data.authors else 0 }};
 
     /**
      * CORRECCIÓN 1: Prevenir errores de "myDropzone is not defined"
@@ -361,11 +362,19 @@
             if (uvlNavItem) {
                 var observer = new MutationObserver(function () {
                     if (!uvlNavItem.classList.contains('current')) return;
-                    var goingForward = navItems[0].classList.contains('completed');
                     setTimeout(function () {
                         var instance = KTStepper.getInstance(stepperEl);
                         if (!instance) return;
-                        goingForward ? instance.goNext() : instance.goPrevious();
+                        var currentStep = typeof instance.getCurrentStepIndex === 'function'
+                            ? instance.getCurrentStepIndex()
+                            : null;
+                        var previousStep = typeof instance.getPreviousStepIndex === 'function'
+                            ? instance.getPreviousStepIndex()
+                            : null;
+                        var goingForward = previousStep === null || currentStep === null
+                            ? true
+                            : previousStep < currentStep;
+                        goingForward ? instance.goTo(3) : instance.goTo(1);
                     }, 0);
                 });
                 observer.observe(uvlNavItem, { attributes: true, attributeFilter: ['class'] });
@@ -375,6 +384,7 @@
         // ── 2. Interceptar submit para edición ──────────────────────────────
         var submitBtn = document.querySelector('[data-kt-stepper-action="submit"]');
         var continueBtn = document.querySelector('[data-kt-stepper-action="next"]');
+        var previousBtn = document.querySelector('[data-kt-stepper-action="previous"]');
         var errorContainer = document.getElementById('upload-error');
         var datasetId = {{ dataset.id | tojson if dataset else 'null' }};
         var editUrl = {{ url_for('dataset.edit_metadata', dataset_id=dataset.id) | tojson if dataset else 'null' }};
@@ -478,6 +488,36 @@
             }
 
             return '';
+        }
+
+        function getStepperInstance() {
+            return stepperEl ? KTStepper.getInstance(stepperEl) : null;
+        }
+
+        if (continueBtn) {
+            continueBtn.addEventListener('click', function (e) {
+                var stepperInstance = getStepperInstance();
+                var currentStep = stepperInstance ? stepperInstance.getCurrentStepIndex() : null;
+
+                if (stepperInstance && currentStep === 1) {
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                    stepperInstance.goTo(3);
+                }
+            }, true);
+        }
+
+        if (previousBtn) {
+            previousBtn.addEventListener('click', function (e) {
+                var stepperInstance = getStepperInstance();
+                var currentStep = stepperInstance ? stepperInstance.getCurrentStepIndex() : null;
+
+                if (stepperInstance && currentStep === 3) {
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                    stepperInstance.goTo(1);
+                }
+            }, true);
         }
 
         if (submitBtn && datasetId) {
@@ -659,19 +699,19 @@
             <div class="row mb-3">
                 <div class="col-md-6">
                     <label class="form-label">Name *</label>
-                    <input type="text" name="authors[[index]][name]" class="form-control author-name" value="[[name]]" required>
+                    <input type="text" name="[[nameField]]" class="form-control author-name" value="[[name]]" required>
                     <div class="invalid-feedback"></div>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Affiliation</label>
-                    <input type="text" name="authors[[index]][affiliation]" class="form-control author-affiliation" value="[[affiliation]]">
+                    <input type="text" name="[[affiliationField]]" class="form-control author-affiliation" value="[[affiliation]]">
                     <div class="invalid-feedback"></div>
                 </div>
             </div>
             <div class="row mb-3">
                 <div class="col-md-12">
                     <label class="form-label">ORCID</label>
-                    <input type="text" name="authors[[index]][orcid]" class="form-control orcid-input" value="[[orcid]]">
+                    <input type="text" name="[[orcidField]]" class="form-control orcid-input" value="[[orcid]]">
                     <div class="invalid-feedback"></div>
                 </div>
             </div>

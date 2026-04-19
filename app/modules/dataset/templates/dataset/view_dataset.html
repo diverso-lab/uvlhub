@@ -15,6 +15,38 @@
 
     <div class="row">
 
+        {% if not dataset.ds_meta_data.dataset_doi %}
+        <div class="col-12 mb-5">
+            <div class="alert alert-info d-flex align-items-center">
+                <i class="ki-duotone ki-information-5 fs-2 me-3">
+                    <span class="path1"></span>
+                    <span class="path2"></span>
+                    <span class="path3"></span>
+                </i>
+                <div>
+                    <strong>Local dataset</strong> — This dataset has not been synchronized with Zenodo yet.
+                    It is only stored locally and is not publicly visible.
+                    {% if dataset.user_id == current_user.id %}
+                        <a href="{{ url_for('dataset.list_datasets') }}" class="alert-link ms-1">Go to My datasets</a> to publish it.
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% elif not dataset.is_metadata_synchronized() %}
+        <div class="col-12 mb-5">
+            <div class="alert alert-danger d-flex align-items-center">
+                <i class="ki-duotone ki-wifi-square fs-2 me-3">
+                    <span class="path1"></span>
+                    <span class="path2"></span>
+                </i>
+                <div>
+                    <strong>No connection to Zenodo</strong> — Metadata changes are saved locally but could not be pushed to Zenodo.
+                    The public record on Zenodo is out of date until the connection is restored and synchronization completes.
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
         <div class="col-12 mb-5">
 
             <div class="card">
@@ -25,6 +57,11 @@
                             <span class="badge bg-secondary">{{ dataset.get_cleaned_publication_type() }}</span>
                             {% if dataset.ds_meta_data.dataset_anonymous %}
                                 <span class="badge bg-secondary">Anonymous dataset</span>
+                            {% endif %}
+                            {% if not dataset.ds_meta_data.dataset_doi %}
+                                <span class="badge badge-light-info">Unsynchronized</span>
+                            {% elif not dataset.is_metadata_synchronized() %}
+                                <span class="badge badge-light-danger">Pending Zenodo sync</span>
                             {% endif %}
                             <p class="text-muted mt-2 mb-1">
                                 {{ dataset.created_at.strftime('%B %d, %Y at %I:%M %p') }}
