@@ -42,3 +42,10 @@ profile = "black"
 [tool.flake8]
 max-line-length = 120
 extend-ignore = ["E203", "W503"]
+# Additive to flake8's built-in excludes. `vendor/` holds bundled third-party
+# source distributed as wheels; style debt there isn't ours to fix.
+extend-exclude = [
+    "*/vendor/*",
+    "*/node_modules/*",
+    "*/migrations/*",
+]

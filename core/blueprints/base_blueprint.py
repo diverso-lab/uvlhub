@@ -1,9 +1,11 @@
 import os
 
-from flask import Blueprint, Response, abort
+from flask import Blueprint, abort, send_from_directory
 
 
 class BaseBlueprint(Blueprint):
+    ALLOWED_ASSET_SUBFOLDERS = ("js", "css", "dist")
+
     def __init__(
         self,
         name,
@@ -34,7 +36,6 @@ class BaseBlueprint(Blueprint):
         """Define a dynamic route to serve any file inside subfolders under assets (e.g., js, css)."""
         assets_folder = os.path.join(self.module_path, "assets")
         if os.path.exists(assets_folder):
-            # Define a route for any file inside the 'assets' folder and its subfolders
             self.add_url_rule(
                 f"/{self.name}/<path:subfolder>/<path:filename>",
                 "assets",
@@ -44,27 +45,20 @@ class BaseBlueprint(Blueprint):
             print(f"(BaseBlueprint) -> {assets_folder} does not exist.")
 
     def send_file(self, subfolder, filename):
-        """Send any file located in the specified subfolder within the assets folder."""
-        file_path = os.path.join(self.module_path, "assets", subfolder, filename)
+        """Serve a file from the module's assets/<subfolder>/ tree.
 
-        if filename == "webpack.config.js":
+        Uses send_from_directory so binary assets (wheels, wasm, zip) stream
+        correctly with the right MIME type instead of being read as text.
+        """
+        if filename.endswith("webpack.config.js") or os.path.basename(filename) == "webpack.config.js":
             abort(403, description="Access to this file is forbidden")
 
-        # Check if the file exists and is located within a valid subfolder (e.g., js, css)
-        if os.path.exists(file_path) and subfolder in ["js", "css", "dist"]:
-            try:
-                # Detect the correct MIME type based on file extension
-                if filename.endswith(".js"):
-                    mimetype = "application/javascript"
-                elif filename.endswith(".css"):
-                    mimetype = "text/css"
-                else:
-                    mimetype = "text/plain"
-
-                with open(file_path, "r") as file:
-                    file_content = file.read()
-                return Response(file_content, mimetype=mimetype)
-            except FileNotFoundError:
-                abort(404, description=f"File not found: {file_path}")
-        else:
+        top = subfolder.split("/", 1)[0]
+        if top not in self.ALLOWED_ASSET_SUBFOLDERS:
             abort(404, description=f"Invalid path or file: {subfolder}/{filename}")
+
+        assets_root = os.path.join(self.module_path, "assets", subfolder)
+        if not os.path.isdir(assets_root):
+            abort(404, description=f"Invalid path or file: {subfolder}/{filename}")
+
+        return send_from_directory(assets_root, filename)
