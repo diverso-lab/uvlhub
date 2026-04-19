@@ -58,14 +58,24 @@
                                     <span class="path3"></span>
                                 </i>
                             </a>
-                            <a href="{{ url_for('dataset.edit_metadata', dataset_id=dataset.id) }}" 
-                               class="btn btn-sm btn-icon btn-light-primary me-1" 
+                            <a href="{{ url_for('dataset.edit_metadata', dataset_id=dataset.id) }}"
+                               class="btn btn-sm btn-icon btn-light-primary me-1"
                                title="Edit Metadata">
                                 <i class="ki-duotone ki-pencil fs-2">
                                     <span class="path1"></span>
                                     <span class="path2"></span>
                                 </i>
                             </a>
+                            {% if not dataset.is_metadata_synchronized() %}
+                            <a href="javascript:void(0);"
+                               class="btn btn-sm btn-icon btn-light-warning me-1 btn-retry-sync"
+                               data-dataset-id="{{ dataset.id }}"
+                               title="Retry sync to Zenodo"
+                               data-bs-toggle="tooltip"
+                               data-bs-placement="top">
+                                <span class="fw-bold" style="font-size: 1rem; font-family: sans-serif;">Z</span>
+                            </a>
+                            {% endif %}
                             <div class="position-relative d-inline-block">
                                 <button class="btn btn-sm btn-icon btn-light-success"
                                         title="Download"
@@ -236,6 +246,44 @@
 </div>
 {% endif %}
 
+<div class="modal fade" tabindex="-1" id="retrySyncConfirmModal">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title d-flex align-items-center">
+          <span class="fw-bold me-2" style="font-size: 1.2rem; font-family: sans-serif;">Z</span>
+          Retry sync to Zenodo
+        </h5>
+        <button type="button" class="btn btn-sm btn-icon" data-bs-dismiss="modal">
+          <i class="ki-duotone ki-cross fs-2"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div id="retrySyncStatusAlert" class="alert d-flex align-items-center mb-4">
+          <span class="me-3 fw-bold" id="retrySyncAlertIcon" style="font-size: 1.6rem; line-height: 1; font-family: sans-serif;">Z</span>
+          <div>
+            <strong id="retrySyncAlertTitle"></strong><br>
+            <span class="fs-7" id="retrySyncAlertBody"></span>
+          </div>
+        </div>
+        <p class="fw-semibold text-gray-700">
+          This will attempt to push the pending metadata changes to Zenodo.
+        </p>
+        <p class="text-muted fs-7">
+          Make sure you have an active internet connection before retrying.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-warning" id="confirmRetrySyncBtn">
+          <span class="fw-bold me-2" style="font-size: 1rem; font-family: sans-serif;">Z</span>
+          <span class="btn-text">Retry now</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal fade" tabindex="-1" id="syncConfirmModal">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
@@ -284,6 +332,77 @@
 
 
 {% block scripts %}
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    let selectedRetrySyncDatasetId = null;
+    const retrySyncBtn = document.getElementById("confirmRetrySyncBtn");
+    const retrySyncBtnText = retrySyncBtn.querySelector(".btn-text");
+
+    const alertEl     = document.getElementById("retrySyncStatusAlert");
+    const alertIcon   = document.getElementById("retrySyncAlertIcon");
+    const alertTitle  = document.getElementById("retrySyncAlertTitle");
+    const alertBody   = document.getElementById("retrySyncAlertBody");
+
+    function setRetrySyncAlert(available) {
+        if (available) {
+            alertEl.className = "alert alert-success d-flex align-items-center mb-4";
+            alertIcon.className = "me-3 fw-bold text-success";
+            alertTitle.textContent = "Zenodo is now available.";
+            alertBody.textContent = "The connection has been restored. Your pending changes can now be pushed.";
+        } else {
+            alertEl.className = "alert alert-warning d-flex align-items-center mb-4";
+            alertIcon.className = "me-3 fw-bold text-warning";
+            alertTitle.textContent = "Zenodo is currently unavailable.";
+            alertBody.textContent = "Metadata changes are saved locally but could not be pushed to Zenodo.";
+        }
+    }
+
+    $("#synchronizedDatasetsTable").on("click", ".btn-retry-sync", function (e) {
+        e.preventDefault();
+        selectedRetrySyncDatasetId = this.dataset.datasetId;
+
+        // Estado de carga mientras comprueba
+        alertEl.className = "alert alert-secondary d-flex align-items-center mb-4";
+        alertIcon.className = "me-3 fw-bold text-muted";
+        alertTitle.textContent = "Checking Zenodo connection…";
+        alertBody.textContent = "";
+
+        const modal = new bootstrap.Modal(document.getElementById("retrySyncConfirmModal"));
+        modal.show();
+
+        fetch("/zenodo/test")
+            .then(r => r.json())
+            .then(data => setRetrySyncAlert(data.success === true))
+            .catch(() => setRetrySyncAlert(false));
+    });
+
+    retrySyncBtn.addEventListener("click", function () {
+        if (!selectedRetrySyncDatasetId) return;
+
+        retrySyncBtn.disabled = true;
+        retrySyncBtnText.textContent = "Syncing...";
+        retrySyncBtn.insertAdjacentHTML("beforeend", '<span class="spinner-border spinner-border-sm ms-2"></span>');
+
+        fetch(`/datasets/retry-sync/${selectedRetrySyncDatasetId}`, { method: "POST" })
+            .then(r => r.json())
+            .then(data => {
+                if (data.message) {
+                    toastr.success(data.message);
+                    location.reload();
+                } else {
+                    toastr.error(data.error || "Failed to retry sync.");
+                }
+            })
+            .catch(err => toastr.error("Unexpected error: " + err))
+            .finally(() => {
+                retrySyncBtn.disabled = false;
+                retrySyncBtnText.textContent = "Retry now";
+                retrySyncBtn.querySelector(".spinner-border")?.remove();
+            });
+    });
+});
+</script>
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
