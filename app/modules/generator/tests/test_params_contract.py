@@ -10,6 +10,7 @@ These assert that:
    dict that Params can accept without raising. This is the contract test
    that would have caught 1.0007 and EXTRA_CONSTRAINT_REPRESENTATIVENESS=0.5.
 """
+
 from dataclasses import fields
 
 from fm_generator.FMGenerator.models.config import Params
@@ -25,9 +26,15 @@ def test_arith_keys_exist_in_params():
     # function body in routes.py, not at module scope. We re-declare the
     # contract here so the test is self-documenting.
     arith = {
-        "PROB_SUM", "PROB_SUBSTRACT", "PROB_MULTIPLY", "PROB_DIVIDE",
-        "PROB_EQUALS", "PROB_LESS", "PROB_GREATER",
-        "PROB_LESS_EQUALS", "PROB_GREATER_EQUALS",
+        "PROB_SUM",
+        "PROB_SUBSTRACT",
+        "PROB_MULTIPLY",
+        "PROB_DIVIDE",
+        "PROB_EQUALS",
+        "PROB_LESS",
+        "PROB_GREATER",
+        "PROB_LESS_EQUALS",
+        "PROB_GREATER_EQUALS",
     }
     agg = {"PROB_SUM_FUNCTION", "PROB_AVG_FUNCTION"}
     str_keys = {"PROB_LEN_FUNCTION"}

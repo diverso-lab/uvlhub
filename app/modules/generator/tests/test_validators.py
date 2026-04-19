@@ -4,6 +4,7 @@ These run against the pure validator functions (no DB, no request context)
 and drive each branch with parametrised inputs. A regression here catches
 the kind of locale/tolerance bugs that reached production.
 """
+
 from werkzeug.datastructures import MultiDict
 
 from app.modules.generator.routes import (
@@ -13,8 +14,8 @@ from app.modules.generator.routes import (
     validate_step3_form,
 )
 
-
 # ── _safe_float ───────────────────────────────────────────────────────────
+
 
 def test_safe_float_accepts_dot():
     assert _safe_float("0.5") == 0.5
@@ -39,6 +40,7 @@ def test_safe_float_empty_returns_default():
 
 # ── step1 ─────────────────────────────────────────────────────────────────
 
+
 def test_step1_happy_path():
     errors, _ = validate_step1_form(MultiDict({"num_models_val": "5", "seed": "42"}))
     assert errors == {}
@@ -61,6 +63,7 @@ def test_step1_rejects_negative_seed():
 
 # ── step2 ─────────────────────────────────────────────────────────────────
 
+
 def _valid_step2(**overrides):
     base = {
         "num_features_min": "5",
@@ -81,9 +84,7 @@ def test_step2_happy_path():
 
 
 def test_step2_rejects_min_gt_max():
-    errors, _ = validate_step2_form(
-        _valid_step2(num_features_min="30", num_features_max="10")
-    )
+    errors, _ = validate_step2_form(_valid_step2(num_features_min="30", num_features_max="10"))
     assert "num_features_max" in errors
 
 
@@ -116,6 +117,7 @@ def test_step2_rejects_clearly_wrong_sum():
 
 # ── step3 ─────────────────────────────────────────────────────────────────
 
+
 def _valid_step3(**overrides):
     base = {
         "num_constraints_min": "1",
@@ -146,9 +148,7 @@ def test_step3_rejects_extra_constraint_repr_as_decimal():
 
 
 def test_step3_rejects_extra_constraint_repr_gt_vars_max():
-    errors, _ = validate_step3_form(
-        _valid_step3(extra_constraint_repr="10", vars_per_ctc_max="3")
-    )
+    errors, _ = validate_step3_form(_valid_step3(extra_constraint_repr="10", vars_per_ctc_max="3"))
     assert "extra_constraint_repr" in errors
 
 
@@ -161,18 +161,14 @@ def test_step3_boolops_sum_within_tolerance():
 
 
 def test_step3_boolops_sum_wildly_wrong():
-    errors, _ = validate_step3_form(
-        _valid_step3(prob_and="0.9", prob_or="0.9", prob_implies="0", prob_equiv="0")
-    )
+    errors, _ = validate_step3_form(_valid_step3(prob_and="0.9", prob_or="0.9", prob_implies="0", prob_equiv="0"))
     assert "boolop_sum" in errors
     assert "Current sum" in errors["boolop_sum"]
 
 
 def test_step3_arithmetic_only_when_level_enabled():
     """If arithmetic_level is off, the arithmetic-sum check should not fire."""
-    errors, _ = validate_step3_form(
-        _valid_step3(prob_plus="0", prob_minus="0", prob_times="0", prob_div="0")
-    )
+    errors, _ = validate_step3_form(_valid_step3(prob_plus="0", prob_minus="0", prob_times="0", prob_div="0"))
     assert "arithmetic_sum" not in errors
 
 
@@ -180,7 +176,10 @@ def test_step3_arithmetic_sum_enforced_when_level_on():
     errors, _ = validate_step3_form(
         _valid_step3(
             arithmetic_level="on",
-            prob_plus="0.9", prob_minus="0.9", prob_times="0", prob_div="0",
+            prob_plus="0.9",
+            prob_minus="0.9",
+            prob_times="0",
+            prob_div="0",
         )
     )
     assert "arithmetic_sum" in errors

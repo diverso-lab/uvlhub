@@ -10,12 +10,11 @@ none of them can regress silently:
 - Back navigation preserving state
 - /generator/random and /generator/llm routes
 """
+
 import json
 
 import pytest
-
 from fm_generator.FMGenerator.models.config import Params
-
 
 STEP1 = {"num_models_val": "3", "seed": "42", "name_prefix": "fm"}
 STEP2 = {
@@ -66,6 +65,7 @@ def _walk_happy_path(client, step2=None, step3=None, step4=None):
 
 # ── Routes & top-level shape ─────────────────────────────────────────────
 
+
 def test_landing_is_reachable(client):
     assert client.get("/generator").status_code == 200
     assert client.get("/generator/").status_code == 200
@@ -85,6 +85,7 @@ def test_llm_placeholder_renders(client):
 
 # ── Session recovery ─────────────────────────────────────────────────────
 
+
 def test_advancing_with_no_session_redirects_to_landing(client):
     """Formerly returned a 400 "Error: Params missing in session" — now we
     redirect the user back to /generator so they can restart cleanly. This
@@ -96,6 +97,7 @@ def test_advancing_with_no_session_redirects_to_landing(client):
 
 
 # ── Happy path + contract ────────────────────────────────────────────────
+
 
 def test_full_happy_path_produces_valid_params(client):
     _walk_happy_path(client)
@@ -114,25 +116,30 @@ def test_step5_renders_when_session_ready(client):
 
 # ── Regression: 1.0007 slider sum ─────────────────────────────────────────
 
+
 def test_parent_child_slider_sum_1p0007_renormalises(client):
     """The slider rounds each segment to 4 decimals, which can leave up to
     0.0007 residue. The route must renormalise to exactly 1.0 before
     constructing Params."""
     client.post("/generator/random/step1", data=STEP1)
     poisoned = dict(STEP2)
-    poisoned.update({
-        "dist_optional": "0.2502",
-        "dist_mandatory": "0.2502",
-        "dist_alternative": "0.2502",
-        "dist_or": "0.2501",
-    })
+    poisoned.update(
+        {
+            "dist_optional": "0.2502",
+            "dist_mandatory": "0.2502",
+            "dist_alternative": "0.2502",
+            "dist_or": "0.2501",
+        }
+    )
     r = client.post("/generator/random/step2", data=poisoned)
     assert r.status_code == 302  # reached step3, Params built OK
 
     params = json.loads(client.get("/generator/random/params-json").data)
     total = (
-        params["DIST_OPTIONAL"] + params["DIST_MANDATORY"]
-        + params["DIST_ALTERNATIVE"] + params["DIST_OR"]
+        params["DIST_OPTIONAL"]
+        + params["DIST_MANDATORY"]
+        + params["DIST_ALTERNATIVE"]
+        + params["DIST_OR"]
         + params["DIST_GROUP_CARDINALITY"]
     )
     assert abs(total - 1.0) < 1e-6
@@ -140,22 +147,19 @@ def test_parent_child_slider_sum_1p0007_renormalises(client):
 
 # ── Regression: boolean-ops sum residue ───────────────────────────────────
 
+
 def test_boolean_ops_residue_renormalises(client):
     _walk_happy_path(
         client,
-        step3={**STEP3,
-               "prob_and": "0.3334", "prob_or": "0.3333",
-               "prob_implies": "0.1667", "prob_equiv": "0.1666"},
+        step3={**STEP3, "prob_and": "0.3334", "prob_or": "0.3333", "prob_implies": "0.1667", "prob_equiv": "0.1666"},
     )
     params = json.loads(client.get("/generator/random/params-json").data)
-    total = (
-        params["PROB_AND"] + params["PROB_OR_CT"]
-        + params["PROB_IMPLICATION"] + params["PROB_EQUIVALENCE"]
-    )
+    total = params["PROB_AND"] + params["PROB_OR_CT"] + params["PROB_IMPLICATION"] + params["PROB_EQUIVALENCE"]
     assert abs(total - 1.0) < 1e-6
 
 
 # ── Regression: EXTRA_CONSTRAINT_REPRESENTATIVENESS "0.5" ─────────────────
+
 
 def test_extra_constraint_representativeness_is_int_in_session(client):
     _walk_happy_path(client)
@@ -166,19 +170,25 @@ def test_extra_constraint_representativeness_is_int_in_session(client):
 
 # ── Regression: Spanish-locale decimal comma ──────────────────────────────
 
+
 def test_spanish_locale_decimal_comma_is_accepted(client):
     _walk_happy_path(
         client,
-        step3={**STEP3,
-               "prob_not": "0,3",
-               "prob_and": "0,4", "prob_or": "0,2",
-               "prob_implies": "0,2", "prob_equiv": "0,2"},
+        step3={
+            **STEP3,
+            "prob_not": "0,3",
+            "prob_and": "0,4",
+            "prob_or": "0,2",
+            "prob_implies": "0,2",
+            "prob_equiv": "0,2",
+        },
     )
     params = json.loads(client.get("/generator/random/params-json").data)
     assert params["PROB_NOT"] == pytest.approx(0.3)
 
 
 # ── Regression: back navigation keeps state ───────────────────────────────
+
 
 def test_back_nav_from_step3_preserves_step2_choices(client):
     # Advance to step3 with a specific max_features

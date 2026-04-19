@@ -34,10 +34,23 @@ packages = ["rosemary"]
 [tool.black]
 line-length = 120
 target-version = ["py313"]
+# Skip vendored third-party sources — we track them but don't own their style.
+extend-exclude = '''
+/(
+    .*/vendor
+  | .*/node_modules
+  | .*/migrations
+)/
+'''
 
 [tool.isort]
 line_length = 120
 profile = "black"
+extend_skip_glob = [
+    "*/vendor/*",
+    "*/node_modules/*",
+    "*/migrations/*",
+]
 
 [tool.flake8]
 max-line-length = 120

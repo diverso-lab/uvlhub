@@ -388,9 +388,15 @@ def step2():
         # dataclass (note: PROB_SUM/PROB_SUBSTRACT are the arithmetic +/−,
         # while PROB_SUM_FUNCTION/PROB_AVG_FUNCTION are the aggregates).
         _ARITH_KEYS = [
-            "PROB_SUM", "PROB_SUBSTRACT", "PROB_MULTIPLY", "PROB_DIVIDE",
-            "PROB_EQUALS", "PROB_LESS", "PROB_GREATER",
-            "PROB_LESS_EQUALS", "PROB_GREATER_EQUALS",
+            "PROB_SUM",
+            "PROB_SUBSTRACT",
+            "PROB_MULTIPLY",
+            "PROB_DIVIDE",
+            "PROB_EQUALS",
+            "PROB_LESS",
+            "PROB_GREATER",
+            "PROB_LESS_EQUALS",
+            "PROB_GREATER_EQUALS",
         ]
         _AGG_KEYS = ["PROB_SUM_FUNCTION", "PROB_AVG_FUNCTION"]
         _STR_KEYS = ["PROB_LEN_FUNCTION"]
@@ -450,9 +456,7 @@ def step2():
         if _dist_total > 0:
             for k in _dist_keys:
                 params_dict[k] = round(params_dict[k] / _dist_total, 6)
-            params_dict[_dist_keys[-1]] += round(
-                1.0 - sum(params_dict[k] for k in _dist_keys), 6
-            )
+            params_dict[_dist_keys[-1]] += round(1.0 - sum(params_dict[k] for k in _dist_keys), 6)
 
         try:
             from fm_generator.FMGenerator.models.config import Params
@@ -794,18 +798,14 @@ def step3():
                 request.form.get("prob_avg", params_dict.get("PROB_AVG_FUNCTION", 0.0))
             )
 
-            params_dict["PROB_SUM"] = _safe_float(
-                request.form.get("prob_plus"), params_dict.get("PROB_SUM", 0.7)
-            )
+            params_dict["PROB_SUM"] = _safe_float(request.form.get("prob_plus"), params_dict.get("PROB_SUM", 0.7))
             params_dict["PROB_SUBSTRACT"] = _safe_float(
                 request.form.get("prob_minus"), params_dict.get("PROB_SUBSTRACT", 0.2)
             )
             params_dict["PROB_MULTIPLY"] = _safe_float(
                 request.form.get("prob_times"), params_dict.get("PROB_MULTIPLY", 0.1)
             )
-            params_dict["PROB_DIVIDE"] = _safe_float(
-                request.form.get("prob_div"), params_dict.get("PROB_DIVIDE", 0.0)
-            )
+            params_dict["PROB_DIVIDE"] = _safe_float(request.form.get("prob_div"), params_dict.get("PROB_DIVIDE", 0.0))
 
             arithmetic_level_enabled = bool(params_dict.get("ARITHMETIC_LEVEL", False))
 
@@ -813,9 +813,7 @@ def step3():
                 params_dict["PROB_EQUALS"] = _safe_float(
                     request.form.get("prob_eq"), params_dict.get("PROB_EQUALS", 0.1)
                 )
-                params_dict["PROB_LESS"] = _safe_float(
-                    request.form.get("prob_lt"), params_dict.get("PROB_LESS", 0.2)
-                )
+                params_dict["PROB_LESS"] = _safe_float(request.form.get("prob_lt"), params_dict.get("PROB_LESS", 0.2))
                 params_dict["PROB_GREATER"] = _safe_float(
                     request.form.get("prob_gt"), params_dict.get("PROB_GREATER", 0.7)
                 )
@@ -934,9 +932,7 @@ def step3():
         if _bool_total > 0:
             for k in _bool_keys:
                 params_dict[k] = round(params_dict[k] / _bool_total, 6)
-            params_dict[_bool_keys[-1]] += round(
-                1.0 - sum(params_dict[k] for k in _bool_keys), 6
-            )
+            params_dict[_bool_keys[-1]] += round(1.0 - sum(params_dict[k] for k in _bool_keys), 6)
 
         # En step3 solo guardamos el estado; no reconstruimos Params aquí
         # porque params_dict puede contener todavía datos del step4.
@@ -1250,9 +1246,7 @@ def _collect_step4_attributes(form, params_dict):
             use_in_constraints = raw_use and params_dict.get("ARITHMETIC_LEVEL", False)
         elif type_ == "string":
             use_in_constraints = (
-                raw_use
-                and params_dict.get("TYPE_LEVEL", False)
-                and params_dict.get("STRING_CONSTRAINTS", False)
+                raw_use and params_dict.get("TYPE_LEVEL", False) and params_dict.get("STRING_CONSTRAINTS", False)
             )
         else:
             use_in_constraints = False
