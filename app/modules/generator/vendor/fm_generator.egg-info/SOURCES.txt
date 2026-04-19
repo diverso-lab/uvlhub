@@ -1,0 +1,15 @@
+pyproject.toml
+fm_generator/__init__.py
+fm_generator.egg-info/PKG-INFO
+fm_generator.egg-info/SOURCES.txt
+fm_generator.egg-info/dependency_links.txt
+fm_generator.egg-info/top_level.txt
+fm_generator/FMGenerator/__init__.py
+fm_generator/FMGenerator/test.py
+fm_generator/FMGenerator/models/__init__.py
+fm_generator/FMGenerator/models/config.py
+fm_generator/FMGenerator/models/models.py
+fm_generator/FMGenerator/operations/__init__.py
+fm_generator/FMGenerator/operations/generate_models.py
+fm_generator/FMGenerator/operations/products.py
+fm_generator/FMGenerator/operations/valid.py

@@ -45,6 +45,8 @@ COPY --chmod=0755 scripts/ ./scripts/
 
 RUN pip install -e ./
 
+RUN pip install --no-cache-dir -e ./app/modules/generator/vendor
+
 RUN find . -type d -name "__pycache__" -exec rm -r {} + \
  && find . -type f -name "*.pyc" -exec rm -f {} +
 

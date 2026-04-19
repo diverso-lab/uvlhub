@@ -1,0 +1,209 @@
+{% extends "generator/index.html" %}
+{% from "generator/_macros.html" import info, section, number_field, range_field, probability_field, sum_badge %}
+
+{% block title %}Generate random feature models{% endblock %}
+
+{% block wizard_content %}
+{% if errors.get('global') %}
+    <div class="alert alert-danger">{{ errors['global'] }}</div>
+{% endif %}
+
+{# Hidden carry-over fields (so the JS can read them and the backend keeps context) #}
+<input type="checkbox" id="aggregate_functions" name="aggregate_functions" class="d-none" {% if values.get('aggregate_functions', False) %}checked{% endif %}>
+<input type="checkbox" id="type_level"         name="type_level"         class="d-none" {% if values.get('type_level', False) %}checked{% endif %}>
+<input type="checkbox" id="string_constraints" name="string_constraints" class="d-none" {% if values.get('string_constraints', False) %}checked{% endif %}>
+
+<div class="row g-8">
+    <div class="col-xl-12">
+
+        <!-- Constraints amount -->
+        {{ section('Constraints', 'How many cross-tree constraints each model gets and how wide they are.') }}
+
+        {{ range_field('num_constraints_min', 'num_constraints_max', 'Number of constraints',
+            'Min / Max number of cross-tree constraints in each generated model.',
+            values, errors, default_min=1, default_max=10, hard_min=1) }}
+
+        {{ range_field('vars_per_ctc_min', 'vars_per_ctc_max', 'Variables per constraint',
+            'Min / Max number of features referenced in a single constraint. Max cannot exceed the maximum number of features selected in step 2.',
+            values, errors, default_min=1, default_max=10, hard_min=1, hard_max=values.get('max_features', 10000)) }}
+
+        {{ number_field('extra_constraint_repr', 'Extra constraint representativeness',
+            'Maximum times a feature can appear in each constraint. Must be ≤ Max variables per constraint.',
+            values, errors, default=1, min=1, max=10000) }}
+
+        <div class="separator separator-dashed my-9"></div>
+
+        <!-- Boolean operators -->
+        {{ section('Boolean operators',
+            'Probabilities used to sample the shape of Boolean constraints. AND/OR/⇒/⇔ always add up to 1.') }}
+
+        <div class="row g-3 mb-4">
+            {{ probability_field('prob_not', 'NOT', 'Probability of a NOT term in a constraint.', values, errors, default=0.3, symbol='¬') }}
+        </div>
+
+        <div class="prob-distribution mb-3">
+            <!-- Slim interactive slider for AND / OR / IMPLIES / EQUIVALENCE -->
+            <div id="boolop_slider" class="rel-slider mt-3 mb-5"></div>
+
+            <!-- Hidden inputs posted to the server -->
+            <input type="hidden" id="prob_and"     name="prob_and"     value="{{ values.get('prob_and', 0.4) }}">
+            <input type="hidden" id="prob_or"      name="prob_or"      value="{{ values.get('prob_or', 0.2) }}">
+            <input type="hidden" id="prob_implies" name="prob_implies" value="{{ values.get('prob_implies', 0.2) }}">
+            <input type="hidden" id="prob_equiv"   name="prob_equiv"   value="{{ values.get('prob_equiv', 0.2) }}">
+
+            <div class="row g-3">
+                <div class="col-6 col-md-3 d-flex align-items-center gap-2">
+                    <span class="rel-swatch" style="background: #5e6278;"></span>
+                    <span class="fs-5 fw-bold text-gray-900 me-1">∧</span>
+                    <span class="fs-7 fw-semibold text-gray-900">AND</span>
+                    {{ info('Probability of an AND connective.') }}
+                    <span class="badge badge-light ms-auto fw-bold" id="label_prob_and">40%</span>
+                </div>
+                <div class="col-6 col-md-3 d-flex align-items-center gap-2">
+                    <span class="rel-swatch" style="background: #3f4254;"></span>
+                    <span class="fs-5 fw-bold text-gray-900 me-1">∨</span>
+                    <span class="fs-7 fw-semibold text-gray-900">OR</span>
+                    {{ info('Probability of an OR connective.') }}
+                    <span class="badge badge-light ms-auto fw-bold" id="label_prob_or">20%</span>
+                </div>
+                <div class="col-6 col-md-3 d-flex align-items-center gap-2">
+                    <span class="rel-swatch" style="background: #2b2b40;"></span>
+                    <span class="fs-5 fw-bold text-gray-900 me-1">⇒</span>
+                    <span class="fs-7 fw-semibold text-gray-900">IMPLIES</span>
+                    {{ info('Probability of an implication connective.') }}
+                    <span class="badge badge-light ms-auto fw-bold" id="label_prob_implies">20%</span>
+                </div>
+                <div class="col-6 col-md-3 d-flex align-items-center gap-2">
+                    <span class="rel-swatch" style="background: #181c32;"></span>
+                    <span class="fs-5 fw-bold text-gray-900 me-1">⇔</span>
+                    <span class="fs-7 fw-semibold text-gray-900">EQUIVALENCE</span>
+                    {{ info('Probability of an equivalence connective.') }}
+                    <span class="badge badge-light ms-auto fw-bold" id="label_prob_equiv">20%</span>
+                </div>
+            </div>
+        </div>
+
+        {% if values.get('arithmetic_level', False) %}
+        <div class="separator separator-dashed my-9"></div>
+
+        <!-- Arithmetic operators -->
+        {{ section('Arithmetic operators',
+            'Probabilities for arithmetic terms inside constraints. Must add up to 1. Only used because Arithmetic level is enabled.') }}
+
+        <div class="row g-3 mb-2">
+            {{ probability_field('prob_plus',  'Plus',     'Probability of +.',   values, errors, default=0.7, symbol='+') }}
+            {{ probability_field('prob_minus', 'Minus',    'Probability of −.',   values, errors, default=0.2, symbol='−') }}
+            {{ probability_field('prob_times', 'Times',    'Probability of ×.',   values, errors, default=0.1, symbol='×') }}
+            {{ probability_field('prob_div',   'Divide',   'Probability of ÷.',   values, errors, default=0.0, symbol='÷') }}
+            {% if values.get('aggregate_functions', False) %}
+            {{ probability_field('prob_sum',   'Sum agg.', 'Probability of the sum() aggregate function.', values, errors, default=0.0) }}
+            {{ probability_field('prob_avg',   'Avg agg.', 'Probability of the avg() aggregate function.', values, errors, default=0.0) }}
+            {% endif %}
+        </div>
+        {{ sum_badge('arithmetic_sum', 'Sum of arithmetic probabilities', initial=values.get('arithmetic_sum', '1.0000')) }}
+        {% if errors.get('arithmetic_sum') %}
+            <div class="text-danger fs-7 mt-1">{{ errors['arithmetic_sum'] }}</div>
+        {% endif %}
+
+        <div class="separator separator-dashed my-9"></div>
+
+        <!-- Comparison operators -->
+        {{ section('Comparison operators',
+            'Probability of each comparison operator. Must add up to 1. Only used because Arithmetic level is enabled.') }}
+
+        <div class="row g-3 mb-2">
+            {{ probability_field('prob_eq',  'Equal',           'Probability of = comparison.',   values, errors, default=0.1, symbol='=') }}
+            {{ probability_field('prob_lt',  'Less than',       'Probability of < comparison.',   values, errors, default=0.2, symbol='<') }}
+            {{ probability_field('prob_gt',  'Greater than',    'Probability of > comparison.',   values, errors, default=0.7, symbol='>') }}
+            {{ probability_field('prob_leq', 'Less-or-equal',   'Probability of ≤ comparison.',   values, errors, default=0.0, symbol='≤') }}
+            {{ probability_field('prob_geq', 'Greater-or-equal','Probability of ≥ comparison.',   values, errors, default=0.0, symbol='≥') }}
+        </div>
+        {{ sum_badge('cmp_sum', 'Sum of comparison probabilities', initial=values.get('cmp_sum', '1.0000')) }}
+        {% if errors.get('cmp_sum') %}
+            <div class="text-danger fs-7 mt-1">{{ errors['cmp_sum'] }}</div>
+        {% endif %}
+        {% endif %}
+
+        {% if values.get('string_constraints', False) %}
+        <div class="separator separator-dashed my-9"></div>
+
+        <!-- Type level constraints -->
+        {{ section('Type level constraints',
+            'Probability of string functions. Only used because Type level and String constraints are enabled.') }}
+
+        <div class="row g-3">
+            {{ probability_field('prob_len', 'Length', 'Probability of the len() function appearing in string constraints.', values, errors, default=0.7, symbol='len') }}
+        </div>
+        {% if errors.get('prob_len') %}
+            <div class="text-danger fs-7 mt-1">{{ errors['prob_len'] }}</div>
+        {% endif %}
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}
+
+{% block wizard_scripts %}
+<script>
+(function run() {
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", run, { once: true });
+        return;
+    }
+    const maxVars = document.getElementById("vars_per_ctc_max");
+    if (maxVars) {
+        maxVars.addEventListener("input", () => {
+            const hardMax = parseInt(maxVars.getAttribute("max") || "10000", 10);
+            const v = parseInt(maxVars.value || "0", 10);
+            if (v > hardMax) maxVars.value = hardMax;
+        });
+    }
+
+    function updateSum(ids, badgeId) {
+        const badge = document.getElementById(badgeId);
+        if (!badge) return;
+        let sum = 0;
+        ids.forEach(id => {
+            const els = document.getElementsByName(id);
+            if (els.length) sum += parseFloat(els[0].value) || 0;
+        });
+        badge.innerText = sum.toFixed(4);
+        badge.classList.remove('badge-light-success', 'badge-light-danger');
+        badge.classList.add(Math.abs(sum - 1.0) < 0.001 ? 'badge-light-success' : 'badge-light-danger');
+    }
+
+    // Boolean operators are driven by the noUiSlider in scripts.js
+    // (initBooleanOpsSlider). The slider rounds to 4 decimals and absorbs the
+    // residue into the last segment so the sum is always exactly 1.
+
+    // Arithmetic
+    function updateArithmeticSum() {
+        const aggCb = document.getElementById('aggregate_functions');
+        const ids = ['prob_plus', 'prob_minus', 'prob_times', 'prob_div'];
+        if (aggCb && aggCb.checked) {
+            if (document.getElementsByName('prob_sum').length) ids.push('prob_sum');
+            if (document.getElementsByName('prob_avg').length) ids.push('prob_avg');
+        }
+        updateSum(ids, 'arithmetic_sum');
+    }
+    if (document.getElementById('arithmetic_sum')) {
+        ['prob_plus', 'prob_minus', 'prob_times', 'prob_div', 'prob_sum', 'prob_avg'].forEach(id => {
+            const el = document.getElementsByName(id)[0];
+            if (el) el.addEventListener('input', updateArithmeticSum);
+        });
+        document.getElementById('aggregate_functions')?.addEventListener('change', updateArithmeticSum);
+        updateArithmeticSum();
+    }
+
+    // Comparison
+    const cmp_ids = ['prob_eq', 'prob_lt', 'prob_gt', 'prob_leq', 'prob_geq'];
+    if (document.getElementById('cmp_sum')) {
+        cmp_ids.forEach(id => {
+            const el = document.getElementsByName(id)[0];
+            if (el) el.addEventListener('input', () => updateSum(cmp_ids, 'cmp_sum'));
+        });
+        updateSum(cmp_ids, 'cmp_sum');
+    }
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends "base_template.html" %}
+
+{% block title %}LLM feature-model generator{% endblock %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb text-muted fs-6 fw-semibold">
+    <li class="breadcrumb-item"><a href="/" class="">Home</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('generator.landing') }}">Generate</a></li>
+    <li class="breadcrumb-item text-muted">LLM</li>
+</ol>
+{% endblock %}
+
+{% block content %}
+<div class="card card-bordered shadow-sm">
+    <div class="card-body py-15 text-center">
+        <div class="symbol symbol-75px mx-auto mb-6">
+            <span class="symbol-label bg-light-warning">
+                <i class="ki-duotone ki-abstract-39 fs-1 text-warning">
+                    <span class="path1"></span><span class="path2"></span>
+                </i>
+            </span>
+        </div>
+        <h1 class="fw-bold text-gray-900 mb-3">LLM generator</h1>
+        <span class="badge badge-light-warning fs-7 mb-6">Coming soon</span>
+        <p class="text-gray-700 fs-5 fw-semibold mw-700px mx-auto mb-8">
+            This generator is not available yet. It will let you describe a domain in natural language and
+            get a draft feature model back in UVL, ready to iterate on and download.
+        </p>
+        <a href="{{ url_for('generator.landing') }}" class="btn btn-light">
+            <i class="ki-duotone ki-arrow-left fs-3 me-1"><span class="path1"></span><span class="path2"></span></i>
+            Back to generators
+        </a>
+    </div>
+</div>
+{% endblock %}

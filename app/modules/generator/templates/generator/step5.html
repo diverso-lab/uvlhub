@@ -1,0 +1,63 @@
+{% extends "generator/index.html" %}
+{% from "generator/_macros.html" import info %}
+
+{% block title %}Download your models{% endblock %}
+
+{% block wizard_content %}
+<div class="text-center py-10">
+    <div class="symbol symbol-80px mx-auto mb-6">
+        <span class="symbol-label bg-light-primary">
+            <i class="ki-duotone ki-abstract-26 fs-2x text-primary">
+                <span class="path1"></span><span class="path2"></span>
+            </i>
+        </span>
+    </div>
+
+    <h3 class="fw-bold text-gray-900 mb-2">Ready to generate</h3>
+    <div class="text-gray-600 fw-semibold fs-6 mb-8 mw-500px mx-auto">
+        Your feature models will be packaged as a ZIP and downloaded to your device. You can trigger this as many times as you want with the same parameters.
+    </div>
+
+    <button type="button" id="generate-zip-btn" class="btn btn-primary btn-lg">
+        <i class="ki-duotone ki-download fs-2 me-2"><span class="path1"></span><span class="path2"></span></i>
+        Generate &amp; download ZIP
+    </button>
+
+    <div id="generate-status" class="text-gray-600 fs-7 fw-semibold mt-4">&nbsp;</div>
+</div>
+
+<script>
+    (function () {
+        const btn = document.getElementById("generate-zip-btn");
+        const status = document.getElementById("generate-status");
+
+        async function waitForRuntime() {
+            for (let i = 0; i < 600; i++) {                      // up to ~60s
+                if (window.generatorRuntime && window.generatorRuntime.generate) return;
+                await new Promise(r => setTimeout(r, 100));
+            }
+            throw new Error("Generator runtime did not become ready.");
+        }
+
+        async function run() {
+            btn.disabled = true;
+            status.textContent = "Working on it…";
+            try {
+                await waitForRuntime();
+                const n = await window.generatorRuntime.generate();
+                status.textContent = `Last run produced ${n} model${n === 1 ? "" : "s"}.`;
+            } catch (e) {
+                console.error(e);
+                status.textContent = `Something went wrong: ${e.message || e}`;
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        btn.addEventListener("click", run);
+
+        // Auto-fire once when the runtime becomes ready.
+        waitForRuntime().then(() => window.generatorRuntime.ready()).then(() => run());
+    })();
+</script>
+{% endblock %}
