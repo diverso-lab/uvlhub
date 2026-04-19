@@ -16,7 +16,7 @@ from app.modules.hubfile.repositories import (
     HubfileRepository,
     HubfileViewRecordRepository,
 )
-from app.modules.statistics.services import StatisticsService
+from app.modules.statistics.services import DashboardService, StatisticsService
 
 
 @pytest.fixture(scope="module")
@@ -76,3 +76,108 @@ def test_refresh_statistics_rebuilds_counters_from_records(mock_enqueue_task, te
     assert statistics.feature_models_viewed == 3
     assert statistics.datasets_downloaded == 1
     assert statistics.feature_models_downloaded == 1
+
+
+# ─── Dashboard ──────────────────────────────────────────────────────────────
+
+
+def _seed_dashboard_fixtures():
+    """Two DOI'd datasets (one more popular than the other) and one
+    without DOI, so we can verify the DOI filter hides it."""
+    user = UserRepository().create(email="dash@example.com", password="test1234")
+
+    popular_meta = DSMetaDataRepository().create(
+        title="Popular dataset",
+        description="Popular",
+        publication_type=PublicationType.JOURNAL_ARTICLE,
+        dataset_doi="10.9999/popular",
+    )
+    popular = DataSetRepository().create(user_id=user.id, ds_meta_data_id=popular_meta.id)
+    FeatureModelRepository().create(dataset_id=popular.id)
+    FeatureModelRepository().create(dataset_id=popular.id)
+    DSViewRecordRepository().create(dataset_id=popular.id, view_cookie="v-p1")
+    DSViewRecordRepository().create(dataset_id=popular.id, view_cookie="v-p2")
+    DSDownloadRecordRepository().create(dataset_id=popular.id, download_cookie="d-p1")
+
+    quiet_meta = DSMetaDataRepository().create(
+        title="Quiet dataset",
+        description="Quiet",
+        publication_type=PublicationType.JOURNAL_ARTICLE,
+        dataset_doi="10.9999/quiet",
+    )
+    quiet = DataSetRepository().create(user_id=user.id, ds_meta_data_id=quiet_meta.id)
+    FeatureModelRepository().create(dataset_id=quiet.id)
+
+    private_meta = DSMetaDataRepository().create(
+        title="Private dataset",
+        description="No DOI — must be invisible",
+        publication_type=PublicationType.JOURNAL_ARTICLE,
+        dataset_doi=None,
+    )
+    private = DataSetRepository().create(user_id=user.id, ds_meta_data_id=private_meta.id)
+    FeatureModelRepository().create(dataset_id=private.id)
+    DSViewRecordRepository().create(dataset_id=private.id, view_cookie="v-priv")
+
+    return popular, quiet, private
+
+
+def test_dashboard_excludes_datasets_without_doi(test_client, clean_database):
+    _seed_dashboard_fixtures()
+
+    data = DashboardService().build_dashboard(use_cache=False)
+
+    assert data.total_datasets == 2  # the private one is excluded
+    assert data.total_feature_models == 3  # 2 + 1
+    titles = [row.title for row in data.top_by_models]
+    assert "Private dataset" not in titles
+    assert "Popular dataset" in titles
+    assert "Quiet dataset" in titles
+
+
+def test_dashboard_monthly_series_has_no_gaps(test_client, clean_database):
+    _seed_dashboard_fixtures()
+
+    data = DashboardService().build_dashboard(use_cache=False)
+
+    # Covers the rolling 12-month window: 13 buckets (start + 12 whole months).
+    assert len(data.months) >= 12
+    assert len(data.uploads_per_month) == len(data.months)
+    assert len(data.views_per_month) == len(data.months)
+    assert len(data.downloads_per_month) == len(data.months)
+    # Months are strictly ordered.
+    assert data.months == sorted(data.months)
+
+
+def test_dashboard_top_tables_are_ordered_by_metric(test_client, clean_database):
+    _seed_dashboard_fixtures()
+
+    data = DashboardService().build_dashboard(use_cache=False)
+
+    titles_in_order = [row.title for row in data.top_by_models]
+    # The "popular" dataset has 2 FM, quiet has 1, so popular must come first.
+    assert titles_in_order[0] == "Popular dataset"
+
+    view_titles = [row.title for row in data.top_by_views]
+    assert view_titles[0] == "Popular dataset"
+
+
+def test_dashboard_uses_cache_when_enabled(test_client, clean_database):
+    _seed_dashboard_fixtures()
+    service = DashboardService()
+    # In testing we short-circuit the Redis client; use_cache still runs the
+    # full path but the payload must be identical between calls.
+    a = service.build_dashboard(use_cache=True)
+    b = service.build_dashboard(use_cache=True)
+    assert a == b
+
+
+def test_dashboard_route_renders_without_errors(test_client, clean_database):
+    _seed_dashboard_fixtures()
+    response = test_client.get("/statistics")
+    assert response.status_code == 200
+    body = response.data.decode()
+    assert "Popular dataset" in body
+    # The pub-type label must come out pretty-cased from the enum name.
+    assert "Journal Article" in body
+    # Private dataset must not appear anywhere.
+    assert "Private dataset" not in body

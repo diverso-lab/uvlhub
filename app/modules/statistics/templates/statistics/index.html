@@ -1,11 +1,226 @@
 {% extends "base_template.html" %}
+{% set title = "Dashboard" %}
 
-{% block title %}View statistics{% endblock %}
+{% macro _top_table(title_, rows, value_label, badge_class, icon) -%}
+<div class="card h-100">
+    <div class="card-header">
+        <h3 class="card-title">
+            <i data-feather="{{ icon }}" class="me-2"></i>
+            {{ title_ }}
+        </h3>
+    </div>
+    <div class="card-body p-0">
+        {% if rows %}
+        <table class="table table-row-dashed align-middle mb-0">
+            <thead>
+                <tr class="text-muted fw-bold fs-7 text-uppercase">
+                    <th class="ps-6">Dataset</th>
+                    <th class="text-end pe-6">{{ value_label }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                <tr>
+                    <td class="ps-6">
+                        <a href="{{ row.doi_url }}" class="text-gray-800 text-hover-primary fw-semibold">
+                            {{ row.title }}
+                        </a>
+                    </td>
+                    <td class="text-end pe-6">
+                        <span class="badge {{ badge_class }}">{{ row.value }}</span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="text-muted p-6 mb-0">No data available.</p>
+        {% endif %}
+    </div>
+</div>
+{%- endmacro %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb text-muted fs-6 fw-semibold">
+    <li class="breadcrumb-item"><a href="/">Home</a></li>
+    <li class="breadcrumb-item text-muted">Dashboard</li>
+</ol>
+{% endblock %}
 
 {% block content %}
+
+<!-- Summary cards -->
+<div class="row g-4 mb-6">
+    <div class="col-6 col-md-4 col-lg-2">
+        <div class="card text-center h-100">
+            <div class="card-body py-4">
+                <i data-feather="database" class="mb-2 text-primary" style="width:28px;height:28px;"></i>
+                <div class="fs-2 fw-bold">{{ dashboard.total_datasets }}</div>
+                <div class="text-muted fs-7">Datasets</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+        <div class="card text-center h-100">
+            <div class="card-body py-4">
+                <i data-feather="file" class="mb-2 text-info" style="width:28px;height:28px;"></i>
+                <div class="fs-2 fw-bold">{{ dashboard.total_feature_models }}</div>
+                <div class="text-muted fs-7">Feature models</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+        <div class="card text-center h-100">
+            <div class="card-body py-4">
+                <i data-feather="users" class="mb-2 text-warning" style="width:28px;height:28px;"></i>
+                <div class="fs-2 fw-bold">{{ dashboard.total_authors }}</div>
+                <div class="text-muted fs-7">Authors</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+        <div class="card text-center h-100">
+            <div class="card-body py-4">
+                <i data-feather="eye" class="mb-2 text-success" style="width:28px;height:28px;"></i>
+                <div class="fs-2 fw-bold">{{ dashboard.total_views }}</div>
+                <div class="text-muted fs-7">Dataset views</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+        <div class="card text-center h-100">
+            <div class="card-body py-4">
+                <i data-feather="download" class="mb-2 text-danger" style="width:28px;height:28px;"></i>
+                <div class="fs-2 fw-bold">{{ dashboard.total_downloads }}</div>
+                <div class="text-muted fs-7">Downloads</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+        <div class="card text-center h-100">
+            <div class="card-body py-4">
+                <i data-feather="layers" class="mb-2 text-secondary" style="width:28px;height:28px;"></i>
+                <div class="fs-2 fw-bold">{{ dashboard.avg_models_per_dataset }}</div>
+                <div class="text-muted fs-7">Avg models/dataset</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Uploads chart -->
+<div class="card mb-6">
+    <div class="card-header">
+        <h3 class="card-title">
+            <i data-feather="trending-up" class="me-2 text-primary"></i>
+            Datasets uploaded per month (last 12 months)
+        </h3>
+    </div>
+    <div class="card-body">
+        {% if dashboard.months %}
+        <canvas id="uploadsChart" height="80"></canvas>
+        {% else %}
+        <p class="text-muted mb-0">No data available for the last 12 months.</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row g-4 mb-6">
+    <div class="col-lg-6">
+        {{ _top_table("Datasets with most feature models", dashboard.top_by_models, "Models",
+                      "badge-light-primary", "award") }}
+    </div>
+    <div class="col-lg-6">
+        {{ _top_table("Datasets with most features", dashboard.top_by_features, "Features",
+                      "badge-light-warning", "zap") }}
+    </div>
+</div>
+
+<div class="row g-4 mb-6">
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i data-feather="pie-chart" class="me-2 text-info"></i>
+                    Datasets by publication type
+                </h3>
+            </div>
+            <div class="card-body p-0">
+                {% if dashboard.publication_types %}
+                <table class="table table-row-dashed align-middle mb-0">
+                    <thead>
+                        <tr class="text-muted fw-bold fs-7 text-uppercase">
+                            <th class="ps-6">Type</th>
+                            <th class="text-end pe-6">Count</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pub_type, count in dashboard.publication_types %}
+                        <tr>
+                            <td class="ps-6 fw-semibold text-gray-700">{{ pub_type }}</td>
+                            <td class="text-end pe-6">
+                                <span class="badge badge-light-info">{{ count }}</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="text-muted p-6 mb-0">No data available.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        {{ _top_table("Most recently uploaded datasets", dashboard.latest_datasets, "Date",
+                      "badge-light-success", "clock") }}
+    </div>
+</div>
+
+<!-- Activity chart -->
+<div class="card mb-6">
+    <div class="card-header">
+        <h3 class="card-title">
+            <i data-feather="activity" class="me-2 text-danger"></i>
+            Downloads and views per month (last 12 months)
+        </h3>
+    </div>
+    <div class="card-body">
+        {% if dashboard.months %}
+        <canvas id="activityChart" height="80"></canvas>
+        {% else %}
+        <p class="text-muted mb-0">No activity data available for the last 12 months.</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row g-4 mb-6">
+    <div class="col-lg-4">
+        {{ _top_table("Most viewed datasets", dashboard.top_by_views, "Views",
+                      "badge-light-success", "eye") }}
+    </div>
+    <div class="col-lg-4">
+        {{ _top_table("Most downloaded datasets", dashboard.top_by_downloads, "Downloads",
+                      "badge-light-danger", "download") }}
+    </div>
+    <div class="col-lg-4">
+        {{ _top_table("Most configurable datasets", dashboard.top_by_configurations, "Configs",
+                      "badge-light-secondary", "sliders") }}
+    </div>
+</div>
+
+{# Serialise the chart series as JSON so the bundled scripts.js can pick them
+   up without needing any server-side string interpolation inside <script>. #}
+<script id="dashboard-data" type="application/json">
+{
+    "months": {{ dashboard.months | tojson }},
+    "uploads": {{ dashboard.uploads_per_month | tojson }},
+    "views": {{ dashboard.views_per_month | tojson }},
+    "downloads": {{ dashboard.downloads_per_month | tojson }}
+}
+</script>
 
 {% endblock %}
 
 {% block scripts %}
-    <script src="{{ url_for('statistics.assets', subfolder='js', filename='scripts.js') }}"></script>
+<script type="module" src="{{ url_for('statistics.assets', subfolder='dist', filename='statistics.bundle.js') }}"></script>
 {% endblock %}
