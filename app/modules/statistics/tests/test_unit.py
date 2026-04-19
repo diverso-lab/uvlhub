@@ -78,6 +78,82 @@ def test_refresh_statistics_rebuilds_counters_from_records(mock_enqueue_task, te
     assert statistics.feature_models_downloaded == 1
 
 
+# ─── DOI filter on refresh_statistics ──────────────────────────────────────
+
+
+@patch("core.managers.task_queue_manager.TaskQueueManager.enqueue_task")
+def test_refresh_statistics_excludes_private_datasets(mock_enqueue_task, test_client, clean_database):
+    """Views and downloads for datasets without a DOI must not be counted,
+    otherwise the `/statistics` summary cards disagree with the top-N tables.
+    """
+    user = UserRepository().create(email="stats-private@example.com", password="test1234")
+
+    public_meta = DSMetaDataRepository().create(
+        title="Public",
+        description="Public",
+        publication_type=PublicationType.BOOK,
+        dataset_doi="10.1234/public",
+    )
+    public_ds = DataSetRepository().create(user_id=user.id, ds_meta_data_id=public_meta.id)
+    public_fm = FeatureModelRepository().create(dataset_id=public_ds.id)
+    public_hubfile = HubfileRepository().create(
+        name="public.uvl", checksum="pub", size=1, feature_model_id=public_fm.id
+    )
+    DSViewRecordRepository().create(dataset_id=public_ds.id, view_cookie="pub-v")
+    DSDownloadRecordRepository().create(dataset_id=public_ds.id, download_cookie="pub-d")
+    HubfileViewRecordRepository().create(file_id=public_hubfile.id, view_cookie="pub-fv")
+    HubfileDownloadRecordRepository().create(file_id=public_hubfile.id, download_cookie="pub-fd")
+
+    private_meta = DSMetaDataRepository().create(
+        title="Private",
+        description="Private",
+        publication_type=PublicationType.BOOK,
+        dataset_doi=None,
+    )
+    private_ds = DataSetRepository().create(user_id=user.id, ds_meta_data_id=private_meta.id)
+    private_fm = FeatureModelRepository().create(dataset_id=private_ds.id)
+    private_hubfile = HubfileRepository().create(
+        name="priv.uvl", checksum="priv", size=1, feature_model_id=private_fm.id
+    )
+    DSViewRecordRepository().create(dataset_id=private_ds.id, view_cookie="priv-v")
+    DSDownloadRecordRepository().create(dataset_id=private_ds.id, download_cookie="priv-d")
+    HubfileViewRecordRepository().create(file_id=private_hubfile.id, view_cookie="priv-fv")
+    HubfileDownloadRecordRepository().create(file_id=private_hubfile.id, download_cookie="priv-fd")
+
+    stats = StatisticsService().refresh_statistics()
+
+    assert stats.datasets_counter == 1
+    assert stats.feature_models_counter == 1
+    assert stats.datasets_viewed == 1
+    assert stats.datasets_downloaded == 1
+    assert stats.feature_models_viewed == 1
+    assert stats.feature_models_downloaded == 1
+
+
+def test_preview_refresh_returns_before_after_tuples(test_client, clean_database):
+    user = UserRepository().create(email="preview@example.com", password="test1234")
+    meta = DSMetaDataRepository().create(
+        title="Preview",
+        description="Preview",
+        publication_type=PublicationType.BOOK,
+        dataset_doi="10.9999/preview",
+    )
+    ds = DataSetRepository().create(user_id=user.id, ds_meta_data_id=meta.id)
+    FeatureModelRepository().create(dataset_id=ds.id)
+
+    service = StatisticsService()
+    diff = service.preview_refresh()
+
+    # Snapshot is untouched by a dry-run preview.
+    persisted = service.get_statistics()
+    assert persisted.datasets_counter == 0
+    assert persisted.feature_models_counter == 0
+
+    # The diff maps each field to (before, after).
+    assert diff["datasets_counter"] == (0, 1)
+    assert diff["feature_models_counter"] == (0, 1)
+
+
 # ─── Dashboard ──────────────────────────────────────────────────────────────
 
 

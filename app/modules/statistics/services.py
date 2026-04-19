@@ -97,6 +97,17 @@ class StatisticsService(BaseService):
     def refresh_statistics(self) -> Statistics:
         return self.repository.refresh_statistics()
 
+    def preview_refresh(self) -> dict[str, tuple[int, int]]:
+        """Dry-run sync: return ``{field: (before, after)}`` without writing.
+
+        Used by `rosemary counters:sync --dry-run` so operators can inspect
+        drift before committing. Every dict key is also a real field on
+        :class:`Statistics`, so callers can feed it straight into a template.
+        """
+        current = self.repository.get_statistics()
+        proposed = self.repository.compute_totals()
+        return {field: (getattr(current, field), value) for field, value in proposed.items()}
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Dashboard service — all the aggregations in one place.

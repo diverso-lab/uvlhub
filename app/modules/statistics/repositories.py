@@ -62,26 +62,61 @@ class StatisticsRepository(BaseRepository):
         statistics = self.get_statistics()
         return statistics.feature_models_downloaded
 
-    def refresh_statistics(self) -> Statistics:
+    def compute_totals(self) -> dict[str, int]:
+        """Re-compute every counter from the record tables without touching
+        the persisted row. Every total is restricted to datasets with a DOI
+        so the counters line up with what the `/statistics` dashboard shows.
+        """
         from app.modules.dataset.models import DataSet, DSMetaData
         from app.modules.featuremodel.models import FeatureModel
-
-        statistics = self.get_statistics()
 
         synchronized_dataset_ids = (
             self.session.query(DataSet.id).join(DSMetaData).filter(DSMetaData.dataset_doi.isnot(None)).scalar_subquery()
         )
-
-        statistics.datasets_counter = (
-            self.session.query(DataSet).join(DSMetaData).filter(DSMetaData.dataset_doi.isnot(None)).count()
+        synchronized_featuremodel_ids = (
+            self.session.query(FeatureModel.id)
+            .filter(FeatureModel.dataset_id.in_(synchronized_dataset_ids))
+            .scalar_subquery()
         )
-        statistics.feature_models_counter = (
-            self.session.query(FeatureModel).filter(FeatureModel.dataset_id.in_(synchronized_dataset_ids)).count()
-        )
-        statistics.datasets_viewed = self.session.query(DSViewRecord).count()
-        statistics.feature_models_viewed = self.session.query(HubfileViewRecord).count()
-        statistics.datasets_downloaded = self.session.query(DSDownloadRecord).count()
-        statistics.feature_models_downloaded = self.session.query(HubfileDownloadRecord).count()
+        from app.modules.hubfile.models import Hubfile
 
+        synchronized_hubfile_ids = (
+            self.session.query(Hubfile.id)
+            .filter(Hubfile.feature_model_id.in_(synchronized_featuremodel_ids))
+            .scalar_subquery()
+        )
+
+        return {
+            "datasets_counter": (
+                self.session.query(DataSet).join(DSMetaData).filter(DSMetaData.dataset_doi.isnot(None)).count()
+            ),
+            "feature_models_counter": (
+                self.session.query(FeatureModel).filter(FeatureModel.dataset_id.in_(synchronized_dataset_ids)).count()
+            ),
+            "datasets_viewed": (
+                self.session.query(DSViewRecord).filter(DSViewRecord.dataset_id.in_(synchronized_dataset_ids)).count()
+            ),
+            "datasets_downloaded": (
+                self.session.query(DSDownloadRecord)
+                .filter(DSDownloadRecord.dataset_id.in_(synchronized_dataset_ids))
+                .count()
+            ),
+            "feature_models_viewed": (
+                self.session.query(HubfileViewRecord)
+                .filter(HubfileViewRecord.file_id.in_(synchronized_hubfile_ids))
+                .count()
+            ),
+            "feature_models_downloaded": (
+                self.session.query(HubfileDownloadRecord)
+                .filter(HubfileDownloadRecord.file_id.in_(synchronized_hubfile_ids))
+                .count()
+            ),
+        }
+
+    def refresh_statistics(self) -> Statistics:
+        """Persist the recomputed totals into the singleton row."""
+        statistics = self.get_statistics()
+        for field, value in self.compute_totals().items():
+            setattr(statistics, field, value)
         self.session.commit()
         return statistics
