@@ -1,5 +1,11 @@
 import pytest
 
+from app.modules.auth.repositories import UserRepository
+from app.modules.dataset.models import PublicationType
+from app.modules.dataset.repositories import DataSetRepository, DSMetaDataRepository
+from app.modules.featuremodel.repositories import FeatureModelRepository
+from app.modules.featuremodel.services import FeatureModelService
+
 
 @pytest.fixture(scope="module")
 def test_client(test_client):
@@ -22,3 +28,28 @@ def test_sample_assertion(test_client):
     """
     greeting = "Hello, World!"
     assert greeting == "Hello, World!", "The greeting does not coincide with 'Hello, World!'"
+
+
+def test_count_feature_models_counts_only_synchronized_datasets(test_client, clean_database):
+    user = UserRepository().create(email="models@example.com", password="test1234")
+
+    synced_meta = DSMetaDataRepository().create(
+        title="Synced dataset",
+        description="Dataset with DOI",
+        publication_type=PublicationType.BOOK,
+        dataset_doi="10.1234/synced-dataset",
+    )
+    unsynced_meta = DSMetaDataRepository().create(
+        title="Unsynced dataset",
+        description="Dataset without DOI",
+        publication_type=PublicationType.BOOK,
+    )
+
+    synced_dataset = DataSetRepository().create(user_id=user.id, ds_meta_data_id=synced_meta.id)
+    unsynced_dataset = DataSetRepository().create(user_id=user.id, ds_meta_data_id=unsynced_meta.id)
+
+    FeatureModelRepository().create(dataset_id=synced_dataset.id)
+    FeatureModelRepository().create(dataset_id=synced_dataset.id)
+    FeatureModelRepository().create(dataset_id=unsynced_dataset.id)
+
+    assert FeatureModelService().count_feature_models() == 2
