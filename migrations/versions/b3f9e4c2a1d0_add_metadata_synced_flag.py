@@ -1,7 +1,7 @@
 """add metadata_synced flag
 
 Revision ID: b3f9e4c2a1d0
-Revises: 8a96e53e7e32
+Revises: 976920761330
 Create Date: 2026-04-07 02:15:00.000000
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'b3f9e4c2a1d0'
-down_revision = '8a96e53e7e32'
+down_revision = '976920761330'
 branch_labels = None
 depends_on = None
 
