@@ -13,7 +13,6 @@ import json
 import pytest
 from fm_generator.FMGenerator.models.config import Params
 
-
 # Minimum valid payloads, coherent with each step's validator.
 STEP1 = {"num_models_val": "3", "seed": "42", "name_prefix": "fm"}
 STEP2 = {}  # pure-Boolean (no levels toggled)
@@ -143,12 +142,14 @@ def test_parent_child_slider_sum_1p0007_renormalises(client):
     client.post("/generator/random/step1", data=STEP1)
     client.post("/generator/random/step2", data=STEP2)
     poisoned = dict(STEP3)
-    poisoned.update({
-        "dist_optional": "0.2502",
-        "dist_mandatory": "0.2502",
-        "dist_alternative": "0.2502",
-        "dist_or": "0.2501",
-    })
+    poisoned.update(
+        {
+            "dist_optional": "0.2502",
+            "dist_mandatory": "0.2502",
+            "dist_alternative": "0.2502",
+            "dist_or": "0.2501",
+        }
+    )
     r = client.post("/generator/random/step3", data=poisoned)
     assert r.status_code == 302  # reached step4, Params-level sum is 1.0
 
@@ -206,9 +207,14 @@ def test_back_nav_from_step2_preserves_level_flags(client):
     """The step-2 levels must persist across prev-nav (was a bug that
     reset arithmetic/type on every back press)."""
     client.post("/generator/random/step1", data=STEP1)
-    client.post("/generator/random/step2", data={
-        "arithmetic_level": "on", "type_level": "on", "aggregate_functions": "on",
-    })
+    client.post(
+        "/generator/random/step2",
+        data={
+            "arithmetic_level": "on",
+            "type_level": "on",
+            "aggregate_functions": "on",
+        },
+    )
     r = client.post("/generator/random/step3", data={**STEP3, "nav": "prev"})
     assert r.status_code == 302
     params = json.loads(client.get("/generator/random/params-json").data)

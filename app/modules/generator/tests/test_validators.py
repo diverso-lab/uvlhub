@@ -116,11 +116,18 @@ def test_step2_accepts_type_only():
 
 
 def test_step2_accepts_all_majors_and_minors():
-    errors, _ = validate_step2_form(MultiDict({
-        "arithmetic_level": "on", "type_level": "on",
-        "feature_cardinality": "on", "aggregate_functions": "on",
-        "string_constraints": "on", "group_cardinality": "on",
-    }))
+    errors, _ = validate_step2_form(
+        MultiDict(
+            {
+                "arithmetic_level": "on",
+                "type_level": "on",
+                "feature_cardinality": "on",
+                "aggregate_functions": "on",
+                "string_constraints": "on",
+                "group_cardinality": "on",
+            }
+        )
+    )
     assert errors == {}
 
 
@@ -189,18 +196,26 @@ def test_step3_rejects_non_integer_depth():
 
 def test_step3_accepts_sum_within_tolerance():
     """Form-side tolerance is 1e-3 so slider-rounded values still validate."""
-    errors, _ = validate_step3_form(_valid_step3(
-        dist_optional="0.2502", dist_mandatory="0.2502",
-        dist_alternative="0.2502", dist_or="0.2501",
-    ))
+    errors, _ = validate_step3_form(
+        _valid_step3(
+            dist_optional="0.2502",
+            dist_mandatory="0.2502",
+            dist_alternative="0.2502",
+            dist_or="0.2501",
+        )
+    )
     assert "rel_dist_total" not in errors
 
 
 def test_step3_rejects_clearly_wrong_rel_sum():
-    errors, _ = validate_step3_form(_valid_step3(
-        dist_optional="0.9", dist_mandatory="0.9",
-        dist_alternative="0", dist_or="0",
-    ))
+    errors, _ = validate_step3_form(
+        _valid_step3(
+            dist_optional="0.9",
+            dist_mandatory="0.9",
+            dist_alternative="0",
+            dist_or="0",
+        )
+    )
     assert "rel_dist_total" in errors
 
 
@@ -209,8 +224,10 @@ def test_step3_group_cardinality_requires_all_five_dists():
     dist_group_cardinality) must total 1.0."""
     errors, _ = validate_step3_form(
         _valid_step3(
-            dist_optional="0.2", dist_mandatory="0.2",
-            dist_alternative="0.2", dist_or="0.2",
+            dist_optional="0.2",
+            dist_mandatory="0.2",
+            dist_alternative="0.2",
+            dist_or="0.2",
             dist_group_cardinality="0.2",
         ),
         params_dict={"GROUP_CARDINALITY": True},
@@ -221,10 +238,13 @@ def test_step3_group_cardinality_requires_all_five_dists():
 def test_step3_group_cardinality_min_gt_max():
     errors, _ = validate_step3_form(
         _valid_step3(
-            dist_optional="0.2", dist_mandatory="0.2",
-            dist_alternative="0.2", dist_or="0.2",
+            dist_optional="0.2",
+            dist_mandatory="0.2",
+            dist_alternative="0.2",
+            dist_or="0.2",
             dist_group_cardinality="0.2",
-            group_cardinality_min="10", group_cardinality_max="5",
+            group_cardinality_min="10",
+            group_cardinality_max="5",
         ),
         params_dict={"GROUP_CARDINALITY": True},
     )
@@ -280,16 +300,14 @@ def test_step4_rejects_extra_repr_gt_vars_max():
 
 
 def test_step4_boolops_sum_within_tolerance():
-    errors, _ = validate_step4_form(_valid_step4(
-        prob_and="0.3334", prob_or="0.3333", prob_implies="0.1667", prob_equiv="0.1666"
-    ))
+    errors, _ = validate_step4_form(
+        _valid_step4(prob_and="0.3334", prob_or="0.3333", prob_implies="0.1667", prob_equiv="0.1666")
+    )
     assert "boolop_sum" not in errors
 
 
 def test_step4_boolops_sum_wildly_wrong():
-    errors, _ = validate_step4_form(_valid_step4(
-        prob_and="0.9", prob_or="0.9", prob_implies="0", prob_equiv="0"
-    ))
+    errors, _ = validate_step4_form(_valid_step4(prob_and="0.9", prob_or="0.9", prob_implies="0", prob_equiv="0"))
     assert "boolop_sum" in errors
 
 
@@ -306,8 +324,15 @@ def test_step4_arithmetic_ignored_when_level_off():
 def test_step4_arithmetic_sum_required_when_level_on():
     errors, _ = validate_step4_form(
         _valid_step4(
-            prob_plus="0.9", prob_minus="0.9", prob_times="0", prob_div="0",
-            prob_eq="0.2", prob_lt="0.2", prob_gt="0.2", prob_leq="0.2", prob_geq="0.2",
+            prob_plus="0.9",
+            prob_minus="0.9",
+            prob_times="0",
+            prob_div="0",
+            prob_eq="0.2",
+            prob_lt="0.2",
+            prob_gt="0.2",
+            prob_leq="0.2",
+            prob_geq="0.2",
         ),
         params_dict={"ARITHMETIC_LEVEL": True},
     )
@@ -317,8 +342,15 @@ def test_step4_arithmetic_sum_required_when_level_on():
 def test_step4_comparison_sum_required_when_arithmetic_on():
     errors, _ = validate_step4_form(
         _valid_step4(
-            prob_plus="0.7", prob_minus="0.2", prob_times="0.1", prob_div="0",
-            prob_eq="0.5", prob_lt="0.5", prob_gt="0", prob_leq="0", prob_geq="0",
+            prob_plus="0.7",
+            prob_minus="0.2",
+            prob_times="0.1",
+            prob_div="0",
+            prob_eq="0.5",
+            prob_lt="0.5",
+            prob_gt="0",
+            prob_leq="0",
+            prob_geq="0",
         ),
         params_dict={"ARITHMETIC_LEVEL": True},
     )
@@ -328,9 +360,19 @@ def test_step4_comparison_sum_required_when_arithmetic_on():
 def test_step4_ctc_dist_required_when_any_level_on():
     errors, _ = validate_step4_form(
         _valid_step4(
-            prob_plus="0.7", prob_minus="0.2", prob_times="0.1", prob_div="0",
-            prob_eq="0.1", prob_lt="0.2", prob_gt="0.7", prob_leq="0", prob_geq="0",
-            ctc_dist_boolean="0.5", ctc_dist_integer="0.0", ctc_dist_real="0.0", ctc_dist_string="0.0",
+            prob_plus="0.7",
+            prob_minus="0.2",
+            prob_times="0.1",
+            prob_div="0",
+            prob_eq="0.1",
+            prob_lt="0.2",
+            prob_gt="0.7",
+            prob_leq="0",
+            prob_geq="0",
+            ctc_dist_boolean="0.5",
+            ctc_dist_integer="0.0",
+            ctc_dist_real="0.0",
+            ctc_dist_string="0.0",
         ),
         params_dict={"ARITHMETIC_LEVEL": True},
     )
@@ -341,9 +383,19 @@ def test_step4_ctc_dist_required_when_any_level_on():
 def test_step4_ctc_dist_passes_when_sums_to_one():
     errors, _ = validate_step4_form(
         _valid_step4(
-            prob_plus="0.7", prob_minus="0.2", prob_times="0.1", prob_div="0",
-            prob_eq="0.1", prob_lt="0.2", prob_gt="0.7", prob_leq="0", prob_geq="0",
-            ctc_dist_boolean="0.5", ctc_dist_integer="0.5", ctc_dist_real="0.0", ctc_dist_string="0.0",
+            prob_plus="0.7",
+            prob_minus="0.2",
+            prob_times="0.1",
+            prob_div="0",
+            prob_eq="0.1",
+            prob_lt="0.2",
+            prob_gt="0.7",
+            prob_leq="0",
+            prob_geq="0",
+            ctc_dist_boolean="0.5",
+            ctc_dist_integer="0.5",
+            ctc_dist_real="0.0",
+            ctc_dist_string="0.0",
         ),
         params_dict={"ARITHMETIC_LEVEL": True},
     )
@@ -388,9 +440,14 @@ def test_step5_rejects_min_gt_max_attrs():
 
 
 def test_step5_attr_dist_sum_must_be_one():
-    errors, _ = validate_step5_form(_valid_step5_random(
-        dist_boolean="0.5", dist_integer="0.0", dist_real="0.0", dist_string="0.0",
-    ))
+    errors, _ = validate_step5_form(
+        _valid_step5_random(
+            dist_boolean="0.5",
+            dist_integer="0.0",
+            dist_real="0.0",
+            dist_string="0.0",
+        )
+    )
     assert "attr_dist_sum" in errors
 
 
@@ -406,58 +463,80 @@ def test_step5_attr_dist_honours_gating():
 
 
 def test_step5_manual_mode_missing_name():
-    form = MultiDict({
-        "attr_name_0": "", "attr_type_0": "boolean",
-        "attr_attach_prob_0": "0.5", "attr_value_true_0": "on",
-    })
+    form = MultiDict(
+        {
+            "attr_name_0": "",
+            "attr_type_0": "boolean",
+            "attr_attach_prob_0": "0.5",
+            "attr_value_true_0": "on",
+        }
+    )
     errors, _ = validate_step5_form(form)
     assert "attr_name_0" in errors
 
 
 def test_step5_manual_mode_boolean_needs_value():
-    form = MultiDict({
-        "attr_name_0": "A", "attr_type_0": "boolean",
-        "attr_attach_prob_0": "0.5",
-    })
+    form = MultiDict(
+        {
+            "attr_name_0": "A",
+            "attr_type_0": "boolean",
+            "attr_attach_prob_0": "0.5",
+        }
+    )
     errors, _ = validate_step5_form(form)
     assert "attr_value_bool_0" in errors
 
 
 def test_step5_manual_mode_integer_needs_range():
-    form = MultiDict({
-        "attr_name_0": "A", "attr_type_0": "integer",
-        "attr_attach_prob_0": "0.5",
-    })
+    form = MultiDict(
+        {
+            "attr_name_0": "A",
+            "attr_type_0": "integer",
+            "attr_attach_prob_0": "0.5",
+        }
+    )
     errors, _ = validate_step5_form(form)
     assert "attr_minmax_0" in errors
 
 
 def test_step5_manual_mode_min_gt_max():
-    form = MultiDict({
-        "attr_name_0": "A", "attr_type_0": "integer",
-        "attr_attach_prob_0": "0.5",
-        "attr_min_value_0": "10", "attr_max_value_0": "5",
-    })
+    form = MultiDict(
+        {
+            "attr_name_0": "A",
+            "attr_type_0": "integer",
+            "attr_attach_prob_0": "0.5",
+            "attr_min_value_0": "10",
+            "attr_max_value_0": "5",
+        }
+    )
     errors, _ = validate_step5_form(form)
     assert "attr_minmax_0" in errors
 
 
 def test_step5_manual_mode_bad_attach_prob():
-    form = MultiDict({
-        "attr_name_0": "A", "attr_type_0": "boolean",
-        "attr_attach_prob_0": "1.5", "attr_value_true_0": "on",
-    })
+    form = MultiDict(
+        {
+            "attr_name_0": "A",
+            "attr_type_0": "boolean",
+            "attr_attach_prob_0": "1.5",
+            "attr_value_true_0": "on",
+        }
+    )
     errors, _ = validate_step5_form(form)
     assert "attr_attach_prob_0" in errors
 
 
 def test_step5_manual_mode_use_in_ctc_integer_requires_arithmetic():
-    form = MultiDict({
-        "attr_name_0": "A", "attr_type_0": "integer",
-        "attr_attach_prob_0": "0.5",
-        "attr_min_value_0": "0", "attr_max_value_0": "10",
-        "attr_use_in_constraints_0": "on",
-    })
+    form = MultiDict(
+        {
+            "attr_name_0": "A",
+            "attr_type_0": "integer",
+            "attr_attach_prob_0": "0.5",
+            "attr_min_value_0": "0",
+            "attr_max_value_0": "10",
+            "attr_use_in_constraints_0": "on",
+        }
+    )
     errors, _ = validate_step5_form(form, params_dict={"ARITHMETIC_LEVEL": False})
     assert "attr_use_in_constraints_0" in errors
 
