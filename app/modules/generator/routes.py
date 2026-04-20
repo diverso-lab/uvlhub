@@ -138,14 +138,16 @@ def validate_step2_form(form):
     if string_ctc and not type_:
         errors["string_constraints"] = "Requires Type level."
 
-    values.update({
-        "arithmetic_level": arith,
-        "type_level": type_,
-        "feature_cardinality": feat_card,
-        "aggregate_functions": aggregate,
-        "string_constraints": string_ctc,
-        "group_cardinality": group_card,
-    })
+    values.update(
+        {
+            "arithmetic_level": arith,
+            "type_level": type_,
+            "feature_cardinality": feat_card,
+            "aggregate_functions": aggregate,
+            "string_constraints": string_ctc,
+            "group_cardinality": group_card,
+        }
+    )
     return errors, values
 
 
@@ -194,9 +196,7 @@ def validate_step3_form(form, params_dict=None):
 
     # Relation distribution (including group cardinality if its toggle is on)
     group_cardinality_enabled = bool(
-        params_dict.get("GROUP_CARDINALITY")
-        if "GROUP_CARDINALITY" in params_dict
-        else "group_cardinality" in form
+        params_dict.get("GROUP_CARDINALITY") if "GROUP_CARDINALITY" in params_dict else "group_cardinality" in form
     )
     feature_cardinality_enabled = bool(
         params_dict.get("FEATURE_CARDINALITY")
@@ -236,9 +236,7 @@ def validate_step3_form(form, params_dict=None):
         try:
             gc_max = int(form.get("group_cardinality_max", "").strip())
             if "num_features_max" not in errors and max_features and gc_max > max_features:
-                errors["group_cardinality_max"] = (
-                    "Group cardinality max cannot exceed Max. features."
-                )
+                errors["group_cardinality_max"] = "Group cardinality max cannot exceed Max. features."
             elif gc_max < 1:
                 errors["group_cardinality_max"] = "Group cardinality max must be at least 1."
         except Exception:
@@ -364,11 +362,13 @@ def validate_step4_form(form, max_features: int = 10000, params_dict=None):
     # 5) Arithmetic (conditional) + comparison (conditional).
     # Prefer params_dict (step 2 truth) over any form mirrors.
     arith_on = (
-        params_dict.get("ARITHMETIC_LEVEL") if "ARITHMETIC_LEVEL" in params_dict
+        params_dict.get("ARITHMETIC_LEVEL")
+        if "ARITHMETIC_LEVEL" in params_dict
         else form.get("arithmetic_level") in ("on", "true", "1", True)
     )
     agg_on = (
-        params_dict.get("AGGREGATE_FUNCTIONS") if "AGGREGATE_FUNCTIONS" in params_dict
+        params_dict.get("AGGREGATE_FUNCTIONS")
+        if "AGGREGATE_FUNCTIONS" in params_dict
         else form.get("aggregate_functions") in ("on", "true", "1", True)
     )
     if arith_on:
@@ -410,11 +410,13 @@ def validate_step4_form(form, max_features: int = 10000, params_dict=None):
 
     # 6) Type level / string constraints — also from step 2.
     type_on = (
-        params_dict.get("TYPE_LEVEL") if "TYPE_LEVEL" in params_dict
+        params_dict.get("TYPE_LEVEL")
+        if "TYPE_LEVEL" in params_dict
         else form.get("type_level") in ("on", "true", "1", True)
     )
     str_on = (
-        params_dict.get("STRING_CONSTRAINTS") if "STRING_CONSTRAINTS" in params_dict
+        params_dict.get("STRING_CONSTRAINTS")
+        if "STRING_CONSTRAINTS" in params_dict
         else form.get("string_constraints") in ("on", "true", "1", True)
     )
     if str_on and type_on:
@@ -441,9 +443,7 @@ def validate_step4_form(form, max_features: int = 10000, params_dict=None):
             if is_active:
                 active += v
         if abs(active - 1.0) > 0.001:
-            errors["ctc_dist_sum"] = (
-                f"Current sum: {active:.4f}. Active type probabilities must total 1.0."
-            )
+            errors["ctc_dist_sum"] = f"Current sum: {active:.4f}. Active type probabilities must total 1.0."
         values["ctc_dist_sum"] = f"{active:.4f}"
 
     for k in form:
@@ -507,9 +507,7 @@ def validate_step5_form(form, params_dict=None):
             if is_active:
                 active_total += v
         if abs(active_total - 1.0) > 0.001:
-            errors["attr_dist_sum"] = (
-                f"Current sum: {active_total:.4f}. Active type probabilities must total 1.0."
-            )
+            errors["attr_dist_sum"] = f"Current sum: {active_total:.4f}. Active type probabilities must total 1.0."
         values["attr_dist_sum"] = f"{active_total:.4f}"
     else:
         values["min_attributes"] = ""
@@ -599,9 +597,7 @@ def _collect_manual_attributes(form, params_dict):
             use_in_ctc = raw_use and params_dict.get("ARITHMETIC_LEVEL", False)
         elif t_ == "string":
             use_in_ctc = (
-                raw_use
-                and params_dict.get("TYPE_LEVEL", False)
-                and params_dict.get("STRING_CONSTRAINTS", False)
+                raw_use and params_dict.get("TYPE_LEVEL", False) and params_dict.get("STRING_CONSTRAINTS", False)
             )
         else:
             use_in_ctc = False
@@ -613,15 +609,20 @@ def _collect_manual_attributes(form, params_dict):
             if form.get(f"attr_value_false_{i}") is not None:
                 values_list.append(False)
             attr_dict = {
-                "name": name, "type": "Boolean", "value": values_list,
-                "attach_probability": attach_prob, "use_in_constraints": use_in_ctc,
+                "name": name,
+                "type": "Boolean",
+                "value": values_list,
+                "attach_probability": attach_prob,
+                "use_in_constraints": use_in_ctc,
             }
         elif t_ in ("integer", "real", "string"):
             attr_dict = {
-                "name": name, "type": t_.capitalize(),
+                "name": name,
+                "type": t_.capitalize(),
                 "min_value": form.get(f"attr_min_value_{i}", None),
                 "max_value": form.get(f"attr_max_value_{i}", None),
-                "attach_probability": attach_prob, "use_in_constraints": use_in_ctc,
+                "attach_probability": attach_prob,
+                "use_in_constraints": use_in_ctc,
             }
         else:
             continue
@@ -699,9 +700,7 @@ def _apply_step4_constraints(params_dict, form):
     params_dict["MIN_CONSTRAINTS"] = int(form.get("num_constraints_min", 1))
     params_dict["MAX_CONSTRAINTS"] = int(form.get("num_constraints_max", 10))
     try:
-        params_dict["EXTRA_CONSTRAINT_REPRESENTATIVENESS"] = max(
-            1, int(float(form.get("extra_constraint_repr", 1)))
-        )
+        params_dict["EXTRA_CONSTRAINT_REPRESENTATIVENESS"] = max(1, int(float(form.get("extra_constraint_repr", 1))))
     except (TypeError, ValueError):
         params_dict["EXTRA_CONSTRAINT_REPRESENTATIVENESS"] = 1
     params_dict["MIN_VARS_PER_CONSTRAINT"] = int(form.get("vars_per_ctc_min", 1))
@@ -742,9 +741,17 @@ def _apply_step4_constraints(params_dict, form):
         params_dict["PROB_GREATER_EQUALS"] = _safe_float(form.get("prob_geq"), 0.0)
     else:
         for k in (
-            "PROB_SUM", "PROB_SUBSTRACT", "PROB_MULTIPLY", "PROB_DIVIDE",
-            "PROB_SUM_FUNCTION", "PROB_AVG_FUNCTION",
-            "PROB_EQUALS", "PROB_LESS", "PROB_GREATER", "PROB_LESS_EQUALS", "PROB_GREATER_EQUALS",
+            "PROB_SUM",
+            "PROB_SUBSTRACT",
+            "PROB_MULTIPLY",
+            "PROB_DIVIDE",
+            "PROB_SUM_FUNCTION",
+            "PROB_AVG_FUNCTION",
+            "PROB_EQUALS",
+            "PROB_LESS",
+            "PROB_GREATER",
+            "PROB_LESS_EQUALS",
+            "PROB_GREATER_EQUALS",
         ):
             params_dict[k] = 0.0
 
@@ -856,7 +863,10 @@ def step1():
         except ValueError as e:
             errors["global"] = str(e)
             return render_template(
-                "generator/step1.html", current_step=1, errors=errors, values=request.form,
+                "generator/step1.html",
+                current_step=1,
+                errors=errors,
+                values=request.form,
             )
         # Merge onto any existing params (we keep downstream fields if the
         # user walked back from a later step).
@@ -882,11 +892,19 @@ def step1():
 def step2():
     if request.method == "POST":
         nav = request.form.get("nav", "next")
-        save_step_state(2, request.form, checkbox_fields=[
-            "boolean_level", "arithmetic_level", "type_level",
-            "feature_cardinality", "aggregate_functions", "string_constraints",
-            "group_cardinality",
-        ])
+        save_step_state(
+            2,
+            request.form,
+            checkbox_fields=[
+                "boolean_level",
+                "arithmetic_level",
+                "type_level",
+                "feature_cardinality",
+                "aggregate_functions",
+                "string_constraints",
+                "group_cardinality",
+            ],
+        )
         params_dict = session.get("params", {}) or {}
         _apply_step2_levels(params_dict, request.form)
         session["params"] = params_dict
@@ -935,14 +953,16 @@ def step3():
             return redirect(url_for("generator.step2"))
 
         errors, values = validate_step3_form(request.form, params_dict)
-        values.update({
-            "arithmetic_level": params_dict.get("ARITHMETIC_LEVEL", False),
-            "type_level": params_dict.get("TYPE_LEVEL", False),
-            "feature_cardinality": params_dict.get("FEATURE_CARDINALITY", False),
-            "aggregate_functions": params_dict.get("AGGREGATE_FUNCTIONS", False),
-            "string_constraints": params_dict.get("STRING_CONSTRAINTS", False),
-            "group_cardinality": params_dict.get("GROUP_CARDINALITY", False),
-        })
+        values.update(
+            {
+                "arithmetic_level": params_dict.get("ARITHMETIC_LEVEL", False),
+                "type_level": params_dict.get("TYPE_LEVEL", False),
+                "feature_cardinality": params_dict.get("FEATURE_CARDINALITY", False),
+                "aggregate_functions": params_dict.get("AGGREGATE_FUNCTIONS", False),
+                "string_constraints": params_dict.get("STRING_CONSTRAINTS", False),
+                "group_cardinality": params_dict.get("GROUP_CARDINALITY", False),
+            }
+        )
         if errors:
             return render_template("generator/step3.html", current_step=3, errors=errors, values=values)
         _apply_step3_tree(params_dict, request.form)
@@ -1043,24 +1063,26 @@ def step4():
         "prob_equiv": params_dict.get("PROB_EQUIVALENCE", 0.1),
     }
     if has_saved:
-        defaults.update({
-            "prob_plus": params_dict.get("PROB_SUM", STEP4_UI_DEFAULTS["prob_plus"]),
-            "prob_minus": params_dict.get("PROB_SUBSTRACT", STEP4_UI_DEFAULTS["prob_minus"]),
-            "prob_times": params_dict.get("PROB_MULTIPLY", STEP4_UI_DEFAULTS["prob_times"]),
-            "prob_div": params_dict.get("PROB_DIVIDE", STEP4_UI_DEFAULTS["prob_div"]),
-            "prob_sum": params_dict.get("PROB_SUM_FUNCTION", STEP4_UI_DEFAULTS["prob_sum"]),
-            "prob_avg": params_dict.get("PROB_AVG_FUNCTION", STEP4_UI_DEFAULTS["prob_avg"]),
-            "prob_eq": params_dict.get("PROB_EQUALS", STEP4_UI_DEFAULTS["prob_eq"]),
-            "prob_lt": params_dict.get("PROB_LESS", STEP4_UI_DEFAULTS["prob_lt"]),
-            "prob_gt": params_dict.get("PROB_GREATER", STEP4_UI_DEFAULTS["prob_gt"]),
-            "prob_leq": params_dict.get("PROB_LESS_EQUALS", STEP4_UI_DEFAULTS["prob_leq"]),
-            "prob_geq": params_dict.get("PROB_GREATER_EQUALS", STEP4_UI_DEFAULTS["prob_geq"]),
-            "prob_len": (
-                params_dict.get("PROB_LEN_FUNCTION", STEP4_UI_DEFAULTS["prob_len"])
-                if params_dict.get("TYPE_LEVEL") and params_dict.get("STRING_CONSTRAINTS")
-                else 0.0
-            ),
-        })
+        defaults.update(
+            {
+                "prob_plus": params_dict.get("PROB_SUM", STEP4_UI_DEFAULTS["prob_plus"]),
+                "prob_minus": params_dict.get("PROB_SUBSTRACT", STEP4_UI_DEFAULTS["prob_minus"]),
+                "prob_times": params_dict.get("PROB_MULTIPLY", STEP4_UI_DEFAULTS["prob_times"]),
+                "prob_div": params_dict.get("PROB_DIVIDE", STEP4_UI_DEFAULTS["prob_div"]),
+                "prob_sum": params_dict.get("PROB_SUM_FUNCTION", STEP4_UI_DEFAULTS["prob_sum"]),
+                "prob_avg": params_dict.get("PROB_AVG_FUNCTION", STEP4_UI_DEFAULTS["prob_avg"]),
+                "prob_eq": params_dict.get("PROB_EQUALS", STEP4_UI_DEFAULTS["prob_eq"]),
+                "prob_lt": params_dict.get("PROB_LESS", STEP4_UI_DEFAULTS["prob_lt"]),
+                "prob_gt": params_dict.get("PROB_GREATER", STEP4_UI_DEFAULTS["prob_gt"]),
+                "prob_leq": params_dict.get("PROB_LESS_EQUALS", STEP4_UI_DEFAULTS["prob_leq"]),
+                "prob_geq": params_dict.get("PROB_GREATER_EQUALS", STEP4_UI_DEFAULTS["prob_geq"]),
+                "prob_len": (
+                    params_dict.get("PROB_LEN_FUNCTION", STEP4_UI_DEFAULTS["prob_len"])
+                    if params_dict.get("TYPE_LEVEL") and params_dict.get("STRING_CONSTRAINTS")
+                    else 0.0
+                ),
+            }
+        )
     else:
         defaults.update(STEP4_UI_DEFAULTS)
         if not (params_dict.get("TYPE_LEVEL") and params_dict.get("STRING_CONSTRAINTS")):
@@ -1103,7 +1125,10 @@ def step5():
         errors, values = validate_step5_form(request.form, params_dict)
         if errors:
             return render_template(
-                "generator/step5.html", current_step=5, errors=errors, values=values,
+                "generator/step5.html",
+                current_step=5,
+                errors=errors,
+                values=values,
                 arithmetic_level=params_dict.get("ARITHMETIC_LEVEL", False),
                 type_level=params_dict.get("TYPE_LEVEL", False),
                 string_constraints=params_dict.get("STRING_CONSTRAINTS", False),
@@ -1126,7 +1151,10 @@ def step5():
     }
     values = load_step_state(5, defaults)
     return render_template(
-        "generator/step5.html", current_step=5, errors={}, values=values,
+        "generator/step5.html",
+        current_step=5,
+        errors={},
+        values=values,
         arithmetic_level=params_dict.get("ARITHMETIC_LEVEL", False),
         type_level=params_dict.get("TYPE_LEVEL", False),
         string_constraints=params_dict.get("STRING_CONSTRAINTS", False),
@@ -1144,9 +1172,15 @@ def step6():
 
     if request.method == "POST":
         nav = request.form.get("nav", "next")
-        save_step_state(6, request.form, checkbox_fields=[
-            "ensure_satisfiable", "feature_count_suffix", "constraint_count_suffix",
-        ])
+        save_step_state(
+            6,
+            request.form,
+            checkbox_fields=[
+                "ensure_satisfiable",
+                "feature_count_suffix",
+                "constraint_count_suffix",
+            ],
+        )
         _apply_step6_output(params_dict, request.form)
         session["params"] = params_dict
         if nav == "prev":

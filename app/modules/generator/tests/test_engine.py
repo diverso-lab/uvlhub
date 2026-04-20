@@ -12,7 +12,6 @@ import re
 import tempfile
 
 from flamapy.metamodels.fm_metamodel.models import Attribute, Domain
-
 from fm_generator.FMGenerator.models.config import Params
 from fm_generator.FMGenerator.models.models import FmgeneratorModel
 from fm_generator.FMGenerator.operations.generate_models import generate_single_model
@@ -83,9 +82,7 @@ def _run(params: Params, n: int = 5) -> str:
     params.NUM_MODELS = n
     with tempfile.TemporaryDirectory() as d:
         FmgeneratorModel(params).generate_models(d)
-        return "\n".join(
-            open(os.path.join(d, f)).read() for f in sorted(os.listdir(d)) if f.endswith(".uvl")
-        )
+        return "\n".join(open(os.path.join(d, f)).read() for f in sorted(os.listdir(d)) if f.endswith(".uvl"))
 
 
 # ── NUM_MODELS + filename suffixes ───────────────────────────────────────
@@ -234,8 +231,12 @@ def test_random_attributes_respects_count_range():
 
 def test_dist_boolean_only_produces_only_boolean_attrs():
     p = _base_params(
-        DIST_BOOLEAN=1.0, DIST_INTEGER=0.0, DIST_REAL=0.0, DIST_STRING=0.0,
-        MIN_ATTRIBUTES=3, MAX_ATTRIBUTES=3,
+        DIST_BOOLEAN=1.0,
+        DIST_INTEGER=0.0,
+        DIST_REAL=0.0,
+        DIST_STRING=0.0,
+        MIN_ATTRIBUTES=3,
+        MAX_ATTRIBUTES=3,
     )
     text = _run(p, n=3)
     # Boolean attrs serialise as "{Name true}" or "{Name false}".
@@ -247,8 +248,12 @@ def test_dist_boolean_only_produces_only_boolean_attrs():
 def test_dist_integer_only_produces_integer_attrs():
     p = _base_params(
         ARITHMETIC_LEVEL=True,
-        DIST_BOOLEAN=0.0, DIST_INTEGER=1.0, DIST_REAL=0.0, DIST_STRING=0.0,
-        MIN_ATTRIBUTES=3, MAX_ATTRIBUTES=3,
+        DIST_BOOLEAN=0.0,
+        DIST_INTEGER=1.0,
+        DIST_REAL=0.0,
+        DIST_STRING=0.0,
+        MIN_ATTRIBUTES=3,
+        MAX_ATTRIBUTES=3,
     )
     text = _run(p, n=3)
     attrs = re.findall(r"\{Attr\d+\s+([^,}]+)", text)
@@ -261,8 +266,12 @@ def test_dist_integer_only_produces_integer_attrs():
 def test_dist_string_only_respects_type_level():
     p = _base_params(
         TYPE_LEVEL=True,
-        DIST_BOOLEAN=0.0, DIST_INTEGER=0.0, DIST_REAL=0.0, DIST_STRING=1.0,
-        MIN_ATTRIBUTES=3, MAX_ATTRIBUTES=3,
+        DIST_BOOLEAN=0.0,
+        DIST_INTEGER=0.0,
+        DIST_REAL=0.0,
+        DIST_STRING=1.0,
+        MIN_ATTRIBUTES=3,
+        MAX_ATTRIBUTES=3,
     )
     text = _run(p, n=3)
     # Strings emit quoted: {Attr0 'low'}
@@ -273,8 +282,12 @@ def test_no_integer_attrs_when_arithmetic_off():
     """Even if DIST_INTEGER=1.0, ARITHMETIC_LEVEL=False falls back to Boolean."""
     p = _base_params(
         ARITHMETIC_LEVEL=False,
-        DIST_BOOLEAN=0.0, DIST_INTEGER=1.0, DIST_REAL=0.0, DIST_STRING=0.0,
-        MIN_ATTRIBUTES=3, MAX_ATTRIBUTES=3,
+        DIST_BOOLEAN=0.0,
+        DIST_INTEGER=1.0,
+        DIST_REAL=0.0,
+        DIST_STRING=0.0,
+        MIN_ATTRIBUTES=3,
+        MAX_ATTRIBUTES=3,
     )
     text = _run(p, n=3)
     # Since integer/real are gated off and DIST_BOOLEAN=0, engine falls back
@@ -288,8 +301,10 @@ def test_no_integer_attrs_when_arithmetic_off():
 
 def test_boolean_only_level_has_no_arith_no_strings():
     p = _base_params(
-        ARITHMETIC_LEVEL=False, TYPE_LEVEL=False,
-        MIN_CONSTRAINTS=8, MAX_CONSTRAINTS=10,
+        ARITHMETIC_LEVEL=False,
+        TYPE_LEVEL=False,
+        MIN_CONSTRAINTS=8,
+        MAX_CONSTRAINTS=10,
     )
     text = _run(p, n=3)
     # No aggregate keywords, no len(), no arithmetic operators in constraints.
@@ -309,11 +324,19 @@ def test_boolean_only_level_has_no_arith_no_strings():
 def test_arithmetic_level_produces_arith_constraints():
     p = _base_params(
         ARITHMETIC_LEVEL=True,
-        DIST_BOOLEAN=0.0, DIST_INTEGER=1.0, DIST_REAL=0.0, DIST_STRING=0.0,
+        DIST_BOOLEAN=0.0,
+        DIST_INTEGER=1.0,
+        DIST_REAL=0.0,
+        DIST_STRING=0.0,
         # Force arithmetic CTCs: weight boolean low, integer high.
-        CTC_DIST_BOOLEAN=0.0, CTC_DIST_INTEGER=1.0, CTC_DIST_REAL=0.0, CTC_DIST_STRING=0.0,
-        MIN_CONSTRAINTS=10, MAX_CONSTRAINTS=10,
-        MIN_ATTRIBUTES=3, MAX_ATTRIBUTES=4,
+        CTC_DIST_BOOLEAN=0.0,
+        CTC_DIST_INTEGER=1.0,
+        CTC_DIST_REAL=0.0,
+        CTC_DIST_STRING=0.0,
+        MIN_CONSTRAINTS=10,
+        MAX_CONSTRAINTS=10,
+        MIN_ATTRIBUTES=3,
+        MAX_ATTRIBUTES=4,
     )
     text = _run(p, n=5)
     body = "\n".join(_iter_constraint_lines(text))
@@ -323,12 +346,22 @@ def test_arithmetic_level_produces_arith_constraints():
 
 def test_aggregate_functions_produce_sum_avg():
     p = _base_params(
-        ARITHMETIC_LEVEL=True, AGGREGATE_FUNCTIONS=True,
-        DIST_BOOLEAN=0.0, DIST_INTEGER=1.0, DIST_REAL=0.0, DIST_STRING=0.0,
-        CTC_DIST_BOOLEAN=0.0, CTC_DIST_INTEGER=1.0, CTC_DIST_REAL=0.0, CTC_DIST_STRING=0.0,
-        PROB_SUM_FUNCTION=0.5, PROB_AVG_FUNCTION=0.5,
-        MIN_CONSTRAINTS=15, MAX_CONSTRAINTS=15,
-        MIN_ATTRIBUTES=3, MAX_ATTRIBUTES=4,
+        ARITHMETIC_LEVEL=True,
+        AGGREGATE_FUNCTIONS=True,
+        DIST_BOOLEAN=0.0,
+        DIST_INTEGER=1.0,
+        DIST_REAL=0.0,
+        DIST_STRING=0.0,
+        CTC_DIST_BOOLEAN=0.0,
+        CTC_DIST_INTEGER=1.0,
+        CTC_DIST_REAL=0.0,
+        CTC_DIST_STRING=0.0,
+        PROB_SUM_FUNCTION=0.5,
+        PROB_AVG_FUNCTION=0.5,
+        MIN_CONSTRAINTS=15,
+        MAX_CONSTRAINTS=15,
+        MIN_ATTRIBUTES=3,
+        MAX_ATTRIBUTES=4,
     )
     text = _run(p, n=5)
     body = "\n".join(_iter_constraint_lines(text))
@@ -337,12 +370,21 @@ def test_aggregate_functions_produce_sum_avg():
 
 def test_string_level_produces_len_constraints():
     p = _base_params(
-        TYPE_LEVEL=True, STRING_CONSTRAINTS=True,
-        DIST_BOOLEAN=0.0, DIST_INTEGER=0.0, DIST_REAL=0.0, DIST_STRING=1.0,
-        CTC_DIST_BOOLEAN=0.0, CTC_DIST_INTEGER=0.0, CTC_DIST_REAL=0.0, CTC_DIST_STRING=1.0,
+        TYPE_LEVEL=True,
+        STRING_CONSTRAINTS=True,
+        DIST_BOOLEAN=0.0,
+        DIST_INTEGER=0.0,
+        DIST_REAL=0.0,
+        DIST_STRING=1.0,
+        CTC_DIST_BOOLEAN=0.0,
+        CTC_DIST_INTEGER=0.0,
+        CTC_DIST_REAL=0.0,
+        CTC_DIST_STRING=1.0,
         PROB_LEN_FUNCTION=1.0,
-        MIN_CONSTRAINTS=10, MAX_CONSTRAINTS=10,
-        MIN_ATTRIBUTES=3, MAX_ATTRIBUTES=4,
+        MIN_CONSTRAINTS=10,
+        MAX_CONSTRAINTS=10,
+        MIN_ATTRIBUTES=3,
+        MAX_ATTRIBUTES=4,
     )
     text = _run(p, n=5)
     body = "\n".join(_iter_constraint_lines(text))
@@ -369,11 +411,16 @@ def _iter_constraint_lines(text: str):
 def test_min_vars_per_constraint_respected():
     """With MIN=MAX=4, every Boolean constraint has exactly 4 leaves."""
     p = _base_params(
-        MIN_VARS_PER_CONSTRAINT=4, MAX_VARS_PER_CONSTRAINT=4,
-        PROB_NOT=0.0, EXTRA_CONSTRAINT_REPRESENTATIVENESS=1,
-        MIN_CONSTRAINTS=6, MAX_CONSTRAINTS=6,
-        MIN_FEATURES=10, MAX_FEATURES=15,
-        MIN_ATTRIBUTES=0, MAX_ATTRIBUTES=0,  # no attributes → purely Boolean ctcs
+        MIN_VARS_PER_CONSTRAINT=4,
+        MAX_VARS_PER_CONSTRAINT=4,
+        PROB_NOT=0.0,
+        EXTRA_CONSTRAINT_REPRESENTATIVENESS=1,
+        MIN_CONSTRAINTS=6,
+        MAX_CONSTRAINTS=6,
+        MIN_FEATURES=10,
+        MAX_FEATURES=15,
+        MIN_ATTRIBUTES=0,
+        MAX_ATTRIBUTES=0,  # no attributes → purely Boolean ctcs
     )
     text = _run(p, n=3)
     for line in _iter_constraint_lines(text):
@@ -383,7 +430,9 @@ def test_min_vars_per_constraint_respected():
 
 def test_prob_not_zero_produces_no_negations():
     p = _base_params(
-        PROB_NOT=0.0, MIN_CONSTRAINTS=8, MAX_CONSTRAINTS=8,
+        PROB_NOT=0.0,
+        MIN_CONSTRAINTS=8,
+        MAX_CONSTRAINTS=8,
     )
     text = _run(p, n=5)
     ctc_body = text.split("constraints\n", 1)[1] if "constraints\n" in text else ""
@@ -393,7 +442,9 @@ def test_prob_not_zero_produces_no_negations():
 
 def test_prob_not_one_produces_many_negations():
     p = _base_params(
-        PROB_NOT=1.0, MIN_CONSTRAINTS=8, MAX_CONSTRAINTS=8,
+        PROB_NOT=1.0,
+        MIN_CONSTRAINTS=8,
+        MAX_CONSTRAINTS=8,
     )
     text = _run(p, n=5)
     ctc_body = text.split("constraints\n", 1)[1] if "constraints\n" in text else ""
@@ -416,9 +467,13 @@ def test_prob_and_dominant():
     """With PROB_AND=1.0, PROB_OR/IMPLIES/EQUIV=0, every Boolean connective
     should be AND (serialised as ' & ')."""
     p = _base_params(
-        PROB_AND=1.0, PROB_OR_CT=0.0, PROB_IMPLICATION=0.0, PROB_EQUIVALENCE=0.0,
+        PROB_AND=1.0,
+        PROB_OR_CT=0.0,
+        PROB_IMPLICATION=0.0,
+        PROB_EQUIVALENCE=0.0,
         PROB_NOT=0.0,
-        MIN_CONSTRAINTS=10, MAX_CONSTRAINTS=10,
+        MIN_CONSTRAINTS=10,
+        MAX_CONSTRAINTS=10,
     )
     text = _run(p, n=3)
     ctc_body = text.split("constraints\n", 1)[1]
@@ -431,9 +486,13 @@ def test_prob_and_dominant():
 
 def test_prob_implies_dominant():
     p = _base_params(
-        PROB_AND=0.0, PROB_OR_CT=0.0, PROB_IMPLICATION=1.0, PROB_EQUIVALENCE=0.0,
+        PROB_AND=0.0,
+        PROB_OR_CT=0.0,
+        PROB_IMPLICATION=1.0,
+        PROB_EQUIVALENCE=0.0,
         PROB_NOT=0.0,
-        MIN_CONSTRAINTS=10, MAX_CONSTRAINTS=10,
+        MIN_CONSTRAINTS=10,
+        MAX_CONSTRAINTS=10,
     )
     text = _run(p, n=3)
     ctc_body = text.split("constraints\n", 1)[1]
@@ -471,7 +530,8 @@ def test_manual_mode_uses_attribute_in_constraints_flag():
         ATTRIBUTES_LIST=[attr],
         ATTRIBUTE_ATTACH_PROBS=[1.0],
         ATTRIBUTE_IN_CONSTRAINTS=[False],
-        MIN_CONSTRAINTS=5, MAX_CONSTRAINTS=5,
+        MIN_CONSTRAINTS=5,
+        MAX_CONSTRAINTS=5,
     )
     text = _run(p, n=2)
     for line in _iter_constraint_lines(text):
