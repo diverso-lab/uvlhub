@@ -1,5 +1,5 @@
 {% extends "generator/index.html" %}
-{% from "generator/_macros.html" import info, section, number_field, range_field, probability_field, check_field, sum_badge, slider_field %}
+{% from "generator/_macros.html" import info, section, check_field %}
 
 {% block title %}Generate random feature models{% endblock %}
 
@@ -8,21 +8,20 @@
     <div class="alert alert-danger">{{ errors['global'] }}</div>
 {% endif %}
 
+<div class="notice d-flex bg-light-primary rounded border-primary border border-dashed p-5 mb-8">
+    <i class="ki-duotone ki-abstract-26 fs-2x text-primary me-4 mt-1"><span class="path1"></span><span class="path2"></span></i>
+    <div class="fs-7 text-gray-700 fw-semibold">
+        Pick the UVL levels your models need. <strong>Boolean</strong> is always on — it's the base. <strong>Arithmetic</strong> unlocks numeric attributes, arithmetic constraints, feature cardinality and aggregates. <strong>Type</strong> unlocks typed attributes and string constraints. The later steps only show sections that apply to the levels you pick here.
+    </div>
+</div>
+
 <div class="row g-8">
     <div class="col-xl-12">
 
-        <!-- Language levels -->
         {{ section('Language levels',
-            'Pick which UVL levels the generator uses. Boolean is always on; Arithmetic enables minor levels like feature cardinality and aggregates; Type enables string constraints.') }}
+            'Scope of expressivity. Minor levels depend on their major — turning a minor on automatically requires its major.') }}
 
-        <div class="notice d-flex bg-light-primary rounded border-primary border border-dashed p-5 mb-6">
-            <i class="ki-duotone ki-abstract-26 fs-2x text-primary me-4 mt-1"><span class="path1"></span><span class="path2"></span></i>
-            <div class="fs-7 text-gray-700 fw-semibold">
-                <strong>Boolean</strong> is the minimum required level. <strong>Arithmetic</strong> includes Boolean, and <strong>Type</strong> includes both. You must pick a major level before enabling its minor levels.
-            </div>
-        </div>
-
-        <div class="card card-bordered mb-9">
+        <div class="card card-bordered mb-5">
             <div class="card-body">
                 <div class="row g-6">
                     <div class="col-md-6">
@@ -60,167 +59,20 @@
             </div>
         </div>
 
-        <div class="separator separator-dashed my-9"></div>
-
-        <!-- Features -->
-        {{ section('Features', 'Shape of the feature tree.') }}
-
-        {{ range_field('num_features_min', 'num_features_max', 'Number of features',
-            'Min / Max number of features each generated model will have.',
-            values, errors, default_min=3000, default_max=8500, hard_min=1) }}
-
-        {{ slider_field('max_tree_depth', 'Maximum tree depth',
-            'Upper bound for the tree depth. Cannot exceed the maximum number of features selected above.',
-            values, errors, default=5, min=1, max=50, max_from='num_features_max') }}
-
-        <div class="separator separator-dashed my-9"></div>
-
-        <!-- Parent-child distribution -->
-        {{ section('Parent–child distribution',
-            'How often each kind of parent/child relation appears. Drag the separators to reshape — the four values always add up to 1.') }}
-
-        <div class="prob-distribution mb-3">
-            <!-- Slim interactive slider -->
-            <div id="rel_slider" class="rel-slider mt-3 mb-5"></div>
-
-            <!-- Hidden inputs posted to the server -->
-            <input type="hidden" id="dist_optional"    name="dist_optional"    value="{{ values.get('dist_optional', 0.3) }}">
-            <input type="hidden" id="dist_mandatory"   name="dist_mandatory"   value="{{ values.get('dist_mandatory', 0.3) }}">
-            <input type="hidden" id="dist_alternative" name="dist_alternative" value="{{ values.get('dist_alternative', 0.2) }}">
-            <input type="hidden" id="dist_or"          name="dist_or"          value="{{ values.get('dist_or', 0.2) }}">
-
-            <!-- Legend: each type and its current % -->
-            <div class="row g-3">
-                <div class="col-6 col-md-3 d-flex align-items-center gap-2">
-                    <span class="rel-swatch" style="background: #5e6278;"></span>
-                    <span class="fs-7 fw-semibold text-gray-900">Optional</span>
-                    {{ info('Probability of a child being optional.') }}
-                    <span class="badge badge-light ms-auto fw-bold" id="label_dist_optional">30%</span>
-                </div>
-                <div class="col-6 col-md-3 d-flex align-items-center gap-2">
-                    <span class="rel-swatch" style="background: #3f4254;"></span>
-                    <span class="fs-7 fw-semibold text-gray-900">Mandatory</span>
-                    {{ info('Probability of a child being mandatory.') }}
-                    <span class="badge badge-light ms-auto fw-bold" id="label_dist_mandatory">30%</span>
-                </div>
-                <div class="col-6 col-md-3 d-flex align-items-center gap-2">
-                    <span class="rel-swatch" style="background: #2b2b40;"></span>
-                    <span class="fs-7 fw-semibold text-gray-900">Alternative</span>
-                    {{ info('Probability of an alternative group (exactly one child selected).') }}
-                    <span class="badge badge-light ms-auto fw-bold" id="label_dist_alternative">20%</span>
-                </div>
-                <div class="col-6 col-md-3 d-flex align-items-center gap-2">
-                    <span class="rel-swatch" style="background: #181c32;"></span>
-                    <span class="fs-7 fw-semibold text-gray-900">Or</span>
-                    {{ info('Probability of an or group (at least one child selected).') }}
-                    <span class="badge badge-light ms-auto fw-bold" id="label_dist_or">20%</span>
-                </div>
-                <div id="group_card_legend" class="col-12 d-flex align-items-center gap-2 mt-2 d-none">
-                    <span class="rel-swatch" style="background: repeating-linear-gradient(-45deg, #b5b5c3 0 6px, #a1a5b7 6px 12px);"></span>
-                    <span class="fs-7 fw-semibold text-gray-900">Group cardinality</span>
-                    {{ info('Share of cross-tree constraints reserved for groups with arbitrary cardinality bounds.') }}
-                    <span class="badge badge-light ms-auto fw-bold" id="label_group_card">10%</span>
-                </div>
-            </div>
-            {% if errors.get('rel_dist_total') %}
-                <div class="text-danger fs-7 mt-3">{{ errors['rel_dist_total'] }}</div>
-            {% endif %}
-        </div>
-
-        <!-- Feature cardinality block -->
-        <div id="feature_cardinality_block" class="card card-bordered mt-7" style="display: none;">
-            <div class="card-body">
-                <div class="d-flex align-items-center mb-4">
-                    <h5 class="fw-bold text-gray-900 mb-0 me-1">Feature cardinality settings</h5>
-                    {{ info('Only used if Feature cardinality is enabled above. Controls how often a feature may repeat and the allowed instance range.') }}
-                </div>
-
-                <div class="mb-5">
-                    <label for="prob_fc" class="form-label d-flex align-items-center">
-                        Attach probability
-                        {{ info('Share of features that get a cardinality. 0 = no feature has one; 1 = every feature has one.') }}
-                    </label>
-                    <input type="number"
-                           id="prob_fc"
-                           name="prob_fc"
-                           class="form-control form-control-solid"
-                           step="0.01" min="0" max="1"
-                           value="{{ values.get('prob_fc', 0.05) }}">
-                </div>
-
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label for="min_feature_cardinality" class="form-label">Min instances</label>
-                        <input type="number"
-                               id="min_feature_cardinality"
-                               name="min_feature_cardinality"
-                               class="form-control form-control-solid"
-                               min="1"
-                               data-clamp
-                               data-clamp-max-from="max_feature_cardinality"
-                               value="{{ values.get('min_feature_cardinality', 2) }}">
-                        {% if errors.get('min_feature_cardinality') %}
-                            <div class="text-danger fs-7 mt-1">{{ errors['min_feature_cardinality'] }}</div>
-                        {% endif %}
-                    </div>
-                    <div class="col-md-6">
-                        <label for="max_feature_cardinality" class="form-label">Max instances</label>
-                        <input type="number"
-                               id="max_feature_cardinality"
-                               name="max_feature_cardinality"
-                               class="form-control form-control-solid"
-                               min="1"
-                               data-clamp
-                               data-clamp-min-from="min_feature_cardinality"
-                               value="{{ values.get('max_feature_cardinality', 5) }}">
-                        {% if errors.get('max_feature_cardinality') %}
-                            <div class="text-danger fs-7 mt-1">{{ errors['max_feature_cardinality'] }}</div>
-                        {% endif %}
-                    </div>
-                </div>
-                <div class="text-gray-600 fs-7 mt-2">
-                    Min must be ≤ Max.
-                </div>
-            </div>
-        </div>
-
-        <!-- Hidden: the probability share is controlled by the slider above -->
-        <input type="hidden"
-               id="dist_group_cardinality"
-               name="dist_group_cardinality"
-               value="{{ values.get('dist_group_cardinality', 0.0) }}">
-
-        <!-- Group cardinality block -->
-        <div id="group_cardinality_block" class="card card-bordered mt-7" style="display: none;">
-            <div class="card-body">
-                <div class="d-flex align-items-center mb-4">
-                    <h5 class="fw-bold text-gray-900 mb-0 me-1">Group cardinality range</h5>
-                    {{ info('Size range of a group-cardinality group — i.e. how many children may be selected. The share of such groups is controlled by the Group cardinality segment in the slider above.') }}
-                </div>
-
-                {{ range_field('group_cardinality_min', 'group_cardinality_max', 'Children selectable per group',
-                    'Minimum and maximum number of children selectable inside a single group-cardinality group.',
-                    values, errors, default_min=1, default_max=6, hard_min=1, hard_max=20) }}
-            </div>
+        <div class="text-gray-600 fs-7 mt-3">
+            <i class="ki-duotone ki-information-5 fs-5 me-1"></i>
+            You can always come back and change these — the wizard shows only the sections that apply.
         </div>
 
     </div>
 </div>
-{% endblock %}
 
-{% block wizard_scripts %}
+<!-- IMPORTANT: script lives inside #stepper_generator so wizard-spa.js
+     re-executes it after every partial swap (prev/next). Otherwise the
+     change handlers only attach on the very first page load and minor
+     levels stop toggling visibility after any SPA navigation. -->
 <script>
 (function run() {
-    if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", run, { once: true });
-        return;
-    }
-    // Keep Boolean always on
-    const bool_ = document.getElementById("boolean_level");
-    if (bool_) bool_.checked = true;
-
-    // Dependent minor levels are only shown when their major is active.
-    // Group cardinality stays visible always (it does not depend on a major).
     function setMinorVisibility(inputId, visible) {
         const input = document.getElementById(inputId);
         if (!input) return;
@@ -228,26 +80,28 @@
         if (wrapper) wrapper.style.display = visible ? "" : "none";
         if (!visible && input.checked) input.checked = false;
     }
-
     function updateLevelDependencies() {
-        const arithmetic = document.getElementById("arithmetic_level");
-        const type       = document.getElementById("type_level");
-        const arithOn = !!(arithmetic && arithmetic.checked);
-        const typeOn  = !!(type && type.checked);
+        const arith = document.getElementById("arithmetic_level");
+        const type = document.getElementById("type_level");
+        const arithOn = !!(arith && arith.checked);
+        const typeOn = !!(type && type.checked);
         setMinorVisibility("feature_cardinality", arithOn);
         setMinorVisibility("aggregate_functions", arithOn);
         setMinorVisibility("string_constraints", typeOn);
     }
     function autoEnableMajors() {
-        const arithmetic = document.getElementById("arithmetic_level");
-        const featureCard = document.getElementById("feature_cardinality");
-        const aggregate  = document.getElementById("aggregate_functions");
-        const type       = document.getElementById("type_level");
-        const stringC    = document.getElementById("string_constraints");
-        if (featureCard.checked || aggregate.checked) arithmetic.checked = true;
-        if (stringC.checked) type.checked = true;
+        const arith = document.getElementById("arithmetic_level");
+        const type = document.getElementById("type_level");
+        const featCard = document.getElementById("feature_cardinality");
+        const agg = document.getElementById("aggregate_functions");
+        const strC = document.getElementById("string_constraints");
+        if ((featCard && featCard.checked) || (agg && agg.checked)) arith.checked = true;
+        if (strC && strC.checked) type.checked = true;
         updateLevelDependencies();
     }
+    // Keep Boolean always on.
+    const bool_ = document.getElementById("boolean_level");
+    if (bool_) bool_.checked = true;
     ["arithmetic_level", "type_level"].forEach(id => {
         document.getElementById(id)?.addEventListener("change", updateLevelDependencies);
     });
@@ -255,39 +109,6 @@
         document.getElementById(id)?.addEventListener("change", autoEnableMajors);
     });
     updateLevelDependencies();
-
-    // Parent-child distribution slider is rendered by scripts.js (noUiSlider).
-    // Update group cardinality legend visibility based on its toggle.
-    function syncGroupLegendVisibility() {
-        const legend = document.getElementById("group_card_legend");
-        const gc = document.getElementById("group_cardinality");
-        if (!legend || !gc) return;
-        legend.classList.toggle("d-none", !gc.checked);
-    }
-    document.getElementById("group_cardinality")?.addEventListener("change", syncGroupLegendVisibility);
-    syncGroupLegendVisibility();
-
-    // Toggle group cardinality block. The slider JS handles the default share
-    // when group is activated; this only controls block visibility.
-    function toggleGroupCardinalityBlock() {
-        const cb = document.getElementById("group_cardinality");
-        const block = document.getElementById("group_cardinality_block");
-        if (!cb || !block) return;
-        block.style.display = cb.checked ? "" : "none";
-        syncGroupLegendVisibility();
-    }
-    document.getElementById("group_cardinality")?.addEventListener("change", toggleGroupCardinalityBlock);
-    toggleGroupCardinalityBlock();
-
-    // Toggle feature cardinality block
-    function toggleFeatureCardinalityBlock() {
-        const cb = document.getElementById("feature_cardinality");
-        const block = document.getElementById("feature_cardinality_block");
-        if (!cb || !block) return;
-        block.style.display = cb.checked ? "" : "none";
-    }
-    document.getElementById("feature_cardinality")?.addEventListener("change", toggleFeatureCardinalityBlock);
-    toggleFeatureCardinalityBlock();
 })();
 </script>
 {% endblock %}
