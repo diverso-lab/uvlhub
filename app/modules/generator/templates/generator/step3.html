@@ -31,6 +31,35 @@
             'Maximum times a feature can appear in each constraint. Must be ≤ Max variables per constraint.',
             values, errors, default=1, min=1, max=10000) }}
 
+        {% if values.get('arithmetic_level') or values.get('type_level') %}
+        <div class="separator separator-dashed my-9"></div>
+
+        {{ section('Constraint type distribution',
+            'How often a constraint is Boolean, arithmetic (integer/real attributes) or string. Disabled levels always score 0. Active values must add up to 1.') }}
+
+        <div class="row g-3 mb-2">
+            {{ probability_field('ctc_dist_boolean', 'Boolean',
+                'Probability of a pure Boolean constraint (features and negations only).',
+                values, errors, default=0.7, symbol='B') }}
+            {{ probability_field('ctc_dist_integer', 'Integer',
+                'Probability of a constraint involving integer attributes. Requires Arithmetic level.',
+                values, errors, default=0.2, symbol='ℤ',
+                disabled=(not values.get('arithmetic_level'))) }}
+            {{ probability_field('ctc_dist_real', 'Real',
+                'Probability of a constraint involving real attributes. Requires Arithmetic level.',
+                values, errors, default=0.1, symbol='ℝ',
+                disabled=(not values.get('arithmetic_level'))) }}
+            {{ probability_field('ctc_dist_string', 'String',
+                'Probability of a constraint involving string attributes. Requires Type level.',
+                values, errors, default=0.0, symbol='S',
+                disabled=(not values.get('string_constraints'))) }}
+        </div>
+        {{ sum_badge('ctc_dist_sum', 'Sum of active type probabilities', initial=values.get('ctc_dist_sum', '1.0000')) }}
+        {% if errors.get('ctc_dist_sum') %}
+            <div class="text-danger fs-7 mt-1">{{ errors['ctc_dist_sum'] }}</div>
+        {% endif %}
+        {% endif %}
+
         <div class="separator separator-dashed my-9"></div>
 
         <!-- Boolean operators -->
@@ -203,6 +232,22 @@
             if (el) el.addEventListener('input', () => updateSum(cmp_ids, 'cmp_sum'));
         });
         updateSum(cmp_ids, 'cmp_sum');
+    }
+
+    // CTC type distribution — sum only the *enabled* (non-disabled) inputs
+    // so the section stays coherent with step2's major/minor level toggles.
+    if (document.getElementById('ctc_dist_sum')) {
+        const ctc_ids = ['ctc_dist_boolean', 'ctc_dist_integer', 'ctc_dist_real', 'ctc_dist_string'];
+        const activeCtc = () => ctc_ids.filter(id => {
+            const el = document.getElementById(id);
+            return el && !el.disabled;
+        });
+        const updateCtcSum = () => updateSum(activeCtc(), 'ctc_dist_sum');
+        ctc_ids.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('input', updateCtcSum);
+        });
+        updateCtcSum();
     }
 })();
 </script>
