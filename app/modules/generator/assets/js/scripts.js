@@ -14,7 +14,6 @@ const WHEELS = [
     "blinker-1.9.0-py3-none-any.whl",
     "dd-0.5.7-py3-none-any.whl",
     "flamapy_bdd-2.5.0-py3-none-any.whl",
-    "flamapy_configurator-2.0.1-py3-none-any.whl",
     "flamapy_fm-2.5.0-py3-none-any.whl",
     "flamapy_fw-2.5.0-py3-none-any.whl",
     "flamapy_sat-2.5.0-py3-none-any.whl",
@@ -28,7 +27,7 @@ const WHEELS = [
     "pydot-4.0.0-py3-none-any.whl",
     "setuptools-80.9.0-py3-none-any.whl",
     "six-1.17.0-py2.py3-none-any.whl",
-    "uvlparser-2.0.1-py3-none-any.whl",
+    "uvlparser-2.5.0-py3-none-any.whl",
     "werkzeug-3.1.3-py3-none-any.whl",
 ];
 
