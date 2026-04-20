@@ -214,38 +214,43 @@ export function getRuntime() {
     return window.__generatorRuntime;
 }
 
-export async function generateAndDownload() {
-    showModal();
-    setModal({ title: "Generating models", msg: "Running the generator…", subtle: " ", percent: 40, state: "loading" });
-    const pyodide = await getRuntime();
+// ─── Primitives — used by step6 to orchestrate a live UI ─────────────────
 
+export async function fetchParams() {
     const resp = await fetch("/generator/random/params-json");
     if (!resp.ok) throw new Error("Failed to fetch params-json: " + resp.status);
-    const paramsObj = await resp.json();
-
-    pyodide.globals.set("params_json", JSON.stringify(paramsObj));
-    const uvlsJson = await pyodide.runPythonAsync("generate_models(params_json)");
-    const uvls = JSON.parse(uvlsJson);
-
-    setModal({ msg: "Packaging ZIP…", percent: 85 });
-    const zip = new JSZip();
-    const prefix = paramsObj.NAME_PREFIX || "fm";
-    uvls.forEach((u, i) => zip.file(`${prefix}_${i}.uvl`, u));
-    const blob = await zip.generateAsync({ type: "blob" });
-    saveAs(blob, "feature_models.zip");
-
-    setModal({
-        title: `${uvls.length} model${uvls.length === 1 ? "" : "s"} ready`,
-        msg: "Your download has started.",
-        subtle: " ",
-        state: "success",
-        percent: 100,
-    });
-    hideModal(1200);
-    return uvls.length;
+    return resp.json();
 }
 
-window.generatorRuntime = { ready: getRuntime, generate: generateAndDownload };
+export async function generateOne(pyodide, paramsObj, index) {
+    // Each call re-sets params_json because paramsObj may have changed
+    // between invocations (the user flipping checkboxes on step 6 before
+    // clicking Generate). Kept cheap — Python parses it lazily.
+    pyodide.globals.set("params_json", JSON.stringify(paramsObj));
+    pyodide.globals.set("model_index", index);
+    const resultJson = await pyodide.runPythonAsync(
+        "generate_one_model(params_json, int(model_index))",
+    );
+    return JSON.parse(resultJson);
+}
+
+export async function packageZip(files) {
+    const zip = new JSZip();
+    files.forEach((f) => zip.file(f.filename, f.content));
+    return zip.generateAsync({ type: "blob" });
+}
+
+export function triggerDownload(blob, filename = "feature_models.zip") {
+    saveAs(blob, filename);
+}
+
+window.generatorRuntime = {
+    ready: getRuntime,
+    fetchParams,
+    generateOne,
+    packageZip,
+    triggerDownload,
+};
 
 // ─── Generic distribution control ───────────────────────────────────────
 // Renders an N-handle noUiSlider whose segments partition [0, 1], backed
@@ -336,6 +341,18 @@ function initDistributionControl({ sliderId, allSegments, labelPrefix = "label_"
 
     let suppressSliderUpdate = false;
 
+    // Setting el.value programmatically does NOT fire `input`/`change`,
+    // so the sidebar live-refresh (which listens for those) would stay
+    // silent while the user drags handles. We emit a bubbling custom
+    // event once per drag update; wizard-spa.js is wired to refresh the
+    // summary on it.
+    function notifyDraftChanged() {
+        const form = slider.closest("form");
+        if (form) {
+            form.dispatchEvent(new CustomEvent("wizard:draft-changed", { bubbles: true }));
+        }
+    }
+
     slider.noUiSlider.on("update", (raw) => {
         if (suppressSliderUpdate) return;
         const cum = raw.map(Number);
@@ -349,6 +366,7 @@ function initDistributionControl({ sliderId, allSegments, labelPrefix = "label_"
         const rounded = roundAndFix(vals);
         writeValues(rounded);
         updateLegend(rounded);
+        notifyDraftChanged();
     });
 
     // Bind number-input changes: rebalance siblings, reposition slider.

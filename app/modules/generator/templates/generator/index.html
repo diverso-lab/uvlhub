@@ -86,7 +86,9 @@
                 {% endfor %}
             </div>
 
-            {{ summary_panel(session.get('params', {})) }}
+            <div id="wizard_summary">
+                {{ summary_panel(session.get('params', {})) }}
+            </div>
         </div>
     </div>
     <!--end::Aside-->

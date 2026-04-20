@@ -644,6 +644,9 @@ def _apply_step2_levels(params_dict, form):
       * Minor levels (feature/aggregate, string) are cleared when their
         major is off.
     """
+    # Boolean is the base level — always on once step 2 has been visited,
+    # so the summary sidebar always lists "Majors: Boolean, …" from here on.
+    params_dict["BOOLEAN_LEVEL"] = True
     params_dict["ARITHMETIC_LEVEL"] = "arithmetic_level" in form
     params_dict["TYPE_LEVEL"] = "type_level" in form
     params_dict["FEATURE_CARDINALITY"] = "feature_cardinality" in form
@@ -852,15 +855,18 @@ def step1():
         errors, values = validate_step1_form(request.form)
         if errors:
             return render_template("generator/step1.html", current_step=1, errors=errors, values=values)
+        # Persist ONLY the three fields step 1 owns. Earlier versions dumped
+        # the whole Params dataclass (including every dataclass default)
+        # into session, which made the sidebar summary display stale
+        # "defaults" for steps the user hadn't reached yet. The wrapper
+        # reconstructs Params(**dict) on the fly using its own defaults,
+        # so the downstream flow doesn't need this pre-fill.
+        p = session.get("params", {}) or {}
         try:
-            from fm_generator.FMGenerator.models.config import Params
-
-            params = Params(
-                NUM_MODELS=int(request.form.get("num_models_val")),
-                SEED=int(request.form.get("seed")),
-                NAME_PREFIX=request.form.get("name_prefix", ""),
-            )
-        except ValueError as e:
+            p["NUM_MODELS"] = int(request.form.get("num_models_val"))
+            p["SEED"] = int(request.form.get("seed"))
+            p["NAME_PREFIX"] = request.form.get("name_prefix", "")
+        except (TypeError, ValueError) as e:
             errors["global"] = str(e)
             return render_template(
                 "generator/step1.html",
@@ -868,10 +874,6 @@ def step1():
                 errors=errors,
                 values=request.form,
             )
-        # Merge onto any existing params (we keep downstream fields if the
-        # user walked back from a later step).
-        p = session.get("params", {}) or {}
-        p.update(params.__dict__)
         session["params"] = p
         clear_step_state(1)
         return redirect(url_for("generator.step2"))
@@ -1193,7 +1195,10 @@ def step6():
         return redirect(url_for("generator.step6"))
 
     defaults = {
-        "ensure_satisfiable": params_dict.get("ENSURE_SATISFIABLE", True),
+        # ENSURE_SATISFIABLE triggers up to 20 retries per model via pysat;
+        # on big configurations that can multiply generation time 20×. Keep
+        # it OFF by default and warn the user on the step 6 card.
+        "ensure_satisfiable": params_dict.get("ENSURE_SATISFIABLE", False),
         "feature_count_suffix": params_dict.get("INCLUDE_FEATURE_COUNT_SUFFIX", False),
         "constraint_count_suffix": params_dict.get("INCLUDE_CONSTRAINT_COUNT_SUFFIX", False),
     }
@@ -1210,3 +1215,57 @@ def get_params_json():
     if not params:
         return jsonify({"error": "Params missing"}), 400
     return jsonify(params)
+
+
+# Dispatch table for the live-summary endpoint so it stays in sync with
+# the real step handlers. Each entry persists its step's form data onto
+# a working copy of session["params"].
+_DRAFT_PERSISTERS = {
+    2: _apply_step2_levels,
+    3: _apply_step3_tree,
+    4: _apply_step4_constraints,
+    5: _apply_step5_attributes,
+    6: _apply_step6_output,
+}
+
+
+@generator_bp.route("/generator/random/summary-refresh/<int:step>", methods=["POST"])
+def refresh_summary(step: int):
+    """Best-effort draft save + re-rendered summary panel.
+
+    The wizard sidebar re-renders after every Next, which feels laggy when
+    the user is still filling the current step. This endpoint accepts the
+    in-progress form data, applies the step-specific persister (wrapped in
+    try/except so garbage input can't break navigation), and returns just
+    the re-rendered summary panel HTML. The client swaps ``#wizard_summary``
+    in place, so the sidebar mirrors what the user is typing.
+    """
+    params_dict = session.get("params", {}) or {}
+
+    # Step 1's fields are a special case: they map 1:1 onto Params but
+    # there is no ``_apply_step1`` (the route builds Params directly).
+    if step == 1:
+        form = request.form
+        try:
+            nm = form.get("num_models_val")
+            if nm:
+                params_dict["NUM_MODELS"] = max(1, min(1000, int(nm)))
+        except (TypeError, ValueError):
+            pass
+        try:
+            sd = form.get("seed")
+            if sd:
+                params_dict["SEED"] = max(1, int(sd))
+        except (TypeError, ValueError):
+            pass
+        if form.get("name_prefix") is not None:
+            params_dict["NAME_PREFIX"] = form.get("name_prefix", "")
+    elif step in _DRAFT_PERSISTERS:
+        try:
+            _DRAFT_PERSISTERS[step](params_dict, request.form)
+        except Exception:
+            # Swallow — a half-filled form shouldn't break the summary.
+            pass
+
+    session["params"] = params_dict
+    return render_template("generator/_summary_partial.html", params=params_dict)

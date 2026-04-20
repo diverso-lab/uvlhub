@@ -20,8 +20,14 @@
             <div class="card-body">
                 <div class="d-flex flex-column gap-4">
                     {{ check_field('ensure_satisfiable', 'Ensure satisfiable',
-                        'Retry up to 20 times per model until pysat certifies the Boolean skeleton is satisfiable. Arithmetic/string constraints are outside SAT, so this guarantees the Boolean tree is consistent.',
+                        'Retry up to 20 times per model until pysat certifies the Boolean skeleton is satisfiable. Arithmetic/string constraints are outside SAT, so this guarantees only the Boolean tree is consistent.',
                         values) }}
+                    <div id="ensure_sat_warning" class="alert alert-warning d-flex align-items-start py-3 mb-0" style="display: none;">
+                        <i class="ki-duotone ki-information-5 fs-2 me-3 text-warning mt-1"><span class="path1"></span><span class="path2"></span><span class="path3"></span></i>
+                        <div class="fs-7">
+                            <strong>Heads up:</strong> with large configurations this can take significantly longer — every model may retry up to 20&times; until pysat certifies it. For a quick smoke-test, leave it off.
+                        </div>
+                    </div>
                     {{ check_field('feature_count_suffix', 'Append feature count to filename',
                         "Adds '_Nf' to each filename, where N is the number of features of that model.",
                         values) }}
@@ -45,24 +51,86 @@
 
             <h3 class="fw-bold text-gray-900 mb-2">Ready to generate</h3>
             <div class="text-gray-600 fw-semibold fs-6 mb-8 mw-500px mx-auto">
-                Your feature models will be packaged as a ZIP and downloaded to your device. You can trigger this as many times as you want with the same parameters.
+                Click <strong>Generate</strong> and watch your feature models appear below. When the batch is complete, download them all as a single ZIP.
             </div>
 
-            <button type="button" id="generate-zip-btn" class="btn btn-primary btn-lg">
-                <i class="ki-duotone ki-download fs-2 me-2"><span class="path1"></span><span class="path2"></span></i>
-                Generate &amp; download ZIP
+            <button type="button" id="generate-btn" class="btn btn-primary btn-lg">
+                <i class="ki-duotone ki-rocket fs-2 me-2"><span class="path1"></span><span class="path2"></span></i>
+                Generate
             </button>
+        </div>
 
-            <div id="generate-status" class="text-gray-600 fs-7 fw-semibold mt-4">&nbsp;</div>
+        <!-- Live generation log: fills up as each model gets produced. -->
+        <div id="gen-panel" class="mt-6" style="display: none;">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <div class="fw-bold fs-6 text-gray-900" id="gen-panel-title">Generating models…</div>
+                <span class="badge badge-light-primary fs-7 fw-bold" id="gen-counter">0 / 0</span>
+            </div>
+            <div class="progress h-6px rounded-pill mb-4">
+                <div id="gen-bar" class="progress-bar bg-primary rounded-pill" role="progressbar" style="width: 0%;"></div>
+            </div>
+            <div class="gen-terminal">
+                <div id="gen-log" class="gen-terminal-body"></div>
+            </div>
+            <div id="gen-actions" class="text-center mt-6" style="display: none;">
+                <button type="button" id="download-btn" class="btn btn-success btn-lg me-3">
+                    <i class="ki-duotone ki-download fs-2 me-2"><span class="path1"></span><span class="path2"></span></i>
+                    Download ZIP
+                </button>
+                <button type="button" id="regenerate-btn" class="btn btn-light-primary btn-lg">
+                    <i class="ki-duotone ki-arrows-circle fs-2 me-2"><span class="path1"></span><span class="path2"></span></i>
+                    Regenerate
+                </button>
+            </div>
         </div>
 
     </div>
 </div>
-{% endblock %}
 
-{% block wizard_scripts %}
+<style>
+    .gen-terminal {
+        background: #1e1e2d;
+        border-radius: 10px;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+    }
+    .gen-terminal-body {
+        max-height: 320px;
+        overflow-y: auto;
+        padding: 14px 18px;
+        font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+        font-size: 12.5px;
+        line-height: 1.7;
+        color: #cfd3e0;
+    }
+    .gen-terminal-body .log-time { color: #7e8299; }
+    .gen-terminal-body .log-ok   { color: #50cd89; }
+    .gen-terminal-body .log-pend { color: #f1bc00; }
+    .gen-terminal-body .log-err  { color: #f1416c; }
+    .gen-terminal-body .log-file { color: #7239ea; font-weight: 600; }
+    .gen-terminal-body .log-meta { color: #8099a6; }
+    .gen-terminal-body .log-line { display: block; }
+    .gen-terminal-body .log-line.new { animation: genFade 180ms ease-out; }
+    @keyframes genFade { from { opacity: 0; transform: translateY(2px); } to { opacity: 1; transform: none; } }
+</style>
+
+<!-- IMPORTANT: inline inside #stepper_generator so wizard-spa.js's reinit()
+     re-runs this IIFE after every SPA swap. If this script lived inside
+     the wizard_scripts block it would land outside the swap root and the
+     click handler would disappear after any prev/next navigation. -->
 <script>
 (function () {
+    // Toggle the "takes longer" warning as the user flips the ensure-SAT
+    // checkbox. The warning starts visible if the option is checked on
+    // initial render.
+    const ensureCb = document.getElementById("ensure_satisfiable");
+    const ensureWarn = document.getElementById("ensure_sat_warning");
+    function syncWarning() {
+        if (!ensureCb || !ensureWarn) return;
+        ensureWarn.style.display = ensureCb.checked ? "" : "none";
+    }
+    ensureCb?.addEventListener("change", syncWarning);
+    syncWarning();
+
     // Persist the output options to the session every time the user changes
     // one of the three checkboxes — no need to click "next". This keeps the
     // params-json endpoint (used by Pyodide) in sync with the UI.
@@ -83,37 +151,159 @@
         document.getElementById(id)?.addEventListener("change", syncOptions);
     });
 
-    const btn = document.getElementById("generate-zip-btn");
-    const status = document.getElementById("generate-status");
+    const generateBtn = document.getElementById("generate-btn");
+    const panel       = document.getElementById("gen-panel");
+    const panelTitle  = document.getElementById("gen-panel-title");
+    const counter     = document.getElementById("gen-counter");
+    const bar         = document.getElementById("gen-bar");
+    const logEl       = document.getElementById("gen-log");
+    const actions     = document.getElementById("gen-actions");
+    const downloadBtn = document.getElementById("download-btn");
+    const regenBtn    = document.getElementById("regenerate-btn");
+
+    let generatedFiles = [];   // kept across runs so Download stays usable
+    let generatedParams = null; // params snapshot at generation time
 
     async function waitForRuntime() {
         for (let i = 0; i < 600; i++) {                // up to ~60s
-            if (window.generatorRuntime && window.generatorRuntime.generate) return;
+            const rt = window.generatorRuntime;
+            if (rt && rt.fetchParams && rt.generateOne) return rt;
             await new Promise(r => setTimeout(r, 100));
         }
         throw new Error("Generator runtime did not become ready.");
     }
 
-    async function run() {
-        btn.disabled = true;
-        status.textContent = "Working on it…";
+    function stamp() {
+        const d = new Date();
+        const pad = n => String(n).padStart(2, "0");
+        return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    }
+
+    function appendLog(html, cls) {
+        const line = document.createElement("span");
+        line.className = "log-line new " + (cls || "");
+        line.innerHTML = `<span class="log-time">[${stamp()}]</span> ${html}`;
+        logEl.appendChild(line);
+        // Auto-scroll to bottom so the latest line is always visible.
+        logEl.parentElement.scrollTop = logEl.parentElement.scrollHeight;
+        logEl.scrollTop = logEl.scrollHeight;
+        // Strip the 'new' class after the fade so repeated appends don't
+        // re-trigger the animation on layout nudges.
+        setTimeout(() => line.classList.remove("new"), 200);
+    }
+
+    function resetPanel(n) {
+        logEl.innerHTML = "";
+        panel.style.display = "";
+        panelTitle.textContent = "Generating models…";
+        counter.textContent = `0 / ${n}`;
+        bar.style.width = "0%";
+        bar.classList.remove("bg-success", "bg-danger");
+        bar.classList.add("bg-primary");
+        actions.style.display = "none";
+        generatedFiles = [];
+    }
+
+    function markDone(n, elapsedS) {
+        panelTitle.textContent = `Done — ${n} model${n === 1 ? "" : "s"} generated`;
+        counter.textContent = `${n} / ${n}`;
+        bar.style.width = "100%";
+        bar.classList.remove("bg-primary");
+        bar.classList.add("bg-success");
+        actions.style.display = "";
+        appendLog(`<span class="log-ok">✓</span> Finished in <span class="log-meta">${elapsedS.toFixed(1)}s</span>. Ready to download.`, "log-ok");
+    }
+
+    function markError(i, n, err) {
+        bar.classList.remove("bg-primary");
+        bar.classList.add("bg-danger");
+        panelTitle.textContent = `Failed on model ${i + 1} / ${n}`;
+        appendLog(`<span class="log-err">✗</span> Model ${i + 1} failed — <span class="log-meta">${String((err && err.message) || err).slice(0, 200)}</span>`, "log-err");
+        // Keep whatever we had so the user can still download partial results.
+        if (generatedFiles.length > 0) actions.style.display = "";
+    }
+
+    async function runGeneration() {
+        generateBtn.disabled = true;
         try {
-            // Flush any pending option change so params-json is up to date.
+            // Flush in-flight option toggles into session before fetching params.
             await syncOptions();
-            await waitForRuntime();
-            const n = await window.generatorRuntime.generate();
-            status.textContent = `Last run produced ${n} model${n === 1 ? "" : "s"}.`;
+            const runtime = await waitForRuntime();
+            const pyodide = await runtime.ready();
+            const paramsObj = await runtime.fetchParams();
+            const n = parseInt(paramsObj.NUM_MODELS, 10) || 0;
+            if (n <= 0) throw new Error("NUM_MODELS must be a positive integer");
+            generatedParams = paramsObj;
+
+            resetPanel(n);
+            appendLog(`Starting generation of <strong>${n}</strong> model${n === 1 ? "" : "s"} — prefix <span class="log-file">${paramsObj.NAME_PREFIX || "fm"}</span>, seed <span class="log-meta">${paramsObj.SEED}</span>.`);
+            if (paramsObj.ENSURE_SATISFIABLE) {
+                appendLog(`<span class="log-pend">⚠</span> Ensure-satisfiable is on — each model may retry up to 20×.`, "log-pend");
+            }
+
+            const t0 = performance.now();
+            for (let i = 0; i < n; i++) {
+                appendLog(`<span class="log-pend">⋯</span> generating model ${i + 1} / ${n}…`, "log-pend");
+                let result;
+                try {
+                    result = await runtime.generateOne(pyodide, paramsObj, i);
+                } catch (err) {
+                    console.error(err);
+                    markError(i, n, err);
+                    return;
+                }
+                generatedFiles.push(result);
+                // Replace the "pending" line with a "done" line by removing
+                // the last element and appending the success entry.
+                const last = logEl.lastElementChild;
+                if (last && last.classList.contains("log-pend")) last.remove();
+                appendLog(
+                    `<span class="log-ok">✓</span> <span class="log-file">${result.filename}</span> <span class="log-meta">(${result.features} features · ${result.constraints} constraints)</span>`,
+                    "log-ok",
+                );
+                counter.textContent = `${i + 1} / ${n}`;
+                bar.style.width = `${Math.round(((i + 1) / n) * 100)}%`;
+                // Yield to the browser so DOM updates paint between iterations.
+                await new Promise(r => setTimeout(r, 0));
+            }
+
+            markDone(n, (performance.now() - t0) / 1000);
         } catch (e) {
             console.error(e);
-            status.textContent = `Something went wrong: ${e.message || e}`;
+            appendLog(`<span class="log-err">✗</span> ${e.message || e}`, "log-err");
+            bar.classList.remove("bg-primary");
+            bar.classList.add("bg-danger");
         } finally {
-            btn.disabled = false;
+            generateBtn.disabled = false;
         }
     }
-    btn.addEventListener("click", run);
 
-    // Auto-fire once when the runtime becomes ready.
-    waitForRuntime().then(() => window.generatorRuntime.ready()).then(() => run());
+    async function runDownload() {
+        if (!generatedFiles.length) return;
+        downloadBtn.disabled = true;
+        try {
+            const runtime = await waitForRuntime();
+            const blob = await runtime.packageZip(generatedFiles);
+            runtime.triggerDownload(blob, "feature_models.zip");
+        } catch (e) {
+            console.error(e);
+            appendLog(`<span class="log-err">✗</span> ZIP packaging failed — ${e.message || e}`, "log-err");
+        } finally {
+            downloadBtn.disabled = false;
+        }
+    }
+
+    function runRegenerate() {
+        generatedFiles = [];
+        actions.style.display = "none";
+        runGeneration();
+    }
+
+    generateBtn.addEventListener("click", runGeneration);
+    downloadBtn.addEventListener("click", runDownload);
+    regenBtn.addEventListener("click", runRegenerate);
 })();
 </script>
 {% endblock %}
+
+{% block wizard_scripts %}{% endblock %}
