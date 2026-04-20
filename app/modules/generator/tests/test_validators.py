@@ -61,6 +61,16 @@ def test_step1_rejects_negative_seed():
     assert "seed" in errors
 
 
+def test_step1_rejects_num_models_over_cap():
+    errors, _ = validate_step1_form(MultiDict({"num_models_val": "1001", "seed": "1"}))
+    assert "num_models_val" in errors
+
+
+def test_step1_accepts_num_models_at_cap():
+    errors, _ = validate_step1_form(MultiDict({"num_models_val": "1000", "seed": "1"}))
+    assert "num_models_val" not in errors
+
+
 # ── step2 ─────────────────────────────────────────────────────────────────
 
 

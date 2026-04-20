@@ -9,7 +9,7 @@
 
         {{ number_field('num_models_val', 'Number of models',
             'How many random feature models to generate in this batch.',
-            values, errors, default=5, min=1) }}
+            values, errors, default=5, min=1, max=1000) }}
 
         {{ number_field('seed', 'Seed',
             'Random seed used to make runs reproducible. Same seed + same parameters = same models.',

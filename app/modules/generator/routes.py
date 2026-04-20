@@ -92,6 +92,8 @@ def validate_step1_form(form):
         num_models = int(num_models_val)
         if num_models < 1:
             errors["num_models_val"] = "Number of models must be at least 1."
+        elif num_models > 1000:
+            errors["num_models_val"] = "Number of models cannot exceed 1000."
     except Exception:
         errors["num_models_val"] = "Number of models must be an integer."
 
