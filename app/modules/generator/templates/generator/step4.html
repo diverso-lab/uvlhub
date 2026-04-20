@@ -1,5 +1,5 @@
 {% extends "generator/index.html" %}
-{% from "generator/_macros.html" import info, section, range_field, probability_field, sum_badge %}
+{% from "generator/_macros.html" import info, section, number_field, range_field, probability_field, sum_badge %}
 
 {% block title %}Generate random feature models{% endblock %}
 
@@ -8,79 +8,165 @@
     <div class="alert alert-danger">{{ errors['global'] }}</div>
 {% endif %}
 
+{# Hidden carry-over fields (so the JS can read them and the backend keeps context) #}
+<input type="checkbox" id="aggregate_functions" name="aggregate_functions" class="d-none" {% if values.get('aggregate_functions', False) %}checked{% endif %}>
+<input type="checkbox" id="type_level"         name="type_level"         class="d-none" {% if values.get('type_level', False) %}checked{% endif %}>
+<input type="checkbox" id="string_constraints" name="string_constraints" class="d-none" {% if values.get('string_constraints', False) %}checked{% endif %}>
+
 <div class="row g-8">
     <div class="col-xl-12">
 
-        {{ section('Attributes',
-            'Decide whether attributes are sampled randomly or if you want to define each one by hand.') }}
+        <!-- Constraints amount -->
+        {{ section('Constraints', 'How many cross-tree constraints each model gets and how wide they are.') }}
 
-        <!-- Mode toggle -->
-        <div class="card card-bordered mb-7">
-            <div class="card-body py-6">
-                <label class="form-check form-check-custom form-check-solid">
-                    <input class="form-check-input"
-                           type="checkbox"
-                           id="random_attributes"
-                           name="random_attributes"
-                           {% if values.get('random_attributes') %}checked{% endif %}>
-                    <span class="form-check-label d-flex align-items-center">
-                        Generate attributes randomly
-                        {{ info('When on, the generator samples attributes within the configured Min/Max count. When off, you define each attribute manually below.') }}
-                    </span>
-                </label>
+        {{ range_field('num_constraints_min', 'num_constraints_max', 'Number of constraints',
+            'Min / Max number of cross-tree constraints in each generated model.',
+            values, errors, default_min=1, default_max=10, hard_min=1) }}
+
+        {{ range_field('vars_per_ctc_min', 'vars_per_ctc_max', 'Variables per constraint',
+            'Min / Max number of features referenced in a single constraint. Max cannot exceed the maximum number of features selected in step 2.',
+            values, errors, default_min=1, default_max=10, hard_min=1, hard_max=values.get('max_features', 10000)) }}
+
+        {{ number_field('extra_constraint_repr', 'Extra constraint representativeness',
+            'Maximum times a feature can appear in each constraint. Must be ≤ Max variables per constraint.',
+            values, errors, default=1, min=1, max=10000) }}
+
+        {% if values.get('arithmetic_level') or values.get('type_level') %}
+        <div class="separator separator-dashed my-9"></div>
+
+        {{ section('Constraint type distribution',
+            'How often a constraint is Boolean, arithmetic (integer/real attributes) or string. Disabled levels always score 0. Active values must add up to 1.') }}
+
+        <div class="row g-3 mb-2">
+            {{ probability_field('ctc_dist_boolean', 'Boolean',
+                'Probability of a pure Boolean constraint (features and negations only).',
+                values, errors, default=0.7, symbol='B') }}
+            {{ probability_field('ctc_dist_integer', 'Integer',
+                'Probability of a constraint involving integer attributes. Requires Arithmetic level.',
+                values, errors, default=0.2, symbol='ℤ',
+                disabled=(not values.get('arithmetic_level'))) }}
+            {{ probability_field('ctc_dist_real', 'Real',
+                'Probability of a constraint involving real attributes. Requires Arithmetic level.',
+                values, errors, default=0.1, symbol='ℝ',
+                disabled=(not values.get('arithmetic_level'))) }}
+            {{ probability_field('ctc_dist_string', 'String',
+                'Probability of a constraint involving string attributes. Requires Type level.',
+                values, errors, default=0.0, symbol='S',
+                disabled=(not values.get('string_constraints'))) }}
+        </div>
+        {{ sum_badge('ctc_dist_sum', 'Sum of active type probabilities', initial=values.get('ctc_dist_sum', '1.0000')) }}
+        {% if errors.get('ctc_dist_sum') %}
+            <div class="text-danger fs-7 mt-1">{{ errors['ctc_dist_sum'] }}</div>
+        {% endif %}
+        {% endif %}
+
+        <div class="separator separator-dashed my-9"></div>
+
+        <!-- Boolean operators -->
+        {{ section('Boolean operators',
+            'Probabilities used to sample the shape of Boolean constraints. AND/OR/⇒/⇔ always add up to 1.') }}
+
+        <div class="row g-3 mb-4">
+            {{ probability_field('prob_not', 'NOT', 'Probability of a NOT term in a constraint.', values, errors, default=0.3, symbol='¬') }}
+        </div>
+
+        <div class="prob-distribution mb-3">
+            <!-- Slim interactive slider for AND / OR / IMPLIES / EQUIVALENCE -->
+            <div id="boolop_slider" class="rel-slider mt-3 mb-5"></div>
+
+            <!-- Hidden inputs posted to the server -->
+            <input type="hidden" id="prob_and"     name="prob_and"     value="{{ values.get('prob_and', 0.4) }}">
+            <input type="hidden" id="prob_or"      name="prob_or"      value="{{ values.get('prob_or', 0.2) }}">
+            <input type="hidden" id="prob_implies" name="prob_implies" value="{{ values.get('prob_implies', 0.2) }}">
+            <input type="hidden" id="prob_equiv"   name="prob_equiv"   value="{{ values.get('prob_equiv', 0.2) }}">
+
+            <div class="row g-3">
+                <div class="col-6 col-md-3 d-flex align-items-center gap-2">
+                    <span class="rel-swatch" style="background: #5e6278;"></span>
+                    <span class="fs-5 fw-bold text-gray-900 me-1">∧</span>
+                    <span class="fs-7 fw-semibold text-gray-900">AND</span>
+                    {{ info('Probability of an AND connective.') }}
+                    <span class="badge badge-light ms-auto fw-bold" id="label_prob_and">40%</span>
+                </div>
+                <div class="col-6 col-md-3 d-flex align-items-center gap-2">
+                    <span class="rel-swatch" style="background: #3f4254;"></span>
+                    <span class="fs-5 fw-bold text-gray-900 me-1">∨</span>
+                    <span class="fs-7 fw-semibold text-gray-900">OR</span>
+                    {{ info('Probability of an OR connective.') }}
+                    <span class="badge badge-light ms-auto fw-bold" id="label_prob_or">20%</span>
+                </div>
+                <div class="col-6 col-md-3 d-flex align-items-center gap-2">
+                    <span class="rel-swatch" style="background: #2b2b40;"></span>
+                    <span class="fs-5 fw-bold text-gray-900 me-1">⇒</span>
+                    <span class="fs-7 fw-semibold text-gray-900">IMPLIES</span>
+                    {{ info('Probability of an implication connective.') }}
+                    <span class="badge badge-light ms-auto fw-bold" id="label_prob_implies">20%</span>
+                </div>
+                <div class="col-6 col-md-3 d-flex align-items-center gap-2">
+                    <span class="rel-swatch" style="background: #181c32;"></span>
+                    <span class="fs-5 fw-bold text-gray-900 me-1">⇔</span>
+                    <span class="fs-7 fw-semibold text-gray-900">EQUIVALENCE</span>
+                    {{ info('Probability of an equivalence connective.') }}
+                    <span class="badge badge-light ms-auto fw-bold" id="label_prob_equiv">20%</span>
+                </div>
             </div>
         </div>
 
-        <!-- Random mode -->
-        <div id="random-attributes-settings">
-            {{ range_field('min_attributes', 'max_attributes', 'Number of attributes',
-                'Min / Max number of attributes sampled per model when the random mode is on.',
-                values, errors, default_min=1, default_max=5, hard_min=1, hard_max=10000) }}
-            <div class="text-gray-600 fs-7 mb-5">Min must be ≤ Max.</div>
+        {% if values.get('arithmetic_level', False) %}
+        <div class="separator separator-dashed my-9"></div>
 
-            {{ section('Attribute type distribution',
-                'When sampling each attribute, how likely is each UVL type to be chosen. Integer/Real are only active with the Arithmetic level; String is only active with the Type level. Active values must add up to 1.') }}
+        <!-- Arithmetic operators -->
+        {{ section('Arithmetic operators',
+            'Probabilities for arithmetic terms inside constraints. Must add up to 1. Only used because Arithmetic level is enabled.') }}
 
-            <div class="row g-3 mb-2">
-                {{ probability_field('dist_boolean', 'Boolean',
-                    'Probability of a boolean attribute.',
-                    values, errors, default=0.7, symbol='B') }}
-                {{ probability_field('dist_integer', 'Integer',
-                    'Probability of an integer attribute. Requires Arithmetic level.',
-                    values, errors, default=0.1, symbol='ℤ',
-                    disabled=(not arithmetic_level)) }}
-                {{ probability_field('dist_real', 'Real',
-                    'Probability of a real-valued attribute. Requires Arithmetic level.',
-                    values, errors, default=0.1, symbol='ℝ',
-                    disabled=(not arithmetic_level)) }}
-                {{ probability_field('dist_string', 'String',
-                    'Probability of a string attribute. Requires Type level.',
-                    values, errors, default=0.1, symbol='S',
-                    disabled=(not type_level)) }}
-            </div>
-            {{ sum_badge('attr_dist_sum', 'Sum of active type probabilities', initial=values.get('attr_dist_sum', '1.0000')) }}
-            {% if errors.get('attr_dist_sum') %}
-                <div class="text-danger fs-7 mt-1">{{ errors['attr_dist_sum'] }}</div>
+        <div class="row g-3 mb-2">
+            {{ probability_field('prob_plus',  'Plus',     'Probability of +.',   values, errors, default=0.7, symbol='+') }}
+            {{ probability_field('prob_minus', 'Minus',    'Probability of −.',   values, errors, default=0.2, symbol='−') }}
+            {{ probability_field('prob_times', 'Times',    'Probability of ×.',   values, errors, default=0.1, symbol='×') }}
+            {{ probability_field('prob_div',   'Divide',   'Probability of ÷.',   values, errors, default=0.0, symbol='÷') }}
+            {% if values.get('aggregate_functions', False) %}
+            {{ probability_field('prob_sum',   'Sum agg.', 'Probability of the sum() aggregate function.', values, errors, default=0.0) }}
+            {{ probability_field('prob_avg',   'Avg agg.', 'Probability of the avg() aggregate function.', values, errors, default=0.0) }}
             {% endif %}
         </div>
+        {{ sum_badge('arithmetic_sum', 'Sum of arithmetic probabilities', initial=values.get('arithmetic_sum', '1.0000')) }}
+        {% if errors.get('arithmetic_sum') %}
+            <div class="text-danger fs-7 mt-1">{{ errors['arithmetic_sum'] }}</div>
+        {% endif %}
 
-        <!-- Manual mode -->
-        <div id="manual-attributes-section" style="display: none;">
-            <div id="manual-attributes-global-error" class="alert alert-danger py-2 mb-4" style="display:none;"></div>
+        <div class="separator separator-dashed my-9"></div>
 
-            <div class="d-flex gap-2 mb-5">
-                <button type="button" class="btn btn-sm btn-light-primary" id="add-attribute-btn">
-                    <i class="ki-duotone ki-plus fs-4"></i>
-                    Add attribute
-                </button>
-                <button type="button" class="btn btn-sm btn-light-danger" id="delete-attribute-btn">
-                    <i class="ki-duotone ki-minus fs-4"></i>
-                    Remove last
-                </button>
-            </div>
+        <!-- Comparison operators -->
+        {{ section('Comparison operators',
+            'Probability of each comparison operator. Must add up to 1. Only used because Arithmetic level is enabled.') }}
 
-            <div id="manual-attributes-list"></div>
+        <div class="row g-3 mb-2">
+            {{ probability_field('prob_eq',  'Equal',           'Probability of = comparison.',   values, errors, default=0.1, symbol='=') }}
+            {{ probability_field('prob_lt',  'Less than',       'Probability of < comparison.',   values, errors, default=0.2, symbol='<') }}
+            {{ probability_field('prob_gt',  'Greater than',    'Probability of > comparison.',   values, errors, default=0.7, symbol='>') }}
+            {{ probability_field('prob_leq', 'Less-or-equal',   'Probability of ≤ comparison.',   values, errors, default=0.0, symbol='≤') }}
+            {{ probability_field('prob_geq', 'Greater-or-equal','Probability of ≥ comparison.',   values, errors, default=0.0, symbol='≥') }}
         </div>
+        {{ sum_badge('cmp_sum', 'Sum of comparison probabilities', initial=values.get('cmp_sum', '1.0000')) }}
+        {% if errors.get('cmp_sum') %}
+            <div class="text-danger fs-7 mt-1">{{ errors['cmp_sum'] }}</div>
+        {% endif %}
+        {% endif %}
+
+        {% if values.get('string_constraints', False) %}
+        <div class="separator separator-dashed my-9"></div>
+
+        <!-- Type level constraints -->
+        {{ section('Type level constraints',
+            'Probability of string functions. Only used because Type level and String constraints are enabled.') }}
+
+        <div class="row g-3">
+            {{ probability_field('prob_len', 'Length', 'Probability of the len() function appearing in string constraints.', values, errors, default=0.7, symbol='len') }}
+        </div>
+        {% if errors.get('prob_len') %}
+            <div class="text-danger fs-7 mt-1">{{ errors['prob_len'] }}</div>
+        {% endif %}
+        {% endif %}
 
     </div>
 </div>
@@ -88,303 +174,81 @@
 
 {% block wizard_scripts %}
 <script>
-const randomCheckbox = document.getElementById('random_attributes');
-const randomSettings = document.getElementById('random-attributes-settings');
-const manualSection = document.getElementById('manual-attributes-section');
-const manualAttributesList = document.getElementById('manual-attributes-list');
-const savedAttributes = {{ values.get('attributes_list', []) | tojson }};
-const serverErrors = {{ errors | tojson }};
-const values = {{ values | tojson }};
-
-const arithmeticLevelEnabled   = {{ 1 if session.get('params', {}).get('ARITHMETIC_LEVEL', False) else 0 }};
-const typeLevelEnabled         = {{ 1 if session.get('params', {}).get('TYPE_LEVEL', False) else 0 }};
-const stringConstraintsEnabled = {{ 1 if session.get('params', {}).get('STRING_CONSTRAINTS', False) else 0 }};
-const manualAttributesGlobalError = document.getElementById('manual-attributes-global-error');
-
-function toggleAttributeSections() {
-    if (randomCheckbox.checked) {
-        randomSettings.style.display = '';
-        manualSection.style.display  = 'none';
-    } else {
-        randomSettings.style.display = 'none';
-        manualSection.style.display  = '';
+(function run() {
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", run, { once: true });
+        return;
     }
-}
-randomCheckbox.addEventListener('change', toggleAttributeSections);
-
-document.getElementById('add-attribute-btn').addEventListener('click', addAttributeCard);
-document.getElementById('delete-attribute-btn').addEventListener('click', function() {
-    const cards = manualAttributesList.getElementsByClassName('manual-attribute-card');
-    if (cards.length > 0) {
-        cards[cards.length - 1].remove();
-        updateManualAttributesGlobalError();
-    }
-});
-
-function validateBooleanCheckboxes(card) {
-    const trueBox  = card.querySelector('.boolean-true');
-    const falseBox = card.querySelector('.boolean-false');
-    const errorDiv = card.querySelector('.attr-bool-error');
-    if (!trueBox.checked && !falseBox.checked) {
-        errorDiv.textContent = 'Select at least one value (True or False).';
-        return false;
-    }
-    errorDiv.textContent = '';
-    return true;
-}
-
-function countIncompleteManualCards() {
-    const cards = document.querySelectorAll('.manual-attribute-card');
-    let incomplete = 0;
-    cards.forEach((card, idx) => {
-        let bad = false;
-        const name = card.querySelector(`[name="attr_name_${idx}"]`);
-        const type = card.querySelector(`[name="attr_type_${idx}"]`);
-        const prob = card.querySelector(`[name="attr_attach_prob_${idx}"]`);
-        if (!name || !name.value.trim()) bad = true;
-        if (!prob || !prob.value.trim()) bad = true;
-        if (type && type.value === 'boolean') {
-            const t = card.querySelector(`[name="attr_value_true_${idx}"]`);
-            const f = card.querySelector(`[name="attr_value_false_${idx}"]`);
-            if (!((t && t.checked) || (f && f.checked))) bad = true;
-        } else if (type && ['integer', 'real', 'string'].includes(type.value)) {
-            const mn = card.querySelector(`[name="attr_min_value_${idx}"]`);
-            const mx = card.querySelector(`[name="attr_max_value_${idx}"]`);
-            if (!mn || !mn.value.trim() || !mx || !mx.value.trim()) bad = true;
-        }
-        if (bad) incomplete++;
-    });
-    return incomplete;
-}
-
-function updateManualAttributesGlobalError() {
-    if (randomCheckbox.checked) {
-        manualAttributesGlobalError.style.display = 'none';
-        manualAttributesGlobalError.textContent = '';
-        return 0;
-    }
-    const n = countIncompleteManualCards();
-    if (n > 0) {
-        manualAttributesGlobalError.style.display = '';
-        manualAttributesGlobalError.textContent =
-            `There are ${n} attribute card(s) with missing required fields. Complete them before continuing.`;
-    } else {
-        manualAttributesGlobalError.style.display = 'none';
-        manualAttributesGlobalError.textContent = '';
-    }
-    return n;
-}
-
-function updateValueField(card, type, idx) {
-    const valueDiv = card.querySelector('.value-field');
-    if (type === 'boolean') {
-        valueDiv.innerHTML = `
-            <label class="form-label">Possible values</label>
-            <div class="d-flex gap-5">
-                <label class="form-check form-check-custom form-check-solid">
-                    <input class="form-check-input boolean-true" type="checkbox" name="attr_value_true_${idx}">
-                    <span class="form-check-label">True</span>
-                </label>
-                <label class="form-check form-check-custom form-check-solid">
-                    <input class="form-check-input boolean-false" type="checkbox" name="attr_value_false_${idx}">
-                    <span class="form-check-label">False</span>
-                </label>
-            </div>
-        `;
-        valueDiv.querySelector('.boolean-true').addEventListener('change', () => validateBooleanCheckboxes(card));
-        valueDiv.querySelector('.boolean-false').addEventListener('change', () => validateBooleanCheckboxes(card));
-    } else if (type === 'integer' || type === 'real' || type === 'string') {
-        const step = type === 'real' ? 'any' : '1';
-        const min  = type === 'string' ? '0' : '';
-        valueDiv.innerHTML = `
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <label class="form-label">Min</label>
-                    <input type="number" class="form-control form-control-solid"
-                        name="attr_min_value_${idx}" required step="${step}" min="${min}">
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">Max</label>
-                    <input type="number" class="form-control form-control-solid"
-                        name="attr_max_value_${idx}" required step="${step}" min="${min}">
-                </div>
-            </div>
-        `;
-    } else {
-        valueDiv.innerHTML = `
-            <label class="form-label">Value</label>
-            <input type="text" class="form-control form-control-solid" name="attr_value_${idx}" placeholder="e.g. 5 or Red" required>
-        `;
-    }
-}
-
-function addAttributeCard() {
-    const idx = manualAttributesList.children.length;
-    const card = document.createElement('div');
-    card.className = 'card card-bordered mb-4 manual-attribute-card';
-    card.innerHTML = `
-        <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h5 class="fw-bold text-gray-900 mb-0">Attribute #${idx + 1}</h5>
-            </div>
-
-            <div class="row g-4 mb-4">
-                <div class="col-md-6">
-                    <label class="form-label">Name</label>
-                    <input type="text" class="form-control form-control-solid"
-                        name="attr_name_${idx}" placeholder="e.g. Seats" required>
-                    <div class="text-danger attr-name-error fs-7 mt-1"></div>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">Type</label>
-                    <select class="form-select form-select-solid attr-type-select" name="attr_type_${idx}" required>
-                        <option value="integer">Integer</option>
-                        <option value="real">Real</option>
-                        <option value="boolean">Boolean</option>
-                        <option value="string">String</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="mb-4 value-field"></div>
-            <div class="text-danger attr-minmax-error fs-7 mb-2"></div>
-            <div class="text-danger attr-bool-error fs-7 mb-2"></div>
-
-            <div class="mb-4">
-                <label class="form-label">Attach probability</label>
-                <input type="number" class="form-control form-control-solid"
-                    name="attr_attach_prob_${idx}" step="0.001" required>
-                <div class="text-danger attr-attach-prob-error fs-7 mt-1"></div>
-            </div>
-
-            <label class="form-check form-check-custom form-check-solid">
-                <input class="form-check-input" type="checkbox"
-                    name="attr_use_in_constraints_${idx}" id="attr_use_in_constraints_${idx}" checked>
-                <span class="form-check-label">Use in constraints</span>
-            </label>
-            <div class="text-danger attr-use-in-constraints-error fs-7 mt-1"></div>
-            <div class="text-gray-600 attr-use-in-constraints-hint fs-7 mt-1"></div>
-        </div>
-    `;
-    manualAttributesList.appendChild(card);
-
-    updateValueField(card, 'integer', idx);
-    updateUseInConstraintsAvailability(card, 'integer', idx);
-
-    card.querySelector('.attr-type-select').addEventListener('change', function () {
-        updateValueField(card, this.value, idx);
-        updateUseInConstraintsAvailability(card, this.value, idx);
-    });
-    card.addEventListener('input',  updateManualAttributesGlobalError);
-    card.addEventListener('change', updateManualAttributesGlobalError);
-
-    updateManualAttributesGlobalError();
-}
-
-document.querySelector('form').addEventListener('submit', function (e) {
-    let valid = true;
-    if (!randomCheckbox.checked) {
-        document.querySelectorAll('.manual-attribute-card').forEach((card) => {
-            const sel = card.querySelector('.attr-type-select');
-            if (sel && sel.value === 'boolean' && !validateBooleanCheckboxes(card)) valid = false;
+    const maxVars = document.getElementById("vars_per_ctc_max");
+    if (maxVars) {
+        maxVars.addEventListener("input", () => {
+            const hardMax = parseInt(maxVars.getAttribute("max") || "10000", 10);
+            const v = parseInt(maxVars.value || "0", 10);
+            if (v > hardMax) maxVars.value = hardMax;
         });
-        if (updateManualAttributesGlobalError() > 0) valid = false;
     }
-    if (!valid) e.preventDefault();
-});
 
-toggleAttributeSections();
-
-// Restore manual attributes from previous session
-if (!randomCheckbox.checked) {
-    manualAttributesList.innerHTML = '';
-    let idx = 0;
-    while (values[`attr_name_${idx}`] !== undefined) {
-        addAttributeCard();
-        const card = manualAttributesList.children[idx];
-
-        card.querySelector(`[name="attr_name_${idx}"]`).value = values[`attr_name_${idx}`] || '';
-
-        const sel = card.querySelector(`[name="attr_type_${idx}"]`);
-        const type = (values[`attr_type_${idx}`] || 'integer').toLowerCase();
-        sel.value = type;
-        updateValueField(card, type, idx);
-        updateUseInConstraintsAvailability(card, type, idx);
-
-        card.querySelector(`[name="attr_attach_prob_${idx}"]`).value = values[`attr_attach_prob_${idx}`] ?? 0.7;
-        card.querySelector(`[name="attr_use_in_constraints_${idx}"]`).checked = values[`attr_use_in_constraints_${idx}`] === 'on';
-
-        if (type === 'boolean') {
-            if (values[`attr_value_true_${idx}`])  card.querySelector(`[name="attr_value_true_${idx}"]`).checked  = true;
-            if (values[`attr_value_false_${idx}`]) card.querySelector(`[name="attr_value_false_${idx}"]`).checked = true;
-        } else {
-            if (values[`attr_min_value_${idx}`] !== undefined) card.querySelector(`[name="attr_min_value_${idx}"]`).value = values[`attr_min_value_${idx}`];
-            if (values[`attr_max_value_${idx}`] !== undefined) card.querySelector(`[name="attr_max_value_${idx}"]`).value = values[`attr_max_value_${idx}`];
-        }
-
-        const err = {
-            minmax: serverErrors[`attr_minmax_${idx}`],
-            bool:   serverErrors[`attr_value_bool_${idx}`],
-            name:   serverErrors[`attr_name_${idx}`],
-            prob:   serverErrors[`attr_attach_prob_${idx}`],
-            uic:    serverErrors[`attr_use_in_constraints_${idx}`],
-        };
-        if (err.prob)   card.querySelector('.attr-attach-prob-error').textContent = err.prob;
-        if (err.name)   card.querySelector('.attr-name-error').textContent = err.name;
-        if (err.minmax) card.querySelector('.attr-minmax-error').textContent = err.minmax;
-        if (err.bool)   card.querySelector('.attr-bool-error').textContent = err.bool;
-        if (err.uic)    card.querySelector('.attr-use-in-constraints-error').textContent = err.uic;
-
-        idx++;
-    }
-    if (idx === 0) addAttributeCard();
-}
-updateManualAttributesGlobalError();
-
-// ─── Attribute-type distribution live sum ───────────────────────────────
-(function () {
-    const badge = document.getElementById('attr_dist_sum');
-    if (!badge) return;
-    const active = ['dist_boolean']
-        .concat(arithmeticLevelEnabled ? ['dist_integer', 'dist_real'] : [])
-        .concat(typeLevelEnabled ? ['dist_string'] : []);
-    function update() {
-        let s = 0;
-        active.forEach((id) => {
-            const el = document.getElementById(id);
-            if (el && !el.disabled) s += parseFloat(el.value) || 0;
+    function updateSum(ids, badgeId) {
+        const badge = document.getElementById(badgeId);
+        if (!badge) return;
+        let sum = 0;
+        ids.forEach(id => {
+            const els = document.getElementsByName(id);
+            if (els.length) sum += parseFloat(els[0].value) || 0;
         });
-        badge.innerText = s.toFixed(4);
+        badge.innerText = sum.toFixed(4);
         badge.classList.remove('badge-light-success', 'badge-light-danger');
-        badge.classList.add(Math.abs(s - 1.0) < 0.001 ? 'badge-light-success' : 'badge-light-danger');
+        badge.classList.add(Math.abs(sum - 1.0) < 0.001 ? 'badge-light-success' : 'badge-light-danger');
     }
-    active.forEach((id) => {
-        const el = document.getElementById(id);
-        if (el) {
-            el.addEventListener('input', update);
-            el.addEventListener('change', update);
-        }
-    });
-    update();
-})();
 
-function updateUseInConstraintsAvailability(card, type, idx) {
-    const cb = card.querySelector(`[name="attr_use_in_constraints_${idx}"]`);
-    const hint = card.querySelector('.attr-use-in-constraints-hint');
-    if (!cb) return;
-    let enabled = false, msg = '';
-    if (type === 'boolean') {
-        enabled = true;
-    } else if (type === 'integer' || type === 'real') {
-        enabled = !!arithmeticLevelEnabled;
-        if (!enabled) msg = 'Only available if Arithmetic level is enabled in step 2.';
-    } else if (type === 'string') {
-        enabled = !!typeLevelEnabled && !!stringConstraintsEnabled;
-        if (!enabled) msg = 'Only available if Type level and String constraints are enabled in step 2.';
+    // Boolean operators are driven by the noUiSlider in scripts.js
+    // (initBooleanOpsSlider). The slider rounds to 4 decimals and absorbs the
+    // residue into the last segment so the sum is always exactly 1.
+
+    // Arithmetic
+    function updateArithmeticSum() {
+        const aggCb = document.getElementById('aggregate_functions');
+        const ids = ['prob_plus', 'prob_minus', 'prob_times', 'prob_div'];
+        if (aggCb && aggCb.checked) {
+            if (document.getElementsByName('prob_sum').length) ids.push('prob_sum');
+            if (document.getElementsByName('prob_avg').length) ids.push('prob_avg');
+        }
+        updateSum(ids, 'arithmetic_sum');
     }
-    cb.disabled = !enabled;
-    if (!enabled) cb.checked = false;
-    if (hint) hint.textContent = msg;
-}
+    if (document.getElementById('arithmetic_sum')) {
+        ['prob_plus', 'prob_minus', 'prob_times', 'prob_div', 'prob_sum', 'prob_avg'].forEach(id => {
+            const el = document.getElementsByName(id)[0];
+            if (el) el.addEventListener('input', updateArithmeticSum);
+        });
+        document.getElementById('aggregate_functions')?.addEventListener('change', updateArithmeticSum);
+        updateArithmeticSum();
+    }
+
+    // Comparison
+    const cmp_ids = ['prob_eq', 'prob_lt', 'prob_gt', 'prob_leq', 'prob_geq'];
+    if (document.getElementById('cmp_sum')) {
+        cmp_ids.forEach(id => {
+            const el = document.getElementsByName(id)[0];
+            if (el) el.addEventListener('input', () => updateSum(cmp_ids, 'cmp_sum'));
+        });
+        updateSum(cmp_ids, 'cmp_sum');
+    }
+
+    // CTC type distribution — sum only the *enabled* (non-disabled) inputs
+    // so the section stays coherent with step2's major/minor level toggles.
+    if (document.getElementById('ctc_dist_sum')) {
+        const ctc_ids = ['ctc_dist_boolean', 'ctc_dist_integer', 'ctc_dist_real', 'ctc_dist_string'];
+        const activeCtc = () => ctc_ids.filter(id => {
+            const el = document.getElementById(id);
+            return el && !el.disabled;
+        });
+        const updateCtcSum = () => updateSum(activeCtc(), 'ctc_dist_sum');
+        ctc_ids.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('input', updateCtcSum);
+        });
+        updateCtcSum();
+    }
+})();
 </script>
 {% endblock %}

@@ -1,0 +1,119 @@
+{% extends "generator/index.html" %}
+{% from "generator/_macros.html" import info, section, check_field %}
+
+{% block title %}Download your models{% endblock %}
+
+{% block wizard_content %}
+<div class="notice d-flex bg-light-primary rounded border-primary border border-dashed p-5 mb-8">
+    <i class="ki-duotone ki-rocket fs-2x text-primary me-4 mt-1"><span class="path1"></span><span class="path2"></span></i>
+    <div class="fs-7 text-gray-700 fw-semibold">
+        Final touches before downloading. Optionally retry until every model is satisfiable and embed the feature/constraint counts in the filenames.
+    </div>
+</div>
+
+<div class="row g-8">
+    <div class="col-xl-10">
+
+        {{ section('Output options', 'Post-processing applied to each generated model.') }}
+
+        <div class="card card-bordered mb-9">
+            <div class="card-body">
+                <div class="d-flex flex-column gap-4">
+                    {{ check_field('ensure_satisfiable', 'Ensure satisfiable',
+                        'Retry up to 20 times per model until pysat certifies the Boolean skeleton is satisfiable. Arithmetic/string constraints are outside SAT, so this guarantees the Boolean tree is consistent.',
+                        values) }}
+                    {{ check_field('feature_count_suffix', 'Append feature count to filename',
+                        "Adds '_Nf' to each filename, where N is the number of features of that model.",
+                        values) }}
+                    {{ check_field('constraint_count_suffix', 'Append constraint count to filename',
+                        "Adds '_Nc' to each filename, where N is the number of cross-tree constraints of that model.",
+                        values) }}
+                </div>
+            </div>
+        </div>
+
+        <div class="separator separator-dashed my-9"></div>
+
+        <div class="text-center py-6">
+            <div class="symbol symbol-80px mx-auto mb-6">
+                <span class="symbol-label bg-light-primary">
+                    <i class="ki-duotone ki-abstract-26 fs-2x text-primary">
+                        <span class="path1"></span><span class="path2"></span>
+                    </i>
+                </span>
+            </div>
+
+            <h3 class="fw-bold text-gray-900 mb-2">Ready to generate</h3>
+            <div class="text-gray-600 fw-semibold fs-6 mb-8 mw-500px mx-auto">
+                Your feature models will be packaged as a ZIP and downloaded to your device. You can trigger this as many times as you want with the same parameters.
+            </div>
+
+            <button type="button" id="generate-zip-btn" class="btn btn-primary btn-lg">
+                <i class="ki-duotone ki-download fs-2 me-2"><span class="path1"></span><span class="path2"></span></i>
+                Generate &amp; download ZIP
+            </button>
+
+            <div id="generate-status" class="text-gray-600 fs-7 fw-semibold mt-4">&nbsp;</div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block wizard_scripts %}
+<script>
+(function () {
+    // Persist the output options to the session every time the user changes
+    // one of the three checkboxes — no need to click "next". This keeps the
+    // params-json endpoint (used by Pyodide) in sync with the UI.
+    async function syncOptions() {
+        const form = document.querySelector("form");
+        if (!form) return;
+        const fd = new FormData(form);
+        fd.set("nav", "stay");
+        try {
+            await fetch(form.action, {
+                method: "POST", body: fd,
+                headers: { "X-Requested-With": "fetch" },
+                credentials: "same-origin",
+            });
+        } catch (e) { /* best-effort */ }
+    }
+    ["ensure_satisfiable", "feature_count_suffix", "constraint_count_suffix"].forEach(id => {
+        document.getElementById(id)?.addEventListener("change", syncOptions);
+    });
+
+    const btn = document.getElementById("generate-zip-btn");
+    const status = document.getElementById("generate-status");
+
+    async function waitForRuntime() {
+        for (let i = 0; i < 600; i++) {                // up to ~60s
+            if (window.generatorRuntime && window.generatorRuntime.generate) return;
+            await new Promise(r => setTimeout(r, 100));
+        }
+        throw new Error("Generator runtime did not become ready.");
+    }
+
+    async function run() {
+        btn.disabled = true;
+        status.textContent = "Working on it…";
+        try {
+            // Flush any pending option change so params-json is up to date.
+            await syncOptions();
+            await waitForRuntime();
+            const n = await window.generatorRuntime.generate();
+            status.textContent = `Last run produced ${n} model${n === 1 ? "" : "s"}.`;
+        } catch (e) {
+            console.error(e);
+            status.textContent = `Something went wrong: ${e.message || e}`;
+        } finally {
+            btn.disabled = false;
+        }
+    }
+    btn.addEventListener("click", run);
+
+    // Auto-fire once when the runtime becomes ready.
+    waitForRuntime().then(() => window.generatorRuntime.ready()).then(() => run());
+})();
+</script>
+{% endblock %}

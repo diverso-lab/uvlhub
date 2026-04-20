@@ -1,5 +1,5 @@
 {% extends "generator/index.html" %}
-{% from "generator/_macros.html" import info, section, number_field, range_field, probability_field, sum_badge %}
+{% from "generator/_macros.html" import info, section, number_field, range_field, slider_field %}
 
 {% block title %}Generate random feature models{% endblock %}
 
@@ -8,164 +8,134 @@
     <div class="alert alert-danger">{{ errors['global'] }}</div>
 {% endif %}
 
-{# Hidden carry-over fields (so the JS can read them and the backend keeps context) #}
-<input type="checkbox" id="aggregate_functions" name="aggregate_functions" class="d-none" {% if values.get('aggregate_functions', False) %}checked{% endif %}>
-<input type="checkbox" id="type_level"         name="type_level"         class="d-none" {% if values.get('type_level', False) %}checked{% endif %}>
-<input type="checkbox" id="string_constraints" name="string_constraints" class="d-none" {% if values.get('string_constraints', False) %}checked{% endif %}>
+<div class="notice d-flex bg-light-primary rounded border-primary border border-dashed p-5 mb-8">
+    <i class="ki-duotone ki-tree fs-2x text-primary me-4 mt-1"><span class="path1"></span><span class="path2"></span><span class="path3"></span></i>
+    <div class="fs-7 text-gray-700 fw-semibold">
+        Shape of the feature tree: how many features, how deep, and how often each kind of parent–child relation appears. The feature-cardinality and group-cardinality blocks only show if you enabled them in the previous step.
+    </div>
+</div>
 
 <div class="row g-8">
     <div class="col-xl-12">
 
-        <!-- Constraints amount -->
-        {{ section('Constraints', 'How many cross-tree constraints each model gets and how wide they are.') }}
+        {{ section('Features', 'Size of the tree.') }}
 
-        {{ range_field('num_constraints_min', 'num_constraints_max', 'Number of constraints',
-            'Min / Max number of cross-tree constraints in each generated model.',
-            values, errors, default_min=1, default_max=10, hard_min=1) }}
+        {{ range_field('num_features_min', 'num_features_max', 'Number of features',
+            'Min / Max number of features each generated model will have.',
+            values, errors, default_min=10, default_max=50, hard_min=1) }}
 
-        {{ range_field('vars_per_ctc_min', 'vars_per_ctc_max', 'Variables per constraint',
-            'Min / Max number of features referenced in a single constraint. Max cannot exceed the maximum number of features selected in step 2.',
-            values, errors, default_min=1, default_max=10, hard_min=1, hard_max=values.get('max_features', 10000)) }}
-
-        {{ number_field('extra_constraint_repr', 'Extra constraint representativeness',
-            'Maximum times a feature can appear in each constraint. Must be ≤ Max variables per constraint.',
-            values, errors, default=1, min=1, max=10000) }}
-
-        {% if values.get('arithmetic_level') or values.get('type_level') %}
-        <div class="separator separator-dashed my-9"></div>
-
-        {{ section('Constraint type distribution',
-            'How often a constraint is Boolean, arithmetic (integer/real attributes) or string. Disabled levels always score 0. Active values must add up to 1.') }}
-
-        <div class="row g-3 mb-2">
-            {{ probability_field('ctc_dist_boolean', 'Boolean',
-                'Probability of a pure Boolean constraint (features and negations only).',
-                values, errors, default=0.7, symbol='B') }}
-            {{ probability_field('ctc_dist_integer', 'Integer',
-                'Probability of a constraint involving integer attributes. Requires Arithmetic level.',
-                values, errors, default=0.2, symbol='ℤ',
-                disabled=(not values.get('arithmetic_level'))) }}
-            {{ probability_field('ctc_dist_real', 'Real',
-                'Probability of a constraint involving real attributes. Requires Arithmetic level.',
-                values, errors, default=0.1, symbol='ℝ',
-                disabled=(not values.get('arithmetic_level'))) }}
-            {{ probability_field('ctc_dist_string', 'String',
-                'Probability of a constraint involving string attributes. Requires Type level.',
-                values, errors, default=0.0, symbol='S',
-                disabled=(not values.get('string_constraints'))) }}
-        </div>
-        {{ sum_badge('ctc_dist_sum', 'Sum of active type probabilities', initial=values.get('ctc_dist_sum', '1.0000')) }}
-        {% if errors.get('ctc_dist_sum') %}
-            <div class="text-danger fs-7 mt-1">{{ errors['ctc_dist_sum'] }}</div>
-        {% endif %}
-        {% endif %}
+        {{ slider_field('max_tree_depth', 'Maximum tree depth',
+            'Upper bound for the tree depth. Cannot exceed the maximum number of features.',
+            values, errors, default=5, min=1, max=50, max_from='num_features_max') }}
 
         <div class="separator separator-dashed my-9"></div>
 
-        <!-- Boolean operators -->
-        {{ section('Boolean operators',
-            'Probabilities used to sample the shape of Boolean constraints. AND/OR/⇒/⇔ always add up to 1.') }}
-
-        <div class="row g-3 mb-4">
-            {{ probability_field('prob_not', 'NOT', 'Probability of a NOT term in a constraint.', values, errors, default=0.3, symbol='¬') }}
-        </div>
+        {{ section('Parent–child distribution',
+            'How often each kind of parent/child relation appears. Drag the separators to reshape — the values always add up to 1.') }}
 
         <div class="prob-distribution mb-3">
-            <!-- Slim interactive slider for AND / OR / IMPLIES / EQUIVALENCE -->
-            <div id="boolop_slider" class="rel-slider mt-3 mb-5"></div>
+            <div id="rel_slider" class="rel-slider mt-3 mb-5"></div>
 
-            <!-- Hidden inputs posted to the server -->
-            <input type="hidden" id="prob_and"     name="prob_and"     value="{{ values.get('prob_and', 0.4) }}">
-            <input type="hidden" id="prob_or"      name="prob_or"      value="{{ values.get('prob_or', 0.2) }}">
-            <input type="hidden" id="prob_implies" name="prob_implies" value="{{ values.get('prob_implies', 0.2) }}">
-            <input type="hidden" id="prob_equiv"   name="prob_equiv"   value="{{ values.get('prob_equiv', 0.2) }}">
+            <input type="hidden" id="dist_optional"    name="dist_optional"    value="{{ values.get('dist_optional', 0.3) }}">
+            <input type="hidden" id="dist_mandatory"   name="dist_mandatory"   value="{{ values.get('dist_mandatory', 0.3) }}">
+            <input type="hidden" id="dist_alternative" name="dist_alternative" value="{{ values.get('dist_alternative', 0.2) }}">
+            <input type="hidden" id="dist_or"          name="dist_or"          value="{{ values.get('dist_or', 0.2) }}">
 
             <div class="row g-3">
                 <div class="col-6 col-md-3 d-flex align-items-center gap-2">
                     <span class="rel-swatch" style="background: #5e6278;"></span>
-                    <span class="fs-5 fw-bold text-gray-900 me-1">∧</span>
-                    <span class="fs-7 fw-semibold text-gray-900">AND</span>
-                    {{ info('Probability of an AND connective.') }}
-                    <span class="badge badge-light ms-auto fw-bold" id="label_prob_and">40%</span>
+                    <span class="fs-7 fw-semibold text-gray-900">Optional</span>
+                    {{ info('Probability of a child being optional.') }}
+                    <span class="badge badge-light ms-auto fw-bold" id="label_dist_optional">30%</span>
                 </div>
                 <div class="col-6 col-md-3 d-flex align-items-center gap-2">
                     <span class="rel-swatch" style="background: #3f4254;"></span>
-                    <span class="fs-5 fw-bold text-gray-900 me-1">∨</span>
-                    <span class="fs-7 fw-semibold text-gray-900">OR</span>
-                    {{ info('Probability of an OR connective.') }}
-                    <span class="badge badge-light ms-auto fw-bold" id="label_prob_or">20%</span>
+                    <span class="fs-7 fw-semibold text-gray-900">Mandatory</span>
+                    {{ info('Probability of a child being mandatory.') }}
+                    <span class="badge badge-light ms-auto fw-bold" id="label_dist_mandatory">30%</span>
                 </div>
                 <div class="col-6 col-md-3 d-flex align-items-center gap-2">
                     <span class="rel-swatch" style="background: #2b2b40;"></span>
-                    <span class="fs-5 fw-bold text-gray-900 me-1">⇒</span>
-                    <span class="fs-7 fw-semibold text-gray-900">IMPLIES</span>
-                    {{ info('Probability of an implication connective.') }}
-                    <span class="badge badge-light ms-auto fw-bold" id="label_prob_implies">20%</span>
+                    <span class="fs-7 fw-semibold text-gray-900">Alternative</span>
+                    {{ info('Probability of an alternative group (exactly one child selected).') }}
+                    <span class="badge badge-light ms-auto fw-bold" id="label_dist_alternative">20%</span>
                 </div>
                 <div class="col-6 col-md-3 d-flex align-items-center gap-2">
                     <span class="rel-swatch" style="background: #181c32;"></span>
-                    <span class="fs-5 fw-bold text-gray-900 me-1">⇔</span>
-                    <span class="fs-7 fw-semibold text-gray-900">EQUIVALENCE</span>
-                    {{ info('Probability of an equivalence connective.') }}
-                    <span class="badge badge-light ms-auto fw-bold" id="label_prob_equiv">20%</span>
+                    <span class="fs-7 fw-semibold text-gray-900">Or</span>
+                    {{ info('Probability of an or group (at least one child selected).') }}
+                    <span class="badge badge-light ms-auto fw-bold" id="label_dist_or">20%</span>
+                </div>
+                <div id="group_card_legend" class="col-12 d-flex align-items-center gap-2 mt-2 d-none">
+                    <span class="rel-swatch" style="background: repeating-linear-gradient(-45deg, #b5b5c3 0 6px, #a1a5b7 6px 12px);"></span>
+                    <span class="fs-7 fw-semibold text-gray-900">Group cardinality</span>
+                    {{ info('Share reserved for arbitrary-cardinality groups.') }}
+                    <span class="badge badge-light ms-auto fw-bold" id="label_group_card">10%</span>
                 </div>
             </div>
-        </div>
-
-        {% if values.get('arithmetic_level', False) %}
-        <div class="separator separator-dashed my-9"></div>
-
-        <!-- Arithmetic operators -->
-        {{ section('Arithmetic operators',
-            'Probabilities for arithmetic terms inside constraints. Must add up to 1. Only used because Arithmetic level is enabled.') }}
-
-        <div class="row g-3 mb-2">
-            {{ probability_field('prob_plus',  'Plus',     'Probability of +.',   values, errors, default=0.7, symbol='+') }}
-            {{ probability_field('prob_minus', 'Minus',    'Probability of −.',   values, errors, default=0.2, symbol='−') }}
-            {{ probability_field('prob_times', 'Times',    'Probability of ×.',   values, errors, default=0.1, symbol='×') }}
-            {{ probability_field('prob_div',   'Divide',   'Probability of ÷.',   values, errors, default=0.0, symbol='÷') }}
-            {% if values.get('aggregate_functions', False) %}
-            {{ probability_field('prob_sum',   'Sum agg.', 'Probability of the sum() aggregate function.', values, errors, default=0.0) }}
-            {{ probability_field('prob_avg',   'Avg agg.', 'Probability of the avg() aggregate function.', values, errors, default=0.0) }}
+            {% if errors.get('rel_dist_total') %}
+                <div class="text-danger fs-7 mt-3">{{ errors['rel_dist_total'] }}</div>
             {% endif %}
         </div>
-        {{ sum_badge('arithmetic_sum', 'Sum of arithmetic probabilities', initial=values.get('arithmetic_sum', '1.0000')) }}
-        {% if errors.get('arithmetic_sum') %}
-            <div class="text-danger fs-7 mt-1">{{ errors['arithmetic_sum'] }}</div>
-        {% endif %}
 
+        <input type="hidden" id="dist_group_cardinality" name="dist_group_cardinality"
+               value="{{ values.get('dist_group_cardinality', 0.0) }}">
+
+        {% if values.get('feature_cardinality') %}
         <div class="separator separator-dashed my-9"></div>
-
-        <!-- Comparison operators -->
-        {{ section('Comparison operators',
-            'Probability of each comparison operator. Must add up to 1. Only used because Arithmetic level is enabled.') }}
-
-        <div class="row g-3 mb-2">
-            {{ probability_field('prob_eq',  'Equal',           'Probability of = comparison.',   values, errors, default=0.1, symbol='=') }}
-            {{ probability_field('prob_lt',  'Less than',       'Probability of < comparison.',   values, errors, default=0.2, symbol='<') }}
-            {{ probability_field('prob_gt',  'Greater than',    'Probability of > comparison.',   values, errors, default=0.7, symbol='>') }}
-            {{ probability_field('prob_leq', 'Less-or-equal',   'Probability of ≤ comparison.',   values, errors, default=0.0, symbol='≤') }}
-            {{ probability_field('prob_geq', 'Greater-or-equal','Probability of ≥ comparison.',   values, errors, default=0.0, symbol='≥') }}
+        <div class="card card-bordered">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-4">
+                    <h5 class="fw-bold text-gray-900 mb-0 me-1">Feature cardinality</h5>
+                    {{ info('Settings for the Feature cardinality minor level. How likely each non-root feature is to repeat and the allowed instance range.') }}
+                </div>
+                <div class="mb-5">
+                    <label for="prob_fc" class="form-label d-flex align-items-center">
+                        Attach probability
+                        {{ info('Share of features that get a cardinality. 0 = none; 1 = every feature.') }}
+                    </label>
+                    <input type="number" id="prob_fc" name="prob_fc"
+                           class="form-control form-control-solid"
+                           step="0.01" min="0" max="1"
+                           value="{{ values.get('prob_fc', 0.05) }}">
+                    {% if errors.get('prob_fc') %}
+                        <div class="text-danger fs-7 mt-1">{{ errors['prob_fc'] }}</div>
+                    {% endif %}
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="min_feature_cardinality" class="form-label">Min instances</label>
+                        <input type="number" id="min_feature_cardinality" name="min_feature_cardinality"
+                               class="form-control form-control-solid"
+                               min="1" data-clamp data-clamp-max-from="max_feature_cardinality"
+                               value="{{ values.get('min_feature_cardinality', 2) }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="max_feature_cardinality" class="form-label">Max instances</label>
+                        <input type="number" id="max_feature_cardinality" name="max_feature_cardinality"
+                               class="form-control form-control-solid"
+                               min="1" data-clamp data-clamp-min-from="min_feature_cardinality"
+                               value="{{ values.get('max_feature_cardinality', 5) }}">
+                    </div>
+                </div>
+                <div class="text-gray-600 fs-7 mt-2">Min must be ≤ Max.</div>
+            </div>
         </div>
-        {{ sum_badge('cmp_sum', 'Sum of comparison probabilities', initial=values.get('cmp_sum', '1.0000')) }}
-        {% if errors.get('cmp_sum') %}
-            <div class="text-danger fs-7 mt-1">{{ errors['cmp_sum'] }}</div>
-        {% endif %}
         {% endif %}
 
-        {% if values.get('string_constraints', False) %}
+        {% if values.get('group_cardinality') %}
         <div class="separator separator-dashed my-9"></div>
-
-        <!-- Type level constraints -->
-        {{ section('Type level constraints',
-            'Probability of string functions. Only used because Type level and String constraints are enabled.') }}
-
-        <div class="row g-3">
-            {{ probability_field('prob_len', 'Length', 'Probability of the len() function appearing in string constraints.', values, errors, default=0.7, symbol='len') }}
+        <div class="card card-bordered">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-4">
+                    <h5 class="fw-bold text-gray-900 mb-0 me-1">Group cardinality</h5>
+                    {{ info('Settings for the Group cardinality minor level. The share in the slider above controls how often such groups appear; this card controls their size.') }}
+                </div>
+                {{ range_field('group_cardinality_min', 'group_cardinality_max', 'Children selectable per group',
+                    'Minimum and maximum number of children selectable inside a single group-cardinality group.',
+                    values, errors, default_min=1, default_max=6, hard_min=1, hard_max=20) }}
+            </div>
         </div>
-        {% if errors.get('prob_len') %}
-            <div class="text-danger fs-7 mt-1">{{ errors['prob_len'] }}</div>
-        {% endif %}
         {% endif %}
 
     </div>
@@ -179,76 +149,10 @@
         document.addEventListener("DOMContentLoaded", run, { once: true });
         return;
     }
-    const maxVars = document.getElementById("vars_per_ctc_max");
-    if (maxVars) {
-        maxVars.addEventListener("input", () => {
-            const hardMax = parseInt(maxVars.getAttribute("max") || "10000", 10);
-            const v = parseInt(maxVars.value || "0", 10);
-            if (v > hardMax) maxVars.value = hardMax;
-        });
-    }
-
-    function updateSum(ids, badgeId) {
-        const badge = document.getElementById(badgeId);
-        if (!badge) return;
-        let sum = 0;
-        ids.forEach(id => {
-            const els = document.getElementsByName(id);
-            if (els.length) sum += parseFloat(els[0].value) || 0;
-        });
-        badge.innerText = sum.toFixed(4);
-        badge.classList.remove('badge-light-success', 'badge-light-danger');
-        badge.classList.add(Math.abs(sum - 1.0) < 0.001 ? 'badge-light-success' : 'badge-light-danger');
-    }
-
-    // Boolean operators are driven by the noUiSlider in scripts.js
-    // (initBooleanOpsSlider). The slider rounds to 4 decimals and absorbs the
-    // residue into the last segment so the sum is always exactly 1.
-
-    // Arithmetic
-    function updateArithmeticSum() {
-        const aggCb = document.getElementById('aggregate_functions');
-        const ids = ['prob_plus', 'prob_minus', 'prob_times', 'prob_div'];
-        if (aggCb && aggCb.checked) {
-            if (document.getElementsByName('prob_sum').length) ids.push('prob_sum');
-            if (document.getElementsByName('prob_avg').length) ids.push('prob_avg');
-        }
-        updateSum(ids, 'arithmetic_sum');
-    }
-    if (document.getElementById('arithmetic_sum')) {
-        ['prob_plus', 'prob_minus', 'prob_times', 'prob_div', 'prob_sum', 'prob_avg'].forEach(id => {
-            const el = document.getElementsByName(id)[0];
-            if (el) el.addEventListener('input', updateArithmeticSum);
-        });
-        document.getElementById('aggregate_functions')?.addEventListener('change', updateArithmeticSum);
-        updateArithmeticSum();
-    }
-
-    // Comparison
-    const cmp_ids = ['prob_eq', 'prob_lt', 'prob_gt', 'prob_leq', 'prob_geq'];
-    if (document.getElementById('cmp_sum')) {
-        cmp_ids.forEach(id => {
-            const el = document.getElementsByName(id)[0];
-            if (el) el.addEventListener('input', () => updateSum(cmp_ids, 'cmp_sum'));
-        });
-        updateSum(cmp_ids, 'cmp_sum');
-    }
-
-    // CTC type distribution — sum only the *enabled* (non-disabled) inputs
-    // so the section stays coherent with step2's major/minor level toggles.
-    if (document.getElementById('ctc_dist_sum')) {
-        const ctc_ids = ['ctc_dist_boolean', 'ctc_dist_integer', 'ctc_dist_real', 'ctc_dist_string'];
-        const activeCtc = () => ctc_ids.filter(id => {
-            const el = document.getElementById(id);
-            return el && !el.disabled;
-        });
-        const updateCtcSum = () => updateSum(activeCtc(), 'ctc_dist_sum');
-        ctc_ids.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.addEventListener('input', updateCtcSum);
-        });
-        updateCtcSum();
-    }
+    // Show the group-cardinality segment in the legend only if the feature is enabled.
+    const gcEnabled = {{ 1 if values.get('group_cardinality') else 0 }};
+    const legend = document.getElementById("group_card_legend");
+    if (legend) legend.classList.toggle("d-none", !gcEnabled);
 })();
 </script>
 {% endblock %}

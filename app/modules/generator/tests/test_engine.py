@@ -11,7 +11,6 @@ import os
 import re
 import tempfile
 
-from flamapy.core.models.ast import ASTOperation
 from flamapy.metamodels.fm_metamodel.models import Attribute, Domain
 
 from fm_generator.FMGenerator.models.config import Params
