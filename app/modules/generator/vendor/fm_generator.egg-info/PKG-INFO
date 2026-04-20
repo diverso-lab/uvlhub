@@ -1,5 +1,0 @@
-Metadata-Version: 2.4
-Name: fm_generator
-Version: 0.0.1
-Summary: Internal fork of fm_generator — random UVL feature model generator. Maintained in-tree under app/modules/generator/vendor.
-Requires-Python: >=3.12
