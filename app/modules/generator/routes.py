@@ -732,6 +732,31 @@ def validate_step3_form(form, max_features: int = 10000):
         except Exception:
             errors["prob_len"] = "Value must be a decimal between 0 and 1."
 
+    # 8b) CTC TYPE DISTRIBUTION (CTC_DIST_BOOLEAN/INTEGER/REAL/STRING)
+    # Only required if the user has enabled any non-Boolean level in step2.
+    # Otherwise the section is hidden and the default 100% boolean holds.
+    arithmetic_level_checked = form.get("arithmetic_level") in ["on", "true", "1", True]
+    if arithmetic_level_checked or type_level_checked:
+        ctc_fields = [
+            ("ctc_dist_boolean", True),
+            ("ctc_dist_integer", arithmetic_level_checked),
+            ("ctc_dist_real", arithmetic_level_checked),
+            ("ctc_dist_string", type_level_checked and string_constraints_checked),
+        ]
+        active_sum = 0.0
+        for field, active in ctc_fields:
+            v = _safe_float(form.get(field), 0.0)
+            if not active:
+                v = 0.0
+            if not (0.0 <= v <= 1.0):
+                errors[field] = "Value must be between 0 and 1."
+            values[field] = v
+            if active:
+                active_sum += v
+        if abs(active_sum - 1.0) > 0.001:
+            errors["ctc_dist_sum"] = f"Current sum: {active_sum:.4f}. Active type probabilities must total 1.0."
+        values["ctc_dist_sum"] = f"{active_sum:.4f}"
+
     # 9) GUARDAR TODOS LOS VALORES PARA REPINTAR EL FORMULARIO
     for k in form:
         values[k] = form[k]
@@ -921,6 +946,28 @@ def step3():
         else:
             params_dict["PROB_LEN_FUNCTION"] = 0.0
 
+        # Cross-tree constraint TYPE distribution (CTC_DIST_*). Inactive
+        # levels are pinned to 0 so a stale POST value can't skew the mix.
+        params_dict["CTC_DIST_BOOLEAN"] = _safe_float(request.form.get("ctc_dist_boolean"), 0.7)
+        if arithmetic_level_enabled:
+            params_dict["CTC_DIST_INTEGER"] = _safe_float(request.form.get("ctc_dist_integer"), 0.2)
+            params_dict["CTC_DIST_REAL"] = _safe_float(request.form.get("ctc_dist_real"), 0.1)
+        else:
+            params_dict["CTC_DIST_INTEGER"] = 0.0
+            params_dict["CTC_DIST_REAL"] = 0.0
+        if type_level_enabled and string_constraints_enabled:
+            params_dict["CTC_DIST_STRING"] = _safe_float(request.form.get("ctc_dist_string"), 0.0)
+        else:
+            params_dict["CTC_DIST_STRING"] = 0.0
+        _ctc_keys = ["CTC_DIST_BOOLEAN", "CTC_DIST_INTEGER", "CTC_DIST_REAL", "CTC_DIST_STRING"]
+        _ctc_total = sum(params_dict[k] for k in _ctc_keys)
+        if _ctc_total > 0:
+            for k in _ctc_keys:
+                params_dict[k] = round(params_dict[k] / _ctc_total, 6)
+            params_dict[_ctc_keys[0]] += round(1.0 - sum(params_dict[k] for k in _ctc_keys), 6)
+        else:
+            params_dict["CTC_DIST_BOOLEAN"] = 1.0
+
         # Renormalise the Boolean-connective probabilities to sum EXACTLY 1.0.
         # Params.__post_init__ enforces a 1e-6 tolerance; the form-side
         # normaliser rounds to 4 decimals, which can leave residue.
@@ -967,6 +1014,11 @@ def step3():
         "boolop_sum": "1.0000",
         "arithmetic_sum": "1.0000",
         "cmp_sum": "1.0000",
+        "ctc_dist_sum": "1.0000",
+        "ctc_dist_boolean": params_dict.get("CTC_DIST_BOOLEAN", 0.7),
+        "ctc_dist_integer": params_dict.get("CTC_DIST_INTEGER", 0.2),
+        "ctc_dist_real": params_dict.get("CTC_DIST_REAL", 0.1),
+        "ctc_dist_string": params_dict.get("CTC_DIST_STRING", 0.0),
         "arithmetic_level": params_dict.get("ARITHMETIC_LEVEL", False),
         "aggregate_functions": params_dict.get("AGGREGATE_FUNCTIONS", False),
         "type_level": params_dict.get("TYPE_LEVEL", False),
@@ -1084,6 +1136,29 @@ def validate_step4_form(form, params_dict=None):
 
         values["min_attributes"] = min_attr_val
         values["max_attributes"] = max_attr_val
+
+        # Attribute-type distribution: must total 1.0 across active types.
+        # Disabled types are forced to 0 server-side so a stale POST value
+        # can't skew the distribution.
+        dist_fields = [
+            ("dist_boolean", True),
+            ("dist_integer", arithmetic_level_enabled),
+            ("dist_real", arithmetic_level_enabled),
+            ("dist_string", type_level_enabled),
+        ]
+        active_total = 0.0
+        for field, active in dist_fields:
+            v = _safe_float(form.get(field), 0.0)
+            if not active:
+                v = 0.0
+            if not (0.0 <= v <= 1.0):
+                errors[field] = "Value must be between 0 and 1."
+            values[field] = v
+            if active:
+                active_total += v
+        if abs(active_total - 1.0) > 0.001:
+            errors["attr_dist_sum"] = f"Current sum: {active_total:.4f}. Active type probabilities must total 1.0."
+        values["attr_dist_sum"] = f"{active_total:.4f}"
 
     else:
         values["min_attributes"] = ""
@@ -1300,6 +1375,27 @@ def _apply_step4_form(params_dict, form):
         params_dict["ATTRIBUTES_LIST"] = []
         params_dict["ATTRIBUTE_ATTACH_PROBS"] = []
         params_dict["ATTRIBUTE_IN_CONSTRAINTS"] = []
+        # Attribute-type distribution. Inactive types (gated by step2 levels)
+        # are forced to 0 here so the dataclass invariant "sum over active
+        # kinds == 1" survives even if the user tampers with the form.
+        arith_on = bool(params_dict.get("ARITHMETIC_LEVEL", False))
+        type_on = bool(params_dict.get("TYPE_LEVEL", False))
+        dist = {
+            "DIST_BOOLEAN": _safe_float(form.get("dist_boolean"), 0.7),
+            "DIST_INTEGER": _safe_float(form.get("dist_integer"), 0.0) if arith_on else 0.0,
+            "DIST_REAL": _safe_float(form.get("dist_real"), 0.0) if arith_on else 0.0,
+            "DIST_STRING": _safe_float(form.get("dist_string"), 0.0) if type_on else 0.0,
+        }
+        active_sum = sum(v for v in dist.values())
+        if active_sum > 0:
+            for k in dist:
+                dist[k] = round(dist[k] / active_sum, 6)
+            # Absorb rounding residue into the dominant active component so
+            # the sum lands exactly on 1.0.
+            residue = round(1.0 - sum(dist.values()), 6)
+            dominant = max(dist, key=dist.get)
+            dist[dominant] = round(dist[dominant] + residue, 6)
+        params_dict.update(dist)
     else:
         attrs, probs, in_ctc = _collect_step4_attributes(form, params_dict)
         params_dict["MIN_ATTRIBUTES"] = None
@@ -1343,6 +1439,11 @@ def step4():
         "min_attributes": params_dict.get("MIN_ATTRIBUTES", 1),
         "max_attributes": params_dict.get("MAX_ATTRIBUTES", 5),
         "attributes_list": params_dict.get("ATTRIBUTES_LIST", []),
+        "dist_boolean": params_dict.get("DIST_BOOLEAN", 0.7),
+        "dist_integer": params_dict.get("DIST_INTEGER", 0.1),
+        "dist_real": params_dict.get("DIST_REAL", 0.1),
+        "dist_string": params_dict.get("DIST_STRING", 0.1),
+        "attr_dist_sum": "1.0000",
     }
 
     values = load_step_state(4, default_values)

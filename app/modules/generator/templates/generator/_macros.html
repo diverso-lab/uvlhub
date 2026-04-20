@@ -117,8 +117,8 @@
 </div>
 {%- endmacro %}
 
-{%- macro probability_field(name, label, tip, values, errors, default=0.0, symbol=None) -%}
-<div class="col">
+{%- macro probability_field(name, label, tip, values, errors, default=0.0, symbol=None, disabled=False) -%}
+<div class="col{% if disabled %} opacity-50{% endif %}">
     <label for="{{ name }}" class="form-label fs-7 text-gray-700 d-flex align-items-center">
         {% if symbol %}<span class="fs-5 fw-bold text-gray-900 me-1">{{ symbol }}</span>{% endif %}
         {{ label }}
@@ -129,7 +129,13 @@
            name="{{ name }}"
            class="form-control form-control-solid"
            step="0.01" min="0" max="1"
-           value="{{ values.get(name, default) }}">
+           value="{{ values.get(name, 0.0 if disabled else default) }}"
+           {% if disabled %}disabled data-force-zero="1"{% endif %}>
+    {% if disabled %}
+        {# A disabled input won't submit; mirror the value so the server still
+           sees 0 for this field and the distribution stays consistent. #}
+        <input type="hidden" name="{{ name }}" value="0.0">
+    {% endif %}
     {% if errors.get(name) %}
         <div class="text-danger fs-7 mt-1">{{ errors[name] }}</div>
     {% endif %}

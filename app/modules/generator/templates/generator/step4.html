@@ -1,5 +1,5 @@
 {% extends "generator/index.html" %}
-{% from "generator/_macros.html" import info, section, range_field %}
+{% from "generator/_macros.html" import info, section, range_field, probability_field, sum_badge %}
 
 {% block title %}Generate random feature models{% endblock %}
 
@@ -36,7 +36,32 @@
             {{ range_field('min_attributes', 'max_attributes', 'Number of attributes',
                 'Min / Max number of attributes sampled per model when the random mode is on.',
                 values, errors, default_min=1, default_max=5, hard_min=1, hard_max=10000) }}
-            <div class="text-gray-600 fs-7">Min must be ≤ Max.</div>
+            <div class="text-gray-600 fs-7 mb-5">Min must be ≤ Max.</div>
+
+            {{ section('Attribute type distribution',
+                'When sampling each attribute, how likely is each UVL type to be chosen. Integer/Real are only active with the Arithmetic level; String is only active with the Type level. Active values must add up to 1.') }}
+
+            <div class="row g-3 mb-2">
+                {{ probability_field('dist_boolean', 'Boolean',
+                    'Probability of a boolean attribute.',
+                    values, errors, default=0.7, symbol='B') }}
+                {{ probability_field('dist_integer', 'Integer',
+                    'Probability of an integer attribute. Requires Arithmetic level.',
+                    values, errors, default=0.1, symbol='ℤ',
+                    disabled=(not arithmetic_level)) }}
+                {{ probability_field('dist_real', 'Real',
+                    'Probability of a real-valued attribute. Requires Arithmetic level.',
+                    values, errors, default=0.1, symbol='ℝ',
+                    disabled=(not arithmetic_level)) }}
+                {{ probability_field('dist_string', 'String',
+                    'Probability of a string attribute. Requires Type level.',
+                    values, errors, default=0.1, symbol='S',
+                    disabled=(not type_level)) }}
+            </div>
+            {{ sum_badge('attr_dist_sum', 'Sum of active type probabilities', initial=values.get('attr_dist_sum', '1.0000')) }}
+            {% if errors.get('attr_dist_sum') %}
+                <div class="text-danger fs-7 mt-1">{{ errors['attr_dist_sum'] }}</div>
+            {% endif %}
         </div>
 
         <!-- Manual mode -->
@@ -315,6 +340,33 @@ if (!randomCheckbox.checked) {
     if (idx === 0) addAttributeCard();
 }
 updateManualAttributesGlobalError();
+
+// ─── Attribute-type distribution live sum ───────────────────────────────
+(function () {
+    const badge = document.getElementById('attr_dist_sum');
+    if (!badge) return;
+    const active = ['dist_boolean']
+        .concat(arithmeticLevelEnabled ? ['dist_integer', 'dist_real'] : [])
+        .concat(typeLevelEnabled ? ['dist_string'] : []);
+    function update() {
+        let s = 0;
+        active.forEach((id) => {
+            const el = document.getElementById(id);
+            if (el && !el.disabled) s += parseFloat(el.value) || 0;
+        });
+        badge.innerText = s.toFixed(4);
+        badge.classList.remove('badge-light-success', 'badge-light-danger');
+        badge.classList.add(Math.abs(s - 1.0) < 0.001 ? 'badge-light-success' : 'badge-light-danger');
+    }
+    active.forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', update);
+            el.addEventListener('change', update);
+        }
+    });
+    update();
+})();
 
 function updateUseInConstraintsAvailability(card, type, idx) {
     const cb = card.querySelector(`[name="attr_use_in_constraints_${idx}"]`);

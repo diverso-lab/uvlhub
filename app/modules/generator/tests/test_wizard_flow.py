@@ -40,7 +40,18 @@ STEP3 = {
     "prob_equiv": "0.2",
     "nav": "next",
 }
-STEP4 = {"random_attributes": "on", "min_attributes": "1", "max_attributes": "3", "nav": "next"}
+# Boolean-only defaults (no arithmetic/type levels → all non-boolean type
+# shares are 0, boolean holds 1.0).
+STEP4 = {
+    "random_attributes": "on",
+    "min_attributes": "1",
+    "max_attributes": "3",
+    "dist_boolean": "1.0",
+    "dist_integer": "0.0",
+    "dist_real": "0.0",
+    "dist_string": "0.0",
+    "nav": "next",
+}
 
 
 @pytest.fixture
