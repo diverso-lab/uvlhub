@@ -31,55 +31,76 @@
         <div class="separator separator-dashed my-9"></div>
 
         {{ section('Parent–child distribution',
-            'How often each kind of parent/child relation appears. Drag the separators to reshape — the values always add up to 1.') }}
+            'How often each kind of parent/child relation appears. Drag the handles OR type exact values — both stay in sync and always add up to 1.') }}
 
         <div class="prob-distribution mb-3">
             <div id="rel_slider" class="rel-slider mt-3 mb-5"></div>
 
-            <input type="hidden" id="dist_optional"    name="dist_optional"    value="{{ values.get('dist_optional', 0.3) }}">
-            <input type="hidden" id="dist_mandatory"   name="dist_mandatory"   value="{{ values.get('dist_mandatory', 0.3) }}">
-            <input type="hidden" id="dist_alternative" name="dist_alternative" value="{{ values.get('dist_alternative', 0.2) }}">
-            <input type="hidden" id="dist_or"          name="dist_or"          value="{{ values.get('dist_or', 0.2) }}">
-
             <div class="row g-3">
-                <div class="col-6 col-md-3 d-flex align-items-center gap-2">
-                    <span class="rel-swatch" style="background: #5e6278;"></span>
-                    <span class="fs-7 fw-semibold text-gray-900">Optional</span>
-                    {{ info('Probability of a child being optional.') }}
-                    <span class="badge badge-light ms-auto fw-bold" id="label_dist_optional">30%</span>
+                <div class="col-6 col-md-3">
+                    <label for="dist_optional" class="form-label fs-7 text-gray-700 d-flex align-items-center gap-2">
+                        <span class="rel-swatch" style="background: #5e6278;"></span>
+                        Optional
+                        <span class="badge badge-light ms-auto fw-bold" id="label_dist_optional">30%</span>
+                    </label>
+                    <input type="number" id="dist_optional" name="dist_optional"
+                           class="form-control form-control-solid"
+                           step="0.01" min="0" max="1"
+                           value="{{ values.get('dist_optional', 0.3) }}">
                 </div>
-                <div class="col-6 col-md-3 d-flex align-items-center gap-2">
-                    <span class="rel-swatch" style="background: #3f4254;"></span>
-                    <span class="fs-7 fw-semibold text-gray-900">Mandatory</span>
-                    {{ info('Probability of a child being mandatory.') }}
-                    <span class="badge badge-light ms-auto fw-bold" id="label_dist_mandatory">30%</span>
+                <div class="col-6 col-md-3">
+                    <label for="dist_mandatory" class="form-label fs-7 text-gray-700 d-flex align-items-center gap-2">
+                        <span class="rel-swatch" style="background: #3f4254;"></span>
+                        Mandatory
+                        <span class="badge badge-light ms-auto fw-bold" id="label_dist_mandatory">30%</span>
+                    </label>
+                    <input type="number" id="dist_mandatory" name="dist_mandatory"
+                           class="form-control form-control-solid"
+                           step="0.01" min="0" max="1"
+                           value="{{ values.get('dist_mandatory', 0.3) }}">
                 </div>
-                <div class="col-6 col-md-3 d-flex align-items-center gap-2">
-                    <span class="rel-swatch" style="background: #2b2b40;"></span>
-                    <span class="fs-7 fw-semibold text-gray-900">Alternative</span>
-                    {{ info('Probability of an alternative group (exactly one child selected).') }}
-                    <span class="badge badge-light ms-auto fw-bold" id="label_dist_alternative">20%</span>
+                <div class="col-6 col-md-3">
+                    <label for="dist_alternative" class="form-label fs-7 text-gray-700 d-flex align-items-center gap-2">
+                        <span class="rel-swatch" style="background: #2b2b40;"></span>
+                        Alternative
+                        <span class="badge badge-light ms-auto fw-bold" id="label_dist_alternative">20%</span>
+                    </label>
+                    <input type="number" id="dist_alternative" name="dist_alternative"
+                           class="form-control form-control-solid"
+                           step="0.01" min="0" max="1"
+                           value="{{ values.get('dist_alternative', 0.2) }}">
                 </div>
-                <div class="col-6 col-md-3 d-flex align-items-center gap-2">
-                    <span class="rel-swatch" style="background: #181c32;"></span>
-                    <span class="fs-7 fw-semibold text-gray-900">Or</span>
-                    {{ info('Probability of an or group (at least one child selected).') }}
-                    <span class="badge badge-light ms-auto fw-bold" id="label_dist_or">20%</span>
+                <div class="col-6 col-md-3">
+                    <label for="dist_or" class="form-label fs-7 text-gray-700 d-flex align-items-center gap-2">
+                        <span class="rel-swatch" style="background: #181c32;"></span>
+                        Or
+                        <span class="badge badge-light ms-auto fw-bold" id="label_dist_or">20%</span>
+                    </label>
+                    <input type="number" id="dist_or" name="dist_or"
+                           class="form-control form-control-solid"
+                           step="0.01" min="0" max="1"
+                           value="{{ values.get('dist_or', 0.2) }}">
                 </div>
-                <div id="group_card_legend" class="col-12 d-flex align-items-center gap-2 mt-2 d-none">
-                    <span class="rel-swatch" style="background: repeating-linear-gradient(-45deg, #b5b5c3 0 6px, #a1a5b7 6px 12px);"></span>
-                    <span class="fs-7 fw-semibold text-gray-900">Group cardinality</span>
-                    {{ info('Share reserved for arbitrary-cardinality groups.') }}
-                    <span class="badge badge-light ms-auto fw-bold" id="label_group_card">10%</span>
+                {% if values.get('group_cardinality') %}
+                <div id="group_card_legend" class="col-12 col-md-3">
+                    <label for="dist_group_cardinality" class="form-label fs-7 text-gray-700 d-flex align-items-center gap-2">
+                        <span class="rel-swatch" style="background: repeating-linear-gradient(-45deg, #b5b5c3 0 6px, #a1a5b7 6px 12px);"></span>
+                        Group cardinality
+                        <span class="badge badge-light ms-auto fw-bold" id="label_dist_group_cardinality">20%</span>
+                    </label>
+                    <input type="number" id="dist_group_cardinality" name="dist_group_cardinality"
+                           class="form-control form-control-solid"
+                           step="0.01" min="0" max="1"
+                           value="{{ values.get('dist_group_cardinality', 0.2) }}">
                 </div>
+                {% else %}
+                <input type="hidden" name="dist_group_cardinality" value="0.0">
+                {% endif %}
             </div>
             {% if errors.get('rel_dist_total') %}
                 <div class="text-danger fs-7 mt-3">{{ errors['rel_dist_total'] }}</div>
             {% endif %}
         </div>
-
-        <input type="hidden" id="dist_group_cardinality" name="dist_group_cardinality"
-               value="{{ values.get('dist_group_cardinality', 0.0) }}">
 
         {% if values.get('feature_cardinality') %}
         <div class="separator separator-dashed my-9"></div>
