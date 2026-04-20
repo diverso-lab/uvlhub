@@ -95,10 +95,10 @@ def test_llm_page_renders(client):
     # catches the route or template actually breaking.
     r = client.get("/generator/llm")
     assert r.status_code == 200
-    assert b"llm_seed" in r.data            # seed textarea wired up
-    assert b"llm_model_rows" in r.data      # model table mount point
-    assert b"llm_generate_btn" in r.data    # generate button present
-    assert b"llm-page.js" in r.data         # page controller loaded
+    assert b"llm_seed" in r.data  # seed textarea wired up
+    assert b"llm_model_rows" in r.data  # model table mount point
+    assert b"llm_generate_btn" in r.data  # generate button present
+    assert b"llm-page.js" in r.data  # page controller loaded
 
 
 @pytest.mark.parametrize("step", [1, 2, 3, 4, 5, 6])
