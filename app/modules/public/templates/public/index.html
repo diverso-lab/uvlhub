@@ -6,11 +6,19 @@
 
     <div class="row">
 
-        <div class="mb-2 col-xl-8 col-lg-12 col-md-12 col-sm-12">
+        <div class="mb-2 col-xl-8 col-lg-12 col-md-12 col-sm-12" id="main-datasets-list">
 
+            {# Skeletons shown before real cards render; hidden via JS once DOM is ready. #}
+            <div id="main-datasets-skeleton">
+                {% for _ in range(3) %}
+                    {% include "dataset/_dataset_skeleton_card.html" %}
+                {% endfor %}
+            </div>
+
+            <div id="main-datasets-real" class="d-none">
             {% for dataset in datasets %}
 
-            <div class="row">
+            <div class="row skeleton-fade-in">
 
                 <div class="col-12 mb-5">
 
@@ -147,44 +155,10 @@
                             </div>
                         </div>
 
-                        <!-- DOI + Copy icon -->
+                        <!-- DOI -->
                         <div class="row mt-3">
-                            <div class="col-12 d-flex align-items-center flex-wrap">
-                                
-                                <!-- Etiqueta DOI -->
-                                <span class="px-3 py-1 bg-dark text-white fw-bold rounded-start" style="font-family: monospace;">
-                                DOI
-                                </span>
-
-                                <!-- Enlace al DOI -->
-                                <div class="d-flex align-items-center flex-wrap">
-                                  <a href="{{ dataset.get_uvlhub_doi() }}"
-                                    target="_blank"
-                                    class="px-3 py-1 text-white fw-semibold text-decoration-none rounded-end me-2"
-                                    style="background: linear-gradient(90deg, #2176bd 0%, #2980b9 100%); font-family: monospace; word-break: break-all;">
-                                    {{ dataset.get_uvlhub_doi_path() }}
-                                  </a>
-
-                                  <!-- Copiar DOI -->
-                                  <i data-feather="clipboard"
-                                    class="center-button-icon"
-                                    style="cursor: pointer"
-                                    onclick="copyText('dataset_doi_uvlhub_{{ dataset.id }}')"
-                                    data-bs-toggle="tooltip"
-                                    title="Copy DOI">
-                                  </i>
-                                  <a href="{{ url_for('dataset.dataset_qr_by_id', dataset_id=dataset.id) }}"
-                                  class="ms-2 d-inline-flex align-items-center text-dark text-decoration-none"
-                                  data-bs-toggle="tooltip"
-                                  title="Download QR">
-                                      <i class="fa-solid fa-qrcode" style="font-size: 18px; line-height: 1;"></i>
-                                  </a>
-                                </div>
-
-                                <!-- Texto oculto para copiar -->
-                                <div id="dataset_doi_uvlhub_{{ dataset.id }}" style="display: none;">
-                                {{ dataset.get_uvlhub_doi() }}
-                                </div>
+                            <div class="col-12">
+                                {% include 'dataset/_doi_pill.html' %}
                             </div>
                         </div>
 
@@ -197,8 +171,9 @@
 
             </div>
 
-                
+
             {% endfor %}
+            </div>{# /main-datasets-real #}
 
             <a href="/explore" class="btn btn-primary">
                 <i data-feather="search" class="center-button-icon"></i>
@@ -206,6 +181,15 @@
             </a>
 
         </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const real = document.getElementById('main-datasets-real');
+                const sk = document.getElementById('main-datasets-skeleton');
+                if (real) real.classList.remove('d-none');
+                if (sk) sk.remove();
+            });
+        </script>
 
         <div class="col-xl-4 col-lg-12 col-md-12 col-sm-12">
 

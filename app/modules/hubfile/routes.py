@@ -165,7 +165,7 @@ def view_unsynchronized_file(dataset_id, file_id):
     user_cookie = hubfile_view_record_service.create_cookie(hubfile=selected_file)
     resp = make_response(
         render_template(
-            "hubfile/view_file.html",
+            "dataset/view_dataset.html",
             selected_file=selected_file,
             hubfiles=dataset.files(),
             dataset=dataset,
@@ -214,7 +214,7 @@ def view_uvl_with_doi(doi, filename):
     user_cookie = hubfile_view_record_service.create_cookie(hubfile=selected_file)
     resp = make_response(
         render_template(
-            "hubfile/view_file.html",
+            "dataset/view_dataset.html",
             selected_file=selected_file,
             hubfiles=dataset.files(),
             dataset=dataset,
@@ -240,3 +240,59 @@ def raw_uvl(file_id, filename):
     return send_file(
         file_path, mimetype="text/plain; charset=utf-8", as_attachment=False, download_name=selected_file.name
     )
+
+
+@hubfile_bp.route("/hubfiles/<int:file_id>/workbench-content", methods=["GET"])
+def workbench_content(file_id):
+    """Return the UVL + FactLabel JSON for a single file.
+
+    Access mirrors the HTML routes:
+      - If the parent dataset has a DOI, the content is public.
+      - Otherwise only the owner (authenticated) may read it.
+    """
+    import json as _json
+
+    selected_file = HubfileService().get_or_404(file_id)
+    dataset = selected_file.feature_model.dataset
+
+    is_public = bool(dataset.ds_meta_data and dataset.ds_meta_data.dataset_doi)
+    if not is_public:
+        if not current_user.is_authenticated or dataset.user_id != current_user.id:
+            abort(403)
+
+    directory_path = os.path.join("uploads", f"user_{dataset.user_id}", f"dataset_{dataset.id}", "uvl")
+    file_path = os.path.join(current_app.root_path, "..", directory_path, selected_file.name)
+    try:
+        with open(file_path, "r") as f:
+            uvl = f.read()
+    except Exception as e:
+        uvl = f"[Error reading file: {e}]"
+
+    factlabel = None
+    if selected_file.factlabel_json:
+        try:
+            factlabel = _json.loads(selected_file.factlabel_json)
+        except Exception:
+            factlabel = None
+
+    user_cookie = hubfile_view_record_service.create_cookie(hubfile=selected_file)
+    resp = make_response(
+        jsonify(
+            {
+                "id": selected_file.id,
+                "name": selected_file.name,
+                "size_bytes": selected_file.size,
+                "size_human": selected_file.get_formatted_size(),
+                "uvl": uvl,
+                "factlabel": factlabel,
+                "factlabel_ready": factlabel is not None,
+                "download_url": url_for("hubfile.download_file", file_id=selected_file.id),
+                "raw_url": url_for("hubfile.raw_uvl", file_id=selected_file.id, filename=selected_file.name),
+                "ide_url": selected_file.get_ide_url(),
+                "factlabel_external_url": selected_file.get_factlabel_url(),
+                "view_url": selected_file.get_url(),
+            }
+        )
+    )
+    resp.set_cookie("file_view_cookie", user_cookie)
+    return resp
