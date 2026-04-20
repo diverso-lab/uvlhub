@@ -56,9 +56,10 @@
                 </a>
             </div>
 
-            <!-- LLM generator (coming soon) -->
+            <!-- LLM generator -->
             <div class="col-md-6">
-                <div class="card card-bordered card-dashed h-100 shadow-sm" style="cursor: not-allowed;">
+                <a href="{{ url_for('generator.llm') }}"
+                   class="card card-bordered h-100 shadow-sm text-decoration-none">
                     <div class="card-body d-flex flex-column p-10">
                         <div class="d-flex align-items-center mb-6">
                             <div class="symbol symbol-50px me-4">
@@ -70,24 +71,26 @@
                             </div>
                             <div>
                                 <h2 class="fw-bold text-gray-900 mb-1">LLM generator</h2>
-                                <span class="badge badge-light-warning fs-8">Coming soon</span>
+                                <span class="badge badge-light-success fs-8">Experimental</span>
                             </div>
                         </div>
                         <p class="text-gray-700 fs-6 fw-semibold mb-6">
-                            Describe a domain in natural language and an LLM drafts a feature model for you. You get the UVL back and can iterate on it.
+                            Design feature models from a concept, or derive variants of an existing UVL from the hub. An open-weights LLM runs entirely in your browser (WebLLM) and flamapy validates every candidate. Nothing leaves your machine.
                         </p>
                         <ul class="text-gray-700 fs-7 fw-semibold mb-8 ps-4">
-                            <li>Natural-language domain prompt</li>
-                            <li>Editable draft before download</li>
-                            <li>Hub integration to save or extend</li>
+                            <li><strong>From concept</strong>: type a domain (e.g. "coffee shop"), get a valid UVL back</li>
+                            <li><strong>From seed</strong>: pick any UVL from UVLHub and get semantic variants of it</li>
+                            <li>Optional cross-tree constraints, drop-on-fail validation</li>
+                            <li>In-browser inference (WebGPU), no API key, nothing uploaded</li>
                         </ul>
                         <div class="mt-auto">
-                            <span class="btn btn-light disabled">
-                                Not available yet
+                            <span class="btn btn-warning">
+                                Start
+                                <i class="ki-duotone ki-arrow-right fs-3 ms-1"><span class="path1"></span><span class="path2"></span></i>
                             </span>
                         </div>
                     </div>
-                </div>
+                </a>
             </div>
         </div>
     </div>
