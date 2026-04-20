@@ -1,4 +1,5 @@
 {% extends "base_template.html" %}
+{% from "generator/_macros.html" import info %}
 
 {% block title %}LLM feature-model generator{% endblock %}
 
@@ -11,25 +12,205 @@
 {% endblock %}
 
 {% block content %}
-<div class="card card-bordered shadow-sm">
-    <div class="card-body py-15 text-center">
-        <div class="symbol symbol-75px mx-auto mb-6">
-            <span class="symbol-label bg-light-warning">
-                <i class="ki-duotone ki-abstract-39 fs-1 text-warning">
-                    <span class="path1"></span><span class="path2"></span>
-                </i>
-            </span>
-        </div>
-        <h1 class="fw-bold text-gray-900 mb-3">LLM generator</h1>
-        <span class="badge badge-light-warning fs-7 mb-6">Coming soon</span>
-        <p class="text-gray-700 fs-5 fw-semibold mw-700px mx-auto mb-8">
-            This generator is not available yet. It will let you describe a domain in natural language and
-            get a draft feature model back in UVL, ready to iterate on and download.
-        </p>
-        <a href="{{ url_for('generator.landing') }}" class="btn btn-light">
-            <i class="ki-duotone ki-arrow-left fs-3 me-1"><span class="path1"></span><span class="path2"></span></i>
-            Back to generators
-        </a>
+<style>
+  #llm_search_results { max-height: 280px; overflow-y: auto; }
+  .llm-log-line { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; font-size: 12px; line-height: 1.5; padding: 1px 0; }
+  .llm-log-info    { color: #5e6278; }
+  .llm-log-success { color: #17c653; }
+  .llm-log-warn    { color: #f6c000; }
+  .llm-log-error   { color: #f1416c; }
+  .llm-terminal    { background: #181c32; border-radius: 0.5rem; padding: 0.75rem 1rem; max-height: 260px; overflow-y: auto; }
+  .llm-terminal .llm-log-info    { color: #a1a5b7; }
+  .llm-terminal .llm-log-success { color: #17c653; }
+  .llm-terminal .llm-log-warn    { color: #f6c000; }
+  .llm-terminal .llm-log-error   { color: #f1416c; }
+</style>
+
+<div class="notice d-flex bg-light-primary rounded border-primary border border-dashed p-5 mb-6">
+    <i class="ki-duotone ki-abstract-39 fs-2x text-primary me-4 mt-1"><span class="path1"></span><span class="path2"></span></i>
+    <div class="fs-7 text-gray-700 fw-semibold">
+        Two generation modes, both 100% in-browser (WebLLM + flamapy via Pyodide, nothing leaves your machine):
+        <strong>From seed</strong> extends an existing UVL via structural infill. <strong>From concept</strong> designs a feature model from scratch for a given domain — the LLM produces a JSON tree and we render it to UVL deterministically, so the tree is always syntactically valid.
     </div>
 </div>
+
+<div class="row g-6">
+    <!-- ── Column 1: input (seed or concept, toggleable) ───────────────── -->
+    <div class="col-xl-6">
+        <div class="card card-bordered h-100">
+            <div class="card-header">
+                <div class="d-flex w-100 align-items-center flex-wrap gap-3">
+                    <h3 class="fw-bold text-gray-900 mb-0 me-auto">1. Input</h3>
+                    <div class="btn-group btn-group-sm" role="group" aria-label="Input mode">
+                        <input type="radio" class="btn-check" name="llm_mode" id="llm_mode_seed" value="seed" checked>
+                        <label class="btn btn-outline btn-outline-primary" for="llm_mode_seed">From seed</label>
+                        <input type="radio" class="btn-check" name="llm_mode" id="llm_mode_concept" value="concept">
+                        <label class="btn btn-outline btn-outline-primary" for="llm_mode_concept">From concept</label>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- ── Seed mode panel ────────────────────────────────── -->
+                <div id="llm_mode_seed_panel">
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Search UVLHub</label>
+                        <input type="search" id="llm_search" class="form-control"
+                               placeholder='Search any UVL by name or content (e.g. "car", "linux", "smartwatch")…' autocomplete="off">
+                        <div id="llm_search_results" class="list-group list-group-flush mt-2 border rounded"></div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold" for="llm_presets">Or pick a built-in preset</label>
+                        <select id="llm_presets" class="form-select">
+                            <option value="">— choose a preset —</option>
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label fw-semibold" for="llm_seed">Seed UVL</label>
+                        <textarea id="llm_seed" class="form-control font-monospace" rows="12"
+                                  placeholder="Paste a UVL model here, or pick one above."></textarea>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <input type="text" id="llm_seed_name" class="form-control form-control-sm w-auto" placeholder="seed.uvl" value="seed.uvl">
+                        <div id="llm_seed_organic" class="ms-3"></div>
+                    </div>
+                </div>
+
+                <!-- ── Concept mode panel ─────────────────────────────── -->
+                <div id="llm_mode_concept_panel" style="display: none;">
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold" for="llm_concept">Concept or domain</label>
+                        <input type="text" id="llm_concept" class="form-control"
+                               placeholder='e.g. "electric cars", "coffee shop", "smartwatch"' autocomplete="off">
+                        <div class="text-muted fs-7 mt-1">
+                            The LLM will design a feature model for this domain from scratch.
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-4">
+                        <div class="col-6">
+                            <label class="form-label fw-semibold small" for="llm_concept_target_features">Target features</label>
+                            <input type="number" id="llm_concept_target_features" class="form-control" value="10" min="5" max="60">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-semibold small" for="llm_concept_max_depth">Max depth</label>
+                            <input type="number" id="llm_concept_max_depth" class="form-control" value="3" min="2" max="5">
+                        </div>
+                    </div>
+                    <div class="alert alert-light-info d-flex align-items-start p-4 fs-7 mb-0">
+                        <i class="ki-duotone ki-information-5 fs-2 text-info me-3 mt-1"><span class="path1"></span><span class="path2"></span><span class="path3"></span></i>
+                        <div>
+                            The LLM produces a <strong>plan</strong> (JSON tree) and we render it to UVL deterministically, so the feature tree is guaranteed syntactically valid.
+                            Constraints (if enabled below) go through a second LLM call and are validated one-by-one — any that break the model are dropped.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Column 2: model + params + generation log ──────────────────── -->
+    <div class="col-xl-6">
+        <div class="card card-bordered mb-6">
+            <div class="card-header">
+                <div class="card-title">
+                    <h3 class="fw-bold text-gray-900 mb-0">2. Models</h3>
+                </div>
+                <div class="card-toolbar">
+                    <button type="button" id="llm_refresh_cache_btn" class="btn btn-sm btn-light-primary" title="Re-check IndexedDB for downloaded weights">
+                        <i class="ki-duotone ki-arrows-circle fs-4 me-1"><span class="path1"></span><span class="path2"></span></i>
+                        Refresh
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <table class="table align-middle table-row-dashed fs-7 mb-0">
+                    <thead>
+                        <tr class="text-gray-500 fw-semibold text-uppercase">
+                            <th class="ps-5">Model</th>
+                            <th>Size</th>
+                            <th>Status</th>
+                            <th class="text-end pe-5">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="llm_model_rows">
+                        <!-- rendered by llm-page.js -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="card-footer py-4">
+                <div class="progress h-6px rounded-pill">
+                    <div id="llm_progress_bar" class="progress-bar bg-primary rounded-pill" role="progressbar" style="width: 0%;"></div>
+                </div>
+                <div id="llm_progress_text" class="text-muted fs-7 mt-1">&nbsp;</div>
+            </div>
+        </div>
+
+        <div class="card card-bordered">
+            <div class="card-header">
+                <div class="card-title">
+                    <h3 class="fw-bold text-gray-900 mb-0">3. Generate</h3>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row g-3 mb-4">
+                    <div class="col-4">
+                        <label class="form-label fw-semibold small d-flex align-items-center" for="llm_n_variants">
+                            Variants
+                            {{ info("How many UVL models to produce in this run. Each variant is an independent LLM call with a different random seed, so they diverge even for the same input. 5 is a good default; higher numbers take linearly more time.") }}
+                        </label>
+                        <input type="number" id="llm_n_variants" class="form-control" value="5" min="1" max="20">
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label fw-semibold small d-flex align-items-center" for="llm_temperature">
+                            Temperature
+                            {{ info("Sampling temperature. Lower (0.0–0.2) makes the output deterministic and keeps it on well-formed JSON; higher (0.5+) adds variety across variants but increases the chance of malformed output with small models. For concept mode values above 0.2 are clamped to 0.2 internally.") }}
+                        </label>
+                        <input type="number" id="llm_temperature" class="form-control" value="0.2" min="0" max="2" step="0.1">
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label fw-semibold small d-flex align-items-center" for="llm_max_tokens">
+                            Max tokens
+                            {{ info("Upper bound on the LLM's output length per call (roughly 3–4 characters per token for JSON). Too low: the model runs out mid-output. Too high: complex domains ramble past their coherence limit. 600 works well for concept mode with a 3B coder.") }}
+                        </label>
+                        <input type="number" id="llm_max_tokens" class="form-control" value="100" min="32" max="1024" step="32">
+                    </div>
+                </div>
+
+                <div class="form-check form-check-sm form-check-custom form-check-solid mb-4">
+                    <input class="form-check-input" type="checkbox" id="llm_include_constraints">
+                    <label class="form-check-label fs-7 ms-2 d-flex align-items-center" for="llm_include_constraints">
+                        Also generate cross-tree constraints
+                        {{ info("Second LLM call after the tree is ready. Proposes 1–3 UVL constraints referencing the features just emitted; each one is validated individually and any that break the model are dropped. Roughly doubles the per-variant time.") }}
+                    </label>
+                </div>
+
+                <button type="button" id="llm_generate_btn" class="btn btn-primary mb-5" disabled>
+                    <i class="ki-duotone ki-rocket fs-2 me-2"><span class="path1"></span><span class="path2"></span></i>
+                    Generate variants
+                </button>
+
+                <div id="llm_log" class="llm-terminal mb-4"></div>
+                <div id="llm_results" class="mb-5"></div>
+
+                <button type="button" id="llm_download_btn" class="btn btn-success" disabled>
+                    <i class="ki-duotone ki-download fs-2 me-2"><span class="path1"></span><span class="path2"></span></i>
+                    Download all variants as ZIP
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Pyodide runtime — same pattern as the random generator's index.html. We
+     need it because the LLM page validates every candidate with flamapy. -->
+<script type="module">
+    import { loadPyodide } from "{{ url_for('generator.assets', subfolder='js', filename='pyodide/pyodide.mjs') }}";
+    window.loadPyodide = loadPyodide;
+</script>
+<script src="{{ url_for('generator.assets', subfolder='js', filename='pyodide/pyodide.js') }}"></script>
+<script type="module" src="{{ url_for('generator.assets', subfolder='dist', filename='generator.bundle.js') }}"></script>
+<!-- LLM page controller: orchestrates UVLRepo seed picker, WebLLM worker,
+     and reuses window.generatorRuntime for flamapy validation. -->
+<script src="{{ url_for('generator.assets', subfolder='js', filename='llm-page.js') }}"></script>
 {% endblock %}
