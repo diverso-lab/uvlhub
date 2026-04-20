@@ -1,0 +1,62 @@
+{#
+  Global Dataset QR modal. Include once (in base_template.html) and trigger via
+      openDatasetQrModal(datasetId, doiUrl)
+  from any page.
+#}
+<div class="modal fade" id="datasetQrModal" tabindex="-1" aria-labelledby="datasetQrModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow-lg">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold" id="datasetQrModalLabel">Dataset QR</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center pt-0">
+                <div class="p-3 d-inline-block bg-white rounded border">
+                    <img id="datasetQrModalImage" src="" alt="QR preview"
+                         style="display: block; width: 280px; height: 280px;" />
+                </div>
+                <div class="mt-3">
+                    <a id="datasetQrModalUrl" href="#" target="_blank"
+                       class="text-decoration-none fs-7 font-monospace text-truncate d-inline-block"
+                       style="max-width: 100%;"></a>
+                </div>
+            </div>
+            <div class="modal-footer border-0 justify-content-center flex-wrap gap-2">
+                <span class="text-muted small me-2">Download as</span>
+                <a id="datasetQrDownloadPng" class="btn btn-sm btn-light" href="#">PNG</a>
+                <a id="datasetQrDownloadSvg" class="btn btn-sm btn-light" href="#">SVG</a>
+                <a id="datasetQrDownloadJpg" class="btn btn-sm btn-light" href="#">JPG</a>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+(function () {
+    if (window.openDatasetQrModal) return;
+    window.openDatasetQrModal = function (datasetId, doiUrl) {
+        const base = `/datasets/${datasetId}/qr`;
+        const img = document.getElementById('datasetQrModalImage');
+        if (img) img.src = `${base}?format=png&t=${Date.now()}`;
+        const urlEl = document.getElementById('datasetQrModalUrl');
+        if (urlEl) {
+            urlEl.textContent = doiUrl || '';
+            urlEl.href = doiUrl || '#';
+        }
+        document.getElementById('datasetQrDownloadPng').href = `${base}?format=png&download=1`;
+        document.getElementById('datasetQrDownloadSvg').href = `${base}?format=svg&download=1`;
+        document.getElementById('datasetQrDownloadJpg').href = `${base}?format=jpg&download=1`;
+        const modalEl = document.getElementById('datasetQrModal');
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modal.show();
+    };
+    // Delegated click handler: any element with .dataset-qr-trigger opens the modal.
+    document.addEventListener('click', function (e) {
+        const btn = e.target.closest('.dataset-qr-trigger');
+        if (!btn) return;
+        e.preventDefault();
+        const id = parseInt(btn.dataset.datasetId, 10);
+        if (Number.isNaN(id)) return;
+        window.openDatasetQrModal(id, btn.dataset.doiUrl || '');
+    });
+})();
+</script>

@@ -129,7 +129,7 @@ def test_dataset_qr_by_doi_success():
     assert response.mimetype == "image/png"
     assert response.data == b"qr-image"
     mock_filter_by_doi.assert_called_once_with("10.1234/dataset9")
-    mock_build_qr.assert_called_once_with(dataset)
+    mock_build_qr.assert_called_once_with(dataset, fmt="png", download=False)
 
 
 def test_dataset_qr_by_doi_not_found_returns_404():

@@ -144,6 +144,12 @@ function runSearch(reset = true) {
     activeController = controller;
     isFetching = true;
 
+    if (reset) {
+        renderSkeletons(3);
+    } else {
+        renderSkeletons(1, /* append */ true);
+    }
+
     fetch(`/api/v1/search?${params.toString()}`, { signal: controller.signal })
         .then(res => res.json())
         .then(data => {
@@ -171,6 +177,7 @@ function runSearch(reset = true) {
                 activeController = null;
                 isFetching = false;
             }
+            clearSkeletons();
         });
 }
 
@@ -196,6 +203,8 @@ function renderResults(results, append = false) {
 
     const container = document.getElementById('results-container');
     const notFound = document.getElementById('no-results');
+
+    clearSkeletons();
 
     if (!append) {
         container.innerHTML = '';
@@ -230,4 +239,22 @@ function renderResults(results, append = false) {
     document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
         new bootstrap.Tooltip(el);
     });
+}
+
+// --- Skeleton loaders -------------------------------------------------
+function renderSkeletons(count, append = false) {
+    const container = document.getElementById('results-container');
+    const tpl = document.getElementById('dataset-skeleton-template');
+    if (!container || !tpl) return;
+    if (!append) container.innerHTML = '';
+    document.getElementById('no-results')?.classList.add('d-none');
+    for (let i = 0; i < count; i++) {
+        const node = tpl.content.firstElementChild.cloneNode(true);
+        node.classList.add('js-skeleton-placeholder');
+        container.appendChild(node);
+    }
+}
+
+function clearSkeletons() {
+    document.querySelectorAll('.js-skeleton-placeholder').forEach(el => el.remove());
 }

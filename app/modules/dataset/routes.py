@@ -336,16 +336,45 @@ def download_dataset(dataset_id):
     return resp
 
 
-def _build_dataset_qr_response(dataset: DataSet):
+def _build_dataset_qr_response(dataset: DataSet, fmt: str = "png", download: bool = False):
     if not dataset.ds_meta_data.dataset_doi:
         abort(404, description="QR available only for synchronized datasets with DOI.")
 
+    fmt = (fmt or "png").lower()
+    if fmt not in {"png", "jpg", "jpeg", "svg"}:
+        fmt = "png"
+
     target_url = url_for("dataset.subdomain_index", doi=dataset.ds_meta_data.dataset_doi, _external=True)
+
+    if fmt == "svg":
+        import qrcode.image.svg as qr_svg
+
+        qr = qrcode.QRCode(
+            version=None,
+            error_correction=qrcode.constants.ERROR_CORRECT_H,
+            box_size=12,
+            border=4,
+            image_factory=qr_svg.SvgPathImage,
+        )
+        qr.add_data(target_url)
+        qr.make(fit=True)
+        img = qr.make_image()
+        img_io = BytesIO()
+        img.save(img_io)
+        img_io.seek(0)
+        return send_file(
+            img_io,
+            mimetype="image/svg+xml",
+            as_attachment=download,
+            download_name=f"dataset_{dataset.id}_qr.svg",
+        )
+
+    # Raster (PNG / JPG): high resolution, rounded modules, centered logo.
     qr = qrcode.QRCode(
         version=None,
         error_correction=qrcode.constants.ERROR_CORRECT_H,
-        box_size=10,
-        border=5,
+        box_size=24,
+        border=4,
     )
     qr.add_data(target_url)
     qr.make(fit=True)
@@ -362,17 +391,17 @@ def _build_dataset_qr_response(dataset: DataSet):
         logo = Image.open(logo_path).convert("RGBA")
         qr_width, qr_height = img.size
 
-        logo_size = max(40, qr_width // 5)
+        logo_size = max(80, qr_width // 5)
         logo.thumbnail((logo_size, logo_size), Image.Resampling.LANCZOS)
 
-        padding = max(4, logo_size // 12)
+        padding = max(8, logo_size // 12)
         logo_background = Image.new(
             "RGBA",
             (logo.width + (2 * padding), logo.height + (2 * padding)),
             (0, 0, 0, 0),
         )
         bg_draw = ImageDraw.Draw(logo_background)
-        bg_radius = max(6, logo_background.width // 5)
+        bg_radius = max(10, logo_background.width // 5)
         bg_draw.rounded_rectangle(
             [(0, 0), (logo_background.width - 1, logo_background.height - 1)],
             radius=bg_radius,
@@ -382,7 +411,7 @@ def _build_dataset_qr_response(dataset: DataSet):
         rounded_logo = Image.new("RGBA", logo.size, (0, 0, 0, 0))
         logo_mask = Image.new("L", logo.size, 0)
         logo_mask_draw = ImageDraw.Draw(logo_mask)
-        logo_radius = max(4, logo.width // 5)
+        logo_radius = max(6, logo.width // 5)
         logo_mask_draw.rounded_rectangle(
             [(0, 0), (logo.width - 1, logo.height - 1)],
             radius=logo_radius,
@@ -397,14 +426,30 @@ def _build_dataset_qr_response(dataset: DataSet):
         img.paste(rounded_logo, logo_position, rounded_logo)
 
     img_io = BytesIO()
-    img.save(img_io, format="PNG")
+    if fmt in {"jpg", "jpeg"}:
+        flat = Image.new("RGB", img.size, (255, 255, 255))
+        flat.paste(img, mask=img.split()[3])  # use alpha channel as mask
+        flat.save(img_io, format="JPEG", quality=95, optimize=True)
+        mimetype = "image/jpeg"
+        ext = "jpg"
+    else:
+        img.save(img_io, format="PNG", optimize=True)
+        mimetype = "image/png"
+        ext = "png"
     img_io.seek(0)
 
     return send_file(
         img_io,
-        mimetype="image/png",
-        as_attachment=True,
-        download_name=f"dataset_{dataset.id}_qr.png",
+        mimetype=mimetype,
+        as_attachment=download,
+        download_name=f"dataset_{dataset.id}_qr.{ext}",
+    )
+
+
+def _parse_qr_params():
+    return (
+        request.args.get("format", "png"),
+        request.args.get("download") in {"1", "true", "yes"},
     )
 
 
@@ -412,7 +457,8 @@ def _build_dataset_qr_response(dataset: DataSet):
 @dataset_bp.route("/datasets/<int:dataset_id>/qr/", methods=["GET"])
 def dataset_qr_by_id(dataset_id):
     dataset = dataset_service.get_or_404(dataset_id)
-    return _build_dataset_qr_response(dataset)
+    fmt, download = _parse_qr_params()
+    return _build_dataset_qr_response(dataset, fmt=fmt, download=download)
 
 
 @dataset_bp.route("/doi/<path:doi>/qr", methods=["GET"])
@@ -421,7 +467,8 @@ def dataset_qr_by_doi(doi):
     ds_meta_data = dsmetadata_service.filter_by_doi(doi)
     if not ds_meta_data:
         abort(404, description="Dataset not found for the given DOI.")
-    return _build_dataset_qr_response(ds_meta_data.dataset)
+    fmt, download = _parse_qr_params()
+    return _build_dataset_qr_response(ds_meta_data.dataset, fmt=fmt, download=download)
 
 
 @dataset_bp.route("/datasets/download/all", methods=["GET"])
@@ -466,19 +513,36 @@ def subdomain_index(doi):
 
     dataset = ds_meta_data.dataset
 
-    # Obtener todos los hubfiles de los feature models
-    hubfiles = []
-    for fm in dataset.feature_models:
-        hubfiles.extend(fm.hubfiles)
+    hubfiles = [file for fm in dataset.feature_models for file in fm.hubfiles]
+    selected_file, uvl_content = _preload_first_file(dataset, hubfiles)
 
-    # Guardar la cookie
     user_cookie = ds_view_record_service.create_cookie(dataset=dataset)
 
-    # Renderizar vista con todos los datos
-    resp = make_response(render_template("dataset/view_dataset.html", dataset=dataset, hubfiles=hubfiles))
+    resp = make_response(
+        render_template(
+            "dataset/view_dataset.html",
+            dataset=dataset,
+            hubfiles=hubfiles,
+            selected_file=selected_file,
+            uvl_content=uvl_content,
+        )
+    )
     resp.set_cookie("view_cookie", user_cookie)
-
     return resp
+
+
+def _preload_first_file(dataset, hubfiles):
+    """Pick the first hubfile (if any) and return (file, uvl_content)."""
+    if not hubfiles:
+        return None, None
+    first = hubfiles[0]
+    directory_path = os.path.join("uploads", f"user_{dataset.user_id}", f"dataset_{dataset.id}", "uvl")
+    file_path = os.path.join(current_app.root_path, "..", directory_path, first.name)
+    try:
+        with open(file_path, "r") as f:
+            return first, f.read()
+    except Exception as e:
+        return first, f"[Error reading file: {e}]"
 
 
 @dataset_bp.route("/doi/<path:doi>/files/raw/<path:filename>", methods=["GET"])
@@ -535,19 +599,20 @@ def doi_file_raw(doi, filename):
 @login_required
 @is_dataset_owner
 def get_unsynchronized_dataset(dataset_id):
-
-    # Get dataset
     dataset = dataset_service.get_unsynchronized_dataset_by_user(current_user.id, dataset_id)
-
-    # Obtener todos los hubfiles de los feature models
-    hubfiles = []
-    for fm in dataset.feature_models:
-        hubfiles.extend(fm.hubfiles)
-
     if not dataset:
         abort(404)
 
-    return render_template("dataset/view_dataset.html", dataset=dataset, hubfiles=hubfiles)
+    hubfiles = [file for fm in dataset.feature_models for file in fm.hubfiles]
+    selected_file, uvl_content = _preload_first_file(dataset, hubfiles)
+
+    return render_template(
+        "dataset/view_dataset.html",
+        dataset=dataset,
+        hubfiles=hubfiles,
+        selected_file=selected_file,
+        uvl_content=uvl_content,
+    )
 
 
 @dataset_bp.route("/datasets/retry-sync/<int:dataset_id>", methods=["POST"])
