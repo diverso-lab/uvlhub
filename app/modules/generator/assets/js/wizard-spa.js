@@ -98,8 +98,50 @@
         window.dispatchEvent(new CustomEvent("wizard:swapped", { detail: { root: incoming } }));
     }
 
+    // ─── Live sidebar summary ────────────────────────────────────────────
+    // As the user fills the current step the sidebar re-renders from the
+    // draft form data (debounced). Keeps the "Your setup" summary honest
+    // instead of stale-until-next.
+    let summaryTimer = null;
+    async function refreshSummary(form) {
+        const slot = document.getElementById("wizard_summary");
+        if (!slot || !form) return;
+        const action = form.action || "";
+        const m = action.match(/\/step(\d)$/);
+        if (!m) return;
+        const step = parseInt(m[1], 10);
+        const fd = new FormData(form);
+        try {
+            const resp = await fetch(`/generator/random/summary-refresh/${step}`, {
+                method: "POST",
+                body: fd,
+                headers: { "X-Requested-With": "fetch" },
+                credentials: "same-origin",
+            });
+            if (!resp.ok) return;
+            const html = await resp.text();
+            slot.innerHTML = html;
+        } catch (e) {
+            /* silent: summary stays at its last-known state */
+        }
+    }
+    function scheduleSummaryRefresh(ev) {
+        const root = document.querySelector(ROOT_SELECTOR);
+        if (!root || !root.contains(ev.target)) return;
+        const form = ev.target.closest("form");
+        if (!form) return;
+        clearTimeout(summaryTimer);
+        summaryTimer = setTimeout(() => refreshSummary(form), 250);
+    }
+
     function bind() {
         document.addEventListener("submit", handleSubmit, { capture: true });
+        document.addEventListener("input", scheduleSummaryRefresh, true);
+        document.addEventListener("change", scheduleSummaryRefresh, true);
+        // Sliders (noUiSlider) rewrite input .value programmatically, which
+        // doesn't fire input/change. scripts.js emits wizard:draft-changed
+        // from every slider drag so the summary still follows along.
+        document.addEventListener("wizard:draft-changed", scheduleSummaryRefresh, true);
         window.addEventListener("popstate", () => {
             // Pop means user clicked browser back — just reload that URL in place.
             fetch(window.location.href, {
