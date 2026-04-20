@@ -174,71 +174,122 @@
 </div>
 {%- endmacro %}
 
-{%- macro summary_panel(p) -%}
-{# Ongoing summary of the user's choices. Rendered server-side from session params. #}
+{%- macro _pct(v) -%}{{ '%d' | format(((v or 0) * 100) | round | int) }}%{%- endmacro %}
+
+{%- macro summary_panel(p, current_step=0) -%}
+{# Live summary of the user's choices. One section per wizard step so the
+   panel mirrors the stepper beside it. Each section is suppressed until
+   the relevant step has been filled — the panel grows as the user
+   advances. #}
 {% if p %}
 <div class="border-top border-gray-200 pt-6 mt-10">
     <div class="text-uppercase fw-bold fs-8 text-gray-600 mb-4">Your setup</div>
 
-    {# Step 1 — General #}
+    {# 1 — Batch #}
     {% if p.get('NUM_MODELS') or p.get('SEED') or p.get('NAME_PREFIX') %}
     <div class="mb-5">
-        <div class="fw-bold fs-7 text-gray-900 mb-1">General</div>
+        <div class="fw-bold fs-7 text-gray-900 mb-1">1 · Batch</div>
         {% if p.get('NUM_MODELS') %}{{ _kv('Models', p.NUM_MODELS) }}{% endif %}
         {% if p.get('SEED') is not none %}{{ _kv('Seed', p.SEED) }}{% endif %}
-        {% if p.get('NAME_PREFIX') %}{{ _kv('Prefix', p.NAME_PREFIX) }}{% endif %}
-        {% if p.get('ENSURE_SATISFIABLE') %}{{ _kv('Ensure SAT', 'yes') }}{% endif %}
+        {% if p.get('NAME_PREFIX') %}{{ _kv('Prefix', "'" ~ p.NAME_PREFIX ~ "'") }}{% endif %}
     </div>
     {% endif %}
 
-    {# Step 2 — Feature tree #}
-    {% set levels = [] %}
-    {% if p.get('BOOLEAN_LEVEL') %}{% set _ = levels.append('Boolean') %}{% endif %}
-    {% if p.get('ARITHMETIC_LEVEL') %}{% set _ = levels.append('Arithmetic') %}{% endif %}
-    {% if p.get('TYPE_LEVEL') %}{% set _ = levels.append('Type') %}{% endif %}
+    {# 2 — Language levels #}
+    {% set majors = [] %}
+    {% if p.get('BOOLEAN_LEVEL') %}{% set _ = majors.append('Boolean') %}{% endif %}
+    {% if p.get('ARITHMETIC_LEVEL') %}{% set _ = majors.append('Arithmetic') %}{% endif %}
+    {% if p.get('TYPE_LEVEL') %}{% set _ = majors.append('Type') %}{% endif %}
     {% set minors = [] %}
     {% if p.get('GROUP_CARDINALITY') %}{% set _ = minors.append('Group card.') %}{% endif %}
     {% if p.get('FEATURE_CARDINALITY') %}{% set _ = minors.append('Feature card.') %}{% endif %}
     {% if p.get('AGGREGATE_FUNCTIONS') %}{% set _ = minors.append('Aggregates') %}{% endif %}
     {% if p.get('STRING_CONSTRAINTS') %}{% set _ = minors.append('String ctc') %}{% endif %}
-    {% if levels or minors or p.get('MIN_FEATURES') or p.get('MAX_FEATURES') or p.get('MAX_TREE_DEPTH') %}
+    {% if majors or minors %}
     <div class="mb-5">
-        <div class="fw-bold fs-7 text-gray-900 mb-1">Feature tree</div>
-        {% if levels %}{{ _kv('Levels', levels | join(', ')) }}{% endif %}
-        {% if minors %}{{ _kv('Minors', minors | join(', ')) }}{% endif %}
+        <div class="fw-bold fs-7 text-gray-900 mb-1">2 · Language levels</div>
+        {% if majors %}{{ _kv('Majors', majors | join(', ')) }}{% endif %}
+        {{ _kv('Minors', minors | join(', ') if minors else '—') }}
+    </div>
+    {% endif %}
+
+    {# 3 — Feature tree #}
+    {% if p.get('MIN_FEATURES') or p.get('MAX_FEATURES') or p.get('MAX_TREE_DEPTH') %}
+    <div class="mb-5">
+        <div class="fw-bold fs-7 text-gray-900 mb-1">3 · Feature tree</div>
         {% if p.get('MIN_FEATURES') or p.get('MAX_FEATURES') %}
             {{ _kv('Features', '%s – %s' | format(p.get('MIN_FEATURES','?'), p.get('MAX_FEATURES','?'))) }}
         {% endif %}
         {% if p.get('MAX_TREE_DEPTH') %}{{ _kv('Depth ≤', p.MAX_TREE_DEPTH) }}{% endif %}
+        {% set rel_bits = [] %}
+        {% if p.get('DIST_OPTIONAL', 0) > 0 %}{% set _ = rel_bits.append('opt ' ~ _pct(p.DIST_OPTIONAL)) %}{% endif %}
+        {% if p.get('DIST_MANDATORY', 0) > 0 %}{% set _ = rel_bits.append('mand ' ~ _pct(p.DIST_MANDATORY)) %}{% endif %}
+        {% if p.get('DIST_ALTERNATIVE', 0) > 0 %}{% set _ = rel_bits.append('alt ' ~ _pct(p.DIST_ALTERNATIVE)) %}{% endif %}
+        {% if p.get('DIST_OR', 0) > 0 %}{% set _ = rel_bits.append('or ' ~ _pct(p.DIST_OR)) %}{% endif %}
+        {% if p.get('DIST_GROUP_CARDINALITY', 0) > 0 %}{% set _ = rel_bits.append('group ' ~ _pct(p.DIST_GROUP_CARDINALITY)) %}{% endif %}
+        {% if rel_bits %}{{ _kv('Rel mix', rel_bits | join(' · ')) }}{% endif %}
+        {% if p.get('FEATURE_CARDINALITY') and p.get('PROB_FEATURE_CARDINALITY', 0) > 0 %}
+            {{ _kv('Feat card.', '%s%% [%s..%s]' | format(
+                (p.PROB_FEATURE_CARDINALITY * 100) | round | int,
+                (p.get('MIN_FEATURE_CARDINALITY', [2]) or [2])[0],
+                (p.get('MAX_FEATURE_CARDINALITY', [5]) or [5])[0])) }}
+        {% endif %}
+        {% if p.get('GROUP_CARDINALITY') %}
+            {{ _kv('Group card.', '[%s..%s]' | format(p.get('GROUP_CARDINALITY_MIN', '?'), p.get('GROUP_CARDINALITY_MAX', '?'))) }}
+        {% endif %}
     </div>
     {% endif %}
 
-    {# Step 3 — Constraints #}
+    {# 4 — Constraints #}
     {% if p.get('MIN_CONSTRAINTS') or p.get('MAX_CONSTRAINTS') or p.get('MIN_VARS_PER_CONSTRAINT') or p.get('MAX_VARS_PER_CONSTRAINT') %}
     <div class="mb-5">
-        <div class="fw-bold fs-7 text-gray-900 mb-1">Constraints</div>
+        <div class="fw-bold fs-7 text-gray-900 mb-1">4 · Constraints</div>
         {% if p.get('MIN_CONSTRAINTS') or p.get('MAX_CONSTRAINTS') %}
             {{ _kv('Count', '%s – %s' | format(p.get('MIN_CONSTRAINTS','?'), p.get('MAX_CONSTRAINTS','?'))) }}
         {% endif %}
         {% if p.get('MIN_VARS_PER_CONSTRAINT') or p.get('MAX_VARS_PER_CONSTRAINT') %}
             {{ _kv('Vars/ctc', '%s – %s' | format(p.get('MIN_VARS_PER_CONSTRAINT','?'), p.get('MAX_VARS_PER_CONSTRAINT','?'))) }}
         {% endif %}
+        {% set ctc_bits = [] %}
+        {% if p.get('CTC_DIST_BOOLEAN', 0) > 0 %}{% set _ = ctc_bits.append('B ' ~ _pct(p.CTC_DIST_BOOLEAN)) %}{% endif %}
+        {% if p.get('CTC_DIST_INTEGER', 0) > 0 %}{% set _ = ctc_bits.append('ℤ ' ~ _pct(p.CTC_DIST_INTEGER)) %}{% endif %}
+        {% if p.get('CTC_DIST_REAL', 0) > 0 %}{% set _ = ctc_bits.append('ℝ ' ~ _pct(p.CTC_DIST_REAL)) %}{% endif %}
+        {% if p.get('CTC_DIST_STRING', 0) > 0 %}{% set _ = ctc_bits.append('S ' ~ _pct(p.CTC_DIST_STRING)) %}{% endif %}
+        {% if ctc_bits %}{{ _kv('Type mix', ctc_bits | join(' · ')) }}{% endif %}
     </div>
     {% endif %}
 
-    {# Step 4 — Attributes #}
+    {# 5 — Attributes #}
     {% if p.get('RANDOM_ATTRIBUTES') is not none or p.get('ATTRIBUTES_LIST') %}
     <div class="mb-5">
-        <div class="fw-bold fs-7 text-gray-900 mb-1">Attributes</div>
+        <div class="fw-bold fs-7 text-gray-900 mb-1">5 · Attributes</div>
         {% if p.get('RANDOM_ATTRIBUTES') %}
             {{ _kv('Mode', 'random') }}
             {% if p.get('MIN_ATTRIBUTES') is not none or p.get('MAX_ATTRIBUTES') is not none %}
                 {{ _kv('Count', '%s – %s' | format(p.get('MIN_ATTRIBUTES','?'), p.get('MAX_ATTRIBUTES','?'))) }}
             {% endif %}
+            {% set att_bits = [] %}
+            {% if p.get('DIST_BOOLEAN', 0) > 0 %}{% set _ = att_bits.append('B ' ~ _pct(p.DIST_BOOLEAN)) %}{% endif %}
+            {% if p.get('DIST_INTEGER', 0) > 0 %}{% set _ = att_bits.append('ℤ ' ~ _pct(p.DIST_INTEGER)) %}{% endif %}
+            {% if p.get('DIST_REAL', 0) > 0 %}{% set _ = att_bits.append('ℝ ' ~ _pct(p.DIST_REAL)) %}{% endif %}
+            {% if p.get('DIST_STRING', 0) > 0 %}{% set _ = att_bits.append('S ' ~ _pct(p.DIST_STRING)) %}{% endif %}
+            {% if att_bits %}{{ _kv('Type mix', att_bits | join(' · ')) }}{% endif %}
         {% else %}
             {{ _kv('Mode', 'manual') }}
             {% if p.get('ATTRIBUTES_LIST') %}{{ _kv('Defined', p.ATTRIBUTES_LIST | length) }}{% endif %}
         {% endif %}
+    </div>
+    {% endif %}
+
+    {# 6 — Output #}
+    {% if p.get('ENSURE_SATISFIABLE') is not none or p.get('INCLUDE_FEATURE_COUNT_SUFFIX') or p.get('INCLUDE_CONSTRAINT_COUNT_SUFFIX') %}
+    <div class="mb-5">
+        <div class="fw-bold fs-7 text-gray-900 mb-1">6 · Output</div>
+        {{ _kv('Ensure SAT', 'yes' if p.get('ENSURE_SATISFIABLE') else 'no') }}
+        {% set sfx = [] %}
+        {% if p.get('INCLUDE_FEATURE_COUNT_SUFFIX') %}{% set _ = sfx.append('_Nf') %}{% endif %}
+        {% if p.get('INCLUDE_CONSTRAINT_COUNT_SUFFIX') %}{% set _ = sfx.append('_Nc') %}{% endif %}
+        {{ _kv('Suffixes', sfx | join(' ') if sfx else '—') }}
     </div>
     {% endif %}
 

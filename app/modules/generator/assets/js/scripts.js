@@ -247,177 +247,49 @@ export async function generateAndDownload() {
 
 window.generatorRuntime = { ready: getRuntime, generate: generateAndDownload };
 
-// ─── Parent–child distribution slider ──────────────────────────────────────
-// Renders a 3-handle noUiSlider that splits [0, 1 - groupCardinality] into 4
-// coloured segments and keeps the hidden inputs in sync with its positions.
-// When `group_cardinality` is on, the slider range shrinks so all five values
-// still sum to 1.
-
-const REL_BASE = [
-    { id: "dist_optional",    label: "Optional",    color: "#5e6278" },
-    { id: "dist_mandatory",   label: "Mandatory",   color: "#3f4254" },
-    { id: "dist_alternative", label: "Alternative", color: "#2b2b40" },
-    { id: "dist_or",          label: "Or",          color: "#181c32" },
-];
-const REL_GROUP = {
-    id: "dist_group_cardinality",
-    label: "Group cardinality",
-    color: "repeating-linear-gradient(-45deg, #b5b5c3 0 8px, #a1a5b7 8px 16px)",
-};
-
-function initParentChildSlider() {
-    const slider = document.getElementById("rel_slider");
-    if (!slider) return;
-
-    function groupIsOn() {
-        const gc = document.getElementById("group_cardinality");
-        return !!(gc && gc.checked);
-    }
-
-    function currentSegments() {
-        return groupIsOn() ? [...REL_BASE, REL_GROUP] : REL_BASE;
-    }
-
-    function readValues(segments) {
-        return segments.map((s) => parseFloat(document.getElementById(s.id)?.value || "0"));
-    }
-
-    function normalised(values) {
-        const sum = values.reduce((a, b) => a + b, 0) || 1;
-        return values.map((v) => v / sum);
-    }
-
-    function cumulativeFromDist(dist) {
-        const cum = [];
-        let acc = 0;
-        for (let i = 0; i < dist.length - 1; i++) {
-            acc += dist[i];
-            cum.push(acc);
-        }
-        return cum;
-    }
-
-    function updateLegend(segments, dist) {
-        REL_BASE.forEach((s, i) => {
-            const pct = Math.round((dist[i] || 0) * 100);
-            const badge = document.getElementById(`label_${s.id}`);
-            if (badge) badge.textContent = `${pct}%`;
-        });
-        const gcLbl = document.getElementById("label_group_card");
-        if (gcLbl) {
-            const gcDist = segments.length === 5 ? (dist[4] || 0) : 0;
-            gcLbl.textContent = `${Math.round(gcDist * 100)}%`;
-            const el = document.getElementById("dist_group_cardinality");
-            if (el) el.value = gcDist.toFixed(4);
-        }
-    }
-
-    function buildSlider(segments) {
-        if (slider.noUiSlider) slider.noUiSlider.destroy();
-        slider.innerHTML = "";
-        slider.style.background = "";
-
-        // When group_cardinality is freshly enabled, give it a sensible default
-        // share (10%) so it is immediately visible on the bar.
-        const gcEl = document.getElementById("dist_group_cardinality");
-        const gcIdx = segments.findIndex((s) => s.id === "dist_group_cardinality");
-        if (gcIdx >= 0 && gcEl) {
-            const v = parseFloat(gcEl.value || "0");
-            if (!(v > 0)) gcEl.value = "0.1";
-        } else if (gcEl) {
-            gcEl.value = "0.0";
-        }
-
-        const dist = normalised(readValues(segments));
-        const startCum = cumulativeFromDist(dist);
-
-        noUiSlider.create(slider, {
-            start: startCum,
-            connect: Array(segments.length).fill(true),
-            range: { min: 0, max: 1 },
-            step: 0.01,
-            behaviour: "drag-tap",
-            margin: 0,
-        });
-
-        const connects = slider.querySelectorAll(".noUi-connect");
-        connects.forEach((c, i) => {
-            c.style.background = segments[i].color;
-        });
-
-        slider.noUiSlider.on("update", (raw) => {
-            const cum = raw.map(Number);
-            const nextDist = [];
-            let prev = 0;
-            for (let i = 0; i < cum.length; i++) {
-                nextDist.push(Math.max(0, cum[i] - prev));
-                prev = cum[i];
-            }
-            nextDist.push(Math.max(0, 1 - prev));
-            // Round to 4 decimals but absorb the rounding error on the last
-            // segment so the sum is EXACTLY 1.0 (Params.__post_init__ asserts
-            // abs(sum - 1) < 1e-6 and would otherwise fail).
-            const rounded = nextDist.map((v) => Math.round(v * 10000) / 10000);
-            const diff = 1 - rounded.reduce((a, b) => a + b, 0);
-            rounded[rounded.length - 1] = Math.max(0, rounded[rounded.length - 1] + diff);
-            segments.forEach((s, i) => {
-                const el = document.getElementById(s.id);
-                if (el) el.value = rounded[i].toFixed(4);
-            });
-            updateLegend(segments, rounded);
-        });
-
-        updateLegend(segments, dist);
-    }
-
-    function rebuild() { buildSlider(currentSegments()); }
-    document.getElementById("group_cardinality")?.addEventListener("change", rebuild);
-    rebuild();
-
-    // Safety net: right before submitting the wizard form, make sure the 4
-    // (or 5) probability inputs sum to EXACTLY 1.0, fixing any float residue.
-    const form = slider.closest("form");
-    if (form && !form.__relNormaliserBound) {
-        form.__relNormaliserBound = true;
-        const normalise = () => {
-            const segs = currentSegments();
-            const vals = segs.map((s) => parseFloat(document.getElementById(s.id)?.value || "0"));
-            const total = vals.reduce((a, b) => a + b, 0) || 1;
-            const norm = vals.map((v) => v / total);
-            const rounded = norm.map((v) => Math.round(v * 10000) / 10000);
-            const diff = 1 - rounded.reduce((a, b) => a + b, 0);
-            rounded[rounded.length - 1] = Math.max(0, rounded[rounded.length - 1] + diff);
-            segs.forEach((s, i) => {
-                const el = document.getElementById(s.id);
-                if (el) el.value = rounded[i].toFixed(4);
-            });
-        };
-        // wizard-spa.js dispatches this synchronously before snapshotting the
-        // form data, so the normalised values make it into the POST body.
-        form.addEventListener("wizard:pre-submit", normalise);
-        // Fallback for any non-SPA submit path (full-reload navigation).
-        form.addEventListener("submit", normalise, { capture: true });
-    }
-}
-
-// ─── Generic fixed-segments probability slider ─────────────────────────────
-// Drives a noUiSlider that partitions [0,1] into N segments backed by hidden
-// inputs. Used for step3's Boolean-operator distribution (AND/OR/IMPLIES/
-// EQUIVALENCE). Simpler than the parent–child slider because the segments
-// never change at runtime.
-function initFixedSegmentsSlider({ sliderId, segments, labelSuffix = "label_" }) {
+// ─── Generic distribution control ───────────────────────────────────────
+// Renders an N-handle noUiSlider whose segments partition [0, 1], backed
+// by one visible number input per segment. The slider and the inputs are
+// two-way bound:
+//
+//   * Dragging a handle rewrites every input to the rounded segment share.
+//   * Typing a value in an input (0..1) clamps, rebalances the siblings so
+//     the total stays 1, and repositions the slider handles to match.
+//
+// Segments whose input element is missing from the DOM are skipped — this
+// is how the templates gate off segments (e.g. "Integer" when Arithmetic
+// level is off). If fewer than two segments survive the filter, the
+// slider is hidden and a 100%-tag is displayed instead.
+function initDistributionControl({ sliderId, allSegments, labelPrefix = "label_" }) {
     const slider = document.getElementById(sliderId);
     if (!slider || !window.noUiSlider) return;
 
+    const segments = allSegments.filter((s) => document.getElementById(s.id));
+    if (segments.length === 0) return;
+
+    function inputs() {
+        return segments.map((s) => document.getElementById(s.id));
+    }
     function readValues() {
-        return segments.map((s) => parseFloat(document.getElementById(s.id)?.value || "0"));
+        return inputs().map((el) => parseFloat(el?.value || "0") || 0);
     }
-
-    function normalised(values) {
-        const sum = values.reduce((a, b) => a + b, 0) || 1;
-        return values.map((v) => v / sum);
+    function normalise(vals) {
+        const sum = vals.reduce((a, b) => a + b, 0);
+        return sum > 0 ? vals.map((v) => v / sum) : vals.map(() => 1 / vals.length);
     }
-
+    function roundAndFix(vals) {
+        const rounded = vals.map((v) => Math.round(v * 10000) / 10000);
+        const diff = 1 - rounded.reduce((a, b) => a + b, 0);
+        rounded[rounded.length - 1] = Math.max(0, rounded[rounded.length - 1] + diff);
+        return rounded;
+    }
+    function writeValues(vals) {
+        inputs().forEach((el, i) => {
+            if (!el) return;
+            const next = vals[i].toFixed(4);
+            if (el.value !== next) el.value = next;
+        });
+    }
     function cumulativeFromDist(dist) {
         const cum = [];
         let acc = 0;
@@ -427,24 +299,31 @@ function initFixedSegmentsSlider({ sliderId, segments, labelSuffix = "label_" })
         }
         return cum;
     }
-
-    function updateLegend(dist) {
+    function updateLegend(vals) {
         segments.forEach((s, i) => {
-            const badge = document.getElementById(`${labelSuffix}${s.id}`);
-            if (badge) badge.textContent = `${Math.round((dist[i] || 0) * 100)}%`;
+            const badge = document.getElementById(`${labelPrefix}${s.id}`);
+            if (badge) badge.textContent = `${Math.round((vals[i] || 0) * 100)}%`;
         });
     }
 
-    function writeHiddenInputs(rounded) {
-        segments.forEach((s, i) => {
-            const el = document.getElementById(s.id);
-            if (el) el.value = rounded[i].toFixed(4);
-        });
+    // Degenerate case: only one active segment. Hide the slider and pin
+    // the value to 1.0 — there's nothing to distribute.
+    if (segments.length === 1) {
+        slider.style.display = "none";
+        writeValues([1.0]);
+        updateLegend([1.0]);
+        return;
     }
 
-    const dist = normalised(readValues());
+    const startVals = roundAndFix(normalise(readValues()));
+    writeValues(startVals);
+    updateLegend(startVals);
+
+    if (slider.noUiSlider) slider.noUiSlider.destroy();
+    slider.innerHTML = "";
+    slider.style.display = "";
     noUiSlider.create(slider, {
-        start: cumulativeFromDist(dist),
+        start: cumulativeFromDist(startVals),
         connect: Array(segments.length).fill(true),
         range: { min: 0, max: 1 },
         step: 0.01,
@@ -455,41 +334,93 @@ function initFixedSegmentsSlider({ sliderId, segments, labelSuffix = "label_" })
         c.style.background = segments[i].color;
     });
 
+    let suppressSliderUpdate = false;
+
     slider.noUiSlider.on("update", (raw) => {
+        if (suppressSliderUpdate) return;
         const cum = raw.map(Number);
-        const nextDist = [];
+        const vals = [];
         let prev = 0;
         for (let i = 0; i < cum.length; i++) {
-            nextDist.push(Math.max(0, cum[i] - prev));
+            vals.push(Math.max(0, cum[i] - prev));
             prev = cum[i];
         }
-        nextDist.push(Math.max(0, 1 - prev));
-        const rounded = nextDist.map((v) => Math.round(v * 10000) / 10000);
-        const diff = 1 - rounded.reduce((a, b) => a + b, 0);
-        rounded[rounded.length - 1] = Math.max(0, rounded[rounded.length - 1] + diff);
-        writeHiddenInputs(rounded);
+        vals.push(Math.max(0, 1 - prev));
+        const rounded = roundAndFix(vals);
+        writeValues(rounded);
         updateLegend(rounded);
     });
 
-    updateLegend(dist);
+    // Bind number-input changes: rebalance siblings, reposition slider.
+    segments.forEach((s, idx) => {
+        const el = document.getElementById(s.id);
+        if (!el) return;
+        if (el.__distHandler) {
+            el.removeEventListener("input", el.__distHandler);
+            el.removeEventListener("change", el.__distHandler);
+        }
+        const handler = () => {
+            let v = parseFloat(el.value);
+            if (!Number.isFinite(v)) v = 0;
+            if (v < 0) v = 0;
+            if (v > 1) v = 1;
+            const vals = readValues();
+            vals[idx] = v;
+            const others = vals.map((_, i) => i).filter((i) => i !== idx);
+            const remaining = 1 - v;
+            const otherSum = others.reduce((s, i) => s + vals[i], 0);
+            if (otherSum > 1e-6) {
+                const factor = remaining / otherSum;
+                others.forEach((i) => {
+                    vals[i] = vals[i] * factor;
+                });
+            } else {
+                const share = remaining / Math.max(1, others.length);
+                others.forEach((i) => {
+                    vals[i] = share;
+                });
+            }
+            const rounded = roundAndFix(vals);
+            writeValues(rounded);
+            updateLegend(rounded);
+            suppressSliderUpdate = true;
+            try {
+                slider.noUiSlider.set(cumulativeFromDist(rounded));
+            } finally {
+                suppressSliderUpdate = false;
+            }
+        };
+        el.__distHandler = handler;
+        el.addEventListener("input", handler);
+        el.addEventListener("change", handler);
+    });
 
-    // Pre-submit safety net (same pattern as parent-child slider).
+    // Pre-submit safety net: normalise exactly to 1.0.
     const form = slider.closest("form");
     if (form && !form[`__${sliderId}Bound`]) {
         form[`__${sliderId}Bound`] = true;
-        const normalise = () => {
-            const vals = readValues();
-            const total = vals.reduce((a, b) => a + b, 0) || 1;
-            const norm = vals.map((v) => v / total);
-            const rounded = norm.map((v) => Math.round(v * 10000) / 10000);
-            const diff = 1 - rounded.reduce((a, b) => a + b, 0);
-            rounded[rounded.length - 1] = Math.max(0, rounded[rounded.length - 1] + diff);
-            writeHiddenInputs(rounded);
+        const onSubmit = () => {
+            const rounded = roundAndFix(normalise(readValues()));
+            writeValues(rounded);
+            updateLegend(rounded);
         };
-        form.addEventListener("wizard:pre-submit", normalise);
-        form.addEventListener("submit", normalise, { capture: true });
+        form.addEventListener("wizard:pre-submit", onSubmit);
+        form.addEventListener("submit", onSubmit, { capture: true });
     }
 }
+
+// ─── Segment definitions ───────────────────────────────────────────────
+// Each set is passed to initDistributionControl; segments whose input is
+// missing from the current page are skipped automatically.
+
+const REL_SEGMENTS = [
+    { id: "dist_optional",          label: "Optional",         color: "#5e6278" },
+    { id: "dist_mandatory",         label: "Mandatory",        color: "#3f4254" },
+    { id: "dist_alternative",       label: "Alternative",      color: "#2b2b40" },
+    { id: "dist_or",                label: "Or",               color: "#181c32" },
+    { id: "dist_group_cardinality", label: "Group cardinality",
+      color: "repeating-linear-gradient(-45deg, #b5b5c3 0 8px, #a1a5b7 8px 16px)" },
+];
 
 const BOOL_OPS_SEGMENTS = [
     { id: "prob_and",     label: "AND",         color: "#5e6278" },
@@ -498,17 +429,48 @@ const BOOL_OPS_SEGMENTS = [
     { id: "prob_equiv",   label: "EQUIVALENCE", color: "#181c32" },
 ];
 
-function initBooleanOpsSlider() {
-    initFixedSegmentsSlider({
-        sliderId: "boolop_slider",
-        segments: BOOL_OPS_SEGMENTS,
-        labelSuffix: "label_",
-    });
+const ARITH_OPS_SEGMENTS = [
+    { id: "prob_plus",  label: "+",     color: "#5e6278" },
+    { id: "prob_minus", label: "−",     color: "#3f4254" },
+    { id: "prob_times", label: "×",     color: "#2b2b40" },
+    { id: "prob_div",   label: "÷",     color: "#181c32" },
+    { id: "prob_sum",   label: "sum()", color: "#009ef7" },
+    { id: "prob_avg",   label: "avg()", color: "#0b76b7" },
+];
+
+const CMP_OPS_SEGMENTS = [
+    { id: "prob_eq",  label: "=",  color: "#5e6278" },
+    { id: "prob_lt",  label: "<",  color: "#3f4254" },
+    { id: "prob_gt",  label: ">",  color: "#2b2b40" },
+    { id: "prob_leq", label: "≤",  color: "#181c32" },
+    { id: "prob_geq", label: "≥",  color: "#7e8299" },
+];
+
+const CTC_DIST_SEGMENTS = [
+    { id: "ctc_dist_boolean", label: "Boolean", color: "#5e6278" },
+    { id: "ctc_dist_integer", label: "Integer", color: "#3f4254" },
+    { id: "ctc_dist_real",    label: "Real",    color: "#2b2b40" },
+    { id: "ctc_dist_string",  label: "String",  color: "#181c32" },
+];
+
+const ATTR_DIST_SEGMENTS = [
+    { id: "dist_boolean", label: "Boolean", color: "#5e6278" },
+    { id: "dist_integer", label: "Integer", color: "#3f4254" },
+    { id: "dist_real",    label: "Real",    color: "#2b2b40" },
+    { id: "dist_string",  label: "String",  color: "#181c32" },
+];
+
+function initAllDistributionControls() {
+    initDistributionControl({ sliderId: "rel_slider",        allSegments: REL_SEGMENTS });
+    initDistributionControl({ sliderId: "boolop_slider",     allSegments: BOOL_OPS_SEGMENTS });
+    initDistributionControl({ sliderId: "arith_slider",      allSegments: ARITH_OPS_SEGMENTS });
+    initDistributionControl({ sliderId: "cmp_slider",        allSegments: CMP_OPS_SEGMENTS });
+    initDistributionControl({ sliderId: "ctc_dist_slider",   allSegments: CTC_DIST_SEGMENTS });
+    initDistributionControl({ sliderId: "attr_dist_slider",  allSegments: ATTR_DIST_SEGMENTS });
 }
 
 function initStepHelpers() {
-    initParentChildSlider();
-    initBooleanOpsSlider();
+    initAllDistributionControls();
 }
 
 if (document.readyState === "loading") {

@@ -39,29 +39,65 @@
             <div class="text-gray-600 fs-7 mb-5">Min must be ≤ Max.</div>
 
             {{ section('Attribute type distribution',
-                'When sampling each attribute, how likely is each UVL type to be chosen. Integer/Real are only active with the Arithmetic level; String is only active with the Type level. Active values must add up to 1.') }}
+                'When sampling each attribute, how likely is each UVL type to be chosen. Drag the handles OR type exact values — both stay in sync. Integer/Real need Arithmetic level, String needs Type level; disabled types score 0.') }}
 
-            <div class="row g-3 mb-2">
-                {{ probability_field('dist_boolean', 'Boolean',
-                    'Probability of a boolean attribute.',
-                    values, errors, default=0.7, symbol='B') }}
-                {{ probability_field('dist_integer', 'Integer',
-                    'Probability of an integer attribute. Requires Arithmetic level.',
-                    values, errors, default=0.1, symbol='ℤ',
-                    disabled=(not arithmetic_level)) }}
-                {{ probability_field('dist_real', 'Real',
-                    'Probability of a real-valued attribute. Requires Arithmetic level.',
-                    values, errors, default=0.1, symbol='ℝ',
-                    disabled=(not arithmetic_level)) }}
-                {{ probability_field('dist_string', 'String',
-                    'Probability of a string attribute. Requires Type level.',
-                    values, errors, default=0.1, symbol='S',
-                    disabled=(not type_level)) }}
+            <div class="prob-distribution mb-3">
+                <div id="attr_dist_slider" class="rel-slider mt-3 mb-5"></div>
+                <div class="row g-3">
+                    <div class="col-6 col-md-3">
+                        <label for="dist_boolean" class="form-label fs-7 text-gray-700 d-flex align-items-center gap-2">
+                            <span class="rel-swatch" style="background: #5e6278;"></span>
+                            Boolean
+                            <span class="badge badge-light ms-auto fw-bold" id="label_dist_boolean">70%</span>
+                        </label>
+                        <input type="number" id="dist_boolean" name="dist_boolean"
+                               class="form-control form-control-solid" step="0.01" min="0" max="1"
+                               value="{{ values.get('dist_boolean', 0.7) }}">
+                    </div>
+                    {% if arithmetic_level %}
+                    <div class="col-6 col-md-3">
+                        <label for="dist_integer" class="form-label fs-7 text-gray-700 d-flex align-items-center gap-2">
+                            <span class="rel-swatch" style="background: #3f4254;"></span>
+                            Integer
+                            <span class="badge badge-light ms-auto fw-bold" id="label_dist_integer">10%</span>
+                        </label>
+                        <input type="number" id="dist_integer" name="dist_integer"
+                               class="form-control form-control-solid" step="0.01" min="0" max="1"
+                               value="{{ values.get('dist_integer', 0.1) }}">
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <label for="dist_real" class="form-label fs-7 text-gray-700 d-flex align-items-center gap-2">
+                            <span class="rel-swatch" style="background: #2b2b40;"></span>
+                            Real
+                            <span class="badge badge-light ms-auto fw-bold" id="label_dist_real">10%</span>
+                        </label>
+                        <input type="number" id="dist_real" name="dist_real"
+                               class="form-control form-control-solid" step="0.01" min="0" max="1"
+                               value="{{ values.get('dist_real', 0.1) }}">
+                    </div>
+                    {% else %}
+                    <input type="hidden" name="dist_integer" value="0.0">
+                    <input type="hidden" name="dist_real" value="0.0">
+                    {% endif %}
+                    {% if type_level %}
+                    <div class="col-6 col-md-3">
+                        <label for="dist_string" class="form-label fs-7 text-gray-700 d-flex align-items-center gap-2">
+                            <span class="rel-swatch" style="background: #181c32;"></span>
+                            String
+                            <span class="badge badge-light ms-auto fw-bold" id="label_dist_string">10%</span>
+                        </label>
+                        <input type="number" id="dist_string" name="dist_string"
+                               class="form-control form-control-solid" step="0.01" min="0" max="1"
+                               value="{{ values.get('dist_string', 0.1) }}">
+                    </div>
+                    {% else %}
+                    <input type="hidden" name="dist_string" value="0.0">
+                    {% endif %}
+                </div>
+                {% if errors.get('attr_dist_sum') %}
+                    <div class="text-danger fs-7 mt-3">{{ errors['attr_dist_sum'] }}</div>
+                {% endif %}
             </div>
-            {{ sum_badge('attr_dist_sum', 'Sum of active type probabilities', initial=values.get('attr_dist_sum', '1.0000')) }}
-            {% if errors.get('attr_dist_sum') %}
-                <div class="text-danger fs-7 mt-1">{{ errors['attr_dist_sum'] }}</div>
-            {% endif %}
         </div>
 
         <!-- Manual mode -->
