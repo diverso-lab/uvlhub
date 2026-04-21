@@ -143,6 +143,11 @@
     let currentLoadedModel = null;
     let cacheStatus = {};
     let busyModel = null;
+    // null = not probed yet, true = probe succeeded, false = probe failed.
+    // Consulted by updateRow() to keep Load/Delete buttons disabled after
+    // each re-render when WebGPU is unavailable. The generate button has
+    // its own lifecycle (enabled only after a successful model load).
+    let webGpuReady = null;
 
     // ─── DOM helpers ─────────────────────────────────────────────────────────
     const $ = (id) => document.getElementById(id);
@@ -1138,7 +1143,7 @@
             load.innerHTML = cached
                 ? '<i class="ki-duotone ki-check fs-4 me-1"><span class="path1"></span><span class="path2"></span></i>Load'
                 : '<i class="ki-duotone ki-cloud-download fs-4 me-1"><span class="path1"></span><span class="path2"></span></i>Download + load';
-            load.disabled = anyBusy;
+            load.disabled = anyBusy || webGpuReady === false;
             load.addEventListener("click", () => loadModel(id));
             actionsEl.appendChild(load);
         }
@@ -1229,6 +1234,191 @@
         }
     }
 
+    // ─── Browser detection (best-effort, for WebGPU guidance only) ────────────
+    //
+    // We sniff the UA only to tailor the *instructions* shown in the WebGPU
+    // banner — the real support check is still navigator.gpu + requestAdapter.
+    // If the UA is spoofed or unrecognised we just fall back to generic advice.
+    function detectBrowser() {
+        const ua = (typeof navigator !== "undefined" && navigator.userAgent) || "";
+        const uaData = (typeof navigator !== "undefined" && navigator.userAgentData) || null;
+        const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua) ||
+            (uaData && uaData.mobile === true);
+
+        // userAgentData is the clean path when available (Chromium on desktop).
+        if (uaData && Array.isArray(uaData.brands)) {
+            const brands = uaData.brands.filter(
+                (b) => b && b.brand && !/not.?a.?brand/i.test(b.brand)
+            );
+            const edge = brands.find((b) => /edge/i.test(b.brand));
+            if (edge) {
+                return { name: "Edge", version: parseInt(edge.version, 10) || null, isMobile, raw: ua };
+            }
+            const opera = brands.find((b) => /opera|opr/i.test(b.brand));
+            if (opera) {
+                return { name: "Opera", version: parseInt(opera.version, 10) || null, isMobile, raw: ua };
+            }
+            const brave = brands.find((b) => /brave/i.test(b.brand));
+            if (brave) {
+                return { name: "Brave", version: parseInt(brave.version, 10) || null, isMobile, raw: ua };
+            }
+            const chrome = brands.find((b) => /chrome/i.test(b.brand));
+            if (chrome) {
+                return { name: "Chrome", version: parseInt(chrome.version, 10) || null, isMobile, raw: ua };
+            }
+        }
+
+        // UA-string fallbacks. Order matters: Edge/Opera/Brave inherit
+        // "Chrome/xx" in their UA, so match them before plain Chrome.
+        let m;
+        if ((m = ua.match(/Edg\/(\d+)/))) return { name: "Edge", version: parseInt(m[1], 10), isMobile, raw: ua };
+        if ((m = ua.match(/OPR\/(\d+)/))) return { name: "Opera", version: parseInt(m[1], 10), isMobile, raw: ua };
+        if (/Firefox\//.test(ua)) {
+            m = ua.match(/Firefox\/(\d+)/);
+            const isNightly = /Nightly/i.test(ua);
+            return { name: isNightly ? "Firefox Nightly" : "Firefox", version: m ? parseInt(m[1], 10) : null, isMobile, raw: ua };
+        }
+        if (/CriOS\//.test(ua)) { // Chrome on iOS — same WebKit engine as Safari
+            m = ua.match(/CriOS\/(\d+)/);
+            return { name: "Chrome on iOS", version: m ? parseInt(m[1], 10) : null, isMobile: true, raw: ua };
+        }
+        if (/Chrome\//.test(ua)) {
+            m = ua.match(/Chrome\/(\d+)/);
+            return { name: "Chrome", version: m ? parseInt(m[1], 10) : null, isMobile, raw: ua };
+        }
+        if (/Safari\//.test(ua) && /Version\//.test(ua)) {
+            m = ua.match(/Version\/(\d+)/);
+            return { name: "Safari", version: m ? parseInt(m[1], 10) : null, isMobile, raw: ua };
+        }
+        return { name: "your browser", version: null, isMobile, raw: ua };
+    }
+
+    // Produces { summary, steps[] } explaining *why* WebGPU is unavailable and
+    // how the user can fix it, tailored to their browser. reason is either
+    // "missing" (navigator.gpu absent) or "no-adapter" (API exists but
+    // requestAdapter() returned null — usually a disabled GPU flag or
+    // blocklisted driver).
+    function webGpuGuidance(reason) {
+        const b = detectBrowser();
+        const label = b.version ? `${b.name} ${b.version}` : b.name;
+        const steps = [];
+        let summary = "";
+
+        const tooOldChromium = (b.name === "Chrome" || b.name === "Edge" || b.name === "Opera" || b.name === "Brave")
+            && typeof b.version === "number" && b.version < 113;
+
+        if (b.name === "Chrome on iOS") {
+            summary = `You're on ${label}. On iOS, every browser uses WebKit, and WebGPU only ships on Safari 18+ (iOS 18+).`;
+            steps.push("Open this page in Safari on iOS 18 or newer.");
+            steps.push("Older iPhones/iPads may not be supported even with iOS 18 — small LLMs need several hundred MB of GPU memory.");
+        } else if (b.name === "Safari") {
+            if (typeof b.version === "number" && b.version >= 18) {
+                summary = `You're on ${label}, which ships WebGPU — but no GPU adapter could be acquired.`;
+                steps.push("Check that your macOS/iOS version is fully up to date.");
+                steps.push("Try closing other tabs that may be using the GPU and reload this page.");
+                steps.push("If the problem persists, test in Chrome or Edge 113+ to rule out a Safari-specific driver issue.");
+            } else if (typeof b.version === "number" && b.version === 17) {
+                summary = `You're on ${label}. WebGPU is available but behind a feature flag in Safari 17.`;
+                steps.push("Open Develop → Feature Flags → enable WebGPU (requires the Develop menu: Safari → Settings → Advanced → “Show features for web developers”).");
+                steps.push("Reload this page after enabling the flag.");
+                steps.push("Alternatively, upgrade to Safari 18 (macOS 15 / iOS 18) where WebGPU is enabled by default.");
+            } else {
+                summary = `You're on ${label}. WebGPU ships enabled by default from Safari 18 (macOS 15 / iOS 18).`;
+                steps.push("Upgrade to Safari 18 or newer.");
+                steps.push("Or use Chrome / Edge 113+ on the same machine.");
+            }
+        } else if (b.name === "Firefox Nightly") {
+            summary = `You're on ${label}. Firefox Nightly supports WebGPU but it is gated by a preference.`;
+            steps.push("Open about:config and set dom.webgpu.enabled to true.");
+            steps.push("Restart Firefox Nightly and reload this page.");
+        } else if (b.name === "Firefox") {
+            summary = `You're on ${label}. Stable Firefox doesn't enable WebGPU yet.`;
+            steps.push("Install Firefox Nightly and enable dom.webgpu.enabled in about:config.");
+            steps.push("Or use Chrome / Edge 113+ as a quick alternative.");
+        } else if (tooOldChromium) {
+            summary = `You're on ${label}. WebGPU requires ${b.name} 113 or newer.`;
+            steps.push(`Update ${b.name} to the latest version and reload this page.`);
+        } else if (b.name === "Chrome" || b.name === "Edge" || b.name === "Opera" || b.name === "Brave") {
+            if (reason === "missing") {
+                summary = `You're on ${label}. WebGPU should be available but navigator.gpu is not exposed — this usually means an enterprise policy or an extension is disabling it.`;
+                steps.push("Open a private/incognito window with extensions disabled and reload this page.");
+                steps.push("On managed devices, check with IT — policies like HardwareAccelerationModeEnabled can turn WebGPU off.");
+            } else {
+                summary = `You're on ${label}. The WebGPU API is present but no GPU adapter could be acquired — hardware acceleration is probably off, or your GPU/driver is blocklisted.`;
+                const flagsUrl = b.name === "Edge" ? "edge://flags/#enable-unsafe-webgpu"
+                    : b.name === "Opera" ? "opera://flags/#enable-unsafe-webgpu"
+                    : b.name === "Brave" ? "brave://flags/#enable-unsafe-webgpu"
+                    : "chrome://flags/#enable-unsafe-webgpu";
+                const settingsUrl = b.name === "Edge" ? "edge://settings/system"
+                    : b.name === "Opera" ? "opera://settings/system"
+                    : b.name === "Brave" ? "brave://settings/system"
+                    : "chrome://settings/system";
+                steps.push(`Enable “Use graphics acceleration when available” at ${settingsUrl} and restart the browser.`);
+                steps.push(`If still failing, set ${flagsUrl} to Enabled and restart — this overrides the driver blocklist.`);
+                steps.push("Make sure the OS-level GPU driver is up to date.");
+            }
+        } else if (b.isMobile) {
+            summary = `You're on a mobile browser (${label}). WebGPU support on mobile is limited and most phones don't have enough GPU memory for these models.`;
+            steps.push("Open this page on a desktop browser: Chrome / Edge 113+ or Safari 18+.");
+        } else {
+            summary = `WebGPU is not available in ${label}.`;
+            steps.push("Use a recent Chrome or Edge (113+), or Safari 18+ on macOS 15 / iOS 18.");
+            steps.push("Firefox users: try Firefox Nightly with dom.webgpu.enabled = true in about:config.");
+        }
+
+        return { summary, steps, browser: b };
+    }
+
+    // Visibility is toggled via d-none/d-flex class swap (both ship with
+    // !important in Bootstrap, but only one is applied at a time). Using
+    // inline `style.display` would lose to .d-flex's !important and leave
+    // the banner permanently visible.
+    function showWebGpuBanner(reason) {
+        const banner = $("llm_webgpu_banner");
+        if (!banner) return;
+        const { summary, steps } = webGpuGuidance(reason);
+        const sumEl = $("llm_webgpu_banner_summary");
+        const stepsEl = $("llm_webgpu_banner_steps");
+        if (sumEl) sumEl.textContent = summary;
+        if (stepsEl) {
+            stepsEl.innerHTML = "";
+            if (steps.length) {
+                const ol = document.createElement("ol");
+                ol.className = "mb-0 ps-4";
+                steps.forEach((s) => {
+                    const li = document.createElement("li");
+                    li.className = "mb-1";
+                    li.textContent = s;
+                    ol.appendChild(li);
+                });
+                stepsEl.appendChild(ol);
+            }
+        }
+        banner.classList.remove("d-none");
+        banner.classList.add("d-flex");
+    }
+
+    function hideWebGpuBanner() {
+        const banner = $("llm_webgpu_banner");
+        if (!banner) return;
+        banner.classList.remove("d-flex");
+        banner.classList.add("d-none");
+    }
+
+    // Gates UI elements that are meaningless without WebGPU (model table
+    // rows' Load/Download buttons, Generate button). We leave the table
+    // visible so the user still sees what's on offer once they fix it.
+    // The flag is also honored by updateRow() so subsequent re-renders
+    // (cache refresh, etc.) don't re-enable the Load buttons.
+    function setUiWebGpuEnabled(enabled) {
+        webGpuReady = enabled;
+        if (!enabled) {
+            const genBtn = $("llm_generate_btn");
+            if (genBtn) genBtn.disabled = true;
+        }
+        updateAllRows();
+    }
+
     // ─── WebGPU probe ────────────────────────────────────────────────────────
     //
     // Returns true if WebGPU is available and a GPU adapter can be acquired.
@@ -1236,10 +1426,45 @@
     // they are running on an integrated GPU (slow), a discrete GPU (fast),
     // or some fallback path. On Chrome/Edge this usually returns a real
     // vendor name; on Safari 18+ the name is anonymised ("Apple GPU").
-    async function reportWebGpuAdapter() {
+    //
+    // Side-effect: shows/hides the diagnostic banner based on the outcome,
+    // so the same function works for the on-load probe and the per-click
+    // guard in loadModel().
+    //
+    // Two safeties layered on top of the raw probe:
+    //
+    //  - Coalesce concurrent calls. init() fires a probe and the first
+    //    loadModel() click fires another; without this they race and the
+    //    last-to-finish wins the UI state, which has caused false
+    //    "WebGPU required" banners to appear even after the model had
+    //    already loaded successfully.
+    //  - Cache the success outcome. Once WebGPU is confirmed working we
+    //    trust it for the rest of the session — a transient adapter
+    //    failure (driver briefly busy, another tab hogging the GPU)
+    //    must not rip the UI out from under a user who already has
+    //    models loaded. The Re-check button bypasses the cache.
+    let webGpuProbePromise = null;
+
+    async function reportWebGpuAdapter(options) {
+        const force = !!(options && options.force);
+        if (!force && webGpuReady === true) return true;
+        if (webGpuProbePromise) return webGpuProbePromise;
+        webGpuProbePromise = (async () => {
+            try {
+                return await runWebGpuProbe();
+            } finally {
+                webGpuProbePromise = null;
+            }
+        })();
+        return webGpuProbePromise;
+    }
+
+    async function runWebGpuProbe() {
         if (typeof navigator === "undefined" || !navigator.gpu) {
             log("WebGPU not available in this browser. WebLLM requires WebGPU — " +
                 "use a recent Chrome, Edge, or Safari 18+.", "error");
+            showWebGpuBanner("missing");
+            setUiWebGpuEnabled(false);
             return false;
         }
         try {
@@ -1247,6 +1472,8 @@
             if (!adapter) {
                 log("WebGPU is enabled but no GPU adapter could be acquired. " +
                     "Check the browser's GPU acceleration settings.", "error");
+                showWebGpuBanner("no-adapter");
+                setUiWebGpuEnabled(false);
                 return false;
             }
             let name = "unknown";
@@ -1263,9 +1490,13 @@
                 }
             } catch (_) { /* non-fatal */ }
             log("WebGPU adapter: " + name, "success");
+            hideWebGpuBanner();
+            setUiWebGpuEnabled(true);
             return true;
         } catch (err) {
             log("WebGPU probe failed: " + (err.message || err), "error");
+            showWebGpuBanner("no-adapter");
+            setUiWebGpuEnabled(false);
             return false;
         }
     }
@@ -1808,6 +2039,20 @@
         // Model table (replaces the old dropdown + single download button)
         renderModelTable();
         refreshCacheStatus();
+
+        // Run the WebGPU probe up front so users with unsupported setups see
+        // a targeted banner immediately instead of getting a generic error
+        // only after they click Load. Fire-and-forget: the probe handles its
+        // own UI gating and the rest of init() is unaffected.
+        reportWebGpuAdapter();
+
+        const recheckBtn = $("llm_webgpu_recheck_btn");
+        if (recheckBtn) {
+            recheckBtn.addEventListener("click", () => {
+                log("Re-checking WebGPU support…", "info");
+                reportWebGpuAdapter({ force: true });
+            });
+        }
 
         const refreshBtn = $("llm_refresh_cache_btn");
         if (refreshBtn) {
