@@ -64,26 +64,32 @@ class Hubfile(db.Model):
             self.name,
         )
 
-    def get_ide_url(self) -> str:
+    def _public_raw_url(self) -> str:
+        """Build the public raw-UVL URL for this hubfile (https outside local).
+
+        Shared between the Flamapy IDE and FactLabel helpers so a future
+        tweak (e.g. hostname rewrite) only needs to happen in one place.
         """
-        Returns the URL ready to open this hubfile in Flamapy IDE,
-        with the import correctly encoded.
-        On localhost, leave http; on any other host, force https.
-        """
+        from urllib.parse import quote
+
         raw_url = url_for(
-            "hubfile.raw_uvl", file_id=self.id, filename=self.name, _external=True  # 👈 añadimos filename
+            "hubfile.raw_uvl", file_id=self.id, filename=self.name, _external=True
         )
         if "localhost" not in raw_url and "127.0.0.1" not in raw_url:
             raw_url = raw_url.replace("http://", "https://", 1)
-        return f"https://ide.flamapy.org/?import={raw_url}"
+        # Percent-encode before injecting into another URL's query string,
+        # otherwise a filename containing "&", "#" or "?" would corrupt the
+        # outer URL. `safe=""` means even "/" and ":" get encoded — the
+        # consumer (FactLabel / IDE) URL-decodes the value before fetching.
+        return quote(raw_url, safe="")
+
+    def get_ide_url(self) -> str:
+        """Return the URL that opens this hubfile in Flamapy IDE."""
+        return f"https://ide.flamapy.org/?import={self._public_raw_url()}"
 
     def get_factlabel_url(self) -> str:
-        raw_url = url_for(
-            "hubfile.raw_uvl", file_id=self.id, filename=self.name, _external=True  # 👈 aquí ya mete el /file1.uvl
-        )
-        if "localhost" not in raw_url and "127.0.0.1" not in raw_url:
-            raw_url = raw_url.replace("http://", "https://", 1)
-        return f"https://fmfactlabel.github.io/app/?v=1.8.0&file={raw_url}"
+        """Return the URL that opens this hubfile in FactLabel."""
+        return f"https://fmfactlabel.github.io/app/?v=1.8.0&file={self._public_raw_url()}"
 
     def to_dict(self):
         from flask import url_for
@@ -138,7 +144,7 @@ def hubfile_after_insert_listener(mapper, connection, target):
 
     task_manager = TaskQueueManager()
 
-    # Transformación UVL
+    # UVL transformation
     task_manager.enqueue_task("app.modules.hubfile.tasks.transform_uvl", path=path, timeout=5)
 
     # Fact Label
