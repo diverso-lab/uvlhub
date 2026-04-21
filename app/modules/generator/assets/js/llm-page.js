@@ -161,11 +161,21 @@
         el.scrollTop = el.scrollHeight;
     }
 
+    // Two progress bars live on the page: one in the Models card footer
+    // (used for model downloads during load), and a mirrored one in the
+    // Generate card (so users see progress right above the streaming
+    // results, same position as the random generator's step 6). We always
+    // update both — the "wrong" one just sits at the value it had before.
     function setProgress(percent, text) {
+        const pct = Math.max(0, Math.min(100, percent)) + "%";
         const bar = $("llm_progress_bar");
-        if (bar) bar.style.width = Math.max(0, Math.min(100, percent)) + "%";
+        if (bar) bar.style.width = pct;
         const label = $("llm_progress_text");
         if (label && text !== undefined) label.textContent = text;
+        const genBar = $("llm_gen_progress_bar");
+        if (genBar) genBar.style.width = pct;
+        const genLabel = $("llm_gen_progress_text");
+        if (genLabel && text !== undefined) genLabel.textContent = text;
     }
 
     // ─── UVLRepo seed picker ─────────────────────────────────────────────────
@@ -190,7 +200,13 @@
             // extension at all (some hubfiles are stored as bare names). We
             // only reject filenames that explicitly end in a different,
             // clearly non-UVL extension.
-            const allHits = (data.results || []).filter((h) => h.filename && h.doi);
+            // Hubfile docs in the ES index carry `dataset_doi` (never `doi`),
+            // and their `type` is "hubfile"; dataset-level docs don't have a
+            // filename so they drop out naturally. Accept either field name
+            // to stay compatible if the index schema ever gets renamed.
+            const allHits = (data.results || [])
+                .map((h) => Object.assign({}, h, { doi: h.doi || h.dataset_doi }))
+                .filter((h) => h.filename && h.doi);
             const NON_UVL_EXT = /\.(xml|pdf|json|dimacs|cnf|splx|jpg|jpeg|png|gif|zip|tar|gz|txt|md|doc|docx)$/i;
             const hits = allHits.filter((h) => {
                 if (/\.uvl$/i.test(h.filename)) return true;
@@ -226,18 +242,25 @@
                 // skip the snippet line.
                 const snippet = extractSearchSnippet(h);
 
+                // The DOI field in ES is already a full uvlhub URL
+                // (http://host/doi/<doi>), not a bare DOI. Keep only the
+                // canonical "10.xxxx/..." portion for display so the pill
+                // stays compact; loadSeedFromHub uses the hubfile id,
+                // not the DOI, so we don't need it in the click handler.
+                const doiDisplay = (h.doi.match(/\/doi\/(.+?)\/?$/) || [null, h.doi])[1];
+
                 let inner =
                     '<span class="fw-semibold">' + escapeHtml(h.filename) + "</span>" +
                     '<span class="text-muted fs-7">' +
                         escapeHtml(h.dataset_title || h.title || "") +
-                        ' · <span class="font-monospace">' + escapeHtml(h.doi) + "</span></span>";
+                        ' · <span class="font-monospace">' + escapeHtml(doiDisplay) + "</span></span>";
                 if (snippet) {
                     inner += '<span class="text-gray-700 fs-8 mt-1 font-monospace text-truncate">' +
                              snippet +  // already HTML-safe (sanitized in helper)
                              "</span>";
                 }
                 row.innerHTML = inner;
-                row.addEventListener("click", () => loadSeedFromHub(h.doi, h.filename, h.dataset_title || h.filename));
+                row.addEventListener("click", () => loadSeedFromHub(h.id, h.filename, h.dataset_title || h.filename));
                 results.appendChild(row);
             });
         } catch (err) {
@@ -286,18 +309,101 @@
             .replace(/"/g, "&quot;");
     }
 
-    async function loadSeedFromHub(doi, filename, title) {
+    async function loadSeedFromHub(hubfileId, filename, title) {
+        const results = $("llm_search_results");
+        // Collapse the dropdown into a single "loading" row so the user can
+        // see the click registered. Keeping it in the same container means
+        // the visual jump on success/error is contained.
+        if (results) {
+            results.innerHTML =
+                '<div class="list-group-item d-flex align-items-center gap-2 fs-7">' +
+                '  <span class="spinner-border spinner-border-sm text-primary" role="status"></span>' +
+                '  <span>Loading <span class="font-monospace">' + escapeHtml(filename) + '</span>…</span>' +
+                '</div>';
+        }
         try {
-            const resp = await fetch("/doi/" + encodeURIComponent(doi) + "/files/raw/" + encodeURIComponent(filename));
+            // /hubfiles/raw/<id>/<filename> streams the UVL as text/plain
+            // and is public when the parent dataset has a DOI — the only
+            // case the search UI surfaces anyway.
+            const resp = await fetch(
+                "/hubfiles/raw/" + encodeURIComponent(hubfileId) + "/" + encodeURIComponent(filename)
+            );
             if (!resp.ok) throw new Error("Fetch HTTP " + resp.status);
             const text = await resp.text();
             $("llm_seed").value = text;
             $("llm_seed_name").value = filename;
             renderSeedOrganicBadge();
             log("Seed loaded from hub: " + title + " (" + filename + ")", "info");
+
+            // Replace the dropdown with a persistent "selected" banner the
+            // user can't miss. Clicking "Change" re-opens the search (empty
+            // state — the input still has their query, so it re-runs).
+            if (results) {
+                results.innerHTML =
+                    '<div class="list-group-item d-flex align-items-center gap-3 bg-light-success">' +
+                    '  <i class="ki-duotone ki-check-circle fs-2 text-success"><span class="path1"></span><span class="path2"></span></i>' +
+                    '  <div class="flex-grow-1 min-w-0">' +
+                    '    <div class="fw-semibold text-gray-900">Seed loaded into the editor below</div>' +
+                    '    <div class="text-muted fs-7 text-truncate">' +
+                         '<span class="font-monospace">' + escapeHtml(filename) + '</span>' +
+                         ' · ' + escapeHtml(title) +
+                    '    </div>' +
+                    '  </div>' +
+                    '  <button type="button" class="btn btn-sm btn-light-primary flex-shrink-0" id="llm_search_change">Change</button>' +
+                    '</div>';
+                const changeBtn = document.getElementById("llm_search_change");
+                if (changeBtn) {
+                    changeBtn.addEventListener("click", () => {
+                        const input = $("llm_search");
+                        results.innerHTML = "";
+                        if (input) {
+                            input.focus();
+                            if (input.value) runSearch(input.value.trim());
+                        }
+                    });
+                }
+            }
+
+            // Also flash the seed textarea so the user's eye catches that
+            // *something* changed below. Class toggle; fade handled in CSS
+            // injected once on first call.
+            flashSeedTextarea();
         } catch (err) {
             log("Could not load seed: " + (err.message || err), "error");
+            if (results) {
+                results.innerHTML =
+                    '<div class="list-group-item text-danger fs-7">' +
+                    '  <i class="ki-duotone ki-cross-circle fs-4 me-2"><span class="path1"></span><span class="path2"></span></i>' +
+                    '  Could not load ' + escapeHtml(filename) + ': ' + escapeHtml(err.message || String(err)) +
+                    '</div>';
+            }
         }
+    }
+
+    // Short green border flash on the seed textarea after a successful load
+    // from the hub, so the user's attention lands on the freshly-populated
+    // editor even if they were looking at the search results.
+    function flashSeedTextarea() {
+        const seed = $("llm_seed");
+        if (!seed) return;
+        if (!document.getElementById("llm_seed_flash_style")) {
+            const st = document.createElement("style");
+            st.id = "llm_seed_flash_style";
+            st.textContent =
+                "@keyframes llmSeedFlash {" +
+                "  0%   { box-shadow: 0 0 0 0 rgba(80,205,137,0.6); border-color: #50cd89; }" +
+                "  60%  { box-shadow: 0 0 0 6px rgba(80,205,137,0); border-color: #50cd89; }" +
+                "  100% { box-shadow: 0 0 0 0 rgba(80,205,137,0); }" +
+                "}" +
+                ".llm-seed-flash { animation: llmSeedFlash 900ms ease-out; }";
+            document.head.appendChild(st);
+        }
+        seed.classList.remove("llm-seed-flash");
+        // Re-add on next frame so the animation restarts on consecutive loads.
+        requestAnimationFrame(() => seed.classList.add("llm-seed-flash"));
+        // Bring the editor into view on small screens where the dropdown
+        // pushes it off the fold.
+        seed.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
 
     // ─── Organic-feature check (port of the 2026 notebook heuristic) ─────────
@@ -1136,13 +1242,20 @@
             return;
         }
 
+        // Actions column is narrow — icon-only compact buttons keep each
+        // row to a single line instead of wrapping "Download + load" to two.
+        // Full labels live in title/aria-label so hover and screen readers
+        // still spell them out.
         if (!active) {
             const load = document.createElement("button");
             load.type = "button";
-            load.className = "btn btn-sm " + (cached ? "btn-light-primary" : "btn-primary");
+            load.className = "btn btn-sm btn-icon " + (cached ? "btn-light-primary" : "btn-primary");
+            const loadLabel = cached ? "Load" : "Download + load";
+            load.title = loadLabel;
+            load.setAttribute("aria-label", loadLabel);
             load.innerHTML = cached
-                ? '<i class="ki-duotone ki-check fs-4 me-1"><span class="path1"></span><span class="path2"></span></i>Load'
-                : '<i class="ki-duotone ki-cloud-download fs-4 me-1"><span class="path1"></span><span class="path2"></span></i>Download + load';
+                ? '<i class="ki-duotone ki-check fs-3"><span class="path1"></span><span class="path2"></span></i>'
+                : '<i class="ki-duotone ki-cloud-download fs-3"><span class="path1"></span><span class="path2"></span></i>';
             load.disabled = anyBusy || webGpuReady === false;
             load.addEventListener("click", () => loadModel(id));
             actionsEl.appendChild(load);
@@ -1151,8 +1264,10 @@
         if (cached || active) {
             const del = document.createElement("button");
             del.type = "button";
-            del.className = "btn btn-sm btn-light-danger ms-2";
-            del.innerHTML = '<i class="ki-duotone ki-trash fs-4 me-1"><span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span><span class="path5"></span></i>Delete';
+            del.className = "btn btn-sm btn-icon btn-light-danger ms-2";
+            del.title = "Delete cached weights";
+            del.setAttribute("aria-label", "Delete cached weights");
+            del.innerHTML = '<i class="ki-duotone ki-trash fs-3"><span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span><span class="path5"></span></i>';
             del.disabled = anyBusy;
             del.addEventListener("click", () => deleteModel(id));
             actionsEl.appendChild(del);
@@ -1981,10 +2096,15 @@
         const actions = document.createElement("div");
         actions.className = "d-flex align-items-center gap-2 flex-shrink-0";
 
+        // Icon-only compact buttons so the row stays on one line even when
+        // the filename is long or the viewport narrow. Full labels live in
+        // title + aria-label for hover and screen readers.
         const viewBtn = document.createElement("button");
         viewBtn.type = "button";
-        viewBtn.className = "btn btn-sm btn-light-primary";
-        viewBtn.textContent = "View";
+        viewBtn.className = "btn btn-sm btn-icon btn-light-primary";
+        viewBtn.title = "View UVL";
+        viewBtn.setAttribute("aria-label", "View UVL");
+        viewBtn.innerHTML = '<i class="ki-duotone ki-eye fs-3"><span class="path1"></span><span class="path2"></span><span class="path3"></span></i>';
         viewBtn.addEventListener("click", () => showUvlModal(filename, content));
         actions.appendChild(viewBtn);
 
@@ -1995,19 +2115,22 @@
         // the page's "nothing leaves your machine" promise intact.
         if (verdict.ok) {
             const ideBtn = document.createElement("a");
-            ideBtn.className = "btn btn-sm btn-light-info";
+            ideBtn.className = "btn btn-sm btn-icon btn-light-info";
             ideBtn.target = "_blank";
             ideBtn.rel = "noopener";
             ideBtn.href = flamapyIdeUrlForContent(content);
-            ideBtn.innerHTML = '<i class="ki-duotone ki-rocket fs-5 me-1"><span class="path1"></span><span class="path2"></span></i>Open in IDE';
-            ideBtn.title = "Open this variant in flamapy IDE (ide.flamapy.org)";
+            ideBtn.title = "Open in flamapy IDE (ide.flamapy.org)";
+            ideBtn.setAttribute("aria-label", "Open in flamapy IDE");
+            ideBtn.innerHTML = '<i class="ki-duotone ki-rocket fs-3"><span class="path1"></span><span class="path2"></span></i>';
             actions.appendChild(ideBtn);
         }
 
         const dlBtn = document.createElement("button");
         dlBtn.type = "button";
-        dlBtn.className = "btn btn-sm btn-light-success";
-        dlBtn.innerHTML = '<i class="ki-duotone ki-download fs-5 me-1"><span class="path1"></span><span class="path2"></span></i>Download';
+        dlBtn.className = "btn btn-sm btn-icon btn-light-success";
+        dlBtn.title = "Download UVL";
+        dlBtn.setAttribute("aria-label", "Download UVL");
+        dlBtn.innerHTML = '<i class="ki-duotone ki-download fs-3"><span class="path1"></span><span class="path2"></span></i>';
         dlBtn.addEventListener("click", () => downloadSingleVariant(filename, content));
         actions.appendChild(dlBtn);
 
@@ -2031,10 +2154,9 @@
         setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
 
+    // Cached CodeMirror instance so re-opening the modal is just setValue.
+    let uvlPreviewEditor = null;
     function showUvlModal(filename, content) {
-        // Minimal modal built on the fly — we don't depend on Metronic's
-        // custom initialisers so we can open it even if the wizard runtime
-        // hasn't finished its own init.
         let modal = document.getElementById("llm_uvl_modal");
         if (!modal) {
             modal = document.createElement("div");
@@ -2042,21 +2164,51 @@
             modal.className = "modal fade";
             modal.setAttribute("tabindex", "-1");
             modal.innerHTML =
-                '<div class="modal-dialog modal-lg modal-dialog-centered">' +
+                '<div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">' +
                 '  <div class="modal-content">' +
                 '    <div class="modal-header">' +
-                '      <h5 class="modal-title" id="llm_uvl_modal_title">UVL</h5>' +
+                '      <h5 class="modal-title font-monospace me-auto" id="llm_uvl_modal_title">UVL</h5>' +
+                '      <button type="button" class="btn btn-sm btn-light-primary me-2" id="llm_uvl_modal_copy">' +
+                '        <i class="ki-duotone ki-copy fs-5 me-1"><span class="path1"></span><span class="path2"></span></i>Copy' +
+                '      </button>' +
                 '      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>' +
                 "    </div>" +
-                '    <div class="modal-body">' +
-                '      <pre id="llm_uvl_modal_body" class="fs-7 bg-light-secondary rounded p-4" style="max-height: 60vh; overflow: auto;"></pre>' +
+                '    <div class="modal-body p-3">' +
+                '      <div id="llm_uvl_modal_host" class="uvl-preview"></div>' +
                 "    </div>" +
                 "  </div>" +
                 "</div>";
             document.body.appendChild(modal);
+            // CodeMirror measures wrong while the modal is display:none.
+            // Refresh once Bootstrap paints the visible modal.
+            modal.addEventListener("shown.bs.modal", () => {
+                if (uvlPreviewEditor) uvlPreviewEditor.refresh();
+            });
+            // Copy the currently-shown UVL. The content lives on the
+            // modal element as a dataset attribute so we don't capture a
+            // stale closure the first time the modal is built.
+            modal.querySelector("#llm_uvl_modal_copy").addEventListener("click", (ev) => {
+                const text = modal.dataset.uvlContent || "";
+                if (typeof window.copyUvlToClipboard === "function") {
+                    window.copyUvlToClipboard(ev.currentTarget, text);
+                }
+            });
         }
+        modal.dataset.uvlContent = content;
         document.getElementById("llm_uvl_modal_title").textContent = filename;
-        document.getElementById("llm_uvl_modal_body").textContent = content;
+        const host = document.getElementById("llm_uvl_modal_host");
+        if (typeof window.createUvlPreviewEditor === "function") {
+            uvlPreviewEditor = window.createUvlPreviewEditor(host, content, uvlPreviewEditor);
+        } else {
+            // CodeMirror failed to load (offline, CDN blocked) — fall back
+            // to a plain <pre> so View still works.
+            host.innerHTML = "";
+            const pre = document.createElement("pre");
+            pre.className = "fs-7 bg-light-secondary rounded p-4 m-0";
+            pre.style.cssText = "max-height: 60vh; overflow: auto; tab-size: 2; -moz-tab-size: 2; white-space: pre;";
+            pre.textContent = content;
+            host.appendChild(pre);
+        }
         const instance = window.bootstrap.Modal.getOrCreateInstance(modal);
         instance.show();
     }

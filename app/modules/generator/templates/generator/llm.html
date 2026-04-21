@@ -26,14 +26,6 @@
   .llm-terminal .llm-log-error   { color: #f1416c; }
 </style>
 
-<div class="notice d-flex bg-light-primary rounded border-primary border border-dashed p-5 mb-6">
-    <i class="ki-duotone ki-abstract-39 fs-2x text-primary me-4 mt-1"><span class="path1"></span><span class="path2"></span></i>
-    <div class="fs-7 text-gray-700 fw-semibold">
-        Two generation modes, both 100% in-browser (WebLLM + flamapy via Pyodide, nothing leaves your machine):
-        <strong>From seed</strong> extends an existing UVL via structural infill. <strong>From concept</strong> designs a feature model from scratch for a given domain — the LLM produces a JSON tree and we render it to UVL deterministically, so the tree is always syntactically valid.
-    </div>
-</div>
-
 <!-- WebGPU diagnostic banner — hidden by default, revealed by llm-page.js
      when navigator.gpu is missing or requestAdapter() fails. Content
      (browser name, version, instructions) is injected at runtime.
@@ -85,13 +77,18 @@
                         </select>
                     </div>
                     <div class="mb-2">
-                        <label class="form-label fw-semibold" for="llm_seed">Seed UVL</label>
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                            <label class="form-label fw-semibold mb-0 me-auto" for="llm_seed">Seed UVL</label>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="text-muted fs-7">filename:</span>
+                                <input type="text" id="llm_seed_name" class="form-control form-control-sm font-monospace w-auto" placeholder="seed.uvl" value="seed.uvl" style="min-width: 180px;">
+                            </div>
+                        </div>
                         <textarea id="llm_seed" class="form-control font-monospace" rows="12"
                                   placeholder="Paste a UVL model here, or pick one above."></textarea>
                     </div>
-                    <div class="d-flex align-items-center justify-content-between">
-                        <input type="text" id="llm_seed_name" class="form-control form-control-sm w-auto" placeholder="seed.uvl" value="seed.uvl">
-                        <div id="llm_seed_organic" class="ms-3"></div>
+                    <div class="d-flex align-items-center justify-content-end">
+                        <div id="llm_seed_organic"></div>
                     </div>
                 </div>
 
@@ -208,6 +205,16 @@
                     Generate variants
                 </button>
 
+                {# Generation-scoped progress bar. The one in the Models card
+                   footer still exists for model downloads; this mirror
+                   appears right above the results so users see progress
+                   while variants stream in — same pattern as the random
+                   generator's step 6. #}
+                <div class="progress h-6px rounded-pill mb-2">
+                    <div id="llm_gen_progress_bar" class="progress-bar bg-primary rounded-pill" role="progressbar" style="width: 0%;"></div>
+                </div>
+                <div id="llm_gen_progress_text" class="text-muted fs-7 mb-3">&nbsp;</div>
+
                 <div id="llm_log" class="llm-terminal mb-4"></div>
                 <div id="llm_results" class="mb-5"></div>
 
@@ -230,6 +237,8 @@
 </script>
 <script src="{{ url_for('generator.assets', subfolder='js', filename='pyodide/pyodide.js') }}"></script>
 <script type="module" src="{{ url_for('generator.assets', subfolder='dist', filename='generator.bundle.js') }}"></script>
+{# CodeMirror + UVL mode — used by the "View" variant preview modal. #}
+{% include "generator/_codemirror_uvl.html" %}
 <!-- LLM page controller: orchestrates UVLRepo seed picker, WebLLM worker,
      and reuses window.generatorRuntime for flamapy validation. -->
 <script src="{{ url_for('generator.assets', subfolder='js', filename='llm-page.js') }}"></script>

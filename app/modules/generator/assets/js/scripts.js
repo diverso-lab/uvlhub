@@ -116,6 +116,25 @@ function hideModal(delay = 900) {
     setTimeout(() => modalInstance.hide(), delay);
 }
 
+// ─── Error distillation ───────────────────────────────────────────────────
+//
+// Pyodide's PythonError.message is the full Python traceback, which in our
+// modal comes out as ~25 lines. The user only cares about the final
+// exception line (e.g. "BadZipFile: File is not a zip file"). Extract it.
+function summarisePyError(err) {
+    const msg = (err && err.message) ? err.message : String(err);
+    const lines = msg.trim().split(/\n/);
+    for (let i = lines.length - 1; i >= 0; i--) {
+        const t = lines[i].trim();
+        // Skip empty trailing lines and framework noise; the last non-empty
+        // line that looks like "ExceptionName: …" is the one we want.
+        if (!t) continue;
+        if (/^[A-Za-z_][\w.]*(Error|Exception|Warning|Exit):/.test(t)) return t;
+        return t; // Fall back to whatever the very last content line is.
+    }
+    return msg;
+}
+
 // ─── Wheel diagnostics ────────────────────────────────────────────────────
 //
 // When micropip reports "File is not a zip file" we want to know why. This
@@ -200,7 +219,7 @@ async function bootRuntime() {
             // it also reaches the "Failed to load generator" modal.
             const diag = await diagnoseWheelUrl(wheelUrl);
             throw new Error(
-                `Could not install ${wheel} — ${lastErr.message || lastErr}` +
+                `Could not install ${wheel} — ${summarisePyError(lastErr)}` +
                 (diag ? ` | server returned: ${diag}` : "")
             );
         }

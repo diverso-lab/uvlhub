@@ -76,7 +76,7 @@ def test_params_rejects_broken_relation_sum():
     to normalise DIST_* probabilities."""
     import pytest
 
-    with pytest.raises(ValueError, match="probabilidades de relación"):
+    with pytest.raises(ValueError, match="Relation probabilities"):
         Params(DIST_OPTIONAL=0.3, DIST_MANDATORY=0.3, DIST_ALTERNATIVE=0.2, DIST_OR=0.3)
 
 

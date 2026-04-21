@@ -157,6 +157,10 @@
 </script>
 <script src="{{ url_for('generator.assets', subfolder='js', filename='pyodide/pyodide.js') }}"></script>
 <script type="module" src="{{ url_for('generator.assets', subfolder='dist', filename='generator.bundle.js') }}"></script>
+{# CodeMirror + UVL mode — loaded once here (outside the wizard swap area)
+   so SPA navigations between steps don't re-insert the CDN <link>/<script>
+   nodes on every step change. Needed by step6's "View" variant preview. #}
+{% include "generator/_codemirror_uvl.html" %}
 
 {% block wizard_scripts %}{% endblock %}
 {% endblock %}

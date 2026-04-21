@@ -48,12 +48,12 @@ class Params:
     MAX_VARS_PER_CONSTRAINT: int = 3
 
 
-    # NO REFLEJADO EN EL GENERADOR AÚN
+    # NOT YET REFLECTED IN THE GENERATOR UI
     CTC_DIST_BOOLEAN: float = 0.7
     CTC_DIST_INTEGER: float = 0.2
     CTC_DIST_REAL: float = 0.1
     CTC_DIST_STRING: float = 0.0
-    # NO REFLEJADO EN EL GENERADOR AÚN
+    # NOT YET REFLECTED IN THE GENERATOR UI
 
 
     PROB_NOT: float = 0.1
@@ -85,7 +85,7 @@ class Params:
 
 
     def __post_init__(self):
-        self.BOOLEAN_LEVEL = True  # siempre activado
+        self.BOOLEAN_LEVEL = True  # always enabled
 
         if self.TYPE_LEVEL:
             self.ARITHMETIC_LEVEL = True
@@ -100,7 +100,7 @@ class Params:
         if not self.TYPE_LEVEL:
             self.STRING_CONSTRAINTS = False
 
-        # --- Validación de suma de probabilidades de relaciones ---
+        # --- Relation probability sum validation ---
         total = (
             self.DIST_OPTIONAL +
             self.DIST_MANDATORY +
@@ -110,10 +110,10 @@ class Params:
         )
         if abs(total - 1.0) > 1e-6:
             raise ValueError(
-                f"[ERROR] La suma de las probabilidades de relación no es 1.0 (actual: {total})"
+                f"[ERROR] Relation probabilities do not sum to 1.0 (actual: {total})"
             )
-        
-            # --- Validación de suma de probabilidades de constraints booleanas ---
+
+            # --- Boolean constraint probability sum validation ---
         total_ctc = (
             self.PROB_AND +
             self.PROB_OR_CT +
@@ -122,23 +122,23 @@ class Params:
         )
         if abs(total_ctc - 1.0) > 1e-6:
             raise ValueError(
-                f"[ERROR] La suma de PROB_AND, PROB_OR_CT, PROB_IMPLICATION y PROB_EQUIVALENCE debe ser 1.0 (actual: {total_ctc})"
+                f"[ERROR] PROB_AND + PROB_OR_CT + PROB_IMPLICATION + PROB_EQUIVALENCE must sum to 1.0 (actual: {total_ctc})"
             )
 
 
-        # --- Validaciones de atributos ---
+        # --- Attribute validations ---
         if self.RANDOM_ATTRIBUTES:
             if self.MIN_ATTRIBUTES is None or self.MAX_ATTRIBUTES is None:
-                raise ValueError("[ERROR] Debes definir MIN_ATTRIBUTES y MAX_ATTRIBUTES si RANDOM_ATTRIBUTES es True.")
+                raise ValueError("[ERROR] MIN_ATTRIBUTES and MAX_ATTRIBUTES must be set when RANDOM_ATTRIBUTES is True.")
         else:
             if self.MIN_ATTRIBUTES is not None or self.MAX_ATTRIBUTES is not None:
-                raise ValueError("[ERROR] MIN_ATTRIBUTES y MAX_ATTRIBUTES deben ser None si RANDOM_ATTRIBUTES es False.")
+                raise ValueError("[ERROR] MIN_ATTRIBUTES and MAX_ATTRIBUTES must be None when RANDOM_ATTRIBUTES is False.")
 
             if len(self.ATTRIBUTES_LIST) != len(self.ATTRIBUTE_ATTACH_PROBS) or len(self.ATTRIBUTES_LIST) != len(self.ATTRIBUTE_IN_CONSTRAINTS):
-                raise ValueError("[ERROR] Las listas ATTRIBUTES_LIST, ATTRIBUTE_ATTACH_PROBS y ATTRIBUTE_IN_CONSTRAINTS deben tener la misma longitud.")
+                raise ValueError("[ERROR] ATTRIBUTES_LIST, ATTRIBUTE_ATTACH_PROBS and ATTRIBUTE_IN_CONSTRAINTS must have the same length.")
 
             for i, p in enumerate(self.ATTRIBUTE_ATTACH_PROBS):
                 if not (0.0 <= p <= 1.0):
                     raise ValueError(
-                        f"[ERROR] La probabilidad de aparición del atributo en la posición {i} debe estar entre 0 y 1. Valor recibido: {p}"
+                        f"[ERROR] Attribute probability at position {i} must be between 0 and 1. Got: {p}"
                     )

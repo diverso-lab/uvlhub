@@ -201,33 +201,59 @@
         }[c]));
     }
 
-    // Ad-hoc UVL preview modal. The LLM page has its own — duplicated
-    // intentionally instead of reaching into that file's IIFE; the code
-    // is ~20 lines and refactoring for one extra caller isn't worth it.
+    // UVL preview modal. Upgrades to CodeMirror (via the shared
+    // createUvlPreviewEditor helper loaded by _codemirror_uvl.html) for
+    // line numbers + syntax highlighting, and falls back to a plain <pre>
+    // if the CDN failed so "View" still works offline.
     let previewModalEl = null;
     let previewModalInst = null;
+    let previewEditor = null;
     function showUvlModal(filename, content) {
         if (!previewModalEl) {
             previewModalEl = document.createElement("div");
             previewModalEl.className = "modal fade";
             previewModalEl.tabIndex = -1;
             previewModalEl.innerHTML = `
-                <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title font-monospace" id="gen-modal-title"></h5>
+                            <h5 class="modal-title font-monospace me-auto" id="gen-modal-title"></h5>
+                            <button type="button" class="btn btn-sm btn-light-primary me-2" id="gen-modal-copy">
+                                <i class="ki-duotone ki-copy fs-5 me-1"><span class="path1"></span><span class="path2"></span></i>Copy
+                            </button>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
-                        <div class="modal-body p-0">
-                            <pre id="gen-modal-body" class="m-0 p-4 font-monospace fs-7" style="white-space: pre; overflow-x: auto;"></pre>
+                        <div class="modal-body p-3">
+                            <div id="gen-modal-host" class="uvl-preview"></div>
                         </div>
                     </div>
                 </div>`;
             document.body.appendChild(previewModalEl);
             previewModalInst = new window.bootstrap.Modal(previewModalEl);
+            // CodeMirror measures wrong while display:none; refresh on show.
+            previewModalEl.addEventListener("shown.bs.modal", () => {
+                if (previewEditor && previewEditor.refresh) previewEditor.refresh();
+            });
+            previewModalEl.querySelector("#gen-modal-copy").addEventListener("click", (ev) => {
+                const text = previewModalEl.dataset.uvlContent || "";
+                if (typeof window.copyUvlToClipboard === "function") {
+                    window.copyUvlToClipboard(ev.currentTarget, text);
+                }
+            });
         }
+        previewModalEl.dataset.uvlContent = content;
         previewModalEl.querySelector("#gen-modal-title").textContent = filename;
-        previewModalEl.querySelector("#gen-modal-body").textContent = content;
+        const host = previewModalEl.querySelector("#gen-modal-host");
+        if (typeof window.createUvlPreviewEditor === "function") {
+            previewEditor = window.createUvlPreviewEditor(host, content, previewEditor);
+        } else {
+            host.innerHTML = "";
+            const pre = document.createElement("pre");
+            pre.className = "m-0 p-4 font-monospace fs-7";
+            pre.style.cssText = "white-space: pre; overflow-x: auto; tab-size: 2; -moz-tab-size: 2;";
+            pre.textContent = content;
+            host.appendChild(pre);
+        }
         previewModalInst.show();
     }
 
@@ -246,26 +272,34 @@
         const actionsRow = document.createElement("div");
         actionsRow.className = "d-flex align-items-center gap-2 flex-shrink-0";
 
+        // Icon-only compact buttons — a 1000-model run shouldn't have the
+        // action column hog half the row. Labels exposed via title +
+        // aria-label for hover and screen readers.
         const viewBtn = document.createElement("button");
         viewBtn.type = "button";
-        viewBtn.className = "btn btn-sm btn-light-primary";
-        viewBtn.textContent = "View";
+        viewBtn.className = "btn btn-sm btn-icon btn-light-primary";
+        viewBtn.title = "View UVL";
+        viewBtn.setAttribute("aria-label", "View UVL");
+        viewBtn.innerHTML = '<i class="ki-duotone ki-eye fs-3"><span class="path1"></span><span class="path2"></span><span class="path3"></span></i>';
         viewBtn.addEventListener("click", () => showUvlModal(result.filename, result.content));
         actionsRow.appendChild(viewBtn);
 
         const ideBtn = document.createElement("a");
-        ideBtn.className = "btn btn-sm btn-light-info";
+        ideBtn.className = "btn btn-sm btn-icon btn-light-info";
         ideBtn.target = "_blank";
         ideBtn.rel = "noopener";
         ideBtn.href = flamapyIdeUrlForContent(result.content);
-        ideBtn.title = "Open this model in flamapy IDE (ide.flamapy.org)";
-        ideBtn.innerHTML = '<i class="ki-duotone ki-rocket fs-5 me-1"><span class="path1"></span><span class="path2"></span></i>Open in IDE';
+        ideBtn.title = "Open in flamapy IDE (ide.flamapy.org)";
+        ideBtn.setAttribute("aria-label", "Open in flamapy IDE");
+        ideBtn.innerHTML = '<i class="ki-duotone ki-rocket fs-3"><span class="path1"></span><span class="path2"></span></i>';
         actionsRow.appendChild(ideBtn);
 
         const dlBtn = document.createElement("button");
         dlBtn.type = "button";
-        dlBtn.className = "btn btn-sm btn-light-success";
-        dlBtn.innerHTML = '<i class="ki-duotone ki-download fs-5 me-1"><span class="path1"></span><span class="path2"></span></i>Download';
+        dlBtn.className = "btn btn-sm btn-icon btn-light-success";
+        dlBtn.title = "Download UVL";
+        dlBtn.setAttribute("aria-label", "Download UVL");
+        dlBtn.innerHTML = '<i class="ki-duotone ki-download fs-3"><span class="path1"></span><span class="path2"></span></i>';
         dlBtn.addEventListener("click", () => downloadSingleVariant(result.filename, result.content));
         actionsRow.appendChild(dlBtn);
 
