@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=80.3.1", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fm_generator"
+version = "0.0.1"
+requires-python = ">=3.12"
+authors = [{ name = "antjimort", email = "ajimenez34@us.es" }]
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]

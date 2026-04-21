@@ -1,0 +1,61 @@
+features
+	F0 
+		[2]
+			F4 {Enabled false}
+			F3 {Enabled false}
+		mandatory
+			F2 {Enabled true}
+				mandatory
+					F5 
+						[2]
+							F14 {Enabled true, Measure 3.255}
+							F13 {Enabled true, Measure -7.477}
+		mandatory
+			F1 {Enabled true, Capacity 1}
+				optional
+					F9 {Enabled true, "License Plate" 'szBdjNPK1'}
+				optional
+					F8 {Enabled false}
+				optional
+					F7 {Enabled true}
+						mandatory
+							F10 {Enabled true}
+								or
+									F19 {Enabled true, Measure 9.432, "License Plate" '5ue9q'}
+									F18 {Enabled false}
+									F17 {Enabled false, Measure -0.763}
+				optional
+					F6 {Enabled true, "License Plate" 'aeXTuw6'}
+						[2]
+							F12 {Enabled false, "License Plate" 'toJUMji5'}
+								mandatory
+									F15 {Enabled false, Measure 0.207}
+							F11 {Enabled false}
+								mandatory
+									F16 {Enabled true}
+constraints
+	"F12.License Plate" EQUALS "F6.License Plate"
+	"F9.License Plate" EQUALS "F6.License Plate"
+	F9.Enabled <=> ! F19.Enabled
+	F15.Enabled => F19.Enabled
+	"F19.License Plate" EQUALS "F12.License Plate"
+	F13.Enabled | F7.Enabled
+	! F13.Enabled => F5
+	F5 => F4.Enabled
+	F13.Enabled | F6.Enabled
+	! F15.Enabled & ! F2.Enabled
+	"F6.License Plate" EQUALS "F12.License Plate"
+	F12.Enabled | ! F1.Enabled
+	F8.Enabled & F4.Enabled
+	! F2.Enabled => F7.Enabled
+	F14.Enabled & F11.Enabled
+	F1.Enabled => ! F12.Enabled
+	"F9.License Plate" EQUALS "F19.License Plate"
+	! F6.Enabled | F11.Enabled
+	"F19.License Plate" EQUALS "F9.License Plate"
+	F9.Enabled <=> F4.Enabled
+	F11.Enabled => ! F9.Enabled
+	F19.Enabled <=> ! F14.Enabled
+	F15.Enabled & ! F7.Enabled
+	F1.Enabled <=> F12.Enabled
+	! F10.Enabled | F2.Enabled
