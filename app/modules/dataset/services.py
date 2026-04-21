@@ -800,7 +800,7 @@ class LocalDatasetService:
 
             publication_type = PublicationType(publication_type_id) if publication_type_id else None
 
-            # Crear DSMetaData
+            # Create DSMetaData
             ds_meta = self.dsmetadata_service.create(
                 title=title,
                 description=description,
@@ -811,11 +811,11 @@ class LocalDatasetService:
             )
             self.logger.info(f"[LOCAL] DSMetaData created with ID: {ds_meta.id}")
 
-            # Crear DataSet
+            # Create DataSet
             dataset = self.dataset_service.create(commit=False, user_id=current_user.id, ds_meta_data_id=ds_meta.id)
             self.logger.info(f"[LOCAL] DataSet created with ID: {dataset.id}")
 
-            # Crear autores
+            # Create authors
             i = 0
             while True:
                 name = form.get(f"authors[{i}][name]")
@@ -833,7 +833,7 @@ class LocalDatasetService:
                 self.logger.info(f"[LOCAL] Author #{i} added: {name}, {affiliation}, {orcid}")
                 i += 1
 
-            # Guardar en DB
+            # Commit to DB
             db.session.commit()
             self.logger.info(f"[LOCAL] Dataset {dataset.id} committed to DB")
 

@@ -17,7 +17,7 @@ def valid(file_id):
 def download_transformed_file(file_id, extension, subdirectory):
     try:
         hubfile = HubfileService().get_or_404(file_id)
-        # Obtener el directorio base del dataset, que es el padre de la carpeta 'uvl'
+        # Get the dataset base directory (parent of the 'uvl' folder).
         dataset_dir = os.path.dirname(os.path.dirname(hubfile.get_path()))
         original_filename = os.path.basename(hubfile.get_path())
         transformed_filename = original_filename.replace(".uvl", extension)

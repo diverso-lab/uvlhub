@@ -29,7 +29,7 @@ def test_client(test_client):
     yield test_client
 
 
-# Test unitario que devuelve el DOI
+# Unit test that returns the DOI
 def test_get_uvlhub_doi():
     app = create_app("testing")
 
@@ -39,13 +39,13 @@ def test_get_uvlhub_doi():
     service = DataSetService()
 
     with app.app_context():
-        app.config["SERVER_NAME"] = "uvlhub.io"  # ✅ aquí
+        app.config["SERVER_NAME"] = "uvlhub.io"  # here
         result = service.get_uvlhub_doi(mock_dataset)
 
     assert result == "http://uvlhub.io/doi/10.1234/test_doi"
 
 
-# Test de integración para un DOI válido que devuelve un dataset
+# Integration test for a valid DOI that resolves to a dataset
 @patch("app.modules.dataset.services.DSMetaDataService.filter_by_doi")
 @patch("app.modules.dataset.services.DSViewRecordService.create_cookie")
 def test_subdomain_index_success(mock_create_cookie, mock_filter_by_doi, test_client):

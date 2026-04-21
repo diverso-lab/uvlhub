@@ -8,7 +8,7 @@ from flask.cli import with_appcontext
 )
 @with_appcontext
 def elasticsearch_reset():
-    from app.modules.elasticsearch.services import ElasticsearchService  # <--- aquí dentro
+    from app.modules.elasticsearch.services import ElasticsearchService  # imported lazily to avoid circular deps
 
     search = ElasticsearchService()
 
@@ -43,7 +43,7 @@ def elasticsearch_reset():
 )
 @with_appcontext
 def elasticsearch_reindex():
-    from app.modules.elasticsearch.utils import reindex_all  # mover aquí
+    from app.modules.elasticsearch.utils import reindex_all  # imported lazily
 
     click.echo(click.style("[INFO] Starting reindexing process...", fg="cyan"))
     try:

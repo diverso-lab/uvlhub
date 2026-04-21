@@ -41,7 +41,7 @@ class ResetService(BaseService):
         return token
 
     def reset_and_notify(self, email: str, password: str, token: str):
-        """Resetea la contraseña, marca el token y lanza la notificación en background."""
+        """Reset the password, mark the token as used, and enqueue the background notification."""
         self.reset_password(email=email, password=password)
         self.mark_token_as_used(token)
 

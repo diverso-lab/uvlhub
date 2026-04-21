@@ -3,16 +3,16 @@ document.addEventListener('DOMContentLoaded', function () {
     const toggle = document.getElementById('kt_header_search_toggle');
 
     if (menu && toggle) {
-        // Escucha el evento de clic en el toggle
+        // Listen for clicks on the toggle.
         toggle.addEventListener('click', function () {
-            // Obtén las coordenadas del toggle
+            // Get the toggle's bounding rect.
             const toggleRect = toggle.getBoundingClientRect();
 
-            // Ajusta el menú para que esté justo debajo del icono de búsqueda
+            // Position the menu right below the search icon.
             menu.style.position = 'fixed';
-            menu.style.top = `${toggleRect.bottom}px`; // Posición justo debajo
-            menu.style.left = `${toggleRect.left}px`; // Alineado con el icono
-            menu.style.transform = 'none'; // Elimina cualquier transformación previa
+            menu.style.top = `${toggleRect.bottom}px`; // right below
+            menu.style.left = `${toggleRect.left}px`; // aligned with the icon
+            menu.style.transform = 'none'; // wipe any previous transform
         });
     }
 });
@@ -83,7 +83,7 @@ document.addEventListener("DOMContentLoaded", function () {
                                     subtitle = "Dataset";
                                 }
                             } else {
-                                // Archivo → pertenece a un dataset
+                                // File -> belongs to a dataset
                                 if (item.dataset_title) {
                                     subtitle = `Belongs to dataset: ${item.dataset_title}`;
                                 } else if (item.dataset_doi) {

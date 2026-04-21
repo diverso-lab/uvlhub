@@ -9,20 +9,20 @@ from core.services.BaseService import BaseService
 
 class ElasticsearchService(BaseService):
     def __init__(self, host="http://elasticsearch:9200", index_name="search_index"):
-        print("[INIT] Inicializando ElasticsearchService...")
+        print("[INIT] Initializing ElasticsearchService...")
         print(f"[INIT] Host: {host}")
         print(f"[INIT] Index name: '{index_name}'")
 
         if not isinstance(index_name, str):
-            raise ValueError("El nombre del índice debe ser una cadena.")
+            raise ValueError("Index name must be a string.")
         if not index_name:
-            raise ValueError("El nombre del índice está vacío.")
+            raise ValueError("Index name is empty.")
         if any(c in index_name for c in r" #?/\*\"<>|,"):
-            raise ValueError(f"Nombre de índice inválido: {index_name}")
+            raise ValueError(f"Invalid index name: {index_name}")
         if not index_name.islower():
-            raise ValueError("El nombre del índice debe estar en minúsculas.")
+            raise ValueError("Index name must be lowercase.")
         if index_name.startswith(("-", "_", "+")):
-            raise ValueError("El nombre del índice no puede comenzar por -, _ o +.")
+            raise ValueError("Index name cannot start with -, _ or +.")
 
         super().__init__(ElasticsearchRepository())
 
@@ -30,28 +30,28 @@ class ElasticsearchService(BaseService):
         self.index_name = index_name
 
         if not self.wait_for_elasticsearch():
-            print("[ERROR] Elasticsearch no responde tras varios intentos. Continuando, pero puede fallar luego.")
+            print("[ERROR] Elasticsearch is not responding after several attempts. Continuing, but may fail later.")
 
-        print("[INIT] ElasticsearchService inicializado correctamente.\n")
+        print("[INIT] ElasticsearchService initialized successfully.\n")
 
     def wait_for_elasticsearch(self, retries=5, delay=2):
-        print("[WAIT] Esperando a que Elasticsearch esté disponible...")
+        print("[WAIT] Waiting for Elasticsearch to become available...")
         for attempt in range(retries):
             if self.es.ping():
-                print(f"[WAIT] Elasticsearch respondió al ping en intento {attempt + 1}.")
+                print(f"[WAIT] Elasticsearch responded to ping on attempt {attempt + 1}.")
                 return True
-            print(f"[WAIT] Intento {attempt + 1} fallido. Reintentando en {delay} segundos...")
+            print(f"[WAIT] Attempt {attempt + 1} failed. Retrying in {delay} seconds...")
             time.sleep(delay)
         return False
 
     def create_index_if_not_exists(self):
-        print(f"[DEBUG] Verificando si el índice '{self.index_name}' existe...")
+        print(f"[DEBUG] Checking whether index '{self.index_name}' exists...")
         try:
             exists = self.es.indices.exists(index=self.index_name)
-            print(f"[DEBUG] ¿Existe el índice '{self.index_name}'? {exists}")
+            print(f"[DEBUG] Does index '{self.index_name}' exist? {exists}")
 
             if not exists:
-                print(f"[DEBUG] Creando índice '{self.index_name}'...")
+                print(f"[DEBUG] Creating index '{self.index_name}'...")
 
                 self.es.indices.create(
                     index=self.index_name,
@@ -93,7 +93,7 @@ class ElasticsearchService(BaseService):
                                 "created_at": {"type": "date"},
                                 "doi": {"type": "keyword"},
                                 "authors": {
-                                    "type": "nested",  # o "object" si no vas a hacer queries sobre campos internos
+                                    "type": "nested",  # or "object" if you won't query internal fields
                                     "properties": {
                                         "name": {
                                             "type": "text",
@@ -121,41 +121,41 @@ class ElasticsearchService(BaseService):
                     },
                 )
 
-                print(f"[SUCCESS] Índice '{self.index_name}' creado correctamente.")
+                print(f"[SUCCESS] Index '{self.index_name}' created successfully.")
             else:
-                print(f"[INFO] El índice '{self.index_name}' ya existe.")
+                print(f"[INFO] Index '{self.index_name}' already exists.")
         except BadRequestError as e:
-            print(f"[ERROR] BadRequestError al comprobar/crear índice: {e}")
-            print(f"[DETAIL] Cuerpo del error: {getattr(e, 'body', 'sin cuerpo')}")
+            print(f"[ERROR] BadRequestError while checking/creating index: {e}")
+            print(f"[DETAIL] Error body: {getattr(e, 'body', 'no body')}")
             raise
         except ConnectionError as e:
-            print(f"[ERROR] No se pudo conectar a Elasticsearch: {e}")
+            print(f"[ERROR] Could not connect to Elasticsearch: {e}")
             raise
         except ApiError as e:
-            print(f"[ERROR] Error de API al crear índice: {e}")
+            print(f"[ERROR] API error while creating index: {e}")
             raise
         except Exception as e:
-            print(f"[ERROR] Error inesperado al crear índice: {e}")
+            print(f"[ERROR] Unexpected error while creating index: {e}")
             raise
 
     def index_document(self, doc_id: str, data: dict):
         try:
-            print(f"[DEBUG] Indexando documento con ID '{doc_id}' en '{self.index_name}'")
+            print(f"[DEBUG] Indexing document with ID '{doc_id}' in '{self.index_name}'")
             self.es.index(index=self.index_name, id=doc_id, document=data)
-            print(f"[SUCCESS] Documento '{doc_id}' indexado correctamente.")
+            print(f"[SUCCESS] Document '{doc_id}' indexed successfully.")
         except Exception as e:
-            print(f"[ERROR] No se pudo indexar documento '{doc_id}': {e}")
+            print(f"[ERROR] Could not index document '{doc_id}': {e}")
             raise
 
     def delete_document(self, doc_id: str):
         try:
-            print(f"[DEBUG] Eliminando documento con ID '{doc_id}' de '{self.index_name}'")
+            print(f"[DEBUG] Deleting document with ID '{doc_id}' from '{self.index_name}'")
             self.es.delete(index=self.index_name, id=doc_id)
-            print(f"[SUCCESS] Documento '{doc_id}' eliminado.")
+            print(f"[SUCCESS] Document '{doc_id}' deleted.")
         except NotFoundError:
-            print(f"[INFO] Documento '{doc_id}' no encontrado. Nada que eliminar.")
+            print(f"[INFO] Document '{doc_id}' not found. Nothing to delete.")
         except Exception as e:
-            print(f"[ERROR] No se pudo eliminar documento '{doc_id}': {e}")
+            print(f"[ERROR] Could not delete document '{doc_id}': {e}")
             raise
 
     def delete_by_dataset_id(self, dataset_id: int):
@@ -164,8 +164,8 @@ class ElasticsearchService(BaseService):
             self.es.delete_by_query(
                 index=self.index_name,
                 body={"query": {"term": {"dataset_id": dataset_id}}},
-                conflicts="proceed",  # ✅ CLAVE
-                refresh=True,  # ✅ opcional pero recomendable
+                conflicts="proceed",  # KEY
+                refresh=True,  # optional but recommended
             )
             print(f"[SUCCESS] Elasticsearch docs deleted for dataset_id={dataset_id}")
         except Exception as e:
@@ -185,18 +185,18 @@ class ElasticsearchService(BaseService):
     ):
         try:
             print(
-                f"[DEBUG] Buscando en '{self.index_name}' "
-                f"con query: '{query}', "
-                f"tipo: {publication_type}, "
+                f"[DEBUG] Searching in '{self.index_name}' "
+                f"with query: '{query}', "
+                f"type: {publication_type}, "
                 f"tags: {tags}, "
-                f"orden: {sorting}, "
-                f"página: {page}, tamaño: {size}"
+                f"order: {sorting}, "
+                f"page: {page}, size: {size}"
             )
 
             must_clauses = []
             filter_clauses = []
 
-            # Texto libre
+            # Free text
             if query:
                 must_clauses.append(
                     {
@@ -215,21 +215,21 @@ class ElasticsearchService(BaseService):
                     }
                 )
 
-            # Filtro por tipo de publicación
+            # Filter by publication type
             if publication_type:
                 filter_clauses.append({"term": {"publication_type.keyword": publication_type}})
 
-            # Filtro por tags
+            # Filter by tags
             if tags:
                 filter_clauses.append({"terms": {"tags.keyword": tags}})
 
-            # Filtro por fechas
+            # Filter by dates
             if date_from or date_to:
                 try:
                     range_query = {"range": {"created_at": {}}}
 
                     if date_from:
-                        # Normalizar y validar formato
+                        # Normalize and validate format
                         dt_from = datetime.strptime(date_from, "%Y-%m-%d")
                         range_query["range"]["created_at"]["gte"] = dt_from.strftime("%Y-%m-%dT00:00:00Z")
 
@@ -241,14 +241,14 @@ class ElasticsearchService(BaseService):
                         filter_clauses.append(range_query)
 
                 except ValueError as e:
-                    print(f"[WARN] Formato de fecha inválido recibido: from={date_from}, to={date_to}. Error: {e}")
+                    print(f"[WARN] Invalid date format received: from={date_from}, to={date_to}. Error: {e}")
 
-            # Ordenación
+            # Sorting
             sort_clause = [
                 {"created_at": {"order": "desc"}} if sorting == "newest" else {"created_at": {"order": "asc"}}
             ]
 
-            # Calcular offset
+            # Compute offset
             from_ = (page - 1) * size
 
             body = {
@@ -265,21 +265,21 @@ class ElasticsearchService(BaseService):
             hits = result["hits"]["hits"]
             total = result["hits"]["total"]["value"]
 
-            print(f"[SUCCESS] Búsqueda completada. Página {page}, resultados: {len(hits)}, total: {total}")
+            print(f"[SUCCESS] Search completed. Page {page}, results: {len(hits)}, total: {total}")
 
             return [self._format_hit(hit) for hit in hits], total
 
         except Exception as e:
-            print(f"[ERROR] Fallo en la búsqueda: {e}")
+            print(f"[ERROR] Search failed: {e}")
             raise
 
     def _format_hit(self, hit):
-        """Formatea un resultado Elasticsearch con fechas y tamaños legibles."""
+        """Formats an Elasticsearch hit with human-readable dates and sizes."""
         from datetime import datetime
 
         source = hit["_source"]
 
-        # Formato de fecha
+        # Date format
         if "created_at" in source:
             try:
                 dt = datetime.fromisoformat(source["created_at"])
@@ -287,7 +287,7 @@ class ElasticsearchService(BaseService):
             except Exception:
                 pass
 
-        # Tamaño legible
+        # Human-readable size
         if "total_size_in_bytes" in source:
             source["total_size_in_human_format"] = self._human_readable_size(source["total_size_in_bytes"])
 
@@ -307,7 +307,7 @@ class ElasticsearchService(BaseService):
 
 class IndexingService:
     """
-    Encapsula la lógica de indexación en Elasticsearch.
+    Encapsulates Elasticsearch indexing logic.
     """
 
     def __init__(self, index_dataset_fn, index_hubfile_fn, logger):
@@ -317,7 +317,7 @@ class IndexingService:
 
     def index_dataset_and_hubfiles(self, dataset, created_fms):
         try:
-            # Re-obtener dataset actualizado
+            # Re-fetch the updated dataset
             self.index_dataset(dataset)
             self.logger.info(f"[INDEX] Dataset {dataset.id} indexed")
 

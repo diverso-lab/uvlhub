@@ -10,89 +10,68 @@
 {% endblock %}
 
 {% block content %}
-<div class="card card-bordered shadow-sm">
-    <div class="card-body py-15">
-        <div class="text-center mb-12">
-            <h1 class="fw-bold text-gray-900 mb-3">Generate feature models</h1>
-            <div class="text-gray-600 fs-5 fw-semibold mw-700px mx-auto">
-                Pick how you want to build your feature models. Both generators produce UVL files ready to download or upload to the hub.
-            </div>
+<div class="py-8 mw-800px mx-auto">
+    <div class="text-center mb-8">
+        <h1 class="fw-bold text-gray-900 mb-2">Generate feature models</h1>
+        <div class="text-gray-600 fs-6 fw-semibold mw-600px mx-auto">
+            Pick how you want to build your feature models. Both generators produce UVL files ready to download or upload to the hub.
         </div>
+    </div>
 
-        <div class="row g-8 justify-content-center mw-xl-1100px mx-auto">
-            <!-- Random generator -->
-            <div class="col-md-6">
-                <a href="{{ url_for('generator.step1') }}"
-                   class="card card-bordered h-100 shadow-sm text-decoration-none">
-                    <div class="card-body d-flex flex-column p-10">
-                        <div class="d-flex align-items-center mb-6">
-                            <div class="symbol symbol-50px me-4">
-                                <span class="symbol-label bg-light-primary">
-                                    <i class="ki-duotone ki-abstract-26 fs-1 text-primary">
-                                        <span class="path1"></span><span class="path2"></span>
-                                    </i>
-                                </span>
-                            </div>
-                            <div>
-                                <h2 class="fw-bold text-gray-900 mb-1">Random generator</h2>
-                                <span class="badge badge-light-success fs-8">Available</span>
-                            </div>
-                        </div>
-                        <p class="text-gray-700 fs-6 fw-semibold mb-6">
-                            Generate random feature models from parameters: feature count, tree depth, constraint mix, attribute catalog and probabilities. Runs entirely in your browser with Pyodide.
-                        </p>
-                        <ul class="text-gray-700 fs-7 fw-semibold mb-8 ps-4">
-                            <li>Boolean, arithmetic and type level toggles</li>
-                            <li>Configurable constraints and attributes</li>
-                            <li>Exports a ZIP of UVL files</li>
-                        </ul>
-                        <div class="mt-auto">
-                            <span class="btn btn-primary">
-                                Start
-                                <i class="ki-duotone ki-arrow-right fs-3 ms-1"><span class="path1"></span><span class="path2"></span></i>
-                            </span>
-                        </div>
+    <div class="d-flex flex-column gap-4">
+        <!-- Random generator -->
+        <a href="{{ url_for('generator.step1') }}"
+           class="card card-bordered shadow-sm text-decoration-none">
+            <div class="card-body d-flex align-items-center gap-5 p-6">
+                <div class="symbol symbol-50px flex-shrink-0">
+                    <span class="symbol-label bg-light-primary">
+                        <i class="ki-duotone ki-abstract-26 fs-1 text-primary">
+                            <span class="path1"></span><span class="path2"></span>
+                        </i>
+                    </span>
+                </div>
+                <div class="flex-grow-1 min-w-0">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <h2 class="fw-bold text-gray-900 fs-4 mb-0">Random generator</h2>
+                        <span class="badge badge-light-success fs-8">Available</span>
                     </div>
-                </a>
+                    <div class="text-gray-700 fs-7 fw-semibold">
+                        Random models from parameters — feature count, tree depth, constraint mix, attribute catalog, probabilities. Exports a ZIP. Runs entirely in your browser with Pyodide.
+                    </div>
+                </div>
+                <span class="btn btn-primary flex-shrink-0">
+                    Start
+                    <i class="ki-duotone ki-arrow-right fs-3 ms-1"><span class="path1"></span><span class="path2"></span></i>
+                </span>
             </div>
+        </a>
 
-            <!-- LLM generator -->
-            <div class="col-md-6">
-                <a href="{{ url_for('generator.llm') }}"
-                   class="card card-bordered h-100 shadow-sm text-decoration-none">
-                    <div class="card-body d-flex flex-column p-10">
-                        <div class="d-flex align-items-center mb-6">
-                            <div class="symbol symbol-50px me-4">
-                                <span class="symbol-label bg-light-warning">
-                                    <i class="ki-duotone ki-abstract-39 fs-1 text-warning">
-                                        <span class="path1"></span><span class="path2"></span>
-                                    </i>
-                                </span>
-                            </div>
-                            <div>
-                                <h2 class="fw-bold text-gray-900 mb-1">LLM generator</h2>
-                                <span class="badge badge-light-success fs-8">Experimental</span>
-                            </div>
-                        </div>
-                        <p class="text-gray-700 fs-6 fw-semibold mb-6">
-                            Design feature models from a concept, or derive variants of an existing UVL from the hub. An open-weights LLM runs entirely in your browser (WebLLM) and flamapy validates every candidate. Nothing leaves your machine.
-                        </p>
-                        <ul class="text-gray-700 fs-7 fw-semibold mb-8 ps-4">
-                            <li><strong>From concept</strong>: type a domain (e.g. "coffee shop"), get a valid UVL back</li>
-                            <li><strong>From seed</strong>: pick any UVL from UVLHub and get semantic variants of it</li>
-                            <li>Optional cross-tree constraints, drop-on-fail validation</li>
-                            <li>In-browser inference (WebGPU), no API key, nothing uploaded</li>
-                        </ul>
-                        <div class="mt-auto">
-                            <span class="btn btn-warning">
-                                Start
-                                <i class="ki-duotone ki-arrow-right fs-3 ms-1"><span class="path1"></span><span class="path2"></span></i>
-                            </span>
-                        </div>
+        <!-- LLM generator -->
+        <a href="{{ url_for('generator.llm') }}"
+           class="card card-bordered shadow-sm text-decoration-none">
+            <div class="card-body d-flex align-items-center gap-5 p-6">
+                <div class="symbol symbol-50px flex-shrink-0">
+                    <span class="symbol-label bg-light-warning">
+                        <i class="ki-duotone ki-abstract-39 fs-1 text-warning">
+                            <span class="path1"></span><span class="path2"></span>
+                        </i>
+                    </span>
+                </div>
+                <div class="flex-grow-1 min-w-0">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <h2 class="fw-bold text-gray-900 fs-4 mb-0">LLM generator</h2>
+                        <span class="badge badge-light-warning fs-8">Experimental</span>
                     </div>
-                </a>
+                    <div class="text-gray-700 fs-7 fw-semibold">
+                        <strong>From concept</strong> (type a domain) or <strong>from seed</strong> (pick a UVL from the hub). Open-weights LLM runs in your browser (WebLLM + WebGPU), flamapy validates every candidate — nothing leaves your machine.
+                    </div>
+                </div>
+                <span class="btn btn-warning flex-shrink-0">
+                    Start
+                    <i class="ki-duotone ki-arrow-right fs-3 ms-1"><span class="path1"></span><span class="path2"></span></i>
+                </span>
             </div>
-        </div>
+        </a>
     </div>
 </div>
 {% endblock %}

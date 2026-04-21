@@ -328,9 +328,9 @@ class ZenodoService(BaseService):
             if self._is_unavailable_status(response.status_code):
                 raise ZenodoUnavailableError("Zenodo is currently unavailable.")
             try:
-                error_payload = response.json()  # Zenodo a veces sí devuelve JSON de error
+                error_payload = response.json()  # Zenodo sometimes returns a JSON error body
             except ValueError:
-                error_payload = response.text  # pero si no, mostramos el HTML/texto plano
+                error_payload = response.text  # otherwise fall back to raw HTML / text
             raise Exception(f"Error uploading ZIP to Zenodo: {error_payload}")
 
         return response.json()
@@ -463,8 +463,8 @@ class ZenodoDatasetService:
 
     def upload_to_zenodo(self, dataset, ds_meta, dataset_type, current_user):
         """
-        Sube el dataset a Zenodo (normal o anónimo).
-        Devuelve el DOI si todo va bien.
+        Upload the dataset to Zenodo (regular or anonymous).
+        Returns the DOI on success.
         """
         try:
             anonymous = dataset_type == "zenodo_anonymous"
@@ -472,18 +472,18 @@ class ZenodoDatasetService:
             deposition_id = deposition.get("id")
             self.logger.info(f"[ZENODO] Deposition created with ID: {deposition_id}")
 
-            # Guardar deposition_id en DB
+            # Persist deposition_id in DB
             self.dataset_service.update_dsmetadata(ds_meta.id, deposition_id=deposition_id)
 
-            # Crear ZIP
+            # Build ZIP
             zip_path = self.dataset_service.zip_dataset(dataset)
             self.logger.info(f"[ZENODO] Dataset zipped at path: {zip_path}")
 
-            # Subir ZIP
+            # Upload ZIP
             self.zenodo_service.upload_zip(dataset, deposition_id, zip_path)
             self.logger.info(f"[ZENODO] ZIP uploaded for deposition {deposition_id}")
 
-            # Publicar deposition
+            # Publish deposition
             self.zenodo_service.publish_deposition(deposition_id)
             doi = self.zenodo_service.get_doi(deposition_id)
 

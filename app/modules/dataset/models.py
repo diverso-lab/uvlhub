@@ -154,11 +154,11 @@ class DataSet(db.Model):
 
     def get_uvlhub_doi_path(self) -> str:
         doi = self.get_uvlhub_doi()
-        # Si encuentra "/doi", devolver desde ahí
+        # If "/doi" is present, return the substring starting there.
         idx = doi.find("/doi")
         if idx != -1:
             return doi[idx:]
-        return doi  # fallback: devuelve completo si no hay /doi
+        return doi  # fallback: return the full value if no "/doi" segment
 
     def is_anonymous(self) -> bool:
         return self.ds_meta_data.dataset_anonymous

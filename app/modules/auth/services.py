@@ -48,13 +48,13 @@ class AuthenticationService(BaseService):
             if not self.is_email_available(email):
                 raise ValueError("This email is already registered. Try logging in or using ORCID.")
 
-            # Crear usuario
+            # Create user
             user = User(email=email, active=True)
             user.set_password(password)
             self.repository.session.add(user)
-            self.repository.session.flush()  # garantiza que user.id esté disponible
+            self.repository.session.flush()  # guarantees user.id is available
 
-            # Crear perfil
+            # Create profile
             profile = UserProfile(user_id=user.id, name=name, surname=surname)
             self.repository.session.add(profile)
             self.repository.session.commit()
@@ -73,12 +73,12 @@ class AuthenticationService(BaseService):
         if not profile:
             return None, {"error": "Profile not found"}
 
-        # Solo actualizamos los campos que el usuario puede editar
+        # Only update fields the user is allowed to edit
         profile.name = form.name.data
         profile.surname = form.surname.data
         profile.affiliation = form.affiliation.data
 
-        # 🚫 No tocar ORCID: se gestiona exclusivamente vía login OAuth
+        # Do NOT touch ORCID: it is managed exclusively through the OAuth login flow.
         db.session.commit()
         return profile, None
 

@@ -19,7 +19,7 @@ def send_reset_password_email(email: str, link: str):
 
 
 def send_reset_confirmation_email(email: str):
-    """Envía el correo confirmando que la contraseña ha sido restablecida."""
+    """Send the email confirming that the password has been reset."""
     try:
         subject = "Your Password Has Been Reset"
         body = (

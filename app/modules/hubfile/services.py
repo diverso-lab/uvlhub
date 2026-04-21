@@ -59,17 +59,17 @@ class HubfileService(BaseService):
 
     def create_from_file(self, feature_model_id: int, filepath: str) -> Hubfile:
         """
-        Crea un Hubfile a partir de un archivo .uvl ya ubicado en el directorio destino.
+        Create a Hubfile from a .uvl file already placed in the destination directory.
 
         Args:
-            feature_model_id (int): ID del FeatureModel al que pertenece el archivo.
-            filepath (str): Ruta completa al archivo UVL.
+            feature_model_id (int): ID of the FeatureModel the file belongs to.
+            filepath (str): Full path to the UVL file.
 
         Returns:
-            Hubfile: La instancia creada.
+            Hubfile: The created instance.
         """
         if not os.path.isfile(filepath):
-            raise FileNotFoundError(f"Archivo no encontrado: {filepath}")
+            raise FileNotFoundError(f"File not found: {filepath}")
 
         name = os.path.basename(filepath)
         size = os.path.getsize(filepath)
@@ -82,7 +82,7 @@ class HubfileService(BaseService):
         return hubfile
 
     def _calculate_checksum(self, filepath: str) -> str:
-        """Calcula el hash SHA256 del archivo"""
+        """Compute the SHA256 hash of the file."""
         sha256 = hashlib.sha256()
         with open(filepath, "rb") as f:
             for chunk in iter(lambda: f.read(4096), b""):
@@ -164,40 +164,40 @@ class HubfileViewRecordService(BaseService):
 
 class UploadIngestService:
     """
-    Prepara los UVL para su procesamiento:
-      - Extrae zips de forma segura.
-      - Recolecta todos los .uvl (de zips y sueltos).
-      - Aplana en una carpeta de staging.
+    Prepare UVL files for processing:
+      - Extract zips safely.
+      - Collect every .uvl (from zips and loose).
+      - Flatten into a staging folder.
     """
 
     def __init__(self, logger):
         self.logger = logger
 
     def _strip_uuid_prefix(self, name: str) -> str:
-        """Elimina prefijos UUID_ de los nombres de archivo, si existen."""
+        """Remove UUID_ prefixes from file names, if present."""
         return UUID_PREFIX_RE.sub("", name)
 
     # -------- utils -------- #
 
     def _safe_extract_zip(self, zip_path: str, dest_dir: str) -> None:
-        """Extrae evitando path traversal."""
+        """Extract while preventing path traversal."""
         with zipfile.ZipFile(zip_path, "r") as zf:
             for member in zf.infolist():
-                # Normaliza y evita rutas absolutas o con ..
+                # Normalize and reject absolute or .. paths.
                 member_path = Path(member.filename)
                 if member.is_dir():
                     continue
                 target_path = Path(dest_dir) / member_path
-                # Comprobación de contención
+                # Containment check.
                 target_path_resolved = target_path.resolve()
                 if not str(target_path_resolved).startswith(str(Path(dest_dir).resolve())):
-                    raise ValueError(f"[INGEST] Zip slip detectado en {zip_path}: {member.filename}")
+                    raise ValueError(f"[INGEST] Zip slip detected in {zip_path}: {member.filename}")
                 target_path.parent.mkdir(parents=True, exist_ok=True)
                 with zf.open(member, "r") as src, open(target_path, "wb") as dst:
                     shutil.copyfileobj(src, dst)
 
     def _unique_dest(self, dest_dir: str, filename: str) -> str:
-        """Genera un nombre único si hay colisiones."""
+        """Produce a unique name if the target already exists."""
         base = Path(filename).stem
         ext = Path(filename).suffix
         candidate = Path(dest_dir) / f"{base}{ext}"
@@ -213,22 +213,22 @@ class UploadIngestService:
         stage_dir = str(Path(temp_root) / "_uvl_stage")
         extract_root = str(Path(temp_root) / "_extracted_zips")
 
-        # Limpieza previa
+        # Previous cleanup.
         shutil.rmtree(stage_dir, ignore_errors=True)
         shutil.rmtree(extract_root, ignore_errors=True)
         Path(stage_dir).mkdir(parents=True, exist_ok=True)
         Path(extract_root).mkdir(parents=True, exist_ok=True)
 
-        # 1) Extraer todos los ZIPs
+        # 1) Extract every ZIP.
         zip_paths = [str(p) for p in Path(temp_root).glob("*.zip")]
-        self.logger.info(f"[INGEST] Zips detectados: {len(zip_paths)}")
+        self.logger.info(f"[INGEST] Zips detected: {len(zip_paths)}")
         for zp in zip_paths:
             subdir = Path(extract_root) / f"{Path(zp).stem}_{uuid.uuid4().hex[:8]}"
             subdir.mkdir(parents=True, exist_ok=True)
             self._safe_extract_zip(zp, str(subdir))
-            self.logger.info(f"[INGEST] Extraído: {zp} -> {subdir}")
+            self.logger.info(f"[INGEST] Extracted: {zp} -> {subdir}")
 
-        # 2) Recolectar UVLs (temp_root SIN extract_root + extract_root)
+        # 2) Collect UVLs (temp_root WITHOUT extract_root + extract_root).
         def collect_uvls(root: str, exclude: str = None) -> List[Path]:
             uvls = []
             for p in Path(root).rglob("*.uvl"):
@@ -237,9 +237,9 @@ class UploadIngestService:
             return uvls
 
         uvl_sources = collect_uvls(temp_root, exclude=str(extract_root)) + collect_uvls(extract_root)
-        self.logger.info(f"[INGEST] UVLs encontrados (antes de deduplicar): {len(uvl_sources)}")
+        self.logger.info(f"[INGEST] UVLs found (before deduplication): {len(uvl_sources)}")
 
-        # 3) Deduplicar por hash y copiar a stage_dir con su nombre exacto
+        # 3) Deduplicate by hash and copy to stage_dir keeping the exact name.
         def file_hash(path: Path) -> str:
             h = hashlib.sha256()
             with open(path, "rb") as f:
@@ -253,14 +253,14 @@ class UploadIngestService:
         for src in uvl_sources:
             h = file_hash(src)
             if h in seen:
-                self.logger.info(f"[INGEST] Duplicado ignorado: {src}")
+                self.logger.info(f"[INGEST] Duplicate ignored: {src}")
                 continue
             seen.add(h)
 
-            # 🔹 Eliminar prefijo UUID si existe
+            # Strip UUID prefix if present.
             dest_name = self._strip_uuid_prefix(src.name)
 
-            # 🔹 Solo añadir sufijo hash si ya existe otro archivo con mismo nombre
+            # Only add a hash suffix if another file with the same name already exists.
             if (Path(stage_dir) / dest_name).exists():
                 dest_name = f"{Path(dest_name).stem}_{h[:8]}{Path(dest_name).suffix}"
 
@@ -269,7 +269,7 @@ class UploadIngestService:
             staged_paths.append(str(dest))
 
         if not staged_paths:
-            raise ValueError("No se encontró ningún archivo .uvl tras procesar zips y sueltos.")
+            raise ValueError("No .uvl files were found after processing the uploaded zips and loose files.")
 
-        self.logger.info(f"[INGEST] UVLs en staging: {len(staged_paths)} (dir: {stage_dir})")
+        self.logger.info(f"[INGEST] UVLs in staging: {len(staged_paths)} (dir: {stage_dir})")
         return stage_dir, sorted(staged_paths)

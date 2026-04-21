@@ -140,7 +140,7 @@ def create_dataset():
         except Exception as exc:
             return jsonify({"error": f"Error creating dataset: {str(exc)}"}), 400
 
-        # 2. Draft → terminar aquí
+        # 2. Draft -> stop here
         if dataset_type == "draft":
             shutil.rmtree(current_user.temp_folder(), ignore_errors=True)
             return (
@@ -171,10 +171,10 @@ def create_dataset():
                     200,
                 )
 
-            # 4. Indexación
+            # 4. Indexing
             indexing_service = IndexingService(index_dataset, index_hubfile, logger)
             try:
-                dataset = dataset_service.get_by_id(dataset.id)  # actualizado tras Zenodo
+                dataset = dataset_service.get_by_id(dataset.id)  # refreshed after Zenodo
                 indexing_service.index_dataset_and_hubfiles(dataset, created_fms)
             except Exception as exc:
                 logger.warning(f"[UPLOAD] Dataset {dataset.id} created and uploaded, but indexing failed: {exc}")
@@ -476,24 +476,24 @@ def download_all_dataset():
     selected_formats = request.args.getlist("formats")
     selected_formats = selected_formats if selected_formats else None
 
-    # Crear un directorio temporal
+    # Create a temporary directory
     temp_dir = tempfile.mkdtemp()
     zip_path = os.path.join(temp_dir, "all_datasets.zip")
 
     try:
-        # Generar el archivo ZIP
+        # Build the ZIP file
         dataset_service.zip_all_datasets_by_formats(zip_path, formats=selected_formats)
 
-        # Crear el nombre del archivo con la fecha
+        # Build the filename with the current date
         current_date = datetime.now().strftime("%Y_%m_%d")
         zip_filename = f"uvlhub_bulk_{current_date}.zip"
 
-        # Enviar el archivo como respuesta
+        # Send the file as the response
         return send_file(zip_path, as_attachment=True, download_name=zip_filename)
     except ValueError as exc:
         abort(400, description=str(exc))
     finally:
-        # Asegurar que la carpeta temporal se elimine después de que Flask sirva el archivo
+        # Make sure the temporary folder is removed after Flask serves the file
         if os.path.exists(temp_dir):
             shutil.rmtree(temp_dir)
 
@@ -501,12 +501,12 @@ def download_all_dataset():
 @dataset_bp.route("/doi/<path:doi>", methods=["GET"])
 @dataset_bp.route("/doi/<path:doi>/", methods=["GET"])
 def subdomain_index(doi):
-    # Redirección si el DOI es antiguo
+    # Redirect if the DOI has been superseded
     new_doi = doi_mapping_service.get_new_doi(doi)
     if new_doi:
         return redirect(url_for("dataset.subdomain_index", doi=new_doi), code=302)
 
-    # Buscar el dataset por DOI
+    # Look up the dataset by DOI
     ds_meta_data = dsmetadata_service.filter_by_doi(doi)
     if not ds_meta_data:
         abort(404)
@@ -663,10 +663,10 @@ def sync_dataset(dataset_id):
         logger.warning(f"[SYNC] Dataset {dataset.id} uploaded, but indexing failed: {exc}")
 
     if request.method == "GET":
-        # redirección visual
+        # Browser redirect
         return redirect(url_for("dataset.list_dataset"))
     else:
-        # respuesta JSON (útil si luego quieres AJAX)
+        # JSON response (useful for future AJAX callers)
         return jsonify({"message": "Dataset synchronized", "doi": doi}), 200
 
 
