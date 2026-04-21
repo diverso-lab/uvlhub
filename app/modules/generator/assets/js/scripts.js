@@ -116,6 +116,44 @@ function hideModal(delay = 900) {
     setTimeout(() => modalInstance.hide(), delay);
 }
 
+// ─── Wheel diagnostics ────────────────────────────────────────────────────
+//
+// When micropip reports "File is not a zip file" we want to know why. This
+// helper fetches the same URL directly and reports HTTP status, content
+// type, content length, and the first bytes of the response (either the
+// ZIP magic "PK\x03\x04" if it *is* a valid zip the server sent, or a
+// snippet of whatever HTML/error was served instead). Logged to console in
+// full; returns a short single-line summary for the user-facing error.
+async function diagnoseWheelUrl(url) {
+    try {
+        const resp = await fetch(url, { credentials: "same-origin" });
+        const ct = resp.headers.get("content-type") || "?";
+        const ce = resp.headers.get("content-encoding") || "none";
+        const cl = resp.headers.get("content-length") || "?";
+        const status = `HTTP ${resp.status} ${resp.statusText || ""}`.trim();
+        const buf = new Uint8Array(await resp.arrayBuffer());
+        const isZip = buf.length >= 4 &&
+            buf[0] === 0x50 && buf[1] === 0x4b &&
+            buf[2] === 0x03 && buf[3] === 0x04;
+        let bodySnippet = "";
+        if (!isZip) {
+            // Show the first 200 chars decoded as UTF-8 — makes HTML error
+            // pages instantly recognisable.
+            const text = new TextDecoder("utf-8", { fatal: false }).decode(buf.subarray(0, 200));
+            bodySnippet = text.replace(/\s+/g, " ").trim();
+        }
+        console.error("Wheel diagnostic for", url, {
+            status, contentType: ct, contentEncoding: ce, contentLength: cl,
+            bytesReceived: buf.length, isZip, bodySnippet,
+        });
+        if (isZip) return `${status}, ${buf.length} bytes, valid zip magic (install-side issue)`;
+        return `${status}, ct=${ct}, ce=${ce}, ${buf.length} bytes, body="${bodySnippet.slice(0, 80)}…"`;
+    } catch (e) {
+        console.error("Wheel diagnostic fetch failed for", url, e);
+        return `fetch failed: ${e.message || e}`;
+    }
+}
+
 // ─── Runtime boot ──────────────────────────────────────────────────────────
 
 async function bootRuntime() {
@@ -134,7 +172,8 @@ async function bootRuntime() {
     setModal({ msg: "Installing Python packages…", percent: 15 });
     for (let i = 0; i < WHEELS.length; i++) {
         const wheel = WHEELS[i];
-        pyodide.globals.set("wheel_url", `/generator/js/${wheel}`);
+        const wheelUrl = `/generator/js/${wheel}`;
+        pyodide.globals.set("wheel_url", wheelUrl);
         let lastErr = null;
         // One retry — most wheel install failures are transient (flaky network,
         // CDN hiccup). A second attempt recovers without user intervention.
@@ -152,7 +191,18 @@ async function bootRuntime() {
             }
         }
         if (lastErr) {
-            throw new Error(`Could not install ${wheel} — ${lastErr.message || lastErr}`);
+            // micropip's BadZipFile is almost always the server returning
+            // something other than the wheel — an HTML 404/login page, a
+            // gzipped body the browser failed to decompress, a CDN stub,
+            // etc. Fetch the URL ourselves to surface *what* came back so
+            // the failure is diagnosable from the UI without needing
+            // server logs. The extra info goes into the thrown Error so
+            // it also reaches the "Failed to load generator" modal.
+            const diag = await diagnoseWheelUrl(wheelUrl);
+            throw new Error(
+                `Could not install ${wheel} — ${lastErr.message || lastErr}` +
+                (diag ? ` | server returned: ${diag}` : "")
+            );
         }
         const done = i + 1;
         setModal({
