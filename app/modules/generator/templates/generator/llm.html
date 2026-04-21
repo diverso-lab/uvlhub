@@ -34,6 +34,26 @@
     </div>
 </div>
 
+<!-- WebGPU diagnostic banner — hidden by default, revealed by llm-page.js
+     when navigator.gpu is missing or requestAdapter() fails. Content
+     (browser name, version, instructions) is injected at runtime.
+
+     d-none is used (not `style="display:none"`) because Bootstrap's
+     .d-flex utility ships with !important, which overrides inline style
+     and was making the banner permanently visible with an empty body. -->
+<div id="llm_webgpu_banner" class="notice d-none bg-light-danger rounded border-danger border border-dashed p-5 mb-6">
+    <i class="ki-duotone ki-shield-cross fs-2x text-danger me-4 mt-1"><span class="path1"></span><span class="path2"></span><span class="path3"></span></i>
+    <div class="flex-grow-1">
+        <h4 class="text-gray-900 fw-bold mb-2">WebGPU is required</h4>
+        <div id="llm_webgpu_banner_summary" class="fs-7 text-gray-700 fw-semibold mb-3"></div>
+        <div id="llm_webgpu_banner_steps" class="fs-7 text-gray-700 mb-3"></div>
+        <button type="button" id="llm_webgpu_recheck_btn" class="btn btn-sm btn-light-danger">
+            <i class="ki-duotone ki-arrows-circle fs-4 me-1"><span class="path1"></span><span class="path2"></span></i>
+            Re-check WebGPU support
+        </button>
+    </div>
+</div>
+
 <div class="row g-6">
     <!-- ── Column 1: input (seed or concept, toggleable) ───────────────── -->
     <div class="col-xl-6">

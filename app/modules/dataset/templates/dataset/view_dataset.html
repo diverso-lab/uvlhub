@@ -439,9 +439,13 @@
         margin-right: 0.5rem;
     }
 
-    /* Let the UVL editor breathe a bit more when FactLabel is collapsed. */
-    .workbench-panels .CodeMirror { max-height: 65vh; }
-    .workbench-panels.factlabel-collapsed .CodeMirror { max-height: 80vh; }
+    /* Let the UVL editor breathe a bit more when FactLabel is collapsed.
+       The cap goes on .CodeMirror-scroll (not .CodeMirror) so that with
+       `height: auto` + `viewportMargin: Infinity` the internal scroll
+       viewport kicks in; putting max-height on .CodeMirror itself just
+       clips content at ~line 30 with no scrollbar. */
+    .workbench-panels .CodeMirror-scroll { max-height: 65vh; }
+    .workbench-panels.factlabel-collapsed .CodeMirror-scroll { max-height: 80vh; }
 
     /* Collapsed column: card shrinks to just the chevron + logo strip, and the
        other panel grows horizontally to fill the freed space. Body is already
@@ -468,13 +472,17 @@
     }
     .dataset-description[data-description-collapsed="false"] .dataset-description-body { max-height: none; }
 
-    /* CodeMirror — shared */
+    /* CodeMirror — shared. With height: auto + viewportMargin: Infinity,
+       min/max constraints belong on .CodeMirror-scroll; otherwise long
+       files get clipped without a scrollbar. */
     .CodeMirror {
         height: auto;
-        min-height: 360px;
-        max-height: 75vh;
         font-size: 0.85rem;
         border-radius: 0 0 0.475rem 0.475rem;
+    }
+    .CodeMirror-scroll {
+        min-height: 360px;
+        max-height: 75vh;
     }
     .CodeMirror pre.CodeMirror-line { tab-size: 2; -moz-tab-size: 2; }
 
