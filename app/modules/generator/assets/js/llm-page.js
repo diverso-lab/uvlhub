@@ -1927,6 +1927,25 @@
         }
     }
 
+    // Builds a flamapy IDE URL that carries the UVL content inline instead
+    // of pointing to an http(s) file. The IDE's ?import=<url> param is
+    // fetched client-side, and browsers' fetch() implementations accept
+    // data: URLs (same-origin is not enforced for data: schemes), so the
+    // UVL never has to leave the user's machine to reach the IDE.
+    //
+    // The resulting href encodes the UVL twice: once for the data: URL
+    // payload (encodeURIComponent of the UVL) and once for the outer
+    // query string (encodeURIComponent of the whole data: URL). Without
+    // the outer pass the IDE parser would see the inner '#' or '&' as
+    // boundaries and truncate the content. Very large models end up with
+    // very long URLs — Chrome/Edge handle well over 1 MB, but we warn
+    // above ~200 KB encoded just in case the IDE rejects the request.
+    const FLAMAPY_IDE_BASE = "https://ide.flamapy.org/";
+    function flamapyIdeUrlForContent(content) {
+        const dataUrl = "data:text/plain;charset=utf-8," + encodeURIComponent(content);
+        return FLAMAPY_IDE_BASE + "?import=" + encodeURIComponent(dataUrl);
+    }
+
     function renderVariantRow(filename, content, verdict) {
         const host = $("llm_results");
         const row = document.createElement("div");
@@ -1968,6 +1987,22 @@
         viewBtn.textContent = "View";
         viewBtn.addEventListener("click", () => showUvlModal(filename, content));
         actions.appendChild(viewBtn);
+
+        // Flamapy IDE button — only offered for syntactically valid variants
+        // (a broken UVL isn't worth the round trip). The IDE takes an
+        // ?import=<url> query param and fetches it client-side, so we can
+        // hand it a data: URL instead of uploading the UVL anywhere. Keeps
+        // the page's "nothing leaves your machine" promise intact.
+        if (verdict.ok) {
+            const ideBtn = document.createElement("a");
+            ideBtn.className = "btn btn-sm btn-light-info";
+            ideBtn.target = "_blank";
+            ideBtn.rel = "noopener";
+            ideBtn.href = flamapyIdeUrlForContent(content);
+            ideBtn.innerHTML = '<i class="ki-duotone ki-rocket fs-5 me-1"><span class="path1"></span><span class="path2"></span></i>Open in IDE';
+            ideBtn.title = "Open this variant in flamapy IDE (ide.flamapy.org)";
+            actions.appendChild(ideBtn);
+        }
 
         const dlBtn = document.createElement("button");
         dlBtn.type = "button";
