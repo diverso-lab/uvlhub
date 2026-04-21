@@ -72,9 +72,7 @@ class Hubfile(db.Model):
         """
         from urllib.parse import quote
 
-        raw_url = url_for(
-            "hubfile.raw_uvl", file_id=self.id, filename=self.name, _external=True
-        )
+        raw_url = url_for("hubfile.raw_uvl", file_id=self.id, filename=self.name, _external=True)
         if "localhost" not in raw_url and "127.0.0.1" not in raw_url:
             raw_url = raw_url.replace("http://", "https://", 1)
         # Percent-encode before injecting into another URL's query string,

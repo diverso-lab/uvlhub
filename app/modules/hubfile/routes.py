@@ -245,9 +245,7 @@ def raw_uvl(file_id, filename):
     # as mimetype makes Flask append another "; charset=utf-8", resulting in
     # a duplicated parameter that some CORS-capable fetchers (notably the
     # FactLabel web app) choke on.
-    return send_file(
-        file_path, mimetype="text/plain", as_attachment=False, download_name=selected_file.name
-    )
+    return send_file(file_path, mimetype="text/plain", as_attachment=False, download_name=selected_file.name)
 
 
 @hubfile_bp.route("/hubfiles/<int:file_id>/workbench-content", methods=["GET"])
