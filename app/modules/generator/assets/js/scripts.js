@@ -271,8 +271,8 @@ executor.loadFlamapy()
     executor.setProgress(92, "Creating ZIP", "Packing files into ZIP...");
 
     const zip = new JSZip();
-    uvls.forEach((u, i) => {
-      zip.file(`fm${i}.uvl`, u);
+    uvls.forEach((u) => {
+      zip.file(u.filename, u.content);
     });
 
     const blob = await zip.generateAsync(
