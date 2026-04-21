@@ -71,6 +71,9 @@
                                         {% if values.get('aggregate_functions', False) %}checked{% endif %}>
                                     <label class="form-check-label">Aggregate functions</label>
                                 </div>
+                                {% if errors.get('aggregate_functions') %}
+                                    <div class="text-danger">{{ errors['aggregate_functions'] }}</div>
+                                {% endif %}
                             </td>
                         </tr>
 
@@ -94,6 +97,9 @@
                                         {% if values.get('string_constraints', False) %}checked{% endif %}>
                                     <label class="form-check-label">String constraints</label>
                                 </div>
+                                {% if errors.get('string_constraints') %}
+                                    <div class="text-danger">{{ errors['string_constraints'] }}</div>
+                                {% endif %}
                             </td>
                         </tr>
                     </tbody>
@@ -323,6 +329,7 @@
 {% block scripts %}
 <script>
 document.addEventListener("DOMContentLoaded", function () {
+    const ensureSatisfiableEnabled = {{ 1 if session.get('params', {}).get('ENSURE_SATISFIABLE', False) else 0 }};
     // ================================
     // Language levels logic
     // ================================
@@ -356,6 +363,23 @@ document.addEventListener("DOMContentLoaded", function () {
             stringC.disabled = true;
         } else {
             stringC.disabled = false;
+        }
+
+        if (ensureSatisfiableEnabled) {
+            if (aggregate.checked) {
+                aggregate.classList.add("is-invalid");
+            } else {
+                aggregate.classList.remove("is-invalid");
+            }
+
+            if (stringC.checked) {
+                stringC.classList.add("is-invalid");
+            } else {
+                stringC.classList.remove("is-invalid");
+            }
+        } else {
+            aggregate.classList.remove("is-invalid");
+            stringC.classList.remove("is-invalid");
         }
     }
 

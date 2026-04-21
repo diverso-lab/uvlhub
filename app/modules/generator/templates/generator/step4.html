@@ -25,6 +25,12 @@
             <label class="form-check-label" for="random_attributes">Random attributes</label>
         </div>
 
+        {% if session.get('params', {}).get('ENSURE_SATISFIABLE', False) %}
+            <div class="form-text mb-3">
+                Note: if Ensure satisfiable is enabled, random attributes will not be used in constraints, only in the feature tree.
+            </div>
+        {% endif %}
+
         <!-- Sección para Random: Min / Max -->
         <div id="random-attributes-settings">
             <div class="mb-3 d-flex align-items-center gap-3">
@@ -91,6 +97,7 @@ const values = {{ values | tojson }};
 const arithmeticLevelEnabled = {{ 1 if session.get('params', {}).get('ARITHMETIC_LEVEL', False) else 0 }};
 const typeLevelEnabled = {{ 1 if session.get('params', {}).get('TYPE_LEVEL', False) else 0 }};
 const stringConstraintsEnabled = {{ 1 if session.get('params', {}).get('STRING_CONSTRAINTS', False) else 0 }};
+const ensureSatisfiableEnabled = {{ 1 if session.get('params', {}).get('ENSURE_SATISFIABLE', False) else 0 }};
 const manualAttributesGlobalError = document.getElementById('manual-attributes-global-error');
 
 // Función para alternar visibilidad entre sección “random” y sección “manual”
@@ -302,6 +309,9 @@ function addAttributeCard() {
                 Use in constraints
             </label>
         </div>
+        <div class="form-text mb-1">
+            Note: if Ensure satisfiable is enabled, attributes of any type will not appear in constraints.
+        </div>
         <div class="text-danger attr-use-in-constraints-error mb-1" style="font-size:0.95em;"></div>
         <div class="text-muted attr-use-in-constraints-hint mb-2" style="font-size:0.9em;"></div>
     `;
@@ -450,7 +460,10 @@ function updateUseInConstraintsAvailability(card, type, idx) {
     let enabled = false;
     let message = '';
 
-    if (type === 'boolean') {
+    if (ensureSatisfiableEnabled) {
+        enabled = false;
+        message = 'Disabled because Ensure satisfiable only supports Boolean variables in constraints.';
+    } else if (type === 'boolean') {
         enabled = true;
     } else if (type === 'integer' || type === 'real') {
         enabled = !!arithmeticLevelEnabled;

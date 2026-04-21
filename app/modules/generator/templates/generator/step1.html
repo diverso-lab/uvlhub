@@ -27,10 +27,15 @@
         </div>
 
         <!-- Satisfiable -->
-        <div class="mb-3 form-check">
-            <input class="form-check-input" type="checkbox" id="ensure_satisfiable" name="ensure_satisfiable"
-                {% if values.get('ensure_satisfiable') %} checked {% endif %}>
-            <label class="form-check-label" for="ensure_satisfiable">Ensure satisfiable</label>
+        <div class="mb-3">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="ensure_satisfiable" name="ensure_satisfiable"
+                    {% if values.get('ensure_satisfiable') %} checked {% endif %}>
+                <label class="form-check-label" for="ensure_satisfiable">Ensure satisfiable</label>
+            </div>
+            <div class="form-text">
+                Note: satisfiability is only supported when the variables included in the constraints are purely Boolean.
+            </div>
         </div>
 
         <!-- Name Prefix -->

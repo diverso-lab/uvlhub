@@ -130,9 +130,12 @@ def step1():
     return render_template("generator/step1.html", current_step=1, errors={}, values=values)
 
 
-def validate_step2_form(form):
+def validate_step2_form(form, params_dict=None):
+    params_dict = params_dict or {}
     errors = {}
     values = {}
+
+    ensure_satisfiable_enabled = bool(params_dict.get("ENSURE_SATISFIABLE", False))
 
     # Features
     min_features_val = form.get("num_features_min", "").strip()
@@ -174,6 +177,22 @@ def validate_step2_form(form):
 
     # Type level feature distributions
     type_level_enabled = "type_level" in form
+    feature_cardinality_enabled = "feature_cardinality" in form
+    aggregate_functions_enabled = "aggregate_functions" in form
+    string_constraints_enabled = "string_constraints" in form
+
+    if ensure_satisfiable_enabled:
+        if aggregate_functions_enabled:
+            errors["aggregate_functions"] = (
+                "Aggregate functions are not supported when Ensure satisfiable is enabled, "
+                "because satisfiability is only guaranteed for purely Boolean constraints."
+            )
+
+        if string_constraints_enabled:
+            errors["string_constraints"] = (
+                "String constraints are not supported when Ensure satisfiable is enabled, "
+                "because satisfiability is only guaranteed for purely Boolean constraints."
+            )
 
     if type_level_enabled:
         type_fields = ["dist_boolean", "dist_integer", "dist_real", "dist_string"]
@@ -341,6 +360,10 @@ def step2():
             # Guardar también en params (best-effort) para que no se pierda si
             # vuelves y luego avanzas
             params_dict = session.get("params", {}) or {}
+            params_dict["ARITHMETIC_LEVEL"] = "arithmetic_level" in request.form
+            params_dict["TYPE_LEVEL"] = "type_level" in request.form
+            params_dict["AGGREGATE_FUNCTIONS"] = "aggregate_functions" in request.form
+            params_dict["STRING_CONSTRAINTS"] = "string_constraints" in request.form
             params_dict["GROUP_CARDINALITY"] = "group_cardinality" in request.form
             params_dict["FEATURE_CARDINALITY"] = "feature_cardinality" in request.form
             params_dict["MIN_FEATURES"] = int(request.form.get("num_features_min", params_dict.get("MIN_FEATURES", 10)))
@@ -401,14 +424,14 @@ def step2():
 
             return redirect(url_for("generator.step1"))
 
-        errors, values = validate_step2_form(request.form)
+        params_dict = session.get("params", {}) or {}
+        errors, values = validate_step2_form(request.form, params_dict)
         if errors:
             print(f"[VALIDACIÓN STEP2] Errores detectados: {errors}")
             print("AAAAAAAAAAAAAAAAA")
             print(values)
             return render_template("generator/step2.html", current_step=2, errors=errors, values=values)
-
-        params_dict = session.get("params")
+        
         if not params_dict:
             return "Error: Params missing in session", 400
 
@@ -1021,14 +1044,33 @@ def step3():
     )
 
 
+def resolve_use_in_constraints(raw_use_in_constraints: bool, type_: str, params_dict: dict) -> bool:
+    if not raw_use_in_constraints:
+        return False
+
+    if bool(params_dict.get("ENSURE_SATISFIABLE", False)):
+        return False
+
+    type_lc = (type_ or "").strip().lower()
+
+    if type_lc == "boolean":
+        return True
+
+    if type_lc in ["integer", "real"]:
+        return bool(params_dict.get("ARITHMETIC_LEVEL", False))
+
+    if type_lc == "string":
+        return bool(params_dict.get("TYPE_LEVEL", False)) and bool(params_dict.get("STRING_CONSTRAINTS", False))
+
+    return False
+
 def validate_step4_form(form, params_dict=None):
     errors = {}
     values = {}
     params_dict = params_dict or {}
 
     arithmetic_level_enabled = bool(params_dict.get("ARITHMETIC_LEVEL", False))
-    type_level_enabled = bool(params_dict.get("TYPE_LEVEL", False))
-    string_constraints_enabled = bool(params_dict.get("STRING_CONSTRAINTS", False))
+    ensure_satisfiable_enabled = bool(params_dict.get("ENSURE_SATISFIABLE", False))
 
     random_checked = "random_attributes" in form
     values["random_attributes"] = random_checked
@@ -1094,6 +1136,12 @@ def validate_step4_form(form, params_dict=None):
             use_in_constraints = form.get(f"attr_use_in_constraints_{i}") == "on"
 
             if not use_in_constraints:
+                continue
+
+            if ensure_satisfiable_enabled:
+                errors[f"attr_use_in_constraints_{i}"] = (
+                    "Attributes cannot be used in constraints when Ensure satisfiable is enabled."
+                )
                 continue
 
             if type_lc == "boolean":
@@ -1242,14 +1290,7 @@ def step4():
 
                     raw_use_in_constraints = request.form.get(f"attr_use_in_constraints_{i}") == "on"
 
-                    if type_ == "boolean":
-                        use_in_constraints = raw_use_in_constraints
-                    elif type_ in ["integer", "real"]:
-                        use_in_constraints = raw_use_in_constraints and params_dict.get("ARITHMETIC_LEVEL", False)
-                    elif type_ == "string":
-                        use_in_constraints = raw_use_in_constraints
-                    else:
-                        use_in_constraints = False
+                    use_in_constraints = resolve_use_in_constraints(raw_use_in_constraints, type_, params_dict)
 
                     if type_ == "boolean":
                         values_list = []
@@ -1336,18 +1377,7 @@ def step4():
 
                 raw_use_in_constraints = request.form.get(f"attr_use_in_constraints_{i}") == "on"
 
-                if type_ == "boolean":
-                    use_in_constraints = raw_use_in_constraints
-                elif type_ in ["integer", "real"]:
-                    use_in_constraints = raw_use_in_constraints and params_dict.get("ARITHMETIC_LEVEL", False)
-                elif type_ == "string":
-                    use_in_constraints = (
-                        raw_use_in_constraints
-                        and params_dict.get("TYPE_LEVEL", False)
-                        and params_dict.get("STRING_CONSTRAINTS", False)
-                    )
-                else:
-                    use_in_constraints = False
+                use_in_constraints = resolve_use_in_constraints(raw_use_in_constraints, type_, params_dict)
 
                 if type_ == "boolean":
                     values_list = []
