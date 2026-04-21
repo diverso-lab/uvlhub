@@ -86,8 +86,16 @@ class Hubfile(db.Model):
         return f"https://ide.flamapy.org/?import={self._public_raw_url()}"
 
     def get_factlabel_url(self) -> str:
-        """Return the URL that opens this hubfile in FactLabel."""
-        return f"https://fmfactlabel.github.io/app/?v=1.8.0&file={self._public_raw_url()}"
+        """Return the URL that opens this hubfile in FactLabel.
+
+        Note: we deliberately don't pass `?v=<version>`. FactLabel's JS
+        compares the URL's `v` against its own version.json and redirects
+        to /error_version.html (which is a 404 on GitHub Pages) when they
+        don't match. Hardcoding `v=1.8.0` here broke as soon as FactLabel
+        bumped to 1.8.1. Omitting the param skips the check entirely and
+        lets FactLabel pick up whatever version it's currently serving.
+        """
+        return f"https://fmfactlabel.github.io/app/?file={self._public_raw_url()}"
 
     def to_dict(self):
         from flask import url_for
