@@ -74,7 +74,7 @@ export function initializeSubmit() {
             errorContainer.innerHTML = "❌ Error connecting to the server. Please try again.";
             errorContainer.classList.remove("d-none");
         } finally {
-            // Restaurar estado del botón
+            // Restore button state
             submitBtn.innerHTML = originalText;
             submitBtn.disabled = false;
             continueBtn.disabled = false;

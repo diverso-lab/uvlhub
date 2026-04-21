@@ -43,10 +43,10 @@
   <div class="col-md-6 col-lg-6 col-sm-12" id="filters-panel">
       <div class="card position-sticky" style="top: 85px; z-index: 1;">
           <div class="card-body">
-              <!-- Filtro: búsqueda -->
+              <!-- Filter: search -->
               <input id="search-query" type="text" class="form-control mb-3" placeholder="Search datasets..." autofocus>
 
-              <!-- Filtro: tipo de publicación -->
+              <!-- Filter: publication type -->
               <div class="mb-3">
                   <label class="form-label">Publication type</label>
                   <select class="form-select" id="filter-publication-type">
@@ -72,7 +72,7 @@
                 </select>
               </div>
 
-              <!-- Filtro: tags -->
+              <!-- Filter: tags -->
               <div class="mb-3">
                 <label class="form-label">Tags</label>
                 <input id="filter-tags" 
@@ -81,7 +81,7 @@
                       placeholder="Enter tags separated by commas">
               </div>
 
-              <!-- Filtro: fecha -->
+              <!-- Filter: date -->
               <div class="mb-3">
                 <label class="form-label mb-0">Creation date</label>
                 <div class="d-flex">
@@ -101,7 +101,7 @@
                 âš ï¸ End date must be after start date
               </div>
 
-              <!-- Filtro: orden -->
+              <!-- Filter: sort order -->
               <div class="mb-3">
                   <label class="form-label">Sort by</label>
                   <select class="form-select" id="filter-sorting">
@@ -110,7 +110,7 @@
                   </select>
               </div>
 
-              <!-- Botón de limpiar -->
+              <!-- Clear button -->
               <button class="btn btn-outline-primary w-100" id="clear-filters">Clear filters</button>
           </div>
       </div>
@@ -126,7 +126,7 @@
     <div class="card">
       <div class="card-body">
 
-        <!-- Título + badge -->
+        <!-- Title + badge -->
         <div class="d-flex align-items-center justify-content-between">
           <h2 class="mb-0">
             <a href="[[url]]">
@@ -136,12 +136,12 @@
           <span class="badge bg-secondary">[[publication_type_label]]</span>
         </div>
 
-        <!-- Fecha -->
+        <!-- Date -->
         <p class="text-muted mt-2 mb-1">
           [[created_at]]
         </p>
 
-        <!-- Autores -->
+        <!-- Authors -->
         <div class="row mb-3">
           <div class="col-12">
             <ul class="list-unstyled mb-0" style="font-size: 0.85rem;">
@@ -176,7 +176,7 @@
           </div>
         </div>
 
-        <!-- Descripción -->
+        <!-- Description -->
         <div class="row mb-2">
           <div class="col-12">
             <p class="card-text">[[{description}]]</p>
@@ -281,7 +281,7 @@
           </a>
         </p>
 
-        <!-- Tamaño + Checksum -->
+        <!-- Size + Checksum -->
         <div class="d-flex flex-wrap align-items-center mb-3" style="gap: 1rem;">
           <span class="badge bg-light text-muted">
             Size: [[size_in_human_format]]

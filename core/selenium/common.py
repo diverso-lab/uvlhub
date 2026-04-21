@@ -22,11 +22,11 @@ def initialize_driver():
     if working_dir == "/app/":
         if get_service_driver() == "chrome":
             options = webdriver.ChromeOptions()
-            driver = webdriver.Remote(command_executor=selenium_hub_url, options=options)  # URL del Hub
+            driver = webdriver.Remote(command_executor=selenium_hub_url, options=options)  # Hub URL
         elif get_service_driver() == "firefox":
-            # Configuración para usar el navegador Firefox a través de Selenium Grid
+            # Configure Firefox to run through Selenium Grid.
             options = webdriver.FirefoxOptions()
-            driver = webdriver.Remote(command_executor=selenium_hub_url, options=options)  # URL del Hub de Selenium
+            driver = webdriver.Remote(command_executor=selenium_hub_url, options=options)  # Selenium Hub URL
 
         else:
             raise Exception("Driver not supported")
@@ -39,7 +39,7 @@ def initialize_driver():
             driver = webdriver.Chrome(service=service, options=options)
         elif get_service_driver() == "firefox":
             options = webdriver.FirefoxOptions()
-            # Inicializar el servicio y el driver
+            # Initialize the service and the driver.
             service = FirefoxService(GeckoDriverManager().install())
             # if chromeDriverManager does not work for you, uncomment line 30 and comment line 28
             # service = FirefoxService('/snap/bin/geckodriver')

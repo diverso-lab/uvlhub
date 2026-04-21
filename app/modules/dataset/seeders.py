@@ -74,7 +74,7 @@ class DataSetSeeder(BaseSeeder):
         ]
         seeded_feature_models = self.seed(feature_models)
 
-        # Crear archivos y Hubfiles
+        # Create files and Hubfiles
         load_dotenv()
         working_dir = os.getenv("WORKING_DIR", "")
         src_folder = os.path.join(working_dir, "app", "modules", "dataset", "uvl_examples")

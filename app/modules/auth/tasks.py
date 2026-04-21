@@ -10,12 +10,12 @@ app = create_app()
 
 
 def send_confirmation_email(email: str):
-    """Tarea asíncrona para enviar el correo de confirmación."""
-    logger.info(f"[EMAIL] Enviando correo de confirmación a {email}")
+    """Asynchronous task to send the confirmation email."""
+    logger.info(f"[EMAIL] Sending confirmation email to {email}")
 
     with app.app_context():
         try:
             confirmemail_service.send_confirmation_email(email)
-            logger.info(f"[EMAIL] ✅ Correo de confirmación enviado a {email}")
+            logger.info(f"[EMAIL] Confirmation email sent to {email}")
         except Exception as e:
-            logger.exception(f"[EMAIL] ❌ Error enviando correo a {email}: {e}")
+            logger.exception(f"[EMAIL] Error sending email to {email}: {e}")

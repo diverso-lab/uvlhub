@@ -110,9 +110,9 @@ var titleElement = title.append("text")
   .attr("font-family", TITLE_FONT_FAMILY)
   .attr("font-size", TITLE_FONT_SIZE)
   .attr("font-weight", "bold")
-  .attr("fill", "currentColor"); // 👈 se adapta automáticamente al tema Keen
+  .attr("fill", "currentColor"); // adapts automatically to the Keen theme
 
-// Función auxiliar: divide nombres largos (incluso sin espacios)
+// Helper: split long names (even without spaces)
 function smartWrapText(textNode, text, maxWidth) {
   const avgCharWidth = textSize("ABCDEFGHIJKLMNOPQRSTUVWXYZ", TITLE_FONT_FAMILY, TITLE_FONT_SIZE).width / 26;
   const maxChars = Math.floor(maxWidth / avgCharWidth);
@@ -123,7 +123,7 @@ function smartWrapText(textNode, text, maxWidth) {
   }
 
   const lineHeight = 1.1;
-  const initialDy = chunks.length > 1 ? "0.4em" : "1em"; // 👈 ajuste fino según nº de líneas
+  const initialDy = chunks.length > 1 ? "0.4em" : "1em"; // fine tuning based on line count
 
   chunks.forEach((chunk, index) => {
     textNode.append("tspan")
@@ -134,7 +134,7 @@ function smartWrapText(textNode, text, maxWidth) {
   });
 }
 
-// Límite de ancho (ajuste automático)
+// Width limit (automatic adjustment)
 const MAX_TITLE_WIDTH = maxWidth * 0.9;
 const textWidth = textSize(titleText, TITLE_FONT_FAMILY, TITLE_FONT_SIZE).width;
 
@@ -497,7 +497,7 @@ function wrap(text, width) {
     const x = +textSel.attr("x") || 0;
     const y = +textSel.attr("y") || 0;
 
-    // primera línea: fijamos x,y y dy = 0
+    // first line: we fix x, y, and dy = 0
     let tspan = textSel.text(null)
       .append("tspan")
       .attr("x", x)
@@ -512,7 +512,7 @@ function wrap(text, width) {
         tspan.text(line.join(" "));
         line = [word];
 
-        // líneas siguientes: NO pongas 'y', solo 'x' y un dy constante
+        // subsequent lines: do NOT set 'y', only 'x' and a constant dy
         tspan = textSel.append("tspan")
           .attr("x", x)
           .attr("dy", lineHeight + "em")

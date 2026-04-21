@@ -185,7 +185,7 @@ function runSearch(reset = true) {
 
 window.addEventListener('scroll', () => {
     if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200) {
-        runSearch(false); // carga más sin resetear
+        runSearch(false); // load more without resetting
     }
 });
 

@@ -1,23 +1,23 @@
 export function initializeSummary() {
-    // Selecciona todos los radio buttons con el atributo name="dataset_type"
+    // Select every radio button with the name="dataset_type" attribute.
     const datasetRadios = document.querySelectorAll('input[name="dataset_type"]');
     const summaryDiv = document.getElementById('step_1_summary');
 
-    // Añade un listener a cada radio button
+    // Attach a listener to each radio button.
     datasetRadios.forEach(radio => {
         radio.addEventListener('change', () => {
-            // Encuentra el label correspondiente al radio seleccionado
+            // Find the label matching the selected radio.
             const selectedLabel = document.querySelector(`label[for="${radio.id}"]`);
 
             if (selectedLabel) {
-                // Extrae solo el texto visible del label
+                // Extract only the visible text of the label.
                 const labelText = selectedLabel.querySelector('.text-gray-900').innerText;
-                // Actualiza el contenido del div con el texto seleccionado
+                // Update the div content with the selected text.
                 summaryDiv.textContent = labelText;
             }
         });
     });
 
-    // Disparar el evento inicial para mostrar el valor seleccionado por defecto
+    // Fire the initial event so the default selected value is displayed.
     document.querySelector('input[name="dataset_type"]:checked').dispatchEvent(new Event('change'));
 }

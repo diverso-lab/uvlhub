@@ -1,16 +1,16 @@
 [data-kt-search-element="content"] {
     position: fixed !important;
     transform: none !important;
-    display: none; /* Oculta el menú por defecto */
+    display: none; /* Hide the menu by default */
 }
 
 [data-kt-search-element="content"].show {
-    display: block; /* Muestra el menú cuando sea necesario */
+    display: block; /* Show the menu when needed */
 }
 
 
 .dropzone-file-success .badge {
-    color: #ffffff !important; /* Forzar texto blanco */
+    color: #ffffff !important; /* Force white text */
 }
 
 .tox-promotion{
@@ -61,7 +61,7 @@ a {
     min-width: 2rem;
 }
 
-/* Botón activo Keen-style */
+/* Active button, Keen style */
 #kt_files_table_paginate .paginate_button.current {
     background-color: var(--bs-primary);
     color: white !important;
@@ -136,7 +136,7 @@ a {
     color: #fff !important;
 }
 .btn-orcid:hover {
-    background-color: #8fbf2f !important; /* tono más oscuro al hover */
+    background-color: #8fbf2f !important; /* darker shade on hover */
     border-color: #8fbf2f !important;
 }
 

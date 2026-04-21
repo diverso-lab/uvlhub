@@ -418,11 +418,11 @@ document.addEventListener("DOMContentLoaded", function () {
         modal.show();
     });
 
-    // Acción de confirmación
+    // Confirmation action
     syncBtn.addEventListener("click", function () {
         if (!selectedDatasetId) return;
 
-        // Cambiar estado del botón
+        // Toggle button state
         syncBtn.disabled = true;
         syncBtnText.textContent = "Synchronizing...";
         syncBtn.insertAdjacentHTML("beforeend", '<span class="spinner-border spinner-border-sm ms-2"></span>');
@@ -439,7 +439,7 @@ document.addEventListener("DOMContentLoaded", function () {
             })
             .catch(err => toastr.error("Unexpected error: " + err))
             .finally(() => {
-                // restaurar botón si NO recargas
+                // Restore the button if we're not reloading
                 syncBtn.disabled = false;
                 syncBtnText.textContent = "Sync now";
                 syncBtn.querySelector(".spinner-border")?.remove();

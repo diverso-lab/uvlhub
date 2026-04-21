@@ -12,7 +12,7 @@ from app.modules.hubfile.repositories import HubfileRepository
 
 def test_create_hubfile_calls_enqueue_tasks(test_client):
     with patch("core.managers.task_queue_manager.TaskQueueManager.enqueue_task") as mock_enqueue_task:
-        # Crear entidades mínimas
+        # Create minimal entities
         user = UserRepository().create(password="foo")
         dsmetadata = DSMetaDataRepository().create(
             title="test",
@@ -40,17 +40,17 @@ def test_create_hubfile_calls_enqueue_tasks(test_client):
             "test.uvl",
         )
 
-        # Verificar número de llamadas
+        # Verify call count
         assert mock_enqueue_task.call_count == 3
 
-        # Verificar que se llamó a transform_uvl
+        # Verify transform_uvl was called
         mock_enqueue_task.assert_any_call(
             "app.modules.hubfile.tasks.transform_uvl",
             path=path,
             timeout=5,
         )
 
-        # Verificar que se llamó a compute_factlabel
+        # Verify compute_factlabel was called
         mock_enqueue_task.assert_any_call(
             "app.modules.hubfile.tasks.compute_factlabel",
             hubfile_id=hubfile.id,
