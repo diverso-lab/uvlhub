@@ -2,6 +2,30 @@
 
 {% set title = dataset.ds_meta_data.title %}
 
+{% block head_extra %}
+    {% if fair_meta %}
+    <link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+    <link rel="schema.DCTERMS" href="http://purl.org/dc/terms/">
+    {% if fair_meta.doi_url %}
+    <link rel="canonical" href="{{ fair_meta.doi_url }}">
+    <link rel="cite-as" href="{{ fair_meta.doi_url }}">
+    <link rel="alternate" type="application/vnd.datacite.datacite+json" href="{{ fair_meta.landing_url }}">
+    {% else %}
+    <link rel="canonical" href="{{ fair_meta.landing_url }}">
+    {% endif %}
+    <link rel="license" href="{{ fair_meta.license_url }}">
+    <link rel="describedby" type="application/ld+json" href="{{ fair_meta.landing_url }}">
+    <link rel="describedby" type="text/turtle" href="{{ fair_meta.landing_url }}">
+    <link rel="type" href="https://schema.org/Dataset">
+    <link rel="type" href="http://purl.org/dc/dcmitype/Dataset">
+    {% if fair_meta.zenodo_url %}<link rel="alternate" href="{{ fair_meta.zenodo_url }}">{% endif %}
+    {% for name, content in fair_meta.dc_tags %}
+    <meta name="{{ name }}" content="{{ content }}">
+    {% endfor %}
+    <script type="application/ld+json">{{ fair_meta.json_ld_str|safe }}</script>
+    {% endif %}
+{% endblock %}
+
 {% block breadcrumb %}
 <ol class="breadcrumb text-muted fs-6 fw-semibold">
     <li class="breadcrumb-item"><a href="/" class="">Home</a></li>

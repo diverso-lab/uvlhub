@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import shutil
@@ -31,7 +32,7 @@ from werkzeug.utils import secure_filename
 from app import db
 from app.modules.apikeys.decorators import require_api_key
 from app.modules.auth.services import AuthenticationService
-from app.modules.dataset import dataset_bp
+from app.modules.dataset import dataset_bp, fair_metadata
 from app.modules.dataset.decorators import is_dataset_owner
 from app.modules.dataset.forms import DataSetForm
 from app.modules.dataset.models import DataSet, PublicationType
@@ -512,11 +513,75 @@ def subdomain_index(doi):
         abort(404)
 
     dataset = ds_meta_data.dataset
+    host_url = request.host_url
+    link_header = fair_metadata.build_link_header(dataset, host_url)
 
+    # Content negotiation: machine clients get structured metadata directly.
+    accept = request.accept_mimetypes
+    best = accept.best_match(
+        [
+            "text/html",
+            "text/turtle",
+            "application/x-turtle",
+            "application/rdf+xml",
+            "application/ld+json",
+            "application/vnd.datacite.datacite+json",
+        ],
+        default="text/html",
+    )
+
+    if best in ("text/turtle", "application/x-turtle", "application/rdf+xml"):
+        payload = fair_metadata.build_turtle(dataset, host_url)
+        resp = make_response(payload, 200)
+        resp.headers["Content-Type"] = "text/turtle; charset=utf-8"
+        resp.headers["Link"] = link_header
+        resp.headers["Vary"] = "Accept"
+        return resp
+    if best == "application/ld+json":
+        payload = json.dumps(
+            fair_metadata.build_json_ld(dataset, host_url),
+            indent=2,
+            ensure_ascii=False,
+        )
+        resp = make_response(payload, 200)
+        resp.headers["Content-Type"] = "application/ld+json; charset=utf-8"
+        resp.headers["Link"] = link_header
+        resp.headers["Vary"] = "Accept"
+        return resp
+    if best == "application/vnd.datacite.datacite+json":
+        payload = json.dumps(
+            fair_metadata.build_datacite_json(dataset),
+            indent=2,
+            ensure_ascii=False,
+        )
+        resp = make_response(payload, 200)
+        resp.headers["Content-Type"] = "application/vnd.datacite.datacite+json; charset=utf-8"
+        resp.headers["Link"] = link_header
+        resp.headers["Vary"] = "Accept"
+        return resp
+
+    # HTML fallback (default for browsers and crawlers)
     hubfiles = [file for fm in dataset.feature_models for file in fm.hubfiles]
     selected_file, uvl_content = _preload_first_file(dataset, hubfiles)
 
     user_cookie = ds_view_record_service.create_cookie(dataset=dataset)
+
+    meta = dataset.ds_meta_data
+    json_ld_payload = json.dumps(
+        fair_metadata.build_json_ld(dataset, host_url),
+        ensure_ascii=False,
+        indent=2,
+    ).replace("</", "<\\/")
+    fair_meta = {
+        "dc_tags": fair_metadata.build_dublin_core_tags(dataset),
+        "json_ld_str": json_ld_payload,
+        "landing_url": f"{host_url.rstrip('/')}/doi/{meta.dataset_doi or ''}/",
+        "doi_url": (f"https://doi.org/{meta.dataset_doi}" if meta.dataset_doi else None),
+        "license_url": fair_metadata.CC_BY_40,
+        "zenodo_url": (
+            f"https://zenodo.org/record/{meta.deposition_id}" if meta.deposition_id else None
+        ),
+    }
 
     resp = make_response(
         render_template(
@@ -525,9 +590,12 @@ def subdomain_index(doi):
             hubfiles=hubfiles,
             selected_file=selected_file,
             uvl_content=uvl_content,
+            fair_meta=fair_meta,
         )
     )
     resp.set_cookie("view_cookie", user_cookie)
+    resp.headers["Link"] = link_header
+    resp.headers["Vary"] = "Accept"
     return resp
 
 
