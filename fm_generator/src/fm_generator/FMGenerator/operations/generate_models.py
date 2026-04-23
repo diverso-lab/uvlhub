@@ -1,29 +1,44 @@
 import random
 import string
-from enum import Enum
-from dataclasses import dataclass, field
 from flamapy.metamodels.fm_metamodel.models.feature_model import (
-    FeatureModel, Feature, Relation, Constraint, Attribute, Domain, Range, Cardinality, FeatureType
-)
+    FeatureModel,
+    Feature,
+    Relation,
+    Constraint,
+    Attribute,
+    Domain,
+    Range,
+    Cardinality,
+    FeatureType)
 from flamapy.core.models.ast import AST, ASTOperation, Node
 from fm_generator.FMGenerator.models.config import Params
 from flamapy.core.discover import DiscoverMetamodels
 
 
-def generate_random_attributes(params: Params, features: list[Feature]) -> None:
-    num_attributes = random.randint(params.MIN_ATTRIBUTES, params.MAX_ATTRIBUTES)
+def generate_random_attributes(
+        params: Params,
+        features: list[Feature]) -> None:
+    num_attributes = random.randint(
+        params.MIN_ATTRIBUTES,
+        params.MAX_ATTRIBUTES)
 
     arithmetic_level_enabled = bool(getattr(params, "ARITHMETIC_LEVEL", False))
-    min_vars_per_constraint = int(getattr(params, "MIN_VARS_PER_CONSTRAINT", 1))
-    extra_constraint_repr = max(1, int(getattr(params, "EXTRA_CONSTRAINT_REPRESENTATIVENESS", 1)))
+    min_vars_per_constraint = int(
+        getattr(params, "MIN_VARS_PER_CONSTRAINT", 1))
+    extra_constraint_repr = max(
+        1, int(getattr(params, "EXTRA_CONSTRAINT_REPRESENTATIVENESS", 1)))
 
     # Si hay nivel aritmético, necesitamos suficientes attrs numéricos
     # repartidos en features distintas para que las constraints numéricas
     # sean realmente viables.
     required_numeric_attrs = 0
     if arithmetic_level_enabled:
-        required_numeric_attrs = (min_vars_per_constraint + extra_constraint_repr - 1) // extra_constraint_repr
-        required_numeric_attrs = min(required_numeric_attrs, num_attributes, len(features))
+        required_numeric_attrs = (
+            min_vars_per_constraint + extra_constraint_repr - 1) // extra_constraint_repr
+        required_numeric_attrs = min(
+            required_numeric_attrs,
+            num_attributes,
+            len(features))
 
     available_features_for_numeric = features[:]
     random.shuffle(available_features_for_numeric)
@@ -64,7 +79,10 @@ def generate_random_attributes(params: Params, features: list[Feature]) -> None:
             letters = string.ascii_letters + string.digits
             default = ''.join(random.choices(letters, k=length))
 
-        attribute = Attribute(name=attr_name, domain=domain, default_value=default)
+        attribute = Attribute(
+            name=attr_name,
+            domain=domain,
+            default_value=default)
         attribute.set_parent(feature)
         feature.add_attribute(attribute)
 
@@ -81,7 +99,8 @@ def assign_manual_attributes(params: Params, features: list[Feature]) -> None:
         value = attr.get("value")
         min_value = attr.get("min_value")
         max_value = attr.get("max_value")
-        attach_prob = attr.get("attach_probability", 1.0)  # Por defecto 1.0 (seguro se añade)
+        # Por defecto 1.0 (seguro se añade)
+        attach_prob = attr.get("attach_probability", 1.0)
 
         if type_ == "boolean":
             domain_values = value
@@ -99,6 +118,7 @@ def assign_manual_attributes(params: Params, features: list[Feature]) -> None:
                 else:
                     domain_values = [True, False]
             domain = Domain(ranges=None, elements=domain_values)
+
             def gen_default():
                 return random.choice(domain_values)
 
@@ -112,6 +132,7 @@ def assign_manual_attributes(params: Params, features: list[Feature]) -> None:
             except Exception:
                 max_v = 10
             domain = Domain(ranges=[Range(min_v, max_v)], elements=None)
+
             def gen_default():
                 return random.randint(min_v, max_v)
 
@@ -125,6 +146,7 @@ def assign_manual_attributes(params: Params, features: list[Feature]) -> None:
             except Exception:
                 max_v = 1.0
             domain = Domain(ranges=[Range(min_v, max_v)], elements=None)
+
             def gen_default():
                 return round(random.uniform(min_v, max_v), 3)
 
@@ -138,6 +160,7 @@ def assign_manual_attributes(params: Params, features: list[Feature]) -> None:
             except Exception:
                 max_len = 10
             domain = Domain(ranges=[Range(min_len, max_len)], elements=None)
+
             def gen_default():
                 length = random.randint(min_len, max_len)
                 letters = string.ascii_letters + string.digits
@@ -149,7 +172,8 @@ def assign_manual_attributes(params: Params, features: list[Feature]) -> None:
         for feature in features:
             if random.random() < float(attach_prob):
                 default = gen_default()
-                attribute = Attribute(name=name, domain=domain, default_value=default)
+                attribute = Attribute(
+                    name=name, domain=domain, default_value=default)
                 attribute.set_parent(feature)
                 feature.add_attribute(attribute)
 
@@ -208,6 +232,7 @@ def feature_constraint_bucket(feature: Feature, params: Params) -> str:
 def constraints_must_be_boolean_only(params: Params) -> bool:
     return bool(getattr(params, "ENSURE_SATISFIABLE", False))
 
+
 def select_relation_types(params: Params, total: int) -> list[str]:
     return random.choices(
         population=['mand', 'opt', 'alt', 'or', 'group'],
@@ -221,8 +246,10 @@ def select_relation_types(params: Params, total: int) -> list[str]:
         k=total
     )
 
+
 def determine_group_size(pool_size: int, params: Params) -> int:
     return random.randint(1, min(params.GROUP_CARDINALITY_MAX, pool_size))
+
 
 def maybe_apply_feature_cardinality(feature: Feature, params: Params) -> None:
     if not getattr(params, "FEATURE_CARDINALITY", False):
@@ -243,6 +270,7 @@ def maybe_apply_feature_cardinality(feature: Feature, params: Params) -> None:
 
     feature.feature_cardinality = Cardinality(fc_min, fc_max)
 
+
 def maybe_set_feature_cardinality(feature: Feature, params: Params) -> None:
     if not getattr(params, "FEATURE_CARDINALITY", False):
         return
@@ -260,31 +288,50 @@ def maybe_set_feature_cardinality(feature: Feature, params: Params) -> None:
     fc_min = random.randint(fc_min_cfg, fc_max_cfg)
     fc_max = random.randint(fc_min, fc_max_cfg)
 
-    # 🔥 AQUÍ ESTÁ LA CLAVE
     feature.cardinality_min = fc_min
     feature.cardinality_max = fc_max
 
 
-def create_relation(parent: Feature, children: list[Feature], rel_kind: str, params: Params) -> list[Relation]:
+def create_relation(
+        parent: Feature,
+        children: list[Feature],
+        rel_kind: str,
+        params: Params) -> list[Relation]:
     size = len(children)
     relations = []
 
     if rel_kind == 'mand':
         for child in children:
-            rel = Relation(parent=parent, children=[child], card_min=1, card_max=1)
+            rel = Relation(
+                parent=parent,
+                children=[child],
+                card_min=1,
+                card_max=1)
             relations.append(rel)
 
     elif rel_kind == 'opt':
         for child in children:
-            rel = Relation(parent=parent, children=[child], card_min=0, card_max=1)
+            rel = Relation(
+                parent=parent,
+                children=[child],
+                card_min=0,
+                card_max=1)
             relations.append(rel)
 
     elif rel_kind == 'alt':
-        rel = Relation(parent=parent, children=children, card_min=1, card_max=1)
+        rel = Relation(
+            parent=parent,
+            children=children,
+            card_min=1,
+            card_max=1)
         relations.append(rel)
 
     elif rel_kind == 'or':
-        rel = Relation(parent=parent, children=children, card_min=1, card_max=size)
+        rel = Relation(
+            parent=parent,
+            children=children,
+            card_min=1,
+            card_max=size)
         relations.append(rel)
 
     else:
@@ -294,13 +341,20 @@ def create_relation(parent: Feature, children: list[Feature], rel_kind: str, par
             min_bound = max_bound
         card_min = random.randint(min_bound, max_bound)
         card_max = random.randint(card_min, max_bound)
-        rel = Relation(parent=parent, children=children, card_min=card_min, card_max=card_max)
+        rel = Relation(
+            parent=parent,
+            children=children,
+            card_min=card_min,
+            card_max=card_max)
         relations.append(rel)
 
     return relations
 
 
-def add_relations_to_level(parents: list[Feature], children: list[Feature], params: Params) -> None:
+def add_relations_to_level(
+        parents: list[Feature],
+        children: list[Feature],
+        params: Params) -> None:
     total = len(children)
     rel_types = select_relation_types(params, total)
     random.shuffle(rel_types)
@@ -324,7 +378,7 @@ def generate_hierarchy(params: Params) -> tuple[FeatureModel, list[Feature]]:
     root = Feature(name="F0")
     fm = FeatureModel(root=root)
     numFeats = random.randint(params.MIN_FEATURES, params.MAX_FEATURES)
-    names = [f"F{i+1}" for i in range(numFeats)]
+    names = [f"F{i + 1}" for i in range(numFeats)]
     features = [Feature(name=n) for n in names]
     for feature in features:
         maybe_apply_feature_type(feature, params)
@@ -354,13 +408,10 @@ def generate_hierarchy(params: Params) -> tuple[FeatureModel, list[Feature]]:
     return fm, [f for f in features if f.name in connected]
 
 
-
-def add_constraints(fm: FeatureModel, features: list[Feature], params: Params) -> None:
-    # Attributes usables en constraints
-    # - Manual attributes: use_in_constraints decide si pueden entrar,
-    #   y attach_probability también actúa como probabilidad de aparición en cada constraint
-    # - Random attributes:
-    #   siempre tienen attach_probability fija = 0.3 también para constraints
+def add_constraints(
+        fm: FeatureModel,
+        features: list[Feature],
+        params: Params) -> None:
     RANDOM_ATTR_CONSTRAINT_PROB = 0.8
     boolean_only_constraints = constraints_must_be_boolean_only(params)
     attrs_bool: list[tuple[Feature, Attribute, float]] = []
@@ -378,10 +429,13 @@ def add_constraints(fm: FeatureModel, features: list[Feature], params: Params) -
             # -------------------------
             if hasattr(params, "ATTRIBUTES_LIST"):
                 for attr_dict in params.ATTRIBUTES_LIST:
-                    if attr_dict.get("name") == attr.name and feat.name and attr.name:
+                    if attr_dict.get(
+                            "name") == attr.name and feat.name and attr.name:
                         attr_type = (attr_dict.get("type", "") or "").lower()
-                        use_in_constraints = attr_dict.get("use_in_constraints", False)
-                        constraint_probability = float(attr_dict.get("attach_probability", 1.0))
+                        use_in_constraints = attr_dict.get(
+                            "use_in_constraints", False)
+                        constraint_probability = float(
+                            attr_dict.get("attach_probability", 1.0))
                         break
 
             # -------------------------
@@ -393,7 +447,8 @@ def add_constraints(fm: FeatureModel, features: list[Feature], params: Params) -
                 raw_attr_type = getattr(attr, "attribute_type", None)
 
                 if raw_attr_type is not None:
-                    attr_type = getattr(raw_attr_type, "value", str(raw_attr_type)).lower()
+                    attr_type = getattr(
+                        raw_attr_type, "value", str(raw_attr_type)).lower()
                 else:
                     domain = getattr(attr, "domain", None)
                     elements = getattr(domain, "elements", None) or []
@@ -406,7 +461,11 @@ def add_constraints(fm: FeatureModel, features: list[Feature], params: Params) -
                         range_min = getattr(r, "min_value", None)
                         range_max = getattr(r, "max_value", None)
 
-                        if isinstance(range_min, int) and isinstance(range_max, int):
+                        if isinstance(
+                                range_min,
+                                int) and isinstance(
+                                range_max,
+                                int):
                             attr_type = "integer"
                         elif isinstance(range_min, float) or isinstance(range_max, float):
                             attr_type = "real"
@@ -426,7 +485,8 @@ def add_constraints(fm: FeatureModel, features: list[Feature], params: Params) -
             if not use_in_constraints:
                 continue
 
-            constraint_probability = max(0.0, min(float(constraint_probability), 1.0))
+            constraint_probability = max(
+                0.0, min(float(constraint_probability), 1.0))
             attr_tuple = (feat, attr, constraint_probability)
 
             if attr_type == "boolean":
@@ -450,13 +510,21 @@ def add_constraints(fm: FeatureModel, features: list[Feature], params: Params) -
                         attrs_str.append(attr_tuple)
 
     if boolean_only_constraints:
-        feats_bool = [f for f in features if feature_constraint_bucket(f, params) == "bool"]
+        feats_bool = [
+            f for f in features if feature_constraint_bucket(
+                f, params) == "bool"]
         feats_num = []
         feats_str = []
     else:
-        feats_bool = [f for f in features if feature_constraint_bucket(f, params) == "bool"]
-        feats_num = [f for f in features if feature_constraint_bucket(f, params) == "num"]
-        feats_str = [f for f in features if feature_constraint_bucket(f, params) == "string"]
+        feats_bool = [
+            f for f in features if feature_constraint_bucket(
+                f, params) == "bool"]
+        feats_num = [
+            f for f in features if feature_constraint_bucket(
+                f, params) == "num"]
+        feats_str = [
+            f for f in features if feature_constraint_bucket(
+                f, params) == "string"]
 
     def filter_attrs_for_constraint(
         attr_pool: list[tuple[Feature, Attribute, float]]
@@ -475,7 +543,8 @@ def add_constraints(fm: FeatureModel, features: list[Feature], params: Params) -
             return filtered_pool
 
         # Si no ha entrado ninguno por probabilidad, damos una oportunidad
-        # a que entre uno al menos, escogido ponderadamente por su attach_probability.
+        # a que entre uno al menos, escogido ponderadamente por su
+        # attach_probability.
         weights = [max(0.0, prob) for _, _, prob in original_pool]
         if sum(weights) <= 0.0:
             return []
@@ -493,7 +562,8 @@ def add_constraints(fm: FeatureModel, features: list[Feature], params: Params) -
             return filtered
 
         for fid, values in len_groups.items():
-            selected_values = [value for value in values if random.random() < len_prob]
+            selected_values = [
+                value for value in values if random.random() < len_prob]
             if selected_values:
                 filtered[fid] = selected_values
 
@@ -516,7 +586,8 @@ def add_constraints(fm: FeatureModel, features: list[Feature], params: Params) -
     max_reps = max(1, max_reps)
     max_reps = min(max_reps, max_vars)
 
-    # MAX_FEATURES del step2: lo usamos como máximo de FEATURES DISTINTAS por constraint
+    # MAX_FEATURES del step2: lo usamos como máximo de FEATURES DISTINTAS por
+    # constraint
     max_features_param = int(getattr(params, "MAX_FEATURES", 10))
     max_features_param = max(1, max_features_param)
 
@@ -524,7 +595,11 @@ def add_constraints(fm: FeatureModel, features: list[Feature], params: Params) -
     # Helpers de operaciones
     # -----------------------------
     def pick_bool_op() -> ASTOperation:
-        ops = [ASTOperation.AND, ASTOperation.OR, ASTOperation.IMPLIES, ASTOperation.EQUIVALENCE]
+        ops = [
+            ASTOperation.AND,
+            ASTOperation.OR,
+            ASTOperation.IMPLIES,
+            ASTOperation.EQUIVALENCE]
         weights = [
             float(getattr(params, "PROB_AND", 0.7)),
             float(getattr(params, "PROB_OR_CT", 0.1)),
@@ -606,10 +681,9 @@ def add_constraints(fm: FeatureModel, features: list[Feature], params: Params) -
 
         for _ in range(target_occ):
             allowed_fids = [
-                fid for fid in groups
-                if feature_usage.get(fid, 0) < max_reps
-                and (fid in selected_features or len(selected_features) < max_features_param)
-            ]
+                fid for fid in groups if feature_usage.get(
+                    fid, 0) < max_reps and (
+                    fid in selected_features or len(selected_features) < max_features_param)]
 
             if not allowed_fids:
                 return None
@@ -672,7 +746,6 @@ def add_constraints(fm: FeatureModel, features: list[Feature], params: Params) -
         weights = [prob_sum_function, prob_avg_function]
         return random.choices(names, weights=weights, k=1)[0]
 
-
     def build_function_node(func_name: str, keys: list[str]) -> Node:
         args = ", ".join(keys)
         return Node(f"{func_name}({args})")
@@ -685,7 +758,9 @@ def add_constraints(fm: FeatureModel, features: list[Feature], params: Params) -
     def build_function_style_node(expr: str) -> Node:
         return Node(expr)
 
-    def build_plain_arith_expr(keys: list[str], len_eligible_keys: set[str] | None = None) -> Node:
+    def build_plain_arith_expr(
+            keys: list[str],
+            len_eligible_keys: set[str] | None = None) -> Node:
         len_eligible_keys = len_eligible_keys or set()
 
         first_key = maybe_wrap_key_with_len(keys[0], len_eligible_keys)
@@ -693,7 +768,10 @@ def add_constraints(fm: FeatureModel, features: list[Feature], params: Params) -
 
         for k in keys[1:]:
             wrapped_key = maybe_wrap_key_with_len(k, len_eligible_keys)
-            cur = Node(pick_binary_arith_op(), cur, build_function_style_node(wrapped_key))
+            cur = Node(
+                pick_binary_arith_op(),
+                cur,
+                build_function_style_node(wrapped_key))
 
         return cur
 
@@ -731,11 +809,13 @@ def add_constraints(fm: FeatureModel, features: list[Feature], params: Params) -
         ]
         return build_function_node(agg_name, wrapped_keys)
 
-    def build_arith_expr(keys: list[str], len_eligible_keys: set[str] | None = None) -> Node:
+    def build_arith_expr(
+            keys: list[str],
+            len_eligible_keys: set[str] | None = None) -> Node:
         expr = build_plain_arith_expr(keys, len_eligible_keys)
         expr = maybe_wrap_with_aggregate(expr, keys, len_eligible_keys)
         return expr
-    
+
     def build_boolean_predicate(keys: list[str]) -> Node | None:
         if not keys:
             return None
@@ -746,7 +826,6 @@ def add_constraints(fm: FeatureModel, features: list[Feature], params: Params) -
             return literals[0]
 
         return build_left_deep_bool_ast(literals)
-
 
     def build_numeric_predicate(
         keys: list[str],
@@ -768,7 +847,6 @@ def add_constraints(fm: FeatureModel, features: list[Feature], params: Params) -
         expr_right = build_arith_expr(right_keys, len_eligible_keys)
         return Node(pick_cmp_op(), expr_left, expr_right)
 
-
     def build_string_predicate(keys: list[str]) -> Node | None:
         if len(keys) < 2:
             return None
@@ -779,7 +857,8 @@ def add_constraints(fm: FeatureModel, features: list[Feature], params: Params) -
         eq_nodes: list[Node] = []
         i = 0
         while i + 1 < len(keys):
-            eq_nodes.append(Node(ASTOperation.EQUALS, Node(keys[i]), Node(keys[i + 1])))
+            eq_nodes.append(
+                Node(ASTOperation.EQUALS, Node(keys[i]), Node(keys[i + 1])))
             i += 2
 
         if not eq_nodes:
@@ -788,7 +867,6 @@ def add_constraints(fm: FeatureModel, features: list[Feature], params: Params) -
             return eq_nodes[0]
 
         return build_left_deep_bool_ast(eq_nodes)
-
 
     def pick_predicate_kind(available_kinds: list[str]) -> str:
         weights = []
@@ -806,7 +884,6 @@ def add_constraints(fm: FeatureModel, features: list[Feature], params: Params) -
             return random.choice(available_kinds)
 
         return random.choices(available_kinds, weights=weights, k=1)[0]
-
 
     def build_mixed_constraint(
         bool_groups: dict[str, list[str]],
@@ -850,9 +927,11 @@ def add_constraints(fm: FeatureModel, features: list[Feature], params: Params) -
                     kind = pick_predicate_kind(available_kinds)
 
                 if kind == "bool":
-                    # Para no generar monstruos, un predicado booleano consume entre 1 y 3 vars
+                    # Para no generar monstruos, un predicado booleano consume
+                    # entre 1 y 3 vars
                     occ = random.randint(1, min(3, remaining))
-                    chosen = sample_keys_with_ecr(bool_groups, occ, feature_usage, selected_features)
+                    chosen = sample_keys_with_ecr(
+                        bool_groups, occ, feature_usage, selected_features)
                     if not chosen:
                         break
                     node = build_boolean_predicate(chosen)
@@ -866,7 +945,8 @@ def add_constraints(fm: FeatureModel, features: list[Feature], params: Params) -
                     merged_num_groups: dict[str, list[str]] = {}
                     for source in (num_groups, numeric_len_groups):
                         for fid, values in source.items():
-                            merged_num_groups.setdefault(fid, []).extend(values)
+                            merged_num_groups.setdefault(
+                                fid, []).extend(values)
 
                     chosen = sample_keys_with_ecr(
                         merged_num_groups,
@@ -889,7 +969,8 @@ def add_constraints(fm: FeatureModel, features: list[Feature], params: Params) -
                     if max_occ < 2:
                         break
                     occ = random.randint(2, max_occ)
-                    chosen = sample_keys_with_ecr(str_groups, occ, feature_usage, selected_features)
+                    chosen = sample_keys_with_ecr(
+                        str_groups, occ, feature_usage, selected_features)
                     if not chosen:
                         break
                     node = build_string_predicate(chosen)
@@ -926,9 +1007,12 @@ def add_constraints(fm: FeatureModel, features: list[Feature], params: Params) -
             attrs_str
         )
 
-        bool_pool = [f.name for f in feats_bool] + [f"{f.name}.{a.name}" for f, a in filtered_bool_attrs]
-        num_pool = [f.name for f in feats_num] + [f"{f.name}.{a.name}" for f, a in filtered_num_attrs]
-        str_pool = [f.name for f in feats_str] + [f"{f.name}.{a.name}" for f, a in filtered_str_attrs]
+        bool_pool = [f.name for f in feats_bool] + \
+            [f"{f.name}.{a.name}" for f, a in filtered_bool_attrs]
+        num_pool = [f.name for f in feats_num] + \
+            [f"{f.name}.{a.name}" for f, a in filtered_num_attrs]
+        str_pool = [f.name for f in feats_str] + \
+            [f"{f.name}.{a.name}" for f, a in filtered_str_attrs]
 
         bool_groups = group_keys_by_feature(list(set(bool_pool)))
         num_groups = group_keys_by_feature(list(set(num_pool)))
@@ -944,10 +1028,12 @@ def add_constraints(fm: FeatureModel, features: list[Feature], params: Params) -
             and getattr(params, "STRING_CONSTRAINTS", False)
         ):
             len_pool.extend([f.name for f in feats_str])
-            len_pool.extend([f"{f.name}.{a.name}" for f, a in filtered_str_attrs])
+            len_pool.extend(
+                [f"{f.name}.{a.name}" for f, a in filtered_str_attrs])
 
         len_groups = group_keys_by_feature(list(set(len_pool)))
-        numeric_len_groups = filter_len_groups_for_numeric_use(len_groups, len_prob)
+        numeric_len_groups = filter_len_groups_for_numeric_use(
+            len_groups, len_prob)
 
         # capacidad aproximada total: suma de capacidades por bucket
         total_capacity = 0
@@ -1006,8 +1092,10 @@ def build_uvl_includes(params: Params) -> list[str]:
     if getattr(params, "GROUP_CARDINALITY", False):
         includes.append("Boolean.group-cardinality")
 
-    arithmetic_feature_cardinality = bool(getattr(params, "FEATURE_CARDINALITY", False))
-    arithmetic_aggregate_functions = bool(getattr(params, "AGGREGATE_FUNCTIONS", False))
+    arithmetic_feature_cardinality = bool(
+        getattr(params, "FEATURE_CARDINALITY", False))
+    arithmetic_aggregate_functions = bool(
+        getattr(params, "AGGREGATE_FUNCTIONS", False))
 
     if arithmetic_feature_cardinality and arithmetic_aggregate_functions:
         includes.append("Arithmetic.*")
@@ -1017,7 +1105,13 @@ def build_uvl_includes(params: Params) -> list[str]:
         if arithmetic_feature_cardinality:
             includes.append("Arithmetic.feature-cardinality")
 
-    if getattr(params, "TYPE_LEVEL", False) and getattr(params, "STRING_CONSTRAINTS", False):
+    if getattr(
+        params,
+        "TYPE_LEVEL",
+        False) and getattr(
+        params,
+        "STRING_CONSTRAINTS",
+            False):
         includes.append("Type.string-constraints")
 
     return includes
@@ -1041,7 +1135,10 @@ def is_model_satisfiable(feature_model: FeatureModel) -> bool:
         return False
 
 
-def generate_single_model(params: Params, index: int, attempt: int = 0) -> FeatureModel:
+def generate_single_model(
+        params: Params,
+        index: int,
+        attempt: int = 0) -> FeatureModel:
     seed_value = params.SEED + index + (attempt * SAT_SEED_STRIDE)
     random.seed(seed_value)
 

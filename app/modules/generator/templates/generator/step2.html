@@ -265,15 +265,6 @@
                         <div class="text-danger">{{ errors['dist_or'] }}</div>
                     {% endif %}
                 </div>
-                <!-- QUITA este bloque:
-                <div class="col">
-                    <label for="dist_group_cardinality" class="form-label">Group cardinality:</label>
-                    <input type="number" class="form-control" step="0.01" min="0" max="1" id="dist_group_cardinality" name="dist_group_cardinality" value="{{ values.get('dist_group_cardinality', 0.0) }}">
-                    {% if errors.get('dist_group_cardinality') %}
-                        <div class="text-danger">{{ errors['dist_group_cardinality'] }}</div>
-                    {% endif %}
-                </div>
-                -->
             </div>
             <div class="mt-2" id="rel_sum_display"
                 style="font-weight:bold; color:{% if values.get('rel_dist_total', '1.0000') != '1.0000' %}red{% else %}green{% endif %};">
@@ -504,7 +495,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
-    updateRelSum(); // Inicial
+    updateRelSum();
     updateTypeDistSum();
 });
 </script>

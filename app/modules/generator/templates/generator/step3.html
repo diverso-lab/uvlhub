@@ -11,8 +11,7 @@
 <div class="row justify-content-center">
     <div class="col-md-8">
 
-        <!-- ─────────────────────────────────────────────────────────────────────── -->
-        <!-- Checkbox oculto para “Aggregate functions”                             -->
+        <!-- Checkbox oculto para “Aggregate functions” -->
         <input type="checkbox"
             id="aggregate_functions"
             name="aggregate_functions"
@@ -510,17 +509,6 @@ document.addEventListener("DOMContentLoaded", function () {
             (Math.abs(sum - 1.0) < 0.001) ? 'green' : 'red';
     }
 
-    // Constraint type dist (comentado)
-    
-    /*
-    let ctc_ids = ['ctc_dist_boolean', 'ctc_dist_numeric', 'ctc_dist_aggregate', 'ctc_dist_string'];
-    ctc_ids.forEach(id => {
-        let el = document.getElementsByName(id)[0];
-        if (el) el.addEventListener('input', () => updateSum(ctc_ids, 'ctc_dist_total'));
-    });
-    updateSum(ctc_ids, 'ctc_dist_total');
-    */
-
     // Boolean ops
     let boolop_ids = ['prob_and', 'prob_or', 'prob_implies', 'prob_equiv'];
     boolop_ids.forEach(id => {
@@ -583,6 +571,4 @@ document.addEventListener("DOMContentLoaded", function () {
         updateSum(cmp_ids, 'cmp_sum');
     }});
 </script>
-<!--<script src="{{ url_for('generator.assets', subfolder='js', filename='scripts.js') }}"></script>
--->
 {% endblock %}

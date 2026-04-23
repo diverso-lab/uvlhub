@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from flamapy.metamodels.fm_metamodel.models.feature_model import Attribute
 
+
 @dataclass
 class Params:
     # Paso 1: General
@@ -47,14 +48,12 @@ class Params:
     MIN_VARS_PER_CONSTRAINT: int = 1
     MAX_VARS_PER_CONSTRAINT: int = 3
 
-
     # NO REFLEJADO EN EL GENERADOR AÚN
     CTC_DIST_BOOLEAN: float = 0.7
     CTC_DIST_NUMERIC: float = 0.2
     CTC_DIST_AGGREGATE: float = 0.1
     CTC_DIST_STRING: float = 0.0
     # NO REFLEJADO EN EL GENERADOR AÚN
-
 
     PROB_NOT: float = 0.1
     PROB_AND: float = 0.4
@@ -66,7 +65,7 @@ class Params:
     PROB_SUBSTRACT: float = 0.2
     PROB_MULTIPLY: float = 0.1
     PROB_DIVIDE: float = 0.0
-    
+
     PROB_EQUALS: float = 0.1
     PROB_LESS: float = 0.2
     PROB_GREATER: float = 0.7
@@ -84,7 +83,6 @@ class Params:
     ATTRIBUTE_ATTACH_PROBS: list[float] = field(default_factory=list)
     ATTRIBUTE_IN_CONSTRAINTS: list[bool] = field(default_factory=list)
 
-
     def __post_init__(self):
         self.BOOLEAN_LEVEL = True  # siempre activado
 
@@ -100,17 +98,19 @@ class Params:
 
         if self.FEATURE_CARDINALITY:
             if self.MIN_FEATURE_CARDINALITY < 1:
-                raise ValueError("[ERROR] MIN_FEATURE_CARDINALITY debe ser al menos 1.")
+                raise ValueError(
+                    "[ERROR] MIN_FEATURE_CARDINALITY debe ser al menos 1.")
             if self.MAX_FEATURE_CARDINALITY < 1:
-                raise ValueError("[ERROR] MAX_FEATURE_CARDINALITY debe ser al menos 1.")
+                raise ValueError(
+                    "[ERROR] MAX_FEATURE_CARDINALITY debe ser al menos 1.")
             if self.MIN_FEATURE_CARDINALITY > self.MAX_FEATURE_CARDINALITY:
                 raise ValueError(
                     "[ERROR] MIN_FEATURE_CARDINALITY no puede ser mayor que MAX_FEATURE_CARDINALITY."
                 )
             if not (0.0 <= self.PROB_FEATURE_CARDINALITY <= 1.0):
                 raise ValueError(
-                    f"[ERROR] PROB_FEATURE_CARDINALITY debe estar entre 0 y 1 (actual: {self.PROB_FEATURE_CARDINALITY})"
-                )
+                    f"[ERROR] PROB_FEATURE_CARDINALITY debe estar entre 0 y 1 (actual: {
+                        self.PROB_FEATURE_CARDINALITY})")
 
         if self.TYPE_LEVEL:
             type_dists = [
@@ -123,8 +123,7 @@ class Params:
             for name, value in type_dists:
                 if not (0.0 <= value <= 1.0):
                     raise ValueError(
-                        f"[ERROR] {name} debe estar entre 0 y 1 (actual: {value})"
-                    )
+                        f"[ERROR] {name} debe estar entre 0 y 1 (actual: {value})")
 
             type_total = (
                 self.DIST_BOOLEAN +
@@ -152,8 +151,7 @@ class Params:
         )
         if abs(total - 1.0) > 1e-6:
             raise ValueError(
-                f"[ERROR] La suma de las probabilidades de relación no es 1.0 (actual: {total})"
-            )
+                f"[ERROR] La suma de las probabilidades de relación no es 1.0 (actual: {total})")
 
         # --- Validación de suma de probabilidades de constraints booleanas ---
         total_ctc = (
@@ -164,8 +162,7 @@ class Params:
         )
         if abs(total_ctc - 1.0) > 1e-6:
             raise ValueError(
-                f"[ERROR] La suma de PROB_AND, PROB_OR_CT, PROB_IMPLICATION y PROB_EQUIVALENCE debe ser 1.0 (actual: {total_ctc})"
-            )
+                f"[ERROR] La suma de PROB_AND, PROB_OR_CT, PROB_IMPLICATION y PROB_EQUIVALENCE debe ser 1.0 (actual: {total_ctc})")
 
         # --- Validación de suma de operadores aritméticos ---
         if self.ARITHMETIC_LEVEL:
@@ -203,26 +200,23 @@ class Params:
             )
             if abs(comparison_total - 1.0) > 1e-6:
                 raise ValueError(
-                    f"[ERROR] La suma de probabilidades de comparación debe ser 1.0 (actual: {comparison_total})"
-                )
+                    f"[ERROR] La suma de probabilidades de comparación debe ser 1.0 (actual: {comparison_total})")
 
         # --- Validaciones de atributos ---
         if self.RANDOM_ATTRIBUTES:
             if self.MIN_ATTRIBUTES is None or self.MAX_ATTRIBUTES is None:
-                raise ValueError("[ERROR] Debes definir MIN_ATTRIBUTES y MAX_ATTRIBUTES si RANDOM_ATTRIBUTES es True.")
+                raise ValueError(
+                    "[ERROR] Debes definir MIN_ATTRIBUTES y MAX_ATTRIBUTES si RANDOM_ATTRIBUTES es True.")
         else:
             if self.MIN_ATTRIBUTES is not None or self.MAX_ATTRIBUTES is not None:
-                raise ValueError("[ERROR] MIN_ATTRIBUTES y MAX_ATTRIBUTES deben ser None si RANDOM_ATTRIBUTES es False.")
-
-            # if len(self.ATTRIBUTES_LIST) != len(self.ATTRIBUTE_ATTACH_PROBS) or len(self.ATTRIBUTES_LIST) != len(self.ATTRIBUTE_IN_CONSTRAINTS):
-            #     raise ValueError("[ERROR] Las listas ATTRIBUTES_LIST, ATTRIBUTE_ATTACH_PROBS y ATTRIBUTE_IN_CONSTRAINTS deben tener la misma longitud.")
+                raise ValueError(
+                    "[ERROR] MIN_ATTRIBUTES y MAX_ATTRIBUTES deben ser None si RANDOM_ATTRIBUTES es False.")
 
             for i, p in enumerate(self.ATTRIBUTE_ATTACH_PROBS):
                 if not (0.0 <= p <= 1.0):
-                    raise ValueError(
-                        f"[ERROR] La probabilidad de aparición del atributo en la posición {i} debe estar entre 0 y 1. Valor recibido: {p}"
-                    )
-        
+                    raise ValueError(f"[ERROR] La probabilidad de aparición del atributo en la posición {
+                        i} debe estar entre 0 y 1. Valor recibido: {p}")
+
         if self.ENSURE_SATISFIABLE:
             # PySAT solo soporta constraints booleanas puras sobre features booleanas.
             # Por tanto, aunque el árbol pueda seguir teniendo tipos y atributos,

@@ -15,8 +15,10 @@ def prepend_uvl_includes(serialized_model: str, includes: list[str]) -> str:
     if not includes:
         return serialized_model
 
-    include_block = "include\n" + "\n".join(f"\t{inc}" for inc in includes) + "\n"
+    include_block = "include\n" + \
+        "\n".join(f"\t{inc}" for inc in includes) + "\n"
     return include_block + serialized_model
+
 
 def build_output_filename(fm: FeatureModel, index: int, params: Params) -> str:
     base_name = (params.NAME_PREFIX or "").strip()
@@ -39,6 +41,7 @@ def build_output_filename(fm: FeatureModel, index: int, params: Params) -> str:
 
     return "_".join(parts) + ".uvl"
 
+
 class FmgeneratorModel(VariabilityModel):
     @staticmethod
     def get_extension() -> str:
@@ -59,9 +62,8 @@ class FmgeneratorModel(VariabilityModel):
 
             if is_model_satisfiable(fm):
                 print(
-                    f"Modelo {index}: modelo booleanamente satisfacible encontrado en intento "
-                    f"{attempt + 1}/{SATISFIABILITY_MAX_ATTEMPTS}"
-                )
+                    f"Modelo {index}: modelo booleanamente satisfacible encontrado en intento " f"{
+                        attempt + 1}/{SATISFIABILITY_MAX_ATTEMPTS}")
                 return fm
 
         raise RuntimeError(
@@ -72,7 +74,8 @@ class FmgeneratorModel(VariabilityModel):
     def generate_models(self, output_dir: str) -> list[FeatureModel]:
         print(self.params)
 
-        fms = [self._generate_one_model(i) for i in range(self.params.NUM_MODELS)]
+        fms = [self._generate_one_model(i)
+               for i in range(self.params.NUM_MODELS)]
 
         for i in range(len(fms)):
             filename = build_output_filename(fms[i], i, self.params)
