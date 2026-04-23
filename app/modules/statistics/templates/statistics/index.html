@@ -1,6 +1,22 @@
 {% extends "base_template.html" %}
 {% set title = "Dashboard" %}
 
+{# ─────────────────────────────────────────────────────────────────────────
+   Reusable macros
+   ───────────────────────────────────────────────────────────────────────── #}
+
+{% macro _kpi(label, value, icon, color) -%}
+<div class="col-6 col-md-4 col-lg-2">
+    <div class="card text-center h-100">
+        <div class="card-body py-4">
+            <i data-feather="{{ icon }}" class="mb-2 text-{{ color }}" style="width:28px;height:28px;"></i>
+            <div class="fs-2 fw-bold">{{ value }}</div>
+            <div class="text-muted fs-7">{{ label }}</div>
+        </div>
+    </div>
+</div>
+{%- endmacro %}
+
 {% macro _top_table(title_, rows, value_label, badge_class, icon) -%}
 <div class="card h-100">
     <div class="card-header">
@@ -40,6 +56,69 @@
 </div>
 {%- endmacro %}
 
+{% macro _stats_card(title_, summary, icon) -%}
+<div class="card h-100">
+    <div class="card-header">
+        <h3 class="card-title">
+            <i data-feather="{{ icon }}" class="me-2"></i>
+            {{ title_ }}
+        </h3>
+    </div>
+    <div class="card-body p-0">
+        {% if summary.count %}
+        <table class="table table-row-dashed mb-0">
+            <tbody>
+                <tr><td class="ps-6 text-muted">n</td>           <td class="text-end pe-6 fw-semibold">{{ summary.count }}</td></tr>
+                <tr><td class="ps-6 text-muted">min</td>         <td class="text-end pe-6">{{ summary.min }}</td></tr>
+                <tr><td class="ps-6 text-muted">Q1</td>          <td class="text-end pe-6">{{ summary.q1 }}</td></tr>
+                <tr><td class="ps-6 text-muted">median</td>      <td class="text-end pe-6 fw-semibold">{{ summary.median }}</td></tr>
+                <tr><td class="ps-6 text-muted">Q3</td>          <td class="text-end pe-6">{{ summary.q3 }}</td></tr>
+                <tr><td class="ps-6 text-muted">p90</td>         <td class="text-end pe-6">{{ summary.p90 }}</td></tr>
+                <tr><td class="ps-6 text-muted">max</td>         <td class="text-end pe-6">{{ summary.max }}</td></tr>
+                <tr><td class="ps-6 text-muted">mean</td>        <td class="text-end pe-6">{{ summary.mean }}</td></tr>
+                <tr><td class="ps-6 text-muted">stddev</td>      <td class="text-end pe-6">{{ summary.stddev }}</td></tr>
+            </tbody>
+        </table>
+        {% else %}
+        <p class="text-muted p-6 mb-0">No data available.</p>
+        {% endif %}
+    </div>
+</div>
+{%- endmacro %}
+
+{% macro _breakdown_table(title_, rows, badge_class, icon) -%}
+<div class="card h-100">
+    <div class="card-header">
+        <h3 class="card-title">
+            <i data-feather="{{ icon }}" class="me-2"></i>
+            {{ title_ }}
+        </h3>
+    </div>
+    <div class="card-body p-0">
+        {% if rows %}
+        <table class="table table-row-dashed align-middle mb-0">
+            <thead>
+                <tr class="text-muted fw-bold fs-7 text-uppercase">
+                    <th class="ps-6">Type</th>
+                    <th class="text-end pe-6">Count</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for label, count in rows %}
+                <tr>
+                    <td class="ps-6 fw-semibold text-gray-700">{{ label }}</td>
+                    <td class="text-end pe-6"><span class="badge {{ badge_class }}">{{ count }}</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="text-muted p-6 mb-0">No data available.</p>
+        {% endif %}
+    </div>
+</div>
+{%- endmacro %}
+
 {% block breadcrumb %}
 <ol class="breadcrumb text-muted fs-6 fw-semibold">
     <li class="breadcrumb-item"><a href="/">Home</a></li>
@@ -49,65 +128,31 @@
 
 {% block content %}
 
-<!-- Summary cards -->
-<div class="row g-4 mb-6">
-    <div class="col-6 col-md-4 col-lg-2">
-        <div class="card text-center h-100">
-            <div class="card-body py-4">
-                <i data-feather="database" class="mb-2 text-primary" style="width:28px;height:28px;"></i>
-                <div class="fs-2 fw-bold">{{ dashboard.total_datasets }}</div>
-                <div class="text-muted fs-7">Datasets</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-6 col-md-4 col-lg-2">
-        <div class="card text-center h-100">
-            <div class="card-body py-4">
-                <i data-feather="file" class="mb-2 text-info" style="width:28px;height:28px;"></i>
-                <div class="fs-2 fw-bold">{{ dashboard.total_feature_models }}</div>
-                <div class="text-muted fs-7">Feature models</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-6 col-md-4 col-lg-2">
-        <div class="card text-center h-100">
-            <div class="card-body py-4">
-                <i data-feather="users" class="mb-2 text-warning" style="width:28px;height:28px;"></i>
-                <div class="fs-2 fw-bold">{{ dashboard.total_authors }}</div>
-                <div class="text-muted fs-7">Authors</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-6 col-md-4 col-lg-2">
-        <div class="card text-center h-100">
-            <div class="card-body py-4">
-                <i data-feather="eye" class="mb-2 text-success" style="width:28px;height:28px;"></i>
-                <div class="fs-2 fw-bold">{{ dashboard.total_views }}</div>
-                <div class="text-muted fs-7">Dataset views</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-6 col-md-4 col-lg-2">
-        <div class="card text-center h-100">
-            <div class="card-body py-4">
-                <i data-feather="download" class="mb-2 text-danger" style="width:28px;height:28px;"></i>
-                <div class="fs-2 fw-bold">{{ dashboard.total_downloads }}</div>
-                <div class="text-muted fs-7">Downloads</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-6 col-md-4 col-lg-2">
-        <div class="card text-center h-100">
-            <div class="card-body py-4">
-                <i data-feather="layers" class="mb-2 text-secondary" style="width:28px;height:28px;"></i>
-                <div class="fs-2 fw-bold">{{ dashboard.avg_models_per_dataset }}</div>
-                <div class="text-muted fs-7">Avg models/dataset</div>
-            </div>
-        </div>
+{# Section A: Platform usage ─────────────────────────────────────────────── #}
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <h2 class="mb-0">
+        <i data-feather="server" class="me-2 text-primary"></i>
+        Platform usage
+    </h2>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('statistics.export_csv') }}" class="btn btn-sm btn-light-primary">
+            <i data-feather="download" class="me-1"></i> CSV
+        </a>
+        <a href="{{ url_for('statistics.export_json') }}" class="btn btn-sm btn-light-primary">
+            <i data-feather="code" class="me-1"></i> JSON
+        </a>
     </div>
 </div>
 
-<!-- Uploads chart -->
+<div class="row g-4 mb-6">
+    {{ _kpi("Datasets", dashboard.total_datasets, "database", "primary") }}
+    {{ _kpi("Feature models", dashboard.total_feature_models, "file", "info") }}
+    {{ _kpi("Authors", dashboard.total_authors, "users", "warning") }}
+    {{ _kpi("Dataset views", dashboard.total_views, "eye", "success") }}
+    {{ _kpi("Downloads", dashboard.total_downloads, "download", "danger") }}
+    {{ _kpi("Avg models/dataset", dashboard.avg_models_per_dataset, "layers", "secondary") }}
+</div>
+
 <div class="card mb-6">
     <div class="card-header">
         <h3 class="card-title">
@@ -126,57 +171,22 @@
 
 <div class="row g-4 mb-6">
     <div class="col-lg-6">
-        {{ _top_table("Datasets with most feature models", dashboard.top_by_models, "Models",
-                      "badge-light-primary", "award") }}
+        {{ _top_table("Datasets with most feature models", dashboard.top_by_models, "Models", "badge-light-primary", "award") }}
     </div>
     <div class="col-lg-6">
-        {{ _top_table("Datasets with most features", dashboard.top_by_features, "Features",
-                      "badge-light-warning", "zap") }}
+        {{ _top_table("Most recently uploaded datasets", dashboard.latest_datasets, "Date", "badge-light-success", "clock") }}
     </div>
 </div>
 
 <div class="row g-4 mb-6">
     <div class="col-lg-6">
-        <div class="card h-100">
-            <div class="card-header">
-                <h3 class="card-title">
-                    <i data-feather="pie-chart" class="me-2 text-info"></i>
-                    Datasets by publication type
-                </h3>
-            </div>
-            <div class="card-body p-0">
-                {% if dashboard.publication_types %}
-                <table class="table table-row-dashed align-middle mb-0">
-                    <thead>
-                        <tr class="text-muted fw-bold fs-7 text-uppercase">
-                            <th class="ps-6">Type</th>
-                            <th class="text-end pe-6">Count</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for pub_type, count in dashboard.publication_types %}
-                        <tr>
-                            <td class="ps-6 fw-semibold text-gray-700">{{ pub_type }}</td>
-                            <td class="text-end pe-6">
-                                <span class="badge badge-light-info">{{ count }}</span>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                {% else %}
-                <p class="text-muted p-6 mb-0">No data available.</p>
-                {% endif %}
-            </div>
-        </div>
+        {{ _breakdown_table("Datasets by publication type", dashboard.publication_types, "badge-light-info", "pie-chart") }}
     </div>
     <div class="col-lg-6">
-        {{ _top_table("Most recently uploaded datasets", dashboard.latest_datasets, "Date",
-                      "badge-light-success", "clock") }}
+        {{ _top_table("Most viewed datasets", dashboard.top_by_views, "Views", "badge-light-success", "eye") }}
     </div>
 </div>
 
-<!-- Activity chart -->
 <div class="card mb-6">
     <div class="card-header">
         <h3 class="card-title">
@@ -193,30 +203,158 @@
     </div>
 </div>
 
+{# Section B: Corpus characterisation ─────────────────────────────────────── #}
+<hr class="my-8">
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <h2 class="mb-0">
+        <i data-feather="cpu" class="me-2 text-info"></i>
+        Corpus characterisation
+    </h2>
+    <span class="text-muted fs-7">
+        Materialised from fact labels — {{ dashboard.corpus.metrics_ok }} of
+        {{ dashboard.corpus.hubfiles_with_factlabel }} hubfiles ({{ dashboard.corpus.coverage_pct }}%)
+    </span>
+</div>
+
+{# Coverage KPIs #}
+<div class="row g-4 mb-6">
+    {{ _kpi("Hubfiles total", dashboard.corpus.total_hubfiles, "file-text", "primary") }}
+    {{ _kpi("With fact label", dashboard.corpus.hubfiles_with_factlabel, "check-square", "info") }}
+    {{ _kpi("Metrics extracted", dashboard.corpus.metrics_ok, "bar-chart-2", "success") }}
+    {{ _kpi("Errored", dashboard.corpus.metrics_errored, "alert-triangle", "warning") }}
+    {{ _kpi("Coverage %", dashboard.corpus.coverage_pct, "percent", "secondary") }}
+    {{ _kpi("Satisfiable %", dashboard.corpus.satisfiable_pct, "check-circle", "success") }}
+</div>
+
+{# Satisfiability breakdown #}
 <div class="row g-4 mb-6">
     <div class="col-lg-4">
-        {{ _top_table("Most viewed datasets", dashboard.top_by_views, "Views",
-                      "badge-light-success", "eye") }}
+        <div class="card h-100">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i data-feather="check-circle" class="me-2 text-success"></i>
+                    Satisfiability
+                </h3>
+            </div>
+            <div class="card-body">
+                <canvas id="satChart" height="180"></canvas>
+                <div class="mt-4 text-center text-muted fs-7">
+                    Satisfiable: <span class="fw-bold text-success">{{ dashboard.corpus.satisfiable_count }}</span>
+                    · Unsatisfiable: <span class="fw-bold text-danger">{{ dashboard.corpus.unsatisfiable_count }}</span>
+                    · Unknown: <span class="fw-bold text-muted">{{ dashboard.corpus.unknown_satisfiability }}</span>
+                </div>
+            </div>
+        </div>
     </div>
     <div class="col-lg-4">
-        {{ _top_table("Most downloaded datasets", dashboard.top_by_downloads, "Downloads",
-                      "badge-light-danger", "download") }}
+        <div class="card h-100">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i data-feather="link" class="me-2 text-info"></i>
+                    Constraint types (corpus-wide)
+                </h3>
+            </div>
+            <div class="card-body"><canvas id="constraintTypesChart" height="180"></canvas></div>
+        </div>
     </div>
     <div class="col-lg-4">
-        {{ _top_table("Most configurable datasets", dashboard.top_by_configurations, "Configs",
-                      "badge-light-secondary", "sliders") }}
+        <div class="card h-100">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i data-feather="git-branch" class="me-2 text-warning"></i>
+                    Group types (corpus-wide)
+                </h3>
+            </div>
+            <div class="card-body"><canvas id="groupTypesChart" height="180"></canvas></div>
+        </div>
     </div>
 </div>
 
-{# Serialise the chart series as JSON so the bundled scripts.js can pick them
-   up without needing any server-side string interpolation inside <script>. #}
+{# Statistical summaries — the "headline table" for the paper #}
+<h3 class="mb-3 mt-6">
+    <i data-feather="sigma" class="me-2 text-secondary"></i>
+    Statistical summary (per feature model)
+</h3>
+<div class="row g-4 mb-6">
+    <div class="col-lg-3 col-md-6">{{ _stats_card("Features", dashboard.corpus.summary_features, "hash") }}</div>
+    <div class="col-lg-3 col-md-6">{{ _stats_card("Cross-tree constraints", dashboard.corpus.summary_constraints, "link-2") }}</div>
+    <div class="col-lg-3 col-md-6">{{ _stats_card("Tree depth", dashboard.corpus.summary_depth, "git-commit") }}</div>
+    <div class="col-lg-3 col-md-6">{{ _stats_card("Branching factor", dashboard.corpus.summary_branching_factor, "share-2") }}</div>
+</div>
+<div class="row g-4 mb-6">
+    <div class="col-lg-6">{{ _stats_card("Configurations (exact only)", dashboard.corpus.summary_configurations, "grid") }}</div>
+    <div class="col-lg-6">{{ _breakdown_table("Feature classification (sum across corpus)", dashboard.corpus.feature_classification, "badge-light-secondary", "layers") }}</div>
+</div>
+
+{# Distributions #}
+<div class="row g-4 mb-6">
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i data-feather="bar-chart" class="me-2 text-primary"></i>
+                    Features per model (log buckets)
+                </h3>
+            </div>
+            <div class="card-body"><canvas id="featuresHistChart" height="120"></canvas></div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i data-feather="bar-chart" class="me-2 text-danger"></i>
+                    Cross-tree constraints per model (log buckets)
+                </h3>
+            </div>
+            <div class="card-body"><canvas id="constraintsHistChart" height="120"></canvas></div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-6">
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i data-feather="bar-chart-2" class="me-2 text-success"></i>
+                    Tree depth distribution
+                </h3>
+            </div>
+            <div class="card-body"><canvas id="depthHistChart" height="120"></canvas></div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i data-feather="bar-chart-2" class="me-2 text-warning"></i>
+                    Number of configurations (log buckets, exact only)
+                </h3>
+            </div>
+            <div class="card-body"><canvas id="configsHistChart" height="120"></canvas></div>
+        </div>
+    </div>
+</div>
+
+{# Tops by corpus complexity #}
+<div class="row g-4 mb-6">
+    <div class="col-lg-4">
+        {{ _top_table("Largest models (features)", dashboard.corpus.top_by_features, "Features", "badge-light-primary", "hash") }}
+    </div>
+    <div class="col-lg-4">
+        {{ _top_table("Most constrained models", dashboard.corpus.top_by_constraints, "CTCs", "badge-light-danger", "link-2") }}
+    </div>
+    <div class="col-lg-4">
+        {{ _top_table("Most configurations", dashboard.corpus.top_by_configurations, "Configs", "badge-light-warning", "grid") }}
+    </div>
+</div>
+
+{# JSON payload for client-side charts. All server-side rendered as JSON so
+   scripts.js has a single parse step and zero template interpolation inside JS. #}
 <script id="dashboard-data" type="application/json">
-{
-    "months": {{ dashboard.months | tojson }},
-    "uploads": {{ dashboard.uploads_per_month | tojson }},
-    "views": {{ dashboard.views_per_month | tojson }},
-    "downloads": {{ dashboard.downloads_per_month | tojson }}
-}
+{{ charts_payload | tojson }}
 </script>
 
 {% endblock %}
