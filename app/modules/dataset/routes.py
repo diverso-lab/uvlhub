@@ -578,9 +578,7 @@ def subdomain_index(doi):
         "landing_url": f"{host_url.rstrip('/')}/doi/{meta.dataset_doi or ''}/",
         "doi_url": (f"https://doi.org/{meta.dataset_doi}" if meta.dataset_doi else None),
         "license_url": fair_metadata.CC_BY_40,
-        "zenodo_url": (
-            f"https://zenodo.org/record/{meta.deposition_id}" if meta.deposition_id else None
-        ),
+        "zenodo_url": (f"https://zenodo.org/record/{meta.deposition_id}" if meta.deposition_id else None),
     }
 
     resp = make_response(

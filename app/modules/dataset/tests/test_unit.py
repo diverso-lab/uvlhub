@@ -1,3 +1,4 @@
+from datetime import datetime
 from unittest.mock import MagicMock, patch
 from urllib.error import HTTPError
 
@@ -50,6 +51,15 @@ def test_get_uvlhub_doi():
 @patch("app.modules.dataset.services.DSViewRecordService.create_cookie")
 def test_subdomain_index_success(mock_create_cookie, mock_filter_by_doi, test_client):
     mock_dataset = MagicMock()
+    mock_dataset.ds_meta_data.title = "Test dataset"
+    mock_dataset.ds_meta_data.description = "Test description"
+    mock_dataset.ds_meta_data.dataset_doi = "10.1234/datafset1"
+    mock_dataset.ds_meta_data.publication_doi = None
+    mock_dataset.ds_meta_data.tags = "tag1,tag2"
+    mock_dataset.ds_meta_data.deposition_id = 1
+    mock_dataset.ds_meta_data.authors = []
+    mock_dataset.feature_models = []
+    mock_dataset.created_at = datetime(2024, 1, 1)
     mock_filter_by_doi.return_value = MagicMock(dataset=mock_dataset)
     mock_create_cookie.return_value = "mock_cookie"
 

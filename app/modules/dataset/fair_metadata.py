@@ -6,10 +6,10 @@ Emitted representations:
     * Datacite JSON
     * Turtle (hand-serialised, no rdflib dependency)
 """
+
 from __future__ import annotations
 
 from urllib.parse import quote
-
 
 CC_BY_40 = "https://creativecommons.org/licenses/by/4.0/"
 CC_BY_40_NAME = "Creative Commons Attribution 4.0 International"
@@ -58,11 +58,13 @@ def _distributions(dataset, host_url):
     out = []
     for fm in dataset.feature_models:
         for f in fm.hubfiles:
-            out.append({
-                "name": f.name,
-                "url": f"{base}/doi/{doi}/files/raw/{quote(f.name, safe='')}",
-                "size": int(f.size) if f.size is not None else 0,
-            })
+            out.append(
+                {
+                    "name": f.name,
+                    "url": f"{base}/doi/{doi}/files/raw/{quote(f.name, safe='')}",
+                    "size": int(f.size) if f.size is not None else 0,
+                }
+            )
     return out
 
 
@@ -108,19 +110,23 @@ def build_json_ld(dataset, host_url):
 
     identifiers = []
     if doi:
-        identifiers.append({
-            "@type": "PropertyValue",
-            "propertyID": "DOI",
-            "value": doi,
-            "url": doi_url,
-        })
+        identifiers.append(
+            {
+                "@type": "PropertyValue",
+                "propertyID": "DOI",
+                "value": doi,
+                "url": doi_url,
+            }
+        )
     if zenodo:
-        identifiers.append({
-            "@type": "PropertyValue",
-            "propertyID": "Zenodo",
-            "value": str(meta.deposition_id),
-            "url": zenodo,
-        })
+        identifiers.append(
+            {
+                "@type": "PropertyValue",
+                "propertyID": "Zenodo",
+                "value": str(meta.deposition_id),
+                "url": zenodo,
+            }
+        )
 
     distributions = [
         {
@@ -249,11 +255,13 @@ def build_datacite_json(dataset):
             c["affiliation"] = [{"name": a.affiliation}]
         orcid = _orcid_url(a.orcid)
         if orcid:
-            c["nameIdentifiers"] = [{
-                "nameIdentifier": orcid,
-                "nameIdentifierScheme": "ORCID",
-                "schemeUri": "https://orcid.org",
-            }]
+            c["nameIdentifiers"] = [
+                {
+                    "nameIdentifier": orcid,
+                    "nameIdentifierScheme": "ORCID",
+                    "schemeUri": "https://orcid.org",
+                }
+            ]
         creators.append(c)
     attrs = {
         "doi": meta.dataset_doi,
@@ -267,19 +275,23 @@ def build_datacite_json(dataset):
             "resourceTypeGeneral": "Dataset",
             "schemaOrg": "Dataset",
         },
-        "descriptions": [{
-            "description": meta.description,
-            "descriptionType": "Abstract",
-            "lang": "en",
-        }],
+        "descriptions": [
+            {
+                "description": meta.description,
+                "descriptionType": "Abstract",
+                "lang": "en",
+            }
+        ],
         "subjects": [{"subject": k, "lang": "en"} for k in _keywords(dataset)],
-        "rightsList": [{
-            "rights": CC_BY_40_NAME,
-            "rightsUri": CC_BY_40,
-            "rightsIdentifier": "cc-by-4.0",
-            "rightsIdentifierScheme": "SPDX",
-            "schemeUri": "https://spdx.org/licenses/",
-        }],
+        "rightsList": [
+            {
+                "rights": CC_BY_40_NAME,
+                "rightsUri": CC_BY_40,
+                "rightsIdentifier": "cc-by-4.0",
+                "rightsIdentifierScheme": "SPDX",
+                "schemeUri": "https://spdx.org/licenses/",
+            }
+        ],
         "language": "en",
         "formats": [UVL_MEDIA_TYPE],
         "version": "1.0",
@@ -287,17 +299,21 @@ def build_datacite_json(dataset):
     }
     relations = []
     if meta.deposition_id:
-        relations.append({
-            "relatedIdentifier": str(meta.deposition_id),
-            "relatedIdentifierType": "URL",
-            "relationType": "IsIdenticalTo",
-        })
+        relations.append(
+            {
+                "relatedIdentifier": str(meta.deposition_id),
+                "relatedIdentifierType": "URL",
+                "relationType": "IsIdenticalTo",
+            }
+        )
     if meta.publication_doi:
-        relations.append({
-            "relatedIdentifier": meta.publication_doi,
-            "relatedIdentifierType": "DOI",
-            "relationType": "IsSupplementTo",
-        })
+        relations.append(
+            {
+                "relatedIdentifier": meta.publication_doi,
+                "relatedIdentifierType": "DOI",
+                "relationType": "IsSupplementTo",
+            }
+        )
     if relations:
         attrs["relatedIdentifiers"] = relations
     return {"data": {"type": "dois", "id": meta.dataset_doi or "", "attributes": attrs}}
@@ -327,23 +343,23 @@ def build_turtle(dataset, host_url):
         f'    dcterms:title "{esc(meta.title)}" ;',
         f'    schema:description "{esc(meta.description)}" ;',
         f'    dcterms:description "{esc(meta.description)}" ;',
-        f'    schema:url <{landing}> ;',
+        f"    schema:url <{landing}> ;",
         f'    schema:publisher [ a schema:Organization ; schema:name "uvlhub" ; schema:url <{UVLHUB_URL}> ] ;',
-        f'    dcterms:publisher "uvlhub" ;',
-        f'    schema:license <{CC_BY_40}> ;',
-        f'    dcterms:license <{CC_BY_40}> ;',
+        '    dcterms:publisher "uvlhub" ;',
+        f"    schema:license <{CC_BY_40}> ;",
+        f"    dcterms:license <{CC_BY_40}> ;",
         f'    dcterms:rights "{CC_BY_40_NAME}" ;',
-        f'    dcterms:accessRights "Open Access" ;',
-        f'    schema:isAccessibleForFree true ;',
-        f'    schema:conditionsOfAccess "Open Access" ;',
-        f'    schema:inLanguage "en" ;',
-        f'    dcterms:language "en" ;',
+        '    dcterms:accessRights "Open Access" ;',
+        "    schema:isAccessibleForFree true ;",
+        '    schema:conditionsOfAccess "Open Access" ;',
+        '    schema:inLanguage "en" ;',
+        '    dcterms:language "en" ;',
         f'    schema:encodingFormat "{UVL_MEDIA_TYPE}" ;',
         f'    dcterms:format "{UVL_MEDIA_TYPE}" ;',
-        f'    dcterms:type <http://purl.org/dc/dcmitype/Dataset> ;',
-        f'    schema:conformsTo <{UVL_SPEC}> ;',
-        f'    dcterms:conformsTo <{UVL_SPEC}> ;',
-        f'    schema:version "1.0" ;',
+        "    dcterms:type <http://purl.org/dc/dcmitype/Dataset> ;",
+        f"    schema:conformsTo <{UVL_SPEC}> ;",
+        f"    dcterms:conformsTo <{UVL_SPEC}> ;",
+        '    schema:version "1.0" ;',
         f'    dcterms:identifier "{esc(meta.dataset_doi or "")}" ;',
     ]
     if date:
@@ -358,25 +374,28 @@ def build_turtle(dataset, host_url):
     for a in meta.authors:
         orcid = _orcid_url(a.orcid)
         if orcid:
-            lines.append(f'    schema:creator <{orcid}> ;')
-            lines.append(f'    dcterms:creator <{orcid}> ;')
+            lines.append(f"    schema:creator <{orcid}> ;")
+            lines.append(f"    dcterms:creator <{orcid}> ;")
         else:
             lines.append(f'    schema:creator [ a schema:Person ; schema:name "{esc(a.name)}" ] ;')
             lines.append(f'    dcterms:creator "{esc(a.name)}" ;')
     if zenodo:
-        lines.append(f'    schema:sameAs <{zenodo}> ;')
-        lines.append(f'    dcterms:isVersionOf <{zenodo}> ;')
+        lines.append(f"    schema:sameAs <{zenodo}> ;")
+        lines.append(f"    dcterms:isVersionOf <{zenodo}> ;")
     if meta.publication_doi:
         pub_url = _doi_url(meta.publication_doi)
-        lines.append(f'    schema:citation <{pub_url}> ;')
-        lines.append(f'    dcterms:isReferencedBy <{pub_url}> ;')
-    lines.append(f'    schema:includedInDataCatalog [ a schema:DataCatalog ; schema:name "uvlhub" ; schema:url <{UVLHUB_URL}> ] ;')
+        lines.append(f"    schema:citation <{pub_url}> ;")
+        lines.append(f"    dcterms:isReferencedBy <{pub_url}> ;")
+    lines.append(
+        "    schema:includedInDataCatalog [ a schema:DataCatalog ; "
+        f'schema:name "uvlhub" ; schema:url <{UVLHUB_URL}> ] ;'
+    )
 
     dists = _distributions(dataset, host_url)
     if dists:
         dist_iris = " , ".join(f"<{d['url']}>" for d in dists)
-        lines.append(f'    schema:distribution {dist_iris} ;')
-        lines.append(f'    dcat:distribution {dist_iris} .')
+        lines.append(f"    schema:distribution {dist_iris} ;")
+        lines.append(f"    dcat:distribution {dist_iris} .")
         for d in dists:
             lines.append("")
             lines.append(f"<{d['url']}> a schema:DataDownload , dcat:Distribution ;")
@@ -404,8 +423,8 @@ def build_link_header(dataset, host_url):
     parts.append(f'<{landing}>; rel="describedby"; type="text/turtle"')
     parts.append(f'<{landing}>; rel="describedby"; type="application/vnd.datacite.datacite+json"')
     parts.append(f'<{CC_BY_40}>; rel="license"')
-    parts.append(f'<https://schema.org/Dataset>; rel="type"')
-    parts.append(f'<http://purl.org/dc/dcmitype/Dataset>; rel="type"')
+    parts.append('<https://schema.org/Dataset>; rel="type"')
+    parts.append('<http://purl.org/dc/dcmitype/Dataset>; rel="type"')
     for author in meta.authors:
         orcid = _orcid_url(author.orcid)
         if orcid:
