@@ -71,6 +71,9 @@
                                         {% if values.get('aggregate_functions', False) %}checked{% endif %}>
                                     <label class="form-check-label">Aggregate functions</label>
                                 </div>
+                                {% if errors.get('aggregate_functions') %}
+                                    <div class="text-danger">{{ errors['aggregate_functions'] }}</div>
+                                {% endif %}
                             </td>
                         </tr>
 
@@ -94,6 +97,9 @@
                                         {% if values.get('string_constraints', False) %}checked{% endif %}>
                                     <label class="form-check-label">String constraints</label>
                                 </div>
+                                {% if errors.get('string_constraints') %}
+                                    <div class="text-danger">{{ errors['string_constraints'] }}</div>
+                                {% endif %}
                             </td>
                         </tr>
                     </tbody>
@@ -130,7 +136,7 @@
             <div class="mb-3">
                 <label class="form-label">Maximum tree depth:</label>
                 <input type="number" class="form-control" style="width: 80px; display: inline-block;" name="max_tree_depth" id="max_tree_depth"
-                       value="{{ values.get('max_tree_depth', 5) }}" min="1">
+                        value="{{ values.get('max_tree_depth', 5) }}" min="1">
                 {% if errors.get('max_tree_depth') %}
                     <div class="text-danger">{{ errors['max_tree_depth'] }}</div>
                 {% endif %}
@@ -139,66 +145,74 @@
                 </small>
             </div>
 
-            <!-- Distribución -->
-            <!-- 
-            <div class="mb-3">
-                <label class="form-label">Distribution (as a per unit value, only if Type level is selected) CURRENTLY UNAVAILABLE</label>
-                <div class="row">
-                    <div class="col">
-                        <label class="form-label">Boolean:</label>
-                        <input type="number" step="0.01" min="0" max="1" class="form-control" id="dist_boolean" name="dist_boolean" value="{{ values.get('dist_boolean', 0.7) }}">
-                        {% if errors.get('dist_boolean') %}
-                            <div class="text-danger">{{ errors['dist_boolean'] }}</div>
-                        {% endif %}
+            <div id="type_level_block" class="mb-3">
+                <label class="form-label">Type level feature distributions</label>
+                <div class="p-3 border rounded" style="background: #fafbfc;">
+                    <div class="row">
+                        <div class="col">
+                            <label class="form-label">Boolean:</label>
+                            <input type="number" step="0.01" min="0" max="1" class="form-control" id="dist_boolean" name="dist_boolean" value="{{ values.get('dist_boolean', 0.0) }}">
+                            {% if errors.get('dist_boolean') %}
+                                <div class="text-danger">{{ errors['dist_boolean'] }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col">
+                            <label class="form-label">Integer:</label>
+                            <input type="number" step="0.01" min="0" max="1" class="form-control" id="dist_integer" name="dist_integer" value="{{ values.get('dist_integer', 0.0) }}">
+                            {% if errors.get('dist_integer') %}
+                                <div class="text-danger">{{ errors['dist_integer'] }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col">
+                            <label class="form-label">Float:</label>
+                            <input type="number" step="0.01" min="0" max="1" class="form-control" id="dist_real" name="dist_real" value="{{ values.get('dist_real', 0.0) }}">
+                            {% if errors.get('dist_real') %}
+                                <div class="text-danger">{{ errors['dist_real'] }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col">
+                            <label class="form-label">String:</label>
+                            <input type="number" step="0.01" min="0" max="1" class="form-control" id="dist_string" name="dist_string" value="{{ values.get('dist_string', 0.0) }}">
+                            {% if errors.get('dist_string') %}
+                                <div class="text-danger">{{ errors['dist_string'] }}</div>
+                            {% endif %}
+                        </div>
                     </div>
-                    <div class="col">
-                        <label class="form-label">Integer:</label>
-                        <input type="number" step="0.01" min="0" max="1" class="form-control" id="dist_integer" name="dist_integer" value="{{ values.get('dist_integer', 0.1) }}">
-                        {% if errors.get('dist_integer') %}
-                            <div class="text-danger">{{ errors['dist_integer'] }}</div>
-                        {% endif %}
+
+                    <div class="mt-2" id="type_dist_sum_display"
+                        style="font-weight:bold; color:{% if values.get('type_dist_total', '0.0000') != '1.0000' %}red{% else %}green{% endif %};">
+                        Type dist sum: <span id="type_dist_sum">{{ values.get('type_dist_total', '0.0000') }}</span>
                     </div>
-                    <div class="col">
-                        <label class="form-label">Real:</label>
-                        <input type="number" step="0.01" min="0" max="1" class="form-control" id="dist_real" name="dist_real" value="{{ values.get('dist_real', 0.1) }}">
-                        {% if errors.get('dist_real') %}
-                            <div class="text-danger">{{ errors['dist_real'] }}</div>
-                        {% endif %}
-                    </div>
-                    <div class="col">
-                        <label class="form-label">String:</label>
-                        <input type="number" step="0.01" min="0" max="1" class="form-control" id="dist_string" name="dist_string" value="{{ values.get('dist_string', 0.1) }}">
-                        {% if errors.get('dist_string') %}
-                            <div class="text-danger">{{ errors['dist_string'] }}</div>
-                        {% endif %}
-                    </div>
+
+                    {% if errors.get('type_dist_total') %}
+                        <div class="text-danger">{{ errors['type_dist_total'] }}</div>
+                    {% endif %}
+
+                    <small class="text-muted d-block mt-2">
+                        Note: the sum of Boolean, Integer, Float and String distributions must be exactly 1.0.
+                    </small>
                 </div>
-                <div class="mt-2" id="dist_sum_display"
-                    style="font-weight:bold; color:{% if values.get('dist_total', '1.0000') != '1.0000' %}red{% else %}green{% endif %};">
-                    Current sum: <span id="dist_sum">{{ values.get('dist_total', '1.0000') }}</span>
-                </div>
-                {% if errors.get('dist_total') %}
-                    <div class="text-danger">{{ errors['dist_total'] }}</div>
-                {% endif %}
             </div>
-            -->
 
             <!-- Feature cardinality -->
-            <!--
-            <div class="mb-3">
-                <label class="form-label">Feature cardinality <small>(only if selected)</small> CURRENTLY UNAVAILABLE</label>
+            <div id="feature_cardinality_block" class="mb-3">
+                <label class="form-label">Feature cardinality <small>(only if selected)</small></label>
                 <div class="p-3 border rounded" style="background: #fafbfc;">
                     <div class="row mb-2">
                         <div class="col">
                             <label class="form-label">Min:</label>
-                            <input type="number" class="form-control" style="width: 100px;" min="1" max="10000" id="min_feature_cardinality" name="min_feature_cardinality" value="{{ values.get('min_feature_cardinality', 2) }}">
+                            <input type="number" class="form-control" style="width: 100px;" min="1" max="10000"
+                                    id="min_feature_cardinality" name="min_feature_cardinality"
+                                    value="{{ values.get('min_feature_cardinality', 2) }}">
                             {% if errors.get('min_feature_cardinality') %}
                                 <div class="text-danger">{{ errors['min_feature_cardinality'] }}</div>
                             {% endif %}
                         </div>
                         <div class="col">
                             <label class="form-label">Max:</label>
-                            <input type="number" class="form-control" style="width: 100px;" min="1" max="10000" id="max_feature_cardinality" name="max_feature_cardinality" value="{{ values.get('max_feature_cardinality', 5) }}">
+                            <input type="number" class="form-control" style="width: 100px;" min="1" max="10000"
+                                    id="max_feature_cardinality" name="max_feature_cardinality"
+                                    value="{{ values.get('max_feature_cardinality', 5) }}">
                             {% if errors.get('max_feature_cardinality') %}
                                 <div class="text-danger">{{ errors['max_feature_cardinality'] }}</div>
                             {% endif %}
@@ -206,15 +220,17 @@
                     </div>
                     <div class="mb-2">
                         <label class="form-label">Attach probability</label>
-                        <input type="number" step="0.01" min="0.01" max="1" class="form-control" style="width: 120px;" name="prob_fc" value="{{ values.get('prob_fc', 0.1) }}">
+                        <input type="number" step="0.01" min="0" max="1" class="form-control" style="width: 120px;"
+                                id="prob_fc" name="prob_fc" value="{{ values.get('prob_fc', 0.1) }}">
                         {% if errors.get('attach_probability') %}
                             <div class="text-danger">{{ errors['attach_probability'] }}</div>
                         {% endif %}
                     </div>
-                    <small class="text-muted">Note: 0 means no feature may have feature cardinality; 1 means every feature may have it.</small>
+                    <small class="text-muted">
+                        Note: 0 means no feature may have feature cardinality; 1 means every feature may have it.
+                    </small>
                 </div>
             </div>
-            -->
         </div>
 
         <!-- Distribución de relaciones -->
@@ -249,15 +265,6 @@
                         <div class="text-danger">{{ errors['dist_or'] }}</div>
                     {% endif %}
                 </div>
-                <!-- QUITA este bloque:
-                <div class="col">
-                    <label for="dist_group_cardinality" class="form-label">Group cardinality:</label>
-                    <input type="number" class="form-control" step="0.01" min="0" max="1" id="dist_group_cardinality" name="dist_group_cardinality" value="{{ values.get('dist_group_cardinality', 0.0) }}">
-                    {% if errors.get('dist_group_cardinality') %}
-                        <div class="text-danger">{{ errors['dist_group_cardinality'] }}</div>
-                    {% endif %}
-                </div>
-                -->
             </div>
             <div class="mt-2" id="rel_sum_display"
                 style="font-weight:bold; color:{% if values.get('rel_dist_total', '1.0000') != '1.0000' %}red{% else %}green{% endif %};">
@@ -313,6 +320,7 @@
 {% block scripts %}
 <script>
 document.addEventListener("DOMContentLoaded", function () {
+    const ensureSatisfiableEnabled = {{ 1 if session.get('params', {}).get('ENSURE_SATISFIABLE', False) else 0 }};
     // ================================
     // Language levels logic
     // ================================
@@ -323,6 +331,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const type = document.getElementById("type_level");
         const stringC = document.getElementById("string_constraints");
+
+        const typeBlock = document.getElementById("type_level_block");
+        if (typeBlock) {
+            typeBlock.style.display = type.checked ? "" : "none";
+        }
 
         // Arithmetic → minors
         if (!arithmetic.checked) {
@@ -341,6 +354,23 @@ document.addEventListener("DOMContentLoaded", function () {
             stringC.disabled = true;
         } else {
             stringC.disabled = false;
+        }
+
+        if (ensureSatisfiableEnabled) {
+            if (aggregate.checked) {
+                aggregate.classList.add("is-invalid");
+            } else {
+                aggregate.classList.remove("is-invalid");
+            }
+
+            if (stringC.checked) {
+                stringC.classList.add("is-invalid");
+            } else {
+                stringC.classList.remove("is-invalid");
+            }
+        } else {
+            aggregate.classList.remove("is-invalid");
+            stringC.classList.remove("is-invalid");
         }
     }
 
@@ -387,10 +417,49 @@ document.addEventListener("DOMContentLoaded", function () {
         }
         updateRelSum();  // Actualiza la suma al ocultar/mostrar
     }
+
+    function toggleFeatureCardinalityBlock() {
+        var featureCheckbox = document.getElementById("feature_cardinality");
+        var block = document.getElementById("feature_cardinality_block");
+        if (featureCheckbox.checked) {
+            block.style.display = "";
+        } else {
+            block.style.display = "none";
+        }
+    }
+
     var groupCheckbox = document.getElementById("group_cardinality");
     if (groupCheckbox) {
         groupCheckbox.addEventListener("change", toggleGroupCardinalityBlock);
         toggleGroupCardinalityBlock();  // Llamar al cargar
+    }
+
+    var featureCheckbox = document.getElementById("feature_cardinality");
+    if (featureCheckbox) {
+        featureCheckbox.addEventListener("change", toggleFeatureCardinalityBlock);
+        toggleFeatureCardinalityBlock();
+    }
+
+    function updateTypeDistSum() {
+        let fields = ['dist_boolean', 'dist_integer', 'dist_real', 'dist_string'];
+        let sum = 0;
+
+        fields.forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) {
+                sum += parseFloat(el.value) || 0;
+            }
+        });
+
+        var sumEl = document.getElementById('type_dist_sum');
+        var displayEl = document.getElementById('type_dist_sum_display');
+
+        if (sumEl) {
+            sumEl.innerText = sum.toFixed(4);
+        }
+        if (displayEl) {
+            displayEl.style.color = (Math.abs(sum - 1.0) < 0.001) ? 'green' : 'red';
+        }
     }
 
     // Actualiza la suma según si el checkbox está marcado y el valor de dist_group_cardinality
@@ -419,7 +488,15 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
-    updateRelSum(); // Inicial
+    ['dist_boolean', 'dist_integer', 'dist_real', 'dist_string'].forEach(function(id){
+        var el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', updateTypeDistSum);
+        }
+    });
+
+    updateRelSum();
+    updateTypeDistSum();
 });
 </script>
 {% endblock %}

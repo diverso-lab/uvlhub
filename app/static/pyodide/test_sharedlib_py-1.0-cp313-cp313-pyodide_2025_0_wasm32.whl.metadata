@@ -1,0 +1,9 @@
+Metadata-Version: 2.4
+Name: test-sharedlib-py
+Version: 1.0
+Summary: A package to test Pyodide shared libraries
+Home-page: https://github.com/pyodide/pyodide
+Author: Pyodide team
+Dynamic: author
+Dynamic: home-page
+Dynamic: summary

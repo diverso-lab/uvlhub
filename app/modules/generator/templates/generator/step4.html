@@ -8,6 +8,12 @@
 
         <h3 class="mb-3">Attributes</h3>
 
+        {% if errors.get('global') %}
+            <div class="alert alert-danger mb-3">
+                {{ errors['global'] }}
+            </div>
+        {% endif %}
+
         <!-- Checkbox “Random attributes” -->
         <div class="form-check mb-3">
             <input
@@ -18,6 +24,12 @@
                 {% if values.get('random_attributes') %}checked{% endif %}>
             <label class="form-check-label" for="random_attributes">Random attributes</label>
         </div>
+
+        {% if session.get('params', {}).get('ENSURE_SATISFIABLE', False) %}
+            <div class="form-text mb-3">
+                Note: if Ensure satisfiable is enabled, random attributes will not be used in constraints, only in the feature tree.
+            </div>
+        {% endif %}
 
         <!-- Sección para Random: Min / Max -->
         <div id="random-attributes-settings">
@@ -61,7 +73,6 @@
 
             <div class="mb-3">
                 <button type="button" class="btn btn-outline-primary" id="add-attribute-btn">Add</button>
-                <button type="button" class="btn btn-outline-danger" id="delete-attribute-btn">Delete last one</button>
             </div>
             <div id="manual-attributes-list">
                 <!-- Aquí se insertan dinámicamente las tarjetas de atributos manuales -->
@@ -85,6 +96,7 @@ const values = {{ values | tojson }};
 const arithmeticLevelEnabled = {{ 1 if session.get('params', {}).get('ARITHMETIC_LEVEL', False) else 0 }};
 const typeLevelEnabled = {{ 1 if session.get('params', {}).get('TYPE_LEVEL', False) else 0 }};
 const stringConstraintsEnabled = {{ 1 if session.get('params', {}).get('STRING_CONSTRAINTS', False) else 0 }};
+const ensureSatisfiableEnabled = {{ 1 if session.get('params', {}).get('ENSURE_SATISFIABLE', False) else 0 }};
 const manualAttributesGlobalError = document.getElementById('manual-attributes-global-error');
 
 // Función para alternar visibilidad entre sección “random” y sección “manual”
@@ -103,13 +115,7 @@ randomCheckbox.addEventListener('change', toggleAttributeSections);
 
 // Plantilla y lógica para añadir/eliminar tarjetas manuales
 document.getElementById('add-attribute-btn').addEventListener('click', addAttributeCard);
-document.getElementById('delete-attribute-btn').addEventListener('click', function() {
-    const cards = manualAttributesList.getElementsByClassName('manual-attribute-card');
-    if (cards.length > 0) {
-        cards[cards.length - 1].remove();
-        updateManualAttributesGlobalError();
-    }
-});
+
 
 // Auxiliar para validar Boolean (al menos uno)
 function validateBooleanCheckboxes(card) {
@@ -296,10 +302,40 @@ function addAttributeCard() {
                 Use in constraints
             </label>
         </div>
+        <div class="form-text mb-1">
+            Note: if Ensure satisfiable is enabled, attributes of any type will not appear in constraints.
+        </div>
         <div class="text-danger attr-use-in-constraints-error mb-1" style="font-size:0.95em;"></div>
         <div class="text-muted attr-use-in-constraints-hint mb-2" style="font-size:0.9em;"></div>
+        
+        <div class="mt-3 text-end">
+            <button type="button" class="btn btn-outline-danger btn-sm delete-attribute-btn">
+                Delete
+            </button>
+        </div>
     `;
     manualAttributesList.appendChild(card);
+
+    function reindexCards() {
+        const cards = document.querySelectorAll('.manual-attribute-card');
+
+        cards.forEach((card, newIdx) => {
+            card.querySelectorAll('[name]').forEach(input => {
+                input.name = input.name.replace(/_\d+$/, `_${newIdx}`);
+            });
+
+            card.querySelectorAll('[id]').forEach(el => {
+                el.id = el.id.replace(/_\d+$/, `_${newIdx}`);
+            });
+        });
+    }
+
+    // Delete specific card
+    card.querySelector('.delete-attribute-btn').addEventListener('click', () => {
+        card.remove();
+        reindexCards();
+        updateManualAttributesGlobalError();
+    });
 
     // Inicializar campo “Value” con tipo por defecto (integer)
     updateValueField(card, 'integer', idx);
@@ -444,7 +480,10 @@ function updateUseInConstraintsAvailability(card, type, idx) {
     let enabled = false;
     let message = '';
 
-    if (type === 'boolean') {
+    if (ensureSatisfiableEnabled) {
+        enabled = false;
+        message = 'Disabled because Ensure satisfiable only supports Boolean variables in constraints.';
+    } else if (type === 'boolean') {
         enabled = true;
     } else if (type === 'integer' || type === 'real') {
         enabled = !!arithmeticLevelEnabled;
@@ -452,10 +491,7 @@ function updateUseInConstraintsAvailability(card, type, idx) {
             message = 'Only available if Arithmetic level is enabled in step 2.';
         }
     } else if (type === 'string') {
-        enabled = !!typeLevelEnabled && !!stringConstraintsEnabled;
-        if (!enabled) {
-            message = 'Only available if Type level and String constraints are enabled in step 2.';
-        }
+        enabled = true;
     }
 
     checkbox.disabled = !enabled;

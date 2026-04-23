@@ -27,15 +27,20 @@
         </div>
 
         <!-- Satisfiable -->
-        <div class="mb-3 form-check">
-            <input class="form-check-input" type="checkbox" id="ensure_satisfiable" name="ensure_satisfiable"
-                {% if values.get('ensure_satisfiable') %} checked {% endif %}>
-            <label class="form-check-label" for="ensure_satisfiable">Ensure satisfiable</label>
+        <div class="mb-3">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="ensure_satisfiable" name="ensure_satisfiable"
+                    {% if values.get('ensure_satisfiable') %} checked {% endif %}>
+                <label class="form-check-label" for="ensure_satisfiable">Ensure satisfiable</label>
+            </div>
+            <div class="form-text">
+                Note: satisfiability is only supported when the variables included in the constraints are purely Boolean. It may take long to generate satisfiable models, it is not recommended to generate more than 5 SAT models.
+            </div>
         </div>
 
         <!-- Name Prefix -->
         <div class="mb-3">
-            <label for="name_prefix" class="form-label">Name/Prefix</label>
+            <label for="name_prefix" class="form-label">Base name</label>
             <input type="text" class="form-control" id="name_prefix" name="name_prefix"
                    placeholder="e.g. fm" value="{{ values.get('name_prefix', '') }}">
         </div>

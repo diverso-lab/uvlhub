@@ -11,8 +11,7 @@
 <div class="row justify-content-center">
     <div class="col-md-8">
 
-        <!-- ─────────────────────────────────────────────────────────────────────── -->
-        <!-- Checkbox oculto para “Aggregate functions”                             -->
+        <!-- Checkbox oculto para “Aggregate functions” -->
         <input type="checkbox"
             id="aggregate_functions"
             name="aggregate_functions"
@@ -322,8 +321,19 @@
                         value="{{ values.get('prob_div', 0.0) }}"
                     >
                 </div>
+            </div>
 
-                {% if values.get('aggregate_functions', False) %}
+            <div class="mt-2"
+                style="font-weight:bold; color:{% if values.get('arithmetic_sum', '1.0000') != '1.0000' %}red{% else %}green{% endif %};">
+                Arithmetic operators sum: <span id="arithmetic_sum">{{ values.get('arithmetic_sum', '1.0000') }}</span>
+            </div>
+
+            {% if errors.get('arithmetic_sum') %}
+                <div class="text-danger">{{ errors['arithmetic_sum'] }}</div>
+            {% endif %}
+
+            {% if values.get('aggregate_functions', False) %}
+            <div class="row mb-2 mt-3">
                 <div class="col">
                     <label>sum()</label>
                     <input
@@ -350,16 +360,16 @@
                         value="{{ values.get('prob_avg', 0.0) }}"
                     >
                 </div>
-                {% endif %}
             </div>
 
             <div class="mt-2"
-                style="font-weight:bold; color:{% if values.get('arithmetic_sum', '1.0000') != '1.0000' %}red{% else %}green{% endif %};">
-                Current sum: <span id="arithmetic_sum">{{ values.get('arithmetic_sum', '1.0000') }}</span>
+                style="font-weight:bold; color:{% if (values.get('aggregate_sum', '0.0000') | float) > 1.0 %}red{% else %}green{% endif %};">
+                Aggregate functions sum: <span id="aggregate_sum">{{ values.get('aggregate_sum', '0.0000') }}</span>
             </div>
 
-            {% if errors.get('arithmetic_sum') %}
-                <div class="text-danger">{{ errors['arithmetic_sum'] }}</div>
+            {% if errors.get('aggregate_sum') %}
+                <div class="text-danger">{{ errors['aggregate_sum'] }}</div>
+            {% endif %}
             {% endif %}
         </div>
         {% endif %}
@@ -499,17 +509,6 @@ document.addEventListener("DOMContentLoaded", function () {
             (Math.abs(sum - 1.0) < 0.001) ? 'green' : 'red';
     }
 
-    // Constraint type dist (comentado)
-    
-    /*
-    let ctc_ids = ['ctc_dist_boolean', 'ctc_dist_numeric', 'ctc_dist_aggregate', 'ctc_dist_string'];
-    ctc_ids.forEach(id => {
-        let el = document.getElementsByName(id)[0];
-        if (el) el.addEventListener('input', () => updateSum(ctc_ids, 'ctc_dist_total'));
-    });
-    updateSum(ctc_ids, 'ctc_dist_total');
-    */
-
     // Boolean ops
     let boolop_ids = ['prob_and', 'prob_or', 'prob_implies', 'prob_equiv'];
     boolop_ids.forEach(id => {
@@ -518,33 +517,48 @@ document.addEventListener("DOMContentLoaded", function () {
     });
     updateSum(boolop_ids, 'boolop_sum');
 
-    // Arithmetic level + aggregate
+    // Arithmetic operators sum (= 1.0)
     function updateArithmeticSum() {
-        const aggCb = document.getElementById('aggregate_functions');
-        const ids = ['prob_plus', 'prob_minus', 'prob_times', 'prob_div'];
+        updateSum(['prob_plus', 'prob_minus', 'prob_times', 'prob_div'], 'arithmetic_sum');
+    }
 
-        if (aggCb && aggCb.checked) {
-            if (document.getElementsByName('prob_sum').length) ids.push('prob_sum');
-            if (document.getElementsByName('prob_avg').length) ids.push('prob_avg');
-        }
+    // Aggregate functions sum (<= 1.0)
+    function updateAggregateSum() {
+        const totalEl = document.getElementById('aggregate_sum');
+        if (!totalEl) return;
 
-        updateSum(ids, 'arithmetic_sum');
+        let sum = 0.0;
+
+        const sumInput = document.getElementsByName('prob_sum')[0];
+        const avgInput = document.getElementsByName('prob_avg')[0];
+
+        if (sumInput) sum += parseFloat(sumInput.value) || 0;
+        if (avgInput) sum += parseFloat(avgInput.value) || 0;
+
+        totalEl.innerText = sum.toFixed(4);
+        totalEl.parentElement.style.color = (sum <= 1.001) ? 'green' : 'red';
     }
 
     if (document.getElementById('arithmetic_sum')) {
-        ['prob_plus', 'prob_minus', 'prob_times', 'prob_div', 'prob_sum', 'prob_avg'].forEach(id => {
+        ['prob_plus', 'prob_minus', 'prob_times', 'prob_div'].forEach(id => {
             const input = document.getElementsByName(id)[0];
             if (input) {
                 input.addEventListener('input', updateArithmeticSum);
             }
         });
 
-        const aggCb = document.getElementById('aggregate_functions');
-        if (aggCb) {
-            aggCb.addEventListener('change', updateArithmeticSum);
-        }
-
         updateArithmeticSum();
+    }
+
+    if (document.getElementById('aggregate_sum')) {
+        ['prob_sum', 'prob_avg'].forEach(id => {
+            const input = document.getElementsByName(id)[0];
+            if (input) {
+                input.addEventListener('input', updateAggregateSum);
+            }
+        });
+
+        updateAggregateSum();
     }
 
     // Comparison ops
