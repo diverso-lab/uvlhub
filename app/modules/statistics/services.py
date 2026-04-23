@@ -539,7 +539,7 @@ class DashboardService:
                 doi_url = dataset.get_uvlhub_doi()
             except Exception:
                 doi_url = "#"
-            out.append(DashboardRow(title=title, doi_url=doi_url, value=int(value) if value is not None else 0))
+            out.append(DashboardRow(title=title, doi_url=doi_url, value=_format_top_value(value)))
         return out
 
     # ── platform top-N helpers ─────────────────────────────────────────────
@@ -742,6 +742,25 @@ class DashboardService:
 
 def _sum(rows, attr: str) -> int:
     return sum(getattr(r, attr) or 0 for r in rows)
+
+
+def _format_top_value(v) -> int | str:
+    """Render a top-table metric value for humans.
+
+    Integers up to ~1e15 print as plain numbers (good for features, constraints,
+    tree depth). Anything bigger — realistically only the `configurations`
+    column, which routinely hits 2^N-scale values — collapses to scientific
+    notation so the table cell stays readable instead of spraying 30 digits.
+    """
+    if v is None:
+        return 0
+    try:
+        fv = float(v)
+    except (TypeError, ValueError):
+        return 0
+    if abs(fv) < 1e15 and float(int(fv)) == fv:
+        return int(fv)
+    return f"{fv:.2e}"
 
 
 def _summarize(values: list[float | int]) -> StatsSummary:

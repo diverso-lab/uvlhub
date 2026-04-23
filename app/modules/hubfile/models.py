@@ -189,7 +189,14 @@ class HubfileMetrics(db.Model):
     # or a string like "<= 1234" when only an upper bound could be computed
     # within the analysis budget. Splitting it lets queries like
     # AVG(configurations) WHERE NOT is_upper_bound be straightforward.
-    configurations = db.Column(db.BigInteger, nullable=True)
+    #
+    # Stored as DOUBLE (precision=53) rather than BIGINT because real feature
+    # models routinely produce 2^N-scale counts — e.g. a model with 140
+    # independent optional features reports 1.27e30 configurations, which
+    # overflows signed BIGINT (max ~9.2e18). Double precision covers anything
+    # fmfactlabel can compute (up to ~1.8e308) at the cost of ~15 significant
+    # digits, which is plenty for histograms and summaries.
+    configurations = db.Column(db.Float(precision=53), nullable=True)
     configurations_is_upper_bound = db.Column(db.Boolean, nullable=True)
 
     # Stored as fractions in [0, 1] (fmfactlabel reports them as percentages).

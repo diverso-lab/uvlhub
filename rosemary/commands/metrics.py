@@ -131,26 +131,51 @@ def metrics_backfill(force: bool, limit: int | None, batch_size: int):
         )
     )
 
-    processed = ok = errored = 0
+    processed = ok = errored = failed = 0
     pending_in_batch = 0
 
-    # `yield_per` keeps memory bounded when iterating thousands of rows: the
-    # JSON payloads are several KB each.
-    for hubfile_id, raw in base.yield_per(batch_size):
+    # Take the full id list up front: the yield_per cursor can't survive a
+    # `rollback()` mid-iteration (MariaDB closes the unbuffered result),
+    # and we need the option to rollback per-row when an INSERT fails
+    # (e.g. a fact label reports a value that overflows a column). Ids are
+    # small; loading 1e6 of them is still a handful of MB.
+    ids_and_payloads = base.all()
+
+    from datetime import datetime
+
+    import pytz
+
+    for hubfile_id, raw in ids_and_payloads:
         fields = extract_metrics(raw)
+        try:
+            row = db.session.get(HubfileMetrics, hubfile_id)
+            if row is None:
+                row = HubfileMetrics(hubfile_id=hubfile_id)
+                db.session.add(row)
 
-        row = db.session.get(HubfileMetrics, hubfile_id)
-        if row is None:
-            row = HubfileMetrics(hubfile_id=hubfile_id)
-            db.session.add(row)
+            row.extracted_at = datetime.now(pytz.utc)
+            for column, value in fields.items():
+                setattr(row, column, value)
 
-        from datetime import datetime
-
-        import pytz
-
-        row.extracted_at = datetime.now(pytz.utc)
-        for column, value in fields.items():
-            setattr(row, column, value)
+            db.session.flush()
+        except Exception as e:
+            # Keep the whole backfill going when a single hubfile's payload
+            # doesn't fit the schema — mark that one as errored and move on.
+            db.session.rollback()
+            failed += 1
+            click.echo(click.style(f"  ✖ hubfile {hubfile_id}: {e}", fg="red"))
+            # Store the failure in the row so `metrics:status` counts it.
+            try:
+                row = db.session.get(HubfileMetrics, hubfile_id) or HubfileMetrics(hubfile_id=hubfile_id)
+                if hubfile_id not in {r.hubfile_id for r in db.session.new}:
+                    db.session.add(row)
+                row.extracted_at = datetime.now(pytz.utc)
+                row.extractor_version = fields.get("extractor_version", "1")
+                row.parse_error = f"db insert failed: {e}"[:2000]
+                db.session.flush()
+            except Exception:
+                db.session.rollback()
+            continue
 
         processed += 1
         pending_in_batch += 1
@@ -164,17 +189,17 @@ def metrics_backfill(force: bool, limit: int | None, batch_size: int):
             pending_in_batch = 0
             click.echo(
                 click.style(
-                    f"  …{processed}/{total} processed (ok={ok}, errored={errored})",
+                    f"  …{processed}/{total} processed (ok={ok}, errored={errored}, failed={failed})",
                     fg="cyan",
                 )
             )
 
-    if pending_in_batch:
+    if pending_in_batch or failed:
         db.session.commit()
 
     click.echo(
         click.style(
-            f"\n🎉 Done. {processed} processed — {ok} OK, {errored} with parse errors.",
+            f"\n🎉 Done. {processed} processed — {ok} OK, {errored} with parse errors, {failed} DB-insert failures.",
             fg="green",
         )
     )

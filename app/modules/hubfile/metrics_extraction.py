@@ -140,21 +140,23 @@ def _parse_percent(raw: Any) -> float | None:
     return None
 
 
-def _parse_configurations(raw: Any) -> tuple[int | None, bool | None]:
-    """fmfactlabel reports either an exact int or a string like '<= 1234'.
+def _parse_configurations(raw: Any) -> tuple[float | None, bool | None]:
+    """fmfactlabel reports either an exact integer or a string like '<= 1234'.
 
-    Returns ``(value, is_upper_bound)``. Both are None when the analysis was
-    skipped (e.g. light fact label) or the value can't be parsed.
+    Returns ``(value, is_upper_bound)`` as a float because real feature models
+    routinely produce 2^N-scale counts (e.g. 1.27e30) that overflow BIGINT.
+    Both are None when the analysis was skipped (e.g. light fact label) or
+    the value can't be parsed.
     """
     if raw is None:
         return None, None
     if isinstance(raw, (int, float)):
-        return int(raw), False
+        return float(raw), False
     if isinstance(raw, str):
         m = _CONFIG_RE.match(raw)
         if m:
             try:
-                return int(float(m.group(2).replace(",", "."))), m.group(1) == "<="
+                return float(m.group(2).replace(",", ".")), m.group(1) == "<="
             except (TypeError, ValueError):
                 return None, None
     return None, None
