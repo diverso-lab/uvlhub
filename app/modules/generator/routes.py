@@ -24,7 +24,6 @@ STEP3_UI_DEFAULTS = {
     "prob_gt": 0.7,
     "prob_leq": 0.0,
     "prob_geq": 0.0,
-
     "prob_len": 0.7,
 }
 
@@ -90,11 +89,7 @@ def step1():
         errors, values = validate_step1_form(request.form)
 
         if errors:
-            return render_template(
-                "generator/step1.html",
-                current_step=1,
-                errors=errors,
-                values=values)
+            return render_template("generator/step1.html", current_step=1, errors=errors, values=values)
 
         try:
             from fm_generator.FMGenerator.models.config import Params
@@ -122,22 +117,15 @@ def step1():
     params_dict = session.get("params", {})
 
     values = {
-        "num_models_val": params_dict.get(
-            "NUM_MODELS", 5), "seed": params_dict.get(
-            "SEED", 42), "name_prefix": params_dict.get(
-                "NAME_PREFIX", ""), "ensure_satisfiable": (
-                    "on" if params_dict.get(
-                        "ENSURE_SATISFIABLE", True) else ""), "feature_count_suffix": (
-                            "on" if params_dict.get(
-                                "INCLUDE_FEATURE_COUNT_SUFFIX", False) else ""), "constraint_count_suffix": (
-                                    "on" if params_dict.get(
-                                        "INCLUDE_CONSTRAINT_COUNT_SUFFIX", False) else ""), }
+        "num_models_val": params_dict.get("NUM_MODELS", 5),
+        "seed": params_dict.get("SEED", 42),
+        "name_prefix": params_dict.get("NAME_PREFIX", ""),
+        "ensure_satisfiable": ("on" if params_dict.get("ENSURE_SATISFIABLE", True) else ""),
+        "feature_count_suffix": ("on" if params_dict.get("INCLUDE_FEATURE_COUNT_SUFFIX", False) else ""),
+        "constraint_count_suffix": ("on" if params_dict.get("INCLUDE_CONSTRAINT_COUNT_SUFFIX", False) else ""),
+    }
 
-    return render_template(
-        "generator/step1.html",
-        current_step=1,
-        errors={},
-        values=values)
+    return render_template("generator/step1.html", current_step=1, errors={}, values=values)
 
 
 def validate_step2_form(form, params_dict=None):
@@ -145,8 +133,7 @@ def validate_step2_form(form, params_dict=None):
     errors = {}
     values = {}
 
-    ensure_satisfiable_enabled = bool(
-        params_dict.get("ENSURE_SATISFIABLE", False))
+    ensure_satisfiable_enabled = bool(params_dict.get("ENSURE_SATISFIABLE", False))
 
     # Features
     min_features_val = form.get("num_features_min", "").strip()
@@ -181,8 +168,7 @@ def validate_step2_form(form, params_dict=None):
     max_tree_depth_val = form.get("max_tree_depth", "").strip()
     try:
         max_tree_depth = int(max_tree_depth_val)
-        if "num_features_max" not in errors and not (
-                1 <= max_tree_depth <= max_features):
+        if "num_features_max" not in errors and not (1 <= max_tree_depth <= max_features):
             errors["max_tree_depth"] = "Maximum tree depth must be between 1 and the maximum number of features."
     except Exception:
         errors["max_tree_depth"] = "Maximum tree depth must be an integer."
@@ -197,19 +183,17 @@ def validate_step2_form(form, params_dict=None):
         if aggregate_functions_enabled:
             errors["aggregate_functions"] = (
                 "Aggregate functions are not supported when Ensure satisfiable is enabled, "
-                "because satisfiability is only guaranteed for purely Boolean constraints.")
+                "because satisfiability is only guaranteed for purely Boolean constraints."
+            )
 
         if string_constraints_enabled:
             errors["string_constraints"] = (
                 "String constraints are not supported when Ensure satisfiable is enabled, "
-                "because satisfiability is only guaranteed for purely Boolean constraints.")
+                "because satisfiability is only guaranteed for purely Boolean constraints."
+            )
 
     if type_level_enabled:
-        type_fields = [
-            "dist_boolean",
-            "dist_integer",
-            "dist_real",
-            "dist_string"]
+        type_fields = ["dist_boolean", "dist_integer", "dist_real", "dist_string"]
         type_values = []
 
         for f in type_fields:
@@ -226,8 +210,7 @@ def validate_step2_form(form, params_dict=None):
         type_total = sum(type_values)
         if abs(type_total - 1.0) > 0.001:
             errors["type_dist_total"] = (
-                f"The sum of type distributions must be exactly 1.0. "
-                f"Current sum: {type_total:.4f}."
+                f"The sum of type distributions must be exactly 1.0. " f"Current sum: {type_total:.4f}."
             )
 
         values["type_dist_total"] = f"{type_total:.4f}"
@@ -252,26 +235,18 @@ def validate_step2_form(form, params_dict=None):
         try:
             min_fc = int(min_fc_val)
             if not (1 <= min_fc <= 10000):
-                errors["min_feature_cardinality"] = (
-                    "Min. feature cardinality must be between 1 and 10,000."
-                )
+                errors["min_feature_cardinality"] = "Min. feature cardinality must be between 1 and 10,000."
         except Exception:
             min_fc = None
-            errors["min_feature_cardinality"] = (
-                "Min. feature cardinality must be an integer."
-            )
+            errors["min_feature_cardinality"] = "Min. feature cardinality must be an integer."
 
         try:
             max_fc = int(max_fc_val)
             if not (1 <= max_fc <= 10000):
-                errors["max_feature_cardinality"] = (
-                    "Max. feature cardinality must be between 1 and 10,000."
-                )
+                errors["max_feature_cardinality"] = "Max. feature cardinality must be between 1 and 10,000."
         except Exception:
             max_fc = None
-            errors["max_feature_cardinality"] = (
-                "Max. feature cardinality must be an integer."
-            )
+            errors["max_feature_cardinality"] = "Max. feature cardinality must be an integer."
 
         if (
             "min_feature_cardinality" not in errors
@@ -280,16 +255,10 @@ def validate_step2_form(form, params_dict=None):
             and max_fc is not None
             and min_fc > max_fc
         ):
-            errors["max_feature_cardinality"] = (
-                "Max. feature cardinality must be greater than or equal to min."
-            )
+            errors["max_feature_cardinality"] = "Max. feature cardinality must be greater than or equal to min."
 
     # Distribución de relaciones (groups)
-    rel_fields = [
-        "dist_optional",
-        "dist_mandatory",
-        "dist_alternative",
-        "dist_or"]
+    rel_fields = ["dist_optional", "dist_mandatory", "dist_alternative", "dist_or"]
     group_cardinality_enabled = "group_cardinality" in form
 
     if group_cardinality_enabled:
@@ -385,78 +354,55 @@ def step2():
             params_dict["STRING_CONSTRAINTS"] = "string_constraints" in request.form
             params_dict["GROUP_CARDINALITY"] = "group_cardinality" in request.form
             params_dict["FEATURE_CARDINALITY"] = "feature_cardinality" in request.form
-            params_dict["MIN_FEATURES"] = int(
-                request.form.get(
-                    "num_features_min", params_dict.get(
-                        "MIN_FEATURES", 10)))
-            params_dict["MAX_FEATURES"] = int(
-                request.form.get(
-                    "num_features_max", params_dict.get(
-                        "MAX_FEATURES", 50)))
+            params_dict["MIN_FEATURES"] = int(request.form.get("num_features_min", params_dict.get("MIN_FEATURES", 10)))
+            params_dict["MAX_FEATURES"] = int(request.form.get("num_features_max", params_dict.get("MAX_FEATURES", 50)))
             params_dict["MAX_TREE_DEPTH"] = int(
-                request.form.get(
-                    "max_tree_depth", params_dict.get(
-                        "MAX_TREE_DEPTH", 5)))
+                request.form.get("max_tree_depth", params_dict.get("MAX_TREE_DEPTH", 5))
+            )
             params_dict["DIST_OPTIONAL"] = float(
-                request.form.get(
-                    "dist_optional", params_dict.get(
-                        "DIST_OPTIONAL", 0.3)))
+                request.form.get("dist_optional", params_dict.get("DIST_OPTIONAL", 0.3))
+            )
             params_dict["DIST_MANDATORY"] = float(
-                request.form.get(
-                    "dist_mandatory", params_dict.get(
-                        "DIST_MANDATORY", 0.3)))
+                request.form.get("dist_mandatory", params_dict.get("DIST_MANDATORY", 0.3))
+            )
             params_dict["DIST_ALTERNATIVE"] = float(
-                request.form.get(
-                    "dist_alternative", params_dict.get(
-                        "DIST_ALTERNATIVE", 0.2)))
-            params_dict["DIST_OR"] = float(
-                request.form.get(
-                    "dist_or", params_dict.get(
-                        "DIST_OR", 0.2)))
+                request.form.get("dist_alternative", params_dict.get("DIST_ALTERNATIVE", 0.2))
+            )
+            params_dict["DIST_OR"] = float(request.form.get("dist_or", params_dict.get("DIST_OR", 0.2)))
 
             if "type_level" in request.form:
                 params_dict["DIST_BOOLEAN"] = float(
-                    request.form.get(
-                        "dist_boolean", params_dict.get(
-                            "DIST_BOOLEAN", 0.0)))
+                    request.form.get("dist_boolean", params_dict.get("DIST_BOOLEAN", 0.0))
+                )
                 params_dict["DIST_INTEGER"] = float(
-                    request.form.get(
-                        "dist_integer", params_dict.get(
-                            "DIST_INTEGER", 0.0)))
-                params_dict["DIST_REAL"] = float(request.form.get(
-                    "dist_real", params_dict.get("DIST_REAL", 0.0)))
-                params_dict["DIST_STRING"] = float(
-                    request.form.get(
-                        "dist_string", params_dict.get(
-                            "DIST_STRING", 0.0)))
+                    request.form.get("dist_integer", params_dict.get("DIST_INTEGER", 0.0))
+                )
+                params_dict["DIST_REAL"] = float(request.form.get("dist_real", params_dict.get("DIST_REAL", 0.0)))
+                params_dict["DIST_STRING"] = float(request.form.get("dist_string", params_dict.get("DIST_STRING", 0.0)))
 
             if "group_cardinality" in request.form:
                 params_dict["DIST_GROUP_CARDINALITY"] = float(
-                    request.form.get(
-                        "dist_group_cardinality", params_dict.get(
-                            "DIST_GROUP_CARDINALITY", 0.0)))
+                    request.form.get("dist_group_cardinality", params_dict.get("DIST_GROUP_CARDINALITY", 0.0))
+                )
                 params_dict["GROUP_CARDINALITY_MIN"] = int(
-                    request.form.get(
-                        "group_cardinality_min", params_dict.get(
-                            "GROUP_CARDINALITY_MIN", 10)))
+                    request.form.get("group_cardinality_min", params_dict.get("GROUP_CARDINALITY_MIN", 10))
+                )
                 params_dict["GROUP_CARDINALITY_MAX"] = int(
-                    request.form.get(
-                        "group_cardinality_max", params_dict.get(
-                            "GROUP_CARDINALITY_MAX", 50)))
+                    request.form.get("group_cardinality_max", params_dict.get("GROUP_CARDINALITY_MAX", 50))
+                )
             else:
                 params_dict["DIST_GROUP_CARDINALITY"] = 0.0
 
             if "feature_cardinality" in request.form:
-                params_dict["PROB_FEATURE_CARDINALITY"] = float(request.form.get(
-                    "prob_fc", params_dict.get("PROB_FEATURE_CARDINALITY", 0.1)))
+                params_dict["PROB_FEATURE_CARDINALITY"] = float(
+                    request.form.get("prob_fc", params_dict.get("PROB_FEATURE_CARDINALITY", 0.1))
+                )
                 params_dict["MIN_FEATURE_CARDINALITY"] = int(
-                    request.form.get(
-                        "min_feature_cardinality", params_dict.get(
-                            "MIN_FEATURE_CARDINALITY", 2)))
+                    request.form.get("min_feature_cardinality", params_dict.get("MIN_FEATURE_CARDINALITY", 2))
+                )
                 params_dict["MAX_FEATURE_CARDINALITY"] = int(
-                    request.form.get(
-                        "max_feature_cardinality", params_dict.get(
-                            "MAX_FEATURE_CARDINALITY", 5)))
+                    request.form.get("max_feature_cardinality", params_dict.get("MAX_FEATURE_CARDINALITY", 5))
+                )
 
             session["params"] = params_dict
 
@@ -467,11 +413,7 @@ def step2():
         if errors:
             print(f"[VALIDACIÓN STEP2] Errores detectados: {errors}")
             print(values)
-            return render_template(
-                "generator/step2.html",
-                current_step=2,
-                errors=errors,
-                values=values)
+            return render_template("generator/step2.html", current_step=2, errors=errors, values=values)
 
         if not params_dict:
             return "Error: Params missing in session", 400
@@ -484,20 +426,14 @@ def step2():
         params_dict["AGGREGATE_FUNCTIONS"] = "aggregate_functions" in request.form
         params_dict["STRING_CONSTRAINTS"] = "string_constraints" in request.form
 
-        params_dict["MIN_FEATURES"] = int(
-            request.form.get("num_features_min", 1))
-        params_dict["MAX_FEATURES"] = int(
-            request.form.get("num_features_max", 10))
+        params_dict["MIN_FEATURES"] = int(request.form.get("num_features_min", 1))
+        params_dict["MAX_FEATURES"] = int(request.form.get("num_features_max", 10))
 
         if "type_level" in request.form:
-            params_dict["DIST_BOOLEAN"] = float(
-                request.form.get("dist_boolean", 0.0))
-            params_dict["DIST_INTEGER"] = float(
-                request.form.get("dist_integer", 0.0))
-            params_dict["DIST_REAL"] = float(
-                request.form.get("dist_real", 0.0))
-            params_dict["DIST_STRING"] = float(
-                request.form.get("dist_string", 0.0))
+            params_dict["DIST_BOOLEAN"] = float(request.form.get("dist_boolean", 0.0))
+            params_dict["DIST_INTEGER"] = float(request.form.get("dist_integer", 0.0))
+            params_dict["DIST_REAL"] = float(request.form.get("dist_real", 0.0))
+            params_dict["DIST_STRING"] = float(request.form.get("dist_string", 0.0))
         else:
             params_dict["DIST_BOOLEAN"] = 0.0
             params_dict["DIST_INTEGER"] = 0.0
@@ -505,47 +441,33 @@ def step2():
             params_dict["DIST_STRING"] = 0.0
 
         # Tree depth
-        params_dict["MAX_TREE_DEPTH"] = int(
-            request.form.get("max_tree_depth", 5))
+        params_dict["MAX_TREE_DEPTH"] = int(request.form.get("max_tree_depth", 5))
 
         # Groups
-        params_dict["DIST_OPTIONAL"] = float(
-            request.form.get("dist_optional", 0.7))
-        params_dict["DIST_MANDATORY"] = float(
-            request.form.get("dist_mandatory", 0.2))
-        params_dict["DIST_ALTERNATIVE"] = float(
-            request.form.get("dist_alternative", 0.0))
+        params_dict["DIST_OPTIONAL"] = float(request.form.get("dist_optional", 0.7))
+        params_dict["DIST_MANDATORY"] = float(request.form.get("dist_mandatory", 0.2))
+        params_dict["DIST_ALTERNATIVE"] = float(request.form.get("dist_alternative", 0.0))
         params_dict["DIST_OR"] = float(request.form.get("dist_or", 0.0))
 
         # Group cardinality
         if "group_cardinality" in request.form:
-            params_dict["DIST_GROUP_CARDINALITY"] = float(
-                request.form.get("dist_group_cardinality", 0.0))
-            params_dict["GROUP_CARDINALITY_MIN"] = int(
-                request.form.get("group_cardinality_min", 1))
-            params_dict["GROUP_CARDINALITY_MAX"] = int(
-                request.form.get("group_cardinality_max", 10))
+            params_dict["DIST_GROUP_CARDINALITY"] = float(request.form.get("dist_group_cardinality", 0.0))
+            params_dict["GROUP_CARDINALITY_MIN"] = int(request.form.get("group_cardinality_min", 1))
+            params_dict["GROUP_CARDINALITY_MAX"] = int(request.form.get("group_cardinality_max", 10))
         else:
             params_dict["DIST_GROUP_CARDINALITY"] = 0.0
-            params_dict["GROUP_CARDINALITY_MIN"] = params_dict.get(
-                "GROUP_CARDINALITY_MIN", 1)
-            params_dict["GROUP_CARDINALITY_MAX"] = params_dict.get(
-                "GROUP_CARDINALITY_MAX", 1)
+            params_dict["GROUP_CARDINALITY_MIN"] = params_dict.get("GROUP_CARDINALITY_MIN", 1)
+            params_dict["GROUP_CARDINALITY_MAX"] = params_dict.get("GROUP_CARDINALITY_MAX", 1)
 
         # Feature cardinality
         if "feature_cardinality" in request.form:
-            params_dict["PROB_FEATURE_CARDINALITY"] = float(
-                request.form.get("prob_fc", 0.1))
-            params_dict["MIN_FEATURE_CARDINALITY"] = int(
-                request.form.get("min_feature_cardinality", 2))
-            params_dict["MAX_FEATURE_CARDINALITY"] = int(
-                request.form.get("max_feature_cardinality", 5))
+            params_dict["PROB_FEATURE_CARDINALITY"] = float(request.form.get("prob_fc", 0.1))
+            params_dict["MIN_FEATURE_CARDINALITY"] = int(request.form.get("min_feature_cardinality", 2))
+            params_dict["MAX_FEATURE_CARDINALITY"] = int(request.form.get("max_feature_cardinality", 5))
         else:
             params_dict["PROB_FEATURE_CARDINALITY"] = 0.0
-            params_dict["MIN_FEATURE_CARDINALITY"] = params_dict.get(
-                "MIN_FEATURE_CARDINALITY", 2)
-            params_dict["MAX_FEATURE_CARDINALITY"] = params_dict.get(
-                "MAX_FEATURE_CARDINALITY", 5)
+            params_dict["MIN_FEATURE_CARDINALITY"] = params_dict.get("MIN_FEATURE_CARDINALITY", 2)
+            params_dict["MAX_FEATURE_CARDINALITY"] = params_dict.get("MAX_FEATURE_CARDINALITY", 5)
 
         # En step2 solo guardamos el estado; no reconstruimos Params aquí
         # porque eso puede disparar validaciones de steps posteriores.
@@ -713,8 +635,7 @@ def validate_step3_form(form, max_features: int = 10000, params_dict=None):
 
     # 5) ARITHMETIC LEVEL + AGGREGATE FUNCTIONS
     arithmetic_level_checked = bool(params_dict.get("ARITHMETIC_LEVEL", False))
-    aggregate_functions_checked = bool(
-        params_dict.get("AGGREGATE_FUNCTIONS", False))
+    aggregate_functions_checked = bool(params_dict.get("AGGREGATE_FUNCTIONS", False))
 
     if arithmetic_level_checked:
         try:
@@ -729,11 +650,7 @@ def validate_step3_form(form, max_features: int = 10000, params_dict=None):
             prob_plus = prob_minus = prob_times = prob_div = 0.0
 
         arithmetic_sum = prob_plus + prob_minus + prob_times + prob_div
-        arithmetic_fields = [
-            "prob_plus",
-            "prob_minus",
-            "prob_times",
-            "prob_div"]
+        arithmetic_fields = ["prob_plus", "prob_minus", "prob_times", "prob_div"]
 
         if abs(arithmetic_sum - 1.0) > 0.001:
             for f in arithmetic_fields:
@@ -797,8 +714,7 @@ def validate_step3_form(form, max_features: int = 10000, params_dict=None):
 
     # 7) TYPE LEVEL / STRING CONSTRAINTS
     type_level_checked = bool(params_dict.get("TYPE_LEVEL", False))
-    string_constraints_checked = bool(
-        params_dict.get("STRING_CONSTRAINTS", False))
+    string_constraints_checked = bool(params_dict.get("STRING_CONSTRAINTS", False))
 
     if string_constraints_checked and type_level_checked:
         try:
@@ -824,37 +740,23 @@ def step3():
     if request.method == "POST":
         nav = request.form.get("nav", "next")
 
-        save_step_state(
-            3,
-            request.form,
-            checkbox_fields=[
-                "aggregate_functions",
-                "type_level",
-                "string_constraints"])
+        save_step_state(3, request.form, checkbox_fields=["aggregate_functions", "type_level", "string_constraints"])
 
         if nav == "prev":
             params_dict = session.get("params", {}) or {}
 
             params_dict["MIN_CONSTRAINTS"] = int(
-                request.form.get(
-                    "num_constraints_min",
-                    params_dict.get(
-                        "MIN_CONSTRAINTS",
-                        1)))
+                request.form.get("num_constraints_min", params_dict.get("MIN_CONSTRAINTS", 1))
+            )
             params_dict["MAX_CONSTRAINTS"] = int(
-                request.form.get(
-                    "num_constraints_max",
-                    params_dict.get(
-                        "MAX_CONSTRAINTS",
-                        10)))
+                request.form.get("num_constraints_max", params_dict.get("MAX_CONSTRAINTS", 10))
+            )
             params_dict["EXTRA_CONSTRAINT_REPRESENTATIVENESS"] = int(
-                request.form.get(
-                    "extra_constraint_repr", params_dict.get(
-                        "EXTRA_CONSTRAINT_REPRESENTATIVENESS", 1)))
+                request.form.get("extra_constraint_repr", params_dict.get("EXTRA_CONSTRAINT_REPRESENTATIVENESS", 1))
+            )
             params_dict["MIN_VARS_PER_CONSTRAINT"] = int(
-                request.form.get(
-                    "vars_per_ctc_min", params_dict.get(
-                        "MIN_VARS_PER_CONSTRAINT", 1)))
+                request.form.get("vars_per_ctc_min", params_dict.get("MIN_VARS_PER_CONSTRAINT", 1))
+            )
             max_feats = int(params_dict.get("MAX_FEATURES", 10000))
             params_dict["MAX_VARS_PER_CONSTRAINT"] = min(
                 int(
@@ -865,61 +767,42 @@ def step3():
                 ),
                 max_feats,
             )
-            params_dict["PROB_NOT"] = float(
-                request.form.get(
-                    "prob_not", params_dict.get(
-                        "PROB_NOT", 0.3)))
-            params_dict["PROB_AND"] = float(
-                request.form.get(
-                    "prob_and", params_dict.get(
-                        "PROB_AND", 0.7)))
-            params_dict["PROB_OR_CT"] = float(
-                request.form.get(
-                    "prob_or", params_dict.get(
-                        "PROB_OR_CT", 0.1)))
+            params_dict["PROB_NOT"] = float(request.form.get("prob_not", params_dict.get("PROB_NOT", 0.3)))
+            params_dict["PROB_AND"] = float(request.form.get("prob_and", params_dict.get("PROB_AND", 0.7)))
+            params_dict["PROB_OR_CT"] = float(request.form.get("prob_or", params_dict.get("PROB_OR_CT", 0.1)))
             params_dict["PROB_IMPLICATION"] = float(
-                request.form.get(
-                    "prob_implies", params_dict.get(
-                        "PROB_IMPLICATION", 0.1)))
-            params_dict["PROB_EQUIVALENCE"] = float(request.form.get(
-                "prob_equiv", params_dict.get("PROB_EQUIVALENCE", 0.1)))
+                request.form.get("prob_implies", params_dict.get("PROB_IMPLICATION", 0.1))
+            )
+            params_dict["PROB_EQUIVALENCE"] = float(
+                request.form.get("prob_equiv", params_dict.get("PROB_EQUIVALENCE", 0.1))
+            )
 
-            params_dict["PROB_SUM_FUNCTION"] = float(request.form.get(
-                "prob_sum", params_dict.get("PROB_SUM_FUNCTION", 0.0)))
-            params_dict["PROB_AVG_FUNCTION"] = float(request.form.get(
-                "prob_avg", params_dict.get("PROB_AVG_FUNCTION", 0.0)))
+            params_dict["PROB_SUM_FUNCTION"] = float(
+                request.form.get("prob_sum", params_dict.get("PROB_SUM_FUNCTION", 0.0))
+            )
+            params_dict["PROB_AVG_FUNCTION"] = float(
+                request.form.get("prob_avg", params_dict.get("PROB_AVG_FUNCTION", 0.0))
+            )
 
-            params_dict["PROB_SUM"] = float(
-                request.form.get(
-                    "prob_plus", params_dict.get(
-                        "PROB_SUM", 0.7)))
+            params_dict["PROB_SUM"] = float(request.form.get("prob_plus", params_dict.get("PROB_SUM", 0.7)))
             params_dict["PROB_SUBSTRACT"] = float(
-                request.form.get(
-                    "prob_minus", params_dict.get(
-                        "PROB_SUBSTRACT", 0.2)))
-            params_dict["PROB_MULTIPLY"] = float(
-                request.form.get(
-                    "prob_times", params_dict.get(
-                        "PROB_MULTIPLY", 0.1)))
-            params_dict["PROB_DIVIDE"] = float(
-                request.form.get(
-                    "prob_div", params_dict.get(
-                        "PROB_DIVIDE", 0.0)))
+                request.form.get("prob_minus", params_dict.get("PROB_SUBSTRACT", 0.2))
+            )
+            params_dict["PROB_MULTIPLY"] = float(request.form.get("prob_times", params_dict.get("PROB_MULTIPLY", 0.1)))
+            params_dict["PROB_DIVIDE"] = float(request.form.get("prob_div", params_dict.get("PROB_DIVIDE", 0.0)))
 
-            arithmetic_level_enabled = bool(
-                params_dict.get("ARITHMETIC_LEVEL", False))
+            arithmetic_level_enabled = bool(params_dict.get("ARITHMETIC_LEVEL", False))
 
             if arithmetic_level_enabled:
-                params_dict["PROB_EQUALS"] = float(request.form.get(
-                    "prob_eq", params_dict.get("PROB_EQUALS", 0.1)))
-                params_dict["PROB_LESS"] = float(request.form.get(
-                    "prob_lt", params_dict.get("PROB_LESS", 0.2)))
-                params_dict["PROB_GREATER"] = float(request.form.get(
-                    "prob_gt", params_dict.get("PROB_GREATER", 0.7)))
-                params_dict["PROB_LESS_EQUALS"] = float(request.form.get(
-                    "prob_leq", params_dict.get("PROB_LESS_EQUALS", 0.0)))
-                params_dict["PROB_GREATER_EQUALS"] = float(request.form.get(
-                    "prob_geq", params_dict.get("PROB_GREATER_EQUALS", 0.0)))
+                params_dict["PROB_EQUALS"] = float(request.form.get("prob_eq", params_dict.get("PROB_EQUALS", 0.1)))
+                params_dict["PROB_LESS"] = float(request.form.get("prob_lt", params_dict.get("PROB_LESS", 0.2)))
+                params_dict["PROB_GREATER"] = float(request.form.get("prob_gt", params_dict.get("PROB_GREATER", 0.7)))
+                params_dict["PROB_LESS_EQUALS"] = float(
+                    request.form.get("prob_leq", params_dict.get("PROB_LESS_EQUALS", 0.0))
+                )
+                params_dict["PROB_GREATER_EQUALS"] = float(
+                    request.form.get("prob_geq", params_dict.get("PROB_GREATER_EQUALS", 0.0))
+                )
             else:
                 params_dict["PROB_EQUALS"] = 0.0
                 params_dict["PROB_LESS"] = 0.0
@@ -928,12 +811,12 @@ def step3():
                 params_dict["PROB_GREATER_EQUALS"] = 0.0
 
             type_level_enabled = bool(params_dict.get("TYPE_LEVEL", False))
-            string_constraints_enabled = bool(
-                params_dict.get("STRING_CONSTRAINTS", False))
+            string_constraints_enabled = bool(params_dict.get("STRING_CONSTRAINTS", False))
 
             if type_level_enabled and string_constraints_enabled:
-                params_dict["PROB_LEN_FUNCTION"] = float(request.form.get(
-                    "prob_len", params_dict.get("PROB_LEN_FUNCTION", 0.7)))
+                params_dict["PROB_LEN_FUNCTION"] = float(
+                    request.form.get("prob_len", params_dict.get("PROB_LEN_FUNCTION", 0.7))
+                )
             else:
                 params_dict["PROB_LEN_FUNCTION"] = 0.0
             session["params"] = params_dict
@@ -942,67 +825,45 @@ def step3():
         # Extraer max features de params_dict
         max_feats = params_dict.get("MAX_FEATURES", 10000)
 
-        errors, values = validate_step3_form(
-            request.form, max_feats, params_dict)
+        errors, values = validate_step3_form(request.form, max_feats, params_dict)
 
-        values["arithmetic_level"] = bool(
-            params_dict.get("ARITHMETIC_LEVEL", False))
-        values["aggregate_functions"] = bool(
-            params_dict.get("AGGREGATE_FUNCTIONS", False))
+        values["arithmetic_level"] = bool(params_dict.get("ARITHMETIC_LEVEL", False))
+        values["aggregate_functions"] = bool(params_dict.get("AGGREGATE_FUNCTIONS", False))
         values["type_level"] = bool(params_dict.get("TYPE_LEVEL", False))
-        values["string_constraints"] = bool(
-            params_dict.get("STRING_CONSTRAINTS", False))
+        values["string_constraints"] = bool(params_dict.get("STRING_CONSTRAINTS", False))
 
         if errors:
             print(f"[VALIDACIÓN STEP3] Errores detectados: {errors}")
-            return render_template(
-                "generator/step3.html",
-                current_step=3,
-                errors=errors,
-                values=values)
+            return render_template("generator/step3.html", current_step=3, errors=errors, values=values)
 
         # Guardar campos en params_dict
-        params_dict["MIN_CONSTRAINTS"] = int(
-            request.form.get("num_constraints_min", 1))
-        params_dict["MAX_CONSTRAINTS"] = int(
-            request.form.get("num_constraints_max", 10))
-        params_dict["EXTRA_CONSTRAINT_REPRESENTATIVENESS"] = int(
-            request.form.get("extra_constraint_repr", 1))
-        params_dict["MIN_VARS_PER_CONSTRAINT"] = int(
-            request.form.get("vars_per_ctc_min", 1))
+        params_dict["MIN_CONSTRAINTS"] = int(request.form.get("num_constraints_min", 1))
+        params_dict["MAX_CONSTRAINTS"] = int(request.form.get("num_constraints_max", 10))
+        params_dict["EXTRA_CONSTRAINT_REPRESENTATIVENESS"] = int(request.form.get("extra_constraint_repr", 1))
+        params_dict["MIN_VARS_PER_CONSTRAINT"] = int(request.form.get("vars_per_ctc_min", 1))
 
         max_feats = int(params_dict.get("MAX_FEATURES", 10000))
-        params_dict["MAX_VARS_PER_CONSTRAINT"] = min(
-            int(request.form.get("vars_per_ctc_max", 1)), max_feats)
+        params_dict["MAX_VARS_PER_CONSTRAINT"] = min(int(request.form.get("vars_per_ctc_max", 1)), max_feats)
 
         # Boolean level
         params_dict["PROB_NOT"] = float(request.form.get("prob_not", 0.3))
         params_dict["PROB_AND"] = float(request.form.get("prob_and", 0.7))
         params_dict["PROB_OR_CT"] = float(request.form.get("prob_or", 0.1))
-        params_dict["PROB_IMPLICATION"] = float(
-            request.form.get("prob_implies", 0.1))
-        params_dict["PROB_EQUIVALENCE"] = float(
-            request.form.get("prob_equiv", 0.1))
+        params_dict["PROB_IMPLICATION"] = float(request.form.get("prob_implies", 0.1))
+        params_dict["PROB_EQUIVALENCE"] = float(request.form.get("prob_equiv", 0.1))
 
-        arithmetic_level_enabled = bool(
-            params_dict.get("ARITHMETIC_LEVEL", False))
-        aggregate_functions_enabled = bool(
-            params_dict.get("AGGREGATE_FUNCTIONS", False))
+        arithmetic_level_enabled = bool(params_dict.get("ARITHMETIC_LEVEL", False))
+        aggregate_functions_enabled = bool(params_dict.get("AGGREGATE_FUNCTIONS", False))
 
         if arithmetic_level_enabled:
             params_dict["PROB_SUM"] = float(request.form.get("prob_plus", 0.7))
-            params_dict["PROB_SUBSTRACT"] = float(
-                request.form.get("prob_minus", 0.2))
-            params_dict["PROB_MULTIPLY"] = float(
-                request.form.get("prob_times", 0.1))
-            params_dict["PROB_DIVIDE"] = float(
-                request.form.get("prob_div", 0.0))
+            params_dict["PROB_SUBSTRACT"] = float(request.form.get("prob_minus", 0.2))
+            params_dict["PROB_MULTIPLY"] = float(request.form.get("prob_times", 0.1))
+            params_dict["PROB_DIVIDE"] = float(request.form.get("prob_div", 0.0))
 
             if aggregate_functions_enabled:
-                params_dict["PROB_SUM_FUNCTION"] = float(
-                    request.form.get("prob_sum", 0.0))
-                params_dict["PROB_AVG_FUNCTION"] = float(
-                    request.form.get("prob_avg", 0.0))
+                params_dict["PROB_SUM_FUNCTION"] = float(request.form.get("prob_sum", 0.0))
+                params_dict["PROB_AVG_FUNCTION"] = float(request.form.get("prob_avg", 0.0))
             else:
                 params_dict["PROB_SUM_FUNCTION"] = 0.0
                 params_dict["PROB_AVG_FUNCTION"] = 0.0
@@ -1016,15 +877,11 @@ def step3():
 
         # Comparison operators
         if arithmetic_level_enabled:
-            params_dict["PROB_EQUALS"] = float(
-                request.form.get("prob_eq", 0.1))
+            params_dict["PROB_EQUALS"] = float(request.form.get("prob_eq", 0.1))
             params_dict["PROB_LESS"] = float(request.form.get("prob_lt", 0.2))
-            params_dict["PROB_GREATER"] = float(
-                request.form.get("prob_gt", 0.7))
-            params_dict["PROB_LESS_EQUALS"] = float(
-                request.form.get("prob_leq", 0.0))
-            params_dict["PROB_GREATER_EQUALS"] = float(
-                request.form.get("prob_geq", 0.0))
+            params_dict["PROB_GREATER"] = float(request.form.get("prob_gt", 0.7))
+            params_dict["PROB_LESS_EQUALS"] = float(request.form.get("prob_leq", 0.0))
+            params_dict["PROB_GREATER_EQUALS"] = float(request.form.get("prob_geq", 0.0))
         else:
             params_dict["PROB_EQUALS"] = 0.0
             params_dict["PROB_LESS"] = 0.0
@@ -1034,12 +891,10 @@ def step3():
 
         # Type level
         type_level_enabled = bool(params_dict.get("TYPE_LEVEL", False))
-        string_constraints_enabled = bool(
-            params_dict.get("STRING_CONSTRAINTS", False))
+        string_constraints_enabled = bool(params_dict.get("STRING_CONSTRAINTS", False))
 
         if type_level_enabled and string_constraints_enabled:
-            params_dict["PROB_LEN_FUNCTION"] = float(
-                request.form.get("prob_len", 0.7))
+            params_dict["PROB_LEN_FUNCTION"] = float(request.form.get("prob_len", 0.7))
         else:
             params_dict["PROB_LEN_FUNCTION"] = 0.0
 
@@ -1114,12 +969,7 @@ def step3():
     else:
         # primera vez que entras a step3: IGNORA params_dict para estos campos
         default_values.update(STEP3_UI_DEFAULTS)
-        if not (
-            params_dict.get(
-                "TYPE_LEVEL",
-                False) and params_dict.get(
-                "STRING_CONSTRAINTS",
-                False)):
+        if not (params_dict.get("TYPE_LEVEL", False) and params_dict.get("STRING_CONSTRAINTS", False)):
             default_values["prob_len"] = 0.0
 
     values = load_step_state(3, default_values)
@@ -1127,15 +977,13 @@ def step3():
     # Estos flags deben venir SIEMPRE del step2 (params), no de un estado
     # viejo del wizard
     values["arithmetic_level"] = params_dict.get("ARITHMETIC_LEVEL", False)
-    values["aggregate_functions"] = params_dict.get(
-        "AGGREGATE_FUNCTIONS", False)
+    values["aggregate_functions"] = params_dict.get("AGGREGATE_FUNCTIONS", False)
     values["type_level"] = params_dict.get("TYPE_LEVEL", False)
     values["string_constraints"] = params_dict.get("STRING_CONSTRAINTS", False)
 
     # si el usuario tenía guardado en wizard un número mayor, lo capamos
     try:
-        values["vars_per_ctc_max"] = str(
-            min(int(values.get("vars_per_ctc_max", max_feats)), max_feats))
+        values["vars_per_ctc_max"] = str(min(int(values.get("vars_per_ctc_max", max_feats)), max_feats))
     except Exception:
         values["vars_per_ctc_max"] = str(max_feats)
 
@@ -1150,10 +998,7 @@ def step3():
     )
 
 
-def resolve_use_in_constraints(
-        raw_use_in_constraints: bool,
-        type_: str,
-        params_dict: dict) -> bool:
+def resolve_use_in_constraints(raw_use_in_constraints: bool, type_: str, params_dict: dict) -> bool:
     if not raw_use_in_constraints:
         return False
 
@@ -1169,13 +1014,7 @@ def resolve_use_in_constraints(
         return bool(params_dict.get("ARITHMETIC_LEVEL", False))
 
     if type_lc == "string":
-        return bool(
-            params_dict.get(
-                "TYPE_LEVEL",
-                False)) and bool(
-            params_dict.get(
-                "STRING_CONSTRAINTS",
-                False))
+        return bool(params_dict.get("TYPE_LEVEL", False)) and bool(params_dict.get("STRING_CONSTRAINTS", False))
 
     return False
 
@@ -1186,8 +1025,7 @@ def validate_step4_form(form, params_dict=None):
     params_dict = params_dict or {}
 
     arithmetic_level_enabled = bool(params_dict.get("ARITHMETIC_LEVEL", False))
-    ensure_satisfiable_enabled = bool(
-        params_dict.get("ENSURE_SATISFIABLE", False))
+    ensure_satisfiable_enabled = bool(params_dict.get("ENSURE_SATISFIABLE", False))
 
     random_checked = "random_attributes" in form
     values["random_attributes"] = random_checked
@@ -1239,11 +1077,7 @@ def validate_step4_form(form, params_dict=None):
             else:
                 break
 
-        attr_types = [
-            form.get(
-                f"attr_type_{i}",
-                "").strip() for i in range(
-                len(attr_names))]
+        attr_types = [form.get(f"attr_type_{i}", "").strip() for i in range(len(attr_names))]
 
         # Validar nombre del atributo
         for i in range(len(attr_names)):
@@ -1254,8 +1088,7 @@ def validate_step4_form(form, params_dict=None):
         # Validar use_in_constraints según el tipo y los levels activos
         for i in range(len(attr_names)):
             type_lc = (form.get(f"attr_type_{i}", "") or "").strip().lower()
-            use_in_constraints = form.get(
-                f"attr_use_in_constraints_{i}") == "on"
+            use_in_constraints = form.get(f"attr_use_in_constraints_{i}") == "on"
 
             if not use_in_constraints:
                 continue
@@ -1281,10 +1114,7 @@ def validate_step4_form(form, params_dict=None):
         for i, t in enumerate(attr_types):
             t_lc = t.lower()
 
-            attach_prob_val = (
-                form.get(
-                    f"attr_attach_prob_{i}",
-                    "") or "").strip()
+            attach_prob_val = (form.get(f"attr_attach_prob_{i}", "") or "").strip()
             if not attach_prob_val:
                 errors[f"attr_attach_prob_{
                     i}"] = "Attach probability is required."
@@ -1386,10 +1216,8 @@ def step4():
             params_dict["RANDOM_ATTRIBUTES"] = random_attributes
 
             if random_attributes:
-                params_dict["MIN_ATTRIBUTES"] = int(
-                    request.form.get("min_attributes", 1))
-                params_dict["MAX_ATTRIBUTES"] = int(
-                    request.form.get("max_attributes", 5))
+                params_dict["MIN_ATTRIBUTES"] = int(request.form.get("min_attributes", 1))
+                params_dict["MAX_ATTRIBUTES"] = int(request.form.get("max_attributes", 5))
                 params_dict["ATTRIBUTES_LIST"] = []
                 params_dict["ATTRIBUTE_ATTACH_PROBS"] = []
                 params_dict["ATTRIBUTE_IN_CONSTRAINTS"] = []
@@ -1411,32 +1239,23 @@ def step4():
 
                 for i in range(n_attrs):
                     name = request.form.get(f"attr_name_{i}", "")
-                    type_ = request.form.get(
-                        f"attr_type_{i}", "").strip().lower()
+                    type_ = request.form.get(f"attr_type_{i}", "").strip().lower()
 
-                    attach_prob_raw = (
-                        request.form.get(
-                            f"attr_attach_prob_{i}",
-                            "") or "").strip()
+                    attach_prob_raw = (request.form.get(f"attr_attach_prob_{i}", "") or "").strip()
                     try:
-                        attach_prob = float(
-                            attach_prob_raw) if attach_prob_raw != "" else 1.0
+                        attach_prob = float(attach_prob_raw) if attach_prob_raw != "" else 1.0
                     except Exception:
                         attach_prob = 1.0
 
-                    raw_use_in_constraints = request.form.get(
-                        f"attr_use_in_constraints_{i}") == "on"
+                    raw_use_in_constraints = request.form.get(f"attr_use_in_constraints_{i}") == "on"
 
-                    use_in_constraints = resolve_use_in_constraints(
-                        raw_use_in_constraints, type_, params_dict)
+                    use_in_constraints = resolve_use_in_constraints(raw_use_in_constraints, type_, params_dict)
 
                     if type_ == "boolean":
                         values_list = []
-                        if request.form.get(
-                                f"attr_value_true_{i}") is not None:
+                        if request.form.get(f"attr_value_true_{i}") is not None:
                             values_list.append(True)
-                        if request.form.get(
-                                f"attr_value_false_{i}") is not None:
+                        if request.form.get(f"attr_value_false_{i}") is not None:
                             values_list.append(False)
                         attr_dict = {
                             "name": name,
@@ -1478,20 +1297,14 @@ def step4():
         errors, values = validate_step4_form(request.form, params_dict)
 
         if errors:
-            return render_template(
-                "generator/step4.html",
-                current_step=4,
-                errors=errors,
-                values=values)
+            return render_template("generator/step4.html", current_step=4, errors=errors, values=values)
 
         random_attributes = "random_attributes" in request.form
         params_dict["RANDOM_ATTRIBUTES"] = random_attributes
 
         if random_attributes:
-            params_dict["MIN_ATTRIBUTES"] = int(
-                request.form.get("min_attributes", 1))
-            params_dict["MAX_ATTRIBUTES"] = int(
-                request.form.get("max_attributes", 5))
+            params_dict["MIN_ATTRIBUTES"] = int(request.form.get("min_attributes", 1))
+            params_dict["MAX_ATTRIBUTES"] = int(request.form.get("max_attributes", 5))
             params_dict["ATTRIBUTES_LIST"] = []
             params_dict["ATTRIBUTE_ATTACH_PROBS"] = []
             params_dict["ATTRIBUTE_IN_CONSTRAINTS"] = []
@@ -1515,21 +1328,15 @@ def step4():
                 name = request.form.get(f"attr_name_{i}", "")
                 type_ = request.form.get(f"attr_type_{i}", "").strip().lower()
 
-                attach_prob_raw = (
-                    request.form.get(
-                        f"attr_attach_prob_{i}",
-                        "") or "").strip()
+                attach_prob_raw = (request.form.get(f"attr_attach_prob_{i}", "") or "").strip()
                 try:
-                    attach_prob = float(
-                        attach_prob_raw) if attach_prob_raw != "" else 1.0
+                    attach_prob = float(attach_prob_raw) if attach_prob_raw != "" else 1.0
                 except Exception:
                     attach_prob = 1.0
 
-                raw_use_in_constraints = request.form.get(
-                    f"attr_use_in_constraints_{i}") == "on"
+                raw_use_in_constraints = request.form.get(f"attr_use_in_constraints_{i}") == "on"
 
-                use_in_constraints = resolve_use_in_constraints(
-                    raw_use_in_constraints, type_, params_dict)
+                use_in_constraints = resolve_use_in_constraints(raw_use_in_constraints, type_, params_dict)
 
                 if type_ == "boolean":
                     values_list = []
@@ -1634,11 +1441,7 @@ def step5():
                     domain = Domain(ranges=None, elements=None)
                     default_value = value
 
-                rebuilt_attrs.append(
-                    Attribute(
-                        name=name,
-                        domain=domain,
-                        default_value=default_value))
+                rebuilt_attrs.append(Attribute(name=name, domain=domain, default_value=default_value))
 
             print(session["params"])
 

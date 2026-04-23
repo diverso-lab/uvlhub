@@ -35,10 +35,12 @@ def generate_models(params_json: str) -> str:
         if fname.endswith(".uvl"):
             path = os.path.join(output_dir, fname)
             with open(path, "r", encoding="utf-8") as f:
-                results.append({
-                    "filename": fname,
-                    "content": f.read(),
-                })
+                results.append(
+                    {
+                        "filename": fname,
+                        "content": f.read(),
+                    }
+                )
 
     # 5) Limpiar el temporal
     shutil.rmtree(temp_dir)
