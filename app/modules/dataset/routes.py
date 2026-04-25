@@ -562,7 +562,7 @@ def subdomain_index(doi):
 
     # HTML fallback (default for browsers and crawlers)
     hubfiles = [file for fm in dataset.feature_models for file in fm.hubfiles]
-    selected_file, uvl_content = _preload_first_file(dataset, hubfiles)
+    selected_file = hubfiles[0] if hubfiles else None
 
     user_cookie = ds_view_record_service.create_cookie(dataset=dataset)
 
@@ -587,7 +587,7 @@ def subdomain_index(doi):
             dataset=dataset,
             hubfiles=hubfiles,
             selected_file=selected_file,
-            uvl_content=uvl_content,
+            uvl_content=None,
             fair_meta=fair_meta,
         )
     )
@@ -595,20 +595,6 @@ def subdomain_index(doi):
     resp.headers["Link"] = link_header
     resp.headers["Vary"] = "Accept"
     return resp
-
-
-def _preload_first_file(dataset, hubfiles):
-    """Pick the first hubfile (if any) and return (file, uvl_content)."""
-    if not hubfiles:
-        return None, None
-    first = hubfiles[0]
-    directory_path = os.path.join("uploads", f"user_{dataset.user_id}", f"dataset_{dataset.id}", "uvl")
-    file_path = os.path.join(current_app.root_path, "..", directory_path, first.name)
-    try:
-        with open(file_path, "r") as f:
-            return first, f.read()
-    except Exception as e:
-        return first, f"[Error reading file: {e}]"
 
 
 @dataset_bp.route("/doi/<path:doi>/files/raw/<path:filename>", methods=["GET"])
@@ -670,14 +656,14 @@ def get_unsynchronized_dataset(dataset_id):
         abort(404)
 
     hubfiles = [file for fm in dataset.feature_models for file in fm.hubfiles]
-    selected_file, uvl_content = _preload_first_file(dataset, hubfiles)
+    selected_file = hubfiles[0] if hubfiles else None
 
     return render_template(
         "dataset/view_dataset.html",
         dataset=dataset,
         hubfiles=hubfiles,
         selected_file=selected_file,
-        uvl_content=uvl_content,
+        uvl_content=None,
     )
 
 

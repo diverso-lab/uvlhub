@@ -152,16 +152,6 @@ def view_unsynchronized_file(dataset_id, file_id):
     if not dataset or not selected_file:
         abort(404)
 
-    # 4. Build the on-disk path to the file.
-    directory_path = os.path.join("uploads", f"user_{dataset.user_id}", f"dataset_{dataset.id}", "uvl")
-    file_path = os.path.join(current_app.root_path, "..", directory_path, selected_file.name)
-
-    try:
-        with open(file_path, "r") as f:
-            content = f.read()
-    except Exception as e:
-        content = f"[Error reading file: {e}]"
-
     user_cookie = hubfile_view_record_service.create_cookie(hubfile=selected_file)
     resp = make_response(
         render_template(
@@ -169,7 +159,7 @@ def view_unsynchronized_file(dataset_id, file_id):
             selected_file=selected_file,
             hubfiles=dataset.files(),
             dataset=dataset,
-            uvl_content=content,
+            uvl_content=None,
         )
     )
     resp.set_cookie("file_view_cookie", user_cookie)
@@ -201,16 +191,6 @@ def view_uvl_with_doi(doi, filename):
     if not selected_file:
         abort(404)
 
-    # 4. Build the on-disk path to the file.
-    directory_path = os.path.join("uploads", f"user_{dataset.user_id}", f"dataset_{dataset.id}", "uvl")
-    file_path = os.path.join(current_app.root_path, "..", directory_path, selected_file.name)
-
-    try:
-        with open(file_path, "r") as f:
-            content = f.read()
-    except Exception as e:
-        content = f"[Error reading file: {e}]"
-
     user_cookie = hubfile_view_record_service.create_cookie(hubfile=selected_file)
     resp = make_response(
         render_template(
@@ -218,7 +198,7 @@ def view_uvl_with_doi(doi, filename):
             selected_file=selected_file,
             hubfiles=dataset.files(),
             dataset=dataset,
-            uvl_content=content,
+            uvl_content=None,
         )
     )
     resp.set_cookie("file_view_cookie", user_cookie)

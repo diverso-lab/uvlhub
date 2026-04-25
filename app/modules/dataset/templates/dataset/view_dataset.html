@@ -307,7 +307,7 @@
                 </div>
                 <div class="card-body p-0 panel-body position-relative">
                     <textarea id="uvlEditor" class="d-none">{% if uvl_content %}{{ uvl_content }}{% endif %}</textarea>
-                    <div id="uvlSkeleton" class="uvl-skeleton d-none p-4">
+                    <div id="uvlSkeleton" class="uvl-skeleton {% if not selected_file %}d-none {% endif %}p-4">
                         <span class="skeleton skeleton-line" style="width: 25%;"></span>
                         <span class="skeleton skeleton-line" style="width: 55%; margin-left: 1rem;"></span>
                         <span class="skeleton skeleton-line" style="width: 40%; margin-left: 2rem;"></span>
@@ -380,7 +380,7 @@
                 <div class="card-body panel-body">
                     <div id="FMFactLabelWrapper" class="w-100 position-relative">
                         <svg id="FMFactLabelChart" class="chart w-100" preserveAspectRatio="xMinYMin meet"></svg>
-                        <div id="factLabelSkeleton" class="factlabel-skeleton d-none">
+                        <div id="factLabelSkeleton" class="factlabel-skeleton {% if not selected_file %}d-none{% endif %}">
                             <span class="skeleton skeleton-line xl mb-3" style="width: 50%;"></span>
                             <span class="skeleton skeleton-line" style="width: 80%;"></span>
                             <span class="skeleton skeleton-line" style="width: 65%;"></span>
@@ -617,6 +617,12 @@
     .uvl-skeleton { min-height: 360px; }
     .uvl-skeleton .skeleton-line { font-family: monospace; }
     .workbench-panels .CodeMirror.is-loading { visibility: hidden; }
+    /* Overlay the UVL skeleton on top of the (hidden) CodeMirror so the
+       panel doesn't double its height while the file is loading. */
+    .panel-section[data-panel-key="uvl"] .panel-body { min-height: 360px; }
+    .panel-section[data-panel-key="uvl"] #uvlSkeleton {
+        position: absolute; inset: 0; z-index: 2;
+    }
 </style>
 
 <script>
@@ -675,13 +681,15 @@ document.addEventListener('DOMContentLoaded', function () {
         initDescriptionToggle();
         if (currentFileId) {
             applyFileUi(findModel(currentFileId));
-            renderFactLabelForCurrentFile();
+            fetchAndApplyContent(currentFileId);
         }
     }
     initTooltips();
 });
 
 // ---------- Editor ----------
+const UVL_PLAIN_THRESHOLD_BYTES = 1024 * 1024; // 1 MB: above this, skip syntax highlighting
+
 function initUvlEditor() {
     const ta = document.getElementById('uvlEditor');
     if (!ta || !window.CodeMirror) return;
@@ -694,9 +702,32 @@ function initUvlEditor() {
         indentUnit: 2,
         lineWrapping: false,
         foldGutter: true,
-        gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
-        viewportMargin: Infinity
+        gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
     });
+    // Hide CodeMirror until the async fetch lands content; the skeleton
+    // (rendered visible by the template) carries the visual.
+    if (currentFileId) setUvlLoading(true);
+}
+
+function applyUvlContent(text) {
+    if (!uvlEditorInstance) {
+        setUvlLoading(false);
+        return;
+    }
+    const big = (text || '').length > UVL_PLAIN_THRESHOLD_BYTES;
+    uvlEditorInstance.setOption('mode', big ? null : 'uvl');
+    // Defer setValue so the loading skeleton paints first; CodeMirror's
+    // setValue can block the main thread for several seconds on large files.
+    setTimeout(() => {
+        try {
+            if (uvlEditorInstance) {
+                uvlEditorInstance.setValue(text || '');
+                uvlEditorInstance.refresh();
+            }
+        } finally {
+            setUvlLoading(false);
+        }
+    }, 0);
 }
 
 // ---------- Panel collapsing ----------
@@ -954,11 +985,7 @@ function fetchAndApplyContent(fileId) {
     fetch(url, { credentials: 'same-origin' })
         .then(r => r.ok ? r.json() : Promise.reject(r.status))
         .then(data => {
-            if (uvlEditorInstance) {
-                uvlEditorInstance.setValue(data.uvl || '');
-                uvlEditorInstance.refresh();
-                setTimeout(() => uvlEditorInstance.refresh(), 0);
-            }
+            applyUvlContent(data.uvl || '');
             const ideLink = document.getElementById('workbench-ide-link');
             if (ideLink) ideLink.href = data.ide_url;
             const fl = document.getElementById('workbench-factlabel-external');
@@ -967,11 +994,8 @@ function fetchAndApplyContent(fileId) {
         })
         .catch(err => {
             console.error('workbench fetch error', err);
-            if (uvlEditorInstance) uvlEditorInstance.setValue(`[Error loading model: ${err}]`);
+            applyUvlContent(`[Error loading model: ${err}]`);
             setFactLabelLoading(false);
-        })
-        .finally(() => {
-            setUvlLoading(false);
         });
 }
 
