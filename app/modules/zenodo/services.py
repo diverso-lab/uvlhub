@@ -19,6 +19,10 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 
+class ZenodoUnavailableError(Exception):
+    pass
+
+
 class ZenodoService(BaseService):
 
     def __init__(self):
@@ -45,6 +49,42 @@ class ZenodoService(BaseService):
     def get_zenodo_access_token(self):
         return os.getenv("ZENODO_ACCESS_TOKEN")
 
+    @staticmethod
+    def _extract_error_payload(response):
+        try:
+            return response.json()
+        except ValueError:
+            return response.text
+
+    @staticmethod
+    def _is_unavailable_status(status_code: int) -> bool:
+        return status_code >= 500
+
+    def _request(self, method: str, url: str, unavailable_message: str, **kwargs):
+        try:
+            return requests.request(method, url, **kwargs)
+        except requests.RequestException as exc:
+            raise ZenodoUnavailableError(unavailable_message) from exc
+
+    def _raise_for_zenodo_response(
+        self,
+        response,
+        *,
+        expected_status: int,
+        failure_message: str,
+        unavailable_message: str,
+    ) -> None:
+        if response.status_code == expected_status:
+            return
+
+        error_payload = self._extract_error_payload(response)
+        if self._is_unavailable_status(response.status_code):
+            raise ZenodoUnavailableError(unavailable_message)
+
+        raise Exception(
+            f"{failure_message}. " f"Status code: {response.status_code}. " f"Error details: {error_payload}"
+        )
+
     def test_connection(self) -> bool:
         """
         Test the connection with Zenodo.
@@ -52,7 +92,10 @@ class ZenodoService(BaseService):
         Returns:
             bool: True if the connection is successful, False otherwise.
         """
-        response = requests.get(self.ZENODO_API_URL, params=self.params, headers=self.headers)
+        try:
+            response = requests.get(self.ZENODO_API_URL, params=self.params, headers=self.headers)
+        except requests.RequestException:
+            return False
         return response.status_code == 200
 
     def test_full_connection(self) -> Response:
@@ -197,10 +240,20 @@ class ZenodoService(BaseService):
 
         data = {"metadata": metadata}
 
-        response = requests.post(self.ZENODO_API_URL, params=self.params, json=data, headers=self.headers)
-        if response.status_code != 201:
-            error_message = f"Failed to create deposition. Error details: {response.json()}"
-            raise Exception(error_message)
+        response = self._request(
+            "POST",
+            self.ZENODO_API_URL,
+            "Zenodo is currently unavailable.",
+            params=self.params,
+            json=data,
+            headers=self.headers,
+        )
+        self._raise_for_zenodo_response(
+            response,
+            expected_status=201,
+            failure_message="Failed to create deposition",
+            unavailable_message="Zenodo is currently unavailable.",
+        )
 
         return response.json()
 
@@ -236,10 +289,20 @@ class ZenodoService(BaseService):
         files = {"file": open(file_path, "rb")}
 
         publish_url = f"{self.ZENODO_API_URL}/{deposition_id}/files"
-        response = requests.post(publish_url, params=self.params, data=data, files=files)
-        if response.status_code != 201:
-            error_message = f"Failed to upload files. Error details: {response.json()}"
-            raise Exception(error_message)
+        response = self._request(
+            "POST",
+            publish_url,
+            "Zenodo is currently unavailable.",
+            params=self.params,
+            data=data,
+            files=files,
+        )
+        self._raise_for_zenodo_response(
+            response,
+            expected_status=201,
+            failure_message="Failed to upload files",
+            unavailable_message="Zenodo is currently unavailable.",
+        )
         return response.json()
 
     def upload_zip(self, dataset: DataSet, deposition_id: int, zip_path: str) -> dict:
@@ -251,14 +314,23 @@ class ZenodoService(BaseService):
         with open(zip_path, "rb") as file_obj:
             files = {"file": file_obj}
             upload_url = f"{self.ZENODO_API_URL}/{deposition_id}/files"
-            response = requests.post(upload_url, params=self.params, data=data, files=files)
+            response = self._request(
+                "POST",
+                upload_url,
+                "Zenodo is currently unavailable.",
+                params=self.params,
+                data=data,
+                files=files,
+            )
 
         if response.status_code != 201:
             logger.error(f"Failed to upload ZIP: {response.status_code} {response.reason}")
+            if self._is_unavailable_status(response.status_code):
+                raise ZenodoUnavailableError("Zenodo is currently unavailable.")
             try:
-                error_payload = response.json()  # Zenodo a veces sí devuelve JSON de error
+                error_payload = response.json()  # Zenodo sometimes returns a JSON error body
             except ValueError:
-                error_payload = response.text  # pero si no, mostramos el HTML/texto plano
+                error_payload = response.text  # otherwise fall back to raw HTML / text
             raise Exception(f"Error uploading ZIP to Zenodo: {error_payload}")
 
         return response.json()
@@ -273,8 +345,10 @@ class ZenodoService(BaseService):
         publish_url = f"{self.ZENODO_API_URL}/{deposition_id}/actions/publish"
         logger.info(f"Publishing deposition {deposition_id} at {publish_url}")
 
-        response = requests.post(
+        response = self._request(
+            "POST",
             publish_url,
+            "Zenodo is currently unavailable.",
             params=self.params,
             headers=self.headers,
         )
@@ -282,8 +356,12 @@ class ZenodoService(BaseService):
         logger.info(f"Zenodo publish response code: {response.status_code}")
         logger.info(f"Zenodo publish response body: {response.text}")
 
-        if response.status_code != 202:
-            raise Exception("Failed to publish deposition")
+        self._raise_for_zenodo_response(
+            response,
+            expected_status=202,
+            failure_message="Failed to publish deposition",
+            unavailable_message="Zenodo is currently unavailable.",
+        )
 
     def update_deposition(self, deposition_id: int, metadata: dict) -> dict:
         """
@@ -300,29 +378,38 @@ class ZenodoService(BaseService):
         # Step 1: Change the deposition to an editable draft
         edit_url = f"{self.ZENODO_API_URL}/{deposition_id}/actions/edit"
         logger.info(f"Zenodo edit URL: {edit_url}")
-        edit_response = requests.post(edit_url, params=self.params, headers=self.headers)
-
-        if edit_response.status_code != 201:
-            error_message = (
-                f"Failed to change deposition to editable draft. "
-                f"Status code: {edit_response.status_code}. "
-                f"Error details: {edit_response.json()}"
-            )
-            raise Exception(error_message)
+        edit_response = self._request(
+            "POST",
+            edit_url,
+            "Zenodo is currently unavailable.",
+            params=self.params,
+            headers=self.headers,
+        )
+        self._raise_for_zenodo_response(
+            edit_response,
+            expected_status=201,
+            failure_message="Failed to change deposition to editable draft",
+            unavailable_message="Zenodo is currently unavailable.",
+        )
 
         # Step 2: Update the deposition metadata
         data = {"metadata": metadata}
         update_url = f"{self.ZENODO_API_URL}/{deposition_id}"
         logger.info(f"Zenodo update URL: {update_url}")
-        update_response = requests.put(update_url, params=self.params, json=data, headers=self.headers)
-
-        if update_response.status_code != 200:
-            error_message = (
-                f"Failed to update deposition. "
-                f"Status code: {update_response.status_code}. "
-                f"Error details: {update_response.json()}"
-            )
-            raise Exception(error_message)
+        update_response = self._request(
+            "PUT",
+            update_url,
+            "Zenodo is currently unavailable.",
+            params=self.params,
+            json=data,
+            headers=self.headers,
+        )
+        self._raise_for_zenodo_response(
+            update_response,
+            expected_status=200,
+            failure_message="Failed to update deposition",
+            unavailable_message="Zenodo is currently unavailable.",
+        )
 
         # Step 3: Re-publish deposition
         self.publish_deposition(deposition_id=deposition_id)
@@ -340,9 +427,19 @@ class ZenodoService(BaseService):
             dict: The response in JSON format with the details of the deposition.
         """
         deposition_url = f"{self.ZENODO_API_URL}/{deposition_id}"
-        response = requests.get(deposition_url, params=self.params, headers=self.headers)
-        if response.status_code != 200:
-            raise Exception("Failed to get deposition")
+        response = self._request(
+            "GET",
+            deposition_url,
+            "Zenodo is currently unavailable.",
+            params=self.params,
+            headers=self.headers,
+        )
+        self._raise_for_zenodo_response(
+            response,
+            expected_status=200,
+            failure_message="Failed to get deposition",
+            unavailable_message="Zenodo is currently unavailable.",
+        )
         return response.json()
 
     def get_doi(self, deposition_id: int) -> str:
@@ -366,8 +463,8 @@ class ZenodoDatasetService:
 
     def upload_to_zenodo(self, dataset, ds_meta, dataset_type, current_user):
         """
-        Sube el dataset a Zenodo (normal o anónimo).
-        Devuelve el DOI si todo va bien.
+        Upload the dataset to Zenodo (regular or anonymous).
+        Returns the DOI on success.
         """
         try:
             anonymous = dataset_type == "zenodo_anonymous"
@@ -375,18 +472,18 @@ class ZenodoDatasetService:
             deposition_id = deposition.get("id")
             self.logger.info(f"[ZENODO] Deposition created with ID: {deposition_id}")
 
-            # Guardar deposition_id en DB
+            # Persist deposition_id in DB
             self.dataset_service.update_dsmetadata(ds_meta.id, deposition_id=deposition_id)
 
-            # Crear ZIP
+            # Build ZIP
             zip_path = self.dataset_service.zip_dataset(dataset)
             self.logger.info(f"[ZENODO] Dataset zipped at path: {zip_path}")
 
-            # Subir ZIP
+            # Upload ZIP
             self.zenodo_service.upload_zip(dataset, deposition_id, zip_path)
             self.logger.info(f"[ZENODO] ZIP uploaded for deposition {deposition_id}")
 
-            # Publicar deposition
+            # Publish deposition
             self.zenodo_service.publish_deposition(deposition_id)
             doi = self.zenodo_service.get_doi(deposition_id)
 

@@ -20,7 +20,7 @@ class TaskQueueManager:
     def _initialize(self):
         redis_conn = current_app.config.get("SESSION_REDIS")
 
-        # 🔹 Si estamos en modo testing o no hay conexión real, usar fakeredis
+        # If we're in testing mode or there's no real connection, fall back to fakeredis.
         if current_app.config.get("TESTING") or redis_conn is None:
             try:
                 import fakeredis
@@ -30,13 +30,13 @@ class TaskQueueManager:
             except ImportError:
                 logger.warning("fakeredis not installed, tests may fail without Redis.")
         else:
-            # Si es un string, convierte a conexión redis real
+            # If the config value is a string, turn it into a real Redis connection.
             import redis
 
             if isinstance(redis_conn, str):
                 redis_conn = redis.from_url(redis_conn)
 
-        # ✅ Crear la cola RQ con la conexión apropiada
+        # Create the RQ queue with the appropriate connection.
         self.queue = Queue(connection=redis_conn)
         self.redis_worker_timeout = current_app.config.get("REDIS_WORKER_TIMEOUT", 180)
         logger.info("TaskQueueManager initialized with Redis connection.")

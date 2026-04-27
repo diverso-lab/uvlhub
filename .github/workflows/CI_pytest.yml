@@ -46,7 +46,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: '3.12'
+          python-version: '3.13'
 
       - name: Delete rosemary editable mode
         run: sed -i '/rosemary @ file:\/\/\/app/d' requirements.txt
@@ -57,5 +57,12 @@ jobs:
           # constraints.txt must contain: setuptools<82
           pip install -r requirements.txt -c constraints.txt
 
+      - name: Install generator vendor package
+        # The generator module pulls its feature-model generator from a
+        # vendored source tree (bundled as a wheel for Pyodide at runtime).
+        # pytest also imports Params from it directly, so install it editable
+        # into the CI Python env.
+        run: pip install --no-cache-dir -e ./app/modules/generator/vendor
+
       - name: Run Tests
-        run: pytest app/modules/ --ignore-glob='*selenium*'
+        run: pytest app/modules/ --ignore-glob='*selenium*' -m 'not slow'

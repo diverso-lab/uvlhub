@@ -68,17 +68,21 @@ def create_app(config_name="development"):
     logging_manager = LoggingManager(app)
     logging_manager.setup_logging()
 
-    # CORS
-    cors_resources = {r"/hubfiles/raw/*": {"origins": "*"}}
+    # CORS. The resources keys are URL PATHS (matched via fnmatch), not full
+    # URLs, so an entry like "https://..." is inert. Only public endpoints
+    # should get the `*` wildcard; anything that ships cookies or tokens is
+    # scoped to FLAMAPY_IDE_ORIGINS.
+    #
+    # /hubfiles/raw/* is publicly readable — the UVL content of a dataset
+    # with a DOI is already world-readable on uvlhub — and needs to be
+    # reachable from third-party web apps (FactLabel, Flamapy IDE, …), same
+    # as GitHub's raw URLs.
     ide_origins = app.config.get("FLAMAPY_IDE_ORIGINS", [])
-    cors_resources.update(
-        {
-            r"/api/v1/auth/status": {"origins": ide_origins, "supports_credentials": True},
-            r"/api/v1/datasets/upload": {"origins": ide_origins, "supports_credentials": True},
-            r"/hubfiles/raw/*": {"origins": "*"},
-            r"https://www.uvlhub.io/*": {"origins": "*", "supports_credentials": True},
-        }
-    )
+    cors_resources = {
+        r"/hubfiles/raw/*": {"origins": "*"},
+        r"/api/v1/auth/status": {"origins": ide_origins, "supports_credentials": True},
+        r"/api/v1/datasets/upload": {"origins": ide_origins, "supports_credentials": True},
+    }
     CORS(app, resources=cors_resources)
 
     # Swagger API

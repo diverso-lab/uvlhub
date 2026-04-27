@@ -8,16 +8,26 @@ name: Deploy on Webhook
 
 on:
   workflow_run:
-    # Trigger this workflow only after "Pytest" completes
-    workflows: 
+    # Trigger only after "Pytest" completes on the main branch. The
+    # branches: filter restricts the trigger itself — without it the
+    # workflow would fire on every branch's Pytest run and then be
+    # gated only by the job-level if, which is noisy in the Actions tab.
+    workflows:
       - "Pytest"
     types:
       - completed
+    branches:
+      - main
 
 jobs:
   deploy:
-    # Run deployment only if the tests succeeded AND we're on the main branch
-    if: github.event.workflow_run.conclusion == 'success' && github.ref == 'refs/heads/main'
+    # Belt-and-suspenders: re-check that the upstream Pytest run both
+    # succeeded AND was on main. In a workflow_run context github.ref
+    # refers to the triggered workflow itself; the head_branch field
+    # holds the branch where the upstream Pytest actually ran.
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main'
     runs-on: ubuntu-24.04
 
     steps:

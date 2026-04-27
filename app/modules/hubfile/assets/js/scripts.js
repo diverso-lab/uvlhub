@@ -22,11 +22,11 @@ document.addEventListener("DOMContentLoaded", function () {
         previewsContainer: id + " .dropzone-items",
         clickable: id + " .dropzone-select",
         accept: function (file, done) {
-            // límite en bytes (100 MB decimales)
+            // Limit in bytes (100 MB decimal)
             const maxZipSize = 100 * 1000 * 1000;
 
             if (file.name.toLowerCase().endsWith(".zip") && file.size > maxZipSize) {
-                const sizeMB = (file.size / 1000000).toFixed(1); // en MB con 1 decimal
+                const sizeMB = (file.size / 1000000).toFixed(1); // in MB with 1 decimal
                 done(`ZIP file too big (${sizeMB} MB). Max size is 100 MB.`);
                 return;
             }
@@ -46,7 +46,7 @@ document.addEventListener("DOMContentLoaded", function () {
     document.dispatchEvent(new Event("myDropzoneReady"));
 
     myDropzone.on("removedfile", function () {
-    // ¿Quedan archivos con error?
+    // Any error files left?
     const hasErrors = this.files.some(f => f.status === Dropzone.ERROR);
 
     if (!hasErrors) {
@@ -60,7 +60,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
     /*
-     * Botón "Clear all"
+     * "Clear all" button
      */
     const clearBtn = document.getElementById("clear-all-btn");
     if (clearBtn) {
@@ -69,17 +69,17 @@ document.addEventListener("DOMContentLoaded", function () {
         clearBtn.addEventListener("click", function (e) {
             e.preventDefault();
 
-            // 🚀 Limpieza en el backend
+            // Backend cleanup
             fetch("/hubfile/clear_temp", { method: "POST" })
-                .catch(err => console.error("Error limpiando backend:", err));
+                .catch(err => console.error("Error cleaning backend:", err));
 
-            // 🧹 Limpieza visual
+            // Visual cleanup
             myDropzone.removeAllFiles(true);
             updateStep2Summary();
             updatePagination(myDropzone.files);
             clearBtn.style.display = "none";
 
-            // 🔕 Ocultar mensaje de error
+            // Hide error message
             const errBox = document.getElementById("upload-error");
             if (errBox) {
                 errBox.classList.add("d-none");
@@ -101,7 +101,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     /*
-     * Paginación
+     * Pagination
      */
     const filesPerPage = 5;
     let currentPage = 1;
@@ -229,10 +229,10 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     /*
-     * Validación de archivos .uvl en sintaxis
+     * Syntactic validation of .uvl files
      */
     myDropzone.on("addedfile", function (file) {
-        // Guardar UUID
+        // Persist UUID
         file.upload = file.upload || {};
         if (!file.upload.uuid) file.upload.uuid = crypto.randomUUID();
 
@@ -271,20 +271,20 @@ document.addEventListener("DOMContentLoaded", function () {
         updatePagination(this.files);
     });
 
-    // Adjuntar uuid en la subida
+    // Attach uuid on upload
     myDropzone.on("sending", function (file, xhr, formData) {
         file.upload = file.upload || {};
         formData.append("uuid", file.upload.uuid);
     });
 
-    // Marcar subidos
+    // Mark as uploaded
     myDropzone.on("success", function (file, response) {
-        // ✅ confiar en que el backend devuelve siempre { filename: "..." }
+        // Trust the backend to always return { filename: "..." }
         file.serverFilename = response.filename;
         file.uploadedToServer = true;
     });
 
-    // Eliminar en servidor
+    // Delete on server
     myDropzone.on("removedfile", function (file) {
         if (!file.uploadedToServer) return;
 

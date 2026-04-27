@@ -1,16 +1,16 @@
 [data-kt-search-element="content"] {
     position: fixed !important;
     transform: none !important;
-    display: none; /* Oculta el menú por defecto */
+    display: none; /* Hide the menu by default */
 }
 
 [data-kt-search-element="content"].show {
-    display: block; /* Muestra el menú cuando sea necesario */
+    display: block; /* Show the menu when needed */
 }
 
 
 .dropzone-file-success .badge {
-    color: #ffffff !important; /* Forzar texto blanco */
+    color: #ffffff !important; /* Force white text */
 }
 
 .tox-promotion{
@@ -61,7 +61,7 @@ a {
     min-width: 2rem;
 }
 
-/* Botón activo Keen-style */
+/* Active button, Keen style */
 #kt_files_table_paginate .paginate_button.current {
     background-color: var(--bs-primary);
     color: white !important;
@@ -80,9 +80,54 @@ a {
 }
 
 .logo-img {
+    width: 100%;
     height: 100px;
     object-fit: contain;
     object-position: center;
+}
+
+.team-logo-frame,
+.logo-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.75rem;
+}
+
+.team-logo-frame {
+    width: 100%;
+    min-height: 120px;
+    padding: 1rem;
+}
+
+.logo-badge {
+    padding: 0.4rem 0.75rem;
+}
+
+.logo-badge img {
+    display: block;
+    max-width: 100%;
+}
+
+.logo-badge--compact {
+    min-height: 2.25rem;
+    padding: 0.3rem 0.6rem;
+}
+
+.logo-badge--panel {
+    min-height: 3rem;
+}
+
+.logo-badge__image {
+    width: auto;
+    height: 24px;
+}
+
+[data-bs-theme="dark"] .team-logo-frame,
+[data-bs-theme="dark"] .logo-badge {
+    background-color: #cfd7df;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 0.35rem 0.85rem rgba(0, 0, 0, 0.14);
 }
 
 .btn-orcid {
@@ -91,6 +136,89 @@ a {
     color: #fff !important;
 }
 .btn-orcid:hover {
-    background-color: #8fbf2f !important; /* tono más oscuro al hover */
+    background-color: #8fbf2f !important; /* darker shade on hover */
     border-color: #8fbf2f !important;
+}
+
+/* ============================================================
+   Skeleton placeholders — shared shimmer used for loading states
+   in the main page, explore results, and dataset workbench.
+   ============================================================ */
+@keyframes skeleton-shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+.skeleton {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(
+        90deg,
+        rgba(0, 0, 0, 0.06) 25%,
+        rgba(0, 0, 0, 0.12) 37%,
+        rgba(0, 0, 0, 0.06) 63%
+    );
+    background-size: 400% 100%;
+    animation: skeleton-shimmer 1.6s ease infinite;
+    border-radius: 6px;
+    color: transparent !important;
+    pointer-events: none;
+    user-select: none;
+}
+[data-bs-theme="dark"] .skeleton {
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.06) 25%,
+        rgba(255, 255, 255, 0.14) 37%,
+        rgba(255, 255, 255, 0.06) 63%
+    );
+    background-size: 400% 100%;
+}
+.skeleton-line { display: block; height: 12px; width: 100%; margin-bottom: 0.5rem; }
+.skeleton-line.sm { height: 10px; }
+.skeleton-line.lg { height: 18px; }
+.skeleton-line.xl { height: 28px; }
+.skeleton-block { display: block; width: 100%; }
+.skeleton-circle { border-radius: 50%; }
+
+/* Fade-in once real content replaces the skeleton. */
+.skeleton-fade-in {
+    animation: skeleton-fade-in 0.25s ease-out both;
+}
+@keyframes skeleton-fade-in {
+    from { opacity: 0; transform: translateY(2px); }
+    to   { opacity: 1; transform: none; }
+}
+
+/* ============================================================
+   DOI pill — shared visual used in workbench, main page, and
+   explore results. Zenodo-style split pill: black "DOI" label
+   on the left + blue gradient value on the right.
+   ============================================================ */
+.doi-pill {
+    font-family: monospace;
+    font-size: 0.78rem;
+    line-height: 1.2;
+    height: 35px;
+}
+.doi-pill-label,
+.doi-pill-value {
+    display: inline-flex;
+    align-items: center;
+}
+.doi-pill-label {
+    background: #18181b;
+    color: #fff;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+.doi-pill-value {
+    background: linear-gradient(90deg, #2176bd 0%, #2980b9 100%);
+    color: #fff;
+    text-decoration: none;
+    transition: filter 0.15s ease;
+}
+.doi-pill-value:hover {
+    filter: brightness(1.08);
+    color: #fff;
 }

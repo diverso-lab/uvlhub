@@ -1,0 +1,37 @@
+{#
+  Partial: Download dataset button + format picker.
+  Inputs:
+    - dataset: the DataSet (uses get_file_total_size_for_human).
+    - size (optional): bool, default True; show size in label.
+    - button_class (optional): extra classes for the button.
+#}
+{% set _size = size if size is defined else True %}
+{% set _button_class = button_class if button_class is defined else 'btn-primary' %}
+<div class="position-relative">
+    <button class="btn {{ _button_class }} d-inline-flex align-items-center"
+            data-kt-menu-trigger="click"
+            data-kt-menu-placement="bottom-end"
+            data-kt-menu-attach="parent">
+        <i data-feather="download" class="me-2" style="width: 14px; height: 14px;"></i>
+        Download dataset{% if _size %} ({{ dataset.get_file_total_size_for_human() }}){% endif %}
+    </button>
+
+    <div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-title-gray-700 menu-icon-gray-500 fw-semibold py-4 px-4 fs-base w-200px"
+         data-kt-menu="true" data-download-menu>
+        {% for fmt, label in [('uvl','UVL'), ('glencoe','Glencoe'), ('dimacs','DIMACS'), ('splot','SPLOT')] %}
+        <div class="menu-item px-0 py-1">
+            <label class="form-check form-check-custom form-check-solid align-items-center m-0">
+                <input class="form-check-input me-3 download-format-checkbox" type="checkbox" value="{{ fmt }}" checked />
+                <span class="menu-title">{{ label }}</span>
+            </label>
+        </div>
+        {% endfor %}
+        <div class="separator my-3"></div>
+        <button type="button"
+                class="btn btn-light-primary btn-sm w-100"
+                data-download-formats-action
+                data-download-base-url="{{ url_for('dataset.download_dataset', dataset_id=dataset.id) }}">
+            Download
+        </button>
+    </div>
+</div>

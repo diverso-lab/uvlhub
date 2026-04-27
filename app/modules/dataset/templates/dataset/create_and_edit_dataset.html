@@ -47,7 +47,7 @@
                 </div>
                 <!--end::Step 1-->
                 <!--begin::Step 2-->
-                <div class="stepper-item" data-kt-stepper-element="nav">
+                <div class="stepper-item" data-kt-stepper-element="nav" {% if is_edit %}style="display:none"{% endif %}>
                     <!--begin::Wrapper-->
                     <div class="stepper-wrapper">
                         <!--begin::Icon-->
@@ -335,12 +335,13 @@
 </div>
 
 <script>
-    var isEditMode = {{ 'true' if is_edit else 'false' }};
+    window.isEditMode = {{ 'true' if is_edit else 'false' }};
     window.initialDropzoneFiles = {{ preloaded_temp_files | default([], true) | tojson }};
+    window.initialAuthorIndex = {{ dataset.ds_meta_data.authors | length if dataset and dataset.ds_meta_data and dataset.ds_meta_data.authors else 0 }};
 
     /**
-     * CORRECCIÓN 1: Prevenir errores de "myDropzone is not defined"
-     * Inicializamos un objeto simulado para que los scripts externos no rompan al intentar acceder a él.
+     * FIX 1: Prevent "myDropzone is not defined" errors.
+     * Initialize a placeholder object so external scripts don't break when they reach for it.
      */
     window.myDropzone = window.myDropzone || {
         files: [],
@@ -353,7 +354,7 @@
     {% if is_edit %}
     document.addEventListener('DOMContentLoaded', function () {
 
-        // ── 1. Saltar paso UVL automáticamente ──────────────────────────────
+        // 1. Skip the UVL step automatically.
         var stepperEl = document.querySelector('#stepper_upload_dataset');
         if (stepperEl) {
             var navItems = Array.from(stepperEl.querySelectorAll('[data-kt-stepper-element="nav"]'));
@@ -361,20 +362,29 @@
             if (uvlNavItem) {
                 var observer = new MutationObserver(function () {
                     if (!uvlNavItem.classList.contains('current')) return;
-                    var goingForward = navItems[0].classList.contains('completed');
                     setTimeout(function () {
                         var instance = KTStepper.getInstance(stepperEl);
                         if (!instance) return;
-                        goingForward ? instance.goNext() : instance.goPrevious();
+                        var currentStep = typeof instance.getCurrentStepIndex === 'function'
+                            ? instance.getCurrentStepIndex()
+                            : null;
+                        var previousStep = typeof instance.getPreviousStepIndex === 'function'
+                            ? instance.getPreviousStepIndex()
+                            : null;
+                        var goingForward = previousStep === null || currentStep === null
+                            ? true
+                            : previousStep < currentStep;
+                        goingForward ? instance.goTo(3) : instance.goTo(1);
                     }, 0);
                 });
                 observer.observe(uvlNavItem, { attributes: true, attributeFilter: ['class'] });
             }
         }
 
-        // ── 2. Interceptar submit para edición ──────────────────────────────
+        // 2. Intercept submit when in edit mode.
         var submitBtn = document.querySelector('[data-kt-stepper-action="submit"]');
         var continueBtn = document.querySelector('[data-kt-stepper-action="next"]');
+        var previousBtn = document.querySelector('[data-kt-stepper-action="previous"]');
         var errorContainer = document.getElementById('upload-error');
         var datasetId = {{ dataset.id | tojson if dataset else 'null' }};
         var editUrl = {{ url_for('dataset.edit_metadata', dataset_id=dataset.id) | tojson if dataset else 'null' }};
@@ -480,6 +490,36 @@
             return '';
         }
 
+        function getStepperInstance() {
+            return stepperEl ? KTStepper.getInstance(stepperEl) : null;
+        }
+
+        if (continueBtn) {
+            continueBtn.addEventListener('click', function (e) {
+                var stepperInstance = getStepperInstance();
+                var currentStep = stepperInstance ? stepperInstance.getCurrentStepIndex() : null;
+
+                if (stepperInstance && currentStep === 1) {
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                    stepperInstance.goTo(3);
+                }
+            }, true);
+        }
+
+        if (previousBtn) {
+            previousBtn.addEventListener('click', function (e) {
+                var stepperInstance = getStepperInstance();
+                var currentStep = stepperInstance ? stepperInstance.getCurrentStepIndex() : null;
+
+                if (stepperInstance && currentStep === 3) {
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                    stepperInstance.goTo(1);
+                }
+            }, true);
+        }
+
         if (submitBtn && datasetId) {
             var authorsContainer = document.getElementById('authors-container');
             if (authorsContainer && existingAuthors.length) {
@@ -494,7 +534,7 @@
                     var stepperInstance = stepperEl ? KTStepper.getInstance(stepperEl) : null;
                     var currentStep = stepperInstance ? stepperInstance.getCurrentStepIndex() : null;
 
-                    // En edición el paso de autores sigue siendo el 4 (el UVL está oculto pero existe en el DOM)
+                    // In edit mode the authors step is still step 4 (the UVL step is hidden but still in the DOM).
                     if (currentStep === 4) {
                         var duplicateMessage = getDuplicateAuthorMessage();
                         if (duplicateMessage) {
@@ -539,7 +579,7 @@
 
             submitBtn.addEventListener('click', async function (e) {
                 /**
-                 * CORRECCIÓN 2: Evitar doble envío y comportamientos por defecto del navegador.
+                 * FIX 2: Prevent double submit and the browser's default form behavior.
                  */
                 e.preventDefault();
                 e.stopImmediatePropagation();
@@ -589,8 +629,8 @@
 
                 try {
                     /**
-                     * CORRECCIÓN 3: Ajuste de URL y manejo de errores 404.
-                     * Si el servidor responde 404, prueba cambiar a: '/datasets/edit/' + datasetId
+                     * FIX 3: URL tweak and 404 handling.
+                     * If the server responds with 404, try switching to: '/datasets/edit/' + datasetId
                      */
                     var response = await fetch(editUrl, {
                         method: 'POST',
@@ -659,19 +699,19 @@
             <div class="row mb-3">
                 <div class="col-md-6">
                     <label class="form-label">Name *</label>
-                    <input type="text" name="authors[[index]][name]" class="form-control author-name" value="[[name]]" required>
+                    <input type="text" name="[[nameField]]" class="form-control author-name" value="[[name]]" required>
                     <div class="invalid-feedback"></div>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Affiliation</label>
-                    <input type="text" name="authors[[index]][affiliation]" class="form-control author-affiliation" value="[[affiliation]]">
+                    <input type="text" name="[[affiliationField]]" class="form-control author-affiliation" value="[[affiliation]]">
                     <div class="invalid-feedback"></div>
                 </div>
             </div>
             <div class="row mb-3">
                 <div class="col-md-12">
                     <label class="form-label">ORCID</label>
-                    <input type="text" name="authors[[index]][orcid]" class="form-control orcid-input" value="[[orcid]]">
+                    <input type="text" name="[[orcidField]]" class="form-control orcid-input" value="[[orcid]]">
                     <div class="invalid-feedback"></div>
                 </div>
             </div>

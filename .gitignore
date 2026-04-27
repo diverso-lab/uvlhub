@@ -20,6 +20,7 @@ dist/
 
 # Python egg info
 rosemary.egg-info/
+*.egg-info/
 
 # Coverage reports
 .coverage
@@ -50,3 +51,6 @@ docker/tmp/videos/
 
 # Config files
 .moduleignore
+
+# Local scratch/debug screenshots
+scripts/_*.png

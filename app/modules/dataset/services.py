@@ -36,6 +36,7 @@ from app.modules.hubfile.repositories import (
 )
 from app.modules.hubfile.services import UploadIngestService
 from app.modules.statistics.services import StatisticsService
+from app.modules.zenodo.services import ZenodoUnavailableError
 from core.services.BaseService import BaseService
 
 logger = logging.getLogger(__name__)
@@ -400,6 +401,7 @@ class DataSetService(BaseService):
         if not wants_sync:
             dataset.ds_meta_data.dataset_doi = None
             dataset.ds_meta_data.deposition_id = None
+            dataset.ds_meta_data.metadata_synced = True
             return
 
         if zenodo_service is None:
@@ -407,17 +409,36 @@ class DataSetService(BaseService):
 
         if is_synced:
             self._sync_metadata_in_zenodo_if_needed(dataset, zenodo_service)
+            dataset.ds_meta_data.metadata_synced = True
             return
 
         self._publish_dataset_to_zenodo(dataset, zenodo_service)
+        dataset.ds_meta_data.metadata_synced = True
 
-    def update_metadata_from_request(self, dataset: DataSet, form_data, zenodo_service=None) -> None:
+    def update_metadata_from_request(self, dataset: DataSet, form_data, zenodo_service=None) -> dict:
+        was_synchronized = bool(dataset.ds_meta_data.dataset_doi)
+        sync_deferred = False
         try:
             dataset_type = self._get_requested_dataset_type(form_data)
             self._apply_metadata_from_form(dataset, form_data)
             self._replace_authors_from_form(dataset, form_data)
-            self._transition_dataset_state_if_needed(dataset, dataset_type, zenodo_service)
+            try:
+                self._transition_dataset_state_if_needed(dataset, dataset_type, zenodo_service)
+            except ZenodoUnavailableError as exc:
+                if was_synchronized and dataset_type in {"zenodo", "zenodo_anonymous"}:
+                    dataset.ds_meta_data.metadata_synced = False
+                    sync_deferred = True
+                    logger.warning(
+                        "Zenodo unavailable while updating metadata for dataset %s. Changes saved locally.",
+                        getattr(dataset, "id", "unknown"),
+                    )
+                else:
+                    raise DatasetMetadataUpdateError(str(exc))
             self.repository.session.commit()
+            return {
+                "metadata_synced": bool(dataset.ds_meta_data.metadata_synced),
+                "sync_deferred": sync_deferred,
+            }
         except DatasetMetadataValidationError:
             self.repository.session.rollback()
             raise
@@ -779,21 +800,22 @@ class LocalDatasetService:
 
             publication_type = PublicationType(publication_type_id) if publication_type_id else None
 
-            # Crear DSMetaData
+            # Create DSMetaData
             ds_meta = self.dsmetadata_service.create(
                 title=title,
                 description=description,
                 publication_type=publication_type,
                 publication_doi=publication_doi,
                 tags=",".join(tags) if tags else "",
+                metadata_synced=True,
             )
             self.logger.info(f"[LOCAL] DSMetaData created with ID: {ds_meta.id}")
 
-            # Crear DataSet
+            # Create DataSet
             dataset = self.dataset_service.create(commit=False, user_id=current_user.id, ds_meta_data_id=ds_meta.id)
             self.logger.info(f"[LOCAL] DataSet created with ID: {dataset.id}")
 
-            # Crear autores
+            # Create authors
             i = 0
             while True:
                 name = form.get(f"authors[{i}][name]")
@@ -811,7 +833,7 @@ class LocalDatasetService:
                 self.logger.info(f"[LOCAL] Author #{i} added: {name}, {affiliation}, {orcid}")
                 i += 1
 
-            # Guardar en DB
+            # Commit to DB
             db.session.commit()
             self.logger.info(f"[LOCAL] Dataset {dataset.id} committed to DB")
 

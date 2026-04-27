@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import shutil
@@ -28,9 +29,10 @@ from qrcode.image.styledpil import StyledPilImage
 from qrcode.image.styles.moduledrawers.pil import RoundedModuleDrawer
 from werkzeug.utils import secure_filename
 
+from app import db
 from app.modules.apikeys.decorators import require_api_key
 from app.modules.auth.services import AuthenticationService
-from app.modules.dataset import dataset_bp
+from app.modules.dataset import dataset_bp, fair_metadata
 from app.modules.dataset.decorators import is_dataset_owner
 from app.modules.dataset.forms import DataSetForm
 from app.modules.dataset.models import DataSet, PublicationType
@@ -139,7 +141,7 @@ def create_dataset():
         except Exception as exc:
             return jsonify({"error": f"Error creating dataset: {str(exc)}"}), 400
 
-        # 2. Draft → terminar aquí
+        # 2. Draft -> stop here
         if dataset_type == "draft":
             shutil.rmtree(current_user.temp_folder(), ignore_errors=True)
             return (
@@ -170,10 +172,10 @@ def create_dataset():
                     200,
                 )
 
-            # 4. Indexación
+            # 4. Indexing
             indexing_service = IndexingService(index_dataset, index_hubfile, logger)
             try:
-                dataset = dataset_service.get_by_id(dataset.id)  # actualizado tras Zenodo
+                dataset = dataset_service.get_by_id(dataset.id)  # refreshed after Zenodo
                 indexing_service.index_dataset_and_hubfiles(dataset, created_fms)
             except Exception as exc:
                 logger.warning(f"[UPLOAD] Dataset {dataset.id} created and uploaded, but indexing failed: {exc}")
@@ -243,9 +245,39 @@ def edit_metadata(dataset_id):
     if request.method == "POST":
         is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
         try:
-            dataset_service.update_metadata_from_request(dataset, request.form, zenodo_service=zenodo_service)
+            update_result = dataset_service.update_metadata_from_request(
+                dataset,
+                request.form,
+                zenodo_service=zenodo_service,
+            )
+            if update_result.get("sync_deferred"):
+                warning_message = (
+                    "Dataset metadata updated locally. Zenodo is currently unavailable, "
+                    "so synchronization is still pending."
+                )
+                flash(warning_message, "warning")
+                if is_ajax:
+                    return (
+                        jsonify(
+                            {
+                                "message": warning_message,
+                                "metadata_synced": False,
+                                "sync_deferred": True,
+                            }
+                        ),
+                        200,
+                    )
             if is_ajax:
-                return jsonify({"message": "Dataset updated successfully"}), 200
+                return (
+                    jsonify(
+                        {
+                            "message": "Dataset updated successfully",
+                            "metadata_synced": update_result.get("metadata_synced", True),
+                            "sync_deferred": False,
+                        }
+                    ),
+                    200,
+                )
             flash("Dataset updated successfully!", "success")
         except DatasetMetadataValidationError as exc:
             if is_ajax:
@@ -305,16 +337,45 @@ def download_dataset(dataset_id):
     return resp
 
 
-def _build_dataset_qr_response(dataset: DataSet):
+def _build_dataset_qr_response(dataset: DataSet, fmt: str = "png", download: bool = False):
     if not dataset.ds_meta_data.dataset_doi:
         abort(404, description="QR available only for synchronized datasets with DOI.")
 
+    fmt = (fmt or "png").lower()
+    if fmt not in {"png", "jpg", "jpeg", "svg"}:
+        fmt = "png"
+
     target_url = url_for("dataset.subdomain_index", doi=dataset.ds_meta_data.dataset_doi, _external=True)
+
+    if fmt == "svg":
+        import qrcode.image.svg as qr_svg
+
+        qr = qrcode.QRCode(
+            version=None,
+            error_correction=qrcode.constants.ERROR_CORRECT_H,
+            box_size=12,
+            border=4,
+            image_factory=qr_svg.SvgPathImage,
+        )
+        qr.add_data(target_url)
+        qr.make(fit=True)
+        img = qr.make_image()
+        img_io = BytesIO()
+        img.save(img_io)
+        img_io.seek(0)
+        return send_file(
+            img_io,
+            mimetype="image/svg+xml",
+            as_attachment=download,
+            download_name=f"dataset_{dataset.id}_qr.svg",
+        )
+
+    # Raster (PNG / JPG): high resolution, rounded modules, centered logo.
     qr = qrcode.QRCode(
         version=None,
         error_correction=qrcode.constants.ERROR_CORRECT_H,
-        box_size=10,
-        border=5,
+        box_size=24,
+        border=4,
     )
     qr.add_data(target_url)
     qr.make(fit=True)
@@ -331,17 +392,17 @@ def _build_dataset_qr_response(dataset: DataSet):
         logo = Image.open(logo_path).convert("RGBA")
         qr_width, qr_height = img.size
 
-        logo_size = max(40, qr_width // 5)
+        logo_size = max(80, qr_width // 5)
         logo.thumbnail((logo_size, logo_size), Image.Resampling.LANCZOS)
 
-        padding = max(4, logo_size // 12)
+        padding = max(8, logo_size // 12)
         logo_background = Image.new(
             "RGBA",
             (logo.width + (2 * padding), logo.height + (2 * padding)),
             (0, 0, 0, 0),
         )
         bg_draw = ImageDraw.Draw(logo_background)
-        bg_radius = max(6, logo_background.width // 5)
+        bg_radius = max(10, logo_background.width // 5)
         bg_draw.rounded_rectangle(
             [(0, 0), (logo_background.width - 1, logo_background.height - 1)],
             radius=bg_radius,
@@ -351,7 +412,7 @@ def _build_dataset_qr_response(dataset: DataSet):
         rounded_logo = Image.new("RGBA", logo.size, (0, 0, 0, 0))
         logo_mask = Image.new("L", logo.size, 0)
         logo_mask_draw = ImageDraw.Draw(logo_mask)
-        logo_radius = max(4, logo.width // 5)
+        logo_radius = max(6, logo.width // 5)
         logo_mask_draw.rounded_rectangle(
             [(0, 0), (logo.width - 1, logo.height - 1)],
             radius=logo_radius,
@@ -366,14 +427,30 @@ def _build_dataset_qr_response(dataset: DataSet):
         img.paste(rounded_logo, logo_position, rounded_logo)
 
     img_io = BytesIO()
-    img.save(img_io, format="PNG")
+    if fmt in {"jpg", "jpeg"}:
+        flat = Image.new("RGB", img.size, (255, 255, 255))
+        flat.paste(img, mask=img.split()[3])  # use alpha channel as mask
+        flat.save(img_io, format="JPEG", quality=95, optimize=True)
+        mimetype = "image/jpeg"
+        ext = "jpg"
+    else:
+        img.save(img_io, format="PNG", optimize=True)
+        mimetype = "image/png"
+        ext = "png"
     img_io.seek(0)
 
     return send_file(
         img_io,
-        mimetype="image/png",
-        as_attachment=True,
-        download_name=f"dataset_{dataset.id}_qr.png",
+        mimetype=mimetype,
+        as_attachment=download,
+        download_name=f"dataset_{dataset.id}_qr.{ext}",
+    )
+
+
+def _parse_qr_params():
+    return (
+        request.args.get("format", "png"),
+        request.args.get("download") in {"1", "true", "yes"},
     )
 
 
@@ -381,7 +458,8 @@ def _build_dataset_qr_response(dataset: DataSet):
 @dataset_bp.route("/datasets/<int:dataset_id>/qr/", methods=["GET"])
 def dataset_qr_by_id(dataset_id):
     dataset = dataset_service.get_or_404(dataset_id)
-    return _build_dataset_qr_response(dataset)
+    fmt, download = _parse_qr_params()
+    return _build_dataset_qr_response(dataset, fmt=fmt, download=download)
 
 
 @dataset_bp.route("/doi/<path:doi>/qr", methods=["GET"])
@@ -390,7 +468,8 @@ def dataset_qr_by_doi(doi):
     ds_meta_data = dsmetadata_service.filter_by_doi(doi)
     if not ds_meta_data:
         abort(404, description="Dataset not found for the given DOI.")
-    return _build_dataset_qr_response(ds_meta_data.dataset)
+    fmt, download = _parse_qr_params()
+    return _build_dataset_qr_response(ds_meta_data.dataset, fmt=fmt, download=download)
 
 
 @dataset_bp.route("/datasets/download/all", methods=["GET"])
@@ -398,24 +477,24 @@ def download_all_dataset():
     selected_formats = request.args.getlist("formats")
     selected_formats = selected_formats if selected_formats else None
 
-    # Crear un directorio temporal
+    # Create a temporary directory
     temp_dir = tempfile.mkdtemp()
     zip_path = os.path.join(temp_dir, "all_datasets.zip")
 
     try:
-        # Generar el archivo ZIP
+        # Build the ZIP file
         dataset_service.zip_all_datasets_by_formats(zip_path, formats=selected_formats)
 
-        # Crear el nombre del archivo con la fecha
+        # Build the filename with the current date
         current_date = datetime.now().strftime("%Y_%m_%d")
         zip_filename = f"uvlhub_bulk_{current_date}.zip"
 
-        # Enviar el archivo como respuesta
+        # Send the file as the response
         return send_file(zip_path, as_attachment=True, download_name=zip_filename)
     except ValueError as exc:
         abort(400, description=str(exc))
     finally:
-        # Asegurar que la carpeta temporal se elimine después de que Flask sirva el archivo
+        # Make sure the temporary folder is removed after Flask serves the file
         if os.path.exists(temp_dir):
             shutil.rmtree(temp_dir)
 
@@ -423,30 +502,98 @@ def download_all_dataset():
 @dataset_bp.route("/doi/<path:doi>", methods=["GET"])
 @dataset_bp.route("/doi/<path:doi>/", methods=["GET"])
 def subdomain_index(doi):
-    # Redirección si el DOI es antiguo
+    # Redirect if the DOI has been superseded
     new_doi = doi_mapping_service.get_new_doi(doi)
     if new_doi:
         return redirect(url_for("dataset.subdomain_index", doi=new_doi), code=302)
 
-    # Buscar el dataset por DOI
+    # Look up the dataset by DOI
     ds_meta_data = dsmetadata_service.filter_by_doi(doi)
     if not ds_meta_data:
         abort(404)
 
     dataset = ds_meta_data.dataset
+    host_url = request.host_url
+    link_header = fair_metadata.build_link_header(dataset, host_url)
 
-    # Obtener todos los hubfiles de los feature models
-    hubfiles = []
-    for fm in dataset.feature_models:
-        hubfiles.extend(fm.hubfiles)
+    # Content negotiation: machine clients get structured metadata directly.
+    accept = request.accept_mimetypes
+    best = accept.best_match(
+        [
+            "text/html",
+            "text/turtle",
+            "application/x-turtle",
+            "application/rdf+xml",
+            "application/ld+json",
+            "application/vnd.datacite.datacite+json",
+        ],
+        default="text/html",
+    )
 
-    # Guardar la cookie
+    if best in ("text/turtle", "application/x-turtle", "application/rdf+xml"):
+        payload = fair_metadata.build_turtle(dataset, host_url)
+        resp = make_response(payload, 200)
+        resp.headers["Content-Type"] = "text/turtle; charset=utf-8"
+        resp.headers["Link"] = link_header
+        resp.headers["Vary"] = "Accept"
+        return resp
+    if best == "application/ld+json":
+        payload = json.dumps(
+            fair_metadata.build_json_ld(dataset, host_url),
+            indent=2,
+            ensure_ascii=False,
+        )
+        resp = make_response(payload, 200)
+        resp.headers["Content-Type"] = "application/ld+json; charset=utf-8"
+        resp.headers["Link"] = link_header
+        resp.headers["Vary"] = "Accept"
+        return resp
+    if best == "application/vnd.datacite.datacite+json":
+        payload = json.dumps(
+            fair_metadata.build_datacite_json(dataset),
+            indent=2,
+            ensure_ascii=False,
+        )
+        resp = make_response(payload, 200)
+        resp.headers["Content-Type"] = "application/vnd.datacite.datacite+json; charset=utf-8"
+        resp.headers["Link"] = link_header
+        resp.headers["Vary"] = "Accept"
+        return resp
+
+    # HTML fallback (default for browsers and crawlers)
+    hubfiles = [file for fm in dataset.feature_models for file in fm.hubfiles]
+    selected_file = hubfiles[0] if hubfiles else None
+
     user_cookie = ds_view_record_service.create_cookie(dataset=dataset)
 
-    # Renderizar vista con todos los datos
-    resp = make_response(render_template("dataset/view_dataset.html", dataset=dataset, hubfiles=hubfiles))
-    resp.set_cookie("view_cookie", user_cookie)
+    meta = dataset.ds_meta_data
+    json_ld_payload = json.dumps(
+        fair_metadata.build_json_ld(dataset, host_url),
+        ensure_ascii=False,
+        indent=2,
+    ).replace("</", "<\\/")
+    fair_meta = {
+        "dc_tags": fair_metadata.build_dublin_core_tags(dataset),
+        "json_ld_str": json_ld_payload,
+        "landing_url": f"{host_url.rstrip('/')}/doi/{meta.dataset_doi or ''}/",
+        "doi_url": (f"https://doi.org/{meta.dataset_doi}" if meta.dataset_doi else None),
+        "license_url": fair_metadata.CC_BY_40,
+        "zenodo_url": (f"https://zenodo.org/record/{meta.deposition_id}" if meta.deposition_id else None),
+    }
 
+    resp = make_response(
+        render_template(
+            "dataset/view_dataset.html",
+            dataset=dataset,
+            hubfiles=hubfiles,
+            selected_file=selected_file,
+            uvl_content=None,
+            fair_meta=fair_meta,
+        )
+    )
+    resp.set_cookie("view_cookie", user_cookie)
+    resp.headers["Link"] = link_header
+    resp.headers["Vary"] = "Accept"
     return resp
 
 
@@ -504,19 +651,43 @@ def doi_file_raw(doi, filename):
 @login_required
 @is_dataset_owner
 def get_unsynchronized_dataset(dataset_id):
-
-    # Get dataset
     dataset = dataset_service.get_unsynchronized_dataset_by_user(current_user.id, dataset_id)
-
-    # Obtener todos los hubfiles de los feature models
-    hubfiles = []
-    for fm in dataset.feature_models:
-        hubfiles.extend(fm.hubfiles)
-
     if not dataset:
         abort(404)
 
-    return render_template("dataset/view_dataset.html", dataset=dataset, hubfiles=hubfiles)
+    hubfiles = [file for fm in dataset.feature_models for file in fm.hubfiles]
+    selected_file = hubfiles[0] if hubfiles else None
+
+    return render_template(
+        "dataset/view_dataset.html",
+        dataset=dataset,
+        hubfiles=hubfiles,
+        selected_file=selected_file,
+        uvl_content=None,
+    )
+
+
+@dataset_bp.route("/datasets/retry-sync/<int:dataset_id>", methods=["POST"])
+@login_required
+@is_dataset_owner
+def retry_sync_dataset(dataset_id):
+    dataset = dataset_service.get_or_404(dataset_id)
+
+    if not dataset.ds_meta_data.dataset_doi:
+        return jsonify({"error": "Dataset is not synchronized with Zenodo yet"}), 400
+
+    if dataset.ds_meta_data.metadata_synced:
+        return jsonify({"error": "Dataset metadata is already in sync"}), 400
+
+    try:
+        dataset_service._sync_metadata_in_zenodo_if_needed(dataset, zenodo_service)
+        dataset.ds_meta_data.metadata_synced = True
+        db.session.commit()
+    except Exception as exc:
+        logger.exception(f"[RETRY SYNC ERROR] {exc}")
+        return jsonify({"error": f"Zenodo sync failed: {exc}"}), 500
+
+    return jsonify({"message": "Metadata successfully synced to Zenodo"}), 200
 
 
 @dataset_bp.route("/datasets/sync/<int:dataset_id>", methods=["POST", "GET"])
@@ -544,10 +715,10 @@ def sync_dataset(dataset_id):
         logger.warning(f"[SYNC] Dataset {dataset.id} uploaded, but indexing failed: {exc}")
 
     if request.method == "GET":
-        # redirección visual
+        # Browser redirect
         return redirect(url_for("dataset.list_dataset"))
     else:
-        # respuesta JSON (útil si luego quieres AJAX)
+        # JSON response (useful for future AJAX callers)
         return jsonify({"message": "Dataset synchronized", "doi": doi}), 200
 
 

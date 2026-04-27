@@ -87,6 +87,7 @@ class DSMetaData(db.Model):
     ds_metrics = db.relationship("DSMetrics", uselist=False, backref="ds_meta_data", cascade="all, delete")
     authors = db.relationship("Author", backref="ds_meta_data", lazy=True, cascade="all, delete")
     dataset_anonymous = db.Column(Boolean, default=False)
+    metadata_synced = db.Column(Boolean, nullable=False, default=True)
 
 
 class DataSet(db.Model):
@@ -153,14 +154,17 @@ class DataSet(db.Model):
 
     def get_uvlhub_doi_path(self) -> str:
         doi = self.get_uvlhub_doi()
-        # Si encuentra "/doi", devolver desde ahí
+        # If "/doi" is present, return the substring starting there.
         idx = doi.find("/doi")
         if idx != -1:
             return doi[idx:]
-        return doi  # fallback: devuelve completo si no hay /doi
+        return doi  # fallback: return the full value if no "/doi" segment
 
     def is_anonymous(self) -> bool:
         return self.ds_meta_data.dataset_anonymous
+
+    def is_metadata_synchronized(self) -> bool:
+        return bool(self.ds_meta_data.metadata_synced)
 
     def get_publication(self) -> str | None:
         if not self.ds_meta_data.publication_type:
@@ -178,6 +182,7 @@ class DataSet(db.Model):
             "publication_type": self.get_cleaned_publication_type(),
             "publication_doi": self.ds_meta_data.publication_doi,
             "dataset_doi": self.ds_meta_data.dataset_doi,
+            "metadata_synced": self.ds_meta_data.metadata_synced,
             "tags": self.ds_meta_data.tags.split(",") if self.ds_meta_data.tags else [],
             "url": self.get_uvlhub_doi(),
             "download": f'{request.host_url.rstrip("/")}/dataset/download/{self.id}',

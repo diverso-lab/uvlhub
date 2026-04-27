@@ -1,324 +1,1127 @@
 {% extends "base_template.html" %}
 
-{% set title = dataset.ds_meta_data.title  %}
+{% set title = dataset.ds_meta_data.title %}
+
+{% block head_extra %}
+    {% if fair_meta %}
+    <link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+    <link rel="schema.DCTERMS" href="http://purl.org/dc/terms/">
+    {% if fair_meta.doi_url %}
+    <link rel="canonical" href="{{ fair_meta.doi_url }}">
+    <link rel="cite-as" href="{{ fair_meta.doi_url }}">
+    <link rel="alternate" type="application/vnd.datacite.datacite+json" href="{{ fair_meta.landing_url }}">
+    {% else %}
+    <link rel="canonical" href="{{ fair_meta.landing_url }}">
+    {% endif %}
+    <link rel="license" href="{{ fair_meta.license_url }}">
+    <link rel="describedby" type="application/ld+json" href="{{ fair_meta.landing_url }}">
+    <link rel="describedby" type="text/turtle" href="{{ fair_meta.landing_url }}">
+    <link rel="type" href="https://schema.org/Dataset">
+    <link rel="type" href="http://purl.org/dc/dcmitype/Dataset">
+    {% if fair_meta.zenodo_url %}<link rel="alternate" href="{{ fair_meta.zenodo_url }}">{% endif %}
+    {% for name, content in fair_meta.dc_tags %}
+    <meta name="{{ name }}" content="{{ content }}">
+    {% endfor %}
+    <script type="application/ld+json">{{ fair_meta.json_ld_str|safe }}</script>
+    {% endif %}
+{% endblock %}
 
 {% block breadcrumb %}
-
 <ol class="breadcrumb text-muted fs-6 fw-semibold">
     <li class="breadcrumb-item"><a href="/" class="">Home</a></li>
     <li class="breadcrumb-item text-muted">{{ dataset.ds_meta_data.title }}</li>
+    {% if selected_file %}
+    <li class="breadcrumb-item text-muted">{{ selected_file.name }}</li>
+    {% endif %}
 </ol>
-
 {% endblock %}
 
 {% block content %}
 
-    <div class="row">
+    {# ---------- Notices (local / unsynced) ---------- #}
+    {% if not dataset.ds_meta_data.dataset_doi %}
+    <div class="alert alert-info d-flex align-items-center mb-5">
+        <i class="ki-duotone ki-information-5 fs-2 me-3">
+            <span class="path1"></span><span class="path2"></span><span class="path3"></span>
+        </i>
+        <div>
+            <strong>Local dataset</strong> — This dataset has not been synchronized with Zenodo yet.
+            It is only stored locally and is not publicly visible.
+            {% if current_user.is_authenticated and dataset.user_id == current_user.id %}
+                <a href="{{ url_for('dataset.list_datasets') }}" class="alert-link ms-1">Go to My datasets</a> to publish it.
+            {% endif %}
+        </div>
+    </div>
+    {% elif not dataset.is_metadata_synchronized() %}
+    <div class="alert alert-danger d-flex align-items-center mb-5">
+        <i class="ki-duotone ki-wifi-square fs-2 me-3">
+            <span class="path1"></span><span class="path2"></span>
+        </i>
+        <div>
+            <strong>No connection to Zenodo</strong> — Metadata changes are saved locally but could not be pushed to Zenodo.
+            The public record is out of date until the connection is restored.
+        </div>
+    </div>
+    {% endif %}
 
-        <div class="col-12 mb-5">
+<div class="row g-4 workbench-root">
 
-            <div class="card">
-                <div class="card-body">
-                    
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <span class="badge bg-secondary">{{ dataset.get_cleaned_publication_type() }}</span>
-                            {% if dataset.ds_meta_data.dataset_anonymous %}
-                                <span class="badge bg-secondary">Anonymous dataset</span>
-                            {% endif %}
-                            <p class="text-muted mt-2 mb-1">
-                                {{ dataset.created_at.strftime('%B %d, %Y at %I:%M %p') }}
-                            </p>
-                        </div>
+    {# ========== LEFT COLUMN: dataset metadata ========== #}
+    <div class="col-lg-3 col-md-12 workbench-meta-col">
+        <div class="card workbench-meta-card">
+            <div class="card-body">
 
-                        {% if dataset.user_id == current_user.id %}
-                            <a href="{{ url_for('dataset.edit_metadata', dataset_id=dataset.id) }}" 
-                               class="btn btn-sm btn-primary">
-                                <i class="fa fa-edit me-1"></i> Edit Metadata
-                            </a>
-                        {% endif %}
-                    </div>
+                {# Header: title first, badges below #}
+                <h3 class="fs-4 fw-bold text-gray-900 mb-2 lh-sm">{{ dataset.ds_meta_data.title }}</h3>
 
-                    <div class="row mb-3 mt-4">
-                        <div class="col-12">
-                            <ul class="list-unstyled mb-0" style="font-size: 0.85rem;">
-                            {% if dataset.ds_meta_data.dataset_anonymous %}
-                                <li class="d-flex align-items-center mb-1" style="line-height: 1.2;">
-                                    <i data-feather="user" class="me-2 text-muted" style="width: 14px; height: 14px;"></i>
-                                    <span class="me-2">Anonymous</span>
-                                </li>
-                            {% else %}
-                                {% for author in dataset.ds_meta_data.authors %}
-                                    <li class="d-flex align-items-center mb-1" style="line-height: 1.2;">
-                                    <i data-feather="user" class="me-2 text-muted" style="width: 14px; height: 14px;"></i>
-                                    <span class="me-2">{{ author.name }}</span>
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                    {% if dataset.get_cleaned_publication_type() %}
+                        <span class="badge badge-light fw-semibold text-gray-700">{{ dataset.get_cleaned_publication_type() }}</span>
+                    {% endif %}
+                    {% if dataset.ds_meta_data.dataset_anonymous %}
+                        <span class="badge badge-light-secondary">Anonymous</span>
+                    {% endif %}
+                    {% if not dataset.ds_meta_data.dataset_doi %}
+                        <span class="badge badge-light-info">Unsynchronized</span>
+                    {% elif not dataset.is_metadata_synchronized() %}
+                        <span class="badge badge-light-danger">Pending sync</span>
+                    {% endif %}
+                </div>
 
-                                    {% if author.affiliation %}
-                                        <span class="badge bg-light text-muted me-2" style="font-size: 0.75rem;">
-                                        {{ author.affiliation }}
-                                        </span>
-                                    {% endif %}
+                {# Meta facts: single inline row #}
+                <div class="text-muted fs-7 mb-4 d-flex flex-wrap align-items-center gap-1">
+                    <span>{{ dataset.created_at.strftime('%b %d, %Y') }}</span>
+                    <span class="text-gray-400">·</span>
+                    <span>{{ hubfiles|length }} model{{ '' if hubfiles|length == 1 else 's' }}</span>
+                    <span class="text-gray-400">·</span>
+                    <span>{{ dataset.get_file_total_size_for_human() }}</span>
+                </div>
 
-                                    {% if author.orcid %}
-                                        <a href="https://orcid.org/{{ author.orcid }}"
-                                        target="_blank"
-                                        class="text-success d-flex align-items-center"
-                                        data-bs-toggle="tooltip"
-                                        data-bs-placement="top"
-                                        title="ORCID: {{ author.orcid }}">
-                                        <img src="{{ url_for('static', filename='media/logos/orcid.svg') }}"
-                                            alt="ORCID" class="me-1" width="14" height="14" />
-                                        </a>
-                                    {% endif %}
-                                    </li>
-                                {% endfor %}
-                            {% endif %}
-                            </ul>
-                        </div>
-                    </div>
-
-
-                    <div class="row mb-2">
-                        <div class="col-12">
-                            <p class="card-text">{{ dataset.ds_meta_data.description | safe}}</p>
-                        </div>
-                    </div>
-
-                    <!-- Tags -->
-                    <div class="row mb-3">
-                        <div class="col-12">
-                            {% for tag in dataset.ds_meta_data.tags.split(',') %}
-                                <span class="badge bg-secondary">{{ tag.strip() }}</span>
-                            {% endfor %}
-                        </div>
-                    </div>
-
-                    <!-- DOI Buttons -->
-                    <div class="row mt-3 mb-2">
-                        <div class="col-12 d-flex align-items-center flex-wrap gap-2">
-                            {% if dataset.ds_meta_data.dataset_doi %}
-                            <a href="{{ dataset.get_zenodo_url() }}" target="_blank"
-                            class="btn btn-light btn-sm px-2 py-1 d-inline-flex align-items-center">
-                            <i class="bi bi-box-arrow-up-right me-2"></i>
-                            View Zenodo publication
-                            </a>
-                            {% endif %}
-
-                            {% if dataset.ds_meta_data.publication_doi %}
-                            <a href="{{ dataset.ds_meta_data.publication_doi }}" target="_blank"
-                            class="btn btn-light btn-sm px-2 py-1 d-inline-flex align-items-center">
-                            <i class="bi bi-box-arrow-up-right me-2"></i>
-                            View associated publication
-                            </a>
-                            {% endif %}
-
-                        </div>
-                    </div>
-
-                                        {% if dataset.ds_meta_data.dataset_doi %}
-                    <!-- DOI + Copy icon -->
-                    <div class="row mt-3">
-                        <div class="col-12 d-flex align-items-center flex-wrap">
-                            <!-- Etiqueta DOI -->
-                            <span class="px-3 py-1 bg-dark text-white fw-bold rounded-start" style="font-family: monospace;">
-                            DOI
-                            </span>
-
-                            <!-- Enlace al DOI -->
-                            <a href="{{ dataset.get_uvlhub_doi() }}"
-                            target="_blank"
-                            class="px-3 py-1 text-white fw-semibold text-decoration-none rounded-end me-2"
-                            style="background: linear-gradient(90deg, #2176bd 0%, #2980b9 100%); font-family: monospace;">
-                            {{ dataset.get_uvlhub_doi_path() }}
-                            </a>
-
-                            <!-- Copiar DOI -->
-                            <i data-feather="clipboard"
-                            class="center-button-icon"
-                            style="cursor: pointer"
-                            onclick="copyText('dataset_doi_uvlhub_{{ dataset.id }}')"
-                            data-bs-toggle="tooltip"
-                            title="Copy DOI">
+                {% if not dataset.ds_meta_data.dataset_anonymous and dataset.ds_meta_data.authors %}
+                <div class="mb-4">
+                    <label class="form-label fs-7 fw-bold text-muted text-uppercase mb-2">Authors</label>
+                    <div class="d-flex flex-column gap-2">
+                        {% for author in dataset.ds_meta_data.authors %}
+                        <div class="d-flex align-items-start gap-2 fs-7">
+                            <i class="ki-duotone ki-profile-circle fs-4 text-muted mt-1">
+                                <span class="path1"></span><span class="path2"></span><span class="path3"></span>
                             </i>
-
-                            <a href="{{ url_for('dataset.dataset_qr_by_id', dataset_id=dataset.id) }}"
-                            class="ms-2 d-inline-flex align-items-center text-dark text-decoration-none"
-                            data-bs-toggle="tooltip"
-                            title="Download QR">
-                                <i class="fa-solid fa-qrcode" style="font-size: 18px; line-height: 1;"></i>
-                            </a>
-
-                            <!-- Texto oculto para copiar -->
-                            <div id="dataset_doi_uvlhub_{{ dataset.id }}" style="display: none;">
-                            {{ dataset.get_uvlhub_doi() }}
+                            <div class="min-w-0">
+                                <span class="fw-semibold text-gray-800">{{ author.name }}</span>
+                                {% if author.orcid %}
+                                    <a href="https://orcid.org/{{ author.orcid }}" target="_blank"
+                                       class="text-success ms-1"
+                                       data-bs-toggle="tooltip" title="ORCID: {{ author.orcid }}">
+                                        <img src="{{ url_for('static', filename='media/logos/orcid.svg') }}" alt="ORCID" width="12" height="12" />
+                                    </a>
+                                {% endif %}
+                                {% if author.affiliation %}
+                                    <div class="text-muted">{{ author.affiliation }}</div>
+                                {% endif %}
                             </div>
                         </div>
+                        {% endfor %}
                     </div>
-                    {% endif %}
-
-
                 </div>
+                {% endif %}
+
+                {% if dataset.ds_meta_data.description %}
+                <div class="mb-4 dataset-description" data-description-collapsed="true">
+                    <label class="form-label fs-7 fw-bold text-muted text-uppercase mb-2">Description</label>
+                    <div class="dataset-description-body fs-7 text-gray-700">{{ dataset.ds_meta_data.description | safe }}</div>
+                    <a href="javascript:void(0);" class="dataset-description-toggle fs-7 fw-semibold">Show more</a>
+                </div>
+                {% endif %}
+
+                {% if dataset.ds_meta_data.tags %}
+                <div class="mb-4">
+                    <label class="form-label fs-7 fw-bold text-muted text-uppercase mb-2">Tags</label>
+                    <div class="d-flex flex-wrap gap-1">
+                        {% for tag in dataset.ds_meta_data.tags.split(',') %}
+                            <span class="badge badge-light fw-normal">{{ tag.strip() }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if dataset.ds_meta_data.dataset_doi %}
+                <div class="mb-4">
+                    <label class="form-label fs-7 fw-bold text-muted text-uppercase mb-2">Identifier</label>
+                    {% with full_width=True %}
+                        {% include 'dataset/_doi_pill.html' %}
+                    {% endwith %}
+                </div>
+                {% endif %}
+
+                {# Actions — primary download + icon-only secondary actions #}
+                <label class="form-label fs-7 fw-bold text-muted text-uppercase mb-2">Actions</label>
+                <div class="d-flex flex-wrap align-items-center gap-1">
+                    {% with size=False, button_class='btn-light btn-sm' %}
+                        {% include 'dataset/_download_dataset_menu.html' %}
+                    {% endwith %}
+                    {% if dataset.get_zenodo_url() %}
+                    <a href="{{ dataset.get_zenodo_url() }}" target="_blank"
+                       class="btn btn-sm btn-icon btn-light"
+                       data-bs-toggle="tooltip" title="View on Zenodo">
+                        <i class="ki-duotone ki-exit-right-corner fs-4"><span class="path1"></span><span class="path2"></span></i>
+                    </a>
+                    {% endif %}
+                    {% if dataset.ds_meta_data.publication_doi %}
+                    <a href="{{ dataset.ds_meta_data.publication_doi }}" target="_blank"
+                       class="btn btn-sm btn-icon btn-light"
+                       data-bs-toggle="tooltip" title="Associated publication">
+                        <i class="ki-duotone ki-book-open fs-4"><span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span></i>
+                    </a>
+                    {% endif %}
+                    {% if current_user.is_authenticated and dataset.user_id == current_user.id %}
+                    <a href="{{ url_for('dataset.edit_metadata', dataset_id=dataset.id) }}"
+                       class="btn btn-sm btn-icon btn-light"
+                       data-bs-toggle="tooltip" title="Edit metadata">
+                        <i class="ki-duotone ki-pencil fs-4"><span class="path1"></span><span class="path2"></span></i>
+                    </a>
+                    {% endif %}
+                </div>
+
             </div>
-
         </div>
-
     </div>
 
-    <div class="card card-flush">
-        <div class="card-header align-items-center py-5 gap-2 gap-md-5">
-            <div class="card-title">
-                <div class="d-flex align-items-center position-relative my-1">
-                    <i class="ki-duotone ki-magnifier fs-3 position-absolute ms-4">
-                        <span class="path1"></span>
-                        <span class="path2"></span>
-                    </i>
-                    <input type="text" data-kt-ecommerce-product-filter="search" class="form-control form-control-solid w-250px ps-12" placeholder="Search models" />
+    {# ========== RIGHT COLUMN: workbench ========== #}
+    {% if hubfiles|length == 0 %}
+    <div class="col-lg-9 col-md-12">
+        <div class="card">
+            <div class="card-body text-center text-muted py-10">
+                <i class="ki-duotone ki-folder fs-3x text-muted mb-3">
+                    <span class="path1"></span><span class="path2"></span>
+                </i>
+                <h5 class="mb-2">No models in this dataset yet</h5>
+                <p class="mb-0">Upload UVL files to start exploring.</p>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-lg-9 col-md-12 workbench-panels">
+
+    {# Toolbar strip #}
+    <div class="card mb-3 workbench-toolbar" data-toolbar>
+        <div class="card-body py-2 px-3 d-flex flex-wrap align-items-center gap-2">
+
+            <button type="button" class="btn btn-sm btn-icon btn-light" id="workbench-prev"
+                    data-bs-toggle="tooltip" title="Previous model">
+                <i class="ki-duotone ki-left fs-3"></i>
+            </button>
+
+            <div class="dropdown flex-grow-1 flex-md-grow-0 model-picker">
+                <button class="btn btn-sm btn-light dropdown-toggle d-flex align-items-stretch w-100 w-md-auto model-picker-btn p-0 overflow-hidden"
+                        type="button"
+                        data-bs-toggle="dropdown"
+                        data-bs-auto-close="outside"
+                        id="model-picker-toggle"
+                        data-bs-toggle-tooltip="tooltip"
+                        title="Browse models in this dataset"
+                        style="min-width: 300px;">
+                    <span class="model-picker-tag px-2 d-inline-flex align-items-center fw-bold text-white text-uppercase">
+                        <i class="ki-duotone ki-magnifier fs-5 me-1"><span class="path1"></span><span class="path2"></span></i>
+                        Model
+                    </span>
+                    <span class="model-picker-name flex-grow-1 d-inline-flex align-items-center px-3 font-monospace text-truncate">
+                        <span id="model-picker-current">{% if selected_file %}{{ selected_file.name }}{% else %}Select a model…{% endif %}</span>
+                    </span>
+                </button>
+                <div class="dropdown-menu p-3 shadow" style="width: 340px; max-width: 90vw;">
+                    <div class="position-relative mb-2">
+                        <i class="ki-duotone ki-magnifier fs-4 position-absolute ms-3 text-muted"
+                           style="top: 50%; transform: translateY(-50%);">
+                            <span class="path1"></span><span class="path2"></span>
+                        </i>
+                        <input type="text"
+                               class="form-control form-control-sm ps-10"
+                               id="model-picker-search"
+                               placeholder="Search models…"
+                               autocomplete="off" />
+                    </div>
+                    <div id="model-picker-list"
+                         class="model-picker-list"
+                         style="max-height: 360px; overflow-y: auto;"></div>
                 </div>
             </div>
-            <div class="card-toolbar flex-row-fluid justify-content-end gap-5">
-                <div class="position-relative">
-                    <button class="btn btn-primary"
-                            data-kt-menu-trigger="click"
-                            data-kt-menu-placement="bottom-end"
-                            data-kt-menu-attach="parent">
-                        <i data-feather="download" class="me-1" style="width: 14px; height: 14px;"></i>
-                        Download dataset ({{ dataset.get_file_total_size_for_human() }})
-                    </button>
 
-                    <div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-title-gray-700 menu-icon-gray-500 fw-semibold py-4 px-4 fs-base w-200px" data-kt-menu="true" data-download-menu>
-                        <div class="menu-item px-0 py-1">
-                            <label class="form-check form-check-custom form-check-solid align-items-center m-0">
-                                <input class="form-check-input me-3 download-format-checkbox" type="checkbox" value="uvl" checked />
-                                <span class="menu-title">UVL</span>
-                            </label>
-                        </div>
-                        <div class="menu-item px-0 py-1">
-                            <label class="form-check form-check-custom form-check-solid align-items-center m-0">
-                                <input class="form-check-input me-3 download-format-checkbox" type="checkbox" value="glencoe" checked />
-                                <span class="menu-title">Glencoe</span>
-                            </label>
-                        </div>
-                        <div class="menu-item px-0 py-1">
-                            <label class="form-check form-check-custom form-check-solid align-items-center m-0">
-                                <input class="form-check-input me-3 download-format-checkbox" type="checkbox" value="dimacs" checked />
-                                <span class="menu-title">DIMACS</span>
-                            </label>
-                        </div>
-                        <div class="menu-item px-0 py-1">
-                            <label class="form-check form-check-custom form-check-solid align-items-center m-0">
-                                <input class="form-check-input me-3 download-format-checkbox" type="checkbox" value="splot" checked />
-                                <span class="menu-title">SPLOT</span>
-                            </label>
-                        </div>
-                        <div class="separator my-3"></div>
+            <button type="button" class="btn btn-sm btn-icon btn-light" id="workbench-next"
+                    data-bs-toggle="tooltip" title="Next model">
+                <i class="ki-duotone ki-right fs-3"></i>
+            </button>
+
+            <span class="text-muted small ms-1" id="workbench-counter">
+                {% if selected_file %}— / {{ hubfiles|length }}{% else %}— / {{ hubfiles|length }}{% endif %}
+            </span>
+
+        </div>
+    </div>
+
+    {# Side-by-side panels: UVL (primary, wider) left, FactLabel right.
+       Collapses to a stack below the lg breakpoint. #}
+    <div class="row g-3 workbench-panels-grid align-items-start">
+        <div class="col-lg-7 col-12 workbench-uvl-row">
+            <div class="card panel-section" data-panel-key="uvl">
+                <div class="card-header py-2 px-3 panel-header">
+                    <div class="d-flex align-items-center gap-2 min-w-0">
                         <button type="button"
+                                class="btn btn-sm btn-icon btn-light panel-toggle"
+                                data-panel-target="uvl"
+                                data-bs-toggle="tooltip"
+                                title="Collapse / expand">
+                            <i class="ki-duotone ki-down fs-3 panel-toggle-icon"></i>
+                        </button>
+                        <img src="{{ url_for('static', filename='media/logos/uvl_logo.svg') }}"
+                             alt="UVL" class="panel-header-logo" height="30" width="auto" />
+                        <span class="text-muted small text-nowrap" id="workbench-uvl-size">
+                            {% if selected_file %}{{ selected_file.get_formatted_size() }}{% endif %}
+                        </span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 panel-header-actions flex-wrap">
+                        <button type="button" class="btn btn-sm btn-icon btn-light" id="workbench-copy-uvl"
+                                data-bs-toggle="tooltip" title="Copy UVL to clipboard">
+                            <i class="ki-duotone ki-copy fs-3"></i>
+                        </button>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-icon btn-light dropdown-toggle" type="button"
+                                    data-bs-toggle="dropdown" title="Export model">
+                                <i class="ki-duotone ki-file-down fs-3"><span class="path1"></span><span class="path2"></span></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" id="workbench-export-menu">
+                                <li><a class="dropdown-item" href="#" data-export="uvl">UVL</a></li>
+                                <li><a class="dropdown-item" href="#" data-export="glencoe">Glencoe</a></li>
+                                <li><a class="dropdown-item" href="#" data-export="dimacs">DIMACS</a></li>
+                                <li><a class="dropdown-item" href="#" data-export="splot">SPLOT</a></li>
+                            </ul>
+                        </div>
+                        <a href="{% if selected_file %}{{ selected_file.get_ide_url() }}{% else %}#{% endif %}"
+                           id="workbench-ide-link" target="_blank" rel="noopener"
+                           class="btn btn-sm btn-light d-inline-flex align-items-center"
+                           data-bs-toggle="tooltip" title="Open in Flamapy IDE">
+                            <span class="me-2 small">Open with</span>
+                            <img src="{{ url_for('static', filename='media/logos/flamapy_ide.svg') }}"
+                                 alt="Flamapy IDE" style="height: 14px; width: auto;" />
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body p-0 panel-body position-relative">
+                    <textarea id="uvlEditor" class="d-none">{% if uvl_content %}{{ uvl_content }}{% endif %}</textarea>
+                    <div id="uvlSkeleton" class="uvl-skeleton {% if not selected_file %}d-none {% endif %}p-4">
+                        <span class="skeleton skeleton-line" style="width: 25%;"></span>
+                        <span class="skeleton skeleton-line" style="width: 55%; margin-left: 1rem;"></span>
+                        <span class="skeleton skeleton-line" style="width: 40%; margin-left: 2rem;"></span>
+                        <span class="skeleton skeleton-line" style="width: 70%; margin-left: 3rem;"></span>
+                        <span class="skeleton skeleton-line" style="width: 50%; margin-left: 4rem;"></span>
+                        <span class="skeleton skeleton-line" style="width: 60%; margin-left: 3rem;"></span>
+                        <span class="skeleton skeleton-line" style="width: 35%; margin-left: 2rem;"></span>
+                        <span class="skeleton skeleton-line" style="width: 20%;"></span>
+                        <span class="skeleton skeleton-line" style="width: 65%; margin-left: 1rem;"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5 col-12 workbench-factlabel-row">
+            <div class="card panel-section" data-panel-key="factlabel">
+                <div class="card-header py-2 px-3 panel-header">
+                    <div class="d-flex align-items-center gap-2 min-w-0">
+                        <button type="button"
+<<<<<<< HEAD
                                 class="btn btn-light-primary btn-sm w-100"
                                 data-download-formats-action
                                 data-download-base-url="/downloadqueue/dataset/build/download/">
                             Download
+=======
+                                class="btn btn-sm btn-icon btn-light panel-toggle"
+                                data-panel-target="factlabel"
+                                data-bs-toggle="tooltip"
+                                title="Collapse / expand">
+                            <i class="ki-duotone ki-down fs-3 panel-toggle-icon"></i>
+>>>>>>> upstream/generator_tfg
                         </button>
+                        <img src="{{ url_for('static', filename='media/logos/factlabel_logo.svg') }}"
+                             alt="FM Fact Label" class="panel-header-logo" height="30" width="auto" />
+                    </div>
+                    <div class="d-flex align-items-center gap-2 panel-header-actions flex-wrap">
+                        <div class="dropdown">
+                            <button type="button"
+                                    class="btn btn-sm btn-icon btn-light"
+                                    data-bs-toggle="dropdown"
+                                    data-bs-auto-close="outside"
+                                    title="Display options">
+                                <i class="ki-duotone ki-setting-2 fs-3">
+                                    <span class="path1"></span><span class="path2"></span>
+                                </i>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end p-3" style="min-width: 220px;">
+                                <div class="form-check form-check-sm mb-2">
+                                    <input class="form-check-input" type="checkbox" id="collapseZeroValues" checked>
+                                    <label class="form-check-label small" for="collapseZeroValues">Collapse zero values</label>
+                                </div>
+                                <div class="form-check form-check-sm">
+                                    <input class="form-check-input" type="checkbox" id="collapseSubProperties" checked>
+                                    <label class="form-check-label small" for="collapseSubProperties">Collapse sub-properties</label>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button"
+                                id="workbench-factlabel-download"
+                                class="btn btn-sm btn-icon btn-light"
+                                data-bs-toggle="tooltip" title="Download SVG">
+                            <i class="ki-duotone ki-file-down fs-3">
+                                <span class="path1"></span><span class="path2"></span>
+                            </i>
+                        </button>
+                        <a href="{% if selected_file %}{{ selected_file.get_factlabel_url() }}{% else %}#{% endif %}"
+                           id="workbench-factlabel-external"
+                           target="_blank" rel="noopener"
+                           class="btn btn-sm btn-light d-inline-flex align-items-center"
+                           data-bs-toggle="tooltip" title="Open FactLabel in new tab">
+                            <span class="me-2 small">Open with</span>
+                            <img src="{{ url_for('static', filename='media/logos/factlabel_logo.svg') }}"
+                                 alt="FM Fact Label" style="height: 14px; width: auto;" />
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body panel-body">
+                    <div id="FMFactLabelWrapper" class="w-100 position-relative">
+                        <svg id="FMFactLabelChart" class="chart w-100" preserveAspectRatio="xMinYMin meet"></svg>
+                        <div id="factLabelSkeleton" class="factlabel-skeleton {% if not selected_file %}d-none{% endif %}">
+                            <span class="skeleton skeleton-line xl mb-3" style="width: 50%;"></span>
+                            <span class="skeleton skeleton-line" style="width: 80%;"></span>
+                            <span class="skeleton skeleton-line" style="width: 65%;"></span>
+                            <span class="skeleton skeleton-block mt-3" style="height: 140px;"></span>
+                            <span class="skeleton skeleton-line mt-3" style="width: 70%;"></span>
+                            <span class="skeleton skeleton-line" style="width: 55%;"></span>
+                            <span class="skeleton skeleton-block mt-3" style="height: 100px;"></span>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
+    </div>{# /row workbench-panels-grid #}
+    </div>{# /col-lg-9 workbench-panels #}
+    {% endif %}
 
-        <div class="card-body pt-0">
-            <table class="table align-middle table-row-dashed fs-6 gy-5" id="kt_models_table">
-                <thead>
-                    <tr class="text-start text-gray-500 fw-bold fs-7 text-uppercase gs-0">
-                        <th class="min-w-200px">Name</th>
-                        <th class="min-w-100px text-end">Size</th>
-                        <th class="min-w-100px text-end">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="fw-semibold text-gray-600">
-                    {% for file in hubfiles %}
-                    <tr>
-                        <td class="font-monospace">
-                            {% if dataset.ds_meta_data.dataset_doi %}
-                                <!-- Dataset sincronizado con DOI -->
-                                <a href="{{ file.get_url() }}" 
-                                class="text-primary text-hover-dark fw-semibold">
-                                    {{ file.name }}
-                                </a>
-                            {% else %}
-                                <!-- Dataset en borrador (sin DOI) -->
-                                <a href="{{ url_for('hubfile.view_unsynchronized_file', dataset_id=dataset.id, file_id=file.id) }}" 
-                                class="text-primary text-hover-dark fw-semibold">
-                                    {{ file.name }}
-                                </a>
-                            {% endif %}
-                        </td>
-                        <td class="text-end">{{ file.get_formatted_size() }}</td>
-                        <td class="text-end">
-                            <div class="btn-group">
+</div>{# /row workbench-root #}
 
-                                <!-- Export dropdown -->
-                                <button type="button" class="btn btn-sm btn-light btn-active-light-info dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="ki-duotone ki-export fs-5"></i> Export
-                                </button>
-                                <ul class="dropdown-menu dropdown-menu-end">
-                                    <li>
-                                        <a class="dropdown-item" href="{{ url_for('hubfile.download_file', file_id=file.id) }}">
-                                            UVL
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" href="{{ url_for('flamapy.to_glencoe', file_id=file.id) }}">
-                                            Glencoe
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" href="{{ url_for('flamapy.to_cnf', file_id=file.id) }}">
-                                            DIMACS
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" href="{{ url_for('flamapy.to_splot', file_id=file.id) }}">
-                                            SPLOT
-                                        </a>
-                                    </li>
-                                </ul>
-
-                                <!-- View page link -->
-<a href="{{ file.get_url()}}"
-   class="btn btn-sm btn-light btn-active-light-secondary me-1">
-                                    <i class="ki-duotone ki-eye fs-5"></i> View
-                                </a>
-
-
-                            </div>
-                        </td>
-
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+    {# ---------- Metric modal (FactLabel detail view) ---------- #}
+    <div class="modal fade" id="metricModal" tabindex="-1" aria-labelledby="metricModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content shadow-lg rounded-2xl">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="fw-bold text-primary mb-0" id="metricModalLabel">Metric Details</h5>
+                    <button type="button" class="btn btn-icon btn-sm btn-light" data-bs-dismiss="modal" aria-label="Close">
+                        <i class="ki-duotone ki-cross fs-2">
+                            <span class="path1"></span><span class="path2"></span>
+                        </i>
+                    </button>
+                </div>
+                <div class="modal-body pt-3 text-break"></div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light-primary" id="copyButton">
+                        <i class="ki-duotone ki-copy me-2"></i> Copy
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
+
 {% endblock %}
 
 {% block scripts %}
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const table = $('#kt_models_table').DataTable({
-            pageLength: 10,
-            order: [[1, 'asc']]
-        });
+{% if hubfiles|length > 0 %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/fold/foldgutter.css">
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/mode/simple.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/fold/foldcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/fold/foldgutter.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/fold/indent-fold.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script src="{{ url_for('factlabel.assets', subfolder='dist', filename='factlabel.bundle.js') }}"></script>
 
-        // Conectar el buscador personalizado
-        const searchInput = document.querySelector('[data-kt-ecommerce-product-filter="search"]');
-        if (searchInput) {
-            searchInput.addEventListener('keyup', function () {
-                table.search(this.value).draw();
-            });
+<style>
+    /* Panels */
+    .panel-header { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+    .panel-toggle-icon { transition: transform 0.15s ease-in-out; }
+    .panel-section.panel-collapsed .panel-body { display: none; }
+    .panel-section.panel-collapsed .panel-toggle-icon { transform: rotate(-90deg); }
+    /* Logo matches the chevron button (btn-sm btn-icon ≈ 30px square) so the
+       header row has a consistent visual height. */
+    .panel-header-logo { height: 30px; width: auto; display: block; }
+    /* FactLabel logo is wider (long wordmark "FM Fact Label") — shrink it so
+       the full header (chevron + logo + settings + download + open-with) fits
+       on one line in the narrower col-lg-5 column. */
+    .panel-section[data-panel-key="factlabel"] .panel-header-logo { height: 20px; }
+    .panel-header-title { font-weight: 600; font-size: 0.95rem; }
+    .panel-header-actions { flex-wrap: wrap; }
+
+    /* Meta column */
+    .workbench-meta-card .form-label { letter-spacing: 0.04em; }
+
+    /* Action list: download-dataset button (from partial) needs to match siblings */
+    .workbench-meta-card .d-grid > .position-relative > button[data-kt-menu-trigger] {
+        width: 100%;
+        justify-content: flex-start;
+    }
+    .workbench-meta-card .d-grid > .position-relative > button[data-kt-menu-trigger] > svg {
+        margin-right: 0.5rem;
+    }
+
+    /* Let the UVL editor breathe a bit more when FactLabel is collapsed.
+       The cap goes on .CodeMirror-scroll (not .CodeMirror) so that with
+       `height: auto` + `viewportMargin: Infinity` the internal scroll
+       viewport kicks in; putting max-height on .CodeMirror itself just
+       clips content at ~line 30 with no scrollbar. */
+    .workbench-panels .CodeMirror-scroll { max-height: 65vh; }
+    .workbench-panels.factlabel-collapsed .CodeMirror-scroll { max-height: 80vh; }
+
+    /* Collapsed column: card shrinks to just the chevron + logo strip, and the
+       other panel grows horizontally to fill the freed space. Body is already
+       hidden via .panel-collapsed elsewhere. */
+    .workbench-panels-grid .col-collapsed {
+        flex: 0 0 auto !important;
+        width: auto !important;
+        max-width: 280px !important;
+    }
+    .workbench-panels-grid:has(.col-collapsed) > :not(.col-collapsed) {
+        flex: 1 1 auto !important;
+        max-width: none !important;
+    }
+    .col-collapsed .panel-header-actions,
+    .col-collapsed #workbench-uvl-size {
+        display: none !important;
+    }
+
+    /* Dataset description toggle */
+    .dataset-description[data-description-collapsed="true"] .dataset-description-body {
+        max-height: 4.2em; overflow: hidden; position: relative;
+        -webkit-mask-image: linear-gradient(to bottom, #000 60%, transparent 100%);
+        mask-image: linear-gradient(to bottom, #000 60%, transparent 100%);
+    }
+    .dataset-description[data-description-collapsed="false"] .dataset-description-body { max-height: none; }
+
+    /* CodeMirror — shared. With height: auto + viewportMargin: Infinity,
+       min/max constraints belong on .CodeMirror-scroll; otherwise long
+       files get clipped without a scrollbar. */
+    .CodeMirror {
+        height: auto;
+        font-size: 0.85rem;
+        border-radius: 0 0 0.475rem 0.475rem;
+    }
+    .CodeMirror-scroll {
+        min-height: 360px;
+        max-height: 75vh;
+    }
+    .CodeMirror pre.CodeMirror-line { tab-size: 2; -moz-tab-size: 2; }
+
+    /* Never wrap UVL lines — if a line is wider than the panel, the editor
+       scrolls horizontally. Explicit in case some future rule overrides
+       CodeMirror's defaults. */
+    .workbench-panels .CodeMirror-line,
+    .workbench-panels .CodeMirror pre.CodeMirror-line { white-space: pre !important; }
+    .workbench-panels .CodeMirror-scroll { overflow-x: auto !important; }
+
+    /* CodeMirror — light theme */
+    [data-bs-theme="light"] .CodeMirror {
+        background: #fbfbfd;
+        color: #1f2937;
+    }
+    [data-bs-theme="light"] .CodeMirror-gutters {
+        background: #f3f4f6;
+        border-right: 1px solid #e5e7eb;
+    }
+    [data-bs-theme="light"] .CodeMirror-linenumber { color: #9ca3af; }
+    [data-bs-theme="light"] .CodeMirror-cursor { border-left: 1px solid #111827; }
+    [data-bs-theme="light"] .CodeMirror-selected { background: #dbeafe !important; }
+    [data-bs-theme="light"] .CodeMirror-activeline-background { background: rgba(147, 197, 253, 0.12); }
+    [data-bs-theme="light"] .cm-uvl-keyword { color: #1d4ed8; font-weight: 600; }
+    [data-bs-theme="light"] .cm-uvl-type    { color: #7c3aed; font-weight: 600; }
+    [data-bs-theme="light"] .cm-uvl-atom    { color: #0f766e; }
+    [data-bs-theme="light"] .cm-uvl-string  { color: #b91c1c; }
+    [data-bs-theme="light"] .cm-uvl-comment { color: #6b7280; font-style: italic; }
+    [data-bs-theme="light"] .cm-uvl-number  { color: #c2410c; }
+    [data-bs-theme="light"] .cm-uvl-op      { color: #334155; }
+    [data-bs-theme="light"] .CodeMirror-foldmarker { color: #2563eb; text-shadow: none; }
+
+    /* CodeMirror — dark theme */
+    [data-bs-theme="dark"] .CodeMirror {
+        background: #151521;
+        color: #e5e7eb;
+    }
+    [data-bs-theme="dark"] .CodeMirror-gutters {
+        background: #1e1e2d;
+        border-right: 1px solid #2b2b40;
+    }
+    [data-bs-theme="dark"] .CodeMirror-linenumber { color: #6b7280; }
+    [data-bs-theme="dark"] .CodeMirror-cursor { border-left: 1px solid #f3f4f6; }
+    [data-bs-theme="dark"] .CodeMirror-selected { background: #1e3a8a !important; }
+    [data-bs-theme="dark"] .CodeMirror-activeline-background { background: rgba(59, 130, 246, 0.12); }
+    [data-bs-theme="dark"] .cm-uvl-keyword { color: #60a5fa; font-weight: 600; }
+    [data-bs-theme="dark"] .cm-uvl-type    { color: #c084fc; font-weight: 600; }
+    [data-bs-theme="dark"] .cm-uvl-atom    { color: #34d399; }
+    [data-bs-theme="dark"] .cm-uvl-string  { color: #fca5a5; }
+    [data-bs-theme="dark"] .cm-uvl-comment { color: #9ca3af; font-style: italic; }
+    [data-bs-theme="dark"] .cm-uvl-number  { color: #fdba74; }
+    [data-bs-theme="dark"] .cm-uvl-op      { color: #cbd5e1; }
+    [data-bs-theme="dark"] .CodeMirror-foldmarker { color: #60a5fa; text-shadow: none; }
+
+    /* Hide Bootstrap's dropdown caret on icon-only export button (the icon
+       itself communicates action; caret would look cramped in a 30×30 square). */
+    .panel-header-actions .dropdown-toggle::after { display: none; }
+
+    /* In dark mode, turn the multi-color Flamapy IDE and FM FactLabel logos into
+       a solid white mark so they stay legible on the dark header background. */
+    [data-bs-theme="dark"] #workbench-ide-link img,
+    [data-bs-theme="dark"] #workbench-factlabel-external img,
+    [data-bs-theme="dark"] .panel-section[data-panel-key="factlabel"] .panel-header-logo {
+        filter: brightness(0) invert(1);
+    }
+
+    /* Model picker — styled as a split pill "MODEL | file.uvl" so it reads as a browser, not a label.
+       The black tag + magnifier icon already communicates "clickable browser", so hide Bootstrap's
+       default dropdown caret (it was bleeding into the tag's rounded corner as a weird black teardrop). */
+    .model-picker-btn { min-height: 31px; }
+    .model-picker-btn.dropdown-toggle::after { display: none; }
+    .model-picker-tag { background: #18181b; letter-spacing: 0.04em; font-size: 0.72rem; }
+    .model-picker-name { background: transparent; padding-right: 2rem; position: relative; }
+    .model-picker-name::after {
+        content: "";
+        position: absolute;
+        right: 0.9rem;
+        top: 50%;
+        width: 0; height: 0;
+        border-left: 4px solid transparent;
+        border-right: 4px solid transparent;
+        border-top: 5px solid currentColor;
+        opacity: 0.55;
+        transform: translateY(-50%);
+    }
+    .model-picker-btn:hover .model-picker-name { background: rgba(127,127,127,0.08); }
+    [data-bs-theme="dark"] .model-picker-tag { background: #0f172a; }
+
+    /* Model picker */
+    .model-picker-list .model-picker-item {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 6px 10px; border-radius: 6px; cursor: pointer;
+        font-family: monospace; font-size: 0.85rem;
+    }
+    .model-picker-list .model-picker-item:hover,
+    .model-picker-list .model-picker-item.active-row { background: rgba(127, 127, 127, 0.12); }
+    .model-picker-list .model-picker-item.current { font-weight: 600; color: var(--bs-primary); }
+    .model-picker-list .model-picker-empty { padding: 10px; text-align: center; font-size: 0.85rem; color: #9ca3af; }
+
+    /* FactLabel wrapper — let the page scroll; no inner scrollbar. The SVG is
+       scaled responsively via viewBox (set in renderFactLabelContent) and
+       centered, capped at its natural width so it doesn't blow up on wide screens. */
+    #FMFactLabelWrapper { width: 100%; }
+    #FMFactLabelChart { display: block; margin: 0 auto; height: auto; max-width: 100%; }
+
+    /* Skeleton overlays */
+    .factlabel-skeleton { padding: 0.5rem 0; }
+    .uvl-skeleton { min-height: 360px; }
+    .uvl-skeleton .skeleton-line { font-family: monospace; }
+    .workbench-panels .CodeMirror.is-loading { visibility: hidden; }
+    /* Overlay the UVL skeleton on top of the (hidden) CodeMirror so the
+       panel doesn't double its height while the file is loading. */
+    .panel-section[data-panel-key="uvl"] .panel-body { min-height: 360px; }
+    .panel-section[data-panel-key="uvl"] #uvlSkeleton {
+        position: absolute; inset: 0; z-index: 2;
+    }
+</style>
+
+<script>
+(function defineUvlMode() {
+    if (!window.CodeMirror || !CodeMirror.defineSimpleMode) return;
+    CodeMirror.defineSimpleMode("uvl", {
+        start: [
+            { regex: /\/\/.*/, token: "uvl-comment" },
+            { regex: /"(?:[^\\"]|\\.)*"?/, token: "uvl-string" },
+            { regex: /\b(?:features|constraints|include|namespace|imports|as)\b/, token: "uvl-keyword" },
+            { regex: /\b(?:mandatory|optional|alternative|or|cardinality)\b/, token: "uvl-type" },
+            { regex: /\b(?:Boolean|Integer|Real|String)\b/, token: "uvl-type" },
+            { regex: /\b(?:true|false)\b/, token: "uvl-atom" },
+            { regex: /\b\d+(?:\.\d+)?\b/, token: "uvl-number" },
+            { regex: /(?:=>|<=>|==|!=|<=|>=|&&|\|\||!|=|\+|-|\*|\/|<|>)/, token: "uvl-op" }
+        ],
+        meta: { lineComment: "//" }
+    });
+})();
+
+// ---------- Static workbench state ----------
+const WORKBENCH = {
+    datasetId: {{ dataset.id }},
+    models: [
+        {% for f in hubfiles %}
+        {
+            id: {{ f.id }},
+            name: {{ f.name | tojson }},
+            sizeHuman: {{ f.get_formatted_size() | tojson }},
+            doiViewUrl: {% if dataset.ds_meta_data.dataset_doi %}{{ url_for('hubfile.view_uvl_with_doi', doi=dataset.ds_meta_data.dataset_doi, filename=f.name) | tojson }}{% else %}null{% endif %},
+            unsyncViewUrl: {% if not dataset.ds_meta_data.dataset_doi %}{{ url_for('hubfile.view_unsynchronized_file', dataset_id=dataset.id, file_id=f.id) | tojson }}{% else %}null{% endif %},
+            downloadUrl: {{ url_for('hubfile.download_file', file_id=f.id) | tojson }},
+            glencoeUrl: {{ url_for('flamapy.to_glencoe', file_id=f.id) | tojson }},
+            dimacsUrl: {{ url_for('flamapy.to_cnf', file_id=f.id) | tojson }},
+            splotUrl: {{ url_for('flamapy.to_splot', file_id=f.id) | tojson }}
+        }{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ],
+    datasetTitle: {{ dataset.ds_meta_data.title | tojson }},
+    initialFileId: {% if selected_file %}{{ selected_file.id }}{% else %}null{% endif %}
+};
+
+let uvlEditorInstance = null;
+let currentFileId = WORKBENCH.initialFileId;
+let keyboardActiveIndex = -1;
+
+document.addEventListener('DOMContentLoaded', function () {
+    feather.replace();
+    if (document.querySelector('#uvlEditor')) {
+        initUvlEditor();
+        initPanelToggles();
+        initThemeSync();
+        initModelPicker();
+        initPrevNext();
+        initActionButtons();
+        initDescriptionToggle();
+        if (currentFileId) {
+            applyFileUi(findModel(currentFileId));
+            fetchAndApplyContent(currentFileId);
+        }
+    }
+    initTooltips();
+});
+
+// ---------- Editor ----------
+const UVL_PLAIN_THRESHOLD_BYTES = 1024 * 1024; // 1 MB: above this, skip syntax highlighting
+
+function initUvlEditor() {
+    const ta = document.getElementById('uvlEditor');
+    if (!ta || !window.CodeMirror) return;
+    ta.classList.remove('d-none');
+    uvlEditorInstance = CodeMirror.fromTextArea(ta, {
+        mode: "uvl",
+        lineNumbers: true,
+        readOnly: true,
+        tabSize: 2,
+        indentUnit: 2,
+        lineWrapping: false,
+        foldGutter: true,
+        gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
+    });
+    // Hide CodeMirror until the async fetch lands content; the skeleton
+    // (rendered visible by the template) carries the visual.
+    if (currentFileId) setUvlLoading(true);
+}
+
+function applyUvlContent(text) {
+    if (!uvlEditorInstance) {
+        setUvlLoading(false);
+        return;
+    }
+    const big = (text || '').length > UVL_PLAIN_THRESHOLD_BYTES;
+    uvlEditorInstance.setOption('mode', big ? null : 'uvl');
+    // Defer setValue so the loading skeleton paints first; CodeMirror's
+    // setValue can block the main thread for several seconds on large files.
+    setTimeout(() => {
+        try {
+            if (uvlEditorInstance) {
+                uvlEditorInstance.setValue(text || '');
+                uvlEditorInstance.refresh();
+            }
+        } finally {
+            setUvlLoading(false);
+        }
+    }, 0);
+}
+
+// ---------- Panel collapsing ----------
+function initPanelToggles() {
+    ['uvl', 'factlabel'].forEach(key => {
+        const storageKey = `uvlhub.wb.panel.${key}.collapsed`;
+        if (localStorage.getItem(storageKey) === '1') setPanelCollapsed(key, true, { persist: false });
+    });
+
+    document.querySelectorAll('.panel-toggle').forEach(btn => {
+        const key = btn.dataset.panelTarget;
+        btn.addEventListener('click', () => {
+            const section = document.querySelector(`.panel-section[data-panel-key="${key}"]`);
+            const next = !section.classList.contains('panel-collapsed');
+            setPanelCollapsed(key, next);
+        });
+    });
+}
+
+function setPanelCollapsed(key, collapsed, opts) {
+    opts = opts || {};
+    const section = document.querySelector(`.panel-section[data-panel-key="${key}"]`);
+    const panels = document.querySelector('.workbench-panels');
+    if (!section || !panels) return;
+
+    section.classList.toggle('panel-collapsed', collapsed);
+    panels.classList.toggle(`${key}-collapsed`, collapsed);
+
+    // Shrink the whole column so the sibling panel can grow horizontally —
+    // collapse is vertical + horizontal, leaving only chevron + logo visible.
+    const colSelector = key === 'uvl' ? '.workbench-uvl-row' : '.workbench-factlabel-row';
+    const colEl = document.querySelector(colSelector);
+    if (colEl) colEl.classList.toggle('col-collapsed', collapsed);
+
+    if (opts.persist !== false) {
+        localStorage.setItem(`uvlhub.wb.panel.${key}.collapsed`, collapsed ? '1' : '0');
+    }
+
+    if (!collapsed) {
+        if (key === 'uvl' && uvlEditorInstance) setTimeout(() => uvlEditorInstance.refresh(), 0);
+        if (key === 'factlabel') setTimeout(renderFactLabelForCurrentFile, 0);
+    } else if (key === 'factlabel' && uvlEditorInstance) {
+        // UVL gets more breathing room; let CodeMirror remeasure.
+        setTimeout(() => uvlEditorInstance.refresh(), 0);
+    }
+}
+
+// ---------- Theme sync ----------
+function initThemeSync() {
+    const observer = new MutationObserver(() => {
+        if (uvlEditorInstance) uvlEditorInstance.refresh();
+    });
+    observer.observe(document.documentElement, {
+        attributes: true, attributeFilter: ['data-bs-theme']
+    });
+}
+
+// ---------- Description toggle ----------
+function initDescriptionToggle() {
+    const block = document.querySelector('.dataset-description');
+    if (!block) return;
+    const toggle = block.querySelector('.dataset-description-toggle');
+    if (!toggle) return;
+    // Hide toggle if content isn't actually clipped
+    requestAnimationFrame(() => {
+        const body = block.querySelector('.dataset-description-body');
+        if (body.scrollHeight <= body.clientHeight + 2) {
+            toggle.style.display = 'none';
+            block.setAttribute('data-description-collapsed', 'false');
+        }
+    });
+    toggle.addEventListener('click', () => {
+        const collapsed = block.getAttribute('data-description-collapsed') === 'true';
+        block.setAttribute('data-description-collapsed', collapsed ? 'false' : 'true');
+        toggle.textContent = collapsed ? 'Show less' : 'Show more';
+    });
+}
+
+// ---------- Model picker ----------
+function initModelPicker() {
+    const listEl = document.getElementById('model-picker-list');
+    const searchEl = document.getElementById('model-picker-search');
+    const toggleEl = document.getElementById('model-picker-toggle');
+
+    renderPickerList('');
+
+    searchEl.addEventListener('input', e => {
+        keyboardActiveIndex = -1;
+        renderPickerList(e.target.value.trim().toLowerCase());
+    });
+    searchEl.addEventListener('keydown', e => {
+        const items = listEl.querySelectorAll('.model-picker-item');
+        if (!items.length) return;
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            keyboardActiveIndex = Math.min(items.length - 1, keyboardActiveIndex + 1);
+            setActiveRow(items);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            keyboardActiveIndex = Math.max(0, keyboardActiveIndex - 1);
+            setActiveRow(items);
+        } else if (e.key === 'Enter' && keyboardActiveIndex >= 0) {
+            e.preventDefault();
+            const id = parseInt(items[keyboardActiveIndex].dataset.fileId, 10);
+            selectModel(id);
+            bootstrap.Dropdown.getInstance(toggleEl)?.hide();
         }
     });
 
-    function viewFile(fileId) {
-        console.log('View file:', fileId);
-        // Aquí iría el visor/modal
-    }
-</script>
+    toggleEl.addEventListener('shown.bs.dropdown', () => {
+        searchEl.value = '';
+        keyboardActiveIndex = -1;
+        renderPickerList('');
+        searchEl.focus();
+    });
 
+    function setActiveRow(items) {
+        items.forEach(el => el.classList.remove('active-row'));
+        const row = items[keyboardActiveIndex];
+        if (row) {
+            row.classList.add('active-row');
+            row.scrollIntoView({ block: 'nearest' });
+        }
+    }
+}
+
+function renderPickerList(filter) {
+    const listEl = document.getElementById('model-picker-list');
+    const filtered = !filter
+        ? WORKBENCH.models
+        : WORKBENCH.models.filter(m => m.name.toLowerCase().includes(filter));
+
+    if (!filtered.length) {
+        listEl.innerHTML = '<div class="model-picker-empty">No matches.</div>';
+        return;
+    }
+
+    listEl.innerHTML = filtered.map(m => `
+        <div class="model-picker-item ${m.id === currentFileId ? 'current' : ''}" data-file-id="${m.id}">
+            <span class="text-truncate" title="${escapeAttr(m.name)}">${escapeHtml(m.name)}</span>
+            <span class="text-muted ms-2 small">${escapeHtml(m.sizeHuman)}</span>
+        </div>
+    `).join('');
+
+    listEl.querySelectorAll('.model-picker-item').forEach(el => {
+        el.addEventListener('click', () => {
+            const id = parseInt(el.dataset.fileId, 10);
+            selectModel(id);
+            bootstrap.Dropdown.getInstance(document.getElementById('model-picker-toggle'))?.hide();
+        });
+    });
+}
+
+// ---------- Prev / Next ----------
+function initPrevNext() {
+    document.getElementById('workbench-prev').addEventListener('click', () => stepModel(-1));
+    document.getElementById('workbench-next').addEventListener('click', () => stepModel(+1));
+}
+
+function stepModel(delta) {
+    const idx = WORKBENCH.models.findIndex(m => m.id === currentFileId);
+    if (idx === -1) return;
+    const next = WORKBENCH.models[(idx + delta + WORKBENCH.models.length) % WORKBENCH.models.length];
+    selectModel(next.id);
+}
+
+// ---------- Actions ----------
+function initActionButtons() {
+    document.getElementById('workbench-copy-uvl').addEventListener('click', (e) => {
+        const btn = e.currentTarget;
+        const content = uvlEditorInstance ? uvlEditorInstance.getValue() : '';
+        navigator.clipboard.writeText(content).then(() => flashCopyFeedback(btn));
+    });
+
+    document.getElementById('workbench-export-menu').addEventListener('click', (e) => {
+        const a = e.target.closest('[data-export]');
+        if (!a) return;
+        e.preventDefault();
+        const fmt = a.dataset.export;
+        const model = findModel(currentFileId);
+        if (!model) return;
+        const urls = { uvl: model.downloadUrl, glencoe: model.glencoeUrl, dimacs: model.dimacsUrl, splot: model.splotUrl };
+        const url = urls[fmt];
+        if (url) window.location.href = url;
+    });
+
+    const dlBtn = document.getElementById('workbench-factlabel-download');
+    if (dlBtn) dlBtn.addEventListener('click', downloadFactLabelSvg);
+}
+
+// Serialize the rendered FactLabel SVG and trigger a download. Named after the
+// current model so users can distinguish files when downloading multiple.
+function downloadFactLabelSvg() {
+    const svgEl = document.getElementById('FMFactLabelChart');
+    if (!svgEl || !svgEl.hasChildNodes()) return;
+    const clone = svgEl.cloneNode(true);
+    if (!clone.getAttribute('xmlns')) clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    if (!clone.getAttribute('xmlns:xlink')) clone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+    const svgString = new XMLSerializer().serializeToString(clone);
+    const blob = new Blob(['<?xml version="1.0" encoding="UTF-8"?>\n', svgString], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const model = findModel(currentFileId);
+    const base = model ? model.name.replace(/\.[^.]+$/, '') : 'factlabel';
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${base}-factlabel.svg`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+// ---------- Copy feedback ----------
+// Mirrors the DOI copy UX in copy_doi.js: tooltip flips to "Copied!" for a
+// moment, then restores the original title. No button-body swap — keeps the
+// icon-only 30×30 footprint stable.
+function flashCopyFeedback(btn) {
+    if (!btn) return;
+    const originalTitle = btn.getAttribute('data-bs-original-title') || btn.getAttribute('title') || '';
+    const tooltip = bootstrap.Tooltip.getOrCreateInstance(btn);
+    tooltip.setContent({ '.tooltip-inner': 'Copied!' });
+    tooltip.show();
+    setTimeout(() => {
+        tooltip.hide();
+        tooltip.setContent({ '.tooltip-inner': originalTitle });
+    }, 1500);
+}
+
+// ---------- Model selection + fetch ----------
+function findModel(id) { return WORKBENCH.models.find(m => m.id === id); }
+
+function selectModel(fileId) {
+    const model = findModel(fileId);
+    if (!model) return;
+    currentFileId = fileId;
+    applyFileUi(model);
+    fetchAndApplyContent(fileId);
+    pushHistoryFor(model);
+}
+
+function applyFileUi(model) {
+    if (!model) return;
+    document.getElementById('model-picker-current').textContent = model.name;
+    const idx = WORKBENCH.models.findIndex(m => m.id === model.id);
+    document.getElementById('workbench-counter').textContent = `${idx + 1} / ${WORKBENCH.models.length}`;
+    const sizeEl = document.getElementById('workbench-uvl-size');
+    if (sizeEl) sizeEl.textContent = model.sizeHuman;
+    document.title = `${model.name} · ${WORKBENCH.datasetTitle}`;
+}
+
+function fetchAndApplyContent(fileId) {
+    const url = `/hubfiles/${fileId}/workbench-content`;
+    setUvlLoading(true);
+    setFactLabelLoading(true);
+    fetch(url, { credentials: 'same-origin' })
+        .then(r => r.ok ? r.json() : Promise.reject(r.status))
+        .then(data => {
+            applyUvlContent(data.uvl || '');
+            const ideLink = document.getElementById('workbench-ide-link');
+            if (ideLink) ideLink.href = data.ide_url;
+            const fl = document.getElementById('workbench-factlabel-external');
+            if (fl) fl.href = data.factlabel_external_url;
+            renderFactLabelContent(data.factlabel, data.factlabel_ready);
+        })
+        .catch(err => {
+            console.error('workbench fetch error', err);
+            applyUvlContent(`[Error loading model: ${err}]`);
+            setFactLabelLoading(false);
+        });
+}
+
+function setUvlLoading(loading) {
+    const sk = document.getElementById('uvlSkeleton');
+    if (sk) sk.classList.toggle('d-none', !loading);
+    const cm = document.querySelector('.workbench-panels .CodeMirror');
+    if (cm) cm.classList.toggle('is-loading', loading);
+}
+
+function setFactLabelLoading(loading) {
+    const sk = document.getElementById('factLabelSkeleton');
+    if (sk) sk.classList.toggle('d-none', !loading);
+    const chart = document.getElementById('FMFactLabelChart');
+    if (chart) chart.style.visibility = loading ? 'hidden' : 'visible';
+}
+
+function pushHistoryFor(model) {
+    const target = model.doiViewUrl || model.unsyncViewUrl;
+    if (target) history.pushState({ fileId: model.id }, '', target);
+}
+
+window.addEventListener('popstate', (e) => {
+    if (e.state && e.state.fileId) {
+        const model = findModel(e.state.fileId);
+        if (model) {
+            currentFileId = model.id;
+            applyFileUi(model);
+            fetchAndApplyContent(model.id);
+        }
+    }
+});
+
+// ---------- FactLabel ----------
+function renderFactLabelForCurrentFile() {
+    if (!currentFileId) return;
+    setFactLabelLoading(true);
+    fetch(`/factlabel/view/${currentFileId}`)
+        .then(r => r.json())
+        .then(data => renderFactLabelContent(data.success ? data.content : null, !!data.success))
+        .catch(() => renderFactLabelContent(null, false));
+}
+
+function renderFactLabelContent(content, ready) {
+    const svgEl = document.getElementById('FMFactLabelChart');
+    if (!svgEl) return;
+    setFactLabelLoading(false);
+    d3.select(svgEl).selectAll('*').remove();
+    // Reset any responsiveness styling from a previous render
+    svgEl.removeAttribute('viewBox');
+    svgEl.removeAttribute('width');
+    svgEl.removeAttribute('height');
+    svgEl.style.maxWidth = '';
+
+    if (ready && content && typeof drawFMFactLabel === 'function') {
+        drawFMFactLabel(content);
+        makeFactLabelResponsive(svgEl);
+    } else {
+        svgEl.setAttribute('viewBox', '0 0 400 60');
+        svgEl.style.maxWidth = '400px';
+        d3.select(svgEl)
+          .append('text')
+          .attr('x', '50%').attr('y', '50%')
+          .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
+          .attr('font-size', '14px').attr('fill', '#999')
+          .text(ready ? 'Empty FactLabel' : 'FactLabel not yet available');
+    }
+}
+
+// drawFMFactLabel hard-codes pixel width/height on the SVG, which leaves huge
+// empty space in wide columns and/or forces an inner scroll. Convert those
+// dimensions into a viewBox so the SVG scales with CSS, cap max-width at the
+// natural width, and re-measure the content's bounding box on every
+// collapse/expand so the container tracks the actual rendered height instead
+// of reserving the fully-expanded height up front.
+function makeFactLabelResponsive(svgEl) {
+    const w = parseFloat(svgEl.getAttribute('width'));
+    if (!w) return;
+    svgEl.removeAttribute('width');
+    svgEl.removeAttribute('height');
+    svgEl.style.maxWidth = `${w}px`;
+
+    let rafId = 0;
+    const refit = () => {
+        if (rafId) cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(() => {
+            rafId = 0;
+            let bbox;
+            try { bbox = svgEl.getBBox(); } catch (_) { return; }
+            if (!bbox || !bbox.height) return;
+            const PAD = 4;
+            svgEl.setAttribute('viewBox', `0 0 ${w} ${bbox.y + bbox.height + PAD}`);
+        });
+    };
+
+    if (svgEl._factlabelObserver) svgEl._factlabelObserver.disconnect();
+    // Only watch structural changes — d3's collapse/expand uses enter/exit
+    // joins, so childList + subtree catches them. Watching attributes would
+    // re-enter this callback when we set viewBox ourselves.
+    const obs = new MutationObserver(refit);
+    obs.observe(svgEl, { childList: true, subtree: true });
+    svgEl._factlabelObserver = obs;
+    refit();
+}
+
+// ---------- Tooltips ----------
+function initTooltips() {
+    const triggers = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    triggers.forEach(el => {
+        if (!bootstrap.Tooltip.getInstance(el)) new bootstrap.Tooltip(el);
+    });
+}
+
+// ---------- Helpers ----------
+function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c =>
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function escapeAttr(s) { return escapeHtml(s); }
+</script>
+{% endif %}
 {% endblock %}

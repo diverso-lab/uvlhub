@@ -14,6 +14,7 @@ services:
       - ../.env
     volumes:
       - ../:/app
+      - /app/node_modules
       - /var/run/docker.sock:/var/run/docker.sock
     command: [ "bash", "-c", "bash /app/docker/entrypoints/development_entrypoint.sh" ]
     networks:
@@ -31,6 +32,7 @@ services:
       - ../.env
     volumes:
       - ../:/app
+      - /app/node_modules
       - /var/run/docker.sock:/var/run/docker.sock
     command: [ "bash", "-c", "bash /app/docker/entrypoints/worker_entrypoint.sh" ]
     networks:

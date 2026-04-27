@@ -19,7 +19,7 @@ module.exports = {
         loader: 'string-replace-loader',
         options: {
           search: 'console.error(\'Error: \' + e);',
-          replace: '', // Elimina esta línea
+          replace: '', // Strip this line
         },
       },
     ],

@@ -4,11 +4,11 @@ function copyText(id) {
         const icon = document.querySelector(`[onclick="copyText('${id}')"]`);
         const tooltip = bootstrap.Tooltip.getInstance(icon);
 
-        // Cambia el texto a "Copied!" temporalmente
+        // Temporarily switch the label to "Copied!"
         icon.setAttribute('data-bs-original-title', 'Copied!');
         tooltip.show();
 
-        // Espera 2 segundos, luego restaura el título original y oculta el tooltip
+        // Wait 1.5s, then restore the original title and hide the tooltip.
         setTimeout(() => {
             icon.setAttribute('data-bs-original-title', 'Copy DOI');
             tooltip.hide();
