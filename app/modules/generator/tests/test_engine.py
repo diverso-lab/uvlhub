@@ -4,9 +4,9 @@ from flamapy.metamodels.fm_metamodel.models.feature_model import Feature, Featur
 
 from fm_generator.FMGenerator.models.config import Params
 from fm_generator.FMGenerator.models.models import (
+    FmgeneratorModel,
     build_output_filename,
     prepend_uvl_includes,
-    FmgeneratorModel,
 )
 
 

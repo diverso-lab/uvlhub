@@ -1,11 +1,11 @@
 from werkzeug.datastructures import MultiDict
 
 from app.modules.generator.routes import (
+    resolve_use_in_constraints,
     validate_step1_form,
     validate_step2_form,
     validate_step3_form,
     validate_step4_form,
-    resolve_use_in_constraints,
 )
 
 
