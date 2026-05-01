@@ -1,335 +1,510 @@
 {% extends "generator/index.html" %}
-{% from "generator/_macros.html" import info, section, number_field, range_field, probability_field %}
 
 {% block title %}Generate random feature models{% endblock %}
 
 {% block wizard_content %}
-{% if errors.get('global') %}
-    <div class="alert alert-danger">{{ errors['global'] }}</div>
-{% endif %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
 
-{# Hidden carry-over fields so the validator sees the step-2 level flags. #}
-<input type="checkbox" id="aggregate_functions" name="aggregate_functions" class="d-none" {% if values.get('aggregate_functions', False) %}checked{% endif %}>
-<input type="checkbox" id="type_level"         name="type_level"         class="d-none" {% if values.get('type_level', False) %}checked{% endif %}>
-<input type="checkbox" id="string_constraints" name="string_constraints" class="d-none" {% if values.get('string_constraints', False) %}checked{% endif %}>
+        <h3 class="mb-3">Attributes</h3>
 
-<div class="row g-8">
-    <div class="col-xl-12">
+        {% if errors.get('global') %}
+            <div class="alert alert-danger mb-3">
+                {{ errors['global'] }}
+            </div>
+        {% endif %}
 
-        <!-- Constraints amount -->
-        {{ section('Constraints', 'How many cross-tree constraints each model gets and how wide they are.') }}
+        <!-- Checkbox “Random attributes” -->
+        <div class="form-check mb-3">
+            <input
+                class="form-check-input"
+                type="checkbox"
+                id="random_attributes"
+                name="random_attributes"
+                {% if values.get('random_attributes') %}checked{% endif %}>
+            <label class="form-check-label" for="random_attributes">Random attributes</label>
+        </div>
 
-        {{ range_field('num_constraints_min', 'num_constraints_max', 'Number of constraints',
-            'Min / Max number of cross-tree constraints in each generated model.',
-            values, errors, default_min=1, default_max=10, hard_min=1) }}
+        {% if session.get('params', {}).get('ENSURE_SATISFIABLE', False) %}
+            <div class="form-text mb-3">
+                Note: if Ensure satisfiable is enabled, random attributes will not be used in constraints, only in the feature tree.
+            </div>
+        {% endif %}
 
-        {{ range_field('vars_per_ctc_min', 'vars_per_ctc_max', 'Variables per constraint',
-            'Min / Max number of features referenced in a single constraint. Max cannot exceed the maximum number of features selected in step 3.',
-            values, errors, default_min=1, default_max=10, hard_min=1, hard_max=values.get('max_features', 10000)) }}
-
-        {{ number_field('extra_constraint_repr', 'Extra constraint representativeness',
-            'Maximum times a feature can appear in each constraint. Must be ≤ Max variables per constraint.',
-            values, errors, default=1, min=1, max=10000) }}
-
-        {% if values.get('arithmetic_level') or values.get('type_level') %}
-        <div class="separator separator-dashed my-9"></div>
-
-        {{ section('Constraint type distribution',
-            'How often a constraint is Boolean, arithmetic (integer/real attributes) or string. Drag the handles OR type exact values — both stay in sync and always add up to 1. Disabled levels score 0.') }}
-
-        <div class="prob-distribution mb-5">
-            <div id="ctc_dist_slider" class="rel-slider mt-3 mb-5"></div>
-            <div class="row g-3">
-                <div class="col-6 col-md-3">
-                    <label for="ctc_dist_boolean" class="form-label fs-7 text-gray-700 d-flex align-items-center gap-2">
-                        <span class="rel-swatch" style="background: #5e6278;"></span>
-                        Boolean
-                        <span class="badge badge-light ms-auto fw-bold" id="label_ctc_dist_boolean">70%</span>
-                    </label>
-                    <input type="number" id="ctc_dist_boolean" name="ctc_dist_boolean"
-                           class="form-control form-control-solid" step="0.01" min="0" max="1"
-                           value="{{ values.get('ctc_dist_boolean', 0.7) }}">
-                </div>
-                {% if values.get('arithmetic_level') %}
-                <div class="col-6 col-md-3">
-                    <label for="ctc_dist_integer" class="form-label fs-7 text-gray-700 d-flex align-items-center gap-2">
-                        <span class="rel-swatch" style="background: #3f4254;"></span>
-                        Integer
-                        <span class="badge badge-light ms-auto fw-bold" id="label_ctc_dist_integer">20%</span>
-                    </label>
-                    <input type="number" id="ctc_dist_integer" name="ctc_dist_integer"
-                           class="form-control form-control-solid" step="0.01" min="0" max="1"
-                           value="{{ values.get('ctc_dist_integer', 0.2) }}">
-                </div>
-                <div class="col-6 col-md-3">
-                    <label for="ctc_dist_real" class="form-label fs-7 text-gray-700 d-flex align-items-center gap-2">
-                        <span class="rel-swatch" style="background: #2b2b40;"></span>
-                        Real
-                        <span class="badge badge-light ms-auto fw-bold" id="label_ctc_dist_real">10%</span>
-                    </label>
-                    <input type="number" id="ctc_dist_real" name="ctc_dist_real"
-                           class="form-control form-control-solid" step="0.01" min="0" max="1"
-                           value="{{ values.get('ctc_dist_real', 0.1) }}">
-                </div>
-                {% else %}
-                <input type="hidden" name="ctc_dist_integer" value="0.0">
-                <input type="hidden" name="ctc_dist_real" value="0.0">
+        <!-- Sección para Random: Min / Max -->
+        <div id="random-attributes-settings">
+            <div class="mb-3 d-flex align-items-center gap-3">
+                <label for="min_attributes" class="form-label mb-0">Min:</label>
+                <input
+                    type="number"
+                    class="form-control"
+                    style="width:90px;"
+                    min="1"
+                    max="10000"
+                    id="min_attributes"
+                    name="min_attributes"
+                    value="{{ values.get('min_attributes', 1) }}">
+                {% if errors.get('min_attributes') %}
+                    <div class="text-danger ms-2">{{ errors['min_attributes'] }}</div>
                 {% endif %}
-                {% if values.get('string_constraints') %}
-                <div class="col-6 col-md-3">
-                    <label for="ctc_dist_string" class="form-label fs-7 text-gray-700 d-flex align-items-center gap-2">
-                        <span class="rel-swatch" style="background: #181c32;"></span>
-                        String
-                        <span class="badge badge-light ms-auto fw-bold" id="label_ctc_dist_string">0%</span>
-                    </label>
-                    <input type="number" id="ctc_dist_string" name="ctc_dist_string"
-                           class="form-control form-control-solid" step="0.01" min="0" max="1"
-                           value="{{ values.get('ctc_dist_string', 0.0) }}">
-                </div>
-                {% else %}
-                <input type="hidden" name="ctc_dist_string" value="0.0">
+
+                <label for="max_attributes" class="form-label mb-0 ms-3">Max:</label>
+                <input
+                    type="number"
+                    class="form-control"
+                    style="width:90px;"
+                    min="1"
+                    max="10000"
+                    id="max_attributes"
+                    name="max_attributes"
+                    value="{{ values.get('max_attributes', 5) }}">
+                {% if errors.get('max_attributes') %}
+                    <div class="text-danger ms-2">{{ errors['max_attributes'] }}</div>
                 {% endif %}
             </div>
-            {% if errors.get('ctc_dist_sum') %}
-                <div class="text-danger fs-7 mt-3">{{ errors['ctc_dist_sum'] }}</div>
-            {% endif %}
-        </div>
-        {% endif %}
-
-        <div class="separator separator-dashed my-9"></div>
-
-        <!-- Boolean operators -->
-        {{ section('Boolean operators',
-            'Probabilities used to sample the shape of Boolean constraints. AND/OR/⇒/⇔ always add up to 1.') }}
-
-        <div class="row g-3 mb-4">
-            {{ probability_field('prob_not', 'NOT', 'Probability of a NOT term in a constraint.', values, errors, default=0.3, symbol='¬') }}
-        </div>
-
-        <div class="prob-distribution mb-3">
-            <div id="boolop_slider" class="rel-slider mt-3 mb-5"></div>
-            <div class="row g-3">
-                <div class="col-6 col-md-3">
-                    <label for="prob_and" class="form-label fs-7 text-gray-700 d-flex align-items-center gap-2">
-                        <span class="rel-swatch" style="background: #5e6278;"></span>
-                        <span class="fs-5 fw-bold text-gray-900">∧</span> AND
-                        <span class="badge badge-light ms-auto fw-bold" id="label_prob_and">40%</span>
-                    </label>
-                    <input type="number" id="prob_and" name="prob_and"
-                           class="form-control form-control-solid" step="0.01" min="0" max="1"
-                           value="{{ values.get('prob_and', 0.4) }}">
-                </div>
-                <div class="col-6 col-md-3">
-                    <label for="prob_or" class="form-label fs-7 text-gray-700 d-flex align-items-center gap-2">
-                        <span class="rel-swatch" style="background: #3f4254;"></span>
-                        <span class="fs-5 fw-bold text-gray-900">∨</span> OR
-                        <span class="badge badge-light ms-auto fw-bold" id="label_prob_or">20%</span>
-                    </label>
-                    <input type="number" id="prob_or" name="prob_or"
-                           class="form-control form-control-solid" step="0.01" min="0" max="1"
-                           value="{{ values.get('prob_or', 0.2) }}">
-                </div>
-                <div class="col-6 col-md-3">
-                    <label for="prob_implies" class="form-label fs-7 text-gray-700 d-flex align-items-center gap-2">
-                        <span class="rel-swatch" style="background: #2b2b40;"></span>
-                        <span class="fs-5 fw-bold text-gray-900">⇒</span> IMPLIES
-                        <span class="badge badge-light ms-auto fw-bold" id="label_prob_implies">20%</span>
-                    </label>
-                    <input type="number" id="prob_implies" name="prob_implies"
-                           class="form-control form-control-solid" step="0.01" min="0" max="1"
-                           value="{{ values.get('prob_implies', 0.2) }}">
-                </div>
-                <div class="col-6 col-md-3">
-                    <label for="prob_equiv" class="form-label fs-7 text-gray-700 d-flex align-items-center gap-2">
-                        <span class="rel-swatch" style="background: #181c32;"></span>
-                        <span class="fs-5 fw-bold text-gray-900">⇔</span> EQUIVALENCE
-                        <span class="badge badge-light ms-auto fw-bold" id="label_prob_equiv">20%</span>
-                    </label>
-                    <input type="number" id="prob_equiv" name="prob_equiv"
-                           class="form-control form-control-solid" step="0.01" min="0" max="1"
-                           value="{{ values.get('prob_equiv', 0.2) }}">
-                </div>
+            <div class="form-text">
+                Note: Min must be less than or equal to Max.
             </div>
         </div>
 
-        {% if values.get('arithmetic_level', False) %}
-        <div class="separator separator-dashed my-9"></div>
+        <!-- Sección para entrada manual de atributos: inicialmente oculta -->
+        <div id="manual-attributes-section" style="display: none;">
+            <div id="manual-attributes-global-error" class="alert alert-danger py-2 mb-3" style="display:none;"></div>
 
-        <!-- Arithmetic operators -->
-        {{ section('Arithmetic operators',
-            'Probabilities for arithmetic terms inside constraints. Must add up to 1.') }}
-
-        <div class="prob-distribution mb-5">
-            <div id="arith_slider" class="rel-slider mt-3 mb-5"></div>
-            <div class="row g-3">
-                <div class="col-6 col-md-2">
-                    <label for="prob_plus" class="form-label fs-7 text-gray-700 d-flex align-items-center gap-2">
-                        <span class="rel-swatch" style="background: #5e6278;"></span>
-                        <span class="fs-5 fw-bold">+</span>
-                        <span class="badge badge-light ms-auto fw-bold" id="label_prob_plus">70%</span>
-                    </label>
-                    <input type="number" id="prob_plus" name="prob_plus"
-                           class="form-control form-control-solid" step="0.01" min="0" max="1"
-                           value="{{ values.get('prob_plus', 0.7) }}">
-                </div>
-                <div class="col-6 col-md-2">
-                    <label for="prob_minus" class="form-label fs-7 text-gray-700 d-flex align-items-center gap-2">
-                        <span class="rel-swatch" style="background: #3f4254;"></span>
-                        <span class="fs-5 fw-bold">−</span>
-                        <span class="badge badge-light ms-auto fw-bold" id="label_prob_minus">20%</span>
-                    </label>
-                    <input type="number" id="prob_minus" name="prob_minus"
-                           class="form-control form-control-solid" step="0.01" min="0" max="1"
-                           value="{{ values.get('prob_minus', 0.2) }}">
-                </div>
-                <div class="col-6 col-md-2">
-                    <label for="prob_times" class="form-label fs-7 text-gray-700 d-flex align-items-center gap-2">
-                        <span class="rel-swatch" style="background: #2b2b40;"></span>
-                        <span class="fs-5 fw-bold">×</span>
-                        <span class="badge badge-light ms-auto fw-bold" id="label_prob_times">10%</span>
-                    </label>
-                    <input type="number" id="prob_times" name="prob_times"
-                           class="form-control form-control-solid" step="0.01" min="0" max="1"
-                           value="{{ values.get('prob_times', 0.1) }}">
-                </div>
-                <div class="col-6 col-md-2">
-                    <label for="prob_div" class="form-label fs-7 text-gray-700 d-flex align-items-center gap-2">
-                        <span class="rel-swatch" style="background: #181c32;"></span>
-                        <span class="fs-5 fw-bold">÷</span>
-                        <span class="badge badge-light ms-auto fw-bold" id="label_prob_div">0%</span>
-                    </label>
-                    <input type="number" id="prob_div" name="prob_div"
-                           class="form-control form-control-solid" step="0.01" min="0" max="1"
-                           value="{{ values.get('prob_div', 0.0) }}">
-                </div>
-                {% if values.get('aggregate_functions', False) %}
-                <div class="col-6 col-md-2">
-                    <label for="prob_sum" class="form-label fs-7 text-gray-700 d-flex align-items-center gap-2">
-                        <span class="rel-swatch" style="background: #009ef7;"></span>
-                        sum()
-                        <span class="badge badge-light ms-auto fw-bold" id="label_prob_sum">0%</span>
-                    </label>
-                    <input type="number" id="prob_sum" name="prob_sum"
-                           class="form-control form-control-solid" step="0.01" min="0" max="1"
-                           value="{{ values.get('prob_sum', 0.0) }}">
-                </div>
-                <div class="col-6 col-md-2">
-                    <label for="prob_avg" class="form-label fs-7 text-gray-700 d-flex align-items-center gap-2">
-                        <span class="rel-swatch" style="background: #0b76b7;"></span>
-                        avg()
-                        <span class="badge badge-light ms-auto fw-bold" id="label_prob_avg">0%</span>
-                    </label>
-                    <input type="number" id="prob_avg" name="prob_avg"
-                           class="form-control form-control-solid" step="0.01" min="0" max="1"
-                           value="{{ values.get('prob_avg', 0.0) }}">
-                </div>
-                {% endif %}
+            <div class="mb-3">
+                <button type="button" class="btn btn-outline-primary" id="add-attribute-btn">Add</button>
             </div>
-            {% if errors.get('arithmetic_sum') %}
-                <div class="text-danger fs-7 mt-3">{{ errors['arithmetic_sum'] }}</div>
-            {% endif %}
-        </div>
-
-        <div class="separator separator-dashed my-9"></div>
-
-        <!-- Comparison operators -->
-        {{ section('Comparison operators',
-            'Probability of each comparison operator. Must add up to 1.') }}
-
-        <div class="prob-distribution mb-5">
-            <div id="cmp_slider" class="rel-slider mt-3 mb-5"></div>
-            <div class="row g-3">
-                <div class="col-6 col-md-2">
-                    <label for="prob_eq" class="form-label fs-7 text-gray-700 d-flex align-items-center gap-2">
-                        <span class="rel-swatch" style="background: #5e6278;"></span>
-                        <span class="fs-5 fw-bold">=</span>
-                        <span class="badge badge-light ms-auto fw-bold" id="label_prob_eq">10%</span>
-                    </label>
-                    <input type="number" id="prob_eq" name="prob_eq"
-                           class="form-control form-control-solid" step="0.01" min="0" max="1"
-                           value="{{ values.get('prob_eq', 0.1) }}">
-                </div>
-                <div class="col-6 col-md-2">
-                    <label for="prob_lt" class="form-label fs-7 text-gray-700 d-flex align-items-center gap-2">
-                        <span class="rel-swatch" style="background: #3f4254;"></span>
-                        <span class="fs-5 fw-bold">&lt;</span>
-                        <span class="badge badge-light ms-auto fw-bold" id="label_prob_lt">20%</span>
-                    </label>
-                    <input type="number" id="prob_lt" name="prob_lt"
-                           class="form-control form-control-solid" step="0.01" min="0" max="1"
-                           value="{{ values.get('prob_lt', 0.2) }}">
-                </div>
-                <div class="col-6 col-md-2">
-                    <label for="prob_gt" class="form-label fs-7 text-gray-700 d-flex align-items-center gap-2">
-                        <span class="rel-swatch" style="background: #2b2b40;"></span>
-                        <span class="fs-5 fw-bold">&gt;</span>
-                        <span class="badge badge-light ms-auto fw-bold" id="label_prob_gt">70%</span>
-                    </label>
-                    <input type="number" id="prob_gt" name="prob_gt"
-                           class="form-control form-control-solid" step="0.01" min="0" max="1"
-                           value="{{ values.get('prob_gt', 0.7) }}">
-                </div>
-                <div class="col-6 col-md-2">
-                    <label for="prob_leq" class="form-label fs-7 text-gray-700 d-flex align-items-center gap-2">
-                        <span class="rel-swatch" style="background: #181c32;"></span>
-                        <span class="fs-5 fw-bold">≤</span>
-                        <span class="badge badge-light ms-auto fw-bold" id="label_prob_leq">0%</span>
-                    </label>
-                    <input type="number" id="prob_leq" name="prob_leq"
-                           class="form-control form-control-solid" step="0.01" min="0" max="1"
-                           value="{{ values.get('prob_leq', 0.0) }}">
-                </div>
-                <div class="col-6 col-md-2">
-                    <label for="prob_geq" class="form-label fs-7 text-gray-700 d-flex align-items-center gap-2">
-                        <span class="rel-swatch" style="background: #7e8299;"></span>
-                        <span class="fs-5 fw-bold">≥</span>
-                        <span class="badge badge-light ms-auto fw-bold" id="label_prob_geq">0%</span>
-                    </label>
-                    <input type="number" id="prob_geq" name="prob_geq"
-                           class="form-control form-control-solid" step="0.01" min="0" max="1"
-                           value="{{ values.get('prob_geq', 0.0) }}">
-                </div>
+            <div id="manual-attributes-list">
+                <!-- Aquí se insertan dinámicamente las tarjetas de atributos manuales -->
             </div>
-            {% if errors.get('cmp_sum') %}
-                <div class="text-danger fs-7 mt-3">{{ errors['cmp_sum'] }}</div>
-            {% endif %}
         </div>
-        {% endif %}
-
-        {% if values.get('string_constraints', False) %}
-        <div class="separator separator-dashed my-9"></div>
-
-        <!-- Type level constraints -->
-        {{ section('String constraints',
-            'Probability of string functions. Only used because Type level + String constraints are enabled.') }}
-
-        <div class="row g-3">
-            {{ probability_field('prob_len', 'Length', 'Probability of len() appearing in string constraints (otherwise an equality with a literal is used).', values, errors, default=0.7, symbol='len') }}
-        </div>
-        {% if errors.get('prob_len') %}
-            <div class="text-danger fs-7 mt-1">{{ errors['prob_len'] }}</div>
-        {% endif %}
-        {% endif %}
 
     </div>
 </div>
 {% endblock %}
 
-{% block wizard_scripts %}
+{% block scripts %}
 <script>
-(function run() {
-    if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", run, { once: true });
-        return;
+const randomCheckbox = document.getElementById('random_attributes');
+const randomSettings = document.getElementById('random-attributes-settings');
+const manualSection = document.getElementById('manual-attributes-section');
+const manualAttributesList = document.getElementById('manual-attributes-list');
+const savedAttributes = {{ values.get('attributes_list', []) | tojson }};
+const serverErrors = {{ errors | tojson }};
+const values = {{ values | tojson }};
+
+const arithmeticLevelEnabled = {{ 1 if session.get('params', {}).get('ARITHMETIC_LEVEL', False) else 0 }};
+const typeLevelEnabled = {{ 1 if session.get('params', {}).get('TYPE_LEVEL', False) else 0 }};
+const stringConstraintsEnabled = {{ 1 if session.get('params', {}).get('STRING_CONSTRAINTS', False) else 0 }};
+const ensureSatisfiableEnabled = {{ 1 if session.get('params', {}).get('ENSURE_SATISFIABLE', False) else 0 }};
+const manualAttributesGlobalError = document.getElementById('manual-attributes-global-error');
+
+// Función para alternar visibilidad entre sección “random” y sección “manual”
+function toggleAttributeSections() {
+    if (randomCheckbox.checked) {
+        randomSettings.style.display = 'block';
+        manualSection.style.display = 'none';
+    } else {
+        randomSettings.style.display = 'none';
+        manualSection.style.display = 'block';
     }
-    const maxVars = document.getElementById("vars_per_ctc_max");
-    if (maxVars) {
-        maxVars.addEventListener("input", () => {
-            const hardMax = parseInt(maxVars.getAttribute("max") || "10000", 10);
-            const v = parseInt(maxVars.value || "0", 10);
-            if (v > hardMax) maxVars.value = hardMax;
+}
+
+// Listeners para alternar secciones
+randomCheckbox.addEventListener('change', toggleAttributeSections);
+
+// Plantilla y lógica para añadir/eliminar tarjetas manuales
+document.getElementById('add-attribute-btn').addEventListener('click', addAttributeCard);
+
+
+// Auxiliar para validar Boolean (al menos uno)
+function validateBooleanCheckboxes(card) {
+    const trueBox = card.querySelector('.boolean-true');
+    const falseBox = card.querySelector('.boolean-false');
+    const errorDiv = card.querySelector('.attr-bool-error');
+
+    if (!trueBox.checked && !falseBox.checked) {
+        errorDiv.textContent = 'Select at least one value (True or False)';
+        return false;
+    } else {
+        errorDiv.textContent = '';
+        return true;
+    }
+}
+
+function countIncompleteManualCards() {
+    const cards = document.querySelectorAll('.manual-attribute-card');
+    let incompleteCount = 0;
+
+    cards.forEach((card, idx) => {
+        let incomplete = false;
+
+        const nameInput = card.querySelector(`[name="attr_name_${idx}"]`);
+        const typeSelect = card.querySelector(`[name="attr_type_${idx}"]`);
+        const attachProbInput = card.querySelector(`[name="attr_attach_prob_${idx}"]`);
+
+        const nameVal = nameInput ? nameInput.value.trim() : '';
+        const typeVal = typeSelect ? typeSelect.value : '';
+        const attachProbVal = attachProbInput ? attachProbInput.value.trim() : '';
+
+        if (!nameVal) {
+            incomplete = true;
+        }
+
+        if (!attachProbVal) {
+            incomplete = true;
+        }
+
+        if (typeVal === 'boolean') {
+            const trueBox = card.querySelector(`[name="attr_value_true_${idx}"]`);
+            const falseBox = card.querySelector(`[name="attr_value_false_${idx}"]`);
+            const hasAnyBoolValue = (trueBox && trueBox.checked) || (falseBox && falseBox.checked);
+
+            if (!hasAnyBoolValue) {
+                incomplete = true;
+            }
+        } else if (typeVal === 'integer' || typeVal === 'real' || typeVal === 'string') {
+            const minInput = card.querySelector(`[name="attr_min_value_${idx}"]`);
+            const maxInput = card.querySelector(`[name="attr_max_value_${idx}"]`);
+
+            const minVal = minInput ? minInput.value.trim() : '';
+            const maxVal = maxInput ? maxInput.value.trim() : '';
+
+            if (!minVal || !maxVal) {
+                incomplete = true;
+            }
+        }
+
+        if (incomplete) {
+            incompleteCount++;
+        }
+    });
+
+    return incompleteCount;
+}
+
+function updateManualAttributesGlobalError() {
+    if (randomCheckbox.checked) {
+        manualAttributesGlobalError.style.display = 'none';
+        manualAttributesGlobalError.textContent = '';
+        return 0;
+    }
+
+    const incompleteCount = countIncompleteManualCards();
+
+    if (incompleteCount > 0) {
+        manualAttributesGlobalError.style.display = 'block';
+        manualAttributesGlobalError.textContent =
+            `There are ${incompleteCount} attribute card(s) with missing required fields. Please complete them before continuing.`;
+    } else {
+        manualAttributesGlobalError.style.display = 'none';
+        manualAttributesGlobalError.textContent = '';
+    }
+
+    return incompleteCount;
+}
+
+// Función auxiliar para actualizar el campo “Value” según el tipo seleccionado
+function updateValueField(card, type, idx) {
+    const valueDiv = card.querySelector('.value-field');
+    if (type === 'boolean') {
+        valueDiv.innerHTML = `
+            <label class="form-label mb-1">Possible values</label><br>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input boolean-true" type="checkbox" name="attr_value_true_${idx}">
+                <label class="form-check-label">True</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input boolean-false" type="checkbox" name="attr_value_false_${idx}">
+                <label class="form-check-label">False</label>
+            </div>
+        `;
+        // Validación en tiempo real
+        const trueBox = valueDiv.querySelector('.boolean-true');
+        const falseBox = valueDiv.querySelector('.boolean-false');
+        trueBox.addEventListener('change', () => validateBooleanCheckboxes(card));
+        falseBox.addEventListener('change', () => validateBooleanCheckboxes(card));
+    } else if (type === 'integer' || type === 'real' || type === 'string') {
+        const step = (type === 'real') ? 'any' : '1';
+        const minAttr = (type === 'string') ? '0' : '';
+        valueDiv.innerHTML = `
+            <div class="d-flex gap-2">
+                <div>
+                    <label class="form-label mb-1">Min</label>
+                    <input type="number"
+                            class="form-control"
+                            name="attr_min_value_${idx}"
+                            required
+                            step="${step}"
+                            min="${minAttr}">
+                </div>
+                <div>
+                    <label class="form-label mb-1">Max</label>
+                    <input type="number"
+                            class="form-control"
+                            name="attr_max_value_${idx}"
+                            required
+                            step="${step}"
+                            min="${minAttr}">
+                </div>
+            </div>
+        `;
+    } else {
+        valueDiv.innerHTML = `
+            <label class="form-label">Value</label>
+            <input type="text" class="form-control" name="attr_value_${idx}" placeholder="e.g. 5 or Red" required>
+        `;
+    }
+}
+
+// Plantilla para añadir una nueva tarjeta de atributo manual
+function addAttributeCard() {
+    const idx = manualAttributesList.children.length;
+    const card = document.createElement('div');
+    card.className = 'card p-3 mb-3 manual-attribute-card';
+
+    card.innerHTML = `
+        <div class="mb-2">
+            <label class="form-label">Name</label>
+            <input type="text" class="form-control" name="attr_name_${idx}" placeholder="e.g. Seats" required>
+            <div class="text-danger attr-name-error" style="font-size:0.95em;"></div>
+        </div>
+        <div class="mb-2">
+            <label class="form-label">Type</label>
+            <select class="form-select attr-type-select" name="attr_type_${idx}" required>
+                <option value="integer">Integer</option>
+                <option value="real">Real</option>
+                <option value="boolean">Boolean</option>
+                <option value="string">String</option>
+            </select>
+        </div>
+        <div class="mb-2 value-field">
+            <!-- Aquí se mostrará el campo “Value” según tipo -->
+        </div>
+        <div class="text-danger attr-minmax-error mb-2" style="font-size:0.95em;"></div>
+        <div class="text-danger attr-bool-error mb-2" style="font-size:0.95em;"></div>
+        <div class="mb-2">
+            <label class="form-label">Attach probability</label>
+            <input type="number"
+                class="form-control"
+                name="attr_attach_prob_${idx}"
+                step="0.001"
+                required>
+            <div class="text-danger attr-attach-prob-error mb-2" style="font-size:0.95em;"></div>
+        </div>
+        <div class="form-check mb-1">
+            <input class="form-check-input"
+                type="checkbox"
+                name="attr_use_in_constraints_${idx}"
+                id="attr_use_in_constraints_${idx}"
+                checked>
+            <label class="form-check-label" for="attr_use_in_constraints_${idx}">
+                Use in constraints
+            </label>
+        </div>
+        <div class="form-text mb-1">
+            Note: if Ensure satisfiable is enabled, attributes of any type will not appear in constraints.
+        </div>
+        <div class="text-danger attr-use-in-constraints-error mb-1" style="font-size:0.95em;"></div>
+        <div class="text-muted attr-use-in-constraints-hint mb-2" style="font-size:0.9em;"></div>
+        
+        <div class="mt-3 text-end">
+            <button type="button" class="btn btn-outline-danger btn-sm delete-attribute-btn">
+                Delete
+            </button>
+        </div>
+    `;
+    manualAttributesList.appendChild(card);
+
+    function reindexCards() {
+        const cards = document.querySelectorAll('.manual-attribute-card');
+
+        cards.forEach((card, newIdx) => {
+            card.querySelectorAll('[name]').forEach(input => {
+                input.name = input.name.replace(/_\d+$/, `_${newIdx}`);
+            });
+
+            card.querySelectorAll('[id]').forEach(el => {
+                el.id = el.id.replace(/_\d+$/, `_${newIdx}`);
+            });
         });
     }
-})();
+
+    // Delete specific card
+    card.querySelector('.delete-attribute-btn').addEventListener('click', () => {
+        card.remove();
+        reindexCards();
+        updateManualAttributesGlobalError();
+    });
+
+    // Inicializar campo “Value” con tipo por defecto (integer)
+    updateValueField(card, 'integer', idx);
+    updateUseInConstraintsAvailability(card, 'integer', idx);
+
+    // Cuando cambie el <select> de tipo, actualizamos el campo Value
+    card.querySelector('.attr-type-select').addEventListener('change', function() {
+        updateValueField(card, this.value, idx);
+        updateUseInConstraintsAvailability(card, this.value, idx);
+    });
+    card.addEventListener('input', updateManualAttributesGlobalError);
+    card.addEventListener('change', updateManualAttributesGlobalError);
+
+    updateManualAttributesGlobalError();
+}
+
+// Validar al hacer submit que todos los Boolean tengan al menos una opción seleccionada
+document.querySelector('form').addEventListener('submit', function(e) {
+    let valid = true;
+
+    if (!randomCheckbox.checked) {
+        document.querySelectorAll('.manual-attribute-card').forEach((card, idx) => {
+            const typeSelect = card.querySelector('.attr-type-select');
+            if (typeSelect && typeSelect.value === 'boolean') {
+                if (!validateBooleanCheckboxes(card)) {
+                    valid = false;
+                }
+            }
+        });
+
+        const incompleteCount = updateManualAttributesGlobalError();
+        if (incompleteCount > 0) {
+            valid = false;
+        }
+    }
+
+    if (!valid) {
+        e.preventDefault();
+    }
+});
+
+// Al cargar la página, seleccionamos la sección apropiada según el checkbox
+toggleAttributeSections();
+
+// Inicialización de tarjetas manuales SOLO una vez
+if (!randomCheckbox.checked) {
+    manualAttributesList.innerHTML = "";
+
+    // Detectar cuántos atributos vienen del form (values)
+    let idx = 0;
+    while (true) {
+        if (values[`attr_name_${idx}`] !== undefined) {
+            addAttributeCard();
+            const card = manualAttributesList.children[idx];
+
+            // name
+            card.querySelector(`[name="attr_name_${idx}"]`).value =
+                values[`attr_name_${idx}`] || "";
+
+            // type
+            const typeSelect = card.querySelector(`[name="attr_type_${idx}"]`);
+            const typeVal = (values[`attr_type_${idx}`] || "integer").toLowerCase();
+            typeSelect.value = typeVal;
+
+            updateValueField(card, typeVal, idx);
+            updateUseInConstraintsAvailability(card, typeVal, idx);
+
+            // attach prob
+            card.querySelector(`[name="attr_attach_prob_${idx}"]`).value =
+                values[`attr_attach_prob_${idx}`] ?? 0.7;
+
+            // use_in_constraints
+            const uic = card.querySelector(`[name="attr_use_in_constraints_${idx}"]`);
+            uic.checked = values[`attr_use_in_constraints_${idx}`] === "on";
+
+            // valores según tipo
+            if (typeVal === "boolean") {
+                if (values[`attr_value_true_${idx}`]) {
+                    card.querySelector(`[name="attr_value_true_${idx}"]`).checked = true;
+                }
+                if (values[`attr_value_false_${idx}`]) {
+                    card.querySelector(`[name="attr_value_false_${idx}"]`).checked = true;
+                }
+            } else {
+                if (values[`attr_min_value_${idx}`] !== undefined) {
+                    card.querySelector(`[name="attr_min_value_${idx}"]`).value =
+                        values[`attr_min_value_${idx}`];
+                }
+                if (values[`attr_max_value_${idx}`] !== undefined) {
+                    card.querySelector(`[name="attr_max_value_${idx}"]`).value =
+                        values[`attr_max_value_${idx}`];
+                }
+            }
+
+            // ERRORES
+            const minMaxError = serverErrors[`attr_minmax_${idx}`];
+            const boolError = serverErrors[`attr_value_bool_${idx}`];
+            const nameError = serverErrors[`attr_name_${idx}`];
+            const attachProbError = serverErrors[`attr_attach_prob_${idx}`];
+            const useInConstraintsError = serverErrors[`attr_use_in_constraints_${idx}`];
+
+            if (attachProbError) {
+                card.querySelector('.attr-attach-prob-error').textContent = attachProbError;
+            }
+
+            if (nameError) {
+                card.querySelector('.attr-name-error').textContent = nameError;
+            }
+
+            if (minMaxError) {
+                card.querySelector('.attr-minmax-error').textContent = minMaxError;
+            }
+
+            if (boolError) {
+                card.querySelector('.attr-bool-error').textContent = boolError;
+            }
+
+            if (useInConstraintsError) {
+                card.querySelector('.attr-use-in-constraints-error').textContent = useInConstraintsError;
+            }
+
+            idx++;
+        } else {
+            break;
+        }
+    }
+
+    // si no había ninguno → crear uno vacío
+    if (idx === 0) {
+        addAttributeCard();
+    }
+}
+
+updateManualAttributesGlobalError();
+
+function updateUseInConstraintsAvailability(card, type, idx) {
+    const checkbox = card.querySelector(`[name="attr_use_in_constraints_${idx}"]`);
+    const hintDiv = card.querySelector('.attr-use-in-constraints-hint');
+
+    if (!checkbox) return;
+
+    let enabled = false;
+    let message = '';
+
+    if (ensureSatisfiableEnabled) {
+        enabled = false;
+        message = 'Disabled because Ensure satisfiable only supports Boolean variables in constraints.';
+    } else if (type === 'boolean') {
+        enabled = true;
+    } else if (type === 'integer' || type === 'real') {
+        enabled = !!arithmeticLevelEnabled;
+        if (!enabled) {
+            message = 'Only available if Arithmetic level is enabled in step 2.';
+        }
+    } else if (type === 'string') {
+        enabled = true;
+    }
+
+    checkbox.disabled = !enabled;
+
+    if (!enabled) {
+        checkbox.checked = false;
+    }
+
+    if (hintDiv) {
+        hintDiv.textContent = message;
+    }
+}
 </script>
 {% endblock %}
+
+

@@ -1,426 +1,72 @@
 {% extends "generator/index.html" %}
-{% from "generator/_macros.html" import info, section, range_field, probability_field, sum_badge %}
-
-{% block title %}Generate random feature models{% endblock %}
+{% block title %}Finishing{% endblock %}
 
 {% block wizard_content %}
-{% if errors.get('global') %}
-    <div class="alert alert-danger">{{ errors['global'] }}</div>
-{% endif %}
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <h3 class="mb-3 text-center">Finishing</h3>
+    <p class="mb-4 text-center">
+      Your feature models are being generated. If download does not start, refresh this page.
+    </p>
 
-<div class="row g-8">
-    <div class="col-xl-12">
+    <div class="mb-3">
+      <div class="d-flex justify-content-between align-items-center mb-1">
+        <span id="generate-phase" class="fw-semibold">Preparing...</span>
+        <span id="generate-percent" class="fw-semibold">0%</span>
+      </div>
 
-        {{ section('Attributes',
-            'Decide whether attributes are sampled randomly or if you want to define each one by hand.') }}
-
-        <!-- Mode toggle -->
-        <div class="card card-bordered mb-7">
-            <div class="card-body py-6">
-                <label class="form-check form-check-custom form-check-solid">
-                    <input class="form-check-input"
-                           type="checkbox"
-                           id="random_attributes"
-                           name="random_attributes"
-                           {% if values.get('random_attributes') %}checked{% endif %}>
-                    <span class="form-check-label d-flex align-items-center">
-                        Generate attributes randomly
-                        {{ info('When on, the generator samples attributes within the configured Min/Max count. When off, you define each attribute manually below.') }}
-                    </span>
-                </label>
-            </div>
+      <div class="progress" style="height: 24px;">
+        <div
+          id="generate-progress-bar"
+          class="progress-bar progress-bar-striped progress-bar-animated"
+          role="progressbar"
+          style="width: 0%;"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          aria-valuenow="0"
+        >
+          0%
         </div>
-
-        <!-- Random mode -->
-        <div id="random-attributes-settings">
-            {{ range_field('min_attributes', 'max_attributes', 'Number of attributes',
-                'Min / Max number of attributes sampled per model when the random mode is on.',
-                values, errors, default_min=1, default_max=5, hard_min=1, hard_max=10000) }}
-            <div class="text-gray-600 fs-7 mb-5">Min must be ≤ Max.</div>
-
-            {{ section('Attribute type distribution',
-                'When sampling each attribute, how likely is each UVL type to be chosen. Drag the handles OR type exact values — both stay in sync. Integer/Real need Arithmetic level, String needs Type level; disabled types score 0.') }}
-
-            <div class="prob-distribution mb-3">
-                <div id="attr_dist_slider" class="rel-slider mt-3 mb-5"></div>
-                <div class="row g-3">
-                    <div class="col-6 col-md-3">
-                        <label for="dist_boolean" class="form-label fs-7 text-gray-700 d-flex align-items-center gap-2">
-                            <span class="rel-swatch" style="background: #5e6278;"></span>
-                            Boolean
-                            <span class="badge badge-light ms-auto fw-bold" id="label_dist_boolean">70%</span>
-                        </label>
-                        <input type="number" id="dist_boolean" name="dist_boolean"
-                               class="form-control form-control-solid" step="0.01" min="0" max="1"
-                               value="{{ values.get('dist_boolean', 0.7) }}">
-                    </div>
-                    {% if arithmetic_level %}
-                    <div class="col-6 col-md-3">
-                        <label for="dist_integer" class="form-label fs-7 text-gray-700 d-flex align-items-center gap-2">
-                            <span class="rel-swatch" style="background: #3f4254;"></span>
-                            Integer
-                            <span class="badge badge-light ms-auto fw-bold" id="label_dist_integer">10%</span>
-                        </label>
-                        <input type="number" id="dist_integer" name="dist_integer"
-                               class="form-control form-control-solid" step="0.01" min="0" max="1"
-                               value="{{ values.get('dist_integer', 0.1) }}">
-                    </div>
-                    <div class="col-6 col-md-3">
-                        <label for="dist_real" class="form-label fs-7 text-gray-700 d-flex align-items-center gap-2">
-                            <span class="rel-swatch" style="background: #2b2b40;"></span>
-                            Real
-                            <span class="badge badge-light ms-auto fw-bold" id="label_dist_real">10%</span>
-                        </label>
-                        <input type="number" id="dist_real" name="dist_real"
-                               class="form-control form-control-solid" step="0.01" min="0" max="1"
-                               value="{{ values.get('dist_real', 0.1) }}">
-                    </div>
-                    {% else %}
-                    <input type="hidden" name="dist_integer" value="0.0">
-                    <input type="hidden" name="dist_real" value="0.0">
-                    {% endif %}
-                    {% if type_level %}
-                    <div class="col-6 col-md-3">
-                        <label for="dist_string" class="form-label fs-7 text-gray-700 d-flex align-items-center gap-2">
-                            <span class="rel-swatch" style="background: #181c32;"></span>
-                            String
-                            <span class="badge badge-light ms-auto fw-bold" id="label_dist_string">10%</span>
-                        </label>
-                        <input type="number" id="dist_string" name="dist_string"
-                               class="form-control form-control-solid" step="0.01" min="0" max="1"
-                               value="{{ values.get('dist_string', 0.1) }}">
-                    </div>
-                    {% else %}
-                    <input type="hidden" name="dist_string" value="0.0">
-                    {% endif %}
-                </div>
-                {% if errors.get('attr_dist_sum') %}
-                    <div class="text-danger fs-7 mt-3">{{ errors['attr_dist_sum'] }}</div>
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- Manual mode -->
-        <div id="manual-attributes-section" style="display: none;">
-            <div id="manual-attributes-global-error" class="alert alert-danger py-2 mb-4" style="display:none;"></div>
-
-            <div class="d-flex gap-2 mb-5">
-                <button type="button" class="btn btn-sm btn-light-primary" id="add-attribute-btn">
-                    <i class="ki-duotone ki-plus fs-4"></i>
-                    Add attribute
-                </button>
-                <button type="button" class="btn btn-sm btn-light-danger" id="delete-attribute-btn">
-                    <i class="ki-duotone ki-minus fs-4"></i>
-                    Remove last
-                </button>
-            </div>
-
-            <div id="manual-attributes-list"></div>
-        </div>
-
+      </div>
     </div>
+
+    <div id="generate-status" class="mt-3 fw-bold text-center"></div>
+
+    <div class="card mt-4">
+      <div class="card-header fw-semibold">
+        Generation log
+      </div>
+      <div
+        id="generate-log-viewer"
+        style="
+          background: #111827;
+          color: #e5e7eb;
+          font-family: monospace;
+          font-size: 0.92rem;
+          height: 280px;
+          overflow-y: auto;
+          padding: 12px;
+          white-space: pre-wrap;
+          border-bottom-left-radius: 0.375rem;
+          border-bottom-right-radius: 0.375rem;
+        "
+      ></div>
+    </div>
+  </div>
 </div>
 {% endblock %}
 
-{% block wizard_scripts %}
-<script>
-const randomCheckbox = document.getElementById('random_attributes');
-const randomSettings = document.getElementById('random-attributes-settings');
-const manualSection = document.getElementById('manual-attributes-section');
-const manualAttributesList = document.getElementById('manual-attributes-list');
-const savedAttributes = {{ values.get('attributes_list', []) | tojson }};
-const serverErrors = {{ errors | tojson }};
-const values = {{ values | tojson }};
+{% block scripts %}
 
-const arithmeticLevelEnabled   = {{ 1 if session.get('params', {}).get('ARITHMETIC_LEVEL', False) else 0 }};
-const typeLevelEnabled         = {{ 1 if session.get('params', {}).get('TYPE_LEVEL', False) else 0 }};
-const stringConstraintsEnabled = {{ 1 if session.get('params', {}).get('STRING_CONSTRAINTS', False) else 0 }};
-const manualAttributesGlobalError = document.getElementById('manual-attributes-global-error');
+  <script type="module">
+    import { loadPyodide } from "{{ url_for('static', filename='pyodide/pyodide.mjs') }}";
+    window.loadPyodide = loadPyodide;
+  </script>
 
-function toggleAttributeSections() {
-    if (randomCheckbox.checked) {
-        randomSettings.style.display = '';
-        manualSection.style.display  = 'none';
-    } else {
-        randomSettings.style.display = 'none';
-        manualSection.style.display  = '';
-    }
-}
-randomCheckbox.addEventListener('change', toggleAttributeSections);
+  <script
+    type="module"
+    src="{{ url_for('static', filename='js/generator.bundle.js') }}">
+  </script>
 
-document.getElementById('add-attribute-btn').addEventListener('click', addAttributeCard);
-document.getElementById('delete-attribute-btn').addEventListener('click', function() {
-    const cards = manualAttributesList.getElementsByClassName('manual-attribute-card');
-    if (cards.length > 0) {
-        cards[cards.length - 1].remove();
-        updateManualAttributesGlobalError();
-    }
-});
-
-function validateBooleanCheckboxes(card) {
-    const trueBox  = card.querySelector('.boolean-true');
-    const falseBox = card.querySelector('.boolean-false');
-    const errorDiv = card.querySelector('.attr-bool-error');
-    if (!trueBox.checked && !falseBox.checked) {
-        errorDiv.textContent = 'Select at least one value (True or False).';
-        return false;
-    }
-    errorDiv.textContent = '';
-    return true;
-}
-
-function countIncompleteManualCards() {
-    const cards = document.querySelectorAll('.manual-attribute-card');
-    let incomplete = 0;
-    cards.forEach((card, idx) => {
-        let bad = false;
-        const name = card.querySelector(`[name="attr_name_${idx}"]`);
-        const type = card.querySelector(`[name="attr_type_${idx}"]`);
-        const prob = card.querySelector(`[name="attr_attach_prob_${idx}"]`);
-        if (!name || !name.value.trim()) bad = true;
-        if (!prob || !prob.value.trim()) bad = true;
-        if (type && type.value === 'boolean') {
-            const t = card.querySelector(`[name="attr_value_true_${idx}"]`);
-            const f = card.querySelector(`[name="attr_value_false_${idx}"]`);
-            if (!((t && t.checked) || (f && f.checked))) bad = true;
-        } else if (type && ['integer', 'real', 'string'].includes(type.value)) {
-            const mn = card.querySelector(`[name="attr_min_value_${idx}"]`);
-            const mx = card.querySelector(`[name="attr_max_value_${idx}"]`);
-            if (!mn || !mn.value.trim() || !mx || !mx.value.trim()) bad = true;
-        }
-        if (bad) incomplete++;
-    });
-    return incomplete;
-}
-
-function updateManualAttributesGlobalError() {
-    if (randomCheckbox.checked) {
-        manualAttributesGlobalError.style.display = 'none';
-        manualAttributesGlobalError.textContent = '';
-        return 0;
-    }
-    const n = countIncompleteManualCards();
-    if (n > 0) {
-        manualAttributesGlobalError.style.display = '';
-        manualAttributesGlobalError.textContent =
-            `There are ${n} attribute card(s) with missing required fields. Complete them before continuing.`;
-    } else {
-        manualAttributesGlobalError.style.display = 'none';
-        manualAttributesGlobalError.textContent = '';
-    }
-    return n;
-}
-
-function updateValueField(card, type, idx) {
-    const valueDiv = card.querySelector('.value-field');
-    if (type === 'boolean') {
-        valueDiv.innerHTML = `
-            <label class="form-label">Possible values</label>
-            <div class="d-flex gap-5">
-                <label class="form-check form-check-custom form-check-solid">
-                    <input class="form-check-input boolean-true" type="checkbox" name="attr_value_true_${idx}">
-                    <span class="form-check-label">True</span>
-                </label>
-                <label class="form-check form-check-custom form-check-solid">
-                    <input class="form-check-input boolean-false" type="checkbox" name="attr_value_false_${idx}">
-                    <span class="form-check-label">False</span>
-                </label>
-            </div>
-        `;
-        valueDiv.querySelector('.boolean-true').addEventListener('change', () => validateBooleanCheckboxes(card));
-        valueDiv.querySelector('.boolean-false').addEventListener('change', () => validateBooleanCheckboxes(card));
-    } else if (type === 'integer' || type === 'real' || type === 'string') {
-        const step = type === 'real' ? 'any' : '1';
-        const min  = type === 'string' ? '0' : '';
-        valueDiv.innerHTML = `
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <label class="form-label">Min</label>
-                    <input type="number" class="form-control form-control-solid"
-                        name="attr_min_value_${idx}" required step="${step}" min="${min}">
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">Max</label>
-                    <input type="number" class="form-control form-control-solid"
-                        name="attr_max_value_${idx}" required step="${step}" min="${min}">
-                </div>
-            </div>
-        `;
-    } else {
-        valueDiv.innerHTML = `
-            <label class="form-label">Value</label>
-            <input type="text" class="form-control form-control-solid" name="attr_value_${idx}" placeholder="e.g. 5 or Red" required>
-        `;
-    }
-}
-
-function addAttributeCard() {
-    const idx = manualAttributesList.children.length;
-    const card = document.createElement('div');
-    card.className = 'card card-bordered mb-4 manual-attribute-card';
-    card.innerHTML = `
-        <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h5 class="fw-bold text-gray-900 mb-0">Attribute #${idx + 1}</h5>
-            </div>
-
-            <div class="row g-4 mb-4">
-                <div class="col-md-6">
-                    <label class="form-label">Name</label>
-                    <input type="text" class="form-control form-control-solid"
-                        name="attr_name_${idx}" placeholder="e.g. Seats" required>
-                    <div class="text-danger attr-name-error fs-7 mt-1"></div>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">Type</label>
-                    <select class="form-select form-select-solid attr-type-select" name="attr_type_${idx}" required>
-                        <option value="integer">Integer</option>
-                        <option value="real">Real</option>
-                        <option value="boolean">Boolean</option>
-                        <option value="string">String</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="mb-4 value-field"></div>
-            <div class="text-danger attr-minmax-error fs-7 mb-2"></div>
-            <div class="text-danger attr-bool-error fs-7 mb-2"></div>
-
-            <div class="mb-4">
-                <label class="form-label">Attach probability</label>
-                <input type="number" class="form-control form-control-solid"
-                    name="attr_attach_prob_${idx}" step="0.001" required>
-                <div class="text-danger attr-attach-prob-error fs-7 mt-1"></div>
-            </div>
-
-            <label class="form-check form-check-custom form-check-solid">
-                <input class="form-check-input" type="checkbox"
-                    name="attr_use_in_constraints_${idx}" id="attr_use_in_constraints_${idx}" checked>
-                <span class="form-check-label">Use in constraints</span>
-            </label>
-            <div class="text-danger attr-use-in-constraints-error fs-7 mt-1"></div>
-            <div class="text-gray-600 attr-use-in-constraints-hint fs-7 mt-1"></div>
-        </div>
-    `;
-    manualAttributesList.appendChild(card);
-
-    updateValueField(card, 'integer', idx);
-    updateUseInConstraintsAvailability(card, 'integer', idx);
-
-    card.querySelector('.attr-type-select').addEventListener('change', function () {
-        updateValueField(card, this.value, idx);
-        updateUseInConstraintsAvailability(card, this.value, idx);
-    });
-    card.addEventListener('input',  updateManualAttributesGlobalError);
-    card.addEventListener('change', updateManualAttributesGlobalError);
-
-    updateManualAttributesGlobalError();
-}
-
-document.querySelector('form').addEventListener('submit', function (e) {
-    let valid = true;
-    if (!randomCheckbox.checked) {
-        document.querySelectorAll('.manual-attribute-card').forEach((card) => {
-            const sel = card.querySelector('.attr-type-select');
-            if (sel && sel.value === 'boolean' && !validateBooleanCheckboxes(card)) valid = false;
-        });
-        if (updateManualAttributesGlobalError() > 0) valid = false;
-    }
-    if (!valid) e.preventDefault();
-});
-
-toggleAttributeSections();
-
-// Restore manual attributes from previous session
-if (!randomCheckbox.checked) {
-    manualAttributesList.innerHTML = '';
-    let idx = 0;
-    while (values[`attr_name_${idx}`] !== undefined) {
-        addAttributeCard();
-        const card = manualAttributesList.children[idx];
-
-        card.querySelector(`[name="attr_name_${idx}"]`).value = values[`attr_name_${idx}`] || '';
-
-        const sel = card.querySelector(`[name="attr_type_${idx}"]`);
-        const type = (values[`attr_type_${idx}`] || 'integer').toLowerCase();
-        sel.value = type;
-        updateValueField(card, type, idx);
-        updateUseInConstraintsAvailability(card, type, idx);
-
-        card.querySelector(`[name="attr_attach_prob_${idx}"]`).value = values[`attr_attach_prob_${idx}`] ?? 0.7;
-        card.querySelector(`[name="attr_use_in_constraints_${idx}"]`).checked = values[`attr_use_in_constraints_${idx}`] === 'on';
-
-        if (type === 'boolean') {
-            if (values[`attr_value_true_${idx}`])  card.querySelector(`[name="attr_value_true_${idx}"]`).checked  = true;
-            if (values[`attr_value_false_${idx}`]) card.querySelector(`[name="attr_value_false_${idx}"]`).checked = true;
-        } else {
-            if (values[`attr_min_value_${idx}`] !== undefined) card.querySelector(`[name="attr_min_value_${idx}"]`).value = values[`attr_min_value_${idx}`];
-            if (values[`attr_max_value_${idx}`] !== undefined) card.querySelector(`[name="attr_max_value_${idx}"]`).value = values[`attr_max_value_${idx}`];
-        }
-
-        const err = {
-            minmax: serverErrors[`attr_minmax_${idx}`],
-            bool:   serverErrors[`attr_value_bool_${idx}`],
-            name:   serverErrors[`attr_name_${idx}`],
-            prob:   serverErrors[`attr_attach_prob_${idx}`],
-            uic:    serverErrors[`attr_use_in_constraints_${idx}`],
-        };
-        if (err.prob)   card.querySelector('.attr-attach-prob-error').textContent = err.prob;
-        if (err.name)   card.querySelector('.attr-name-error').textContent = err.name;
-        if (err.minmax) card.querySelector('.attr-minmax-error').textContent = err.minmax;
-        if (err.bool)   card.querySelector('.attr-bool-error').textContent = err.bool;
-        if (err.uic)    card.querySelector('.attr-use-in-constraints-error').textContent = err.uic;
-
-        idx++;
-    }
-    if (idx === 0) addAttributeCard();
-}
-updateManualAttributesGlobalError();
-
-// ─── Attribute-type distribution live sum ───────────────────────────────
-(function () {
-    const badge = document.getElementById('attr_dist_sum');
-    if (!badge) return;
-    const active = ['dist_boolean']
-        .concat(arithmeticLevelEnabled ? ['dist_integer', 'dist_real'] : [])
-        .concat(typeLevelEnabled ? ['dist_string'] : []);
-    function update() {
-        let s = 0;
-        active.forEach((id) => {
-            const el = document.getElementById(id);
-            if (el && !el.disabled) s += parseFloat(el.value) || 0;
-        });
-        badge.innerText = s.toFixed(4);
-        badge.classList.remove('badge-light-success', 'badge-light-danger');
-        badge.classList.add(Math.abs(s - 1.0) < 0.001 ? 'badge-light-success' : 'badge-light-danger');
-    }
-    active.forEach((id) => {
-        const el = document.getElementById(id);
-        if (el) {
-            el.addEventListener('input', update);
-            el.addEventListener('change', update);
-        }
-    });
-    update();
-})();
-
-function updateUseInConstraintsAvailability(card, type, idx) {
-    const cb = card.querySelector(`[name="attr_use_in_constraints_${idx}"]`);
-    const hint = card.querySelector('.attr-use-in-constraints-hint');
-    if (!cb) return;
-    let enabled = false, msg = '';
-    if (type === 'boolean') {
-        enabled = true;
-    } else if (type === 'integer' || type === 'real') {
-        enabled = !!arithmeticLevelEnabled;
-        if (!enabled) msg = 'Only available if Arithmetic level is enabled in step 2.';
-    } else if (type === 'string') {
-        enabled = !!typeLevelEnabled && !!stringConstraintsEnabled;
-        if (!enabled) msg = 'Only available if Type level and String constraints are enabled in step 2.';
-    }
-    cb.disabled = !enabled;
-    if (!enabled) cb.checked = false;
-    if (hint) hint.textContent = msg;
-}
-</script>
+  <script src="{{ url_for('static', filename='pyodide/pyodide.js') }}"></script>
 {% endblock %}

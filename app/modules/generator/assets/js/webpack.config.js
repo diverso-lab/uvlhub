@@ -18,6 +18,9 @@ module.exports = {
   },
 
   resolve: {
+    alias: {
+      pyodide: path.resolve(__dirname, '../../../../static/pyodide')
+    },
     fallback: {
       fs: false,
       'fs/promises': false,

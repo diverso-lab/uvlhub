@@ -14,19 +14,30 @@ from app.modules.orcid.repositories import OrcidRepository
 from app.modules.profile.models import UserProfile
 from core.services.BaseService import BaseService
 
+ORCID_ENABLED = False
+
 
 class OrcidService(BaseService):
 
     def __init__(self):
         super().__init__(OrcidRepository())
+
+        self.enabled = ORCID_ENABLED
+        self.client_id = None
+        self.client_secret = None
+        self.oauth = None
+        self.orcid_client = None
+
+        if not self.enabled:
+            return
+
         self.client_id = self.get_orcid_client_id()
         self.client_secret = self.get_orcid_client_secret()
 
         if not self.client_id or not self.client_secret:
-            # This will be caught by the routes and shown as flash if you wrap service usage,
-            # but right now you're creating it in before_app_request, so this would 500 early.
-            current_app.logger.error("ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured")
-            # If you want to avoid raising here, set a flag and handle it in routes.
+            current_app.logger.warning("ORCID is enabled but ORCID_CLIENT_ID/ORCID_CLIENT_SECRET are not configured")
+            return
+
         self.oauth, self.orcid_client = self.configure_oauth(current_app)
 
     def get_orcid_client_id(self):
@@ -51,6 +62,9 @@ class OrcidService(BaseService):
         return oauth, orcid
 
     def get_orcid_user_info(self, token):
+        if not self.enabled or self.orcid_client is None:
+            return None, "ORCID authentication is disabled."
+
         try:
             resp = self.orcid_client.get("https://orcid.org/oauth/userinfo", token=token)
         except Exception as exc:
@@ -62,9 +76,12 @@ class OrcidService(BaseService):
             return None, "ORCID did not return user information. Please try again."
 
         if resp.status_code != 200:
-            current_app.logger.error("ORCID userinfo failed (%s): %s", resp.status_code, getattr(resp, "text", None))
+            current_app.logger.error(
+                "ORCID userinfo failed (%s): %s",
+                resp.status_code,
+                getattr(resp, "text", None),
+            )
 
-            # Optional: special-case rate limiting
             if resp.status_code == 429:
                 return None, "ORCID is rate-limiting requests. Please try again in a minute."
 
@@ -92,7 +109,6 @@ class OrcidService(BaseService):
         affiliation = (user_info.get("affiliation") or "").strip()
 
         try:
-            # 1) Existing ORCID link?
             orcid_record = Orcid.query.filter_by(orcid_id=orcid_id).first()
             if orcid_record:
                 profile = UserProfile.query.get(orcid_record.profile_id)
@@ -101,11 +117,9 @@ class OrcidService(BaseService):
                 if user:
                     return user, None
 
-                # Broken link: remove and recreate
                 db.session.delete(orcid_record)
                 db.session.flush()
 
-            # 2) Create new user + profile + ORCID link
             user = User(
                 password=generate_password_hash(secrets.token_urlsafe(24)),
                 active=True,
@@ -129,11 +143,9 @@ class OrcidService(BaseService):
             return user, None
 
         except IntegrityError as exc:
-            # Typical race condition: two callbacks creating the same ORCID simultaneously
             current_app.logger.warning("IntegrityError creating ORCID user (%s): %s", orcid_id, exc)
             db.session.rollback()
 
-            # Re-read and return the existing user if it was created in parallel
             try:
                 orcid_record = Orcid.query.filter_by(orcid_id=orcid_id).first()
                 if orcid_record:

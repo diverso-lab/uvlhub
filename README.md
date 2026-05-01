@@ -23,3 +23,30 @@ Repository of feature models in UVL format integrated with Zenodo and flamapy fo
 ## Official documentation
 
 You can consult the official documentation of the project at [docs.uvlhub.io](https://docs.uvlhub.io/)
+
+### Installation
+
+Follow all steps of **Installation** in the official documentation. When you arrive to this step:
+```
+pip install -e ./
+```
+Please, do also:
+```
+pip install -e ./fm_generator
+```
+To download changes from fm_generator plugin, please do from the root of the project:
+```
+cd fm_generator
+git pull origin main
+git submodule update --init --recursive
+```
+You also need to install some dependencies with npm:
+```
+npm install jszip file-saver
+npm install
+```
+To let pyodide work properly:
+```
+npx webpack --config app/modules/generator/assets/js/webpack.config.js
+```
+Then, keep on the next step naturally from the official documentation.

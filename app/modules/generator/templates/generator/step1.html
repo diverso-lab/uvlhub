@@ -1,42 +1,67 @@
 {% extends "generator/index.html" %}
-{% from "generator/_macros.html" import info, number_field %}
 
 {% block title %}Generate random feature models{% endblock %}
 
 {% block wizard_content %}
-<div class="notice d-flex bg-light-primary rounded border-primary border border-dashed p-5 mb-8">
-    <i class="ki-duotone ki-information fs-2x text-primary me-4 mt-1"><span class="path1"></span><span class="path2"></span><span class="path3"></span></i>
-    <div class="fs-7 text-gray-700 fw-semibold">
-        This first step is just the basics of the batch — how many models to produce, a seed for reproducibility, and a name prefix for the output files. Advanced options (language levels, tree shape, constraints, attributes, ensure-satisfiable, filename suffixes) come in later steps.
-    </div>
-</div>
-
-<div class="row g-8">
-    <div class="col-xl-8">
-
-        {{ number_field('num_models_val', 'Number of models',
-            'How many random feature models to generate in this batch.',
-            values, errors, default=5, min=1, max=1000) }}
-
-        {{ number_field('seed', 'Seed',
-            'Random seed used to make runs reproducible. Same seed + same parameters = same models.',
-            values, errors, default=42, min=1) }}
-
-        <div class="mb-7">
-            <label for="name_prefix" class="form-label d-flex align-items-center">
-                Name prefix
-                {{ info("Prefix used when naming the generated UVL files (e.g. 'fm' produces fm0.uvl, fm1.uvl…).") }}
-            </label>
-            <input type="text" id="name_prefix" name="name_prefix"
-                   placeholder="fm"
-                   value="{{ values.get('name_prefix', '') }}"
-                   class="form-control form-control-solid">
+<div class="row justify-content-left">
+    <div class="col-md-6">
+        <!-- Número de modelos -->
+        <div class="mb-3">
+            <label for="num_models_val" class="form-label">Number of models</label>
+            <input type="number" id="num_models_val" name="num_models_val" min="1"
+                value="{{ values.get('num_models_val', 5) }}"
+                class="form-control mt-1" style="width: 100px;">
+            {% if errors.get('num_models_val') %}
+                <div class="text-danger">{{ errors['num_models_val'] }}</div>
+            {% endif %}
         </div>
 
-        {% if errors.get('global') %}
-            <div class="alert alert-danger mt-7">{{ errors['global'] }}</div>
-        {% endif %}
+        <!-- Seed -->
+        <div class="mb-3">
+            <label class="form-label" for="seed">Seed</label>
+            <input type="number" class="form-control mt-1" id="seed" name="seed" min="1"
+                value="{{ values.get('seed', 42) }}" style="width: 100px;">
+            {% if errors.get('seed') %}
+                <div class="text-danger">{{ errors['seed'] }}</div>
+            {% endif %}
+        </div>
 
+        <!-- Satisfiable -->
+        <div class="mb-3">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="ensure_satisfiable" name="ensure_satisfiable"
+                    {% if values.get('ensure_satisfiable') %} checked {% endif %}>
+                <label class="form-check-label" for="ensure_satisfiable">Ensure satisfiable</label>
+            </div>
+            <div class="form-text">
+                Note: satisfiability is only supported when the variables included in the constraints are purely Boolean. It may take long to generate satisfiable models, it is not recommended to generate more than 5 SAT models at once.
+            </div>
+        </div>
+
+        <!-- Name Prefix -->
+        <div class="mb-3">
+            <label for="name_prefix" class="form-label">Base name</label>
+            <input type="text" class="form-control" id="name_prefix" name="name_prefix"
+                   placeholder="e.g. fm" value="{{ values.get('name_prefix', '') }}">
+        </div>
+
+        <!-- Suffixes -->
+        <div class="mb-3 form-check">
+            <input class="form-check-input" type="checkbox" id="feature_count_suffix" name="feature_count_suffix"
+                   {% if values.get('feature_count_suffix') %} checked {% endif %}>
+            <label class="form-check-label" for="feature_count_suffix">Include number of features as name's suffix</label>
+        </div>
+        <div class="mb-3 form-check">
+            <input class="form-check-input" type="checkbox" id="constraint_count_suffix" name="constraint_count_suffix"
+                   {% if values.get('constraint_count_suffix') %} checked {% endif %}>
+            <label class="form-check-label" for="constraint_count_suffix">Include number of constraints as name's suffix</label>
+        </div>
+
+        <!-- Error global (del __post_init__) -->
+        {% if errors.get('global') %}
+            <div class="alert alert-danger">{{ errors['global'] }}</div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
+

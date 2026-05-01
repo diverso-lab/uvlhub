@@ -294,7 +294,7 @@
 											</label>
 										</div>
 										<div class="separator my-3"></div>
-										<button type="button" class="btn btn-light-primary btn-sm w-100" data-download-formats-action data-download-base-url="{{ url_for('dataset.download_all_dataset') }}">Download</button>
+										<button type="button" class="btn btn-light-primary btn-sm w-100" data-download-formats-action data-download-base-url="{{ url_for('downloadqueue.download_build_dataset') }}">Download</button>
 									</div>
 								</div>
 								<!--end::Download all-->
@@ -472,21 +472,28 @@
 										</div>
 										<!--end:Menu item-->
 
+
+
+
 										<!--begin:Menu item-->
 										<div class="menu-item">
 											<!--begin:Menu link-->
-											<a class="menu-link {{ 'active' if request.endpoint and request.endpoint.startswith('generator.') else '' }}" href="{{ url_for('generator.landing') }}">
+											<a class="menu-link {{ 'active' if request.endpoint == 'generator.step1' else '' }}" href="{{ url_for('generator.step1') }}">
 												<span class="menu-icon">
-													<i class="ki-duotone ki-abstract-26 fs-2">
-														<span class="path1"></span>
-														<span class="path2"></span>
-													</i>
+												<i class="ki-duotone ki-abstract-26 fs-2">
+													<span class="path1"></span>
+													<span class="path2"></span>
+												</i>
 												</span>
-												<span class="menu-title">Generate models</span>
+												<span class="menu-title">Generate random models</span>
 											</a>
 											<!--end:Menu link-->
 										</div>
 										<!--end:Menu item-->
+
+
+
+
 
 										{% if current_user.is_anonymous %}
 
