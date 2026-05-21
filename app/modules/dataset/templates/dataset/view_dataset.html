@@ -48,7 +48,7 @@
             <strong>Local dataset</strong> — This dataset has not been synchronized with Zenodo yet.
             It is only stored locally and is not publicly visible.
             {% if current_user.is_authenticated and dataset.user_id == current_user.id %}
-                <a href="{{ url_for('dataset.list_datasets') }}" class="alert-link ms-1">Go to My datasets</a> to publish it.
+                <a href="{{ url_for('dataset.list_dataset') }}" class="alert-link ms-1">Go to My datasets</a> to publish it.
             {% endif %}
         </div>
     </div>
