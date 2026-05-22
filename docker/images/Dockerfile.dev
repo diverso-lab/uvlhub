@@ -39,13 +39,17 @@ RUN npm install
 COPY app/ ./app
 COPY core/ ./core
 COPY rosemary/ ./rosemary
+COPY fm_generator/ ./fm_generator
 COPY migrations/ ./migrations
 COPY docker/ ./docker
 COPY --chmod=0755 scripts/ ./scripts/
 
 RUN pip install -e ./
 
-RUN pip install --no-cache-dir -e ./app/modules/generator/vendor
+RUN pip install --no-cache-dir -e ./fm_generator
+RUN pip install --no-cache-dir build
+RUN python -m build --wheel ./fm_generator \
+ && cp fm_generator/dist/fm_generator-*.whl app/modules/generator/assets/js/
 
 RUN find . -type d -name "__pycache__" -exec rm -r {} + \
  && find . -type f -name "*.pyc" -exec rm -f {} +

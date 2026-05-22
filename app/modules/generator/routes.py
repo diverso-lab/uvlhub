@@ -682,8 +682,8 @@ def _apply_step3_tree(params_dict, form):
 
     if params_dict.get("FEATURE_CARDINALITY"):
         params_dict["PROB_FEATURE_CARDINALITY"] = _safe_float(form.get("prob_fc"), 0.1)
-        params_dict["MIN_FEATURE_CARDINALITY"] = [int(form.get("min_feature_cardinality", 2))]
-        params_dict["MAX_FEATURE_CARDINALITY"] = [int(form.get("max_feature_cardinality", 5))]
+        params_dict["MIN_FEATURE_CARDINALITY"] = int(form.get("min_feature_cardinality", 2))
+        params_dict["MAX_FEATURE_CARDINALITY"] = int(form.get("max_feature_cardinality", 5))
     else:
         params_dict["PROB_FEATURE_CARDINALITY"] = 0.0
         params_dict.pop("MIN_FEATURE_CARDINALITY", None)
@@ -766,11 +766,20 @@ def _apply_step4_constraints(params_dict, form):
         params_dict["PROB_LEN_FUNCTION"] = 0.0
 
     # CTC type distribution
-    params_dict["CTC_DIST_BOOLEAN"] = _safe_float(form.get("ctc_dist_boolean"), 0.7 if arith_on or type_on else 1.0)
-    params_dict["CTC_DIST_INTEGER"] = _safe_float(form.get("ctc_dist_integer"), 0.2) if arith_on else 0.0
-    params_dict["CTC_DIST_REAL"] = _safe_float(form.get("ctc_dist_real"), 0.1) if arith_on else 0.0
-    params_dict["CTC_DIST_STRING"] = _safe_float(form.get("ctc_dist_string"), 0.0) if type_on and str_on else 0.0
-    cks = ["CTC_DIST_BOOLEAN", "CTC_DIST_INTEGER", "CTC_DIST_REAL", "CTC_DIST_STRING"]
+    ctc_boolean = _safe_float(form.get("ctc_dist_boolean"), 0.7 if arith_on or type_on else 1.0)
+    ctc_integer = _safe_float(form.get("ctc_dist_integer"), 0.2) if arith_on else 0.0
+    ctc_real = _safe_float(form.get("ctc_dist_real"), 0.1) if arith_on else 0.0
+    ctc_string = _safe_float(form.get("ctc_dist_string"), 0.0) if type_on and str_on else 0.0
+
+    params_dict["CTC_DIST_BOOLEAN"] = ctc_boolean
+    params_dict["CTC_DIST_NUMERIC"] = ctc_integer + ctc_real
+    params_dict["CTC_DIST_AGGREGATE"] = 0.0
+    params_dict["CTC_DIST_STRING"] = ctc_string
+
+    params_dict.pop("CTC_DIST_INTEGER", None)
+    params_dict.pop("CTC_DIST_REAL", None)
+
+    cks = ["CTC_DIST_BOOLEAN", "CTC_DIST_NUMERIC", "CTC_DIST_AGGREGATE", "CTC_DIST_STRING"]    
     ctot = sum(params_dict[k] for k in cks)
     if ctot > 0:
         for k in cks:

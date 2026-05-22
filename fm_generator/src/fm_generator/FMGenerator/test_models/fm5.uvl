@@ -1,0 +1,47 @@
+features
+	F0 
+		[4]
+			F5 {Enabled false}
+			F4 {Enabled true, Capacity -5}
+			F3 {Enabled false}
+				mandatory
+					F6 {Measure 5.731}
+						mandatory
+							F15 
+			F2 {Enabled false}
+				[2]
+					F8 {Enabled false}
+						mandatory
+							F11 {Enabled false, Capacity -2}
+								[4]
+									F20 
+									F19 {Enabled false}
+									F18 {Enabled true}
+									F17 {Enabled true}
+					F7 {Enabled false}
+						or
+							F14 {Enabled false}
+							F13 {Enabled true}
+							F12 {Enabled false}
+								mandatory
+									F16 {Enabled false}
+			F1 {Enabled true}
+				[2]
+					F10 {Enabled false, Capacity -3, Measure 3.052}
+					F9 {Enabled false}
+constraints
+	F5.Enabled | F16.Enabled
+	! F15 => F10.Enabled
+	! F20 | F19.Enabled
+	F6 => F15
+	F12.Enabled => ! F1.Enabled
+	F16.Enabled & F7.Enabled
+	F5.Enabled => F4.Enabled
+	! F3.Enabled => ! F13.Enabled
+	! F15 | F17.Enabled
+	F12.Enabled <=> F16.Enabled
+	F6 & ! F17.Enabled
+	F8.Enabled & F7.Enabled
+	! F17.Enabled | F5.Enabled
+	! F19.Enabled <=> F9.Enabled
+	F7.Enabled <=> F3.Enabled

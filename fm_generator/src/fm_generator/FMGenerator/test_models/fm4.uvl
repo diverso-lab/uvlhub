@@ -1,0 +1,39 @@
+features
+	F0 
+		[2]
+			F3 {Enabled false}
+				mandatory
+					F4 {Enabled true}
+						[3]
+							F11 {Enabled false}
+							F10 {Enabled false}
+							F9 {Enabled false}
+			F2 {Enabled false}
+				mandatory
+					F5 
+						mandatory
+							F8 {Enabled false, Capacity -2}
+								[3]
+									F15 {Enabled true}
+									F14 {Enabled false, "License Plate" '921JLXmj'}
+									F13 {Enabled true}
+									F12 {Enabled false}
+		mandatory
+			F1 {Enabled true}
+				[2]
+					F7 {Enabled true, Capacity -4}
+					F6 {Enabled false}
+constraints
+	F1.Enabled | F10.Enabled
+	F14.Enabled & F13.Enabled
+	F7.Enabled | F1.Enabled
+	F15.Enabled => F7.Enabled
+	F7.Enabled & F12.Enabled
+	F9.Enabled => F2.Enabled
+	! F8.Enabled => ! F2.Enabled
+	! F11.Enabled & F6.Enabled
+	F9.Enabled => F14.Enabled
+	F13.Enabled => F8.Enabled
+	F5 & F9.Enabled
+	F11.Enabled & F3.Enabled
+	F15.Enabled <=> F11.Enabled

@@ -1,0 +1,46 @@
+features
+	F0 
+		mandatory
+			F4 {Enabled false}
+		or
+			F3 {Enabled true}
+			F2 {Enabled true}
+				optional
+					F5 {Enabled true}
+						[2]
+							F12 {Enabled true}
+							F11 {Enabled false}
+								mandatory
+									F13 
+		mandatory
+			F1 {Enabled true}
+				[3]
+					F8 {Enabled true, "License Plate" 'BcEp7zkY'}
+					F7 {"License Plate" 'rdPaJpq'}
+					F6 
+						[2]
+							F10 {Enabled true}
+								optional
+									F14 {Enabled true}
+							F9 {Enabled false}
+								alternative
+									F16 {Enabled true, Measure -4.62}
+									F15 {Enabled true}
+constraints
+	"F8.License Plate" EQUALS "F7.License Plate"
+	"F7.License Plate" EQUALS "F8.License Plate"
+	"F7.License Plate" EQUALS "F8.License Plate"
+	F10.Enabled | ! F13
+	F8.Enabled | F1.Enabled
+	F9.Enabled <=> ! F5.Enabled
+	! F5.Enabled <=> ! F9.Enabled
+	! F6 <=> F15.Enabled
+	! F13 & F8.Enabled
+	F12.Enabled <=> F1.Enabled
+	! F10.Enabled | F6
+	F3.Enabled & ! F12.Enabled
+	F4.Enabled => F8.Enabled
+	! F4.Enabled & ! F12.Enabled
+	F11.Enabled => ! F10.Enabled
+	! F1.Enabled & ! F16.Enabled
+	! F15.Enabled => F14.Enabled
