@@ -51,6 +51,7 @@ def generate_one_model(params_json: str, index: int) -> str:
     """
     params_dict = json.loads(params_json)
     params = Params(**params_dict)
+    print("DEBUG suffix flags:", params.INCLUDE_FEATURE_COUNT_SUFFIX, params.INCLUDE_CONSTRAINT_COUNT_SUFFIX)
     gen = FmgeneratorModel(params)
 
     temp_dir = tempfile.mkdtemp()

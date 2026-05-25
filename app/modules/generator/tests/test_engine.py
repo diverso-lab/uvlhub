@@ -96,27 +96,34 @@ def test_num_models_respected():
 
 
 def test_feature_count_suffix_applied():
-    p = _base_params(INCLUDE_FEATURE_COUNT_SUFFIX=True)
+    p = _base_params(NUM_MODELS=1, INCLUDE_FEATURE_COUNT_SUFFIX=True)
     with tempfile.TemporaryDirectory() as d:
         FmgeneratorModel(p).generate_models(d)
         files = [f for f in os.listdir(d) if f.endswith(".uvl")]
-        assert all(re.search(r"_\d+f\.uvl$", f) for f in files)
+        assert files
+        assert all(re.match(r"^fm_\d+f\.uvl$", f) for f in files), files
 
 
 def test_constraint_count_suffix_applied():
-    p = _base_params(INCLUDE_CONSTRAINT_COUNT_SUFFIX=True)
+    p = _base_params(NUM_MODELS=1, INCLUDE_CONSTRAINT_COUNT_SUFFIX=True)
     with tempfile.TemporaryDirectory() as d:
         FmgeneratorModel(p).generate_models(d)
         files = [f for f in os.listdir(d) if f.endswith(".uvl")]
-        assert all(re.search(r"_\d+c\.uvl$", f) for f in files)
+        assert files
+        assert all(re.match(r"^fm_\d+c\.uvl$", f) for f in files), files
 
 
 def test_both_suffixes_applied():
-    p = _base_params(INCLUDE_FEATURE_COUNT_SUFFIX=True, INCLUDE_CONSTRAINT_COUNT_SUFFIX=True)
+    p = _base_params(
+        NUM_MODELS=1,
+        INCLUDE_FEATURE_COUNT_SUFFIX=True,
+        INCLUDE_CONSTRAINT_COUNT_SUFFIX=True,
+    )
     with tempfile.TemporaryDirectory() as d:
         FmgeneratorModel(p).generate_models(d)
         files = [f for f in os.listdir(d) if f.endswith(".uvl")]
-        assert all(re.search(r"_\d+f_\d+c\.uvl$", f) for f in files)
+        assert files
+        assert all(re.match(r"^fm_\d+f_\d+c\.uvl$", f) for f in files), files
 
 
 def test_name_prefix_applied():

@@ -138,19 +138,21 @@
     async function syncOptions() {
         const form = document.querySelector("form");
         if (!form) return;
+
         const fd = new FormData(form);
         fd.set("nav", "stay");
+
         try {
-            await fetch(form.action, {
-                method: "POST", body: fd,
+            await fetch("/generator/random/summary-refresh/6", {
+                method: "POST",
+                body: fd,
                 headers: { "X-Requested-With": "fetch" },
                 credentials: "same-origin",
             });
-        } catch (e) { /* best-effort */ }
+        } catch (e) {
+            console.warn("Could not sync step 6 options:", e);
+        }
     }
-    ["ensure_satisfiable", "feature_count_suffix", "constraint_count_suffix"].forEach(id => {
-        document.getElementById(id)?.addEventListener("change", syncOptions);
-    });
 
     const generateBtn = document.getElementById("generate-btn");
     const panel       = document.getElementById("gen-panel");
@@ -370,6 +372,22 @@
             const runtime = await waitForRuntime();
             const pyodide = await runtime.ready();
             const paramsObj = await runtime.fetchParams();
+
+            // Force current UI values into the params sent to Pyodide.
+            paramsObj.ENSURE_SATISFIABLE =
+                !!document.querySelector('[name="ensure_satisfiable"]')?.checked;
+
+            paramsObj.INCLUDE_FEATURE_COUNT_SUFFIX =
+                !!document.querySelector('[name="feature_count_suffix"]')?.checked;
+
+            paramsObj.INCLUDE_CONSTRAINT_COUNT_SUFFIX =
+                !!document.querySelector('[name="constraint_count_suffix"]')?.checked;
+
+            console.log("DEBUG generation params suffixes:", {
+                feature: paramsObj.INCLUDE_FEATURE_COUNT_SUFFIX,
+                constraint: paramsObj.INCLUDE_CONSTRAINT_COUNT_SUFFIX,
+            });
+
             const n = parseInt(paramsObj.NUM_MODELS, 10) || 0;
             if (n <= 0) throw new Error("NUM_MODELS must be a positive integer");
             generatedParams = paramsObj;

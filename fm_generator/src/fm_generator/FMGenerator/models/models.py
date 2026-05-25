@@ -22,19 +22,27 @@ def prepend_uvl_includes(serialized_model: str, includes: list[str]) -> str:
 
 
 def build_output_filename(fm: FeatureModel, index: int, params: Params) -> str:
-    base_name = (params.NAME_PREFIX or "").strip() or "fm"
-    parts = [base_name]
+    base_name = (getattr(params, "NAME_PREFIX", "") or "").strip() or "fm"
 
-    if int(params.NUM_MODELS) > 1:
-        parts.append(str(index))
+    include_features = bool(getattr(params, "INCLUDE_FEATURE_COUNT_SUFFIX", False))
+    include_constraints = bool(getattr(params, "INCLUDE_CONSTRAINT_COUNT_SUFFIX", False))
 
-    if getattr(params, "INCLUDE_FEATURE_COUNT_SUFFIX", False):
-        parts.append(f"N{len(fm.get_features())}")
+    feature_count = len(list(fm.get_features()))
+    constraint_count = len(getattr(fm, "ctcs", []))
 
-    if getattr(params, "INCLUDE_CONSTRAINT_COUNT_SUFFIX", False):
-        parts.append(f"C{len(getattr(fm, 'ctcs', []))}")
+    if include_features and include_constraints:
+        return f"{base_name}_{feature_count}f_{constraint_count}c.uvl"
 
-    return "_".join(parts) + ".uvl"
+    if include_features:
+        return f"{base_name}_{feature_count}f.uvl"
+
+    if include_constraints:
+        return f"{base_name}_{constraint_count}c.uvl"
+
+    if int(getattr(params, "NUM_MODELS", 1)) > 1:
+        return f"{base_name}_{index}.uvl"
+
+    return f"{base_name}.uvl"
 
 
 class FmgeneratorModel(VariabilityModel):

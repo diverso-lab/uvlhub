@@ -1,0 +1,2310 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.13, pytest-9.0.3, pluggy-1.6.0 -- /usr/local/bin/python3.13
+cachedir: .pytest_cache
+rootdir: /app/app/modules
+configfile: pytest.ini
+plugins: cov-7.0.0, locust-2.43.4.dev13, Faker-40.5.1
+collecting ... collected 278 items
+
+app/modules/generator/tests/test_engine.py::test_num_models_respected FAILED [  0%]
+app/modules/generator/tests/test_engine.py::test_feature_count_suffix_applied FAILED [  0%]
+app/modules/generator/tests/test_engine.py::test_constraint_count_suffix_applied FAILED [  1%]
+app/modules/generator/tests/test_engine.py::test_both_suffixes_applied FAILED [  1%]
+app/modules/generator/tests/test_engine.py::test_name_prefix_applied FAILED [  1%]
+app/modules/generator/tests/test_engine.py::test_determinism_same_seed_same_output FAILED [  2%]
+app/modules/generator/tests/test_engine.py::test_different_seed_different_output FAILED [  2%]
+app/modules/generator/tests/test_engine.py::test_feature_count_in_range FAILED [  2%]
+app/modules/generator/tests/test_engine.py::test_max_tree_depth_respected FAILED [  3%]
+app/modules/generator/tests/test_engine.py::test_group_cardinality_off_produces_no_group_relations FAILED [  3%]
+app/modules/generator/tests/test_engine.py::test_group_cardinality_on_with_weight_produces_group_groups FAILED [  3%]
+app/modules/generator/tests/test_engine.py::test_feature_cardinality_off_produces_none FAILED [  4%]
+app/modules/generator/tests/test_engine.py::test_feature_cardinality_on_produces_some FAILED [  4%]
+app/modules/generator/tests/test_engine.py::test_random_attributes_respects_count_range FAILED [  5%]
+app/modules/generator/tests/test_engine.py::test_dist_boolean_only_produces_only_boolean_attrs FAILED [  5%]
+app/modules/generator/tests/test_engine.py::test_dist_integer_only_produces_integer_attrs FAILED [  5%]
+app/modules/generator/tests/test_engine.py::test_dist_string_only_respects_type_level FAILED [  6%]
+app/modules/generator/tests/test_engine.py::test_no_integer_attrs_when_arithmetic_off FAILED [  6%]
+app/modules/generator/tests/test_engine.py::test_boolean_only_level_has_no_arith_no_strings FAILED [  6%]
+app/modules/generator/tests/test_engine.py::test_arithmetic_level_produces_arith_constraints PASSED [  7%]
+app/modules/generator/tests/test_engine.py::test_aggregate_functions_produce_sum_avg FAILED [  7%]
+app/modules/generator/tests/test_engine.py::test_string_level_produces_len_constraints FAILED [  7%]
+app/modules/generator/tests/test_engine.py::test_min_vars_per_constraint_respected FAILED [  8%]
+app/modules/generator/tests/test_engine.py::test_prob_not_zero_produces_no_negations FAILED [  8%]
+app/modules/generator/tests/test_engine.py::test_prob_not_one_produces_many_negations FAILED [  8%]
+app/modules/generator/tests/test_engine.py::test_min_max_constraints_respected FAILED [  9%]
+app/modules/generator/tests/test_engine.py::test_prob_and_dominant FAILED [  9%]
+app/modules/generator/tests/test_engine.py::test_prob_implies_dominant FAILED [ 10%]
+app/modules/generator/tests/test_engine.py::test_ensure_satisfiable_runs_without_crashing FAILED [ 10%]
+app/modules/generator/tests/test_engine.py::test_manual_mode_uses_attribute_in_constraints_flag FAILED [ 10%]
+app/modules/generator/tests/test_engine.py::test_constant_seed_and_index_determinism FAILED [ 11%]
+app/modules/generator/tests/test_wizard_outputs.py::test_boolean_only_wizard_produces_only_boolean PASSED [ 11%]
+app/modules/generator/tests/test_wizard_outputs.py::test_arithmetic_level_wizard_produces_arithmetic_constraints PASSED [ 11%]
+app/modules/generator/tests/test_wizard_outputs.py::test_aggregate_functions_wizard_produces_sum_or_avg PASSED [ 12%]
+app/modules/generator/tests/test_wizard_outputs.py::test_string_level_wizard_produces_string_constraints PASSED [ 12%]
+app/modules/generator/tests/test_wizard_outputs.py::test_arithmetic_off_means_no_arithmetic_in_output PASSED [ 12%]
+app/modules/generator/tests/test_wizard_outputs.py::test_type_off_means_no_string_ctc PASSED [ 13%]
+app/modules/generator/tests/test_wizard_outputs.py::test_feature_cardinality_off_means_no_cardinality_in_uvl PASSED [ 13%]
+app/modules/generator/tests/test_wizard_outputs.py::test_feature_cardinality_on_produces_cardinality PASSED [ 14%]
+app/modules/generator/tests/test_wizard_outputs.py::test_group_cardinality_off_keeps_only_standard_relations PASSED [ 14%]
+app/modules/generator/tests/test_wizard_outputs.py::test_group_cardinality_on_produces_groups PASSED [ 14%]
+app/modules/generator/tests/test_wizard_outputs.py::test_num_models_propagates PASSED [ 15%]
+app/modules/generator/tests/test_wizard_outputs.py::test_name_prefix_propagates PASSED [ 15%]
+app/modules/generator/tests/test_wizard_outputs.py::test_ensure_satisfiable_propagates PASSED [ 15%]
+app/modules/generator/tests/test_wizard_outputs.py::test_filename_suffixes_propagate PASSED [ 16%]
+app/modules/generator/tests/test_wizard_outputs.py::test_filename_suffixes_applied_to_generated_files PASSED [ 16%]
+app/modules/generator/tests/test_wizard_outputs.py::test_vars_per_constraint_fixed_observed_in_output PASSED [ 16%]
+app/modules/generator/tests/test_wizard_outputs.py::test_prob_not_zero_propagates PASSED [ 17%]
+app/modules/generator/tests/test_wizard_outputs.py::test_prob_and_dominant_produces_mostly_conjunctions PASSED [ 17%]
+app/modules/generator/tests/test_wizard_outputs.py::test_attr_type_dominance_boolean FAILED [ 17%]
+app/modules/generator/tests/test_wizard_outputs.py::test_ctc_dist_weights_force_string FAILED [ 18%]
+app/modules/generator/tests/test_wizard_outputs.py::test_num_models_roundtrip[1] PASSED [ 18%]
+app/modules/generator/tests/test_wizard_outputs.py::test_num_models_roundtrip[2] PASSED [ 19%]
+app/modules/generator/tests/test_wizard_outputs.py::test_num_models_roundtrip[3] PASSED [ 19%]
+app/modules/generator/tests/test_wizard_outputs.py::test_num_models_roundtrip[5] PASSED [ 19%]
+app/modules/generator/tests/test_wizard_outputs.py::test_num_models_roundtrip[10] PASSED [ 20%]
+app/modules/generator/tests/test_wizard_outputs.py::test_num_models_roundtrip[25] PASSED [ 20%]
+app/modules/generator/tests/test_wizard_outputs.py::test_num_models_roundtrip[50] PASSED [ 20%]
+app/modules/generator/tests/test_wizard_outputs.py::test_num_models_roundtrip[100] PASSED [ 21%]
+app/modules/generator/tests/test_wizard_outputs.py::test_num_models_roundtrip[500] PASSED [ 21%]
+app/modules/generator/tests/test_wizard_outputs.py::test_num_models_roundtrip[1000] PASSED [ 21%]
+app/modules/generator/tests/test_wizard_outputs.py::test_seed_roundtrip[1] PASSED [ 22%]
+app/modules/generator/tests/test_wizard_outputs.py::test_seed_roundtrip[7] PASSED [ 22%]
+app/modules/generator/tests/test_wizard_outputs.py::test_seed_roundtrip[42] PASSED [ 23%]
+app/modules/generator/tests/test_wizard_outputs.py::test_seed_roundtrip[123] PASSED [ 23%]
+app/modules/generator/tests/test_wizard_outputs.py::test_seed_roundtrip[1000] PASSED [ 23%]
+app/modules/generator/tests/test_wizard_outputs.py::test_seed_roundtrip[999999] PASSED [ 24%]
+app/modules/generator/tests/test_wizard_outputs.py::test_name_prefix_roundtrip[fm] PASSED [ 24%]
+app/modules/generator/tests/test_wizard_outputs.py::test_name_prefix_roundtrip[m_] PASSED [ 24%]
+app/modules/generator/tests/test_wizard_outputs.py::test_name_prefix_roundtrip[model-] PASSED [ 25%]
+app/modules/generator/tests/test_wizard_outputs.py::test_name_prefix_roundtrip[feat_] PASSED [ 25%]
+app/modules/generator/tests/test_wizard_outputs.py::test_name_prefix_roundtrip[zork42_] PASSED [ 25%]
+app/modules/generator/tests/test_wizard_outputs.py::test_name_prefix_roundtrip[a] PASSED [ 26%]
+app/modules/generator/tests/test_wizard_outputs.py::test_name_prefix_roundtrip[generated_] PASSED [ 26%]
+app/modules/generator/tests/test_wizard_outputs.py::test_name_prefix_roundtrip[test] PASSED [ 26%]
+app/modules/generator/tests/test_wizard_outputs.py::test_name_prefix_roundtrip[v2_] PASSED [ 27%]
+app/modules/generator/tests/test_wizard_outputs.py::test_name_prefix_roundtrip[fm_x_] PASSED [ 27%]
+app/modules/generator/tests/test_wizard_outputs.py::test_step1_rejects_bad_num_models[0] PASSED [ 28%]
+app/modules/generator/tests/test_wizard_outputs.py::test_step1_rejects_bad_num_models[-1] PASSED [ 28%]
+app/modules/generator/tests/test_wizard_outputs.py::test_step1_rejects_bad_num_models[1001] PASSED [ 28%]
+app/modules/generator/tests/test_wizard_outputs.py::test_step1_rejects_bad_num_models[abc] PASSED [ 29%]
+app/modules/generator/tests/test_wizard_outputs.py::test_step1_rejects_bad_num_models[] PASSED [ 29%]
+app/modules/generator/tests/test_wizard_outputs.py::test_step1_rejects_bad_num_models[1.5] PASSED [ 29%]
+app/modules/generator/tests/test_wizard_outputs.py::test_step1_rejects_bad_seed[0] PASSED [ 30%]
+app/modules/generator/tests/test_wizard_outputs.py::test_step1_rejects_bad_seed[-1] PASSED [ 30%]
+app/modules/generator/tests/test_wizard_outputs.py::test_step1_rejects_bad_seed[abc] PASSED [ 30%]
+app/modules/generator/tests/test_wizard_outputs.py::test_step1_rejects_bad_seed[] PASSED [ 31%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A0T0FC0AG0ST0GC0] PASSED [ 31%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A0T0FC0AG0ST0GC1] PASSED [ 32%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A0T0FC0AG0ST1GC0] PASSED [ 32%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A0T0FC0AG0ST1GC1] PASSED [ 32%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A0T0FC0AG1ST0GC0] PASSED [ 33%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A0T0FC0AG1ST0GC1] PASSED [ 33%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A0T0FC0AG1ST1GC0] PASSED [ 33%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A0T0FC0AG1ST1GC1] PASSED [ 34%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A0T0FC1AG0ST0GC0] PASSED [ 34%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A0T0FC1AG0ST0GC1] PASSED [ 34%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A0T0FC1AG0ST1GC0] PASSED [ 35%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A0T0FC1AG0ST1GC1] PASSED [ 35%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A0T0FC1AG1ST0GC0] PASSED [ 35%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A0T0FC1AG1ST0GC1] PASSED [ 36%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A0T0FC1AG1ST1GC0] PASSED [ 36%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A0T0FC1AG1ST1GC1] PASSED [ 37%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A0T1FC0AG0ST0GC0] PASSED [ 37%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A0T1FC0AG0ST0GC1] PASSED [ 37%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A0T1FC0AG0ST1GC0] PASSED [ 38%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A0T1FC0AG0ST1GC1] PASSED [ 38%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A0T1FC0AG1ST0GC0] PASSED [ 38%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A0T1FC0AG1ST0GC1] PASSED [ 39%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A0T1FC0AG1ST1GC0] PASSED [ 39%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A0T1FC0AG1ST1GC1] PASSED [ 39%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A0T1FC1AG0ST0GC0] PASSED [ 40%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A0T1FC1AG0ST0GC1] PASSED [ 40%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A0T1FC1AG0ST1GC0] PASSED [ 41%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A0T1FC1AG0ST1GC1] PASSED [ 41%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A0T1FC1AG1ST0GC0] PASSED [ 41%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A0T1FC1AG1ST0GC1] PASSED [ 42%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A0T1FC1AG1ST1GC0] PASSED [ 42%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A0T1FC1AG1ST1GC1] PASSED [ 42%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A1T0FC0AG0ST0GC0] PASSED [ 43%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A1T0FC0AG0ST0GC1] PASSED [ 43%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A1T0FC0AG0ST1GC0] PASSED [ 43%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A1T0FC0AG0ST1GC1] PASSED [ 44%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A1T0FC0AG1ST0GC0] PASSED [ 44%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A1T0FC0AG1ST0GC1] PASSED [ 44%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A1T0FC0AG1ST1GC0] PASSED [ 45%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A1T0FC0AG1ST1GC1] PASSED [ 45%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A1T0FC1AG0ST0GC0] PASSED [ 46%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A1T0FC1AG0ST0GC1] PASSED [ 46%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A1T0FC1AG0ST1GC0] PASSED [ 46%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A1T0FC1AG0ST1GC1] PASSED [ 47%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A1T0FC1AG1ST0GC0] PASSED [ 47%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A1T0FC1AG1ST0GC1] PASSED [ 47%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A1T0FC1AG1ST1GC0] PASSED [ 48%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A1T0FC1AG1ST1GC1] PASSED [ 48%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A1T1FC0AG0ST0GC0] PASSED [ 48%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A1T1FC0AG0ST0GC1] PASSED [ 49%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A1T1FC0AG0ST1GC0] PASSED [ 49%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A1T1FC0AG0ST1GC1] PASSED [ 50%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A1T1FC0AG1ST0GC0] PASSED [ 50%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A1T1FC0AG1ST0GC1] PASSED [ 50%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A1T1FC0AG1ST1GC0] PASSED [ 51%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A1T1FC0AG1ST1GC1] PASSED [ 51%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A1T1FC1AG0ST0GC0] PASSED [ 51%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A1T1FC1AG0ST0GC1] PASSED [ 52%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A1T1FC1AG0ST1GC0] PASSED [ 52%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A1T1FC1AG0ST1GC1] PASSED [ 52%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A1T1FC1AG1ST0GC0] PASSED [ 53%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A1T1FC1AG1ST0GC1] PASSED [ 53%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A1T1FC1AG1ST1GC0] PASSED [ 53%]
+app/modules/generator/tests/test_wizard_outputs.py::test_every_level_combo_walks_the_wizard[A1T1FC1AG1ST1GC1] PASSED [ 54%]
+app/modules/generator/tests/test_wizard_outputs.py::test_feature_count_bounds_roundtrip[1-3] PASSED [ 54%]
+app/modules/generator/tests/test_wizard_outputs.py::test_feature_count_bounds_roundtrip[3-5] PASSED [ 55%]
+app/modules/generator/tests/test_wizard_outputs.py::test_feature_count_bounds_roundtrip[5-10] PASSED [ 55%]
+app/modules/generator/tests/test_wizard_outputs.py::test_feature_count_bounds_roundtrip[10-15] PASSED [ 55%]
+app/modules/generator/tests/test_wizard_outputs.py::test_feature_count_bounds_roundtrip[15-20] PASSED [ 56%]
+app/modules/generator/tests/test_wizard_outputs.py::test_feature_count_bounds_roundtrip[20-30] PASSED [ 56%]
+app/modules/generator/tests/test_wizard_outputs.py::test_feature_count_bounds_roundtrip[50-50] PASSED [ 56%]
+app/modules/generator/tests/test_wizard_outputs.py::test_feature_count_bounds_roundtrip[1-50] PASSED [ 57%]
+app/modules/generator/tests/test_wizard_outputs.py::test_max_tree_depth_roundtrip[1] PASSED [ 57%]
+app/modules/generator/tests/test_wizard_outputs.py::test_max_tree_depth_roundtrip[2] PASSED [ 57%]
+app/modules/generator/tests/test_wizard_outputs.py::test_max_tree_depth_roundtrip[3] PASSED [ 58%]
+app/modules/generator/tests/test_wizard_outputs.py::test_max_tree_depth_roundtrip[4] PASSED [ 58%]
+app/modules/generator/tests/test_wizard_outputs.py::test_max_tree_depth_roundtrip[5] PASSED [ 58%]
+app/modules/generator/tests/test_wizard_outputs.py::test_max_tree_depth_roundtrip[7] PASSED [ 59%]
+app/modules/generator/tests/test_wizard_outputs.py::test_max_tree_depth_roundtrip[10] PASSED [ 59%]
+app/modules/generator/tests/test_wizard_outputs.py::test_deeper_tree_yields_more_indent[1] PASSED [ 60%]
+app/modules/generator/tests/test_wizard_outputs.py::test_deeper_tree_yields_more_indent[2] PASSED [ 60%]
+app/modules/generator/tests/test_wizard_outputs.py::test_deeper_tree_yields_more_indent[3] PASSED [ 60%]
+app/modules/generator/tests/test_wizard_outputs.py::test_deeper_tree_yields_more_indent[4] PASSED [ 61%]
+app/modules/generator/tests/test_wizard_outputs.py::test_deeper_tree_yields_more_indent[5] PASSED [ 61%]
+app/modules/generator/tests/test_wizard_outputs.py::test_relation_distribution_dominance[dist0-optional] PASSED [ 61%]
+app/modules/generator/tests/test_wizard_outputs.py::test_relation_distribution_dominance[dist1-mandatory] PASSED [ 62%]
+app/modules/generator/tests/test_wizard_outputs.py::test_relation_distribution_dominance[dist2-alternative] PASSED [ 62%]
+app/modules/generator/tests/test_wizard_outputs.py::test_relation_distribution_dominance[dist3-or] PASSED [ 62%]
+app/modules/generator/tests/test_wizard_outputs.py::test_group_cardinality_bounds_roundtrip[1-3] PASSED [ 63%]
+app/modules/generator/tests/test_wizard_outputs.py::test_group_cardinality_bounds_roundtrip[2-5] PASSED [ 63%]
+app/modules/generator/tests/test_wizard_outputs.py::test_group_cardinality_bounds_roundtrip[1-2] PASSED [ 64%]
+app/modules/generator/tests/test_wizard_outputs.py::test_group_cardinality_bounds_roundtrip[3-6] PASSED [ 64%]
+app/modules/generator/tests/test_wizard_outputs.py::test_group_cardinality_bounds_roundtrip[1-10] PASSED [ 64%]
+app/modules/generator/tests/test_wizard_outputs.py::test_feature_cardinality_bounds_observed[2-2] PASSED [ 65%]
+app/modules/generator/tests/test_wizard_outputs.py::test_feature_cardinality_bounds_observed[2-5] PASSED [ 65%]
+app/modules/generator/tests/test_wizard_outputs.py::test_feature_cardinality_bounds_observed[3-7] PASSED [ 65%]
+app/modules/generator/tests/test_wizard_outputs.py::test_feature_cardinality_bounds_observed[1-3] PASSED [ 66%]
+app/modules/generator/tests/test_wizard_outputs.py::test_feature_cardinality_bounds_observed[5-10] PASSED [ 66%]
+app/modules/generator/tests/test_wizard_outputs.py::test_feature_cardinality_bounds_observed[2-20] PASSED [ 66%]
+app/modules/generator/tests/test_wizard_outputs.py::test_constraint_count_bounds_roundtrip[1-5] PASSED [ 67%]
+app/modules/generator/tests/test_wizard_outputs.py::test_constraint_count_bounds_roundtrip[3-8] PASSED [ 67%]
+app/modules/generator/tests/test_wizard_outputs.py::test_constraint_count_bounds_roundtrip[5-10] PASSED [ 67%]
+app/modules/generator/tests/test_wizard_outputs.py::test_constraint_count_bounds_roundtrip[10-20] PASSED [ 68%]
+app/modules/generator/tests/test_wizard_outputs.py::test_constraint_count_bounds_roundtrip[1-1] PASSED [ 68%]
+app/modules/generator/tests/test_wizard_outputs.py::test_constraint_count_bounds_roundtrip[15-15] PASSED [ 69%]
+app/modules/generator/tests/test_wizard_outputs.py::test_fixed_constraint_count_observed[1] PASSED [ 69%]
+app/modules/generator/tests/test_wizard_outputs.py::test_fixed_constraint_count_observed[3] PASSED [ 69%]
+app/modules/generator/tests/test_wizard_outputs.py::test_fixed_constraint_count_observed[5] PASSED [ 70%]
+app/modules/generator/tests/test_wizard_outputs.py::test_fixed_constraint_count_observed[7] PASSED [ 70%]
+app/modules/generator/tests/test_wizard_outputs.py::test_fixed_constraint_count_observed[10] PASSED [ 70%]
+app/modules/generator/tests/test_wizard_outputs.py::test_vars_per_ctc_roundtrip[1-2] PASSED [ 71%]
+app/modules/generator/tests/test_wizard_outputs.py::test_vars_per_ctc_roundtrip[2-3] PASSED [ 71%]
+app/modules/generator/tests/test_wizard_outputs.py::test_vars_per_ctc_roundtrip[2-5] PASSED [ 71%]
+app/modules/generator/tests/test_wizard_outputs.py::test_vars_per_ctc_roundtrip[3-7] PASSED [ 72%]
+app/modules/generator/tests/test_wizard_outputs.py::test_vars_per_ctc_roundtrip[1-10] PASSED [ 72%]
+app/modules/generator/tests/test_wizard_outputs.py::test_fixed_vars_per_ctc_observed[2] PASSED [ 73%]
+app/modules/generator/tests/test_wizard_outputs.py::test_fixed_vars_per_ctc_observed[3] PASSED [ 73%]
+app/modules/generator/tests/test_wizard_outputs.py::test_fixed_vars_per_ctc_observed[4] PASSED [ 73%]
+app/modules/generator/tests/test_wizard_outputs.py::test_fixed_vars_per_ctc_observed[5] PASSED [ 74%]
+app/modules/generator/tests/test_wizard_outputs.py::test_boolean_connective_dominance[probs0- & ] PASSED [ 74%]
+app/modules/generator/tests/test_wizard_outputs.py::test_boolean_connective_dominance[probs1- | ] PASSED [ 74%]
+app/modules/generator/tests/test_wizard_outputs.py::test_boolean_connective_dominance[probs2- => ] PASSED [ 75%]
+app/modules/generator/tests/test_wizard_outputs.py::test_boolean_connective_dominance[probs3- <=> ] PASSED [ 75%]
+app/modules/generator/tests/test_wizard_outputs.py::test_arithmetic_operator_dominance[probs0- + ] PASSED [ 75%]
+app/modules/generator/tests/test_wizard_outputs.py::test_arithmetic_operator_dominance[probs1- - ] PASSED [ 76%]
+app/modules/generator/tests/test_wizard_outputs.py::test_arithmetic_operator_dominance[probs2- * ] PASSED [ 76%]
+app/modules/generator/tests/test_wizard_outputs.py::test_arithmetic_operator_dominance[probs3- / ] PASSED [ 76%]
+app/modules/generator/tests/test_wizard_outputs.py::test_comparison_operator_dominance[probs0-==] PASSED [ 77%]
+app/modules/generator/tests/test_wizard_outputs.py::test_comparison_operator_dominance[probs1- < ] PASSED [ 77%]
+app/modules/generator/tests/test_wizard_outputs.py::test_comparison_operator_dominance[probs2- > ] PASSED [ 78%]
+app/modules/generator/tests/test_wizard_outputs.py::test_comparison_operator_dominance[probs3- <= ] PASSED [ 78%]
+app/modules/generator/tests/test_wizard_outputs.py::test_comparison_operator_dominance[probs4- >= ] PASSED [ 78%]
+app/modules/generator/tests/test_wizard_outputs.py::test_aggregate_function_dominance[probs0-sum(] FAILED [ 79%]
+app/modules/generator/tests/test_wizard_outputs.py::test_aggregate_function_dominance[probs1-avg(] FAILED [ 79%]
+app/modules/generator/tests/test_wizard_outputs.py::test_prob_not_spectrum[0.0-False] PASSED [ 79%]
+app/modules/generator/tests/test_wizard_outputs.py::test_prob_not_spectrum[0.5-True] PASSED [ 80%]
+app/modules/generator/tests/test_wizard_outputs.py::test_prob_not_spectrum[1.0-True] PASSED [ 80%]
+app/modules/generator/tests/test_wizard_outputs.py::test_attribute_count_bounds_roundtrip[1-1] PASSED [ 80%]
+app/modules/generator/tests/test_wizard_outputs.py::test_attribute_count_bounds_roundtrip[2-2] PASSED [ 81%]
+app/modules/generator/tests/test_wizard_outputs.py::test_attribute_count_bounds_roundtrip[3-3] PASSED [ 81%]
+app/modules/generator/tests/test_wizard_outputs.py::test_attribute_count_bounds_roundtrip[5-5] PASSED [ 82%]
+app/modules/generator/tests/test_wizard_outputs.py::test_attribute_count_bounds_roundtrip[10-10] PASSED [ 82%]
+app/modules/generator/tests/test_wizard_outputs.py::test_attribute_count_bounds_roundtrip[1-3] PASSED [ 82%]
+app/modules/generator/tests/test_wizard_outputs.py::test_attribute_count_bounds_roundtrip[2-6] PASSED [ 83%]
+app/modules/generator/tests/test_wizard_outputs.py::test_attribute_count_bounds_roundtrip[1-10] PASSED [ 83%]
+app/modules/generator/tests/test_wizard_outputs.py::test_attribute_count_bounds_roundtrip[3-8] PASSED [ 83%]
+app/modules/generator/tests/test_wizard_outputs.py::test_attribute_fixed_count_observed[1] PASSED [ 84%]
+app/modules/generator/tests/test_wizard_outputs.py::test_attribute_fixed_count_observed[2] PASSED [ 84%]
+app/modules/generator/tests/test_wizard_outputs.py::test_attribute_fixed_count_observed[3] PASSED [ 84%]
+app/modules/generator/tests/test_wizard_outputs.py::test_attribute_fixed_count_observed[5] PASSED [ 85%]
+app/modules/generator/tests/test_wizard_outputs.py::test_attribute_fixed_count_observed[7] PASSED [ 85%]
+app/modules/generator/tests/test_wizard_outputs.py::test_attribute_type_dominance[dist0-boolean] FAILED [ 85%]
+app/modules/generator/tests/test_wizard_outputs.py::test_attribute_type_dominance[dist1-integer] FAILED [ 86%]
+app/modules/generator/tests/test_wizard_outputs.py::test_attribute_type_dominance[dist2-real] FAILED [ 86%]
+app/modules/generator/tests/test_wizard_outputs.py::test_attribute_type_dominance[dist3-string] FAILED [ 87%]
+app/modules/generator/tests/test_wizard_outputs.py::test_output_options_matrix[False-False-False] PASSED [ 87%]
+app/modules/generator/tests/test_wizard_outputs.py::test_output_options_matrix[False-False-True] PASSED [ 87%]
+app/modules/generator/tests/test_wizard_outputs.py::test_output_options_matrix[False-True-False] PASSED [ 88%]
+app/modules/generator/tests/test_wizard_outputs.py::test_output_options_matrix[False-True-True] PASSED [ 88%]
+app/modules/generator/tests/test_wizard_outputs.py::test_output_options_matrix[True-False-False] PASSED [ 88%]
+app/modules/generator/tests/test_wizard_outputs.py::test_output_options_matrix[True-False-True] PASSED [ 89%]
+app/modules/generator/tests/test_wizard_outputs.py::test_output_options_matrix[True-True-False] PASSED [ 89%]
+app/modules/generator/tests/test_wizard_outputs.py::test_output_options_matrix[True-True-True] PASSED [ 89%]
+app/modules/generator/tests/test_wizard_outputs.py::test_filename_suffix_combinations[flags0-^fm_\\d+\\.uvl$] PASSED [ 90%]
+app/modules/generator/tests/test_wizard_outputs.py::test_filename_suffix_combinations[flags1-^fm_\\d+f\\.uvl$] PASSED [ 90%]
+app/modules/generator/tests/test_wizard_outputs.py::test_filename_suffix_combinations[flags2-^fm_\\d+c\\.uvl$] PASSED [ 91%]
+app/modules/generator/tests/test_wizard_outputs.py::test_filename_suffix_combinations[flags3-^fm_\\d+f_\\d+c\\.uvl$] PASSED [ 91%]
+app/modules/generator/tests/test_wizard_outputs.py::test_ctc_dist_family_dominance[ctc_dist0-boolean] PASSED [ 91%]
+app/modules/generator/tests/test_wizard_outputs.py::test_ctc_dist_family_dominance[ctc_dist1-arith] PASSED [ 92%]
+app/modules/generator/tests/test_wizard_outputs.py::test_ctc_dist_family_dominance[ctc_dist2-string] FAILED [ 92%]
+app/modules/generator/tests/test_wizard_outputs.py::test_same_seed_gives_same_models[1] PASSED [ 92%]
+app/modules/generator/tests/test_wizard_outputs.py::test_same_seed_gives_same_models[7] PASSED [ 93%]
+app/modules/generator/tests/test_wizard_outputs.py::test_same_seed_gives_same_models[42] PASSED [ 93%]
+app/modules/generator/tests/test_wizard_outputs.py::test_same_seed_gives_same_models[1234] PASSED [ 93%]
+app/modules/generator/tests/test_wizard_outputs.py::test_same_seed_gives_same_models[99999] PASSED [ 94%]
+app/modules/generator/tests/test_wizard_outputs.py::test_prev_nav_goes_to_previous_step[2-/step1] PASSED [ 94%]
+app/modules/generator/tests/test_wizard_outputs.py::test_prev_nav_goes_to_previous_step[3-/step2] PASSED [ 94%]
+app/modules/generator/tests/test_wizard_outputs.py::test_prev_nav_goes_to_previous_step[4-/step3] PASSED [ 95%]
+app/modules/generator/tests/test_wizard_outputs.py::test_prev_nav_goes_to_previous_step[5-/step4] PASSED [ 95%]
+app/modules/generator/tests/test_wizard_outputs.py::test_prev_nav_goes_to_previous_step[6-/step5] PASSED [ 96%]
+app/modules/generator/tests/test_wizard_outputs.py::test_back_navigation_preserves_all_choices PASSED [ 96%]
+app/modules/generator/tests/test_wizard_outputs.py::test_everything_on_every_family_represented PASSED [ 96%]
+app/modules/generator/tests/test_wizard_outputs.py::test_each_step_renders_after_session_primed[1] PASSED [ 97%]
+app/modules/generator/tests/test_wizard_outputs.py::test_each_step_renders_after_session_primed[2] PASSED [ 97%]
+app/modules/generator/tests/test_wizard_outputs.py::test_each_step_renders_after_session_primed[3] PASSED [ 97%]
+app/modules/generator/tests/test_wizard_outputs.py::test_each_step_renders_after_session_primed[4] PASSED [ 98%]
+app/modules/generator/tests/test_wizard_outputs.py::test_each_step_renders_after_session_primed[5] PASSED [ 98%]
+app/modules/generator/tests/test_wizard_outputs.py::test_each_step_renders_after_session_primed[6] PASSED [ 98%]
+app/modules/generator/tests/test_wizard_outputs.py::test_params_json_roundtrips_through_params[1] PASSED [ 99%]
+app/modules/generator/tests/test_wizard_outputs.py::test_params_json_roundtrips_through_params[42] PASSED [ 99%]
+app/modules/generator/tests/test_wizard_outputs.py::test_params_json_roundtrips_through_params[777] PASSED [100%]
+
+=================================== FAILURES ===================================
+__________________________ test_num_models_respected ___________________________
+
+    def test_num_models_respected():
+>       p = _base_params(NUM_MODELS=7)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+app/modules/generator/tests/test_engine.py:92: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/modules/generator/tests/test_engine.py:76: in _base_params
+    return Params(**base)
+           ^^^^^^^^^^^^^^
+<string>:65: in __init__
+    ???
+fm_generator/src/fm_generator/FMGenerator/models/config.py:128: in __post_init__
+    self._validate_type_distribution()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = Params(NUM_MODELS=7, SEED=7, ENSURE_SATISFIABLE=False, NAME_PREFIX='fm', INCLUDE_FEATURE_COUNT_SUFFIX=False, INCLUDE_C...S=True, MIN_ATTRIBUTES=3, MAX_ATTRIBUTES=5, ATTRIBUTES_LIST=[], ATTRIBUTE_ATTACH_PROBS=[], ATTRIBUTE_IN_CONSTRAINTS=[])
+
+    def _validate_type_distribution(self):
+        active = [self.DIST_BOOLEAN]
+    
+        if self.ARITHMETIC_LEVEL:
+            active.extend([self.DIST_INTEGER, self.DIST_REAL])
+    
+        if self.TYPE_LEVEL:
+            active.append(self.DIST_STRING)
+    
+        if any(v < 0.0 or v > 1.0 for v in active):
+            raise ValueError("[ERROR] Attribute type probabilities must be between 0 and 1.")
+    
+        total = sum(active)
+        if abs(total - 1.0) > 1e-6:
+>           raise ValueError(f"[ERROR] Attribute type probabilities must sum to 1.0 (actual: {total}).")
+E           ValueError: [ERROR] Attribute type probabilities must sum to 1.0 (actual: 0.7).
+
+fm_generator/src/fm_generator/FMGenerator/models/config.py:210: ValueError
+______________________ test_feature_count_suffix_applied _______________________
+
+    def test_feature_count_suffix_applied():
+>       p = _base_params(NUM_MODELS=1, INCLUDE_FEATURE_COUNT_SUFFIX=True)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+app/modules/generator/tests/test_engine.py:99: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/modules/generator/tests/test_engine.py:76: in _base_params
+    return Params(**base)
+           ^^^^^^^^^^^^^^
+<string>:65: in __init__
+    ???
+fm_generator/src/fm_generator/FMGenerator/models/config.py:128: in __post_init__
+    self._validate_type_distribution()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = Params(NUM_MODELS=1, SEED=7, ENSURE_SATISFIABLE=False, NAME_PREFIX='fm', INCLUDE_FEATURE_COUNT_SUFFIX=True, INCLUDE_CO...S=True, MIN_ATTRIBUTES=3, MAX_ATTRIBUTES=5, ATTRIBUTES_LIST=[], ATTRIBUTE_ATTACH_PROBS=[], ATTRIBUTE_IN_CONSTRAINTS=[])
+
+    def _validate_type_distribution(self):
+        active = [self.DIST_BOOLEAN]
+    
+        if self.ARITHMETIC_LEVEL:
+            active.extend([self.DIST_INTEGER, self.DIST_REAL])
+    
+        if self.TYPE_LEVEL:
+            active.append(self.DIST_STRING)
+    
+        if any(v < 0.0 or v > 1.0 for v in active):
+            raise ValueError("[ERROR] Attribute type probabilities must be between 0 and 1.")
+    
+        total = sum(active)
+        if abs(total - 1.0) > 1e-6:
+>           raise ValueError(f"[ERROR] Attribute type probabilities must sum to 1.0 (actual: {total}).")
+E           ValueError: [ERROR] Attribute type probabilities must sum to 1.0 (actual: 0.7).
+
+fm_generator/src/fm_generator/FMGenerator/models/config.py:210: ValueError
+_____________________ test_constraint_count_suffix_applied _____________________
+
+    def test_constraint_count_suffix_applied():
+>       p = _base_params(NUM_MODELS=1, INCLUDE_CONSTRAINT_COUNT_SUFFIX=True)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+app/modules/generator/tests/test_engine.py:108: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/modules/generator/tests/test_engine.py:76: in _base_params
+    return Params(**base)
+           ^^^^^^^^^^^^^^
+<string>:65: in __init__
+    ???
+fm_generator/src/fm_generator/FMGenerator/models/config.py:128: in __post_init__
+    self._validate_type_distribution()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = Params(NUM_MODELS=1, SEED=7, ENSURE_SATISFIABLE=False, NAME_PREFIX='fm', INCLUDE_FEATURE_COUNT_SUFFIX=False, INCLUDE_C...S=True, MIN_ATTRIBUTES=3, MAX_ATTRIBUTES=5, ATTRIBUTES_LIST=[], ATTRIBUTE_ATTACH_PROBS=[], ATTRIBUTE_IN_CONSTRAINTS=[])
+
+    def _validate_type_distribution(self):
+        active = [self.DIST_BOOLEAN]
+    
+        if self.ARITHMETIC_LEVEL:
+            active.extend([self.DIST_INTEGER, self.DIST_REAL])
+    
+        if self.TYPE_LEVEL:
+            active.append(self.DIST_STRING)
+    
+        if any(v < 0.0 or v > 1.0 for v in active):
+            raise ValueError("[ERROR] Attribute type probabilities must be between 0 and 1.")
+    
+        total = sum(active)
+        if abs(total - 1.0) > 1e-6:
+>           raise ValueError(f"[ERROR] Attribute type probabilities must sum to 1.0 (actual: {total}).")
+E           ValueError: [ERROR] Attribute type probabilities must sum to 1.0 (actual: 0.7).
+
+fm_generator/src/fm_generator/FMGenerator/models/config.py:210: ValueError
+__________________________ test_both_suffixes_applied __________________________
+
+    def test_both_suffixes_applied():
+>       p = _base_params(
+            NUM_MODELS=1,
+            INCLUDE_FEATURE_COUNT_SUFFIX=True,
+            INCLUDE_CONSTRAINT_COUNT_SUFFIX=True,
+        )
+
+app/modules/generator/tests/test_engine.py:117: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/modules/generator/tests/test_engine.py:76: in _base_params
+    return Params(**base)
+           ^^^^^^^^^^^^^^
+<string>:65: in __init__
+    ???
+fm_generator/src/fm_generator/FMGenerator/models/config.py:128: in __post_init__
+    self._validate_type_distribution()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = Params(NUM_MODELS=1, SEED=7, ENSURE_SATISFIABLE=False, NAME_PREFIX='fm', INCLUDE_FEATURE_COUNT_SUFFIX=True, INCLUDE_CO...S=True, MIN_ATTRIBUTES=3, MAX_ATTRIBUTES=5, ATTRIBUTES_LIST=[], ATTRIBUTE_ATTACH_PROBS=[], ATTRIBUTE_IN_CONSTRAINTS=[])
+
+    def _validate_type_distribution(self):
+        active = [self.DIST_BOOLEAN]
+    
+        if self.ARITHMETIC_LEVEL:
+            active.extend([self.DIST_INTEGER, self.DIST_REAL])
+    
+        if self.TYPE_LEVEL:
+            active.append(self.DIST_STRING)
+    
+        if any(v < 0.0 or v > 1.0 for v in active):
+            raise ValueError("[ERROR] Attribute type probabilities must be between 0 and 1.")
+    
+        total = sum(active)
+        if abs(total - 1.0) > 1e-6:
+>           raise ValueError(f"[ERROR] Attribute type probabilities must sum to 1.0 (actual: {total}).")
+E           ValueError: [ERROR] Attribute type probabilities must sum to 1.0 (actual: 0.7).
+
+fm_generator/src/fm_generator/FMGenerator/models/config.py:210: ValueError
+___________________________ test_name_prefix_applied ___________________________
+
+    def test_name_prefix_applied():
+>       p = _base_params(NAME_PREFIX="PREFIXED_")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+app/modules/generator/tests/test_engine.py:130: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/modules/generator/tests/test_engine.py:76: in _base_params
+    return Params(**base)
+           ^^^^^^^^^^^^^^
+<string>:65: in __init__
+    ???
+fm_generator/src/fm_generator/FMGenerator/models/config.py:128: in __post_init__
+    self._validate_type_distribution()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = Params(NUM_MODELS=2, SEED=7, ENSURE_SATISFIABLE=False, NAME_PREFIX='PREFIXED_', INCLUDE_FEATURE_COUNT_SUFFIX=False, IN...S=True, MIN_ATTRIBUTES=3, MAX_ATTRIBUTES=5, ATTRIBUTES_LIST=[], ATTRIBUTE_ATTACH_PROBS=[], ATTRIBUTE_IN_CONSTRAINTS=[])
+
+    def _validate_type_distribution(self):
+        active = [self.DIST_BOOLEAN]
+    
+        if self.ARITHMETIC_LEVEL:
+            active.extend([self.DIST_INTEGER, self.DIST_REAL])
+    
+        if self.TYPE_LEVEL:
+            active.append(self.DIST_STRING)
+    
+        if any(v < 0.0 or v > 1.0 for v in active):
+            raise ValueError("[ERROR] Attribute type probabilities must be between 0 and 1.")
+    
+        total = sum(active)
+        if abs(total - 1.0) > 1e-6:
+>           raise ValueError(f"[ERROR] Attribute type probabilities must sum to 1.0 (actual: {total}).")
+E           ValueError: [ERROR] Attribute type probabilities must sum to 1.0 (actual: 0.7).
+
+fm_generator/src/fm_generator/FMGenerator/models/config.py:210: ValueError
+____________________ test_determinism_same_seed_same_output ____________________
+
+    def test_determinism_same_seed_same_output():
+>       a = _run(_base_params(SEED=123), n=3)
+                 ^^^^^^^^^^^^^^^^^^^^^^
+
+app/modules/generator/tests/test_engine.py:137: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/modules/generator/tests/test_engine.py:76: in _base_params
+    return Params(**base)
+           ^^^^^^^^^^^^^^
+<string>:65: in __init__
+    ???
+fm_generator/src/fm_generator/FMGenerator/models/config.py:128: in __post_init__
+    self._validate_type_distribution()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = Params(NUM_MODELS=2, SEED=123, ENSURE_SATISFIABLE=False, NAME_PREFIX='fm', INCLUDE_FEATURE_COUNT_SUFFIX=False, INCLUDE...S=True, MIN_ATTRIBUTES=3, MAX_ATTRIBUTES=5, ATTRIBUTES_LIST=[], ATTRIBUTE_ATTACH_PROBS=[], ATTRIBUTE_IN_CONSTRAINTS=[])
+
+    def _validate_type_distribution(self):
+        active = [self.DIST_BOOLEAN]
+    
+        if self.ARITHMETIC_LEVEL:
+            active.extend([self.DIST_INTEGER, self.DIST_REAL])
+    
+        if self.TYPE_LEVEL:
+            active.append(self.DIST_STRING)
+    
+        if any(v < 0.0 or v > 1.0 for v in active):
+            raise ValueError("[ERROR] Attribute type probabilities must be between 0 and 1.")
+    
+        total = sum(active)
+        if abs(total - 1.0) > 1e-6:
+>           raise ValueError(f"[ERROR] Attribute type probabilities must sum to 1.0 (actual: {total}).")
+E           ValueError: [ERROR] Attribute type probabilities must sum to 1.0 (actual: 0.7).
+
+fm_generator/src/fm_generator/FMGenerator/models/config.py:210: ValueError
+_____________________ test_different_seed_different_output _____________________
+
+    def test_different_seed_different_output():
+>       a = _run(_base_params(SEED=1), n=3)
+                 ^^^^^^^^^^^^^^^^^^^^
+
+app/modules/generator/tests/test_engine.py:143: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/modules/generator/tests/test_engine.py:76: in _base_params
+    return Params(**base)
+           ^^^^^^^^^^^^^^
+<string>:65: in __init__
+    ???
+fm_generator/src/fm_generator/FMGenerator/models/config.py:128: in __post_init__
+    self._validate_type_distribution()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = Params(NUM_MODELS=2, SEED=1, ENSURE_SATISFIABLE=False, NAME_PREFIX='fm', INCLUDE_FEATURE_COUNT_SUFFIX=False, INCLUDE_C...S=True, MIN_ATTRIBUTES=3, MAX_ATTRIBUTES=5, ATTRIBUTES_LIST=[], ATTRIBUTE_ATTACH_PROBS=[], ATTRIBUTE_IN_CONSTRAINTS=[])
+
+    def _validate_type_distribution(self):
+        active = [self.DIST_BOOLEAN]
+    
+        if self.ARITHMETIC_LEVEL:
+            active.extend([self.DIST_INTEGER, self.DIST_REAL])
+    
+        if self.TYPE_LEVEL:
+            active.append(self.DIST_STRING)
+    
+        if any(v < 0.0 or v > 1.0 for v in active):
+            raise ValueError("[ERROR] Attribute type probabilities must be between 0 and 1.")
+    
+        total = sum(active)
+        if abs(total - 1.0) > 1e-6:
+>           raise ValueError(f"[ERROR] Attribute type probabilities must sum to 1.0 (actual: {total}).")
+E           ValueError: [ERROR] Attribute type probabilities must sum to 1.0 (actual: 0.7).
+
+fm_generator/src/fm_generator/FMGenerator/models/config.py:210: ValueError
+_________________________ test_feature_count_in_range __________________________
+
+    def test_feature_count_in_range():
+        """Every generated model must have MIN_FEATURES ≤ n ≤ MAX_FEATURES +1
+        (the +1 covers the root)."""
+>       p = _base_params(MIN_FEATURES=5, MAX_FEATURES=8)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+app/modules/generator/tests/test_engine.py:154: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/modules/generator/tests/test_engine.py:76: in _base_params
+    return Params(**base)
+           ^^^^^^^^^^^^^^
+<string>:65: in __init__
+    ???
+fm_generator/src/fm_generator/FMGenerator/models/config.py:128: in __post_init__
+    self._validate_type_distribution()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = Params(NUM_MODELS=2, SEED=7, ENSURE_SATISFIABLE=False, NAME_PREFIX='fm', INCLUDE_FEATURE_COUNT_SUFFIX=False, INCLUDE_C...S=True, MIN_ATTRIBUTES=3, MAX_ATTRIBUTES=5, ATTRIBUTES_LIST=[], ATTRIBUTE_ATTACH_PROBS=[], ATTRIBUTE_IN_CONSTRAINTS=[])
+
+    def _validate_type_distribution(self):
+        active = [self.DIST_BOOLEAN]
+    
+        if self.ARITHMETIC_LEVEL:
+            active.extend([self.DIST_INTEGER, self.DIST_REAL])
+    
+        if self.TYPE_LEVEL:
+            active.append(self.DIST_STRING)
+    
+        if any(v < 0.0 or v > 1.0 for v in active):
+            raise ValueError("[ERROR] Attribute type probabilities must be between 0 and 1.")
+    
+        total = sum(active)
+        if abs(total - 1.0) > 1e-6:
+>           raise ValueError(f"[ERROR] Attribute type probabilities must sum to 1.0 (actual: {total}).")
+E           ValueError: [ERROR] Attribute type probabilities must sum to 1.0 (actual: 0.7).
+
+fm_generator/src/fm_generator/FMGenerator/models/config.py:210: ValueError
+________________________ test_max_tree_depth_respected _________________________
+
+    def test_max_tree_depth_respected():
+        """No child feature should live deeper than MAX_TREE_DEPTH levels below
+        the root. Features are indented with tabs in UVL; each level adds 2 tabs
+        (one for the relation keyword, one for the child). Root sits at 1 tab,
+        so max depth D means the deepest feature is at 1 + 2*D tabs."""
+>       p = _base_params(MAX_TREE_DEPTH=3, MIN_FEATURES=6, MAX_FEATURES=10)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+app/modules/generator/tests/test_engine.py:168: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/modules/generator/tests/test_engine.py:76: in _base_params
+    return Params(**base)
+           ^^^^^^^^^^^^^^
+<string>:65: in __init__
+    ???
+fm_generator/src/fm_generator/FMGenerator/models/config.py:128: in __post_init__
+    self._validate_type_distribution()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = Params(NUM_MODELS=2, SEED=7, ENSURE_SATISFIABLE=False, NAME_PREFIX='fm', INCLUDE_FEATURE_COUNT_SUFFIX=False, INCLUDE_C...S=True, MIN_ATTRIBUTES=3, MAX_ATTRIBUTES=5, ATTRIBUTES_LIST=[], ATTRIBUTE_ATTACH_PROBS=[], ATTRIBUTE_IN_CONSTRAINTS=[])
+
+    def _validate_type_distribution(self):
+        active = [self.DIST_BOOLEAN]
+    
+        if self.ARITHMETIC_LEVEL:
+            active.extend([self.DIST_INTEGER, self.DIST_REAL])
+    
+        if self.TYPE_LEVEL:
+            active.append(self.DIST_STRING)
+    
+        if any(v < 0.0 or v > 1.0 for v in active):
+            raise ValueError("[ERROR] Attribute type probabilities must be between 0 and 1.")
+    
+        total = sum(active)
+        if abs(total - 1.0) > 1e-6:
+>           raise ValueError(f"[ERROR] Attribute type probabilities must sum to 1.0 (actual: {total}).")
+E           ValueError: [ERROR] Attribute type probabilities must sum to 1.0 (actual: 0.7).
+
+fm_generator/src/fm_generator/FMGenerator/models/config.py:210: ValueError
+____________ test_group_cardinality_off_produces_no_group_relations ____________
+
+    def test_group_cardinality_off_produces_no_group_relations():
+>       p = _base_params(
+            GROUP_CARDINALITY=False,
+            DIST_OPTIONAL=0.25,
+            DIST_MANDATORY=0.25,
+            DIST_ALTERNATIVE=0.25,
+            DIST_OR=0.25,
+            DIST_GROUP_CARDINALITY=0.0,
+        )
+
+app/modules/generator/tests/test_engine.py:176: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/modules/generator/tests/test_engine.py:76: in _base_params
+    return Params(**base)
+           ^^^^^^^^^^^^^^
+<string>:65: in __init__
+    ???
+fm_generator/src/fm_generator/FMGenerator/models/config.py:128: in __post_init__
+    self._validate_type_distribution()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = Params(NUM_MODELS=2, SEED=7, ENSURE_SATISFIABLE=False, NAME_PREFIX='fm', INCLUDE_FEATURE_COUNT_SUFFIX=False, INCLUDE_C...S=True, MIN_ATTRIBUTES=3, MAX_ATTRIBUTES=5, ATTRIBUTES_LIST=[], ATTRIBUTE_ATTACH_PROBS=[], ATTRIBUTE_IN_CONSTRAINTS=[])
+
+    def _validate_type_distribution(self):
+        active = [self.DIST_BOOLEAN]
+    
+        if self.ARITHMETIC_LEVEL:
+            active.extend([self.DIST_INTEGER, self.DIST_REAL])
+    
+        if self.TYPE_LEVEL:
+            active.append(self.DIST_STRING)
+    
+        if any(v < 0.0 or v > 1.0 for v in active):
+            raise ValueError("[ERROR] Attribute type probabilities must be between 0 and 1.")
+    
+        total = sum(active)
+        if abs(total - 1.0) > 1e-6:
+>           raise ValueError(f"[ERROR] Attribute type probabilities must sum to 1.0 (actual: {total}).")
+E           ValueError: [ERROR] Attribute type probabilities must sum to 1.0 (actual: 0.7).
+
+fm_generator/src/fm_generator/FMGenerator/models/config.py:210: ValueError
+_________ test_group_cardinality_on_with_weight_produces_group_groups __________
+
+    def test_group_cardinality_on_with_weight_produces_group_groups():
+>       p = _base_params(
+            GROUP_CARDINALITY=True,
+            DIST_OPTIONAL=0.1,
+            DIST_MANDATORY=0.1,
+            DIST_ALTERNATIVE=0.1,
+            DIST_OR=0.1,
+            DIST_GROUP_CARDINALITY=0.6,
+            MIN_FEATURES=8,
+            MAX_FEATURES=12,
+        )
+
+app/modules/generator/tests/test_engine.py:191: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/modules/generator/tests/test_engine.py:76: in _base_params
+    return Params(**base)
+           ^^^^^^^^^^^^^^
+<string>:65: in __init__
+    ???
+fm_generator/src/fm_generator/FMGenerator/models/config.py:128: in __post_init__
+    self._validate_type_distribution()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = Params(NUM_MODELS=2, SEED=7, ENSURE_SATISFIABLE=False, NAME_PREFIX='fm', INCLUDE_FEATURE_COUNT_SUFFIX=False, INCLUDE_C...S=True, MIN_ATTRIBUTES=3, MAX_ATTRIBUTES=5, ATTRIBUTES_LIST=[], ATTRIBUTE_ATTACH_PROBS=[], ATTRIBUTE_IN_CONSTRAINTS=[])
+
+    def _validate_type_distribution(self):
+        active = [self.DIST_BOOLEAN]
+    
+        if self.ARITHMETIC_LEVEL:
+            active.extend([self.DIST_INTEGER, self.DIST_REAL])
+    
+        if self.TYPE_LEVEL:
+            active.append(self.DIST_STRING)
+    
+        if any(v < 0.0 or v > 1.0 for v in active):
+            raise ValueError("[ERROR] Attribute type probabilities must be between 0 and 1.")
+    
+        total = sum(active)
+        if abs(total - 1.0) > 1e-6:
+>           raise ValueError(f"[ERROR] Attribute type probabilities must sum to 1.0 (actual: {total}).")
+E           ValueError: [ERROR] Attribute type probabilities must sum to 1.0 (actual: 0.7).
+
+fm_generator/src/fm_generator/FMGenerator/models/config.py:210: ValueError
+__________________ test_feature_cardinality_off_produces_none __________________
+
+    def test_feature_cardinality_off_produces_none():
+>       p = _base_params(ARITHMETIC_LEVEL=True, FEATURE_CARDINALITY=False)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+app/modules/generator/tests/test_engine.py:211: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/modules/generator/tests/test_engine.py:76: in _base_params
+    return Params(**base)
+           ^^^^^^^^^^^^^^
+<string>:65: in __init__
+    ???
+fm_generator/src/fm_generator/FMGenerator/models/config.py:128: in __post_init__
+    self._validate_type_distribution()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = Params(NUM_MODELS=2, SEED=7, ENSURE_SATISFIABLE=False, NAME_PREFIX='fm', INCLUDE_FEATURE_COUNT_SUFFIX=False, INCLUDE_C...S=True, MIN_ATTRIBUTES=3, MAX_ATTRIBUTES=5, ATTRIBUTES_LIST=[], ATTRIBUTE_ATTACH_PROBS=[], ATTRIBUTE_IN_CONSTRAINTS=[])
+
+    def _validate_type_distribution(self):
+        active = [self.DIST_BOOLEAN]
+    
+        if self.ARITHMETIC_LEVEL:
+            active.extend([self.DIST_INTEGER, self.DIST_REAL])
+    
+        if self.TYPE_LEVEL:
+            active.append(self.DIST_STRING)
+    
+        if any(v < 0.0 or v > 1.0 for v in active):
+            raise ValueError("[ERROR] Attribute type probabilities must be between 0 and 1.")
+    
+        total = sum(active)
+        if abs(total - 1.0) > 1e-6:
+>           raise ValueError(f"[ERROR] Attribute type probabilities must sum to 1.0 (actual: {total}).")
+E           ValueError: [ERROR] Attribute type probabilities must sum to 1.0 (actual: 0.8999999999999999).
+
+fm_generator/src/fm_generator/FMGenerator/models/config.py:210: ValueError
+__________________ test_feature_cardinality_on_produces_some ___________________
+
+    def test_feature_cardinality_on_produces_some():
+>       p = _base_params(
+            ARITHMETIC_LEVEL=True,
+            FEATURE_CARDINALITY=True,
+            PROB_FEATURE_CARDINALITY=1.0,
+            MIN_FEATURE_CARDINALITY=[2],
+            MAX_FEATURE_CARDINALITY=[5],
+        )
+
+app/modules/generator/tests/test_engine.py:217: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/modules/generator/tests/test_engine.py:76: in _base_params
+    return Params(**base)
+           ^^^^^^^^^^^^^^
+<string>:65: in __init__
+    ???
+fm_generator/src/fm_generator/FMGenerator/models/config.py:128: in __post_init__
+    self._validate_type_distribution()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = Params(NUM_MODELS=2, SEED=7, ENSURE_SATISFIABLE=False, NAME_PREFIX='fm', INCLUDE_FEATURE_COUNT_SUFFIX=False, INCLUDE_C...S=True, MIN_ATTRIBUTES=3, MAX_ATTRIBUTES=5, ATTRIBUTES_LIST=[], ATTRIBUTE_ATTACH_PROBS=[], ATTRIBUTE_IN_CONSTRAINTS=[])
+
+    def _validate_type_distribution(self):
+        active = [self.DIST_BOOLEAN]
+    
+        if self.ARITHMETIC_LEVEL:
+            active.extend([self.DIST_INTEGER, self.DIST_REAL])
+    
+        if self.TYPE_LEVEL:
+            active.append(self.DIST_STRING)
+    
+        if any(v < 0.0 or v > 1.0 for v in active):
+            raise ValueError("[ERROR] Attribute type probabilities must be between 0 and 1.")
+    
+        total = sum(active)
+        if abs(total - 1.0) > 1e-6:
+>           raise ValueError(f"[ERROR] Attribute type probabilities must sum to 1.0 (actual: {total}).")
+E           ValueError: [ERROR] Attribute type probabilities must sum to 1.0 (actual: 0.8999999999999999).
+
+fm_generator/src/fm_generator/FMGenerator/models/config.py:210: ValueError
+_________________ test_random_attributes_respects_count_range __________________
+
+    def test_random_attributes_respects_count_range():
+>       p = _base_params(MIN_ATTRIBUTES=3, MAX_ATTRIBUTES=3)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+app/modules/generator/tests/test_engine.py:232: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/modules/generator/tests/test_engine.py:76: in _base_params
+    return Params(**base)
+           ^^^^^^^^^^^^^^
+<string>:65: in __init__
+    ???
+fm_generator/src/fm_generator/FMGenerator/models/config.py:128: in __post_init__
+    self._validate_type_distribution()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = Params(NUM_MODELS=2, SEED=7, ENSURE_SATISFIABLE=False, NAME_PREFIX='fm', INCLUDE_FEATURE_COUNT_SUFFIX=False, INCLUDE_C...S=True, MIN_ATTRIBUTES=3, MAX_ATTRIBUTES=3, ATTRIBUTES_LIST=[], ATTRIBUTE_ATTACH_PROBS=[], ATTRIBUTE_IN_CONSTRAINTS=[])
+
+    def _validate_type_distribution(self):
+        active = [self.DIST_BOOLEAN]
+    
+        if self.ARITHMETIC_LEVEL:
+            active.extend([self.DIST_INTEGER, self.DIST_REAL])
+    
+        if self.TYPE_LEVEL:
+            active.append(self.DIST_STRING)
+    
+        if any(v < 0.0 or v > 1.0 for v in active):
+            raise ValueError("[ERROR] Attribute type probabilities must be between 0 and 1.")
+    
+        total = sum(active)
+        if abs(total - 1.0) > 1e-6:
+>           raise ValueError(f"[ERROR] Attribute type probabilities must sum to 1.0 (actual: {total}).")
+E           ValueError: [ERROR] Attribute type probabilities must sum to 1.0 (actual: 0.7).
+
+fm_generator/src/fm_generator/FMGenerator/models/config.py:210: ValueError
+______________ test_dist_boolean_only_produces_only_boolean_attrs ______________
+
+    def test_dist_boolean_only_produces_only_boolean_attrs():
+>       p = _base_params(
+            DIST_BOOLEAN=1.0,
+            DIST_INTEGER=0.0,
+            DIST_REAL=0.0,
+            DIST_STRING=0.0,
+            MIN_ATTRIBUTES=3,
+            MAX_ATTRIBUTES=3,
+        )
+
+app/modules/generator/tests/test_engine.py:240: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/modules/generator/tests/test_engine.py:76: in _base_params
+    return Params(**base)
+           ^^^^^^^^^^^^^^
+<string>:65: in __init__
+    ???
+fm_generator/src/fm_generator/FMGenerator/models/config.py:129: in __post_init__
+    self._validate_constraint_type_distribution()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = Params(NUM_MODELS=2, SEED=7, ENSURE_SATISFIABLE=False, NAME_PREFIX='fm', INCLUDE_FEATURE_COUNT_SUFFIX=False, INCLUDE_C...S=True, MIN_ATTRIBUTES=3, MAX_ATTRIBUTES=3, ATTRIBUTES_LIST=[], ATTRIBUTE_ATTACH_PROBS=[], ATTRIBUTE_IN_CONSTRAINTS=[])
+
+    def _validate_constraint_type_distribution(self):
+        active = [self.CTC_DIST_BOOLEAN]
+    
+        if self.ARITHMETIC_LEVEL:
+            active.extend([self.CTC_DIST_INTEGER, self.CTC_DIST_REAL])
+    
+        if self.TYPE_LEVEL and self.STRING_CONSTRAINTS:
+            active.append(self.CTC_DIST_STRING)
+    
+        if any(v < 0.0 or v > 1.0 for v in active):
+            raise ValueError("[ERROR] CTC type probabilities must be between 0 and 1.")
+    
+        total = sum(active)
+        if abs(total - 1.0) > 1e-6:
+>           raise ValueError(f"[ERROR] CTC type probabilities must sum to 1.0 (actual: {total}).")
+E           ValueError: [ERROR] CTC type probabilities must sum to 1.0 (actual: 0.7).
+
+fm_generator/src/fm_generator/FMGenerator/models/config.py:226: ValueError
+________________ test_dist_integer_only_produces_integer_attrs _________________
+
+    def test_dist_integer_only_produces_integer_attrs():
+        p = _base_params(
+            ARITHMETIC_LEVEL=True,
+            DIST_BOOLEAN=0.0,
+            DIST_INTEGER=1.0,
+            DIST_REAL=0.0,
+            DIST_STRING=0.0,
+            MIN_ATTRIBUTES=3,
+            MAX_ATTRIBUTES=3,
+        )
+        text = _run(p, n=3)
+        attrs = re.findall(r"\{Attr\d+\s+([^,}]+)", text)
+        # Integers emit as bare ints like "57", not quoted, not booleans.
+        for v in attrs:
+            v = v.strip()
+>           assert re.match(r"^-?\d+$", v), f"expected integer, got {v!r}"
+E           AssertionError: expected integer, got '30.34'
+E           assert None
+E            +  where None = <function match at 0x73b4ab821120>('^-?\\d+$', '30.34')
+E            +    where <function match at 0x73b4ab821120> = re.match
+
+app/modules/generator/tests/test_engine.py:270: AssertionError
+__________________ test_dist_string_only_respects_type_level ___________________
+
+    def test_dist_string_only_respects_type_level():
+        p = _base_params(
+            TYPE_LEVEL=True,
+            DIST_BOOLEAN=0.0,
+            DIST_INTEGER=0.0,
+            DIST_REAL=0.0,
+            DIST_STRING=1.0,
+            MIN_ATTRIBUTES=3,
+            MAX_ATTRIBUTES=3,
+        )
+        text = _run(p, n=3)
+        # Strings emit quoted: {Attr0 'low'}
+>       assert re.search(r"\{Attr\d+\s+'[^']+'", text)
+E       assert None
+E        +  where None = <function search at 0x73b4ab860220>("\\{Attr\\d+\\s+'[^']+'", 'features\n\tF0 \n\t\toptional\n\t\t\tString F2 {Attr1 39.96, Attr2 73.17}\n\t\toptional\n\t\t\tString F1 \n\t\t\t\talternative\n\t\t\t\t\tString F5 \n\t\t\t\t\tString F4 \n\t\t\t\t\t\toptional\n\t\t\t\t\t\t\tString F7 \n\t\t\t\t\t\toptional\n\t\t\t\t\t\t\tString F6 {Attr0 46.91}\n\t\t\t\t\tString F3 \n\t\t\t\t\t\toptional\n\t\t\t\t\t\t\tString F8 \nconstraints\n\tF6.Attr0 <= F2.Attr1\nfeatures\n\tF0 \n\t\tmandatory\n\t\t\tString F2 \n\t\toptional\n\t\t\tString F1 \n\t\t\t\talternative\n\t\t\t\t\tString F4 \n\t\t\t\t\tString F3 \n\t\t\t\t\t\toptional\n\t\t\t\t\t\t\tString F7 {Attr2 22}\n\t\t\t\t\t\toptional\n\t\t\t\t\t\t\tString F6 {Attr1 36.36}\n\t\t\t\t\t\toptional\n\t\t\t\t\t\t\tString F5 {Attr0 41}\nconstraints\n\tF6.Attr1 <= (F5.Attr0 + F7.Attr2)\n\tF5.Attr0 == F7.Attr2\n\tF7.Attr2 < F6.Attr1\n\tF6.Attr1 <= (F5.Attr0 + F7.Attr2)\n\tF5.Attr0 == F6.Attr1\nfeatures\n\tF0 \n\t\tmandatory\n\t\t\tString F3 {Attr1 74}\n\t\toptional\n\t\t\tString F2 \n\t\t\t\toptional\n\t\t\t\t\tString F4 \n\t\t\t\t\t\tmandatory\n\t\t\t\t\t\t\tString F9 {Attr0 74, Attr2 false}\n\t\tmandatory\n\t\t\tString F1 \n\t\t\t\tmandatory\n\t\t\t\t\tString F6 \n\t\t\t\t\t\tmandatory\n\t\t\t\t\t\t\tString F7 \n\t\t\t\tmandatory\n\t\t\t\t\tString F5 \n\t\t\t\t\t\toptional\n\t\t\t\t\t\t\tString F8 \nconstraints\n\tF9.Attr0 >= F3.Attr1\n\tF9.Attr0 <= F3.Attr1')
+E        +    where <function search at 0x73b4ab860220> = re.search
+
+app/modules/generator/tests/test_engine.py:285: AssertionError
+__________________ test_no_integer_attrs_when_arithmetic_off ___________________
+
+    def test_no_integer_attrs_when_arithmetic_off():
+        """Even if DIST_INTEGER=1.0, ARITHMETIC_LEVEL=False falls back to Boolean."""
+>       p = _base_params(
+            ARITHMETIC_LEVEL=False,
+            DIST_BOOLEAN=0.0,
+            DIST_INTEGER=1.0,
+            DIST_REAL=0.0,
+            DIST_STRING=0.0,
+            MIN_ATTRIBUTES=3,
+            MAX_ATTRIBUTES=3,
+        )
+
+app/modules/generator/tests/test_engine.py:290: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/modules/generator/tests/test_engine.py:76: in _base_params
+    return Params(**base)
+           ^^^^^^^^^^^^^^
+<string>:65: in __init__
+    ???
+fm_generator/src/fm_generator/FMGenerator/models/config.py:128: in __post_init__
+    self._validate_type_distribution()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = Params(NUM_MODELS=2, SEED=7, ENSURE_SATISFIABLE=False, NAME_PREFIX='fm', INCLUDE_FEATURE_COUNT_SUFFIX=False, INCLUDE_C...S=True, MIN_ATTRIBUTES=3, MAX_ATTRIBUTES=3, ATTRIBUTES_LIST=[], ATTRIBUTE_ATTACH_PROBS=[], ATTRIBUTE_IN_CONSTRAINTS=[])
+
+    def _validate_type_distribution(self):
+        active = [self.DIST_BOOLEAN]
+    
+        if self.ARITHMETIC_LEVEL:
+            active.extend([self.DIST_INTEGER, self.DIST_REAL])
+    
+        if self.TYPE_LEVEL:
+            active.append(self.DIST_STRING)
+    
+        if any(v < 0.0 or v > 1.0 for v in active):
+            raise ValueError("[ERROR] Attribute type probabilities must be between 0 and 1.")
+    
+        total = sum(active)
+        if abs(total - 1.0) > 1e-6:
+>           raise ValueError(f"[ERROR] Attribute type probabilities must sum to 1.0 (actual: {total}).")
+E           ValueError: [ERROR] Attribute type probabilities must sum to 1.0 (actual: 0.0).
+
+fm_generator/src/fm_generator/FMGenerator/models/config.py:210: ValueError
+_______________ test_boolean_only_level_has_no_arith_no_strings ________________
+
+    def test_boolean_only_level_has_no_arith_no_strings():
+>       p = _base_params(
+            ARITHMETIC_LEVEL=False,
+            TYPE_LEVEL=False,
+            MIN_CONSTRAINTS=8,
+            MAX_CONSTRAINTS=10,
+        )
+
+app/modules/generator/tests/test_engine.py:310: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/modules/generator/tests/test_engine.py:76: in _base_params
+    return Params(**base)
+           ^^^^^^^^^^^^^^
+<string>:65: in __init__
+    ???
+fm_generator/src/fm_generator/FMGenerator/models/config.py:128: in __post_init__
+    self._validate_type_distribution()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = Params(NUM_MODELS=2, SEED=7, ENSURE_SATISFIABLE=False, NAME_PREFIX='fm', INCLUDE_FEATURE_COUNT_SUFFIX=False, INCLUDE_C...S=True, MIN_ATTRIBUTES=3, MAX_ATTRIBUTES=5, ATTRIBUTES_LIST=[], ATTRIBUTE_ATTACH_PROBS=[], ATTRIBUTE_IN_CONSTRAINTS=[])
+
+    def _validate_type_distribution(self):
+        active = [self.DIST_BOOLEAN]
+    
+        if self.ARITHMETIC_LEVEL:
+            active.extend([self.DIST_INTEGER, self.DIST_REAL])
+    
+        if self.TYPE_LEVEL:
+            active.append(self.DIST_STRING)
+    
+        if any(v < 0.0 or v > 1.0 for v in active):
+            raise ValueError("[ERROR] Attribute type probabilities must be between 0 and 1.")
+    
+        total = sum(active)
+        if abs(total - 1.0) > 1e-6:
+>           raise ValueError(f"[ERROR] Attribute type probabilities must sum to 1.0 (actual: {total}).")
+E           ValueError: [ERROR] Attribute type probabilities must sum to 1.0 (actual: 0.7).
+
+fm_generator/src/fm_generator/FMGenerator/models/config.py:210: ValueError
+___________________ test_aggregate_functions_produce_sum_avg ___________________
+
+    def test_aggregate_functions_produce_sum_avg():
+>       p = _base_params(
+            ARITHMETIC_LEVEL=True,
+            AGGREGATE_FUNCTIONS=True,
+            DIST_BOOLEAN=0.0,
+            DIST_INTEGER=1.0,
+            DIST_REAL=0.0,
+            DIST_STRING=0.0,
+            CTC_DIST_BOOLEAN=0.0,
+            CTC_DIST_INTEGER=1.0,
+            CTC_DIST_REAL=0.0,
+            CTC_DIST_STRING=0.0,
+            PROB_SUM_FUNCTION=0.5,
+            PROB_AVG_FUNCTION=0.5,
+            MIN_CONSTRAINTS=15,
+            MAX_CONSTRAINTS=15,
+            MIN_ATTRIBUTES=3,
+            MAX_ATTRIBUTES=4,
+        )
+
+app/modules/generator/tests/test_engine.py:355: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/modules/generator/tests/test_engine.py:76: in _base_params
+    return Params(**base)
+           ^^^^^^^^^^^^^^
+<string>:65: in __init__
+    ???
+fm_generator/src/fm_generator/FMGenerator/models/config.py:130: in __post_init__
+    self._validate_arithmetic_distribution()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = Params(NUM_MODELS=2, SEED=7, ENSURE_SATISFIABLE=False, NAME_PREFIX='fm', INCLUDE_FEATURE_COUNT_SUFFIX=False, INCLUDE_C...S=True, MIN_ATTRIBUTES=3, MAX_ATTRIBUTES=4, ATTRIBUTES_LIST=[], ATTRIBUTE_ATTACH_PROBS=[], ATTRIBUTE_IN_CONSTRAINTS=[])
+
+    def _validate_arithmetic_distribution(self):
+        if not self.ARITHMETIC_LEVEL:
+            return
+    
+        ops = [
+            self.PROB_SUM,
+            self.PROB_SUBSTRACT,
+            self.PROB_MULTIPLY,
+            self.PROB_DIVIDE,
+        ]
+    
+        if self.AGGREGATE_FUNCTIONS:
+            ops.extend([self.PROB_SUM_FUNCTION, self.PROB_AVG_FUNCTION])
+    
+        if any(v < 0.0 or v > 1.0 for v in ops):
+            raise ValueError("[ERROR] Arithmetic probabilities must be between 0 and 1.")
+    
+        total = sum(ops)
+        if abs(total - 1.0) > 1e-6:
+>           raise ValueError(f"[ERROR] Arithmetic probabilities must sum to 1.0 (actual: {total}).")
+E           ValueError: [ERROR] Arithmetic probabilities must sum to 1.0 (actual: 2.0).
+
+fm_generator/src/fm_generator/FMGenerator/models/config.py:247: ValueError
+__________________ test_string_level_produces_len_constraints __________________
+
+    def test_string_level_produces_len_constraints():
+        p = _base_params(
+            TYPE_LEVEL=True,
+            STRING_CONSTRAINTS=True,
+            DIST_BOOLEAN=0.0,
+            DIST_INTEGER=0.0,
+            DIST_REAL=0.0,
+            DIST_STRING=1.0,
+            CTC_DIST_BOOLEAN=0.0,
+            CTC_DIST_INTEGER=0.0,
+            CTC_DIST_REAL=0.0,
+            CTC_DIST_STRING=1.0,
+            PROB_LEN_FUNCTION=1.0,
+            MIN_CONSTRAINTS=10,
+            MAX_CONSTRAINTS=10,
+            MIN_ATTRIBUTES=3,
+            MAX_ATTRIBUTES=4,
+        )
+        text = _run(p, n=5)
+        body = "\n".join(_iter_constraint_lines(text))
+>       assert "len(" in body, f"no string (len) constraints emitted:\n{body}"
+E       AssertionError: no string (len) constraints emitted:
+E         F3 == F7
+E         F4 == F1
+E         F6 == F4
+E         F1 == F7
+E         F3 == F8
+E         F3 == F4
+E         F6 == F1
+E         F8 == F5
+E         F2 == F5
+E         F7 == F1
+E         include
+E         Type.string-constraints
+E         F2 == F4
+E         F1 == F5
+E         F1 == F5
+E         F4 == F3
+E         F3 == F5
+E         F7 == F3
+E         F7 == F3
+E         F5 == F1
+E         F4 == F2
+E         F2 == F5
+E         include
+E         Type.string-constraints
+E         F4 == F5
+E         (F8 == F3) & ! F9.Attr2
+E         (F7 == F1) & F9.Attr2
+E         F6 == F8
+E         F7 == F5
+E         F4 == F8
+E         F9 == F3
+E         F6 == F8
+E         F6 == F5
+E         F3 == F4
+E         include
+E         Type.string-constraints
+E         F6 == F4
+E         F3 == F2
+E         F9 == F3
+E         F1 == F10
+E         F9.Attr3 == F1
+E         F4 == F5
+E         F1 == F10
+E         F2 == F3
+E         F8 == F6
+E         F5 == F2
+E         include
+E         Type.string-constraints
+E         F5 == F2
+E         F2 == F6
+E         F9 == F4
+E         F6 == F5
+E         F8 == F5
+E         F3.Attr2 == F4
+E         F6 == F8
+E         F6 == F5
+E         F4 == F3.Attr2
+E         F3.Attr2 == F8
+E       assert 'len(' in 'F3 == F7\nF4 == F1\nF6 == F4\nF1 == F7\nF3 == F8\nF3 == F4\nF6 == F1\nF8 == F5\nF2 == F5\nF7 == F1\ninclude\nType.string-constraints\nF2 == F4\nF1 == F5\nF1 == F5\nF4 == F3\nF3 == F5\nF7 == F3\nF7 == F3\nF5 == F1\nF4 == F2\nF2 == F5\ninclude\nType.string-constraints\nF4 == F5\n(F8 == F3) & ! F9.Attr2\n(F7 == F1) & F9.Attr2\nF6 == F8\nF7 == F5\nF4 == F8\nF9 == F3\nF6 == F8\nF6 == F5\nF3 == F4\ninclude\nType.string-constraints\nF6 == F4\nF3 == F2\nF9 == F3\nF1 == F10\nF9.Attr3 == F1\nF4 == F5\nF1 == F10\nF2 == F3\nF8 == F6\nF5 == F2\ninclude\nType.string-constraints\nF5 == F2\nF2 == F6\nF9 == F4\nF6 == F5\nF8 == F5\nF3.Attr2 == F4\nF6 == F8\nF6 == F5\nF4 == F3.Attr2\nF3.Attr2 == F8'
+
+app/modules/generator/tests/test_engine.py:398: AssertionError
+____________________ test_min_vars_per_constraint_respected ____________________
+
+    def test_min_vars_per_constraint_respected():
+        """With MIN=MAX=4, every Boolean constraint has exactly 4 leaves."""
+>       p = _base_params(
+            MIN_VARS_PER_CONSTRAINT=4,
+            MAX_VARS_PER_CONSTRAINT=4,
+            PROB_NOT=0.0,
+            EXTRA_CONSTRAINT_REPRESENTATIVENESS=1,
+            MIN_CONSTRAINTS=6,
+            MAX_CONSTRAINTS=6,
+            MIN_FEATURES=10,
+            MAX_FEATURES=15,
+            MIN_ATTRIBUTES=0,
+            MAX_ATTRIBUTES=0,  # no attributes → purely Boolean ctcs
+        )
+
+app/modules/generator/tests/test_engine.py:420: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/modules/generator/tests/test_engine.py:76: in _base_params
+    return Params(**base)
+           ^^^^^^^^^^^^^^
+<string>:65: in __init__
+    ???
+fm_generator/src/fm_generator/FMGenerator/models/config.py:128: in __post_init__
+    self._validate_type_distribution()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = Params(NUM_MODELS=2, SEED=7, ENSURE_SATISFIABLE=False, NAME_PREFIX='fm', INCLUDE_FEATURE_COUNT_SUFFIX=False, INCLUDE_C...S=True, MIN_ATTRIBUTES=0, MAX_ATTRIBUTES=0, ATTRIBUTES_LIST=[], ATTRIBUTE_ATTACH_PROBS=[], ATTRIBUTE_IN_CONSTRAINTS=[])
+
+    def _validate_type_distribution(self):
+        active = [self.DIST_BOOLEAN]
+    
+        if self.ARITHMETIC_LEVEL:
+            active.extend([self.DIST_INTEGER, self.DIST_REAL])
+    
+        if self.TYPE_LEVEL:
+            active.append(self.DIST_STRING)
+    
+        if any(v < 0.0 or v > 1.0 for v in active):
+            raise ValueError("[ERROR] Attribute type probabilities must be between 0 and 1.")
+    
+        total = sum(active)
+        if abs(total - 1.0) > 1e-6:
+>           raise ValueError(f"[ERROR] Attribute type probabilities must sum to 1.0 (actual: {total}).")
+E           ValueError: [ERROR] Attribute type probabilities must sum to 1.0 (actual: 0.7).
+
+fm_generator/src/fm_generator/FMGenerator/models/config.py:210: ValueError
+___________________ test_prob_not_zero_produces_no_negations ___________________
+
+    def test_prob_not_zero_produces_no_negations():
+>       p = _base_params(
+            PROB_NOT=0.0,
+            MIN_CONSTRAINTS=8,
+            MAX_CONSTRAINTS=8,
+        )
+
+app/modules/generator/tests/test_engine.py:439: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/modules/generator/tests/test_engine.py:76: in _base_params
+    return Params(**base)
+           ^^^^^^^^^^^^^^
+<string>:65: in __init__
+    ???
+fm_generator/src/fm_generator/FMGenerator/models/config.py:128: in __post_init__
+    self._validate_type_distribution()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = Params(NUM_MODELS=2, SEED=7, ENSURE_SATISFIABLE=False, NAME_PREFIX='fm', INCLUDE_FEATURE_COUNT_SUFFIX=False, INCLUDE_C...S=True, MIN_ATTRIBUTES=3, MAX_ATTRIBUTES=5, ATTRIBUTES_LIST=[], ATTRIBUTE_ATTACH_PROBS=[], ATTRIBUTE_IN_CONSTRAINTS=[])
+
+    def _validate_type_distribution(self):
+        active = [self.DIST_BOOLEAN]
+    
+        if self.ARITHMETIC_LEVEL:
+            active.extend([self.DIST_INTEGER, self.DIST_REAL])
+    
+        if self.TYPE_LEVEL:
+            active.append(self.DIST_STRING)
+    
+        if any(v < 0.0 or v > 1.0 for v in active):
+            raise ValueError("[ERROR] Attribute type probabilities must be between 0 and 1.")
+    
+        total = sum(active)
+        if abs(total - 1.0) > 1e-6:
+>           raise ValueError(f"[ERROR] Attribute type probabilities must sum to 1.0 (actual: {total}).")
+E           ValueError: [ERROR] Attribute type probabilities must sum to 1.0 (actual: 0.7).
+
+fm_generator/src/fm_generator/FMGenerator/models/config.py:210: ValueError
+__________________ test_prob_not_one_produces_many_negations ___________________
+
+    def test_prob_not_one_produces_many_negations():
+>       p = _base_params(
+            PROB_NOT=1.0,
+            MIN_CONSTRAINTS=8,
+            MAX_CONSTRAINTS=8,
+        )
+
+app/modules/generator/tests/test_engine.py:451: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/modules/generator/tests/test_engine.py:76: in _base_params
+    return Params(**base)
+           ^^^^^^^^^^^^^^
+<string>:65: in __init__
+    ???
+fm_generator/src/fm_generator/FMGenerator/models/config.py:128: in __post_init__
+    self._validate_type_distribution()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = Params(NUM_MODELS=2, SEED=7, ENSURE_SATISFIABLE=False, NAME_PREFIX='fm', INCLUDE_FEATURE_COUNT_SUFFIX=False, INCLUDE_C...S=True, MIN_ATTRIBUTES=3, MAX_ATTRIBUTES=5, ATTRIBUTES_LIST=[], ATTRIBUTE_ATTACH_PROBS=[], ATTRIBUTE_IN_CONSTRAINTS=[])
+
+    def _validate_type_distribution(self):
+        active = [self.DIST_BOOLEAN]
+    
+        if self.ARITHMETIC_LEVEL:
+            active.extend([self.DIST_INTEGER, self.DIST_REAL])
+    
+        if self.TYPE_LEVEL:
+            active.append(self.DIST_STRING)
+    
+        if any(v < 0.0 or v > 1.0 for v in active):
+            raise ValueError("[ERROR] Attribute type probabilities must be between 0 and 1.")
+    
+        total = sum(active)
+        if abs(total - 1.0) > 1e-6:
+>           raise ValueError(f"[ERROR] Attribute type probabilities must sum to 1.0 (actual: {total}).")
+E           ValueError: [ERROR] Attribute type probabilities must sum to 1.0 (actual: 0.7).
+
+fm_generator/src/fm_generator/FMGenerator/models/config.py:210: ValueError
+______________________ test_min_max_constraints_respected ______________________
+
+    def test_min_max_constraints_respected():
+>       p = _base_params(MIN_CONSTRAINTS=3, MAX_CONSTRAINTS=3)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+app/modules/generator/tests/test_engine.py:462: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/modules/generator/tests/test_engine.py:76: in _base_params
+    return Params(**base)
+           ^^^^^^^^^^^^^^
+<string>:65: in __init__
+    ???
+fm_generator/src/fm_generator/FMGenerator/models/config.py:128: in __post_init__
+    self._validate_type_distribution()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = Params(NUM_MODELS=2, SEED=7, ENSURE_SATISFIABLE=False, NAME_PREFIX='fm', INCLUDE_FEATURE_COUNT_SUFFIX=False, INCLUDE_C...S=True, MIN_ATTRIBUTES=3, MAX_ATTRIBUTES=5, ATTRIBUTES_LIST=[], ATTRIBUTE_ATTACH_PROBS=[], ATTRIBUTE_IN_CONSTRAINTS=[])
+
+    def _validate_type_distribution(self):
+        active = [self.DIST_BOOLEAN]
+    
+        if self.ARITHMETIC_LEVEL:
+            active.extend([self.DIST_INTEGER, self.DIST_REAL])
+    
+        if self.TYPE_LEVEL:
+            active.append(self.DIST_STRING)
+    
+        if any(v < 0.0 or v > 1.0 for v in active):
+            raise ValueError("[ERROR] Attribute type probabilities must be between 0 and 1.")
+    
+        total = sum(active)
+        if abs(total - 1.0) > 1e-6:
+>           raise ValueError(f"[ERROR] Attribute type probabilities must sum to 1.0 (actual: {total}).")
+E           ValueError: [ERROR] Attribute type probabilities must sum to 1.0 (actual: 0.7).
+
+fm_generator/src/fm_generator/FMGenerator/models/config.py:210: ValueError
+____________________________ test_prob_and_dominant ____________________________
+
+    def test_prob_and_dominant():
+        """With PROB_AND=1.0, PROB_OR/IMPLIES/EQUIV=0, every Boolean connective
+        should be AND (serialised as ' & ')."""
+>       p = _base_params(
+            PROB_AND=1.0,
+            PROB_OR_CT=0.0,
+            PROB_IMPLICATION=0.0,
+            PROB_EQUIVALENCE=0.0,
+            PROB_NOT=0.0,
+            MIN_CONSTRAINTS=10,
+            MAX_CONSTRAINTS=10,
+        )
+
+app/modules/generator/tests/test_engine.py:476: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/modules/generator/tests/test_engine.py:76: in _base_params
+    return Params(**base)
+           ^^^^^^^^^^^^^^
+<string>:65: in __init__
+    ???
+fm_generator/src/fm_generator/FMGenerator/models/config.py:128: in __post_init__
+    self._validate_type_distribution()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = Params(NUM_MODELS=2, SEED=7, ENSURE_SATISFIABLE=False, NAME_PREFIX='fm', INCLUDE_FEATURE_COUNT_SUFFIX=False, INCLUDE_C...S=True, MIN_ATTRIBUTES=3, MAX_ATTRIBUTES=5, ATTRIBUTES_LIST=[], ATTRIBUTE_ATTACH_PROBS=[], ATTRIBUTE_IN_CONSTRAINTS=[])
+
+    def _validate_type_distribution(self):
+        active = [self.DIST_BOOLEAN]
+    
+        if self.ARITHMETIC_LEVEL:
+            active.extend([self.DIST_INTEGER, self.DIST_REAL])
+    
+        if self.TYPE_LEVEL:
+            active.append(self.DIST_STRING)
+    
+        if any(v < 0.0 or v > 1.0 for v in active):
+            raise ValueError("[ERROR] Attribute type probabilities must be between 0 and 1.")
+    
+        total = sum(active)
+        if abs(total - 1.0) > 1e-6:
+>           raise ValueError(f"[ERROR] Attribute type probabilities must sum to 1.0 (actual: {total}).")
+E           ValueError: [ERROR] Attribute type probabilities must sum to 1.0 (actual: 0.7).
+
+fm_generator/src/fm_generator/FMGenerator/models/config.py:210: ValueError
+__________________________ test_prob_implies_dominant __________________________
+
+    def test_prob_implies_dominant():
+>       p = _base_params(
+            PROB_AND=0.0,
+            PROB_OR_CT=0.0,
+            PROB_IMPLICATION=1.0,
+            PROB_EQUIVALENCE=0.0,
+            PROB_NOT=0.0,
+            MIN_CONSTRAINTS=10,
+            MAX_CONSTRAINTS=10,
+        )
+
+app/modules/generator/tests/test_engine.py:495: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/modules/generator/tests/test_engine.py:76: in _base_params
+    return Params(**base)
+           ^^^^^^^^^^^^^^
+<string>:65: in __init__
+    ???
+fm_generator/src/fm_generator/FMGenerator/models/config.py:128: in __post_init__
+    self._validate_type_distribution()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = Params(NUM_MODELS=2, SEED=7, ENSURE_SATISFIABLE=False, NAME_PREFIX='fm', INCLUDE_FEATURE_COUNT_SUFFIX=False, INCLUDE_C...S=True, MIN_ATTRIBUTES=3, MAX_ATTRIBUTES=5, ATTRIBUTES_LIST=[], ATTRIBUTE_ATTACH_PROBS=[], ATTRIBUTE_IN_CONSTRAINTS=[])
+
+    def _validate_type_distribution(self):
+        active = [self.DIST_BOOLEAN]
+    
+        if self.ARITHMETIC_LEVEL:
+            active.extend([self.DIST_INTEGER, self.DIST_REAL])
+    
+        if self.TYPE_LEVEL:
+            active.append(self.DIST_STRING)
+    
+        if any(v < 0.0 or v > 1.0 for v in active):
+            raise ValueError("[ERROR] Attribute type probabilities must be between 0 and 1.")
+    
+        total = sum(active)
+        if abs(total - 1.0) > 1e-6:
+>           raise ValueError(f"[ERROR] Attribute type probabilities must sum to 1.0 (actual: {total}).")
+E           ValueError: [ERROR] Attribute type probabilities must sum to 1.0 (actual: 0.7).
+
+fm_generator/src/fm_generator/FMGenerator/models/config.py:210: ValueError
+________________ test_ensure_satisfiable_runs_without_crashing _________________
+
+    def test_ensure_satisfiable_runs_without_crashing():
+        """Smoke test: the retry loop must not raise on normal inputs."""
+>       p = _base_params(ENSURE_SATISFIABLE=True, NUM_MODELS=2)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+app/modules/generator/tests/test_engine.py:516: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/modules/generator/tests/test_engine.py:76: in _base_params
+    return Params(**base)
+           ^^^^^^^^^^^^^^
+<string>:65: in __init__
+    ???
+fm_generator/src/fm_generator/FMGenerator/models/config.py:128: in __post_init__
+    self._validate_type_distribution()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = Params(NUM_MODELS=2, SEED=7, ENSURE_SATISFIABLE=True, NAME_PREFIX='fm', INCLUDE_FEATURE_COUNT_SUFFIX=False, INCLUDE_CO...S=True, MIN_ATTRIBUTES=3, MAX_ATTRIBUTES=5, ATTRIBUTES_LIST=[], ATTRIBUTE_ATTACH_PROBS=[], ATTRIBUTE_IN_CONSTRAINTS=[])
+
+    def _validate_type_distribution(self):
+        active = [self.DIST_BOOLEAN]
+    
+        if self.ARITHMETIC_LEVEL:
+            active.extend([self.DIST_INTEGER, self.DIST_REAL])
+    
+        if self.TYPE_LEVEL:
+            active.append(self.DIST_STRING)
+    
+        if any(v < 0.0 or v > 1.0 for v in active):
+            raise ValueError("[ERROR] Attribute type probabilities must be between 0 and 1.")
+    
+        total = sum(active)
+        if abs(total - 1.0) > 1e-6:
+>           raise ValueError(f"[ERROR] Attribute type probabilities must sum to 1.0 (actual: {total}).")
+E           ValueError: [ERROR] Attribute type probabilities must sum to 1.0 (actual: 0.7).
+
+fm_generator/src/fm_generator/FMGenerator/models/config.py:210: ValueError
+_____________ test_manual_mode_uses_attribute_in_constraints_flag ______________
+
+    def test_manual_mode_uses_attribute_in_constraints_flag():
+        """Attributes with use_in_constraints=False must not appear in any
+        constraint expression (across every generated model)."""
+        attr = Attribute(
+            name="SecretSize",
+            domain=Domain(ranges=None, elements=[True, False]),
+            default_value=True,
+        )
+>       p = _base_params(
+            RANDOM_ATTRIBUTES=False,
+            MIN_ATTRIBUTES=None,
+            MAX_ATTRIBUTES=None,
+            ATTRIBUTES_LIST=[attr],
+            ATTRIBUTE_ATTACH_PROBS=[1.0],
+            ATTRIBUTE_IN_CONSTRAINTS=[False],
+            MIN_CONSTRAINTS=5,
+            MAX_CONSTRAINTS=5,
+        )
+
+app/modules/generator/tests/test_engine.py:533: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/modules/generator/tests/test_engine.py:76: in _base_params
+    return Params(**base)
+           ^^^^^^^^^^^^^^
+<string>:65: in __init__
+    ???
+fm_generator/src/fm_generator/FMGenerator/models/config.py:128: in __post_init__
+    self._validate_type_distribution()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = Params(NUM_MODELS=2, SEED=7, ENSURE_SATISFIABLE=False, NAME_PREFIX='fm', INCLUDE_FEATURE_COUNT_SUFFIX=False, INCLUDE_C...els.feature_model.Attribute object at 0x73b4a3e22650>], ATTRIBUTE_ATTACH_PROBS=[1.0], ATTRIBUTE_IN_CONSTRAINTS=[False])
+
+    def _validate_type_distribution(self):
+        active = [self.DIST_BOOLEAN]
+    
+        if self.ARITHMETIC_LEVEL:
+            active.extend([self.DIST_INTEGER, self.DIST_REAL])
+    
+        if self.TYPE_LEVEL:
+            active.append(self.DIST_STRING)
+    
+        if any(v < 0.0 or v > 1.0 for v in active):
+            raise ValueError("[ERROR] Attribute type probabilities must be between 0 and 1.")
+    
+        total = sum(active)
+        if abs(total - 1.0) > 1e-6:
+>           raise ValueError(f"[ERROR] Attribute type probabilities must sum to 1.0 (actual: {total}).")
+E           ValueError: [ERROR] Attribute type probabilities must sum to 1.0 (actual: 0.7).
+
+fm_generator/src/fm_generator/FMGenerator/models/config.py:210: ValueError
+___________________ test_constant_seed_and_index_determinism ___________________
+
+    def test_constant_seed_and_index_determinism():
+        """generate_single_model must be fully deterministic on (SEED, index)."""
+>       p = _base_params(SEED=42)
+            ^^^^^^^^^^^^^^^^^^^^^
+
+app/modules/generator/tests/test_engine.py:550: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/modules/generator/tests/test_engine.py:76: in _base_params
+    return Params(**base)
+           ^^^^^^^^^^^^^^
+<string>:65: in __init__
+    ???
+fm_generator/src/fm_generator/FMGenerator/models/config.py:128: in __post_init__
+    self._validate_type_distribution()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = Params(NUM_MODELS=2, SEED=42, ENSURE_SATISFIABLE=False, NAME_PREFIX='fm', INCLUDE_FEATURE_COUNT_SUFFIX=False, INCLUDE_...S=True, MIN_ATTRIBUTES=3, MAX_ATTRIBUTES=5, ATTRIBUTES_LIST=[], ATTRIBUTE_ATTACH_PROBS=[], ATTRIBUTE_IN_CONSTRAINTS=[])
+
+    def _validate_type_distribution(self):
+        active = [self.DIST_BOOLEAN]
+    
+        if self.ARITHMETIC_LEVEL:
+            active.extend([self.DIST_INTEGER, self.DIST_REAL])
+    
+        if self.TYPE_LEVEL:
+            active.append(self.DIST_STRING)
+    
+        if any(v < 0.0 or v > 1.0 for v in active):
+            raise ValueError("[ERROR] Attribute type probabilities must be between 0 and 1.")
+    
+        total = sum(active)
+        if abs(total - 1.0) > 1e-6:
+>           raise ValueError(f"[ERROR] Attribute type probabilities must sum to 1.0 (actual: {total}).")
+E           ValueError: [ERROR] Attribute type probabilities must sum to 1.0 (actual: 0.7).
+
+fm_generator/src/fm_generator/FMGenerator/models/config.py:210: ValueError
+_______________________ test_attr_type_dominance_boolean _______________________
+
+client = <FlaskClient <Flask 'app'>>
+
+    def test_attr_type_dominance_boolean(client):
+        _walk_wizard(
+            client,
+            step5=_step5(
+                extras={
+                    "dist_boolean": "1.0",
+                    "dist_integer": "0.0",
+                    "dist_real": "0.0",
+                    "dist_string": "0.0",
+                    "min_attributes": "3",
+                    "max_attributes": "3",
+                }
+            ),
+        )
+        text = _fetch_params_and_generate(client, n=3)
+        attrs = re.findall(r"\{Attr\d+\s+(\S+?)(?:,|\})", text)
+        assert attrs
+>       assert all(a in ("true", "false") for a in attrs), attrs
+E       AssertionError: ['false', "'ZkwPRQeNHpCq5QnuVdYXye4JSnE2NiiUHUAKw9iEU'", "'rnVgxwvqcCh5esM2wleOV9'", 'true', '53.88', "'VLFJxdd60'", ...]
+E       assert False
+E        +  where False = all(<generator object test_attr_type_dominance_boolean.<locals>.<genexpr> at 0x73b4a3c2da40>)
+
+app/modules/generator/tests/test_wizard_outputs.py:483: AssertionError
+----------------------------- Captured stderr call -----------------------------
+[2026-05-25 10:59:31,008] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:31,008 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:31,012] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:31,012 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:31,016] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:31,016 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:31,020] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:31,020 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:31,025] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:31,025 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:31,030] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:31,030 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:31,033] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:31,033 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+------------------------------ Captured log call -------------------------------
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+______________________ test_ctc_dist_weights_force_string ______________________
+
+client = <FlaskClient <Flask 'app'>>
+
+    def test_ctc_dist_weights_force_string(client):
+        _walk_wizard(
+            client,
+            step2=_step2(type_=True, string_ctc=True),
+            step4=_step4(
+                string=True,
+                extras={
+                    "ctc_dist_boolean": "0.0",
+                    "ctc_dist_integer": "0.0",
+                    "ctc_dist_real": "0.0",
+                    "ctc_dist_string": "1.0",
+                },
+            ),
+            step5=_step5(
+                extras={
+                    "dist_boolean": "0.0",
+                    "dist_integer": "0.0",
+                    "dist_real": "0.0",
+                    "dist_string": "1.0",
+                    "min_attributes": "3",
+                    "max_attributes": "4",
+                }
+            ),
+        )
+        lines = list(_iter_ctc_lines(_fetch_params_and_generate(client, n=3)))
+        assert lines
+>       assert all(re.search(r"\.Attr\d+", ln) for ln in lines), lines
+E       AssertionError: ['F5 == F2', 'F1 == F6', 'F2 == F4', 'F1 == F3', 'F2 == F1', 'F6 == F3', ...]
+E       assert False
+E        +  where False = all(<generator object test_ctc_dist_weights_force_string.<locals>.<genexpr> at 0x73b4a3d24660>)
+
+app/modules/generator/tests/test_wizard_outputs.py:512: AssertionError
+----------------------------- Captured stderr call -----------------------------
+[2026-05-25 10:59:31,058] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:31,058 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:31,061] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:31,061 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:31,062] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:31,062 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:31,064] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:31,064 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:31,067] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:31,067 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:31,069] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:31,069 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:31,071] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:31,071 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+------------------------------ Captured log call -------------------------------
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+________________ test_aggregate_function_dominance[probs0-sum(] ________________
+
+client = <FlaskClient <Flask 'app'>>
+probs = {'prob_avg': '0.0', 'prob_sum': '1.0'}, marker = 'sum('
+
+    @pytest.mark.parametrize(
+        "probs,marker",
+        [
+            ({"prob_sum": "1.0", "prob_avg": "0.0"}, "sum("),
+            ({"prob_sum": "0.0", "prob_avg": "1.0"}, "avg("),
+        ],
+    )
+    def test_aggregate_function_dominance(client, probs, marker):
+        _walk_wizard(
+            client,
+            step2=_step2(arithmetic=True, aggregate=True),
+            step4=_step4(
+                arithmetic=True,
+                aggregate=True,
+                extras={
+                    "prob_plus": "0.0",
+                    "prob_minus": "0.0",
+                    "prob_times": "0.0",
+                    "prob_div": "0.0",
+                    **probs,
+                    "ctc_dist_boolean": "0.0",
+                    "ctc_dist_integer": "1.0",
+                    "ctc_dist_real": "0.0",
+                    "ctc_dist_string": "0.0",
+                    "num_constraints_min": "15",
+                    "num_constraints_max": "15",
+                },
+            ),
+            step5=_step5(
+                extras={
+                    "dist_boolean": "0.0",
+                    "dist_integer": "1.0",
+                    "dist_real": "0.0",
+                    "dist_string": "0.0",
+                    "min_attributes": "3",
+                    "max_attributes": "4",
+                }
+            ),
+        )
+>       body = "\n".join(_iter_ctc_lines(_fetch_params_and_generate(client, n=3)))
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+app/modules/generator/tests/test_wizard_outputs.py:950: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/modules/generator/tests/test_wizard_outputs.py:207: in _fetch_params_and_generate
+    FmgeneratorModel(params).generate_models(d)
+fm_generator/src/fm_generator/FMGenerator/models/models.py:80: in generate_models
+    fms = [self._build_one(i) for i in range(int(self.params.NUM_MODELS))]
+           ^^^^^^^^^^^^^^^^^^
+fm_generator/src/fm_generator/FMGenerator/models/models.py:58: in _build_one
+    return generate_single_model(self.params, index)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+fm_generator/src/fm_generator/FMGenerator/operations/generate_models.py:1153: in generate_single_model
+    add_constraints(fm, feats, params)
+fm_generator/src/fm_generator/FMGenerator/operations/generate_models.py:1079: in add_constraints
+    root = build_mixed_constraint(
+fm_generator/src/fm_generator/FMGenerator/operations/generate_models.py:967: in build_mixed_constraint
+    node = build_numeric_predicate(chosen, len_eligible_keys)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+fm_generator/src/fm_generator/FMGenerator/operations/generate_models.py:847: in build_numeric_predicate
+    expr_right = build_arith_expr(right_keys, len_eligible_keys)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+fm_generator/src/fm_generator/FMGenerator/operations/generate_models.py:815: in build_arith_expr
+    expr = build_plain_arith_expr(keys, len_eligible_keys)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+fm_generator/src/fm_generator/FMGenerator/operations/generate_models.py:772: in build_plain_arith_expr
+    pick_binary_arith_op(),
+    ^^^^^^^^^^^^^^^^^^^^^^
+fm_generator/src/fm_generator/FMGenerator/operations/generate_models.py:715: in pick_binary_arith_op
+    return random.choices(ops, weights=weights, k=1)[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <random.Random object at 0x5d5035faae40>
+population = [<ASTOperation.ADD: 'ADD'>, <ASTOperation.SUB: 'SUB'>, <ASTOperation.MUL: 'MUL'>, <ASTOperation.DIV: 'DIV'>]
+weights = [0.0, 0.0, 0.0, 0.0]
+
+    def choices(self, population, weights=None, *, cum_weights=None, k=1):
+        """Return a k sized list of population elements chosen with replacement.
+    
+        If the relative weights or cumulative weights are not specified,
+        the selections are made with equal probability.
+    
+        """
+        random = self.random
+        n = len(population)
+        if cum_weights is None:
+            if weights is None:
+                floor = _floor
+                n += 0.0    # convert to float for a small speed improvement
+                return [population[floor(random() * n)] for i in _repeat(None, k)]
+            try:
+                cum_weights = list(_accumulate(weights))
+            except TypeError:
+                if not isinstance(weights, int):
+                    raise
+                k = weights
+                raise TypeError(
+                    f'The number of choices must be a keyword argument: {k=}'
+                ) from None
+        elif weights is not None:
+            raise TypeError('Cannot specify both weights and cumulative weights')
+        if len(cum_weights) != n:
+            raise ValueError('The number of weights does not match the population')
+        total = cum_weights[-1] + 0.0   # convert to float
+        if total <= 0.0:
+>           raise ValueError('Total of weights must be greater than zero')
+E           ValueError: Total of weights must be greater than zero
+
+/usr/local/lib/python3.13/random.py:487: ValueError
+----------------------------- Captured stderr call -----------------------------
+[2026-05-25 10:59:35,150] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:35,150 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:35,151] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:35,151 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:35,152] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:35,152 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:35,153] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:35,153 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:35,155] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:35,155 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:35,156] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:35,156 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:35,157] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:35,157 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+------------------------------ Captured log call -------------------------------
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+________________ test_aggregate_function_dominance[probs1-avg(] ________________
+
+client = <FlaskClient <Flask 'app'>>
+probs = {'prob_avg': '1.0', 'prob_sum': '0.0'}, marker = 'avg('
+
+    @pytest.mark.parametrize(
+        "probs,marker",
+        [
+            ({"prob_sum": "1.0", "prob_avg": "0.0"}, "sum("),
+            ({"prob_sum": "0.0", "prob_avg": "1.0"}, "avg("),
+        ],
+    )
+    def test_aggregate_function_dominance(client, probs, marker):
+        _walk_wizard(
+            client,
+            step2=_step2(arithmetic=True, aggregate=True),
+            step4=_step4(
+                arithmetic=True,
+                aggregate=True,
+                extras={
+                    "prob_plus": "0.0",
+                    "prob_minus": "0.0",
+                    "prob_times": "0.0",
+                    "prob_div": "0.0",
+                    **probs,
+                    "ctc_dist_boolean": "0.0",
+                    "ctc_dist_integer": "1.0",
+                    "ctc_dist_real": "0.0",
+                    "ctc_dist_string": "0.0",
+                    "num_constraints_min": "15",
+                    "num_constraints_max": "15",
+                },
+            ),
+            step5=_step5(
+                extras={
+                    "dist_boolean": "0.0",
+                    "dist_integer": "1.0",
+                    "dist_real": "0.0",
+                    "dist_string": "0.0",
+                    "min_attributes": "3",
+                    "max_attributes": "4",
+                }
+            ),
+        )
+>       body = "\n".join(_iter_ctc_lines(_fetch_params_and_generate(client, n=3)))
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+app/modules/generator/tests/test_wizard_outputs.py:950: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+app/modules/generator/tests/test_wizard_outputs.py:207: in _fetch_params_and_generate
+    FmgeneratorModel(params).generate_models(d)
+fm_generator/src/fm_generator/FMGenerator/models/models.py:80: in generate_models
+    fms = [self._build_one(i) for i in range(int(self.params.NUM_MODELS))]
+           ^^^^^^^^^^^^^^^^^^
+fm_generator/src/fm_generator/FMGenerator/models/models.py:58: in _build_one
+    return generate_single_model(self.params, index)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+fm_generator/src/fm_generator/FMGenerator/operations/generate_models.py:1153: in generate_single_model
+    add_constraints(fm, feats, params)
+fm_generator/src/fm_generator/FMGenerator/operations/generate_models.py:1079: in add_constraints
+    root = build_mixed_constraint(
+fm_generator/src/fm_generator/FMGenerator/operations/generate_models.py:967: in build_mixed_constraint
+    node = build_numeric_predicate(chosen, len_eligible_keys)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+fm_generator/src/fm_generator/FMGenerator/operations/generate_models.py:847: in build_numeric_predicate
+    expr_right = build_arith_expr(right_keys, len_eligible_keys)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+fm_generator/src/fm_generator/FMGenerator/operations/generate_models.py:815: in build_arith_expr
+    expr = build_plain_arith_expr(keys, len_eligible_keys)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+fm_generator/src/fm_generator/FMGenerator/operations/generate_models.py:772: in build_plain_arith_expr
+    pick_binary_arith_op(),
+    ^^^^^^^^^^^^^^^^^^^^^^
+fm_generator/src/fm_generator/FMGenerator/operations/generate_models.py:715: in pick_binary_arith_op
+    return random.choices(ops, weights=weights, k=1)[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <random.Random object at 0x5d5035faae40>
+population = [<ASTOperation.ADD: 'ADD'>, <ASTOperation.SUB: 'SUB'>, <ASTOperation.MUL: 'MUL'>, <ASTOperation.DIV: 'DIV'>]
+weights = [0.0, 0.0, 0.0, 0.0]
+
+    def choices(self, population, weights=None, *, cum_weights=None, k=1):
+        """Return a k sized list of population elements chosen with replacement.
+    
+        If the relative weights or cumulative weights are not specified,
+        the selections are made with equal probability.
+    
+        """
+        random = self.random
+        n = len(population)
+        if cum_weights is None:
+            if weights is None:
+                floor = _floor
+                n += 0.0    # convert to float for a small speed improvement
+                return [population[floor(random() * n)] for i in _repeat(None, k)]
+            try:
+                cum_weights = list(_accumulate(weights))
+            except TypeError:
+                if not isinstance(weights, int):
+                    raise
+                k = weights
+                raise TypeError(
+                    f'The number of choices must be a keyword argument: {k=}'
+                ) from None
+        elif weights is not None:
+            raise TypeError('Cannot specify both weights and cumulative weights')
+        if len(cum_weights) != n:
+            raise ValueError('The number of weights does not match the population')
+        total = cum_weights[-1] + 0.0   # convert to float
+        if total <= 0.0:
+>           raise ValueError('Total of weights must be greater than zero')
+E           ValueError: Total of weights must be greater than zero
+
+/usr/local/lib/python3.13/random.py:487: ValueError
+----------------------------- Captured stderr call -----------------------------
+[2026-05-25 10:59:35,215] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:35,215 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:35,217] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:35,217 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:35,218] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:35,218 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:35,219] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:35,219 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:35,220] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:35,220 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:35,222] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:35,222 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:35,223] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:35,223 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+------------------------------ Captured log call -------------------------------
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+_________________ test_attribute_type_dominance[dist0-boolean] _________________
+
+client = <FlaskClient <Flask 'app'>>
+dist = {'dist_boolean': '1.0', 'dist_integer': '0.0', 'dist_real': '0.0', 'dist_string': '0.0'}
+kind = 'boolean'
+
+    @pytest.mark.parametrize(
+        "dist,kind",
+        [
+            ({"dist_boolean": "1.0", "dist_integer": "0.0", "dist_real": "0.0", "dist_string": "0.0"}, "boolean"),
+            ({"dist_boolean": "0.0", "dist_integer": "1.0", "dist_real": "0.0", "dist_string": "0.0"}, "integer"),
+            ({"dist_boolean": "0.0", "dist_integer": "0.0", "dist_real": "1.0", "dist_string": "0.0"}, "real"),
+            ({"dist_boolean": "0.0", "dist_integer": "0.0", "dist_real": "0.0", "dist_string": "1.0"}, "string"),
+        ],
+    )
+    def test_attribute_type_dominance(client, dist, kind):
+        arith = kind in ("integer", "real")
+        type_ = kind == "string"
+        _walk_wizard(
+            client,
+            step2=_step2(arithmetic=arith, type_=type_, string_ctc=type_),
+            step4=_step4(arithmetic=arith, string=type_),
+            step5=_step5(extras={**dist, "min_attributes": "3", "max_attributes": "3"}),
+        )
+        text = _fetch_params_and_generate(client, n=3)
+        attrs = re.findall(r"\{Attr\d+\s+([^,}]+)", text)
+        assert attrs
+        for v in attrs:
+            v = v.strip()
+            if kind == "boolean":
+>               assert v in ("true", "false"), v
+E               AssertionError: 'ZkwPRQeNHpCq5QnuVdYXye4JSnE2NiiUHUAKw9iEU'
+E               assert "'ZkwPRQeNHpCq5QnuVdYXye4JSnE2NiiUHUAKw9iEU'" in ('true', 'false')
+
+app/modules/generator/tests/test_wizard_outputs.py:1042: AssertionError
+----------------------------- Captured stderr call -----------------------------
+[2026-05-25 10:59:35,808] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:35,808 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:35,812] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:35,812 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:35,814] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:35,814 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:35,817] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:35,817 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:35,820] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:35,820 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:35,823] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:35,823 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:35,828] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:35,828 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+------------------------------ Captured log call -------------------------------
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+_________________ test_attribute_type_dominance[dist1-integer] _________________
+
+client = <FlaskClient <Flask 'app'>>
+dist = {'dist_boolean': '0.0', 'dist_integer': '1.0', 'dist_real': '0.0', 'dist_string': '0.0'}
+kind = 'integer'
+
+    @pytest.mark.parametrize(
+        "dist,kind",
+        [
+            ({"dist_boolean": "1.0", "dist_integer": "0.0", "dist_real": "0.0", "dist_string": "0.0"}, "boolean"),
+            ({"dist_boolean": "0.0", "dist_integer": "1.0", "dist_real": "0.0", "dist_string": "0.0"}, "integer"),
+            ({"dist_boolean": "0.0", "dist_integer": "0.0", "dist_real": "1.0", "dist_string": "0.0"}, "real"),
+            ({"dist_boolean": "0.0", "dist_integer": "0.0", "dist_real": "0.0", "dist_string": "1.0"}, "string"),
+        ],
+    )
+    def test_attribute_type_dominance(client, dist, kind):
+        arith = kind in ("integer", "real")
+        type_ = kind == "string"
+        _walk_wizard(
+            client,
+            step2=_step2(arithmetic=arith, type_=type_, string_ctc=type_),
+            step4=_step4(arithmetic=arith, string=type_),
+            step5=_step5(extras={**dist, "min_attributes": "3", "max_attributes": "3"}),
+        )
+        text = _fetch_params_and_generate(client, n=3)
+        attrs = re.findall(r"\{Attr\d+\s+([^,}]+)", text)
+        assert attrs
+        for v in attrs:
+            v = v.strip()
+            if kind == "boolean":
+                assert v in ("true", "false"), v
+            elif kind == "integer":
+>               assert re.match(r"^-?\d+$", v), v
+E               AssertionError: 28.31
+E               assert None
+E                +  where None = <function match at 0x73b4ab821120>('^-?\\d+$', '28.31')
+E                +    where <function match at 0x73b4ab821120> = re.match
+
+app/modules/generator/tests/test_wizard_outputs.py:1044: AssertionError
+----------------------------- Captured stderr call -----------------------------
+[2026-05-25 10:59:35,878] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:35,878 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:35,882] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:35,882 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:35,886] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:35,886 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:35,890] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:35,890 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:35,894] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:35,894 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:35,897] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:35,897 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:35,900] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:35,900 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+------------------------------ Captured log call -------------------------------
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+__________________ test_attribute_type_dominance[dist2-real] ___________________
+
+client = <FlaskClient <Flask 'app'>>
+dist = {'dist_boolean': '0.0', 'dist_integer': '0.0', 'dist_real': '1.0', 'dist_string': '0.0'}
+kind = 'real'
+
+    @pytest.mark.parametrize(
+        "dist,kind",
+        [
+            ({"dist_boolean": "1.0", "dist_integer": "0.0", "dist_real": "0.0", "dist_string": "0.0"}, "boolean"),
+            ({"dist_boolean": "0.0", "dist_integer": "1.0", "dist_real": "0.0", "dist_string": "0.0"}, "integer"),
+            ({"dist_boolean": "0.0", "dist_integer": "0.0", "dist_real": "1.0", "dist_string": "0.0"}, "real"),
+            ({"dist_boolean": "0.0", "dist_integer": "0.0", "dist_real": "0.0", "dist_string": "1.0"}, "string"),
+        ],
+    )
+    def test_attribute_type_dominance(client, dist, kind):
+        arith = kind in ("integer", "real")
+        type_ = kind == "string"
+        _walk_wizard(
+            client,
+            step2=_step2(arithmetic=arith, type_=type_, string_ctc=type_),
+            step4=_step4(arithmetic=arith, string=type_),
+            step5=_step5(extras={**dist, "min_attributes": "3", "max_attributes": "3"}),
+        )
+        text = _fetch_params_and_generate(client, n=3)
+        attrs = re.findall(r"\{Attr\d+\s+([^,}]+)", text)
+        assert attrs
+        for v in attrs:
+            v = v.strip()
+            if kind == "boolean":
+                assert v in ("true", "false"), v
+            elif kind == "integer":
+                assert re.match(r"^-?\d+$", v), v
+            elif kind == "real":
+>               assert re.match(r"^-?\d+\.\d+$", v), v
+E               AssertionError: 38
+E               assert None
+E                +  where None = <function match at 0x73b4ab821120>('^-?\\d+\\.\\d+$', '38')
+E                +    where <function match at 0x73b4ab821120> = re.match
+
+app/modules/generator/tests/test_wizard_outputs.py:1046: AssertionError
+----------------------------- Captured stderr call -----------------------------
+[2026-05-25 10:59:35,925] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:35,925 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:35,927] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:35,927 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:35,928] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:35,928 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:35,929] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:35,929 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:35,930] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:35,930 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:35,932] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:35,932 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:35,933] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:35,933 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+------------------------------ Captured log call -------------------------------
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+_________________ test_attribute_type_dominance[dist3-string] __________________
+
+client = <FlaskClient <Flask 'app'>>
+dist = {'dist_boolean': '0.0', 'dist_integer': '0.0', 'dist_real': '0.0', 'dist_string': '1.0'}
+kind = 'string'
+
+    @pytest.mark.parametrize(
+        "dist,kind",
+        [
+            ({"dist_boolean": "1.0", "dist_integer": "0.0", "dist_real": "0.0", "dist_string": "0.0"}, "boolean"),
+            ({"dist_boolean": "0.0", "dist_integer": "1.0", "dist_real": "0.0", "dist_string": "0.0"}, "integer"),
+            ({"dist_boolean": "0.0", "dist_integer": "0.0", "dist_real": "1.0", "dist_string": "0.0"}, "real"),
+            ({"dist_boolean": "0.0", "dist_integer": "0.0", "dist_real": "0.0", "dist_string": "1.0"}, "string"),
+        ],
+    )
+    def test_attribute_type_dominance(client, dist, kind):
+        arith = kind in ("integer", "real")
+        type_ = kind == "string"
+        _walk_wizard(
+            client,
+            step2=_step2(arithmetic=arith, type_=type_, string_ctc=type_),
+            step4=_step4(arithmetic=arith, string=type_),
+            step5=_step5(extras={**dist, "min_attributes": "3", "max_attributes": "3"}),
+        )
+        text = _fetch_params_and_generate(client, n=3)
+        attrs = re.findall(r"\{Attr\d+\s+([^,}]+)", text)
+        assert attrs
+        for v in attrs:
+            v = v.strip()
+            if kind == "boolean":
+                assert v in ("true", "false"), v
+            elif kind == "integer":
+                assert re.match(r"^-?\d+$", v), v
+            elif kind == "real":
+                assert re.match(r"^-?\d+\.\d+$", v), v
+            elif kind == "string":
+>               assert v.startswith("'") and v.endswith("'"), v
+E               AssertionError: 76.4
+E               assert (False)
+E                +  where False = <built-in method startswith of str object at 0x73b4a3d0a130>("'")
+E                +    where <built-in method startswith of str object at 0x73b4a3d0a130> = '76.4'.startswith
+
+app/modules/generator/tests/test_wizard_outputs.py:1048: AssertionError
+----------------------------- Captured stderr call -----------------------------
+[2026-05-25 10:59:35,948] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:35,948 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:35,949] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:35,949 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:35,950] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:35,950 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:35,952] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:35,952 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:35,953] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:35,953 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:35,954] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:35,954 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:35,955] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:35,955 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+------------------------------ Captured log call -------------------------------
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+_______________ test_ctc_dist_family_dominance[ctc_dist2-string] _______________
+
+client = <FlaskClient <Flask 'app'>>
+ctc_dist = {'ctc_dist_boolean': '0.0', 'ctc_dist_integer': '0.0', 'ctc_dist_real': '0.0', 'ctc_dist_string': '1.0'}
+family_marker = 'string'
+
+    @pytest.mark.parametrize(
+        "ctc_dist,family_marker",
+        [
+            (
+                {"ctc_dist_boolean": "1.0", "ctc_dist_integer": "0.0", "ctc_dist_real": "0.0", "ctc_dist_string": "0.0"},
+                "boolean",
+            ),
+            (
+                {"ctc_dist_boolean": "0.0", "ctc_dist_integer": "1.0", "ctc_dist_real": "0.0", "ctc_dist_string": "0.0"},
+                "arith",
+            ),
+            (
+                {"ctc_dist_boolean": "0.0", "ctc_dist_integer": "0.0", "ctc_dist_real": "0.0", "ctc_dist_string": "1.0"},
+                "string",
+            ),
+        ],
+    )
+    def test_ctc_dist_family_dominance(client, ctc_dist, family_marker):
+        _walk_wizard(
+            client,
+            step2=_step2(arithmetic=True, type_=True, string_ctc=True),
+            step4=_step4(
+                arithmetic=True,
+                string=True,
+                extras={
+                    **ctc_dist,
+                    "num_constraints_min": "8",
+                    "num_constraints_max": "8",
+                },
+            ),
+            step5=_step5(
+                extras={
+                    "dist_boolean": "0.25",
+                    "dist_integer": "0.25",
+                    "dist_real": "0.25",
+                    "dist_string": "0.25",
+                    "min_attributes": "4",
+                    "max_attributes": "4",
+                }
+            ),
+        )
+        body = "\n".join(_iter_ctc_lines(_fetch_params_and_generate(client, n=3)))
+        if family_marker == "boolean":
+            # Boolean ctcs reference only features (F\d+), no Attr.
+            assert (
+                any(
+                    re.search(r"^[^'a-z]*F\d+", ln) and not re.search(r"\.Attr|len\(|sum\(|avg\(", ln)
+                    for ln in _iter_ctc_lines(body)
+                )
+                or " & " in body
+                or " | " in body
+            )
+        elif family_marker == "arith":
+            assert re.search(r"\s[+\-*/]\s", body), f"no arith:\n{body}"
+        elif family_marker == "string":
+>           assert "len(" in body or re.search(r"\.Attr\d+\s*==\s*'", body), f"no string:\n{body}"
+E           AssertionError: no string:
+E             (F5 == F2) <=> F6
+E             F5 == F2
+E             (F2 == F5) => F4
+E             F5 == F2.Attr3
+E             F2.Attr3 == F5
+E             (F5 == F2.Attr3) <=> F4
+E             F5 == F2
+E             (F2 == F5) & ! F3
+E             include
+E             Type.string-constraints
+E           assert ('len(' in '(F5 == F2) <=> F6\nF5 == F2\n(F2 == F5) => F4\nF5 == F2.Attr3\nF2.Attr3 == F5\n(F5 == F2.Attr3) <=> F4\nF5 == F2\n(F2 == F5) & ! F3\ninclude\nType.string-constraints' or None)
+E            +  where None = <function search at 0x73b4ab860220>("\\.Attr\\d+\\s*==\\s*'", '(F5 == F2) <=> F6\nF5 == F2\n(F2 == F5) => F4\nF5 == F2.Attr3\nF2.Attr3 == F5\n(F5 == F2.Attr3) <=> F4\nF5 == F2\n(F2 == F5) & ! F3\ninclude\nType.string-constraints')
+E            +    where <function search at 0x73b4ab860220> = re.search
+
+app/modules/generator/tests/test_wizard_outputs.py:1160: AssertionError
+----------------------------- Captured stderr call -----------------------------
+[2026-05-25 10:59:36,288] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:36,288 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:36,290] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:36,290 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:36,292] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:36,292 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:36,294] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:36,294 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:36,297] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:36,297 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:36,299] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:36,299 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+[2026-05-25 10:59:36,300] ERROR in services: ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+2026-05-25 10:59:36,300 - app - ERROR - ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+------------------------------ Captured log call -------------------------------
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+ERROR    app:services.py:28 ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured
+=========================== short test summary info ============================
+FAILED app/modules/generator/tests/test_engine.py::test_num_models_respected
+FAILED app/modules/generator/tests/test_engine.py::test_feature_count_suffix_applied
+FAILED app/modules/generator/tests/test_engine.py::test_constraint_count_suffix_applied
+FAILED app/modules/generator/tests/test_engine.py::test_both_suffixes_applied
+FAILED app/modules/generator/tests/test_engine.py::test_name_prefix_applied
+FAILED app/modules/generator/tests/test_engine.py::test_determinism_same_seed_same_output
+FAILED app/modules/generator/tests/test_engine.py::test_different_seed_different_output
+FAILED app/modules/generator/tests/test_engine.py::test_feature_count_in_range
+FAILED app/modules/generator/tests/test_engine.py::test_max_tree_depth_respected
+FAILED app/modules/generator/tests/test_engine.py::test_group_cardinality_off_produces_no_group_relations
+FAILED app/modules/generator/tests/test_engine.py::test_group_cardinality_on_with_weight_produces_group_groups
+FAILED app/modules/generator/tests/test_engine.py::test_feature_cardinality_off_produces_none
+FAILED app/modules/generator/tests/test_engine.py::test_feature_cardinality_on_produces_some
+FAILED app/modules/generator/tests/test_engine.py::test_random_attributes_respects_count_range
+FAILED app/modules/generator/tests/test_engine.py::test_dist_boolean_only_produces_only_boolean_attrs
+FAILED app/modules/generator/tests/test_engine.py::test_dist_integer_only_produces_integer_attrs
+FAILED app/modules/generator/tests/test_engine.py::test_dist_string_only_respects_type_level
+FAILED app/modules/generator/tests/test_engine.py::test_no_integer_attrs_when_arithmetic_off
+FAILED app/modules/generator/tests/test_engine.py::test_boolean_only_level_has_no_arith_no_strings
+FAILED app/modules/generator/tests/test_engine.py::test_aggregate_functions_produce_sum_avg
+FAILED app/modules/generator/tests/test_engine.py::test_string_level_produces_len_constraints
+FAILED app/modules/generator/tests/test_engine.py::test_min_vars_per_constraint_respected
+FAILED app/modules/generator/tests/test_engine.py::test_prob_not_zero_produces_no_negations
+FAILED app/modules/generator/tests/test_engine.py::test_prob_not_one_produces_many_negations
+FAILED app/modules/generator/tests/test_engine.py::test_min_max_constraints_respected
+FAILED app/modules/generator/tests/test_engine.py::test_prob_and_dominant - V...
+FAILED app/modules/generator/tests/test_engine.py::test_prob_implies_dominant
+FAILED app/modules/generator/tests/test_engine.py::test_ensure_satisfiable_runs_without_crashing
+FAILED app/modules/generator/tests/test_engine.py::test_manual_mode_uses_attribute_in_constraints_flag
+FAILED app/modules/generator/tests/test_engine.py::test_constant_seed_and_index_determinism
+FAILED app/modules/generator/tests/test_wizard_outputs.py::test_attr_type_dominance_boolean
+FAILED app/modules/generator/tests/test_wizard_outputs.py::test_ctc_dist_weights_force_string
+FAILED app/modules/generator/tests/test_wizard_outputs.py::test_aggregate_function_dominance[probs0-sum(]
+FAILED app/modules/generator/tests/test_wizard_outputs.py::test_aggregate_function_dominance[probs1-avg(]
+FAILED app/modules/generator/tests/test_wizard_outputs.py::test_attribute_type_dominance[dist0-boolean]
+FAILED app/modules/generator/tests/test_wizard_outputs.py::test_attribute_type_dominance[dist1-integer]
+FAILED app/modules/generator/tests/test_wizard_outputs.py::test_attribute_type_dominance[dist2-real]
+FAILED app/modules/generator/tests/test_wizard_outputs.py::test_attribute_type_dominance[dist3-string]
+FAILED app/modules/generator/tests/test_wizard_outputs.py::test_ctc_dist_family_dominance[ctc_dist2-string]
+======================== 39 failed, 239 passed in 7.45s ========================

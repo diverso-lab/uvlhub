@@ -410,14 +410,19 @@ def test_filename_suffixes_propagate(client):
 
 
 def test_filename_suffixes_applied_to_generated_files(client):
-    _walk_wizard(client, step6=_step6(feat_suffix=True, ctc_suffix=True))
+    _walk_wizard(
+        client,
+        step1=_step1(num_models="1", name_prefix="custom"),
+        step6=_step6(feat_suffix=True, ctc_suffix=True),
+    )
     params = json.loads(client.get("/generator/random/params-json").data)
-    params["NUM_MODELS"] = 2
     p = Params(**params)
+
     with tempfile.TemporaryDirectory() as d:
         FmgeneratorModel(p).generate_models(d)
         files = sorted(os.listdir(d))
-        assert all(re.search(r"_\d+f_\d+c\.uvl$", f) for f in files), f"missing suffix: {files}"
+        assert files
+        assert all(re.match(r"^custom_\d+f_\d+c\.uvl$", f) for f in files), files
 
 
 def test_vars_per_constraint_fixed_observed_in_output(client):
@@ -1067,22 +1072,32 @@ def test_output_options_matrix(client, ensure, feat_sfx, ctc_sfx):
 @pytest.mark.parametrize(
     "flags,pattern",
     [
-        ({}, r"^fm\d+\.uvl$"),
-        ({"feature_count_suffix": "on"}, r"^fm\d+_\d+f\.uvl$"),
-        ({"constraint_count_suffix": "on"}, r"^fm\d+_\d+c\.uvl$"),
-        ({"feature_count_suffix": "on", "constraint_count_suffix": "on"}, r"^fm\d+_\d+f_\d+c\.uvl$"),
+        ({}, r"^fm_\d+\.uvl$"),
+        ({"feature_count_suffix": "on"}, r"^fm_\d+f\.uvl$"),
+        ({"constraint_count_suffix": "on"}, r"^fm_\d+c\.uvl$"),
+        (
+            {"feature_count_suffix": "on", "constraint_count_suffix": "on"},
+            r"^fm_\d+f_\d+c\.uvl$",
+        ),
     ],
 )
 def test_filename_suffix_combinations(client, flags, pattern):
-    _walk_wizard(client, step6={"nav": "next", **flags})
+    num_models = "3" if not flags else "1"
+
+    _walk_wizard(
+        client,
+        step1=_step1(num_models=num_models),
+        step6={"nav": "next", **flags},
+    )
+
     p = json.loads(client.get("/generator/random/params-json").data)
-    p["NUM_MODELS"] = 3
     params = Params(**p)
+
     with tempfile.TemporaryDirectory() as d:
         FmgeneratorModel(params).generate_models(d)
         files = sorted(os.listdir(d))
+        assert files
         assert all(re.match(pattern, f) for f in files), f"files={files} pattern={pattern}"
-
 
 # ── CTC type distribution ────────────────────────────────────────────────
 

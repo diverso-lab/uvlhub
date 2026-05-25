@@ -874,7 +874,10 @@ def add_constraints(
             if kind == "bool":
                 weights.append(float(getattr(params, "CTC_DIST_BOOLEAN", 0.7)))
             elif kind == "num":
-                weights.append(float(getattr(params, "CTC_DIST_NUMERIC", 0.2)))
+                weights.append(
+                    float(getattr(params, "CTC_DIST_INTEGER", 0.2)) +
+                    float(getattr(params, "CTC_DIST_REAL", 0.1))
+                )
             elif kind == "string":
                 weights.append(float(getattr(params, "CTC_DIST_STRING", 0.0)))
             else:
