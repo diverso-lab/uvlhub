@@ -46,13 +46,13 @@ app/modules/generator/tests/test_params_contract.py::test_params_accepts_happy_p
 app/modules/generator/tests/test_params_contract.py::test_params_rejects_broken_relation_sum PASSED [ 10%]
 app/modules/generator/tests/test_params_contract.py::test_params_rejects_broken_boolean_sum PASSED [ 10%]
 app/modules/generator/tests/test_unit.py::test_sample_assertion PASSED   [ 10%]
-app/modules/generator/tests/test_validators.py::test_safe_float_accepts_dot PASSED [ 10%]
-app/modules/generator/tests/test_validators.py::test_safe_float_accepts_spanish_comma PASSED [ 11%]
-app/modules/generator/tests/test_validators.py::test_safe_float_falls_back_on_garbage PASSED [ 11%]
-app/modules/generator/tests/test_validators.py::test_safe_float_none_returns_default PASSED [ 11%]
-app/modules/generator/tests/test_validators.py::test_safe_float_empty_returns_default PASSED [ 11%]
-app/modules/generator/tests/test_validators.py::test_safe_float_accepts_integer_strings PASSED [ 12%]
-app/modules/generator/tests/test_validators.py::test_safe_float_accepts_negative PASSED [ 12%]
+app/modules/generator/tests/test_validators.py::testsafe_float_accepts_dot PASSED [ 10%]
+app/modules/generator/tests/test_validators.py::testsafe_float_accepts_spanish_comma PASSED [ 11%]
+app/modules/generator/tests/test_validators.py::testsafe_float_falls_back_on_garbage PASSED [ 11%]
+app/modules/generator/tests/test_validators.py::testsafe_float_none_returns_default PASSED [ 11%]
+app/modules/generator/tests/test_validators.py::testsafe_float_empty_returns_default PASSED [ 11%]
+app/modules/generator/tests/test_validators.py::testsafe_float_accepts_integer_strings PASSED [ 12%]
+app/modules/generator/tests/test_validators.py::testsafe_float_accepts_negative PASSED [ 12%]
 app/modules/generator/tests/test_validators.py::test_step1_happy_path PASSED [ 12%]
 app/modules/generator/tests/test_validators.py::test_step1_rejects_zero_models PASSED [ 13%]
 app/modules/generator/tests/test_validators.py::test_step1_rejects_negative_models PASSED [ 13%]
@@ -375,4 +375,4 @@ app/modules/generator/tests/test_wizard_outputs.py::test_params_json_roundtrips_
 app/modules/generator/tests/test_wizard_outputs.py::test_params_json_roundtrips_through_params[42] PASSED [ 99%]
 app/modules/generator/tests/test_wizard_outputs.py::test_params_json_roundtrips_through_params[777] PASSED [100%]
 
-============================= 367 passed in 7.22s ==============================
+============================= 367 passed in 10.35s =============================

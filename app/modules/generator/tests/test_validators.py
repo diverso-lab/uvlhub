@@ -7,8 +7,8 @@ step, both happy and sad paths.
 
 from werkzeug.datastructures import MultiDict
 
-from app.modules.generator.routes import (
-    _safe_float,
+from app.modules.generator.services import safe_float
+from app.modules.generator.validators import (
     validate_step1_form,
     validate_step2_form,
     validate_step3_form,
@@ -17,36 +17,36 @@ from app.modules.generator.routes import (
     validate_step6_form,
 )
 
-# ─── _safe_float helper ──────────────────────────────────────────────────
+# ─── safe_float helper ──────────────────────────────────────────────────
 
 
-def test_safe_float_accepts_dot():
-    assert _safe_float("0.5") == 0.5
+def testsafe_float_accepts_dot():
+    assert safe_float("0.5") == 0.5
 
 
-def test_safe_float_accepts_spanish_comma():
-    assert _safe_float("0,5") == 0.5
+def testsafe_float_accepts_spanish_comma():
+    assert safe_float("0,5") == 0.5
 
 
-def test_safe_float_falls_back_on_garbage():
-    assert _safe_float("nope", default=0.7) == 0.7
+def testsafe_float_falls_back_on_garbage():
+    assert safe_float("nope", default=0.7) == 0.7
 
 
-def test_safe_float_none_returns_default():
-    assert _safe_float(None, default=0.3) == 0.3
+def testsafe_float_none_returns_default():
+    assert safe_float(None, default=0.3) == 0.3
 
 
-def test_safe_float_empty_returns_default():
-    assert _safe_float("  ", default=0.1) == 0.1
+def testsafe_float_empty_returns_default():
+    assert safe_float("  ", default=0.1) == 0.1
 
 
-def test_safe_float_accepts_integer_strings():
-    assert _safe_float("5") == 5.0
-    assert _safe_float("0") == 0.0
+def testsafe_float_accepts_integer_strings():
+    assert safe_float("5") == 5.0
+    assert safe_float("0") == 0.0
 
 
-def test_safe_float_accepts_negative():
-    assert _safe_float("-0.2") == -0.2
+def testsafe_float_accepts_negative():
+    assert safe_float("-0.2") == -0.2
 
 
 # ─── Step 1 · Batch ──────────────────────────────────────────────────────
