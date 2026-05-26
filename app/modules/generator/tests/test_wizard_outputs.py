@@ -270,11 +270,19 @@ def test_aggregate_functions_wizard_produces_sum_or_avg(client):
             arithmetic=True,
             aggregate=True,
             extras={
+                "prob_plus": "0.0",
+                "prob_minus": "0.0",
+                "prob_times": "0.0",
+                "prob_div": "0.0",
+                "prob_sum": "0.5",
+                "prob_avg": "0.5",
                 "ctc_dist_boolean": "0.0",
                 "ctc_dist_integer": "1.0",
                 "ctc_dist_real": "0.0",
                 "ctc_dist_string": "0.0",
-            },
+                "num_constraints_min": "15",
+                "num_constraints_max": "15",
+            }
         ),
         step5=_step5(
             extras={
@@ -507,9 +515,12 @@ def test_ctc_dist_weights_force_string(client):
             }
         ),
     )
-    lines = list(_iter_ctc_lines(_fetch_params_and_generate(client, n=3)))
+    lines = [
+        ln for ln in _iter_ctc_lines(_fetch_params_and_generate(client, n=3))
+        if not ln.startswith("include") and not ln.startswith("Type.")
+    ]
     assert lines
-    assert all(re.search(r"\.Attr\d+", ln) for ln in lines), lines
+    assert all("len(" in ln for ln in lines), lines
 
 
 # ═══════════════════════════════════════════════════════════════════════

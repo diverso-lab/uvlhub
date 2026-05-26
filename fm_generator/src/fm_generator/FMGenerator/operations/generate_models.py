@@ -32,28 +32,54 @@ def generate_random_attributes(
     # repartidos en features distintas para que las constraints numéricas
     # sean realmente viables.
     required_numeric_attrs = 0
-    if arithmetic_level_enabled:
+    numeric_weight = (
+        float(getattr(params, "DIST_INTEGER", 0.0)) +
+        float(getattr(params, "DIST_REAL", 0.0))
+    )
+
+    if arithmetic_level_enabled and numeric_weight > 0.0:
         required_numeric_attrs = (
-            min_vars_per_constraint + extra_constraint_repr - 1) // extra_constraint_repr
+            min_vars_per_constraint + extra_constraint_repr - 1
+        ) // extra_constraint_repr
         required_numeric_attrs = min(
             required_numeric_attrs,
             num_attributes,
-            len(features))
+            len(features),
+        )
 
     available_features_for_numeric = features[:]
     random.shuffle(available_features_for_numeric)
 
+    def pick_random_attribute_type() -> str:
+        attr_types = ["boolean", "integer", "real", "string"]
+        weights = [
+            float(getattr(params, "DIST_BOOLEAN", 0.0)),
+            float(getattr(params, "DIST_INTEGER", 0.0)),
+            float(getattr(params, "DIST_REAL", 0.0)),
+            float(getattr(params, "DIST_STRING", 0.0)),
+        ]
+
+        if sum(weights) <= 0.0:
+            return "boolean"
+
+        return random.choices(attr_types, weights=weights, k=1)[0]
+
     for i in range(num_attributes):
         # Garantizamos attrs numéricos suficientes al principio
         if i < required_numeric_attrs:
-            attr_type = random.choice(["integer", "real"])
+            num_types = ["integer", "real"]
+            num_weights = [
+                float(getattr(params, "DIST_INTEGER", 0.0)),
+                float(getattr(params, "DIST_REAL", 0.0)),
+            ]
+            attr_type = random.choices(num_types, weights=num_weights, k=1)[0]
             if available_features_for_numeric:
                 feature = available_features_for_numeric.pop()
             else:
                 feature = random.choice(features)
         else:
             feature = random.choice(features)
-            attr_type = random.choice(['boolean', 'integer', 'real', 'string'])
+            attr_type = pick_random_attribute_type()
 
         attr_name = f"Attr{i}"
 
@@ -83,8 +109,10 @@ def generate_random_attributes(
             name=attr_name,
             domain=domain,
             default_value=default)
+        setattr(attribute, "attribute_type", attr_type)
         attribute.set_parent(feature)
         feature.add_attribute(attribute)
+        
 
 
 def assign_manual_attributes(params: Params, features: list[Feature]) -> None:
@@ -174,6 +202,7 @@ def assign_manual_attributes(params: Params, features: list[Feature]) -> None:
                 default = gen_default()
                 attribute = Attribute(
                     name=name, domain=domain, default_value=default)
+                setattr(attribute, "attribute_type", type_)
                 attribute.set_parent(feature)
                 feature.add_attribute(attribute)
 
@@ -712,6 +741,10 @@ def add_constraints(
             float(getattr(params, "PROB_MULTIPLY", 0.1)),
             float(getattr(params, "PROB_DIVIDE", 0.0)),
         ]
+
+        if sum(weights) <= 0.0:
+            return ASTOperation.ADD
+
         return random.choices(ops, weights=weights, k=1)[0]
 
     def pick_cmp_op() -> ASTOperation:
@@ -812,6 +845,34 @@ def add_constraints(
     def build_arith_expr(
             keys: list[str],
             len_eligible_keys: set[str] | None = None) -> Node:
+        len_eligible_keys = len_eligible_keys or set()
+
+        aggregate_total = (
+            float(getattr(params, "PROB_SUM_FUNCTION", 0.0)) +
+            float(getattr(params, "PROB_AVG_FUNCTION", 0.0))
+        )
+
+        binary_total = (
+            float(getattr(params, "PROB_SUM", 0.0)) +
+            float(getattr(params, "PROB_SUBSTRACT", 0.0)) +
+            float(getattr(params, "PROB_MULTIPLY", 0.0)) +
+            float(getattr(params, "PROB_DIVIDE", 0.0))
+        )
+
+        if (
+            getattr(params, "AGGREGATE_FUNCTIONS", False)
+            and len(keys) >= 2
+            and aggregate_total > 0.0
+            and binary_total <= 0.0
+        ):
+            agg_name = pick_aggregate_name()
+            if agg_name is not None:
+                wrapped_keys = [
+                    maybe_wrap_key_with_len(k, len_eligible_keys)
+                    for k in keys
+                ]
+                return build_function_node(agg_name, wrapped_keys)
+
         expr = build_plain_arith_expr(keys, len_eligible_keys)
         expr = maybe_wrap_with_aggregate(expr, keys, len_eligible_keys)
         return expr
@@ -851,6 +912,18 @@ def add_constraints(
         if len(keys) < 2:
             return None
 
+        len_prob = float(getattr(params, "PROB_LEN_FUNCTION", 0.0))
+        use_len = (
+            getattr(params, "TYPE_LEVEL", False)
+            and getattr(params, "STRING_CONSTRAINTS", False)
+            and len_prob > 0.0
+            and random.random() < len_prob
+        )
+
+        if use_len:
+            wrapped_keys = [f"len({k})" for k in keys]
+            return build_numeric_predicate(wrapped_keys)
+
         if len(keys) == 2:
             return Node(ASTOperation.EQUALS, Node(keys[0]), Node(keys[1]))
 
@@ -858,7 +931,8 @@ def add_constraints(
         i = 0
         while i + 1 < len(keys):
             eq_nodes.append(
-                Node(ASTOperation.EQUALS, Node(keys[i]), Node(keys[i + 1])))
+                Node(ASTOperation.EQUALS, Node(keys[i]), Node(keys[i + 1]))
+            )
             i += 2
 
         if not eq_nodes:

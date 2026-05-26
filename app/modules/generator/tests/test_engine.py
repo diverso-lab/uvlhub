@@ -11,7 +11,6 @@ import os
 import re
 import tempfile
 
-from flamapy.metamodels.fm_metamodel.models import Attribute, Domain
 from fm_generator.FMGenerator.models.config import Params
 from fm_generator.FMGenerator.models.models import FmgeneratorModel
 from fm_generator.FMGenerator.operations.generate_models import generate_single_model
@@ -65,10 +64,14 @@ def _base_params(**overrides) -> Params:
         PROB_SUM_FUNCTION=0.5,
         PROB_AVG_FUNCTION=0.5,
         PROB_LEN_FUNCTION=1.0,
-        DIST_BOOLEAN=0.7,
-        DIST_INTEGER=0.1,
-        DIST_REAL=0.1,
-        DIST_STRING=0.1,
+        DIST_BOOLEAN=1.0,
+        DIST_INTEGER=0.0,
+        DIST_REAL=0.0,
+        DIST_STRING=0.0,
+        CTC_DIST_BOOLEAN=1.0,
+        CTC_DIST_INTEGER=0.0,
+        CTC_DIST_REAL=0.0,
+        CTC_DIST_STRING=0.0,
         MIN_ATTRIBUTES=3,
         MAX_ATTRIBUTES=5,
     )
@@ -208,7 +211,16 @@ def test_group_cardinality_on_with_weight_produces_group_groups():
 
 
 def test_feature_cardinality_off_produces_none():
-    p = _base_params(ARITHMETIC_LEVEL=True, FEATURE_CARDINALITY=False)
+    p = _base_params(
+        ARITHMETIC_LEVEL=True,
+        FEATURE_CARDINALITY=False,
+        DIST_BOOLEAN=1.0,
+        DIST_INTEGER=0.0,
+        DIST_REAL=0.0,
+        CTC_DIST_BOOLEAN=1.0,
+        CTC_DIST_INTEGER=0.0,
+        CTC_DIST_REAL=0.0,
+    )
     text = _run(p, n=5)
     assert "cardinality [" not in text
 
@@ -220,6 +232,12 @@ def test_feature_cardinality_on_produces_some():
         PROB_FEATURE_CARDINALITY=1.0,
         MIN_FEATURE_CARDINALITY=[2],
         MAX_FEATURE_CARDINALITY=[5],
+        DIST_BOOLEAN=1.0,
+        DIST_INTEGER=0.0,
+        DIST_REAL=0.0,
+        CTC_DIST_BOOLEAN=1.0,
+        CTC_DIST_INTEGER=0.0,
+        CTC_DIST_REAL=0.0,
     )
     text = _run(p, n=3)
     assert "cardinality [" in text
@@ -285,22 +303,33 @@ def test_dist_string_only_respects_type_level():
     assert re.search(r"\{Attr\d+\s+'[^']+'", text)
 
 
-def test_no_integer_attrs_when_arithmetic_off():
-    """Even if DIST_INTEGER=1.0, ARITHMETIC_LEVEL=False falls back to Boolean."""
+def test_numeric_attrs_do_not_appear_in_constraints_when_arithmetic_off():
+    """Numeric attributes may exist with Arithmetic level disabled, but they
+    must not be used in constraints."""
     p = _base_params(
         ARITHMETIC_LEVEL=False,
+        TYPE_LEVEL=False,
         DIST_BOOLEAN=0.0,
         DIST_INTEGER=1.0,
         DIST_REAL=0.0,
         DIST_STRING=0.0,
+        CTC_DIST_BOOLEAN=1.0,
+        CTC_DIST_INTEGER=0.0,
+        CTC_DIST_REAL=0.0,
+        CTC_DIST_STRING=0.0,
         MIN_ATTRIBUTES=3,
         MAX_ATTRIBUTES=3,
+        MIN_CONSTRAINTS=6,
+        MAX_CONSTRAINTS=6,
     )
+
     text = _run(p, n=3)
-    # Since integer/real are gated off and DIST_BOOLEAN=0, engine falls back
-    # to the only enabled kind (boolean).
-    attrs = re.findall(r"\{Attr\d+\s+(\S+?)(?:,|\})", text)
-    assert all(a in ("true", "false") for a in attrs), f"got non-boolean: {attrs}"
+
+    attrs = re.findall(r"\{Attr\d+\s+([^,}]+)", text)
+    assert attrs, "expected numeric attributes to be generated"
+
+    for line in _iter_constraint_lines(text):
+        assert ".Attr" not in line, f"attribute leaked into boolean-only constraint: {line}"
 
 
 # ── Constraints / levels ─────────────────────────────────────────────────
@@ -363,6 +392,10 @@ def test_aggregate_functions_produce_sum_avg():
         CTC_DIST_INTEGER=1.0,
         CTC_DIST_REAL=0.0,
         CTC_DIST_STRING=0.0,
+        PROB_SUM=0.0,
+        PROB_SUBSTRACT=0.0,
+        PROB_MULTIPLY=0.0,
+        PROB_DIVIDE=0.0,
         PROB_SUM_FUNCTION=0.5,
         PROB_AVG_FUNCTION=0.5,
         MIN_CONSTRAINTS=15,
@@ -525,11 +558,13 @@ def test_ensure_satisfiable_runs_without_crashing():
 def test_manual_mode_uses_attribute_in_constraints_flag():
     """Attributes with use_in_constraints=False must not appear in any
     constraint expression (across every generated model)."""
-    attr = Attribute(
-        name="SecretSize",
-        domain=Domain(ranges=None, elements=[True, False]),
-        default_value=True,
-    )
+    attr = {
+        "name": "SecretSize",
+        "type": "boolean",
+        "value": [True, False],
+        "attach_probability": 1.0,
+        "use_in_constraints": False,
+    }
     p = _base_params(
         RANDOM_ATTRIBUTES=False,
         MIN_ATTRIBUTES=None,

@@ -113,7 +113,6 @@ class Params:
 
         if not self.TYPE_LEVEL:
             self.STRING_CONSTRAINTS = False
-            self.DIST_STRING = 0.0
             self.CTC_DIST_STRING = 0.0
 
         if self.ENSURE_SATISFIABLE:
@@ -194,18 +193,17 @@ class Params:
             raise ValueError("[ERROR] PROB_NOT must be between 0 and 1.")
 
     def _validate_type_distribution(self):
-        active = [self.DIST_BOOLEAN]
+        values = [
+            self.DIST_BOOLEAN,
+            self.DIST_INTEGER,
+            self.DIST_REAL,
+            self.DIST_STRING,
+        ]
 
-        if self.ARITHMETIC_LEVEL:
-            active.extend([self.DIST_INTEGER, self.DIST_REAL])
-
-        if self.TYPE_LEVEL:
-            active.append(self.DIST_STRING)
-
-        if any(v < 0.0 or v > 1.0 for v in active):
+        if any(v < 0.0 or v > 1.0 for v in values):
             raise ValueError("[ERROR] Attribute type probabilities must be between 0 and 1.")
 
-        total = sum(active)
+        total = sum(values)
         if abs(total - 1.0) > 1e-6:
             raise ValueError(f"[ERROR] Attribute type probabilities must sum to 1.0 (actual: {total}).")
 
