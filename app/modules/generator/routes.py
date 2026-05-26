@@ -23,6 +23,11 @@ from app.modules.generator.services import (
     normalize_distribution,
     safe_float,
     save_step_state,
+    apply_step2_levels,
+    apply_step3_tree,
+    apply_step4_constraints,
+    apply_step5_attributes,
+    apply_step6_output,
 )
 from app.modules.generator.validators import (
     validate_step1_form,
@@ -54,202 +59,6 @@ STEP4_UI_DEFAULTS = {
     # String constraints
     "prob_len": 0.7,
 }
-
-
-# ─── Step form persistence helpers ───────────────────────────────────────
-
-
-def _apply_step2_levels(params_dict, form):
-    """Persist only the level toggles from step 2.
-
-    Normalises the hierarchy so session state matches what
-    ``Params.__post_init__`` would produce:
-      * TYPE_LEVEL → ARITHMETIC_LEVEL (typed attrs imply arithmetic).
-      * Minor levels (feature/aggregate, string) are cleared when their
-        major is off.
-    """
-    # Boolean is the base level — always on once step 2 has been visited,
-    # so the summary sidebar always lists "Majors: Boolean, …" from here on.
-    params_dict["BOOLEAN_LEVEL"] = True
-    params_dict["ARITHMETIC_LEVEL"] = "arithmetic_level" in form
-    params_dict["TYPE_LEVEL"] = "type_level" in form
-    params_dict["FEATURE_CARDINALITY"] = "feature_cardinality" in form
-    params_dict["AGGREGATE_FUNCTIONS"] = "aggregate_functions" in form
-    params_dict["STRING_CONSTRAINTS"] = "string_constraints" in form
-    params_dict["GROUP_CARDINALITY"] = "group_cardinality" in form
-    if params_dict["TYPE_LEVEL"]:
-        params_dict["ARITHMETIC_LEVEL"] = True
-    if not params_dict["ARITHMETIC_LEVEL"]:
-        params_dict["FEATURE_CARDINALITY"] = False
-        params_dict["AGGREGATE_FUNCTIONS"] = False
-    if not params_dict["TYPE_LEVEL"]:
-        params_dict["STRING_CONSTRAINTS"] = False
-
-
-def _apply_step3_tree(params_dict, form):
-    """Persist feature tree + feat/group-cardinality settings from step 3."""
-    params_dict["MIN_FEATURES"] = int(form.get("num_features_min", 1))
-    params_dict["MAX_FEATURES"] = int(form.get("num_features_max", 10))
-    params_dict["MAX_TREE_DEPTH"] = int(form.get("max_tree_depth", 5))
-
-    params_dict["DIST_OPTIONAL"] = safe_float(form.get("dist_optional"), 0.3)
-    params_dict["DIST_MANDATORY"] = safe_float(form.get("dist_mandatory"), 0.3)
-    params_dict["DIST_ALTERNATIVE"] = safe_float(form.get("dist_alternative"), 0.2)
-    params_dict["DIST_OR"] = safe_float(form.get("dist_or"), 0.2)
-
-    if params_dict.get("GROUP_CARDINALITY"):
-        params_dict["DIST_GROUP_CARDINALITY"] = safe_float(form.get("dist_group_cardinality"), 0.0)
-        params_dict["GROUP_CARDINALITY_MIN"] = int(form.get("group_cardinality_min", 1))
-        params_dict["GROUP_CARDINALITY_MAX"] = int(form.get("group_cardinality_max", 6))
-    else:
-        params_dict["DIST_GROUP_CARDINALITY"] = 0.0
-
-    if params_dict.get("FEATURE_CARDINALITY"):
-        params_dict["PROB_FEATURE_CARDINALITY"] = safe_float(form.get("prob_fc"), 0.1)
-        params_dict["MIN_FEATURE_CARDINALITY"] = int(form.get("min_feature_cardinality", 2))
-        params_dict["MAX_FEATURE_CARDINALITY"] = int(form.get("max_feature_cardinality", 5))
-    else:
-        params_dict["PROB_FEATURE_CARDINALITY"] = 0.0
-        params_dict.pop("MIN_FEATURE_CARDINALITY", None)
-        params_dict.pop("MAX_FEATURE_CARDINALITY", None)
-
-    # Renormalise relation distribution so it totals EXACTLY 1.0
-    _keys = ["DIST_OPTIONAL", "DIST_MANDATORY", "DIST_ALTERNATIVE", "DIST_OR", "DIST_GROUP_CARDINALITY"]
-    normalize_distribution(params_dict, _keys, fallback_key="DIST_OPTIONAL")
-
-def _apply_step4_constraints(params_dict, form):
-    """Persist constraint counts + all probability distributions from step 4."""
-    params_dict["MIN_CONSTRAINTS"] = int(form.get("num_constraints_min", 1))
-    params_dict["MAX_CONSTRAINTS"] = int(form.get("num_constraints_max", 10))
-    try:
-        params_dict["EXTRA_CONSTRAINT_REPRESENTATIVENESS"] = max(1, int(float(form.get("extra_constraint_repr", 1))))
-    except (TypeError, ValueError):
-        params_dict["EXTRA_CONSTRAINT_REPRESENTATIVENESS"] = 1
-    params_dict["MIN_VARS_PER_CONSTRAINT"] = int(form.get("vars_per_ctc_min", 1))
-    max_feats = int(params_dict.get("MAX_FEATURES", 10000))
-    params_dict["MAX_VARS_PER_CONSTRAINT"] = min(int(form.get("vars_per_ctc_max", 1)), max_feats)
-
-    # Boolean level
-    params_dict["PROB_NOT"] = safe_float(form.get("prob_not"), 0.3)
-    params_dict["PROB_AND"] = safe_float(form.get("prob_and"), 0.7)
-    params_dict["PROB_OR_CT"] = safe_float(form.get("prob_or"), 0.1)
-    params_dict["PROB_IMPLICATION"] = safe_float(form.get("prob_implies"), 0.1)
-    params_dict["PROB_EQUIVALENCE"] = safe_float(form.get("prob_equiv"), 0.1)
-    # Renormalise boolean connectives to exact 1.0
-    bkeys = ["PROB_AND", "PROB_OR_CT", "PROB_IMPLICATION", "PROB_EQUIVALENCE"]
-    normalize_distribution(params_dict, bkeys, fallback_key="PROB_AND")
-
-    arith_on = bool(params_dict.get("ARITHMETIC_LEVEL", False))
-    agg_on = bool(params_dict.get("AGGREGATE_FUNCTIONS", False))
-    if arith_on:
-        params_dict["PROB_SUM"] = safe_float(form.get("prob_plus"), 0.7)
-        params_dict["PROB_SUBSTRACT"] = safe_float(form.get("prob_minus"), 0.2)
-        params_dict["PROB_MULTIPLY"] = safe_float(form.get("prob_times"), 0.1)
-        params_dict["PROB_DIVIDE"] = safe_float(form.get("prob_div"), 0.0)
-        if agg_on:
-            params_dict["PROB_SUM_FUNCTION"] = safe_float(form.get("prob_sum"), 0.0)
-            params_dict["PROB_AVG_FUNCTION"] = safe_float(form.get("prob_avg"), 0.0)
-        else:
-            params_dict["PROB_SUM_FUNCTION"] = 0.0
-            params_dict["PROB_AVG_FUNCTION"] = 0.0
-        params_dict["PROB_EQUALS"] = safe_float(form.get("prob_eq"), 0.1)
-        params_dict["PROB_LESS"] = safe_float(form.get("prob_lt"), 0.2)
-        params_dict["PROB_GREATER"] = safe_float(form.get("prob_gt"), 0.7)
-        params_dict["PROB_LESS_EQUALS"] = safe_float(form.get("prob_leq"), 0.0)
-        params_dict["PROB_GREATER_EQUALS"] = safe_float(form.get("prob_geq"), 0.0)
-    else:
-        for k in (
-            "PROB_SUM",
-            "PROB_SUBSTRACT",
-            "PROB_MULTIPLY",
-            "PROB_DIVIDE",
-            "PROB_SUM_FUNCTION",
-            "PROB_AVG_FUNCTION",
-            "PROB_EQUALS",
-            "PROB_LESS",
-            "PROB_GREATER",
-            "PROB_LESS_EQUALS",
-            "PROB_GREATER_EQUALS",
-        ):
-            params_dict[k] = 0.0
-
-    type_on = bool(params_dict.get("TYPE_LEVEL", False))
-    str_on = bool(params_dict.get("STRING_CONSTRAINTS", False))
-    if type_on and str_on:
-        params_dict["PROB_LEN_FUNCTION"] = safe_float(form.get("prob_len"), 0.7)
-    else:
-        params_dict["PROB_LEN_FUNCTION"] = 0.0
-
-    # CTC type distribution
-    params_dict["CTC_DIST_BOOLEAN"] = safe_float(
-        form.get("ctc_dist_boolean"),
-        0.7 if arith_on or type_on else 1.0,
-    )
-    params_dict["CTC_DIST_INTEGER"] = (
-        safe_float(form.get("ctc_dist_integer"), 0.2)
-        if arith_on else 0.0
-    )
-    params_dict["CTC_DIST_REAL"] = (
-        safe_float(form.get("ctc_dist_real"), 0.1)
-        if arith_on else 0.0
-    )
-    params_dict["CTC_DIST_STRING"] = (
-        safe_float(form.get("ctc_dist_string"), 0.0)
-        if type_on and str_on else 0.0
-    )
-
-    # Remove obsolete keys from older sessions / previous implementation.
-    params_dict.pop("CTC_DIST_NUMERIC", None)
-    params_dict.pop("CTC_DIST_AGGREGATE", None)
-
-    cks = [
-        "CTC_DIST_BOOLEAN",
-        "CTC_DIST_INTEGER",
-        "CTC_DIST_REAL",
-        "CTC_DIST_STRING",
-    ]
-    
-    normalize_distribution(params_dict, cks, fallback_key="CTC_DIST_BOOLEAN")
-
-
-def _apply_step5_attributes(params_dict, form):
-    """Persist attribute settings from step 5."""
-    random_attributes = "random_attributes" in form
-    params_dict["RANDOM_ATTRIBUTES"] = random_attributes
-    if random_attributes:
-        params_dict["MIN_ATTRIBUTES"] = int(form.get("min_attributes", 1))
-        params_dict["MAX_ATTRIBUTES"] = int(form.get("max_attributes", 5))
-        params_dict["ATTRIBUTES_LIST"] = []
-        params_dict["ATTRIBUTE_ATTACH_PROBS"] = []
-        params_dict["ATTRIBUTE_IN_CONSTRAINTS"] = []
-        arith_on = bool(params_dict.get("ARITHMETIC_LEVEL", False))
-        type_on = bool(params_dict.get("TYPE_LEVEL", False))
-        dist = {
-            "DIST_BOOLEAN": safe_float(form.get("dist_boolean"), 0.7),
-            "DIST_INTEGER": safe_float(form.get("dist_integer"), 0.0) if arith_on else 0.0,
-            "DIST_REAL": safe_float(form.get("dist_real"), 0.0) if arith_on else 0.0,
-            "DIST_STRING": safe_float(form.get("dist_string"), 0.0) if type_on else 0.0,
-        }
-        params_dict.update(dist)
-        normalize_distribution(
-            params_dict,
-            ["DIST_BOOLEAN", "DIST_INTEGER", "DIST_REAL", "DIST_STRING"],
-            fallback_key="DIST_BOOLEAN",
-        )
-    else:
-        attrs, probs, in_ctc = collect_manual_attributes(form, params_dict)
-        params_dict["MIN_ATTRIBUTES"] = None
-        params_dict["MAX_ATTRIBUTES"] = None
-        params_dict["ATTRIBUTES_LIST"] = attrs
-        params_dict["ATTRIBUTE_ATTACH_PROBS"] = probs
-        params_dict["ATTRIBUTE_IN_CONSTRAINTS"] = in_ctc
-
-
-def _apply_step6_output(params_dict, form):
-    """Persist output options from step 6."""
-    params_dict["ENSURE_SATISFIABLE"] = "ensure_satisfiable" in form
-    params_dict["INCLUDE_FEATURE_COUNT_SUFFIX"] = "feature_count_suffix" in form
-    params_dict["INCLUDE_CONSTRAINT_COUNT_SUFFIX"] = "constraint_count_suffix" in form
 
 
 # ─── Entry points ────────────────────────────────────────────────────────
@@ -338,7 +147,7 @@ def step2():
             ],
         )
         params_dict = session.get("params", {}) or {}
-        _apply_step2_levels(params_dict, request.form)
+        apply_step2_levels(params_dict, request.form)
         session["params"] = params_dict
 
         if nav == "prev":
@@ -379,7 +188,7 @@ def step3():
         save_step_state(3, request.form, checkbox_fields=[])
 
         if nav == "prev":
-            _apply_step3_tree(params_dict, request.form)
+            apply_step3_tree(params_dict, request.form)
             session["params"] = params_dict
             clear_step_state(3)
             return redirect(url_for("generator.step2"))
@@ -397,7 +206,7 @@ def step3():
         )
         if errors:
             return render_template("generator/step3.html", current_step=3, errors=errors, values=values)
-        _apply_step3_tree(params_dict, request.form)
+        apply_step3_tree(params_dict, request.form)
         session["params"] = params_dict
         clear_step_state(3)
         return redirect(url_for("generator.step4"))
@@ -443,7 +252,7 @@ def step4():
         save_step_state(4, request.form, checkbox_fields=[])
 
         if nav == "prev":
-            _apply_step4_constraints(params_dict, request.form)
+            apply_step4_constraints(params_dict, request.form)
             session["params"] = params_dict
             clear_step_state(4)
             return redirect(url_for("generator.step3"))
@@ -456,7 +265,7 @@ def step4():
         values["string_constraints"] = params_dict.get("STRING_CONSTRAINTS", False)
         if errors:
             return render_template("generator/step4.html", current_step=4, errors=errors, values=values)
-        _apply_step4_constraints(params_dict, request.form)
+        apply_step4_constraints(params_dict, request.form)
         session["params"] = params_dict
         clear_step_state(4)
         return redirect(url_for("generator.step5"))
@@ -549,7 +358,7 @@ def step5():
         save_step_state(5, request.form, checkbox_fields=["random_attributes"])
 
         if nav == "prev":
-            _apply_step5_attributes(params_dict, request.form)
+            apply_step5_attributes(params_dict, request.form)
             session["params"] = params_dict
             clear_step_state(5)
             return redirect(url_for("generator.step4"))
@@ -565,7 +374,7 @@ def step5():
                 type_level=params_dict.get("TYPE_LEVEL", False),
                 string_constraints=params_dict.get("STRING_CONSTRAINTS", False),
             )
-        _apply_step5_attributes(params_dict, request.form)
+        apply_step5_attributes(params_dict, request.form)
         session["params"] = params_dict
         clear_step_state(5)
         return redirect(url_for("generator.step6"))
@@ -613,7 +422,7 @@ def step6():
                 "constraint_count_suffix",
             ],
         )
-        _apply_step6_output(params_dict, request.form)
+        apply_step6_output(params_dict, request.form)
         session["params"] = params_dict
         if nav == "prev":
             clear_step_state(6)
@@ -651,11 +460,11 @@ def get_params_json():
 # the real step handlers. Each entry persists its step's form data onto
 # a working copy of session["params"].
 _DRAFT_PERSISTERS = {
-    2: _apply_step2_levels,
-    3: _apply_step3_tree,
-    4: _apply_step4_constraints,
-    5: _apply_step5_attributes,
-    6: _apply_step6_output,
+    2: apply_step2_levels,
+    3: apply_step3_tree,
+    4: apply_step4_constraints,
+    5: apply_step5_attributes,
+    6: apply_step6_output,
 }
 
 
