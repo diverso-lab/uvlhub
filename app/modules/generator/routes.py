@@ -28,6 +28,12 @@ from app.modules.generator.services import (
     apply_step4_constraints,
     apply_step5_attributes,
     apply_step6_output,
+    build_step1_values,
+    build_step2_values,
+    build_step3_values,
+    build_step4_values,
+    build_step5_values,
+    build_step6_values,
 )
 from app.modules.generator.validators import (
     validate_step1_form,
@@ -41,24 +47,6 @@ from app.modules.generator.validators import (
 generator_service = GeneratorService()
 
 TOTAL_STEPS = 6
-
-STEP4_UI_DEFAULTS = {
-    # Arithmetic (without aggregates)
-    "prob_plus": 0.7,
-    "prob_minus": 0.2,
-    "prob_times": 0.1,
-    "prob_div": 0.0,
-    "prob_sum": 0.0,
-    "prob_avg": 0.0,
-    # Comparison
-    "prob_eq": 0.1,
-    "prob_lt": 0.2,
-    "prob_gt": 0.7,
-    "prob_leq": 0.0,
-    "prob_geq": 0.0,
-    # String constraints
-    "prob_len": 0.7,
-}
 
 
 # ─── Entry points ────────────────────────────────────────────────────────
@@ -117,12 +105,7 @@ def step1():
         clear_step_state(1)
         return redirect(url_for("generator.step2"))
 
-    params_dict = session.get("params", {})
-    values = {
-        "num_models_val": params_dict.get("NUM_MODELS", 5),
-        "seed": params_dict.get("SEED", 42),
-        "name_prefix": params_dict.get("NAME_PREFIX", ""),
-    }
+    values = build_step1_values(session.get("params", {}))
     return render_template("generator/step1.html", current_step=1, errors={}, values=values)
 
 
@@ -170,7 +153,7 @@ def step2():
         "string_constraints": params_dict.get("STRING_CONSTRAINTS", False),
         "group_cardinality": params_dict.get("GROUP_CARDINALITY", False),
     }
-    values = load_step_state(2, values)
+    values = load_step_state(2, build_step2_values(session.get("params", {})))
     return render_template("generator/step2.html", current_step=2, errors={}, values=values)
 
 
@@ -234,7 +217,7 @@ def step3():
         "group_cardinality": params_dict.get("GROUP_CARDINALITY", False),
         "rel_dist_total": "1.0000",
     }
-    values = load_step_state(3, values)
+    values = load_step_state(3, build_step3_values(params_dict))
     return render_template("generator/step3.html", current_step=3, errors={}, values=values)
 
 
@@ -270,77 +253,7 @@ def step4():
         clear_step_state(4)
         return redirect(url_for("generator.step5"))
 
-    wizard = session.get("wizard", {})
-    has_saved = "4" in wizard
-    max_feats = int(params_dict.get("MAX_FEATURES", 1000))
-    try:
-        _ecr_default = max(1, int(float(params_dict.get("EXTRA_CONSTRAINT_REPRESENTATIVENESS", 1))))
-    except (TypeError, ValueError):
-        _ecr_default = 1
-
-    defaults = {
-        "num_constraints_min": params_dict.get("MIN_CONSTRAINTS", 1),
-        "num_constraints_max": params_dict.get("MAX_CONSTRAINTS", 10),
-        "extra_constraint_repr": _ecr_default,
-        "vars_per_ctc_min": params_dict.get("MIN_VARS_PER_CONSTRAINT", 1),
-        "vars_per_ctc_max": min(int(params_dict.get("MAX_VARS_PER_CONSTRAINT", 10)), max_feats),
-        "max_features": max_feats,
-        "boolop_sum": "1.0000",
-        "arithmetic_sum": "1.0000",
-        "cmp_sum": "1.0000",
-        "ctc_dist_sum": "1.0000",
-        "ctc_dist_boolean": params_dict.get("CTC_DIST_BOOLEAN", 0.7),
-        "ctc_dist_integer": params_dict.get("CTC_DIST_INTEGER", 0.2),
-        "ctc_dist_real": params_dict.get("CTC_DIST_REAL", 0.1),
-        "ctc_dist_string": params_dict.get("CTC_DIST_STRING", 0.0),
-        "arithmetic_level": params_dict.get("ARITHMETIC_LEVEL", False),
-        "aggregate_functions": params_dict.get("AGGREGATE_FUNCTIONS", False),
-        "type_level": params_dict.get("TYPE_LEVEL", False),
-        "string_constraints": params_dict.get("STRING_CONSTRAINTS", False),
-        "prob_not": params_dict.get("PROB_NOT", 0.3),
-        "prob_and": params_dict.get("PROB_AND", 0.7),
-        "prob_or": params_dict.get("PROB_OR_CT", 0.1),
-        "prob_implies": params_dict.get("PROB_IMPLICATION", 0.1),
-        "prob_equiv": params_dict.get("PROB_EQUIVALENCE", 0.1),
-    }
-    if has_saved:
-        defaults.update(
-            {
-                "prob_plus": params_dict.get("PROB_SUM", STEP4_UI_DEFAULTS["prob_plus"]),
-                "prob_minus": params_dict.get("PROB_SUBSTRACT", STEP4_UI_DEFAULTS["prob_minus"]),
-                "prob_times": params_dict.get("PROB_MULTIPLY", STEP4_UI_DEFAULTS["prob_times"]),
-                "prob_div": params_dict.get("PROB_DIVIDE", STEP4_UI_DEFAULTS["prob_div"]),
-                "prob_sum": params_dict.get("PROB_SUM_FUNCTION", STEP4_UI_DEFAULTS["prob_sum"]),
-                "prob_avg": params_dict.get("PROB_AVG_FUNCTION", STEP4_UI_DEFAULTS["prob_avg"]),
-                "prob_eq": params_dict.get("PROB_EQUALS", STEP4_UI_DEFAULTS["prob_eq"]),
-                "prob_lt": params_dict.get("PROB_LESS", STEP4_UI_DEFAULTS["prob_lt"]),
-                "prob_gt": params_dict.get("PROB_GREATER", STEP4_UI_DEFAULTS["prob_gt"]),
-                "prob_leq": params_dict.get("PROB_LESS_EQUALS", STEP4_UI_DEFAULTS["prob_leq"]),
-                "prob_geq": params_dict.get("PROB_GREATER_EQUALS", STEP4_UI_DEFAULTS["prob_geq"]),
-                "prob_len": (
-                    params_dict.get("PROB_LEN_FUNCTION", STEP4_UI_DEFAULTS["prob_len"])
-                    if params_dict.get("TYPE_LEVEL") and params_dict.get("STRING_CONSTRAINTS")
-                    else 0.0
-                ),
-            }
-        )
-    else:
-        defaults.update(STEP4_UI_DEFAULTS)
-        if not (params_dict.get("TYPE_LEVEL") and params_dict.get("STRING_CONSTRAINTS")):
-            defaults["prob_len"] = 0.0
-
-    values = load_step_state(4, defaults)
-    # Always trust params for level flags (never stale wizard state).
-    values["arithmetic_level"] = params_dict.get("ARITHMETIC_LEVEL", False)
-    values["aggregate_functions"] = params_dict.get("AGGREGATE_FUNCTIONS", False)
-    values["type_level"] = params_dict.get("TYPE_LEVEL", False)
-    values["string_constraints"] = params_dict.get("STRING_CONSTRAINTS", False)
-    try:
-        values["vars_per_ctc_max"] = str(min(int(values.get("vars_per_ctc_max", max_feats)), max_feats))
-    except Exception:
-        values["vars_per_ctc_max"] = str(max_feats)
-    values["max_features"] = max_feats
-
+    values = build_step4_values(params_dict)
     return render_template("generator/step4.html", current_step=4, errors={}, values=values)
 
 
@@ -390,7 +303,7 @@ def step5():
         "dist_string": params_dict.get("DIST_STRING", 0.1),
         "attr_dist_sum": "1.0000",
     }
-    values = load_step_state(5, defaults)
+    values = build_step5_values(params_dict)
     return render_template(
         "generator/step5.html",
         current_step=5,
@@ -441,7 +354,7 @@ def step6():
         "feature_count_suffix": params_dict.get("INCLUDE_FEATURE_COUNT_SUFFIX", False),
         "constraint_count_suffix": params_dict.get("INCLUDE_CONSTRAINT_COUNT_SUFFIX", False),
     }
-    values = load_step_state(6, defaults)
+    values = build_step6_values(params_dict)
     return render_template("generator/step6.html", current_step=6, errors={}, values=values)
 
 
