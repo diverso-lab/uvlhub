@@ -375,4 +375,4 @@ app/modules/generator/tests/test_wizard_outputs.py::test_params_json_roundtrips_
 app/modules/generator/tests/test_wizard_outputs.py::test_params_json_roundtrips_through_params[42] PASSED [ 99%]
 app/modules/generator/tests/test_wizard_outputs.py::test_params_json_roundtrips_through_params[777] PASSED [100%]
 
-============================= 367 passed in 5.13s ==============================
+============================= 367 passed in 6.41s ==============================

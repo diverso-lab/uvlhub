@@ -15,31 +15,37 @@ is independent of the others.
 from flask import jsonify, redirect, render_template, request, session, url_for
 
 from app.modules.generator import generator_bp
-from app.modules.generator.services import (
-    GeneratorService,
-    clear_step_state,
-    save_step_state,
-    apply_step2_levels,
-    apply_step3_tree,
-    apply_step4_constraints,
-    apply_step5_attributes,
-    apply_step6_output,
-    build_step1_values,
-    build_step2_values,
-    build_step3_values,
-    build_step4_values,
-    build_step5_values,
-    build_step6_values,
-    update_summary_draft,
-    apply_step1_batch,
-    add_level_flags,
-)
+from app.modules.generator.services import GeneratorService
 from app.modules.generator.validators import (
     validate_step1_form,
     validate_step2_form,
     validate_step3_form,
     validate_step4_form,
     validate_step5_form,
+)
+from app.modules.generator.wizard_state import (
+    clear_step_state,
+    save_step_state,
+    update_summary_draft,
+)
+
+from app.modules.generator.wizard_persisters import (
+    add_level_flags,
+    apply_step1_batch,
+    apply_step2_levels,
+    apply_step3_tree,
+    apply_step4_constraints,
+    apply_step5_attributes,
+    apply_step6_output,
+)
+
+from app.modules.generator.wizard_builders import (
+    build_step1_values,
+    build_step2_values,
+    build_step3_values,
+    build_step4_values,
+    build_step5_values,
+    build_step6_values,
 )
 from app.modules.generator.constants import (
     STEP2_CHECKBOX_FIELDS,

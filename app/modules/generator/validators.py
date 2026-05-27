@@ -1,4 +1,4 @@
-from app.modules.generator.services import safe_float
+from app.modules.generator.wizard_persisters import safe_float
 
 
 def validate_step1_form(form):
