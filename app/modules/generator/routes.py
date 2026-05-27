@@ -30,6 +30,7 @@ from app.modules.generator.services import (
     build_step4_values,
     build_step5_values,
     build_step6_values,
+    update_summary_draft,
 )
 from app.modules.generator.validators import (
     validate_step1_form,
@@ -37,7 +38,6 @@ from app.modules.generator.validators import (
     validate_step3_form,
     validate_step4_form,
     validate_step5_form,
-    validate_step6_form,
 )
 
 generator_service = GeneratorService()
@@ -327,41 +327,5 @@ _DRAFT_PERSISTERS = {
 
 @generator_bp.route("/generator/random/summary-refresh/<int:step>", methods=["POST"])
 def refresh_summary(step: int):
-    """Best-effort draft save + re-rendered summary panel.
-
-    The wizard sidebar re-renders after every Next, which feels laggy when
-    the user is still filling the current step. This endpoint accepts the
-    in-progress form data, applies the step-specific persister (wrapped in
-    try/except so garbage input can't break navigation), and returns just
-    the re-rendered summary panel HTML. The client swaps ``#wizard_summary``
-    in place, so the sidebar mirrors what the user is typing.
-    """
-    params_dict = session.get("params", {}) or {}
-
-    # Step 1's fields are a special case: they map 1:1 onto Params but
-    # there is no ``_apply_step1`` (the route builds Params directly).
-    if step == 1:
-        form = request.form
-        try:
-            nm = form.get("num_models_val")
-            if nm:
-                params_dict["NUM_MODELS"] = max(1, min(1000, int(nm)))
-        except (TypeError, ValueError):
-            pass
-        try:
-            sd = form.get("seed")
-            if sd:
-                params_dict["SEED"] = max(1, int(sd))
-        except (TypeError, ValueError):
-            pass
-        if form.get("name_prefix") is not None:
-            params_dict["NAME_PREFIX"] = form.get("name_prefix", "")
-    elif step in _DRAFT_PERSISTERS:
-        try:
-            _DRAFT_PERSISTERS[step](params_dict, request.form)
-        except Exception:
-            # Swallow — a half-filled form shouldn't break the summary.
-            pass
-
-    session["params"] = params_dict
+    params_dict = update_summary_draft(step, request.form)
     return render_template("generator/_summary_partial.html", params=params_dict)

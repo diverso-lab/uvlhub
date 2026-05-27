@@ -504,3 +504,43 @@ def build_step6_values(params_dict):
         "constraint_count_suffix": params_dict.get("INCLUDE_CONSTRAINT_COUNT_SUFFIX", False),
     }
     return load_step_state(6, defaults)
+
+
+DRAFT_PERSISTERS = {
+    2: apply_step2_levels,
+    3: apply_step3_tree,
+    4: apply_step4_constraints,
+    5: apply_step5_attributes,
+    6: apply_step6_output,
+}
+
+
+def update_summary_draft(step: int, form) -> dict:
+    params_dict = session.get("params", {}) or {}
+
+    if step == 1:
+        try:
+            nm = form.get("num_models_val")
+            if nm:
+                params_dict["NUM_MODELS"] = max(1, min(1000, int(nm)))
+        except (TypeError, ValueError):
+            pass
+
+        try:
+            sd = form.get("seed")
+            if sd:
+                params_dict["SEED"] = max(1, int(sd))
+        except (TypeError, ValueError):
+            pass
+
+        if form.get("name_prefix") is not None:
+            params_dict["NAME_PREFIX"] = form.get("name_prefix", "")
+
+    elif step in DRAFT_PERSISTERS:
+        try:
+            DRAFT_PERSISTERS[step](params_dict, form)
+        except Exception:
+            pass
+
+    session["params"] = params_dict
+    return params_dict
