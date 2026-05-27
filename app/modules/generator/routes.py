@@ -31,6 +31,7 @@ from app.modules.generator.services import (
     build_step5_values,
     build_step6_values,
     update_summary_draft,
+    apply_step1_batch,
 )
 from app.modules.generator.validators import (
     validate_step1_form,
@@ -91,9 +92,7 @@ def step1():
         # so the downstream flow doesn't need this pre-fill.
         p = session.get("params", {}) or {}
         try:
-            p["NUM_MODELS"] = int(request.form.get("num_models_val"))
-            p["SEED"] = int(request.form.get("seed"))
-            p["NAME_PREFIX"] = request.form.get("name_prefix", "")
+            apply_step1_batch(p, request.form)
         except (TypeError, ValueError) as e:
             errors["global"] = str(e)
             return render_template(

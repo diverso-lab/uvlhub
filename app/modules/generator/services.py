@@ -334,6 +334,14 @@ def apply_step6_output(params_dict, form):
 # ─── Builders ───────────────────────────────────────
 
 
+def first_or_value(value, default):
+    if isinstance(value, (list, tuple)):
+        return value[0] if value else default
+    if value is None:
+        return default
+    return value
+
+
 def build_step1_values(params_dict):
     return {
         "num_models_val": params_dict.get("NUM_MODELS", 5),
@@ -367,8 +375,8 @@ def build_step3_values(params_dict):
         "group_cardinality_min": params_dict.get("GROUP_CARDINALITY_MIN", 1),
         "group_cardinality_max": params_dict.get("GROUP_CARDINALITY_MAX", 6),
         "prob_fc": params_dict.get("PROB_FEATURE_CARDINALITY", 0.1),
-        "min_feature_cardinality": (params_dict.get("MIN_FEATURE_CARDINALITY", [2]) or [2])[0],
-        "max_feature_cardinality": (params_dict.get("MAX_FEATURE_CARDINALITY", [5]) or [5])[0],
+        "min_feature_cardinality": first_or_value(params_dict.get("MIN_FEATURE_CARDINALITY"), 2),
+        "max_feature_cardinality": first_or_value(params_dict.get("MAX_FEATURE_CARDINALITY"), 5),
         "arithmetic_level": params_dict.get("ARITHMETIC_LEVEL", False),
         "type_level": params_dict.get("TYPE_LEVEL", False),
         "feature_cardinality": params_dict.get("FEATURE_CARDINALITY", False),
@@ -516,3 +524,9 @@ def update_summary_draft(step: int, form) -> dict:
 
     session["params"] = params_dict
     return params_dict
+
+
+def apply_step1_batch(params_dict, form):
+    params_dict["NUM_MODELS"] = int(form.get("num_models_val"))
+    params_dict["SEED"] = int(form.get("seed"))
+    params_dict["NAME_PREFIX"] = form.get("name_prefix", "")
