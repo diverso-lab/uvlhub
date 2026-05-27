@@ -530,3 +530,17 @@ def apply_step1_batch(params_dict, form):
     params_dict["NUM_MODELS"] = int(form.get("num_models_val"))
     params_dict["SEED"] = int(form.get("seed"))
     params_dict["NAME_PREFIX"] = form.get("name_prefix", "")
+
+
+def add_level_flags(values: dict, params_dict: dict) -> dict:
+    values.update(
+        {
+            "arithmetic_level": params_dict.get("ARITHMETIC_LEVEL", False),
+            "type_level": params_dict.get("TYPE_LEVEL", False),
+            "feature_cardinality": params_dict.get("FEATURE_CARDINALITY", False),
+            "aggregate_functions": params_dict.get("AGGREGATE_FUNCTIONS", False),
+            "string_constraints": params_dict.get("STRING_CONSTRAINTS", False),
+            "group_cardinality": params_dict.get("GROUP_CARDINALITY", False),
+        }
+    )
+    return values

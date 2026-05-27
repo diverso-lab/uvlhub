@@ -32,6 +32,7 @@ from app.modules.generator.services import (
     build_step6_values,
     update_summary_draft,
     apply_step1_batch,
+    add_level_flags,
 )
 from app.modules.generator.validators import (
     validate_step1_form,
@@ -159,16 +160,7 @@ def step3():
             return redirect(url_for("generator.step2"))
 
         errors, values = validate_step3_form(request.form, params_dict)
-        values.update(
-            {
-                "arithmetic_level": params_dict.get("ARITHMETIC_LEVEL", False),
-                "type_level": params_dict.get("TYPE_LEVEL", False),
-                "feature_cardinality": params_dict.get("FEATURE_CARDINALITY", False),
-                "aggregate_functions": params_dict.get("AGGREGATE_FUNCTIONS", False),
-                "string_constraints": params_dict.get("STRING_CONSTRAINTS", False),
-                "group_cardinality": params_dict.get("GROUP_CARDINALITY", False),
-            }
-        )
+        add_level_flags(values, params_dict)
         if errors:
             return render_template("generator/step3.html", current_step=3, errors=errors, values=values)
         apply_step3_tree(params_dict, request.form)
@@ -201,10 +193,7 @@ def step4():
 
         max_feats = int(params_dict.get("MAX_FEATURES", 10000))
         errors, values = validate_step4_form(request.form, max_feats, params_dict)
-        values["arithmetic_level"] = params_dict.get("ARITHMETIC_LEVEL", False)
-        values["aggregate_functions"] = params_dict.get("AGGREGATE_FUNCTIONS", False)
-        values["type_level"] = params_dict.get("TYPE_LEVEL", False)
-        values["string_constraints"] = params_dict.get("STRING_CONSTRAINTS", False)
+        add_level_flags(values, params_dict)
         if errors:
             return render_template("generator/step4.html", current_step=4, errors=errors, values=values)
         apply_step4_constraints(params_dict, request.form)
