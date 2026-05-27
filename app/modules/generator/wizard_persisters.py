@@ -113,7 +113,6 @@ def apply_step1_batch(params_dict, form):
     params_dict["NAME_PREFIX"] = form.get("name_prefix", "")
 
 
-
 def apply_step2_levels(params_dict, form):
     """Persist only the level toggles from step 2.
 

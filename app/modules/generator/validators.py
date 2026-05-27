@@ -362,7 +362,7 @@ def validate_step4_form(form, max_features: int = 10000, params_dict=None):
 
 
 def validate_step5_form(form, params_dict=None):
-    """Step 5 — attributes. Mirror of the legacy step4 validator."""
+    """Step 5 — attributes. Validates random and manual attribute configuration."""
     errors, values = {}, {}
     params_dict = params_dict or {}
 

@@ -15,7 +15,6 @@ is independent of the others.
 from flask import jsonify, redirect, render_template, request, session, url_for
 
 from app.modules.generator import generator_bp
-from app.modules.generator.services import GeneratorService
 from app.modules.generator.validators import (
     validate_step1_form,
     validate_step2_form,
@@ -52,10 +51,6 @@ from app.modules.generator.constants import (
     STEP5_CHECKBOX_FIELDS,
     STEP6_CHECKBOX_FIELDS,
 )
-
-generator_service = GeneratorService()
-
-TOTAL_STEPS = 6
 
 
 # ─── Entry points ────────────────────────────────────────────────────────
