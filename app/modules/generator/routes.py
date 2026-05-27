@@ -39,6 +39,11 @@ from app.modules.generator.validators import (
     validate_step4_form,
     validate_step5_form,
 )
+from app.modules.generator.constants import (
+    STEP2_CHECKBOX_FIELDS,
+    STEP5_CHECKBOX_FIELDS,
+    STEP6_CHECKBOX_FIELDS,
+)
 
 generator_service = GeneratorService()
 
@@ -115,15 +120,7 @@ def step2():
         save_step_state(
             2,
             request.form,
-            checkbox_fields=[
-                "boolean_level",
-                "arithmetic_level",
-                "type_level",
-                "feature_cardinality",
-                "aggregate_functions",
-                "string_constraints",
-                "group_cardinality",
-            ],
+            checkbox_fields=STEP2_CHECKBOX_FIELDS
         )
         params_dict = session.get("params", {}) or {}
         apply_step2_levels(params_dict, request.form)
@@ -231,7 +228,7 @@ def step5():
 
     if request.method == "POST":
         nav = request.form.get("nav", "next")
-        save_step_state(5, request.form, checkbox_fields=["random_attributes"])
+        save_step_state(5, request.form, checkbox_fields=STEP5_CHECKBOX_FIELDS)
 
         if nav == "prev":
             apply_step5_attributes(params_dict, request.form)
@@ -281,11 +278,7 @@ def step6():
         save_step_state(
             6,
             request.form,
-            checkbox_fields=[
-                "ensure_satisfiable",
-                "feature_count_suffix",
-                "constraint_count_suffix",
-            ],
+            checkbox_fields=STEP6_CHECKBOX_FIELDS
         )
         apply_step6_output(params_dict, request.form)
         session["params"] = params_dict
@@ -312,17 +305,6 @@ def get_params_json():
         return jsonify({"error": "Params missing"}), 400
     return jsonify(params)
 
-
-# Dispatch table for the live-summary endpoint so it stays in sync with
-# the real step handlers. Each entry persists its step's form data onto
-# a working copy of session["params"].
-_DRAFT_PERSISTERS = {
-    2: apply_step2_levels,
-    3: apply_step3_tree,
-    4: apply_step4_constraints,
-    5: apply_step5_attributes,
-    6: apply_step6_output,
-}
 
 
 @generator_bp.route("/generator/random/summary-refresh/<int:step>", methods=["POST"])

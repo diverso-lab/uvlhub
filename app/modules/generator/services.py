@@ -6,6 +6,14 @@ from flask import session
 from app.modules.generator.repositories import GeneratorRepository
 from core.services.BaseService import BaseService
 
+from app.modules.generator.constants import (
+    ARITHMETIC_PROB_KEYS,
+    ATTRIBUTE_DIST_KEYS,
+    BOOLEAN_CONNECTIVE_KEYS,
+    CTC_DIST_KEYS,
+    RELATION_DIST_KEYS,
+    STEP4_UI_DEFAULTS,
+)
 
 class GeneratorService(BaseService):
     def __init__(self):
@@ -205,8 +213,8 @@ def apply_step3_tree(params_dict, form):
         params_dict.pop("MAX_FEATURE_CARDINALITY", None)
 
     # Renormalise relation distribution so it totals EXACTLY 1.0
-    _keys = ["DIST_OPTIONAL", "DIST_MANDATORY", "DIST_ALTERNATIVE", "DIST_OR", "DIST_GROUP_CARDINALITY"]
-    normalize_distribution(params_dict, _keys, fallback_key="DIST_OPTIONAL")
+    normalize_distribution(params_dict, RELATION_DIST_KEYS, fallback_key="DIST_OPTIONAL")
+
 
 def apply_step4_constraints(params_dict, form):
     """Persist constraint counts + all probability distributions from step 4."""
@@ -227,8 +235,7 @@ def apply_step4_constraints(params_dict, form):
     params_dict["PROB_IMPLICATION"] = safe_float(form.get("prob_implies"), 0.1)
     params_dict["PROB_EQUIVALENCE"] = safe_float(form.get("prob_equiv"), 0.1)
     # Renormalise boolean connectives to exact 1.0
-    bkeys = ["PROB_AND", "PROB_OR_CT", "PROB_IMPLICATION", "PROB_EQUIVALENCE"]
-    normalize_distribution(params_dict, bkeys, fallback_key="PROB_AND")
+    normalize_distribution(params_dict, BOOLEAN_CONNECTIVE_KEYS, fallback_key="PROB_AND")
 
     arith_on = bool(params_dict.get("ARITHMETIC_LEVEL", False))
     agg_on = bool(params_dict.get("AGGREGATE_FUNCTIONS", False))
@@ -249,19 +256,7 @@ def apply_step4_constraints(params_dict, form):
         params_dict["PROB_LESS_EQUALS"] = safe_float(form.get("prob_leq"), 0.0)
         params_dict["PROB_GREATER_EQUALS"] = safe_float(form.get("prob_geq"), 0.0)
     else:
-        for k in (
-            "PROB_SUM",
-            "PROB_SUBSTRACT",
-            "PROB_MULTIPLY",
-            "PROB_DIVIDE",
-            "PROB_SUM_FUNCTION",
-            "PROB_AVG_FUNCTION",
-            "PROB_EQUALS",
-            "PROB_LESS",
-            "PROB_GREATER",
-            "PROB_LESS_EQUALS",
-            "PROB_GREATER_EQUALS",
-        ):
+        for k in ARITHMETIC_PROB_KEYS:
             params_dict[k] = 0.0
 
     type_on = bool(params_dict.get("TYPE_LEVEL", False))
@@ -293,14 +288,7 @@ def apply_step4_constraints(params_dict, form):
     params_dict.pop("CTC_DIST_NUMERIC", None)
     params_dict.pop("CTC_DIST_AGGREGATE", None)
 
-    cks = [
-        "CTC_DIST_BOOLEAN",
-        "CTC_DIST_INTEGER",
-        "CTC_DIST_REAL",
-        "CTC_DIST_STRING",
-    ]
-    
-    normalize_distribution(params_dict, cks, fallback_key="CTC_DIST_BOOLEAN")
+    normalize_distribution(params_dict, CTC_DIST_KEYS, fallback_key="CTC_DIST_BOOLEAN")
 
 
 def apply_step5_attributes(params_dict, form):
@@ -324,7 +312,7 @@ def apply_step5_attributes(params_dict, form):
         params_dict.update(dist)
         normalize_distribution(
             params_dict,
-            ["DIST_BOOLEAN", "DIST_INTEGER", "DIST_REAL", "DIST_STRING"],
+            ATTRIBUTE_DIST_KEYS,
             fallback_key="DIST_BOOLEAN",
         )
     else:
@@ -344,22 +332,6 @@ def apply_step6_output(params_dict, form):
 
 
 # ─── Builders ───────────────────────────────────────
-
-
-STEP4_UI_DEFAULTS = {
-    "prob_plus": 0.7,
-    "prob_minus": 0.2,
-    "prob_times": 0.1,
-    "prob_div": 0.0,
-    "prob_sum": 0.0,
-    "prob_avg": 0.0,
-    "prob_eq": 0.1,
-    "prob_lt": 0.2,
-    "prob_gt": 0.7,
-    "prob_leq": 0.0,
-    "prob_geq": 0.0,
-    "prob_len": 0.7,
-}
 
 
 def build_step1_values(params_dict):
