@@ -18,10 +18,6 @@ from app.modules.generator import generator_bp
 from app.modules.generator.services import (
     GeneratorService,
     clear_step_state,
-    collect_manual_attributes,
-    load_step_state,
-    normalize_distribution,
-    safe_float,
     save_step_state,
     apply_step2_levels,
     apply_step3_tree,
@@ -143,17 +139,7 @@ def step2():
         clear_step_state(2)
         return redirect(url_for("generator.step3"))
 
-    params_dict = session.get("params", {})
-    values = {
-        "boolean_level": True,
-        "arithmetic_level": params_dict.get("ARITHMETIC_LEVEL", False),
-        "type_level": params_dict.get("TYPE_LEVEL", False),
-        "feature_cardinality": params_dict.get("FEATURE_CARDINALITY", False),
-        "aggregate_functions": params_dict.get("AGGREGATE_FUNCTIONS", False),
-        "string_constraints": params_dict.get("STRING_CONSTRAINTS", False),
-        "group_cardinality": params_dict.get("GROUP_CARDINALITY", False),
-    }
-    values = load_step_state(2, build_step2_values(session.get("params", {})))
+    values = build_step2_values(session.get("params", {}))
     return render_template("generator/step2.html", current_step=2, errors={}, values=values)
 
 
@@ -194,30 +180,7 @@ def step3():
         clear_step_state(3)
         return redirect(url_for("generator.step4"))
 
-    values = {
-        "num_features_min": params_dict.get("MIN_FEATURES", 10),
-        "num_features_max": params_dict.get("MAX_FEATURES", 50),
-        "max_tree_depth": params_dict.get("MAX_TREE_DEPTH", 5),
-        "dist_optional": params_dict.get("DIST_OPTIONAL", 0.3),
-        "dist_mandatory": params_dict.get("DIST_MANDATORY", 0.3),
-        "dist_alternative": params_dict.get("DIST_ALTERNATIVE", 0.2),
-        "dist_or": params_dict.get("DIST_OR", 0.2),
-        "dist_group_cardinality": params_dict.get("DIST_GROUP_CARDINALITY", 0.0),
-        "group_cardinality_min": params_dict.get("GROUP_CARDINALITY_MIN", 1),
-        "group_cardinality_max": params_dict.get("GROUP_CARDINALITY_MAX", 6),
-        "prob_fc": params_dict.get("PROB_FEATURE_CARDINALITY", 0.1),
-        "min_feature_cardinality": (params_dict.get("MIN_FEATURE_CARDINALITY", [2]) or [2])[0],
-        "max_feature_cardinality": (params_dict.get("MAX_FEATURE_CARDINALITY", [5]) or [5])[0],
-        # Flags for gating the UI — must come from params (step2 truth).
-        "arithmetic_level": params_dict.get("ARITHMETIC_LEVEL", False),
-        "type_level": params_dict.get("TYPE_LEVEL", False),
-        "feature_cardinality": params_dict.get("FEATURE_CARDINALITY", False),
-        "aggregate_functions": params_dict.get("AGGREGATE_FUNCTIONS", False),
-        "string_constraints": params_dict.get("STRING_CONSTRAINTS", False),
-        "group_cardinality": params_dict.get("GROUP_CARDINALITY", False),
-        "rel_dist_total": "1.0000",
-    }
-    values = load_step_state(3, build_step3_values(params_dict))
+    values = build_step3_values(params_dict)
     return render_template("generator/step3.html", current_step=3, errors={}, values=values)
 
 
@@ -292,17 +255,6 @@ def step5():
         clear_step_state(5)
         return redirect(url_for("generator.step6"))
 
-    defaults = {
-        "random_attributes": params_dict.get("RANDOM_ATTRIBUTES", True),
-        "min_attributes": params_dict.get("MIN_ATTRIBUTES", 1),
-        "max_attributes": params_dict.get("MAX_ATTRIBUTES", 5),
-        "attributes_list": params_dict.get("ATTRIBUTES_LIST", []),
-        "dist_boolean": params_dict.get("DIST_BOOLEAN", 0.7),
-        "dist_integer": params_dict.get("DIST_INTEGER", 0.1),
-        "dist_real": params_dict.get("DIST_REAL", 0.1),
-        "dist_string": params_dict.get("DIST_STRING", 0.1),
-        "attr_dist_sum": "1.0000",
-    }
     values = build_step5_values(params_dict)
     return render_template(
         "generator/step5.html",
@@ -346,14 +298,6 @@ def step6():
         clear_step_state(6)
         return redirect(url_for("generator.step6"))
 
-    defaults = {
-        # ENSURE_SATISFIABLE triggers up to 20 retries per model via pysat;
-        # on big configurations that can multiply generation time 20×. Keep
-        # it OFF by default and warn the user on the step 6 card.
-        "ensure_satisfiable": params_dict.get("ENSURE_SATISFIABLE", False),
-        "feature_count_suffix": params_dict.get("INCLUDE_FEATURE_COUNT_SUFFIX", False),
-        "constraint_count_suffix": params_dict.get("INCLUDE_CONSTRAINT_COUNT_SUFFIX", False),
-    }
     values = build_step6_values(params_dict)
     return render_template("generator/step6.html", current_step=6, errors={}, values=values)
 
