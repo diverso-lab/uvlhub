@@ -10,6 +10,7 @@ from flamapy.metamodels.fm_metamodel.models.feature_model import (
 
 from fm_generator.FMGenerator.models.config import Params
 
+
 def maybe_apply_feature_type(feature: Feature, params: Params) -> None:
     """Assign a type-level type to the feature according to independent probabilities.
 
@@ -63,15 +64,15 @@ def feature_constraint_bucket(feature: Feature, params: Params) -> str:
 
 def select_relation_types(params: Params, total: int) -> list[str]:
     return random.choices(
-        population=['mand', 'opt', 'alt', 'or', 'group'],
+        population=["mand", "opt", "alt", "or", "group"],
         weights=[
             params.DIST_MANDATORY,
             params.DIST_OPTIONAL,
             params.DIST_ALTERNATIVE,
             params.DIST_OR,
-            params.DIST_GROUP_CARDINALITY
+            params.DIST_GROUP_CARDINALITY,
         ],
-        k=total
+        k=total,
     )
 
 
@@ -120,46 +121,26 @@ def maybe_set_feature_cardinality(feature: Feature, params: Params) -> None:
     feature.cardinality_max = fc_max
 
 
-def create_relation(
-        parent: Feature,
-        children: list[Feature],
-        rel_kind: str,
-        params: Params) -> list[Relation]:
+def create_relation(parent: Feature, children: list[Feature], rel_kind: str, params: Params) -> list[Relation]:
     size = len(children)
     relations = []
 
-    if rel_kind == 'mand':
+    if rel_kind == "mand":
         for child in children:
-            rel = Relation(
-                parent=parent,
-                children=[child],
-                card_min=1,
-                card_max=1)
+            rel = Relation(parent=parent, children=[child], card_min=1, card_max=1)
             relations.append(rel)
 
-    elif rel_kind == 'opt':
+    elif rel_kind == "opt":
         for child in children:
-            rel = Relation(
-                parent=parent,
-                children=[child],
-                card_min=0,
-                card_max=1)
+            rel = Relation(parent=parent, children=[child], card_min=0, card_max=1)
             relations.append(rel)
 
-    elif rel_kind == 'alt':
-        rel = Relation(
-            parent=parent,
-            children=children,
-            card_min=1,
-            card_max=1)
+    elif rel_kind == "alt":
+        rel = Relation(parent=parent, children=children, card_min=1, card_max=1)
         relations.append(rel)
 
-    elif rel_kind == 'or':
-        rel = Relation(
-            parent=parent,
-            children=children,
-            card_min=1,
-            card_max=size)
+    elif rel_kind == "or":
+        rel = Relation(parent=parent, children=children, card_min=1, card_max=size)
         relations.append(rel)
 
     else:
@@ -169,20 +150,13 @@ def create_relation(
             min_bound = max_bound
         card_min = random.randint(min_bound, max_bound)
         card_max = random.randint(card_min, max_bound)
-        rel = Relation(
-            parent=parent,
-            children=children,
-            card_min=card_min,
-            card_max=card_max)
+        rel = Relation(parent=parent, children=children, card_min=card_min, card_max=card_max)
         relations.append(rel)
 
     return relations
 
 
-def add_relations_to_level(
-        parents: list[Feature],
-        children: list[Feature],
-        params: Params) -> None:
+def add_relations_to_level(parents: list[Feature], children: list[Feature], params: Params) -> None:
     total = len(children)
     rel_types = select_relation_types(params, total)
     random.shuffle(rel_types)
@@ -226,7 +200,7 @@ def generate_hierarchy(params: Params) -> tuple[FeatureModel, list[Feature]]:
         level_count = max(1, remaining // levels_left)
         if depth == max_depth:
             level_count = remaining
-        level_feats = features[idx: idx + level_count]
+        level_feats = features[idx : idx + level_count]
         levels[depth] = level_feats
         idx += level_count
         total += level_count

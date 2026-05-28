@@ -11,32 +11,21 @@ from flamapy.metamodels.fm_metamodel.models.feature_model import (
 from fm_generator.FMGenerator.models.config import Params
 
 
-def generate_random_attributes(
-        params: Params,
-        features: list[Feature]) -> None:
-    num_attributes = random.randint(
-        params.MIN_ATTRIBUTES,
-        params.MAX_ATTRIBUTES)
+def generate_random_attributes(params: Params, features: list[Feature]) -> None:
+    num_attributes = random.randint(params.MIN_ATTRIBUTES, params.MAX_ATTRIBUTES)
 
     arithmetic_level_enabled = bool(getattr(params, "ARITHMETIC_LEVEL", False))
-    min_vars_per_constraint = int(
-        getattr(params, "MIN_VARS_PER_CONSTRAINT", 1))
-    extra_constraint_repr = max(
-        1, int(getattr(params, "EXTRA_CONSTRAINT_REPRESENTATIVENESS", 1)))
+    min_vars_per_constraint = int(getattr(params, "MIN_VARS_PER_CONSTRAINT", 1))
+    extra_constraint_repr = max(1, int(getattr(params, "EXTRA_CONSTRAINT_REPRESENTATIVENESS", 1)))
 
     # Si hay nivel aritmético, necesitamos suficientes attrs numéricos
     # repartidos en features distintas para que las constraints numéricas
     # sean realmente viables.
     required_numeric_attrs = 0
-    numeric_weight = (
-        float(getattr(params, "DIST_INTEGER", 0.0)) +
-        float(getattr(params, "DIST_REAL", 0.0))
-    )
+    numeric_weight = float(getattr(params, "DIST_INTEGER", 0.0)) + float(getattr(params, "DIST_REAL", 0.0))
 
     if arithmetic_level_enabled and numeric_weight > 0.0:
-        required_numeric_attrs = (
-            min_vars_per_constraint + extra_constraint_repr - 1
-        ) // extra_constraint_repr
+        required_numeric_attrs = (min_vars_per_constraint + extra_constraint_repr - 1) // extra_constraint_repr
         required_numeric_attrs = min(
             required_numeric_attrs,
             num_attributes,
@@ -79,16 +68,16 @@ def generate_random_attributes(
 
         attr_name = f"Attr{i}"
 
-        if attr_type == 'boolean':
+        if attr_type == "boolean":
             domain = Domain(ranges=None, elements=[True, False])
             default = random.choice([True, False])
 
-        elif attr_type == 'integer':
+        elif attr_type == "integer":
             min_val, max_val = random.randint(0, 50), random.randint(51, 100)
             domain = Domain(ranges=[Range(min_val, max_val)], elements=None)
             default = random.randint(min_val, max_val)
 
-        elif attr_type == 'real':
+        elif attr_type == "real":
             min_val, max_val = random.randint(0, 50), random.randint(51, 100)
             domain = Domain(ranges=[Range(min_val, max_val)], elements=None)
             default = round(random.uniform(min_val, max_val), 2)
@@ -99,22 +88,18 @@ def generate_random_attributes(
             domain = Domain(ranges=[Range(min_len, max_len)], elements=None)
             length = random.randint(min_len, max_len)
             letters = string.ascii_letters + string.digits
-            default = ''.join(random.choices(letters, k=length))
+            default = "".join(random.choices(letters, k=length))
 
-        attribute = Attribute(
-            name=attr_name,
-            domain=domain,
-            default_value=default)
+        attribute = Attribute(name=attr_name, domain=domain, default_value=default)
         setattr(attribute, "attribute_type", attr_type)
         attribute.set_parent(feature)
         feature.add_attribute(attribute)
-        
 
 
 def assign_manual_attributes(params: Params, features: list[Feature]) -> None:
-    assert params.MIN_ATTRIBUTES is None and params.MAX_ATTRIBUTES is None, (
-        "MIN_ATTRIBUTES and MAX_ATTRIBUTES must be None when using manual attributes."
-    )
+    assert (
+        params.MIN_ATTRIBUTES is None and params.MAX_ATTRIBUTES is None
+    ), "MIN_ATTRIBUTES and MAX_ATTRIBUTES must be None when using manual attributes."
     attr_dicts = params.ATTRIBUTES_LIST
 
     for attr in attr_dicts:
@@ -188,7 +173,7 @@ def assign_manual_attributes(params: Params, features: list[Feature]) -> None:
             def gen_default():
                 length = random.randint(min_len, max_len)
                 letters = string.ascii_letters + string.digits
-                return ''.join(random.choices(letters, k=length))
+                return "".join(random.choices(letters, k=length))
 
         else:
             continue
@@ -196,9 +181,7 @@ def assign_manual_attributes(params: Params, features: list[Feature]) -> None:
         for feature in features:
             if random.random() < float(attach_prob):
                 default = gen_default()
-                attribute = Attribute(
-                    name=name, domain=domain, default_value=default)
+                attribute = Attribute(name=name, domain=domain, default_value=default)
                 setattr(attribute, "attribute_type", type_)
                 attribute.set_parent(feature)
                 feature.add_attribute(attribute)
-

@@ -8,6 +8,6 @@ class FmgeneratorValid(Valid):
     def __init__(self):
         self.result = False
 
-    def execute(self, model: FmgeneratorModel) -> 'FmgeneratorValid':
+    def execute(self, model: FmgeneratorModel) -> "FmgeneratorValid":
         # TODO: insert your model code here
         return self.result
