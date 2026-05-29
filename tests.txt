@@ -388,4 +388,4 @@ app/modules/generator/tests/test_wizard_state.py::test_load_step_state_overrides
 app/modules/generator/tests/test_wizard_state.py::test_clear_step_state PASSED [ 99%]
 app/modules/generator/tests/test_wizard_state.py::test_update_summary_draft_step1 PASSED [100%]
 
-============================= 380 passed in 6.80s ==============================
+============================= 380 passed in 5.72s ==============================

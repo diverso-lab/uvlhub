@@ -282,7 +282,7 @@ def test_aggregate_functions_wizard_produces_sum_or_avg(client):
                 "ctc_dist_string": "0.0",
                 "num_constraints_min": "15",
                 "num_constraints_max": "15",
-            }
+            },
         ),
         step5=_step5(
             extras={
@@ -516,7 +516,8 @@ def test_ctc_dist_weights_force_string(client):
         ),
     )
     lines = [
-        ln for ln in _iter_ctc_lines(_fetch_params_and_generate(client, n=3))
+        ln
+        for ln in _iter_ctc_lines(_fetch_params_and_generate(client, n=3))
         if not ln.startswith("include") and not ln.startswith("Type.")
     ]
     assert lines
@@ -1109,6 +1110,7 @@ def test_filename_suffix_combinations(client, flags, pattern):
         files = sorted(os.listdir(d))
         assert files
         assert all(re.match(pattern, f) for f in files), f"files={files} pattern={pattern}"
+
 
 # ── CTC type distribution ────────────────────────────────────────────────
 

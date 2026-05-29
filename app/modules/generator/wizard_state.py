@@ -7,6 +7,7 @@ from app.modules.generator.wizard_persisters import (
     apply_step6_output,
 )
 
+
 def save_step_state(step: int, form, checkbox_fields=None):
     checkbox_fields = checkbox_fields or []
     wizard = session.get("wizard", {})
@@ -74,5 +75,3 @@ def update_summary_draft(step: int, form) -> dict:
 
     session["params"] = params_dict
     return params_dict
-
-

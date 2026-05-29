@@ -20,20 +20,24 @@ def test_build_step2_values_defaults():
 
 
 def test_build_step3_handles_scalar_feature_cardinality():
-    values = build_step3_values({
-        "MIN_FEATURE_CARDINALITY": 3,
-        "MAX_FEATURE_CARDINALITY": 7,
-    })
+    values = build_step3_values(
+        {
+            "MIN_FEATURE_CARDINALITY": 3,
+            "MAX_FEATURE_CARDINALITY": 7,
+        }
+    )
 
     assert values["min_feature_cardinality"] == 3
     assert values["max_feature_cardinality"] == 7
 
 
 def test_build_step3_handles_list_feature_cardinality():
-    values = build_step3_values({
-        "MIN_FEATURE_CARDINALITY": [2],
-        "MAX_FEATURE_CARDINALITY": [5],
-    })
+    values = build_step3_values(
+        {
+            "MIN_FEATURE_CARDINALITY": [2],
+            "MAX_FEATURE_CARDINALITY": [5],
+        }
+    )
 
     assert values["min_feature_cardinality"] == 2
     assert values["max_feature_cardinality"] == 5

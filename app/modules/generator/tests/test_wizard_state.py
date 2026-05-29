@@ -50,11 +50,13 @@ def test_update_summary_draft_step1(test_client):
         from flask import session
 
         session["params"] = {}
-        form = MultiDict({
-            "num_models_val": "8",
-            "seed": "99",
-            "name_prefix": "abc",
-        })
+        form = MultiDict(
+            {
+                "num_models_val": "8",
+                "seed": "99",
+                "name_prefix": "abc",
+            }
+        )
 
         params = update_summary_draft(1, form)
 

@@ -52,7 +52,6 @@ from app.modules.generator.constants import (
     STEP6_CHECKBOX_FIELDS,
 )
 
-
 # ─── Entry points ────────────────────────────────────────────────────────
 
 
@@ -118,11 +117,7 @@ def step1():
 def step2():
     if request.method == "POST":
         nav = request.form.get("nav", "next")
-        save_step_state(
-            2,
-            request.form,
-            checkbox_fields=STEP2_CHECKBOX_FIELDS
-        )
+        save_step_state(2, request.form, checkbox_fields=STEP2_CHECKBOX_FIELDS)
         params_dict = session.get("params", {}) or {}
         apply_step2_levels(params_dict, request.form)
         session["params"] = params_dict
@@ -264,11 +259,7 @@ def step6():
 
     if request.method == "POST":
         nav = request.form.get("nav", "next")
-        save_step_state(
-            6,
-            request.form,
-            checkbox_fields=STEP6_CHECKBOX_FIELDS
-        )
+        save_step_state(6, request.form, checkbox_fields=STEP6_CHECKBOX_FIELDS)
         apply_step6_output(params_dict, request.form)
         session["params"] = params_dict
         if nav == "prev":
@@ -293,7 +284,6 @@ def get_params_json():
     if not params:
         return jsonify({"error": "Params missing"}), 400
     return jsonify(params)
-
 
 
 @generator_bp.route("/generator/random/summary-refresh/<int:step>", methods=["POST"])

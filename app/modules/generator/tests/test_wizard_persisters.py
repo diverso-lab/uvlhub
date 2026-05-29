@@ -11,11 +11,13 @@ from app.modules.generator.wizard_persisters import (
 
 def test_apply_step1_batch():
     params = {}
-    form = MultiDict({
-        "num_models_val": "3",
-        "seed": "123",
-        "name_prefix": "demo",
-    })
+    form = MultiDict(
+        {
+            "num_models_val": "3",
+            "seed": "123",
+            "name_prefix": "demo",
+        }
+    )
 
     apply_step1_batch(params, form)
 
@@ -37,15 +39,17 @@ def test_apply_step2_type_enables_arithmetic():
 
 def test_apply_step3_normalizes_relation_distribution():
     params = {"GROUP_CARDINALITY": False, "FEATURE_CARDINALITY": False}
-    form = MultiDict({
-        "num_features_min": "10",
-        "num_features_max": "20",
-        "max_tree_depth": "5",
-        "dist_optional": "2",
-        "dist_mandatory": "2",
-        "dist_alternative": "2",
-        "dist_or": "2",
-    })
+    form = MultiDict(
+        {
+            "num_features_min": "10",
+            "num_features_max": "20",
+            "max_tree_depth": "5",
+            "dist_optional": "2",
+            "dist_mandatory": "2",
+            "dist_alternative": "2",
+            "dist_or": "2",
+        }
+    )
 
     apply_step3_tree(params, form)
 
@@ -66,19 +70,21 @@ def test_apply_step4_disables_arithmetic_probs_when_arithmetic_off():
         "STRING_CONSTRAINTS": False,
         "MAX_FEATURES": 20,
     }
-    form = MultiDict({
-        "num_constraints_min": "1",
-        "num_constraints_max": "5",
-        "extra_constraint_repr": "1",
-        "vars_per_ctc_min": "1",
-        "vars_per_ctc_max": "5",
-        "prob_not": "0.3",
-        "prob_and": "1",
-        "prob_or": "0",
-        "prob_implies": "0",
-        "prob_equiv": "0",
-        "ctc_dist_boolean": "1",
-    })
+    form = MultiDict(
+        {
+            "num_constraints_min": "1",
+            "num_constraints_max": "5",
+            "extra_constraint_repr": "1",
+            "vars_per_ctc_min": "1",
+            "vars_per_ctc_max": "5",
+            "prob_not": "0.3",
+            "prob_and": "1",
+            "prob_or": "0",
+            "prob_implies": "0",
+            "prob_equiv": "0",
+            "ctc_dist_boolean": "1",
+        }
+    )
 
     apply_step4_constraints(params, form)
 
@@ -90,22 +96,19 @@ def test_apply_step4_disables_arithmetic_probs_when_arithmetic_off():
 
 def test_apply_step5_random_attrs_normalizes_distribution():
     params = {"ARITHMETIC_LEVEL": True, "TYPE_LEVEL": True}
-    form = MultiDict({
-        "random_attributes": "on",
-        "min_attributes": "1",
-        "max_attributes": "4",
-        "dist_boolean": "1",
-        "dist_integer": "1",
-        "dist_real": "1",
-        "dist_string": "1",
-    })
+    form = MultiDict(
+        {
+            "random_attributes": "on",
+            "min_attributes": "1",
+            "max_attributes": "4",
+            "dist_boolean": "1",
+            "dist_integer": "1",
+            "dist_real": "1",
+            "dist_string": "1",
+        }
+    )
 
     apply_step5_attributes(params, form)
 
-    total = (
-        params["DIST_BOOLEAN"]
-        + params["DIST_INTEGER"]
-        + params["DIST_REAL"]
-        + params["DIST_STRING"]
-    )
+    total = params["DIST_BOOLEAN"] + params["DIST_INTEGER"] + params["DIST_REAL"] + params["DIST_STRING"]
     assert total == 1.0

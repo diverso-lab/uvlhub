@@ -64,9 +64,7 @@ def collect_manual_attributes(form, params_dict):
             use_in_ctc = raw_use and params_dict.get("ARITHMETIC_LEVEL", False)
         elif type_ == "string":
             use_in_ctc = (
-                raw_use
-                and params_dict.get("TYPE_LEVEL", False)
-                and params_dict.get("STRING_CONSTRAINTS", False)
+                raw_use and params_dict.get("TYPE_LEVEL", False) and params_dict.get("STRING_CONSTRAINTS", False)
             )
         else:
             use_in_ctc = False
@@ -106,6 +104,7 @@ def collect_manual_attributes(form, params_dict):
 
 
 # ─── Step form persistence helpers ───────────────────────────────────────
+
 
 def apply_step1_batch(params_dict, form):
     params_dict["NUM_MODELS"] = int(form.get("num_models_val"))
@@ -226,18 +225,9 @@ def apply_step4_constraints(params_dict, form):
         form.get("ctc_dist_boolean"),
         0.7 if arith_on or type_on else 1.0,
     )
-    params_dict["CTC_DIST_INTEGER"] = (
-        safe_float(form.get("ctc_dist_integer"), 0.2)
-        if arith_on else 0.0
-    )
-    params_dict["CTC_DIST_REAL"] = (
-        safe_float(form.get("ctc_dist_real"), 0.1)
-        if arith_on else 0.0
-    )
-    params_dict["CTC_DIST_STRING"] = (
-        safe_float(form.get("ctc_dist_string"), 0.0)
-        if type_on and str_on else 0.0
-    )
+    params_dict["CTC_DIST_INTEGER"] = safe_float(form.get("ctc_dist_integer"), 0.2) if arith_on else 0.0
+    params_dict["CTC_DIST_REAL"] = safe_float(form.get("ctc_dist_real"), 0.1) if arith_on else 0.0
+    params_dict["CTC_DIST_STRING"] = safe_float(form.get("ctc_dist_string"), 0.0) if type_on and str_on else 0.0
 
     # Remove obsolete keys from older sessions / previous implementation.
     params_dict.pop("CTC_DIST_NUMERIC", None)
