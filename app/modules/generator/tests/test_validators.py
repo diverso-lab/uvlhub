@@ -7,7 +7,6 @@ step, both happy and sad paths.
 
 from werkzeug.datastructures import MultiDict
 
-from app.modules.generator.wizard_persisters import safe_float
 from app.modules.generator.validators import (
     validate_step1_form,
     validate_step2_form,
@@ -16,6 +15,7 @@ from app.modules.generator.validators import (
     validate_step5_form,
     validate_step6_form,
 )
+from app.modules.generator.wizard_persisters import safe_float
 
 # ─── safe_float helper ──────────────────────────────────────────────────
 

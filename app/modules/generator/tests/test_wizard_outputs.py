@@ -17,6 +17,7 @@ import re
 import tempfile
 
 import pytest
+
 from fm_generator.FMGenerator.models.config import Params
 from fm_generator.FMGenerator.models.models import FmgeneratorModel
 

@@ -1,4 +1,5 @@
 from flask import session
+
 from app.modules.generator.wizard_persisters import (
     apply_step2_levels,
     apply_step3_tree,
