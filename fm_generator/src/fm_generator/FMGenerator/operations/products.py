@@ -8,6 +8,6 @@ class FmgeneratorProducts(Products):
     def __init__(self):
         self.products = []
 
-    def execute(self, model: FmgeneratorModel) -> 'FmgeneratorProducts':
+    def execute(self, model: FmgeneratorModel) -> "FmgeneratorProducts":
         # TODO: insert your model code here
         return self.products

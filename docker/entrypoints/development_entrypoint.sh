@@ -15,6 +15,24 @@
 # Exit immediately if a command exits with a non-zero status
 set -e
 
+# Install fm_generator as editable package
+echo "Installing fm_generator editable package..."
+pip install --no-cache-dir -e ./fm_generator
+
+# Build fm_generator wheel for Pyodide
+echo "Building fm_generator wheel for Pyodide..."
+pip install --no-cache-dir build
+
+rm -f app/modules/generator/assets/js/fm_generator-*.whl
+rm -rf fm_generator/dist fm_generator/build fm_generator/*.egg-info
+
+python -m build --wheel ./fm_generator
+
+cp fm_generator/dist/fm_generator-*.whl app/modules/generator/assets/js/
+
+echo "fm_generator wheel copied:"
+ls -l app/modules/generator/assets/js/fm_generator-*.whl
+
 # Compile webpack files with hot reloading
 rosemary webpack:compile --watch
 

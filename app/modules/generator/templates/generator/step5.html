@@ -109,10 +109,6 @@
                     <i class="ki-duotone ki-plus fs-4"></i>
                     Add attribute
                 </button>
-                <button type="button" class="btn btn-sm btn-light-danger" id="delete-attribute-btn">
-                    <i class="ki-duotone ki-minus fs-4"></i>
-                    Remove last
-                </button>
             </div>
 
             <div id="manual-attributes-list"></div>
@@ -120,14 +116,18 @@
 
     </div>
 </div>
-{% endblock %}
 
-{% block wizard_scripts %}
 <script>
+(function runStep5() {
 const randomCheckbox = document.getElementById('random_attributes');
 const randomSettings = document.getElementById('random-attributes-settings');
 const manualSection = document.getElementById('manual-attributes-section');
 const manualAttributesList = document.getElementById('manual-attributes-list');
+
+if (!randomCheckbox || !randomSettings || !manualSection || !manualAttributesList) {
+    return;
+}
+
 const savedAttributes = {{ values.get('attributes_list', []) | tojson }};
 const serverErrors = {{ errors | tojson }};
 const values = {{ values | tojson }};
@@ -144,18 +144,18 @@ function toggleAttributeSections() {
     } else {
         randomSettings.style.display = 'none';
         manualSection.style.display  = '';
+
+        if (manualAttributesList.children.length === 0) {
+            addAttributeCard();
+        }
     }
+
+    updateManualAttributesGlobalError();
 }
+
 randomCheckbox.addEventListener('change', toggleAttributeSections);
 
 document.getElementById('add-attribute-btn').addEventListener('click', addAttributeCard);
-document.getElementById('delete-attribute-btn').addEventListener('click', function() {
-    const cards = manualAttributesList.getElementsByClassName('manual-attribute-card');
-    if (cards.length > 0) {
-        cards[cards.length - 1].remove();
-        updateManualAttributesGlobalError();
-    }
-});
 
 function validateBooleanCheckboxes(card) {
     const trueBox  = card.querySelector('.boolean-true');
@@ -254,6 +254,23 @@ function updateValueField(card, type, idx) {
     }
 }
 
+function reindexManualAttributeCards() {
+    const cards = manualAttributesList.querySelectorAll('.manual-attribute-card');
+
+    cards.forEach((card, idx) => {
+        const title = card.querySelector('.attr-title');
+        if (title) title.textContent = `Attribute #${idx + 1}`;
+
+        card.querySelectorAll('[name]').forEach((el) => {
+            el.name = el.name.replace(/_\d+$/, `_${idx}`);
+        });
+
+        card.querySelectorAll('[id]').forEach((el) => {
+            el.id = el.id.replace(/_\d+$/, `_${idx}`);
+        });
+    });
+}
+
 function addAttributeCard() {
     const idx = manualAttributesList.children.length;
     const card = document.createElement('div');
@@ -261,7 +278,11 @@ function addAttributeCard() {
     card.innerHTML = `
         <div class="card-body">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h5 class="fw-bold text-gray-900 mb-0">Attribute #${idx + 1}</h5>
+                <h5 class="fw-bold text-gray-900 mb-0 attr-title">Attribute #${idx + 1}</h5>
+                <button type="button" class="btn btn-sm btn-light-danger remove-attribute-btn">
+                    <i class="ki-duotone ki-trash fs-4"></i>
+                    Remove
+                </button>
             </div>
 
             <div class="row g-4 mb-4">
@@ -303,6 +324,17 @@ function addAttributeCard() {
         </div>
     `;
     manualAttributesList.appendChild(card);
+
+    card.querySelector('.remove-attribute-btn').addEventListener('click', function () {
+        card.remove();
+        reindexManualAttributeCards();
+
+        if (!randomCheckbox.checked && manualAttributesList.children.length === 0) {
+            addAttributeCard();
+        }
+
+        updateManualAttributesGlobalError();
+    });
 
     updateValueField(card, 'integer', idx);
     updateUseInConstraintsAvailability(card, 'integer', idx);
@@ -422,5 +454,8 @@ function updateUseInConstraintsAvailability(card, type, idx) {
     if (!enabled) cb.checked = false;
     if (hint) hint.textContent = msg;
 }
+})();
 </script>
 {% endblock %}
+
+{% block wizard_scripts %}{% endblock %}

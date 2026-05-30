@@ -11,6 +11,7 @@ scenarios we've already fixed.
 import json
 
 import pytest
+
 from fm_generator.FMGenerator.models.config import Params
 
 # Minimum valid payloads, coherent with each step's validator.

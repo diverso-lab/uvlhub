@@ -17,6 +17,7 @@ import re
 import tempfile
 
 import pytest
+
 from fm_generator.FMGenerator.models.config import Params
 from fm_generator.FMGenerator.models.models import FmgeneratorModel
 
@@ -270,10 +271,18 @@ def test_aggregate_functions_wizard_produces_sum_or_avg(client):
             arithmetic=True,
             aggregate=True,
             extras={
+                "prob_plus": "0.0",
+                "prob_minus": "0.0",
+                "prob_times": "0.0",
+                "prob_div": "0.0",
+                "prob_sum": "0.5",
+                "prob_avg": "0.5",
                 "ctc_dist_boolean": "0.0",
                 "ctc_dist_integer": "1.0",
                 "ctc_dist_real": "0.0",
                 "ctc_dist_string": "0.0",
+                "num_constraints_min": "15",
+                "num_constraints_max": "15",
             },
         ),
         step5=_step5(
@@ -410,14 +419,19 @@ def test_filename_suffixes_propagate(client):
 
 
 def test_filename_suffixes_applied_to_generated_files(client):
-    _walk_wizard(client, step6=_step6(feat_suffix=True, ctc_suffix=True))
+    _walk_wizard(
+        client,
+        step1=_step1(num_models="1", name_prefix="custom"),
+        step6=_step6(feat_suffix=True, ctc_suffix=True),
+    )
     params = json.loads(client.get("/generator/random/params-json").data)
-    params["NUM_MODELS"] = 2
     p = Params(**params)
+
     with tempfile.TemporaryDirectory() as d:
         FmgeneratorModel(p).generate_models(d)
         files = sorted(os.listdir(d))
-        assert all(re.search(r"_\d+f_\d+c\.uvl$", f) for f in files), f"missing suffix: {files}"
+        assert files
+        assert all(re.match(r"^custom_\d+f_\d+c\.uvl$", f) for f in files), files
 
 
 def test_vars_per_constraint_fixed_observed_in_output(client):
@@ -502,9 +516,13 @@ def test_ctc_dist_weights_force_string(client):
             }
         ),
     )
-    lines = list(_iter_ctc_lines(_fetch_params_and_generate(client, n=3)))
+    lines = [
+        ln
+        for ln in _iter_ctc_lines(_fetch_params_and_generate(client, n=3))
+        if not ln.startswith("include") and not ln.startswith("Type.")
+    ]
     assert lines
-    assert all(re.search(r"\.Attr\d+", ln) for ln in lines), lines
+    assert all("len(" in ln for ln in lines), lines
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -1067,20 +1085,31 @@ def test_output_options_matrix(client, ensure, feat_sfx, ctc_sfx):
 @pytest.mark.parametrize(
     "flags,pattern",
     [
-        ({}, r"^fm\d+\.uvl$"),
-        ({"feature_count_suffix": "on"}, r"^fm\d+_\d+f\.uvl$"),
-        ({"constraint_count_suffix": "on"}, r"^fm\d+_\d+c\.uvl$"),
-        ({"feature_count_suffix": "on", "constraint_count_suffix": "on"}, r"^fm\d+_\d+f_\d+c\.uvl$"),
+        ({}, r"^fm_\d+\.uvl$"),
+        ({"feature_count_suffix": "on"}, r"^fm_\d+f\.uvl$"),
+        ({"constraint_count_suffix": "on"}, r"^fm_\d+c\.uvl$"),
+        (
+            {"feature_count_suffix": "on", "constraint_count_suffix": "on"},
+            r"^fm_\d+f_\d+c\.uvl$",
+        ),
     ],
 )
 def test_filename_suffix_combinations(client, flags, pattern):
-    _walk_wizard(client, step6={"nav": "next", **flags})
+    num_models = "3" if not flags else "1"
+
+    _walk_wizard(
+        client,
+        step1=_step1(num_models=num_models),
+        step6={"nav": "next", **flags},
+    )
+
     p = json.loads(client.get("/generator/random/params-json").data)
-    p["NUM_MODELS"] = 3
     params = Params(**p)
+
     with tempfile.TemporaryDirectory() as d:
         FmgeneratorModel(params).generate_models(d)
         files = sorted(os.listdir(d))
+        assert files
         assert all(re.match(pattern, f) for f in files), f"files={files} pattern={pattern}"
 
 

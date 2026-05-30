@@ -1,0 +1,43 @@
+features
+	F0 
+		mandatory
+			F4 {Enabled true, Capacity 0, Measure -1.749}
+		mandatory
+			F3 {Enabled false}
+		[2]
+			F2 {Enabled false}
+				mandatory
+					F5 {Enabled true}
+						[3]
+							F12 {Enabled false}
+							F11 {Enabled true, Capacity -5}
+								mandatory
+									F13 {Enabled false}
+							F10 {Enabled true}
+								or
+									F15 {Enabled false, Measure 8.59}
+									F14 
+			F1 {Enabled false}
+				alternative
+					F8 {Enabled true, "License Plate" 's5KkG'}
+					F7 
+					F6 
+						mandatory
+							F9 {Enabled true}
+								[2]
+									F17 {"License Plate" 'AKjUiu'}
+									F16 {Enabled false}
+constraints
+	"F8.License Plate" EQUALS "F17.License Plate"
+	"F8.License Plate" EQUALS "F17.License Plate"
+	! F8.Enabled | ! F9.Enabled
+	! F10.Enabled => F2.Enabled
+	F17 <=> F3.Enabled
+	F11.Enabled & F7
+	"F8.License Plate" EQUALS "F17.License Plate"
+	F7 & F15.Enabled
+	F5.Enabled => ! F8.Enabled
+	! F5.Enabled <=> ! F14
+	F11.Enabled <=> F3.Enabled
+	F10.Enabled <=> ! F12.Enabled
+	F5.Enabled & F1.Enabled
