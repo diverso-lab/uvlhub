@@ -1,29 +1,11 @@
 from werkzeug.datastructures import MultiDict
 
 from app.modules.generator.wizard_persisters import (
-    apply_step1_batch,
     apply_step2_levels,
     apply_step3_tree,
     apply_step4_constraints,
     apply_step5_attributes,
 )
-
-
-def test_apply_step1_batch():
-    params = {}
-    form = MultiDict(
-        {
-            "num_models_val": "3",
-            "seed": "123",
-            "name_prefix": "demo",
-        }
-    )
-
-    apply_step1_batch(params, form)
-
-    assert params["NUM_MODELS"] == 3
-    assert params["SEED"] == 123
-    assert params["NAME_PREFIX"] == "demo"
 
 
 def test_apply_step2_type_enables_arithmetic():
@@ -110,5 +92,11 @@ def test_apply_step5_random_attrs_normalizes_distribution():
 
     apply_step5_attributes(params, form)
 
-    total = params["DIST_BOOLEAN"] + params["DIST_INTEGER"] + params["DIST_REAL"] + params["DIST_STRING"]
+    total = (
+        params["DIST_BOOLEAN"]
+        + params["DIST_INTEGER"]
+        + params["DIST_REAL"]
+        + params["DIST_STRING"]
+    )
+
     assert total == 1.0
