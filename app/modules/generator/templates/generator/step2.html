@@ -83,8 +83,14 @@
     function updateLevelDependencies() {
         const arith = document.getElementById("arithmetic_level");
         const type = document.getElementById("type_level");
+
+        if (type?.checked && arith) {
+            arith.checked = true;
+        }
+
         const arithOn = !!(arith && arith.checked);
         const typeOn = !!(type && type.checked);
+
         setMinorVisibility("feature_cardinality", arithOn);
         setMinorVisibility("aggregate_functions", arithOn);
         setMinorVisibility("string_constraints", typeOn);
@@ -95,8 +101,18 @@
         const featCard = document.getElementById("feature_cardinality");
         const agg = document.getElementById("aggregate_functions");
         const strC = document.getElementById("string_constraints");
-        if ((featCard && featCard.checked) || (agg && agg.checked)) arith.checked = true;
-        if (strC && strC.checked) type.checked = true;
+        if ((featCard && featCard.checked) || (agg && agg.checked)) {
+            arith.checked = true;
+        }
+
+        if (strC && strC.checked) {
+            type.checked = true;
+        }
+
+        if (type && type.checked) {
+            arith.checked = true;
+        }
+
         updateLevelDependencies();
     }
     // Keep Boolean always on.
