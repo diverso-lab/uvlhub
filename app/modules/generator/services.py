@@ -1,14 +1,8 @@
 import os
 from zipfile import ZipFile
 
-from app.modules.generator.repositories import GeneratorRepository
-from core.services.BaseService import BaseService
 
-
-class GeneratorService(BaseService):
-    def __init__(self):
-        super().__init__(GeneratorRepository())
-
+class GeneratorService:
     def zip_generated_models(self, output_dir, zip_path):
         with ZipFile(zip_path, "w") as zipf:
             for root, dirs, files in os.walk(output_dir):
