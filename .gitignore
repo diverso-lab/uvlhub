@@ -54,3 +54,4 @@ docker/tmp/videos/
 
 # Local scratch/debug screenshots
 scripts/_*.png
+tests.txt

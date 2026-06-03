@@ -2,9 +2,9 @@ import random
 import string
 
 from flamapy.metamodels.fm_metamodel.models.feature_model import (
-    Feature,
     Attribute,
     Domain,
+    Feature,
     Range,
 )
 

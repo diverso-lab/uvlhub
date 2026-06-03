@@ -10,8 +10,8 @@ from fm_generator.FMGenerator.operations.attributes import (
 from fm_generator.FMGenerator.operations.constraints import add_constraints
 from fm_generator.FMGenerator.operations.hierarchy import generate_hierarchy
 from fm_generator.FMGenerator.operations.satisfiability import (
-    SATISFIABILITY_MAX_ATTEMPTS,
     SAT_SEED_STRIDE,
+    SATISFIABILITY_MAX_ATTEMPTS,
     is_model_satisfiable,
 )
 
