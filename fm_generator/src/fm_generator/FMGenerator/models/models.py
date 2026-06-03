@@ -54,6 +54,9 @@ class FmgeneratorModel(VariabilityModel):
 
         return f"{base_name}.uvl"
 
+    def _filename_for(self, fm: FeatureModel, index: int) -> str:
+        return self._build_output_filename(fm, index)
+
     def _build_one(self, index: int) -> FeatureModel:
         if not getattr(self.params, "ENSURE_SATISFIABLE", False):
             return generate_single_model(self.params, index)
