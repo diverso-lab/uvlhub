@@ -88,4 +88,8 @@ ENV NODE_ENV=production
 ARG VERSION_TAG
 RUN echo "$VERSION_TAG" > /app/.version
 
-EXPOSE 5000
+ENV PORT=10000
+
+EXPOSE 10000
+
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT} app:app"]
