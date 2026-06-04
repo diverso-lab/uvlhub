@@ -40,10 +40,7 @@ def test_wizard_referenced_params_keys_exist_in_params_contract():
 
 
 def test_extra_constraint_representativeness_matches_integer_form_contract():
-    field = next(
-        f for f in fields(Params)
-        if f.name == "EXTRA_CONSTRAINT_REPRESENTATIVENESS"
-    )
+    field = next(f for f in fields(Params) if f.name == "EXTRA_CONSTRAINT_REPRESENTATIVENESS")
 
     assert field.type is int or field.type == "int"
     assert field.default == 1

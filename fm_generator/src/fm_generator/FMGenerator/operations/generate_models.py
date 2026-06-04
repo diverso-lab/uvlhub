@@ -9,17 +9,12 @@ from fm_generator.FMGenerator.operations.attributes import (
 )
 from fm_generator.FMGenerator.operations.constraints import add_constraints
 from fm_generator.FMGenerator.operations.hierarchy import generate_hierarchy
-from fm_generator.FMGenerator.operations.satisfiability import (
-    SAT_SEED_STRIDE,
-    SATISFIABILITY_MAX_ATTEMPTS,
-    is_model_satisfiable,
-)
+
+SAT_SEED_STRIDE = 100000
 
 __all__ = [
-    "SATISFIABILITY_MAX_ATTEMPTS",
     "SAT_SEED_STRIDE",
     "generate_single_model",
-    "is_model_satisfiable",
 ]
 
 

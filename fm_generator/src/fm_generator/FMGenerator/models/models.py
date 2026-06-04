@@ -1,15 +1,14 @@
 from pathlib import Path
 
+from flamapy.core.discover import DiscoverMetamodels
 from flamapy.core.models import VariabilityModel
 from flamapy.metamodels.fm_metamodel.models import FeatureModel
 from flamapy.metamodels.fm_metamodel.transformations.uvl_writer import UVLWriter
 
 from fm_generator.FMGenerator.models.config import Params
-from fm_generator.FMGenerator.operations.generate_models import (
-    SATISFIABILITY_MAX_ATTEMPTS,
-    generate_single_model,
-    is_model_satisfiable,
-)
+from fm_generator.FMGenerator.operations.generate_models import generate_single_model
+
+SATISFIABILITY_MAX_ATTEMPTS = 30
 
 
 class FmgeneratorModel(VariabilityModel):
@@ -67,7 +66,7 @@ class FmgeneratorModel(VariabilityModel):
             fm = generate_single_model(self.params, index, attempt=attempt)
             last_model = fm
 
-            if is_model_satisfiable(fm):
+            if self._run_flamapy_satisfiability(fm):
                 return fm
 
         if last_model is not None:
@@ -91,3 +90,10 @@ class FmgeneratorModel(VariabilityModel):
                 file.write(serialized_model)
 
         return fms
+
+    def _run_flamapy_satisfiability(self, fm: FeatureModel) -> bool:
+        dm = DiscoverMetamodels()
+        sat_model = dm.use_transformation_m2m(fm, "pysat")
+        operation = dm.get_operation(sat_model, "PySATSatisfiable")
+        operation.execute(sat_model)
+        return bool(operation.get_result())

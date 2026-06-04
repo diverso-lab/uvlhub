@@ -10,9 +10,7 @@ from app.modules.generator.validators import (
 
 
 def test_step1_rejects_batch_size_that_could_break_generation():
-    errors, _ = validate_step1_form(
-        MultiDict({"num_models_val": "1001", "seed": "42"})
-    )
+    errors, _ = validate_step1_form(MultiDict({"num_models_val": "1001", "seed": "42"}))
 
     assert "num_models_val" in errors
 
@@ -48,17 +46,13 @@ def _valid_step3(**overrides):
 
 
 def test_step3_rejects_feature_bounds_that_make_tree_generation_impossible():
-    errors, _ = validate_step3_form(
-        _valid_step3(num_features_min="60", num_features_max="10")
-    )
+    errors, _ = validate_step3_form(_valid_step3(num_features_min="60", num_features_max="10"))
 
     assert "num_features_max" in errors
 
 
 def test_step3_rejects_tree_depth_greater_than_available_features():
-    errors, _ = validate_step3_form(
-        _valid_step3(max_tree_depth="20", num_features_max="10")
-    )
+    errors, _ = validate_step3_form(_valid_step3(max_tree_depth="20", num_features_max="10"))
 
     assert "max_tree_depth" in errors
 
@@ -117,17 +111,13 @@ def _valid_step4(**overrides):
 
 
 def test_step4_rejects_constraint_bounds_that_cannot_be_generated():
-    errors, _ = validate_step4_form(
-        _valid_step4(num_constraints_min="10", num_constraints_max="5")
-    )
+    errors, _ = validate_step4_form(_valid_step4(num_constraints_min="10", num_constraints_max="5"))
 
     assert "num_constraints_max" in errors
 
 
 def test_step4_rejects_extra_constraint_representation_greater_than_ctc_size():
-    errors, _ = validate_step4_form(
-        _valid_step4(extra_constraint_repr="10", vars_per_ctc_max="3")
-    )
+    errors, _ = validate_step4_form(_valid_step4(extra_constraint_repr="10", vars_per_ctc_max="3"))
 
     assert "extra_constraint_repr" in errors
 
@@ -184,9 +174,7 @@ def _valid_step5_random(**overrides):
 
 
 def test_step5_rejects_random_attribute_bounds_that_cannot_be_generated():
-    errors, _ = validate_step5_form(
-        _valid_step5_random(min_attributes="10", max_attributes="5")
-    )
+    errors, _ = validate_step5_form(_valid_step5_random(min_attributes="10", max_attributes="5"))
 
     assert "max_attributes" in errors
 

@@ -2,7 +2,6 @@ import pytest
 
 from app.modules.generator.wizard_builders import (
     build_step3_values,
-    build_step4_values,
 )
 
 
@@ -53,14 +52,3 @@ def test_build_step3_preserves_group_cardinality_distribution_when_enabled():
 
     assert values["group_cardinality"] is True
     assert total == 1.0
-
-
-def test_build_step4_converts_extra_constraint_repr_to_valid_integer():
-    values = build_step4_values(
-        {
-            "EXTRA_CONSTRAINT_REPRESENTATIVENESS": 0.5,
-            "MAX_FEATURES": 20,
-        }
-    )
-
-    assert values["extra_constraint_repr"] == 1

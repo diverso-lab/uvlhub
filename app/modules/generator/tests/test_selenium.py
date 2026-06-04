@@ -11,23 +11,19 @@ from core.selenium.common import close_driver, initialize_driver
 
 
 def _wait_for_generator_overlay_to_disappear(driver, wait):
-    wait.until(
-        lambda d: "Preparing generator" not in d.find_element(By.TAG_NAME, "body").text
-    )
+    wait.until(lambda d: "Preparing generator" not in d.find_element(By.TAG_NAME, "body").text)
 
 
 def _submit_next(driver, expected_url_fragment, wait):
     before = driver.current_url
     _wait_for_generator_overlay_to_disappear(driver, wait)
 
-    driver.execute_script(
-        """
+    driver.execute_script("""
         const btn = document.querySelector("button[name='nav'][value='next']");
         const form = btn && btn.form;
         if (!form) throw new Error("next button or parent form missing");
         form.requestSubmit(btn);
-        """
-    )
+        """)
 
     try:
         wait.until(EC.url_contains(expected_url_fragment))
@@ -45,14 +41,12 @@ def _submit_next_expect_same_step(driver, wait):
     before = driver.current_url
     _wait_for_generator_overlay_to_disappear(driver, wait)
 
-    driver.execute_script(
-        """
+    driver.execute_script("""
         const btn = document.querySelector("button[name='nav'][value='next']");
         const form = btn && btn.form;
         if (!form) throw new Error("next button or parent form missing");
         form.requestSubmit(btn);
-        """
-    )
+        """)
 
     wait.until(lambda d: d.current_url == before)
 
@@ -155,9 +149,7 @@ def test_wizard_preserves_step1_values_after_next_and_previous():
         _submit_next(driver, "/step2", wait)
 
         previous_button = wait.until(
-            EC.presence_of_element_located(
-                (By.CSS_SELECTOR, "button[name='nav'][value='prev']")
-            )
+            EC.presence_of_element_located((By.CSS_SELECTOR, "button[name='nav'][value='prev']"))
         )
         driver.execute_script("arguments[0].click();", previous_button)
 
@@ -166,10 +158,7 @@ def test_wizard_preserves_step1_values_after_next_and_previous():
 
         assert driver.find_element(By.NAME, "num_models_val").get_attribute("value") == "7"
         assert driver.find_element(By.NAME, "seed").get_attribute("value") == "77"
-        assert (
-            driver.find_element(By.NAME, "name_prefix").get_attribute("value")
-            == "selenium_demo"
-        )
+        assert driver.find_element(By.NAME, "name_prefix").get_attribute("value") == "selenium_demo"
     finally:
         close_driver(driver)
 
@@ -188,26 +177,18 @@ def test_wizard_reaches_step5_with_pyodide_ready():
         _submit_next(driver, "/step2", short)
 
         for target in ("/step3", "/step4", "/step5"):
-            short.until(
-                EC.presence_of_element_located(
-                    (By.CSS_SELECTOR, "button[name='nav'][value='next']")
-                )
-            )
+            short.until(EC.presence_of_element_located((By.CSS_SELECTOR, "button[name='nav'][value='next']")))
             _wait_for_generator_overlay_to_disappear(driver, short)
             _submit_next(driver, target, short)
 
-        pyodide_wait.until(
-            lambda d: d.execute_script(
-                """
+        pyodide_wait.until(lambda d: d.execute_script("""
                 const rt = window.__generatorRuntime;
                 if (!rt) return false;
                 return rt.then(
                     () => window.__pyodideReady = true,
                     () => window.__pyodideError = true
                 ), !!window.__pyodideReady || !!window.__pyodideError;
-                """
-            )
-        )
+                """))
 
         assert driver.execute_script("return window.__pyodideReady === true;")
         boot_error = driver.execute_script("return window.__pyodideError === true;")
@@ -267,11 +248,7 @@ def test_step2_configuration_is_propagated_to_step3():
 
         _submit_next(driver, "/step3", wait)
 
-        wait.until(
-            EC.presence_of_element_located(
-                (By.ID, "prob_fc")
-            )
-        )
+        wait.until(EC.presence_of_element_located((By.ID, "prob_fc")))
 
         assert driver.find_element(By.ID, "prob_fc")
         assert driver.find_element(By.ID, "min_feature_cardinality")
@@ -297,11 +274,7 @@ def test_step3_group_cardinality_settings_are_shown_when_enabled():
 
         _submit_next(driver, "/step3", wait)
 
-        wait.until(
-            EC.presence_of_element_located(
-                (By.ID, "group_cardinality_min")
-            )
-        )
+        wait.until(EC.presence_of_element_located((By.ID, "group_cardinality_min")))
 
         assert driver.find_element(By.ID, "group_cardinality_min")
         assert driver.find_element(By.ID, "group_cardinality_max")
@@ -323,11 +296,7 @@ def test_step3_feature_cardinality_settings_are_shown_when_enabled():
 
         _submit_next(driver, "/step3", wait)
 
-        wait.until(
-            EC.presence_of_element_located(
-                (By.ID, "prob_fc")
-            )
-        )
+        wait.until(EC.presence_of_element_located((By.ID, "prob_fc")))
 
         assert driver.find_element(By.ID, "prob_fc")
         assert driver.find_element(By.ID, "min_feature_cardinality")

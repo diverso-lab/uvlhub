@@ -92,12 +92,7 @@ def test_apply_step5_random_attrs_normalizes_distribution():
 
     apply_step5_attributes(params, form)
 
-    total = (
-        params["DIST_BOOLEAN"]
-        + params["DIST_INTEGER"]
-        + params["DIST_REAL"]
-        + params["DIST_STRING"]
-    )
+    total = params["DIST_BOOLEAN"] + params["DIST_INTEGER"] + params["DIST_REAL"] + params["DIST_STRING"]
 
     assert total == 1.0
 
