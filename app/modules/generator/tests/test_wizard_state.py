@@ -4,18 +4,10 @@ from app.modules.generator.wizard_state import (
     clear_step_state,
     load_step_state,
     save_step_state,
-<<<<<<< HEAD
 )
 
 
 def test_save_step_state_preserves_checkbox_false_values(test_client):
-=======
-    update_summary_draft,
-)
-
-
-def test_save_step_state_with_checkbox(test_client):
->>>>>>> 352a7cc12088baf77fcee5bfaaa24d6953cf95d3
     with test_client.application.test_request_context():
         from flask import session
 
@@ -29,11 +21,7 @@ def test_save_step_state_with_checkbox(test_client):
         assert session["wizard"]["2"]["missing_flag"] is False
 
 
-<<<<<<< HEAD
 def test_load_step_state_merges_saved_values_over_defaults(test_client):
-=======
-def test_load_step_state_overrides_defaults(test_client):
->>>>>>> 352a7cc12088baf77fcee5bfaaa24d6953cf95d3
     with test_client.application.test_request_context():
         from flask import session
 
@@ -45,7 +33,6 @@ def test_load_step_state_overrides_defaults(test_client):
         assert values["other"] == "x"
 
 
-<<<<<<< HEAD
 def test_save_step_state_does_not_overwrite_other_steps(test_client):
     with test_client.application.test_request_context():
         from flask import session
@@ -75,34 +62,3 @@ def test_clear_step_state_only_removes_target_step(test_client):
 
         assert "3" not in session["wizard"]
         assert session["wizard"]["2"]["arithmetic_level"] is True
-=======
-def test_clear_step_state(test_client):
-    with test_client.application.test_request_context():
-        from flask import session
-
-        session["wizard"] = {"2": {"field": "value"}}
-
-        clear_step_state(2)
-
-        assert "2" not in session["wizard"]
-
-
-def test_update_summary_draft_step1(test_client):
-    with test_client.application.test_request_context():
-        from flask import session
-
-        session["params"] = {}
-        form = MultiDict(
-            {
-                "num_models_val": "8",
-                "seed": "99",
-                "name_prefix": "abc",
-            }
-        )
-
-        params = update_summary_draft(1, form)
-
-        assert params["NUM_MODELS"] == 8
-        assert params["SEED"] == 99
-        assert params["NAME_PREFIX"] == "abc"
->>>>>>> 352a7cc12088baf77fcee5bfaaa24d6953cf95d3

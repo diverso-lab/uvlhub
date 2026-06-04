@@ -1,10 +1,6 @@
 from werkzeug.datastructures import MultiDict
 
 from app.modules.generator.wizard_persisters import (
-<<<<<<< HEAD
-=======
-    apply_step1_batch,
->>>>>>> 352a7cc12088baf77fcee5bfaaa24d6953cf95d3
     apply_step2_levels,
     apply_step3_tree,
     apply_step4_constraints,
@@ -12,26 +8,6 @@ from app.modules.generator.wizard_persisters import (
 )
 
 
-<<<<<<< HEAD
-=======
-def test_apply_step1_batch():
-    params = {}
-    form = MultiDict(
-        {
-            "num_models_val": "3",
-            "seed": "123",
-            "name_prefix": "demo",
-        }
-    )
-
-    apply_step1_batch(params, form)
-
-    assert params["NUM_MODELS"] == 3
-    assert params["SEED"] == 123
-    assert params["NAME_PREFIX"] == "demo"
-
-
->>>>>>> 352a7cc12088baf77fcee5bfaaa24d6953cf95d3
 def test_apply_step2_type_enables_arithmetic():
     params = {}
     form = MultiDict({"type_level": "on"})
@@ -117,7 +93,6 @@ def test_apply_step5_random_attrs_normalizes_distribution():
     apply_step5_attributes(params, form)
 
     total = params["DIST_BOOLEAN"] + params["DIST_INTEGER"] + params["DIST_REAL"] + params["DIST_STRING"]
-<<<<<<< HEAD
 
     assert total == 1.0
 
@@ -175,6 +150,3 @@ def test_apply_step5_masks_unavailable_attribute_types_when_levels_are_off():
     assert params["DIST_INTEGER"] == 0.0
     assert params["DIST_REAL"] == 0.0
     assert params["DIST_STRING"] == 0.0
-=======
-    assert total == 1.0
->>>>>>> 352a7cc12088baf77fcee5bfaaa24d6953cf95d3

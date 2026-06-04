@@ -275,10 +275,4 @@ class Params:
 
             for i, p in enumerate(self.ATTRIBUTE_ATTACH_PROBS):
                 if not (0.0 <= p <= 1.0):
-<<<<<<< HEAD
                     raise ValueError(f"[ERROR] Attribute attach probability at index {i} must be between 0 and 1.")
-=======
-                    raise ValueError(
-                        f"[ERROR] Attribute attach probability at index {i} must be between 0 and 1."
-                    )
->>>>>>> 352a7cc12088baf77fcee5bfaaa24d6953cf95d3

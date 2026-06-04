@@ -98,47 +98,6 @@ def test_num_models_respected():
         assert len([f for f in os.listdir(d) if f.endswith(".uvl")]) == 7
 
 
-<<<<<<< HEAD
-=======
-def test_feature_count_suffix_applied():
-    p = _base_params(NUM_MODELS=1, INCLUDE_FEATURE_COUNT_SUFFIX=True)
-    with tempfile.TemporaryDirectory() as d:
-        FmgeneratorModel(p).generate_models(d)
-        files = [f for f in os.listdir(d) if f.endswith(".uvl")]
-        assert files
-        assert all(re.match(r"^fm_\d+f\.uvl$", f) for f in files), files
-
-
-def test_constraint_count_suffix_applied():
-    p = _base_params(NUM_MODELS=1, INCLUDE_CONSTRAINT_COUNT_SUFFIX=True)
-    with tempfile.TemporaryDirectory() as d:
-        FmgeneratorModel(p).generate_models(d)
-        files = [f for f in os.listdir(d) if f.endswith(".uvl")]
-        assert files
-        assert all(re.match(r"^fm_\d+c\.uvl$", f) for f in files), files
-
-
-def test_both_suffixes_applied():
-    p = _base_params(
-        NUM_MODELS=1,
-        INCLUDE_FEATURE_COUNT_SUFFIX=True,
-        INCLUDE_CONSTRAINT_COUNT_SUFFIX=True,
-    )
-    with tempfile.TemporaryDirectory() as d:
-        FmgeneratorModel(p).generate_models(d)
-        files = [f for f in os.listdir(d) if f.endswith(".uvl")]
-        assert files
-        assert all(re.match(r"^fm_\d+f_\d+c\.uvl$", f) for f in files), files
-
-
-def test_name_prefix_applied():
-    p = _base_params(NAME_PREFIX="PREFIXED_")
-    with tempfile.TemporaryDirectory() as d:
-        FmgeneratorModel(p).generate_models(d)
-        assert all(f.startswith("PREFIXED_") for f in os.listdir(d) if f.endswith(".uvl"))
-
-
->>>>>>> 352a7cc12088baf77fcee5bfaaa24d6953cf95d3
 def test_determinism_same_seed_same_output():
     a = _run(_base_params(SEED=123), n=3)
     b = _run(_base_params(SEED=123), n=3)

@@ -1,19 +1,11 @@
 import random
 
 from flamapy.metamodels.fm_metamodel.models.feature_model import (
-<<<<<<< HEAD
     Cardinality,
     Feature,
     FeatureModel,
     FeatureType,
     Relation,
-=======
-    FeatureModel,
-    Feature,
-    Relation,
-    Cardinality,
-    FeatureType,
->>>>>>> 352a7cc12088baf77fcee5bfaaa24d6953cf95d3
 )
 
 from fm_generator.FMGenerator.models.config import Params

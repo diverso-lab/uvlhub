@@ -9,56 +9,10 @@ from app.modules.generator.validators import (
 )
 from app.modules.generator.wizard_persisters import safe_float
 
-<<<<<<< HEAD
-=======
-# ─── safe_float helper ──────────────────────────────────────────────────
->>>>>>> 352a7cc12088baf77fcee5bfaaa24d6953cf95d3
 
 def test_step1_rejects_batch_size_that_could_break_generation():
     errors, _ = validate_step1_form(MultiDict({"num_models_val": "1001", "seed": "42"}))
 
-<<<<<<< HEAD
-=======
-def testsafe_float_accepts_dot():
-    assert safe_float("0.5") == 0.5
-
-
-def testsafe_float_accepts_spanish_comma():
-    assert safe_float("0,5") == 0.5
-
-
-def testsafe_float_falls_back_on_garbage():
-    assert safe_float("nope", default=0.7) == 0.7
-
-
-def testsafe_float_none_returns_default():
-    assert safe_float(None, default=0.3) == 0.3
-
-
-def testsafe_float_empty_returns_default():
-    assert safe_float("  ", default=0.1) == 0.1
-
-
-def testsafe_float_accepts_integer_strings():
-    assert safe_float("5") == 5.0
-    assert safe_float("0") == 0.0
-
-
-def testsafe_float_accepts_negative():
-    assert safe_float("-0.2") == -0.2
-
-
-# ─── Step 1 · Batch ──────────────────────────────────────────────────────
-
-
-def test_step1_happy_path():
-    errors, _ = validate_step1_form(MultiDict({"num_models_val": "5", "seed": "42", "name_prefix": "fm"}))
-    assert errors == {}
-
-
-def test_step1_rejects_zero_models():
-    errors, _ = validate_step1_form(MultiDict({"num_models_val": "0", "seed": "1"}))
->>>>>>> 352a7cc12088baf77fcee5bfaaa24d6953cf95d3
     assert "num_models_val" in errors
 
 
