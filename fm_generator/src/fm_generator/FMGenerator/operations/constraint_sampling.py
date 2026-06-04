@@ -1,8 +1,13 @@
 import random
 
 from flamapy.metamodels.fm_metamodel.models.feature_model import (
+<<<<<<< HEAD
     Attribute,
     Feature,
+=======
+    Feature,
+    Attribute,
+>>>>>>> 352a7cc12088baf77fcee5bfaaa24d6953cf95d3
 )
 
 
