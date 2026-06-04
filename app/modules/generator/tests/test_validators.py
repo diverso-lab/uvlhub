@@ -7,7 +7,6 @@ from app.modules.generator.validators import (
     validate_step4_form,
     validate_step5_form,
 )
-from app.modules.generator.wizard_persisters import safe_float
 
 
 def test_step1_rejects_batch_size_that_could_break_generation():
