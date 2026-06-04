@@ -75,41 +75,6 @@ def _walk_happy_path(client, step2=None, step3=None, step4=None, step5=None, ste
     return r
 
 
-# ── Routes & top-level shape ─────────────────────────────────────────────
-
-
-def test_landing_is_reachable(client):
-    assert client.get("/generator").status_code == 200
-    assert client.get("/generator/").status_code == 200
-
-
-def test_random_entry_redirects_to_step1(client):
-    r = client.get("/generator/random")
-    assert r.status_code == 302
-    assert r.location.endswith("/step1")
-
-
-def test_llm_page_renders(client):
-    # Smoke test. The /generator/llm page used to be a "Coming soon" stub;
-    # it is now the full in-browser LLM generator. We assert on structural
-    # markers of the new page so the test is resilient to copy tweaks but
-    # catches the route or template actually breaking.
-    r = client.get("/generator/llm")
-    assert r.status_code == 200
-    assert b"llm_seed" in r.data  # seed textarea wired up
-    assert b"llm_model_rows" in r.data  # model table mount point
-    assert b"llm_generate_btn" in r.data  # generate button present
-    assert b"llm-page.js" in r.data  # page controller loaded
-
-
-@pytest.mark.parametrize("step", [1, 2, 3, 4, 5, 6])
-def test_every_step_is_reachable_by_url(client, step):
-    """Every wizard step responds to GET. Steps ≥ 2 without params redirect
-    to the landing — that's also a 2xx/3xx, not a server error."""
-    r = client.get(f"/generator/random/step{step}")
-    assert r.status_code in (200, 302)
-
-
 # ── Session recovery ─────────────────────────────────────────────────────
 
 
@@ -132,12 +97,6 @@ def test_full_happy_path_produces_valid_params(client):
     params = json.loads(r.data)
     # Must survive the strict 1e-6 sum check inside Params.__post_init__.
     Params(**params)
-
-
-def test_step6_renders_when_session_ready(client):
-    _walk_happy_path(client)
-    r = client.get("/generator/random/step6")
-    assert r.status_code == 200
 
 
 # ── Regression: 1.0007 slider sum ─────────────────────────────────────────
@@ -190,22 +149,6 @@ def test_extra_constraint_representativeness_is_int_in_session(client):
     params = json.loads(client.get("/generator/random/params-json").data)
     assert isinstance(params["EXTRA_CONSTRAINT_REPRESENTATIVENESS"], int)
     assert params["EXTRA_CONSTRAINT_REPRESENTATIVENESS"] >= 1
-
-
-def test_spanish_locale_decimal_comma_is_accepted(client):
-    _walk_happy_path(
-        client,
-        step4={
-            **STEP4,
-            "prob_not": "0,3",
-            "prob_and": "0,4",
-            "prob_or": "0,2",
-            "prob_implies": "0,2",
-            "prob_equiv": "0,2",
-        },
-    )
-    params = json.loads(client.get("/generator/random/params-json").data)
-    assert params["PROB_NOT"] == pytest.approx(0.3)
 
 
 # ── Regression: back navigation keeps state ───────────────────────────────

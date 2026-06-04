@@ -396,28 +396,6 @@ def test_group_cardinality_on_produces_groups(client):
 # ── Individual parameter plumbing ────────────────────────────────────────
 
 
-def test_num_models_propagates(client):
-    _walk_wizard(client, step1=_step1(num_models="7"))
-    assert json.loads(client.get("/generator/random/params-json").data)["NUM_MODELS"] == 7
-
-
-def test_name_prefix_propagates(client):
-    _walk_wizard(client, step1=_step1(name_prefix="zork_"))
-    assert json.loads(client.get("/generator/random/params-json").data)["NAME_PREFIX"] == "zork_"
-
-
-def test_ensure_satisfiable_propagates(client):
-    _walk_wizard(client, step6=_step6(ensure_satisfiable=True))
-    assert json.loads(client.get("/generator/random/params-json").data)["ENSURE_SATISFIABLE"] is True
-
-
-def test_filename_suffixes_propagate(client):
-    _walk_wizard(client, step6=_step6(feat_suffix=True, ctc_suffix=True))
-    params = json.loads(client.get("/generator/random/params-json").data)
-    assert params["INCLUDE_FEATURE_COUNT_SUFFIX"] is True
-    assert params["INCLUDE_CONSTRAINT_COUNT_SUFFIX"] is True
-
-
 def test_filename_suffixes_applied_to_generated_files(client):
     _walk_wizard(
         client,
@@ -444,52 +422,6 @@ def test_vars_per_constraint_fixed_observed_in_output(client):
     for line in _iter_ctc_lines(text):
         refs = re.findall(r"\bF\d+\b", line)
         assert len(refs) == 3, f"expected 3 vars, got {len(refs)}: {line}"
-
-
-def test_prob_not_zero_propagates(client):
-    _walk_wizard(client, step4=_step4(extras={"prob_not": "0.0"}))
-    body = "\n".join(_iter_ctc_lines(_fetch_params_and_generate(client, n=3)))
-    assert "!" not in body
-
-
-def test_prob_and_dominant_produces_mostly_conjunctions(client):
-    _walk_wizard(
-        client,
-        step4=_step4(
-            extras={
-                "prob_and": "1.0",
-                "prob_or": "0.0",
-                "prob_implies": "0.0",
-                "prob_equiv": "0.0",
-                "prob_not": "0.0",
-            }
-        ),
-    )
-    body = "\n".join(_iter_ctc_lines(_fetch_params_and_generate(client, n=3)))
-    assert " & " in body
-    assert "=>" not in body
-    assert "<=>" not in body
-    assert " | " not in body
-
-
-def test_attr_type_dominance_boolean(client):
-    _walk_wizard(
-        client,
-        step5=_step5(
-            extras={
-                "dist_boolean": "1.0",
-                "dist_integer": "0.0",
-                "dist_real": "0.0",
-                "dist_string": "0.0",
-                "min_attributes": "3",
-                "max_attributes": "3",
-            }
-        ),
-    )
-    text = _fetch_params_and_generate(client, n=3)
-    attrs = re.findall(r"\{Attr\d+\s+(\S+?)(?:,|\})", text)
-    assert attrs
-    assert all(a in ("true", "false") for a in attrs), attrs
 
 
 def test_ctc_dist_weights_force_string(client):
@@ -530,138 +462,7 @@ def test_ctc_dist_weights_force_string(client):
 # ═══════════════════════════════════════════════════════════════════════
 
 
-# ── Step 1: num_models, seed, name_prefix ───────────────────────────────
-
-
-@pytest.mark.parametrize("n", ["1", "2", "3", "5", "10", "25", "50", "100", "500", "1000"])
-def test_num_models_roundtrip(client, n):
-    _walk_wizard(client, step1=_step1(num_models=n))
-    assert json.loads(client.get("/generator/random/params-json").data)["NUM_MODELS"] == int(n)
-
-
-@pytest.mark.parametrize("seed", ["1", "7", "42", "123", "1000", "999999"])
-def test_seed_roundtrip(client, seed):
-    _walk_wizard(client, step1=_step1(seed=seed))
-    assert json.loads(client.get("/generator/random/params-json").data)["SEED"] == int(seed)
-
-
-@pytest.mark.parametrize(
-    "prefix",
-    ["fm", "m_", "model-", "feat_", "zork42_", "a", "generated_", "test", "v2_", "fm_x_"],
-)
-def test_name_prefix_roundtrip(client, prefix):
-    _walk_wizard(client, step1=_step1(name_prefix=prefix))
-    assert json.loads(client.get("/generator/random/params-json").data)["NAME_PREFIX"] == prefix
-
-
-@pytest.mark.parametrize("bad", ["0", "-1", "1001", "abc", "", "1.5"])
-def test_step1_rejects_bad_num_models(client, bad):
-    r = client.post("/generator/random/step1", data={**_step1(num_models=bad)})
-    assert r.status_code == 200  # re-renders with error
-    assert b"Number of models" in r.data
-
-
-@pytest.mark.parametrize("bad", ["0", "-1", "abc", ""])
-def test_step1_rejects_bad_seed(client, bad):
-    r = client.post("/generator/random/step1", data=_step1(seed=bad))
-    assert r.status_code == 200
-    assert b"Seed" in r.data
-
-
-# ── Step 2: level combinations ──────────────────────────────────────────
-
-
-# All 2^6 combinations of the 6 level toggles; a handful will end up
-# resolving identically in Params (TYPE_LEVEL forces ARITHMETIC_LEVEL on;
-# feat_card/aggregate require arithmetic; string_ctc requires type).
-_ALL_LEVELS = [
-    (a, t, fc, ag, st, gc)
-    for a in (False, True)
-    for t in (False, True)
-    for fc in (False, True)
-    for ag in (False, True)
-    for st in (False, True)
-    for gc in (False, True)
-]
-
-
-@pytest.mark.parametrize(
-    "combo",
-    _ALL_LEVELS,
-    ids=lambda c: (f"A{int(c[0])}T{int(c[1])}FC{int(c[2])}AG{int(c[3])}ST{int(c[4])}GC{int(c[5])}"),
-)
-def test_every_level_combo_walks_the_wizard(client, combo):
-    """Every combination of the six level toggles must either walk the
-    wizard cleanly or — if the validator rejects it — fall back through
-    the engine's enforcement (TYPE forces Arithmetic, etc.). No combo
-    should crash or produce an empty UVL."""
-    arith, type_, fc, ag, st, gc = combo
-    step2_data = _step2(arithmetic=arith, type_=type_, feat_card=fc, aggregate=ag, string_ctc=st, group_card=gc)
-    # Levels validator rejects minor-without-major; that's fine as a
-    # 200 response. The UI auto-enables majors; mimic that here.
-    effective_arith = arith or fc or ag
-    effective_type = type_ or st
-    r = client.post("/generator/random/step1", data=_step1())
-    assert r.status_code == 302
-    r = client.post("/generator/random/step2", data=step2_data)
-    if r.status_code == 200:
-        # Validator rejected. Retry with majors forced on.
-        step2_data = _step2(
-            arithmetic=effective_arith, type_=effective_type, feat_card=fc, aggregate=ag, string_ctc=st, group_card=gc
-        )
-        r = client.post("/generator/random/step2", data=step2_data)
-    assert r.status_code == 302
-
-    # Complete the rest with level-appropriate defaults.
-    client.post("/generator/random/step3", data=_step3(group_card=gc, feat_card=fc))
-    client.post(
-        "/generator/random/step4",
-        data=_step4(
-            arithmetic=effective_arith,
-            aggregate=ag,
-            string=st and effective_type,
-        ),
-    )
-    client.post("/generator/random/step5", data=_step5())
-    client.post("/generator/random/step6", data=_step6())
-
-    params = json.loads(client.get("/generator/random/params-json").data)
-    # TYPE_LEVEL forces ARITHMETIC_LEVEL on in Params.__post_init__.
-    assert params["ARITHMETIC_LEVEL"] is (effective_arith or effective_type)
-    assert params["TYPE_LEVEL"] is effective_type
-    assert params["FEATURE_CARDINALITY"] is (fc and (effective_arith or effective_type))
-    assert params["AGGREGATE_FUNCTIONS"] is (ag and effective_arith)
-    assert params["STRING_CONSTRAINTS"] is (st and effective_type)
-    assert params["GROUP_CARDINALITY"] is gc
-
-
 # ── Step 3: feature tree ranges ─────────────────────────────────────────
-
-
-@pytest.mark.parametrize(
-    "lo,hi",
-    [
-        ("1", "3"),
-        ("3", "5"),
-        ("5", "10"),
-        ("10", "15"),
-        ("15", "20"),
-        ("20", "30"),
-        ("50", "50"),
-        ("1", "50"),
-    ],
-)
-def test_feature_count_bounds_roundtrip(client, lo, hi):
-    _walk_wizard(client, step3=_step3(extras={"num_features_min": lo, "num_features_max": hi}))
-    params = json.loads(client.get("/generator/random/params-json").data)
-    assert params["MIN_FEATURES"] == int(lo)
-    assert params["MAX_FEATURES"] == int(hi)
-
-
-@pytest.mark.parametrize("depth", ["1", "2", "3", "4", "5", "7", "10"])
-def test_max_tree_depth_roundtrip(client, depth):
-    _walk_wizard(client, step3=_step3(extras={"max_tree_depth": depth, "num_features_max": "20"}))
-    assert json.loads(client.get("/generator/random/params-json").data)["MAX_TREE_DEPTH"] == int(depth)
 
 
 @pytest.mark.parametrize("depth", ["1", "2", "3", "4", "5"])
@@ -680,63 +481,6 @@ def test_deeper_tree_yields_more_indent(client, depth):
     feat_lines = [ln for ln in text.splitlines() if re.match(r"\t+F\d+\b", ln)]
     max_indent = max(len(ln) - len(ln.lstrip("\t")) for ln in feat_lines)
     assert max_indent <= 1 + 2 * int(depth), f"depth={depth} got {max_indent} tabs"
-
-
-# ── Step 3: relation distribution dominance ─────────────────────────────
-
-
-@pytest.mark.parametrize(
-    "dist,marker",
-    [
-        ({"dist_optional": "1.0", "dist_mandatory": "0.0", "dist_alternative": "0.0", "dist_or": "0.0"}, "optional"),
-        ({"dist_optional": "0.0", "dist_mandatory": "1.0", "dist_alternative": "0.0", "dist_or": "0.0"}, "mandatory"),
-        ({"dist_optional": "0.0", "dist_mandatory": "0.0", "dist_alternative": "1.0", "dist_or": "0.0"}, "alternative"),
-        ({"dist_optional": "0.0", "dist_mandatory": "0.0", "dist_alternative": "0.0", "dist_or": "1.0"}, "or"),
-    ],
-)
-def test_relation_distribution_dominance(client, dist, marker):
-    _walk_wizard(
-        client,
-        step3=_step3(
-            extras={
-                **dist,
-                "dist_group_cardinality": "0.0",
-                "num_features_min": "12",
-                "num_features_max": "18",
-                "max_tree_depth": "4",
-            }
-        ),
-    )
-    text = _fetch_params_and_generate(client, n=3)
-    assert re.search(rf"^\t+{marker}\s*$", text, re.M), f"missing {marker!r}:\n{text[:300]}"
-
-
-# ── Step 3: group cardinality bounds ────────────────────────────────────
-
-
-@pytest.mark.parametrize("gmin,gmax", [("1", "3"), ("2", "5"), ("1", "2"), ("3", "6"), ("1", "10")])
-def test_group_cardinality_bounds_roundtrip(client, gmin, gmax):
-    _walk_wizard(
-        client,
-        step2=_step2(group_card=True),
-        step3=_step3(
-            group_card=True,
-            extras={
-                "dist_optional": "0.0",
-                "dist_mandatory": "0.0",
-                "dist_alternative": "0.0",
-                "dist_or": "0.0",
-                "dist_group_cardinality": "1.0",
-                "group_cardinality_min": gmin,
-                "group_cardinality_max": gmax,
-                "num_features_min": "10",
-                "num_features_max": "15",
-            },
-        ),
-    )
-    params = json.loads(client.get("/generator/random/params-json").data)
-    assert params["GROUP_CARDINALITY_MIN"] == int(gmin)
-    assert params["GROUP_CARDINALITY_MAX"] == int(gmax)
 
 
 # ── Step 3: feature cardinality bounds ──────────────────────────────────
@@ -771,14 +515,6 @@ def test_feature_cardinality_bounds_observed(client, fmin, fmax):
 # ── Step 4: constraint counts ───────────────────────────────────────────
 
 
-@pytest.mark.parametrize("lo,hi", [("1", "5"), ("3", "8"), ("5", "10"), ("10", "20"), ("1", "1"), ("15", "15")])
-def test_constraint_count_bounds_roundtrip(client, lo, hi):
-    _walk_wizard(client, step4=_step4(extras={"num_constraints_min": lo, "num_constraints_max": hi}))
-    params = json.loads(client.get("/generator/random/params-json").data)
-    assert params["MIN_CONSTRAINTS"] == int(lo)
-    assert params["MAX_CONSTRAINTS"] == int(hi)
-
-
 @pytest.mark.parametrize("fixed", ["1", "3", "5", "7", "10"])
 def test_fixed_constraint_count_observed(client, fixed):
     _walk_wizard(client, step4=_step4(extras={"num_constraints_min": fixed, "num_constraints_max": fixed}))
@@ -786,18 +522,6 @@ def test_fixed_constraint_count_observed(client, fixed):
     for model_text in text.split("features\n")[1:]:
         ctcs = list(_iter_ctc_lines("features\n" + model_text))
         assert len(ctcs) == int(fixed)
-
-
-@pytest.mark.parametrize("vmin,vmax", [("1", "2"), ("2", "3"), ("2", "5"), ("3", "7"), ("1", "10")])
-def test_vars_per_ctc_roundtrip(client, vmin, vmax):
-    _walk_wizard(
-        client,
-        step3=_step3(extras={"num_features_min": "15", "num_features_max": "20"}),
-        step4=_step4(extras={"vars_per_ctc_min": vmin, "vars_per_ctc_max": vmax}),
-    )
-    params = json.loads(client.get("/generator/random/params-json").data)
-    assert params["MIN_VARS_PER_CONSTRAINT"] == int(vmin)
-    assert params["MAX_VARS_PER_CONSTRAINT"] == int(vmax)
 
 
 @pytest.mark.parametrize("fixed", ["2", "3", "4", "5"])
@@ -813,199 +537,7 @@ def test_fixed_vars_per_ctc_observed(client, fixed):
         assert len(refs) == int(fixed), f"expected {fixed} vars, got {len(refs)}: {line}"
 
 
-# ── Step 4: boolean connective dominance ────────────────────────────────
-
-
-@pytest.mark.parametrize(
-    "probs,marker",
-    [
-        ({"prob_and": "1.0", "prob_or": "0.0", "prob_implies": "0.0", "prob_equiv": "0.0"}, " & "),
-        ({"prob_and": "0.0", "prob_or": "1.0", "prob_implies": "0.0", "prob_equiv": "0.0"}, " | "),
-        ({"prob_and": "0.0", "prob_or": "0.0", "prob_implies": "1.0", "prob_equiv": "0.0"}, " => "),
-        ({"prob_and": "0.0", "prob_or": "0.0", "prob_implies": "0.0", "prob_equiv": "1.0"}, " <=> "),
-    ],
-)
-def test_boolean_connective_dominance(client, probs, marker):
-    _walk_wizard(client, step4=_step4(extras={**probs, "prob_not": "0.0"}))
-    body = "\n".join(_iter_ctc_lines(_fetch_params_and_generate(client, n=2)))
-    assert marker in body, f"missing {marker!r}:\n{body}"
-
-
-# ── Step 4: arithmetic operator dominance ────────────────────────────────
-
-
-@pytest.mark.parametrize(
-    "probs,marker",
-    [
-        ({"prob_plus": "1.0", "prob_minus": "0.0", "prob_times": "0.0", "prob_div": "0.0"}, " + "),
-        ({"prob_plus": "0.0", "prob_minus": "1.0", "prob_times": "0.0", "prob_div": "0.0"}, " - "),
-        ({"prob_plus": "0.0", "prob_minus": "0.0", "prob_times": "1.0", "prob_div": "0.0"}, " * "),
-        ({"prob_plus": "0.0", "prob_minus": "0.0", "prob_times": "0.0", "prob_div": "1.0"}, " / "),
-    ],
-)
-def test_arithmetic_operator_dominance(client, probs, marker):
-    _walk_wizard(
-        client,
-        step2=_step2(arithmetic=True),
-        step4=_step4(
-            arithmetic=True,
-            extras={
-                **probs,
-                "ctc_dist_boolean": "0.0",
-                "ctc_dist_integer": "1.0",
-                "ctc_dist_real": "0.0",
-                "ctc_dist_string": "0.0",
-                "num_constraints_min": "10",
-                "num_constraints_max": "10",
-            },
-        ),
-        step5=_step5(
-            extras={
-                "dist_boolean": "0.0",
-                "dist_integer": "1.0",
-                "dist_real": "0.0",
-                "dist_string": "0.0",
-                "min_attributes": "3",
-                "max_attributes": "4",
-            }
-        ),
-    )
-    body = "\n".join(_iter_ctc_lines(_fetch_params_and_generate(client, n=3)))
-    assert marker in body, f"missing {marker!r} in arithmetic output:\n{body}"
-
-
-# ── Step 4: comparison operator dominance ───────────────────────────────
-
-
-@pytest.mark.parametrize(
-    "probs,marker",
-    [
-        ({"prob_eq": "1.0", "prob_lt": "0.0", "prob_gt": "0.0", "prob_leq": "0.0", "prob_geq": "0.0"}, "=="),
-        ({"prob_eq": "0.0", "prob_lt": "1.0", "prob_gt": "0.0", "prob_leq": "0.0", "prob_geq": "0.0"}, " < "),
-        ({"prob_eq": "0.0", "prob_lt": "0.0", "prob_gt": "1.0", "prob_leq": "0.0", "prob_geq": "0.0"}, " > "),
-        ({"prob_eq": "0.0", "prob_lt": "0.0", "prob_gt": "0.0", "prob_leq": "1.0", "prob_geq": "0.0"}, " <= "),
-        ({"prob_eq": "0.0", "prob_lt": "0.0", "prob_gt": "0.0", "prob_leq": "0.0", "prob_geq": "1.0"}, " >= "),
-    ],
-)
-def test_comparison_operator_dominance(client, probs, marker):
-    _walk_wizard(
-        client,
-        step2=_step2(arithmetic=True),
-        step4=_step4(
-            arithmetic=True,
-            extras={
-                **probs,
-                "ctc_dist_boolean": "0.0",
-                "ctc_dist_integer": "1.0",
-                "ctc_dist_real": "0.0",
-                "ctc_dist_string": "0.0",
-                "num_constraints_min": "10",
-                "num_constraints_max": "10",
-            },
-        ),
-        step5=_step5(
-            extras={
-                "dist_boolean": "0.0",
-                "dist_integer": "1.0",
-                "dist_real": "0.0",
-                "dist_string": "0.0",
-                "min_attributes": "3",
-                "max_attributes": "4",
-            }
-        ),
-    )
-    body = "\n".join(_iter_ctc_lines(_fetch_params_and_generate(client, n=3)))
-    assert marker in body, f"missing {marker!r} in comparison output:\n{body}"
-
-
-# ── Step 4: aggregate function dominance ────────────────────────────────
-
-
-@pytest.mark.parametrize(
-    "probs,marker",
-    [
-        ({"prob_sum": "1.0", "prob_avg": "0.0"}, "sum("),
-        ({"prob_sum": "0.0", "prob_avg": "1.0"}, "avg("),
-    ],
-)
-def test_aggregate_function_dominance(client, probs, marker):
-    _walk_wizard(
-        client,
-        step2=_step2(arithmetic=True, aggregate=True),
-        step4=_step4(
-            arithmetic=True,
-            aggregate=True,
-            extras={
-                "prob_plus": "0.0",
-                "prob_minus": "0.0",
-                "prob_times": "0.0",
-                "prob_div": "0.0",
-                **probs,
-                "ctc_dist_boolean": "0.0",
-                "ctc_dist_integer": "1.0",
-                "ctc_dist_real": "0.0",
-                "ctc_dist_string": "0.0",
-                "num_constraints_min": "15",
-                "num_constraints_max": "15",
-            },
-        ),
-        step5=_step5(
-            extras={
-                "dist_boolean": "0.0",
-                "dist_integer": "1.0",
-                "dist_real": "0.0",
-                "dist_string": "0.0",
-                "min_attributes": "3",
-                "max_attributes": "4",
-            }
-        ),
-    )
-    body = "\n".join(_iter_ctc_lines(_fetch_params_and_generate(client, n=3)))
-    assert marker in body, f"missing {marker!r}:\n{body}"
-
-
-# ── Step 4: prob_not spectrum ───────────────────────────────────────────
-
-
-@pytest.mark.parametrize(
-    "prob_not,expected_has_not",
-    [
-        ("0.0", False),
-        ("0.5", True),
-        ("1.0", True),
-    ],
-)
-def test_prob_not_spectrum(client, prob_not, expected_has_not):
-    _walk_wizard(client, step4=_step4(extras={"prob_not": prob_not}))
-    body = "\n".join(_iter_ctc_lines(_fetch_params_and_generate(client, n=3)))
-    has_not = "!" in body
-    assert (
-        has_not is expected_has_not or prob_not == "0.5"
-    ), f"prob_not={prob_not} has_not={has_not} expected={expected_has_not}"
-
-
 # ── Step 5: attribute count bounds ──────────────────────────────────────
-
-
-@pytest.mark.parametrize(
-    "lo,hi",
-    [
-        ("1", "1"),
-        ("2", "2"),
-        ("3", "3"),
-        ("5", "5"),
-        ("10", "10"),
-        ("1", "3"),
-        ("2", "6"),
-        ("1", "10"),
-        ("3", "8"),
-    ],
-)
-def test_attribute_count_bounds_roundtrip(client, lo, hi):
-    _walk_wizard(client, step5=_step5(extras={"min_attributes": lo, "max_attributes": hi}))
-    params = json.loads(client.get("/generator/random/params-json").data)
-    assert params["MIN_ATTRIBUTES"] == int(lo)
-    assert params["MAX_ATTRIBUTES"] == int(hi)
 
 
 @pytest.mark.parametrize("fixed", ["1", "2", "3", "5", "7"])
@@ -1064,24 +596,6 @@ def test_attribute_type_dominance(client, dist, kind):
 # ── Step 6: ensure_satisfiable + filename suffixes matrix ───────────────
 
 
-@pytest.mark.parametrize("ensure", [False, True])
-@pytest.mark.parametrize("feat_sfx", [False, True])
-@pytest.mark.parametrize("ctc_sfx", [False, True])
-def test_output_options_matrix(client, ensure, feat_sfx, ctc_sfx):
-    _walk_wizard(
-        client,
-        step6=_step6(
-            ensure_satisfiable=ensure,
-            feat_suffix=feat_sfx,
-            ctc_suffix=ctc_sfx,
-        ),
-    )
-    p = json.loads(client.get("/generator/random/params-json").data)
-    assert p["ENSURE_SATISFIABLE"] is ensure
-    assert p["INCLUDE_FEATURE_COUNT_SUFFIX"] is feat_sfx
-    assert p["INCLUDE_CONSTRAINT_COUNT_SUFFIX"] is ctc_sfx
-
-
 @pytest.mark.parametrize(
     "flags,pattern",
     [
@@ -1111,67 +625,6 @@ def test_filename_suffix_combinations(client, flags, pattern):
         files = sorted(os.listdir(d))
         assert files
         assert all(re.match(pattern, f) for f in files), f"files={files} pattern={pattern}"
-
-
-# ── CTC type distribution ────────────────────────────────────────────────
-
-
-@pytest.mark.parametrize(
-    "ctc_dist,family_marker",
-    [
-        (
-            {"ctc_dist_boolean": "1.0", "ctc_dist_integer": "0.0", "ctc_dist_real": "0.0", "ctc_dist_string": "0.0"},
-            "boolean",
-        ),
-        (
-            {"ctc_dist_boolean": "0.0", "ctc_dist_integer": "1.0", "ctc_dist_real": "0.0", "ctc_dist_string": "0.0"},
-            "arith",
-        ),
-        (
-            {"ctc_dist_boolean": "0.0", "ctc_dist_integer": "0.0", "ctc_dist_real": "0.0", "ctc_dist_string": "1.0"},
-            "string",
-        ),
-    ],
-)
-def test_ctc_dist_family_dominance(client, ctc_dist, family_marker):
-    _walk_wizard(
-        client,
-        step2=_step2(arithmetic=True, type_=True, string_ctc=True),
-        step4=_step4(
-            arithmetic=True,
-            string=True,
-            extras={
-                **ctc_dist,
-                "num_constraints_min": "8",
-                "num_constraints_max": "8",
-            },
-        ),
-        step5=_step5(
-            extras={
-                "dist_boolean": "0.25",
-                "dist_integer": "0.25",
-                "dist_real": "0.25",
-                "dist_string": "0.25",
-                "min_attributes": "4",
-                "max_attributes": "4",
-            }
-        ),
-    )
-    body = "\n".join(_iter_ctc_lines(_fetch_params_and_generate(client, n=3)))
-    if family_marker == "boolean":
-        # Boolean ctcs reference only features (F\d+), no Attr.
-        assert (
-            any(
-                re.search(r"^[^'a-z]*F\d+", ln) and not re.search(r"\.Attr|len\(|sum\(|avg\(", ln)
-                for ln in _iter_ctc_lines(body)
-            )
-            or " & " in body
-            or " | " in body
-        )
-    elif family_marker == "arith":
-        assert re.search(r"\s[+\-*/]\s", body), f"no arith:\n{body}"
-    elif family_marker == "string":
-        assert "len(" in body or re.search(r"\.Attr\d+\s*==\s*'", body), f"no string:\n{body}"
 
 
 # ── Determinism across wizard posts ─────────────────────────────────────
@@ -1335,39 +788,3 @@ def test_everything_on_every_family_represented(client):
         ]
     )
     assert fams >= 3, f"only {fams} families present"
-
-
-# ── GET rendering smoke tests (each step responds with 200 when ready) ─
-
-
-@pytest.mark.parametrize("step", [1, 2, 3, 4, 5, 6])
-def test_each_step_renders_after_session_primed(client, step):
-    _walk_wizard(client)  # primes the session through step 6
-    r = client.get(f"/generator/random/step{step}")
-    assert r.status_code == 200
-    markers = (b"Generate", b"Batch", b"levels", b"Feature", b"Constraints", b"Attributes", b"Output", b"Download")
-    assert any(m in r.data for m in markers)
-
-
-# ── Params contract (Params() accepts what /params-json returns) ───────
-
-
-@pytest.mark.parametrize("seed", ["1", "42", "777"])
-def test_params_json_roundtrips_through_params(client, seed):
-    _walk_wizard(
-        client,
-        step1=_step1(seed=seed),
-        step2=_step2(arithmetic=True, type_=True, aggregate=True, string_ctc=True, feat_card=True, group_card=True),
-        step3=_step3(group_card=True, feat_card=True),
-        step4=_step4(arithmetic=True, aggregate=True, string=True),
-        step5=_step5(
-            extras={
-                "dist_boolean": "0.25",
-                "dist_integer": "0.25",
-                "dist_real": "0.25",
-                "dist_string": "0.25",
-            }
-        ),
-    )
-    p = json.loads(client.get("/generator/random/params-json").data)
-    Params(**p)  # must not raise

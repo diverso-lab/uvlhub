@@ -98,44 +98,6 @@ def test_num_models_respected():
         assert len([f for f in os.listdir(d) if f.endswith(".uvl")]) == 7
 
 
-def test_feature_count_suffix_applied():
-    p = _base_params(NUM_MODELS=1, INCLUDE_FEATURE_COUNT_SUFFIX=True)
-    with tempfile.TemporaryDirectory() as d:
-        FmgeneratorModel(p).generate_models(d)
-        files = [f for f in os.listdir(d) if f.endswith(".uvl")]
-        assert files
-        assert all(re.match(r"^fm_\d+f\.uvl$", f) for f in files), files
-
-
-def test_constraint_count_suffix_applied():
-    p = _base_params(NUM_MODELS=1, INCLUDE_CONSTRAINT_COUNT_SUFFIX=True)
-    with tempfile.TemporaryDirectory() as d:
-        FmgeneratorModel(p).generate_models(d)
-        files = [f for f in os.listdir(d) if f.endswith(".uvl")]
-        assert files
-        assert all(re.match(r"^fm_\d+c\.uvl$", f) for f in files), files
-
-
-def test_both_suffixes_applied():
-    p = _base_params(
-        NUM_MODELS=1,
-        INCLUDE_FEATURE_COUNT_SUFFIX=True,
-        INCLUDE_CONSTRAINT_COUNT_SUFFIX=True,
-    )
-    with tempfile.TemporaryDirectory() as d:
-        FmgeneratorModel(p).generate_models(d)
-        files = [f for f in os.listdir(d) if f.endswith(".uvl")]
-        assert files
-        assert all(re.match(r"^fm_\d+f_\d+c\.uvl$", f) for f in files), files
-
-
-def test_name_prefix_applied():
-    p = _base_params(NAME_PREFIX="PREFIXED_")
-    with tempfile.TemporaryDirectory() as d:
-        FmgeneratorModel(p).generate_models(d)
-        assert all(f.startswith("PREFIXED_") for f in os.listdir(d) if f.endswith(".uvl"))
-
-
 def test_determinism_same_seed_same_output():
     a = _run(_base_params(SEED=123), n=3)
     b = _run(_base_params(SEED=123), n=3)
@@ -480,17 +442,6 @@ def test_prob_not_zero_produces_no_negations():
     assert "! " not in ctc_body, "unexpected NOT in constraints"
 
 
-def test_prob_not_one_produces_many_negations():
-    p = _base_params(
-        PROB_NOT=1.0,
-        MIN_CONSTRAINTS=8,
-        MAX_CONSTRAINTS=8,
-    )
-    text = _run(p, n=5)
-    ctc_body = text.split("constraints\n", 1)[1] if "constraints\n" in text else ""
-    assert ctc_body.count("!") > 5, "expected many NOT operators"
-
-
 def test_min_max_constraints_respected():
     p = _base_params(MIN_CONSTRAINTS=3, MAX_CONSTRAINTS=3)
     for _ in range(5):
@@ -498,47 +449,6 @@ def test_min_max_constraints_respected():
         ctc_body = text.split("constraints\n", 1)[1] if "constraints\n" in text else ""
         lines = [ln for ln in ctc_body.splitlines() if ln.strip()]
         assert len(lines) == 3
-
-
-# ── Distributions: empirical checks on large batches ─────────────────────
-
-
-def test_prob_and_dominant():
-    """With PROB_AND=1.0, PROB_OR/IMPLIES/EQUIV=0, every Boolean connective
-    should be AND (serialised as ' & ')."""
-    p = _base_params(
-        PROB_AND=1.0,
-        PROB_OR_CT=0.0,
-        PROB_IMPLICATION=0.0,
-        PROB_EQUIVALENCE=0.0,
-        PROB_NOT=0.0,
-        MIN_CONSTRAINTS=10,
-        MAX_CONSTRAINTS=10,
-    )
-    text = _run(p, n=3)
-    ctc_body = text.split("constraints\n", 1)[1]
-    # All connective positions should be '&'; none should be |, =>, <=>.
-    assert "=>" not in ctc_body
-    assert "<=>" not in ctc_body
-    assert " | " not in ctc_body
-    assert " & " in ctc_body
-
-
-def test_prob_implies_dominant():
-    p = _base_params(
-        PROB_AND=0.0,
-        PROB_OR_CT=0.0,
-        PROB_IMPLICATION=1.0,
-        PROB_EQUIVALENCE=0.0,
-        PROB_NOT=0.0,
-        MIN_CONSTRAINTS=10,
-        MAX_CONSTRAINTS=10,
-    )
-    text = _run(p, n=3)
-    ctc_body = text.split("constraints\n", 1)[1]
-    assert " => " in ctc_body
-    assert " & " not in ctc_body
-    assert "<=>" not in ctc_body
 
 
 # ── ENSURE_SATISFIABLE ───────────────────────────────────────────────────

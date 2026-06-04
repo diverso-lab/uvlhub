@@ -100,3 +100,58 @@ def test_apply_step5_random_attrs_normalizes_distribution():
     )
 
     assert total == 1.0
+
+
+def test_apply_step3_normalizes_relation_distribution_with_group_cardinality():
+    params = {"GROUP_CARDINALITY": True, "FEATURE_CARDINALITY": False}
+    form = MultiDict(
+        {
+            "num_features_min": "10",
+            "num_features_max": "20",
+            "max_tree_depth": "5",
+            "dist_optional": "1",
+            "dist_mandatory": "1",
+            "dist_alternative": "1",
+            "dist_or": "1",
+            "dist_group_cardinality": "1",
+            "group_cardinality_min": "1",
+            "group_cardinality_max": "4",
+        }
+    )
+
+    apply_step3_tree(params, form)
+
+    total = (
+        params["DIST_OPTIONAL"]
+        + params["DIST_MANDATORY"]
+        + params["DIST_ALTERNATIVE"]
+        + params["DIST_OR"]
+        + params["DIST_GROUP_CARDINALITY"]
+    )
+
+    assert total == 1.0
+    assert params["DIST_GROUP_CARDINALITY"] > 0.0
+    assert params["GROUP_CARDINALITY_MIN"] == 1
+    assert params["GROUP_CARDINALITY_MAX"] == 4
+
+
+def test_apply_step5_masks_unavailable_attribute_types_when_levels_are_off():
+    params = {"ARITHMETIC_LEVEL": False, "TYPE_LEVEL": False}
+    form = MultiDict(
+        {
+            "random_attributes": "on",
+            "min_attributes": "1",
+            "max_attributes": "4",
+            "dist_boolean": "1",
+            "dist_integer": "1",
+            "dist_real": "1",
+            "dist_string": "1",
+        }
+    )
+
+    apply_step5_attributes(params, form)
+
+    assert params["DIST_BOOLEAN"] == 1.0
+    assert params["DIST_INTEGER"] == 0.0
+    assert params["DIST_REAL"] == 0.0
+    assert params["DIST_STRING"] == 0.0
