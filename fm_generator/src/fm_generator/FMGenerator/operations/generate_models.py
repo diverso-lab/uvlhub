@@ -13,50 +13,60 @@ from fm_generator.FMGenerator.operations.hierarchy import generate_hierarchy
 SAT_SEED_STRIDE = 100000
 
 __all__ = [
+    "GenerateModels",
     "SAT_SEED_STRIDE",
-    "generate_single_model",
 ]
 
 
-def build_uvl_includes(params: Params) -> list[str]:
-    includes: list[str] = []
+class GenerateModels:
+    """Operation responsible for generating random FeatureModel instances."""
 
-    if getattr(params, "GROUP_CARDINALITY", False):
-        includes.append("Boolean.group-cardinality")
+    def __init__(self, params: Params) -> None:
+        self.params = params
 
-    arithmetic_feature_cardinality = bool(getattr(params, "FEATURE_CARDINALITY", False))
-    arithmetic_aggregate_functions = bool(getattr(params, "AGGREGATE_FUNCTIONS", False))
+    def execute(self, index: int, attempt: int = 0) -> FeatureModel:
+        self._seed_generation(index, attempt)
 
-    if arithmetic_feature_cardinality and arithmetic_aggregate_functions:
-        includes.append("Arithmetic.*")
-    else:
-        if arithmetic_aggregate_functions:
-            includes.append("Arithmetic.aggregate-function")
-        if arithmetic_feature_cardinality:
-            includes.append("Arithmetic.feature-cardinality")
+        fm, features = generate_hierarchy(self.params)
+        self._assign_attributes(features)
+        add_constraints(fm, features, self.params)
 
-    if getattr(params, "TYPE_LEVEL", False) and getattr(params, "STRING_CONSTRAINTS", False):
-        includes.append("Type.string-constraints")
+        setattr(fm, "uvl_includes", self._build_uvl_includes())
 
-    return includes
+        return fm
 
+    def _seed_generation(self, index: int, attempt: int) -> None:
+        seed_value = self.params.SEED + index + (attempt * SAT_SEED_STRIDE)
+        random.seed(seed_value)
 
-def generate_single_model(
-    params: Params,
-    index: int,
-    attempt: int = 0,
-) -> FeatureModel:
-    seed_value = params.SEED + index + (attempt * SAT_SEED_STRIDE)
-    random.seed(seed_value)
+    def _assign_attributes(self, features) -> None:
+        if self.params.RANDOM_ATTRIBUTES:
+            generate_random_attributes(self.params, features)
+        else:
+            assign_manual_attributes(self.params, features)
 
-    fm, feats = generate_hierarchy(params)
+    def _build_uvl_includes(self) -> list[str]:
+        includes: list[str] = []
 
-    if params.RANDOM_ATTRIBUTES:
-        generate_random_attributes(params, feats)
-    else:
-        assign_manual_attributes(params, feats)
+        if getattr(self.params, "GROUP_CARDINALITY", False):
+            includes.append("Boolean.group-cardinality")
 
-    add_constraints(fm, feats, params)
-    setattr(fm, "uvl_includes", build_uvl_includes(params))
+        feature_cardinality = bool(getattr(self.params, "FEATURE_CARDINALITY", False))
+        aggregate_functions = bool(getattr(self.params, "AGGREGATE_FUNCTIONS", False))
 
-    return fm
+        if feature_cardinality and aggregate_functions:
+            includes.append("Arithmetic.*")
+        else:
+            if aggregate_functions:
+                includes.append("Arithmetic.aggregate-function")
+            if feature_cardinality:
+                includes.append("Arithmetic.feature-cardinality")
+
+        if getattr(self.params, "TYPE_LEVEL", False) and getattr(
+            self.params,
+            "STRING_CONSTRAINTS",
+            False,
+        ):
+            includes.append("Type.string-constraints")
+
+        return includes

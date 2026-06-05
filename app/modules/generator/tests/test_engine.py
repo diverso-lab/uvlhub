@@ -1,4 +1,4 @@
-"""Engine-level unit tests: drive generate_single_model/FmgeneratorModel
+"""Engine-level unit tests: drive GenerateModels/FmgeneratorModel
 directly and assert each knob in Params actually affects the output.
 
 These tests are the backstop for "my level setting didn't do anything" bugs:
@@ -13,7 +13,7 @@ import tempfile
 
 from fm_generator.FMGenerator.models.config import Params
 from fm_generator.FMGenerator.models.models import FmgeneratorModel
-from fm_generator.FMGenerator.operations.generate_models import generate_single_model
+from fm_generator.FMGenerator.operations.generate_models import GenerateModels
 
 
 def _base_params(**overrides) -> Params:
@@ -491,9 +491,9 @@ def test_manual_mode_uses_attribute_in_constraints_flag():
 
 
 def test_constant_seed_and_index_determinism():
-    """generate_single_model must be fully deterministic on (SEED, index)."""
+    """GenerateModels.execute must be fully deterministic on (SEED, index)."""
     p = _base_params(SEED=42)
-    a = generate_single_model(p, 0)
-    b = generate_single_model(p, 0)
+    a = GenerateModels(p).execute(0)
+    b = GenerateModels(p).execute(0)
     assert [f.name for f in a.get_features()] == [f.name for f in b.get_features()]
     assert len(a.ctcs) == len(b.ctcs)

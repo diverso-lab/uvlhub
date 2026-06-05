@@ -6,7 +6,7 @@ from flamapy.metamodels.fm_metamodel.models import FeatureModel
 from flamapy.metamodels.fm_metamodel.transformations.uvl_writer import UVLWriter
 
 from fm_generator.FMGenerator.models.config import Params
-from fm_generator.FMGenerator.operations.generate_models import generate_single_model
+from fm_generator.FMGenerator.operations.generate_models import GenerateModels
 
 SATISFIABILITY_MAX_ATTEMPTS = 30
 
@@ -18,6 +18,7 @@ class FmgeneratorModel(VariabilityModel):
 
     def __init__(self, params: Params) -> None:
         self.params = params
+        self.generation_operation = GenerateModels(params)
 
     def _prepend_uvl_includes(
         self,
@@ -29,6 +30,9 @@ class FmgeneratorModel(VariabilityModel):
 
         include_block = "include\n" + "\n".join(f"\t{inc}" for inc in includes) + "\n"
         return include_block + serialized_model
+
+    def _filename_for(self, fm: FeatureModel, index: int) -> str:
+        return self._build_output_filename(fm, index)
 
     def _build_output_filename(self, fm: FeatureModel, index: int) -> str:
         base_name = (getattr(self.params, "NAME_PREFIX", "") or "").strip() or "fm"
@@ -53,17 +57,14 @@ class FmgeneratorModel(VariabilityModel):
 
         return f"{base_name}.uvl"
 
-    def _filename_for(self, fm: FeatureModel, index: int) -> str:
-        return self._build_output_filename(fm, index)
-
     def _build_one(self, index: int) -> FeatureModel:
         if not getattr(self.params, "ENSURE_SATISFIABLE", False):
-            return generate_single_model(self.params, index)
+            return self.generation_operation.execute(index)
 
         last_model = None
 
         for attempt in range(SATISFIABILITY_MAX_ATTEMPTS):
-            fm = generate_single_model(self.params, index, attempt=attempt)
+            fm = self.generation_operation.execute(index, attempt=attempt)
             last_model = fm
 
             if self._run_flamapy_satisfiability(fm):
