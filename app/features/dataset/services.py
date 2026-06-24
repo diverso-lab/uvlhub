@@ -315,14 +315,27 @@ class DataSetService(BaseService):
         except ValueError:
             dataset.ds_meta_data.publication_type = PublicationType.OTHER
 
-    def _get_requested_dataset_type(self, form_data) -> str:
-        dataset_type = (form_data.get("dataset_type") or "draft").strip()
+    def _get_requested_dataset_type(self, form_data, default: str = "draft") -> str:
+        dataset_type = (form_data.get("dataset_type") or default).strip()
         allowed_types = {"draft", "zenodo", "zenodo_anonymous"}
         if dataset_type not in allowed_types:
             raise DatasetMetadataValidationError(
                 f"Invalid dataset type '{dataset_type}'. Allowed values: draft, zenodo, zenodo_anonymous."
             )
         return dataset_type
+
+    @staticmethod
+    def _current_dataset_type(dataset: DataSet) -> str:
+        """The dataset_type that reflects a dataset's current published state.
+
+        Used as the default when editing so a request that omits dataset_type
+        never silently downgrades a synchronized dataset to draft (which would
+        clear its Zenodo DOI). Only an explicit dataset_type=draft downgrades.
+        """
+        meta = dataset.ds_meta_data
+        if meta.dataset_doi:
+            return "zenodo_anonymous" if meta.dataset_anonymous else "zenodo"
+        return "draft"
 
     def _replace_authors_from_form(self, dataset: DataSet, form_data) -> None:
         authors = self._parse_authors_from_form(form_data)
@@ -426,7 +439,7 @@ class DataSetService(BaseService):
         was_synchronized = bool(dataset.ds_meta_data.dataset_doi)
         sync_deferred = False
         try:
-            dataset_type = self._get_requested_dataset_type(form_data)
+            dataset_type = self._get_requested_dataset_type(form_data, default=self._current_dataset_type(dataset))
             self._apply_metadata_from_form(dataset, form_data)
             self._replace_authors_from_form(dataset, form_data)
             try:

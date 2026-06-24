@@ -1,4 +1,5 @@
 import zipfile
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 from urllib.error import HTTPError
 
@@ -8,6 +9,23 @@ from app.features.dataset import routes as dataset_routes
 from app.features.dataset.services import DatasetMetadataValidationError, DataSetService
 
 pytestmark = pytest.mark.unit
+
+
+def _dataset_for_type(doi=None, anonymous=False):
+    return SimpleNamespace(ds_meta_data=SimpleNamespace(dataset_doi=doi, dataset_anonymous=anonymous))
+
+
+def test_current_dataset_type_is_draft_without_doi():
+    assert DataSetService._current_dataset_type(_dataset_for_type(doi=None)) == "draft"
+
+
+def test_current_dataset_type_is_zenodo_with_doi():
+    assert DataSetService._current_dataset_type(_dataset_for_type(doi="10.5072/zenodo.1")) == "zenodo"
+
+
+def test_current_dataset_type_is_anonymous_when_flagged():
+    ds = _dataset_for_type(doi="10.5072/zenodo.1", anonymous=True)
+    assert DataSetService._current_dataset_type(ds) == "zenodo_anonymous"
 
 
 def test_validate_orcid_invalid_format():
