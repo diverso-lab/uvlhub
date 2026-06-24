@@ -264,6 +264,10 @@ def workbench_content(file_id):
             factlabel = None
 
     user_cookie = hubfile_view_record_service.create_cookie(hubfile=selected_file)
+    # The UVL-tool URLs are provided by the domain features as template globals;
+    # the generic hub reads them without importing flamapy/factlabel.
+    ide_url_fn = current_app.jinja_env.globals.get("ide_url")
+    factlabel_url_fn = current_app.jinja_env.globals.get("factlabel_url")
     resp = make_response(
         jsonify(
             {
@@ -276,8 +280,8 @@ def workbench_content(file_id):
                 "factlabel_ready": factlabel is not None,
                 "download_url": url_for("hubfile.download_file", file_id=selected_file.id),
                 "raw_url": url_for("hubfile.raw_uvl", file_id=selected_file.id, filename=selected_file.name),
-                "ide_url": selected_file.get_ide_url(),
-                "factlabel_external_url": selected_file.get_factlabel_url(),
+                "ide_url": ide_url_fn(selected_file) if ide_url_fn else None,
+                "factlabel_external_url": factlabel_url_fn(selected_file) if factlabel_url_fn else None,
                 "view_url": selected_file.get_url(),
             }
         )

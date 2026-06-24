@@ -26,6 +26,17 @@ class FactlabelService:
     def __init__(self):
         self.view_record_repository = HubfileViewRecordRepository()
 
+    @staticmethod
+    def external_url(hubfile) -> str:
+        """URL that opens a hubfile in FactLabel (registered as a template global).
+
+        We deliberately don't pass `?v=<version>`: FactLabel's JS compares it
+        against its own version.json and 404s on mismatch, which broke when
+        FactLabel bumped versions. Omitting it lets FactLabel use whatever it
+        is currently serving.
+        """
+        return f"https://fmfactlabel.github.io/app/?file={hubfile.public_raw_url()}"
+
     def parse_factlabel(self, hubfile: Hubfile) -> dict:
         factlabel = hubfile.factlabel
         if not factlabel or not factlabel.factlabel_json:

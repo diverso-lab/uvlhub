@@ -37,6 +37,11 @@ class FlamapyService:
     def __init__(self):
         self.hubfile_service = HubfileService()
 
+    @staticmethod
+    def ide_url(hubfile) -> str:
+        """URL that opens a hubfile in the Flamapy IDE (registered as a template global)."""
+        return f"https://ide.flamapy.org/?import={hubfile.public_raw_url()}"
+
     def get_metrics(self, fm_model: FeatureModel) -> list[dict[str, Any]]:
         return FMMetrics().execute(fm_model).get_result()
 

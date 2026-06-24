@@ -295,7 +295,7 @@
                                 <li><a class="dropdown-item" href="#" data-export="splot">SPLOT</a></li>
                             </ul>
                         </div>
-                        <a href="{% if selected_file %}{{ selected_file.get_ide_url() }}{% else %}#{% endif %}"
+                        <a href="{% if selected_file %}{{ ide_url(selected_file) }}{% else %}#{% endif %}"
                            id="workbench-ide-link" target="_blank" rel="noopener"
                            class="btn btn-sm btn-light d-inline-flex align-items-center"
                            data-bs-toggle="tooltip" title="Open in Flamapy IDE">
@@ -366,7 +366,7 @@
                                 <span class="path1"></span><span class="path2"></span>
                             </i>
                         </button>
-                        <a href="{% if selected_file %}{{ selected_file.get_factlabel_url() }}{% else %}#{% endif %}"
+                        <a href="{% if selected_file %}{{ factlabel_url(selected_file) }}{% else %}#{% endif %}"
                            id="workbench-factlabel-external"
                            target="_blank" rel="noopener"
                            class="btn btn-sm btn-light d-inline-flex align-items-center"

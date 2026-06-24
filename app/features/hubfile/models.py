@@ -67,11 +67,9 @@ class Hubfile(db.Model):
             self.name,
         )
 
-    def _public_raw_url(self) -> str:
-        """Build the public raw-UVL URL for this hubfile (https outside local).
-
-        Shared between the Flamapy IDE and FactLabel helpers so a future
-        tweak (e.g. hostname rewrite) only needs to happen in one place.
+    def public_raw_url(self) -> str:
+        """Build the public, percent-encoded raw URL for this file (https outside
+        local). Generic: any consumer (e.g. UVL-domain tool URLs) can build on it.
         """
         from urllib.parse import quote
 
@@ -81,24 +79,8 @@ class Hubfile(db.Model):
         # Percent-encode before injecting into another URL's query string,
         # otherwise a filename containing "&", "#" or "?" would corrupt the
         # outer URL. `safe=""` means even "/" and ":" get encoded — the
-        # consumer (FactLabel / IDE) URL-decodes the value before fetching.
+        # consumer URL-decodes the value before fetching.
         return quote(raw_url, safe="")
-
-    def get_ide_url(self) -> str:
-        """Return the URL that opens this hubfile in Flamapy IDE."""
-        return f"https://ide.flamapy.org/?import={self._public_raw_url()}"
-
-    def get_factlabel_url(self) -> str:
-        """Return the URL that opens this hubfile in FactLabel.
-
-        Note: we deliberately don't pass `?v=<version>`. FactLabel's JS
-        compares the URL's `v` against its own version.json and redirects
-        to /error_version.html (which is a 404 on GitHub Pages) when they
-        don't match. Hardcoding `v=1.8.0` here broke as soon as FactLabel
-        bumped to 1.8.1. Omitting the param skips the check entirely and
-        lets FactLabel pick up whatever version it's currently serving.
-        """
-        return f"https://fmfactlabel.github.io/app/?file={self._public_raw_url()}"
 
     def to_dict(self):
         from flask import url_for
