@@ -389,7 +389,8 @@ class DashboardService:
         much simpler than 10 separate aggregate queries and lets us share
         the same row scan for summaries, histograms and breakdowns.
         """
-        from app.features.hubfile.models import Hubfile, HubfileMetrics
+        from app.features.factlabel.models import HubfileMetrics
+        from app.features.hubfile.models import Hubfile
 
         total_hubfiles = db.session.query(func.count(Hubfile.id)).scalar() or 0
         hubfiles_with_factlabel = (
@@ -516,8 +517,9 @@ class DashboardService:
         features) for context.
         """
         from app.features.dataset.models import DataSet, DSMetaData
+        from app.features.factlabel.models import HubfileMetrics
         from app.features.featuremodel.models import FeatureModel
-        from app.features.hubfile.models import Hubfile, HubfileMetrics
+        from app.features.hubfile.models import Hubfile
 
         q = (
             db.session.query(Hubfile, DataSet, column)
@@ -845,7 +847,7 @@ class CorpusExportService:
     _SKIP = {"hubfile_id", "extracted_at", "extractor_version", "parse_error"}
 
     def export_columns(self) -> list[str]:
-        from app.features.hubfile.models import HubfileMetrics
+        from app.features.factlabel.models import HubfileMetrics
 
         metric_cols = [c.name for c in HubfileMetrics.__table__.columns if c.name not in self._SKIP]
         return [*self._BASE_COLUMNS, *metric_cols]
@@ -854,8 +856,9 @@ class CorpusExportService:
         """Yield one dict per hubfile that has a metrics row, streamed via
         ``yield_per`` so large corpora don't materialise in memory."""
         from app.features.dataset.models import DataSet, DSMetaData
+        from app.features.factlabel.models import HubfileMetrics
         from app.features.featuremodel.models import FeatureModel
-        from app.features.hubfile.models import Hubfile, HubfileMetrics
+        from app.features.hubfile.models import Hubfile
 
         metric_cols = [c for c in self.export_columns() if c not in self._BASE_COLUMNS]
 

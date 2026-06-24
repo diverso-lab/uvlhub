@@ -18,8 +18,8 @@ from typing import Any, Mapping
 import pytz
 
 from app import db
-from app.features.hubfile.metrics_extraction import extract_metrics
-from app.features.hubfile.models import HubfileMetrics
+from app.features.factlabel.metrics_extraction import extract_metrics
+from app.features.factlabel.models import HubfileMetrics
 
 logger = logging.getLogger(__name__)
 

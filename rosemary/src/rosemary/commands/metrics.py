@@ -25,8 +25,9 @@ def metrics_status():
     from sqlalchemy import case, func
 
     from app import db
-    from app.features.hubfile.metrics_extraction import EXTRACTOR_VERSION
-    from app.features.hubfile.models import Hubfile, HubfileMetrics
+    from app.features.factlabel.metrics_extraction import EXTRACTOR_VERSION
+    from app.features.factlabel.models import HubfileMetrics
+    from app.features.hubfile.models import Hubfile
 
     total = db.session.query(func.count(Hubfile.id)).scalar() or 0
     with_factlabel = (
@@ -90,8 +91,9 @@ def metrics_status():
 @with_appcontext
 def metrics_backfill(force: bool, limit: int | None, batch_size: int):
     from app import db
-    from app.features.hubfile.metrics_extraction import EXTRACTOR_VERSION, extract_metrics
-    from app.features.hubfile.models import Hubfile, HubfileMetrics
+    from app.features.factlabel.metrics_extraction import EXTRACTOR_VERSION, extract_metrics
+    from app.features.factlabel.models import HubfileMetrics
+    from app.features.hubfile.models import Hubfile
 
     base = (
         db.session.query(Hubfile.id, Hubfile.factlabel_json)

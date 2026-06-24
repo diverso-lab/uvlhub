@@ -32,7 +32,7 @@ def compute_factlabel(hubfile_id: int, light_fact_label: bool = False):
             # (non-light) run carries the complete semantic analysis, so we
             # don't overwrite a richer row with a sparser light one.
             if not light_fact_label:
-                from app.features.hubfile.metrics_sync import upsert_metrics_from_payload
+                from app.features.factlabel.metrics_sync import upsert_metrics_from_payload
 
                 try:
                     upsert_metrics_from_payload(hubfile_id, content)
