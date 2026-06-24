@@ -36,6 +36,10 @@
                             <a href="{{ dataset.get_uvlhub_doi() }}">
                                 {{ dataset.ds_meta_data.title }}
                             </a>
+                            {% if dataset.dataset_version > 1 %}
+                                <span class="badge badge-light-primary ms-2"
+                                      title="Latest of {{ dataset.dataset_version }} versions">v{{ dataset.dataset_version }}</span>
+                            {% endif %}
                             {% if dataset.is_anonymous() %}
                                 <span class="badge badge-light-warning ms-2">Anonymous</span>
                             {% endif %}
