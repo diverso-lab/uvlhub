@@ -4,22 +4,33 @@ from dotenv import load_dotenv
 from flasgger import Swagger
 from flask import Flask
 from flask_cors import CORS
+from flask_login import LoginManager
 from flask_migrate import Migrate
 from flask_session import Session
-from flask_sqlalchemy import SQLAlchemy
 
-from app.modules.mail.services import MailService
-from core.configuration.configuration import get_app_version
-from core.managers.config_manager import ConfigManager
-from core.managers.error_handler_manager import ErrorHandlerManager
-from core.managers.logging_manager import LoggingManager
-from core.managers.module_manager import ModuleManager
+from splent_framework.configuration.configuration import get_app_version
+from splent_framework.db import db
+from splent_framework.managers.config_manager import ConfigManager
+from splent_framework.managers.error_handler_manager import ErrorHandlerManager
+from splent_framework.managers.logging_manager import LoggingManager
+
+# Tell the framework managers (ConfigManager / ErrorHandlerManager) which
+# product package holds `config.py` / `errors.py`, without relying on the shell.
+os.environ.setdefault("SPLENT_APP", "app")
+
+from app.feature_loader import register_features  # noqa: E402
+from app.features.mail.services import MailService  # noqa: E402
 
 # Load environment variables
 load_dotenv()
 
+# Re-export the framework's SQLAlchemy singleton so feature modules can keep
+# doing `from app import db` and stay bound to the same instance that
+# splent_framework's BaseSeeder / BaseRepository operate on. Two separate
+# SQLAlchemy() objects would break `init_app` registration.
+__all__ = ["db", "create_app"]
+
 # Create the instances
-db = SQLAlchemy()
 migrate = Migrate()
 mail_service = MailService()
 sess = Session()
@@ -28,9 +39,8 @@ sess = Session()
 def create_app(config_name="development"):
     app = Flask(__name__)
 
-    # Load configuration according to environment
-    config_manager = ConfigManager(app)
-    config_manager.load_config(config_name=config_name)
+    # Load configuration according to environment (reads app/config.py)
+    ConfigManager(app).load_config(config_name=config_name)
 
     # Initialize SQLAlchemy and Migrate with the app
     db.init_app(app)
@@ -39,20 +49,18 @@ def create_app(config_name="development"):
     # Initialize session with the app
     sess.init_app(app)
 
-    # Register modules
-    module_manager = ModuleManager(app)
-    module_manager.register_modules()
+    # Register features (replaces the old core ModuleManager)
+    env = "prod" if config_name == "production" else "dev"
+    register_features(app, env=env)
 
     # Register login manager
-    from flask_login import LoginManager
-
     login_manager = LoginManager()
     login_manager.init_app(app)
     login_manager.login_view = "auth.login"
 
     @login_manager.user_loader
     def load_user(user_id):
-        from app.modules.auth.models import User
+        from app.features.auth.models import User
 
         return User.query.get(int(user_id))
 
@@ -91,7 +99,7 @@ def create_app(config_name="development"):
 
     Swagger(app, template=swagger_template)
 
-    # Initialize error handler manager
+    # Initialize error handler manager (reads app/errors.py)
     error_handler_manager = ErrorHandlerManager(app)
     error_handler_manager.register_error_handlers()
 
@@ -117,7 +125,7 @@ def create_app(config_name="development"):
     @app.template_filter("format_thousands")
     def format_thousands(value):
         try:
-            return f"{int(value):,}".replace(",", " ")  # espacio fino U+202F
+            return f"{int(value):,}".replace(",", " ")  # espacio fino U+202F
         except (ValueError, TypeError):
             return value
 

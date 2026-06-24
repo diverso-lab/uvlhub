@@ -1,11 +1,11 @@
+# syntax=docker/dockerfile:1
 FROM python:3.13
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PIP_ROOT_USER_ACTION=ignore
-ENV PYTHONPATH=/app
-ENV PIP_CONSTRAINT=/app/constraints.txt
+ENV PYTHONPATH=/workspace
 
-WORKDIR /app
+WORKDIR /workspace
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -25,27 +25,27 @@ RUN apt-get update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-RUN git config --global --add safe.directory /app
+RUN git config --global --add safe.directory /workspace
 
-COPY constraints.txt .
-COPY requirements.txt .
 COPY package.json .
 COPY pyproject.toml ./
 
-RUN pip install --no-cache-dir --upgrade pip
-RUN pip install --no-cache-dir --pre -r requirements.txt
-RUN npm install
+# pip's wheel cache lives in a BuildKit cache mount so heavy sdist-only deps
+# (python-sat, dd, gevent, *.dev pins) are compiled once and reused across builds.
+RUN --mount=type=cache,target=/root/.cache/pip pip install --upgrade pip
+RUN --mount=type=cache,target=/root/.cache/pip pip install --pre .
+RUN --mount=type=cache,target=/root/.npm npm install
 
 COPY app/ ./app
-COPY core/ ./core
 COPY rosemary/ ./rosemary
 COPY migrations/ ./migrations
 COPY docker/ ./docker
 COPY --chmod=0755 scripts/ ./scripts/
 
-RUN pip install -e ./
+# Install Rosemary (lives in ./rosemary with its own pyproject)
+RUN --mount=type=cache,target=/root/.cache/pip pip install -e ./rosemary
 
-RUN pip install --no-cache-dir -e ./app/modules/generator/vendor
+RUN --mount=type=cache,target=/root/.cache/pip pip install -e ./app/features/generator/vendor
 
 RUN find . -type d -name "__pycache__" -exec rm -r {} + \
  && find . -type f -name "*.pyc" -exec rm -f {} +

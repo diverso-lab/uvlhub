@@ -2,7 +2,7 @@ import os
 import logging
 from dotenv import load_dotenv
 from rq import Worker, Queue
-from core.managers.config_manager import ConfigManager
+from splent_framework.managers.config_manager import ConfigManager
 from app import create_app, mail_service
 
 # Load environment variables from .env

@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 FROM python:3.13
 
 # -------------------------
@@ -5,11 +6,10 @@ FROM python:3.13
 # -------------------------
 ENV DEBIAN_FRONTEND=noninteractive \
     PIP_ROOT_USER_ACTION=ignore \
-    PYTHONPATH=/app \
-    PIP_CONSTRAINT=/app/constraints.txt
+    PYTHONPATH=/workspace
     
 
-WORKDIR /app
+WORKDIR /workspace
 
 # --------------------------------------------
 # System deps + Node.js (LTS) + Docker CLI
@@ -34,19 +34,17 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 
 # Security settings in Git
-RUN git config --global --add safe.directory /app
+RUN git config --global --add safe.directory /workspace
 
 # -------------------------
 # Dependency manifests first
 # -------------------------
-COPY constraints.txt .
-COPY requirements.txt .
 COPY package.json .
 COPY pyproject.toml ./
 
-# Python deps (constraints applied via PIP_CONSTRAINT env)
-RUN pip install --no-cache-dir --upgrade pip \
- && pip install --no-cache-dir --pre -r requirements.txt
+# Python deps (pinned in pyproject [project.dependencies])
+RUN --mount=type=cache,target=/root/.cache/pip pip install --upgrade pip \
+ && pip install --pre .
 
 # Node deps
 RUN npm install
@@ -55,20 +53,16 @@ RUN npm install
 # Project files
 # -------------------------
 COPY app/ ./app
-COPY core/ ./core
 COPY rosemary/ ./rosemary
 COPY migrations/ ./migrations
 COPY docker/ ./docker
 COPY --chmod=0755 scripts/ ./scripts/
 
-# Install Rosemary as editable
-RUN pip install -e ./
+# Install Rosemary (lives in ./rosemary with its own pyproject)
+RUN pip install -e ./rosemary
 
-# Install vendored fm_generator (server-side use in app/modules/generator/routes.py)
-RUN pip install --no-cache-dir -e ./app/modules/generator/vendor
-
-# Create the .moduleignore file with the module 'webhook' inside
-RUN echo "webhook" > /app/.moduleignore
+# Install vendored fm_generator (server-side use in app/features/generator/routes.py)
+RUN pip install --no-cache-dir -e ./app/features/generator/vendor
 
 # Remove Python cache
 RUN find . -type d -name "__pycache__" -exec rm -r {} + \
@@ -82,6 +76,6 @@ RUN rosemary webpack:compile
 ENV NODE_ENV=production
 
 ARG VERSION_TAG
-RUN echo "$VERSION_TAG" > /app/.version
+RUN echo "$VERSION_TAG" > /workspace/.version
 
 EXPOSE 5000
