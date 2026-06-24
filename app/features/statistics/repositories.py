@@ -1,7 +1,8 @@
+from splent_framework.repositories.BaseRepository import BaseRepository
+
 from app.features.dataset.models import DSDownloadRecord, DSViewRecord
 from app.features.hubfile.models import HubfileDownloadRecord, HubfileViewRecord
 from app.features.statistics.models import Statistics
-from splent_framework.repositories.BaseRepository import BaseRepository
 
 
 class StatisticsRepository(BaseRepository):

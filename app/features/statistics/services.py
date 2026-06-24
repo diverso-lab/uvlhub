@@ -5,12 +5,12 @@ from datetime import datetime, timedelta, timezone
 from statistics import median, quantiles, stdev
 
 from flask import current_app
+from splent_framework.services.BaseService import BaseService
 from sqlalchemy import case, func
 
 from app import db
 from app.features.statistics.models import Statistics
 from app.features.statistics.repositories import StatisticsRepository
-from splent_framework.services.BaseService import BaseService
 
 logger = logging.getLogger(__name__)
 
@@ -818,3 +818,67 @@ def _linear_bucket(values: list[int | float], max_bucket: int) -> list[Histogram
         else:
             out[idx].count += 1
     return out
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Corpus metrics export — one row per hubfile, streamed for reproducibility.
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+class CorpusExportService:
+    """Stream the per-hubfile corpus metrics for the CSV/JSON exports.
+
+    Keeps the DB access out of the routes; the route only wires the stream to an
+    HTTP response.
+    """
+
+    _BASE_COLUMNS = (
+        "hubfile_id",
+        "hubfile_name",
+        "dataset_id",
+        "dataset_title",
+        "dataset_doi",
+        "extracted_at",
+        "extractor_version",
+        "parse_error",
+    )
+    _SKIP = {"hubfile_id", "extracted_at", "extractor_version", "parse_error"}
+
+    def export_columns(self) -> list[str]:
+        from app.features.hubfile.models import HubfileMetrics
+
+        metric_cols = [c.name for c in HubfileMetrics.__table__.columns if c.name not in self._SKIP]
+        return [*self._BASE_COLUMNS, *metric_cols]
+
+    def iter_rows(self):
+        """Yield one dict per hubfile that has a metrics row, streamed via
+        ``yield_per`` so large corpora don't materialise in memory."""
+        from app.features.dataset.models import DataSet, DSMetaData
+        from app.features.featuremodel.models import FeatureModel
+        from app.features.hubfile.models import Hubfile, HubfileMetrics
+
+        metric_cols = [c for c in self.export_columns() if c not in self._BASE_COLUMNS]
+
+        query = (
+            db.session.query(HubfileMetrics, Hubfile, DataSet, DSMetaData)
+            .join(Hubfile, Hubfile.id == HubfileMetrics.hubfile_id)
+            .join(FeatureModel, FeatureModel.id == Hubfile.feature_model_id)
+            .join(DataSet, DataSet.id == FeatureModel.dataset_id)
+            .join(DSMetaData, DSMetaData.id == DataSet.ds_meta_data_id)
+            .order_by(HubfileMetrics.hubfile_id)
+        )
+
+        for metrics, hubfile, dataset, meta in query.yield_per(500):
+            row = {
+                "hubfile_id": metrics.hubfile_id,
+                "hubfile_name": hubfile.name,
+                "dataset_id": dataset.id,
+                "dataset_title": meta.title,
+                "dataset_doi": meta.dataset_doi,
+                "extracted_at": metrics.extracted_at.isoformat() if metrics.extracted_at else None,
+                "extractor_version": metrics.extractor_version,
+                "parse_error": metrics.parse_error,
+            }
+            for col in metric_cols:
+                row[col] = getattr(metrics, col)
+            yield row

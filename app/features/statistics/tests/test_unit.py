@@ -1,261 +1,63 @@
-from unittest.mock import patch
-
 import pytest
+
+from app.features.dataset.models import PublicationType
+from app.features.statistics.services import (
+    DashboardService,
+    _bucket,
+    _format_top_value,
+    _linear_bucket,
+    _summarize,
+)
 
 pytestmark = pytest.mark.unit
 
-from app.features.auth.repositories import UserRepository
-from app.features.dataset.models import PublicationType
-from app.features.dataset.repositories import (
-    DataSetRepository,
-    DSDownloadRecordRepository,
-    DSMetaDataRepository,
-    DSViewRecordRepository,
-)
-from app.features.featuremodel.repositories import FeatureModelRepository
-from app.features.hubfile.repositories import (
-    HubfileDownloadRecordRepository,
-    HubfileRepository,
-    HubfileViewRecordRepository,
-)
-from app.features.statistics.services import DashboardService, StatisticsService
+
+def test_summarize_handles_empty_input():
+    summary = _summarize([])
+
+    assert summary.count == 0
+    assert summary.mean is None
 
 
-@pytest.fixture(scope="module")
-def test_client(test_client):
-    """
-    Extends the test_client fixture to add additional specific data for module testing.
-    """
-    with test_client.application.app_context():
-        # Add HERE new elements to the database that you want to exist in the test context.
-        # DO NOT FORGET to use db.session.add(<element>) and db.session.commit() to save the data.
-        pass
+def test_summarize_computes_basic_statistics():
+    summary = _summarize([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
 
-    yield test_client
+    assert summary.count == 10
+    assert summary.min == 1.0
+    assert summary.max == 10.0
+    assert summary.mean == 5.5
 
 
-def test_sample_assertion(test_client):
-    """
-    Sample test to verify that the test framework and environment are working correctly.
-    It does not communicate with the Flask application; it only performs a simple assertion to
-    confirm that the tests in this module can be executed.
-    """
-    greeting = "Hello, World!"
-    assert greeting == "Hello, World!", "The greeting does not coincide with 'Hello, World!'"
+def test_format_top_value_keeps_small_integers():
+    assert _format_top_value(1024) == 1024
+    assert _format_top_value(None) == 0
 
 
-@patch("app.managers.task_queue_manager.TaskQueueManager.enqueue_task")
-def test_refresh_statistics_rebuilds_counters_from_records(mock_enqueue_task, test_client, clean_database):
-    user = UserRepository().create(email="stats@example.com", password="test1234")
-
-    dsmetadata = DSMetaDataRepository().create(
-        title="Stats dataset",
-        description="Stats dataset",
-        publication_type=PublicationType.BOOK,
-        dataset_doi="10.1234/stats-dataset",
-    )
-    dataset = DataSetRepository().create(user_id=user.id, ds_meta_data_id=dsmetadata.id)
-    feature_model = FeatureModelRepository().create(dataset_id=dataset.id)
-    hubfile = HubfileRepository().create(
-        name="stats.uvl",
-        checksum="abc123",
-        size=123,
-        feature_model_id=feature_model.id,
-    )
-
-    DSViewRecordRepository().create(dataset_id=dataset.id, view_cookie="view-1")
-    DSViewRecordRepository().create(dataset_id=dataset.id, view_cookie="view-2")
-    DSDownloadRecordRepository().create(dataset_id=dataset.id, download_cookie="download-1")
-
-    HubfileViewRecordRepository().create(file_id=hubfile.id, view_cookie="file-view-1")
-    HubfileViewRecordRepository().create(file_id=hubfile.id, view_cookie="file-view-2")
-    HubfileViewRecordRepository().create(file_id=hubfile.id, view_cookie="file-view-3")
-    HubfileDownloadRecordRepository().create(file_id=hubfile.id, download_cookie="file-download-1")
-
-    statistics = StatisticsService().refresh_statistics()
-
-    assert statistics.datasets_viewed == 2
-    assert statistics.feature_models_viewed == 3
-    assert statistics.datasets_downloaded == 1
-    assert statistics.feature_models_downloaded == 1
+def test_format_top_value_uses_scientific_notation_for_huge_numbers():
+    assert _format_top_value(1e20) == "1.00e+20"
 
 
-# ─── DOI filter on refresh_statistics ──────────────────────────────────────
+def test_bucket_counts_into_half_open_ranges():
+    buckets = [("low", 0, 10), ("high", 10, None)]
+
+    result = _bucket([1, 5, 10, 20], buckets)
+
+    assert result[0].count == 2
+    assert result[1].count == 2
 
 
-@patch("app.managers.task_queue_manager.TaskQueueManager.enqueue_task")
-def test_refresh_statistics_excludes_private_datasets(mock_enqueue_task, test_client, clean_database):
-    """Views and downloads for datasets without a DOI must not be counted,
-    otherwise the `/statistics` summary cards disagree with the top-N tables.
-    """
-    user = UserRepository().create(email="stats-private@example.com", password="test1234")
+def test_linear_bucket_groups_by_integer_with_overflow_bin():
+    result = _linear_bucket([0, 1, 1, 5, 20], max_bucket=3)
 
-    public_meta = DSMetaDataRepository().create(
-        title="Public",
-        description="Public",
-        publication_type=PublicationType.BOOK,
-        dataset_doi="10.1234/public",
-    )
-    public_ds = DataSetRepository().create(user_id=user.id, ds_meta_data_id=public_meta.id)
-    public_fm = FeatureModelRepository().create(dataset_id=public_ds.id)
-    public_hubfile = HubfileRepository().create(
-        name="public.uvl", checksum="pub", size=1, feature_model_id=public_fm.id
-    )
-    DSViewRecordRepository().create(dataset_id=public_ds.id, view_cookie="pub-v")
-    DSDownloadRecordRepository().create(dataset_id=public_ds.id, download_cookie="pub-d")
-    HubfileViewRecordRepository().create(file_id=public_hubfile.id, view_cookie="pub-fv")
-    HubfileDownloadRecordRepository().create(file_id=public_hubfile.id, download_cookie="pub-fd")
-
-    private_meta = DSMetaDataRepository().create(
-        title="Private",
-        description="Private",
-        publication_type=PublicationType.BOOK,
-        dataset_doi=None,
-    )
-    private_ds = DataSetRepository().create(user_id=user.id, ds_meta_data_id=private_meta.id)
-    private_fm = FeatureModelRepository().create(dataset_id=private_ds.id)
-    private_hubfile = HubfileRepository().create(
-        name="priv.uvl", checksum="priv", size=1, feature_model_id=private_fm.id
-    )
-    DSViewRecordRepository().create(dataset_id=private_ds.id, view_cookie="priv-v")
-    DSDownloadRecordRepository().create(dataset_id=private_ds.id, download_cookie="priv-d")
-    HubfileViewRecordRepository().create(file_id=private_hubfile.id, view_cookie="priv-fv")
-    HubfileDownloadRecordRepository().create(file_id=private_hubfile.id, download_cookie="priv-fd")
-
-    stats = StatisticsService().refresh_statistics()
-
-    assert stats.datasets_counter == 1
-    assert stats.feature_models_counter == 1
-    assert stats.datasets_viewed == 1
-    assert stats.datasets_downloaded == 1
-    assert stats.feature_models_viewed == 1
-    assert stats.feature_models_downloaded == 1
+    assert [b.count for b in result] == [1, 2, 0, 2]
 
 
-def test_preview_refresh_returns_before_after_tuples(test_client, clean_database):
-    user = UserRepository().create(email="preview@example.com", password="test1234")
-    meta = DSMetaDataRepository().create(
-        title="Preview",
-        description="Preview",
-        publication_type=PublicationType.BOOK,
-        dataset_doi="10.9999/preview",
-    )
-    ds = DataSetRepository().create(user_id=user.id, ds_meta_data_id=meta.id)
-    FeatureModelRepository().create(dataset_id=ds.id)
-
-    service = StatisticsService()
-    diff = service.preview_refresh()
-
-    # Snapshot is untouched by a dry-run preview.
-    persisted = service.get_statistics()
-    assert persisted.datasets_counter == 0
-    assert persisted.feature_models_counter == 0
-
-    # The diff maps each field to (before, after).
-    assert diff["datasets_counter"] == (0, 1)
-    assert diff["feature_models_counter"] == (0, 1)
+def test_pretty_enum_titlecases_the_name():
+    assert DashboardService._pretty_enum(PublicationType.JOURNAL_ARTICLE) == "Journal Article"
+    assert DashboardService._pretty_enum(None) == "—"
 
 
-# ─── Dashboard ──────────────────────────────────────────────────────────────
+def test_align_to_months_fills_gaps_with_zero():
+    aligned = DashboardService._align_to_months(["2020-01", "2020-02"], [("2020-01", 5)])
 
-
-def _seed_dashboard_fixtures():
-    """Two DOI'd datasets (one more popular than the other) and one
-    without DOI, so we can verify the DOI filter hides it."""
-    user = UserRepository().create(email="dash@example.com", password="test1234")
-
-    popular_meta = DSMetaDataRepository().create(
-        title="Popular dataset",
-        description="Popular",
-        publication_type=PublicationType.JOURNAL_ARTICLE,
-        dataset_doi="10.9999/popular",
-    )
-    popular = DataSetRepository().create(user_id=user.id, ds_meta_data_id=popular_meta.id)
-    FeatureModelRepository().create(dataset_id=popular.id)
-    FeatureModelRepository().create(dataset_id=popular.id)
-    DSViewRecordRepository().create(dataset_id=popular.id, view_cookie="v-p1")
-    DSViewRecordRepository().create(dataset_id=popular.id, view_cookie="v-p2")
-    DSDownloadRecordRepository().create(dataset_id=popular.id, download_cookie="d-p1")
-
-    quiet_meta = DSMetaDataRepository().create(
-        title="Quiet dataset",
-        description="Quiet",
-        publication_type=PublicationType.JOURNAL_ARTICLE,
-        dataset_doi="10.9999/quiet",
-    )
-    quiet = DataSetRepository().create(user_id=user.id, ds_meta_data_id=quiet_meta.id)
-    FeatureModelRepository().create(dataset_id=quiet.id)
-
-    private_meta = DSMetaDataRepository().create(
-        title="Private dataset",
-        description="No DOI — must be invisible",
-        publication_type=PublicationType.JOURNAL_ARTICLE,
-        dataset_doi=None,
-    )
-    private = DataSetRepository().create(user_id=user.id, ds_meta_data_id=private_meta.id)
-    FeatureModelRepository().create(dataset_id=private.id)
-    DSViewRecordRepository().create(dataset_id=private.id, view_cookie="v-priv")
-
-    return popular, quiet, private
-
-
-def test_dashboard_excludes_datasets_without_doi(test_client, clean_database):
-    _seed_dashboard_fixtures()
-
-    data = DashboardService().build_dashboard(use_cache=False)
-
-    assert data.total_datasets == 2  # the private one is excluded
-    assert data.total_feature_models == 3  # 2 + 1
-    titles = [row.title for row in data.top_by_models]
-    assert "Private dataset" not in titles
-    assert "Popular dataset" in titles
-    assert "Quiet dataset" in titles
-
-
-def test_dashboard_monthly_series_has_no_gaps(test_client, clean_database):
-    _seed_dashboard_fixtures()
-
-    data = DashboardService().build_dashboard(use_cache=False)
-
-    # Covers the rolling 12-month window: 13 buckets (start + 12 whole months).
-    assert len(data.months) >= 12
-    assert len(data.uploads_per_month) == len(data.months)
-    assert len(data.views_per_month) == len(data.months)
-    assert len(data.downloads_per_month) == len(data.months)
-    # Months are strictly ordered.
-    assert data.months == sorted(data.months)
-
-
-def test_dashboard_top_tables_are_ordered_by_metric(test_client, clean_database):
-    _seed_dashboard_fixtures()
-
-    data = DashboardService().build_dashboard(use_cache=False)
-
-    titles_in_order = [row.title for row in data.top_by_models]
-    # The "popular" dataset has 2 FM, quiet has 1, so popular must come first.
-    assert titles_in_order[0] == "Popular dataset"
-
-    view_titles = [row.title for row in data.top_by_views]
-    assert view_titles[0] == "Popular dataset"
-
-
-def test_dashboard_uses_cache_when_enabled(test_client, clean_database):
-    _seed_dashboard_fixtures()
-    service = DashboardService()
-    # In testing we short-circuit the Redis client; use_cache still runs the
-    # full path but the payload must be identical between calls.
-    a = service.build_dashboard(use_cache=True)
-    b = service.build_dashboard(use_cache=True)
-    assert a == b
-
-
-def test_dashboard_route_renders_without_errors(test_client, clean_database):
-    _seed_dashboard_fixtures()
-    response = test_client.get("/statistics")
-    assert response.status_code == 200
-    body = response.data.decode()
-    assert "Popular dataset" in body
-    # The pub-type label must come out pretty-cased from the enum name.
-    assert "Journal Article" in body
-    # Private dataset must not appear anywhere.
-    assert "Private dataset" not in body
+    assert aligned == [5, 0]

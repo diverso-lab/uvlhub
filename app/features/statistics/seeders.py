@@ -1,5 +1,6 @@
-from app.features.statistics.models import Statistics
 from splent_framework.seeders.BaseSeeder import BaseSeeder
+
+from app.features.statistics.models import Statistics
 
 
 class StatisticsSeeder(BaseSeeder):

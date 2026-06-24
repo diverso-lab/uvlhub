@@ -6,9 +6,8 @@ from datetime import datetime
 
 from flask import Response, render_template, stream_with_context
 
-from app import db
 from app.features.statistics import statistics_bp
-from app.features.statistics.services import DashboardService
+from app.features.statistics.services import CorpusExportService, DashboardService
 
 
 def _charts_payload(dashboard) -> dict:
@@ -51,88 +50,16 @@ def index():
 # ─────────────────────────────────────────────────────────────────────────────
 # Reproducibility exports
 #
-# These hand the paper a frozen-in-time snapshot of the corpus metrics — one
-# row per hubfile, every numeric column on `hubfile_metrics`, plus enough
-# dataset metadata to cite each row. Generating tables/figures from the
-# downloaded file (rather than from the live dashboard) keeps the paper
-# reproducible even after the corpus grows.
+# A frozen-in-time snapshot of the corpus metrics — one row per hubfile, every
+# numeric column on `hubfile_metrics`, plus enough dataset metadata to cite each
+# row. The DB access lives in CorpusExportService; the routes only stream it.
 # ─────────────────────────────────────────────────────────────────────────────
-
-
-def _export_columns() -> list[str]:
-    """Columns to include in CSV/JSON exports, in display order."""
-    from app.features.hubfile.models import HubfileMetrics
-
-    skip = {"hubfile_id", "extracted_at", "extractor_version", "parse_error"}
-    metric_cols = [c.name for c in HubfileMetrics.__table__.columns if c.name not in skip]
-    return [
-        "hubfile_id",
-        "hubfile_name",
-        "dataset_id",
-        "dataset_title",
-        "dataset_doi",
-        "extracted_at",
-        "extractor_version",
-        "parse_error",
-        *metric_cols,
-    ]
-
-
-def _iter_export_rows():
-    """Yield one dict per hubfile that has a metrics row.
-
-    Streamed instead of materialised so a 50k-hubfile export doesn't blow
-    up memory (and so the user gets the first bytes immediately).
-    """
-    from app.features.dataset.models import DataSet, DSMetaData
-    from app.features.featuremodel.models import FeatureModel
-    from app.features.hubfile.models import Hubfile, HubfileMetrics
-
-    columns = _export_columns()
-    metric_cols = [
-        c
-        for c in columns
-        if c
-        not in {
-            "hubfile_id",
-            "hubfile_name",
-            "dataset_id",
-            "dataset_title",
-            "dataset_doi",
-            "extracted_at",
-            "extractor_version",
-            "parse_error",
-        }
-    ]
-
-    q = (
-        db.session.query(HubfileMetrics, Hubfile, DataSet, DSMetaData)
-        .join(Hubfile, Hubfile.id == HubfileMetrics.hubfile_id)
-        .join(FeatureModel, FeatureModel.id == Hubfile.feature_model_id)
-        .join(DataSet, DataSet.id == FeatureModel.dataset_id)
-        .join(DSMetaData, DSMetaData.id == DataSet.ds_meta_data_id)
-        .order_by(HubfileMetrics.hubfile_id)
-    )
-
-    for metrics, hubfile, dataset, meta in q.yield_per(500):
-        row = {
-            "hubfile_id": metrics.hubfile_id,
-            "hubfile_name": hubfile.name,
-            "dataset_id": dataset.id,
-            "dataset_title": meta.title,
-            "dataset_doi": meta.dataset_doi,
-            "extracted_at": metrics.extracted_at.isoformat() if metrics.extracted_at else None,
-            "extractor_version": metrics.extractor_version,
-            "parse_error": metrics.parse_error,
-        }
-        for col in metric_cols:
-            row[col] = getattr(metrics, col)
-        yield row
 
 
 @statistics_bp.route("/statistics/export.csv", methods=["GET"])
 def export_csv():
-    columns = _export_columns()
+    export_service = CorpusExportService()
+    columns = export_service.export_columns()
 
     def generate():
         buf = io.StringIO()
@@ -142,7 +69,7 @@ def export_csv():
         buf.seek(0)
         buf.truncate(0)
 
-        for row in _iter_export_rows():
+        for row in export_service.iter_rows():
             writer.writerow(row)
             yield buf.getvalue()
             buf.seek(0)
@@ -158,10 +85,12 @@ def export_csv():
 
 @statistics_bp.route("/statistics/export.json", methods=["GET"])
 def export_json():
+    export_service = CorpusExportService()
+
     def generate():
         yield "["
         first = True
-        for row in _iter_export_rows():
+        for row in export_service.iter_rows():
             prefix = "" if first else ","
             yield prefix + json.dumps(row, default=str)
             first = False

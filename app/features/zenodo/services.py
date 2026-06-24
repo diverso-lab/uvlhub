@@ -5,14 +5,9 @@ import shutil
 import requests
 from dotenv import load_dotenv
 from flask import Response, jsonify
-from flask_login import current_user
 
 from app import db
 from app.features.dataset.models import DataSet
-from app.features.featuremodel.models import FeatureModel
-from app.features.zenodo.repositories import ZenodoRepository
-from splent_framework.configuration.configuration import uploads_folder_name
-from splent_framework.services.BaseService import BaseService
 
 logger = logging.getLogger(__name__)
 
@@ -23,10 +18,11 @@ class ZenodoUnavailableError(Exception):
     pass
 
 
-class ZenodoService(BaseService):
+class ZenodoService:
+    """Client for the Zenodo deposition API. Owns no relational entity, so it is
+    a plain service: any hub can deposit records, regardless of the stored model."""
 
     def __init__(self):
-        super().__init__(ZenodoRepository())
         self.ZENODO_ACCESS_TOKEN = self.get_zenodo_access_token()
         self.ZENODO_API_URL = self.get_zenodo_url()
         self.headers = {"Content-Type": "application/json"}
@@ -255,54 +251,6 @@ class ZenodoService(BaseService):
             unavailable_message="Zenodo is currently unavailable.",
         )
 
-        return response.json()
-
-    def upload_file(
-        self,
-        dataset: DataSet,
-        deposition_id: int,
-        feature_model: FeatureModel,
-        user=None,
-    ) -> dict:
-        """
-        Upload a file to a deposition in Zenodo.
-
-        Args:
-            deposition_id (int): The ID of the deposition in Zenodo.
-            feature_model (FeatureModel): The FeatureModel object representing the feature model.
-            user (FeatureModel): The User object representing the file owner.
-
-        Returns:
-            dict: The response in JSON format with the details of the uploaded file.
-        """
-        uvl_filename = feature_model.fm_meta_data.uvl_filename
-        data = {"name": uvl_filename}
-        user_id = current_user.id if user is None else user.id
-        file_path = os.path.join(
-            uploads_folder_name(),
-            f"user_{str(user_id)}",
-            f"dataset_{dataset.id}",
-            "uvl",
-            uvl_filename,
-        )
-
-        files = {"file": open(file_path, "rb")}
-
-        publish_url = f"{self.ZENODO_API_URL}/{deposition_id}/files"
-        response = self._request(
-            "POST",
-            publish_url,
-            "Zenodo is currently unavailable.",
-            params=self.params,
-            data=data,
-            files=files,
-        )
-        self._raise_for_zenodo_response(
-            response,
-            expected_status=201,
-            failure_message="Failed to upload files",
-            unavailable_message="Zenodo is currently unavailable.",
-        )
         return response.json()
 
     def upload_zip(self, dataset: DataSet, deposition_id: int, zip_path: str) -> dict:
