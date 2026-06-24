@@ -7,7 +7,7 @@ based on [Keep a Changelog](https://keepachangelog.com/) and the project follows
 ## [2.9] - 2026-06-25
 
 Major release: uvlhub is rebuilt on **splent_framework** and gains **dataset
-versioning** — replace a UVL and publish a new, linked Zenodo version.
+versioning** - replace a UVL and publish a new, linked Zenodo version.
 
 ### Added
 - **Dataset UVL versioning.** Replace the UVL of a draft in place, or publish a
@@ -37,7 +37,7 @@ versioning** — replace a UVL and publish a new, linked Zenodo version.
   `rosemary webpack:compile`); rosemary's selenium/locust commands use the
   `/workspace` layout.
 - **Generator wizard** now boots its self-hosted Pyodide runtime and the
-  **dataset description editor** (TinyMCE) loads its assets — both were 404ing on
+  **dataset description editor** (TinyMCE) loads its assets - both were 404ing on
   nested asset paths.
 
 ### Upgrade notes
