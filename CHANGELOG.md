@@ -21,13 +21,13 @@ versioning** — replace a UVL and publish a new, linked Zenodo version.
   version for published datasets).
 
 ### Changed
-- **Rebuilt on splent_framework.** `app/modules/` → `app/features/`, the bespoke
+- **Rebuilt on splent_framework.** `app/modules/` -> `app/features/`, the bespoke
   `core` is removed, dependencies are pinned in `pyproject.toml`, and the app
   runs from `/workspace`. The rosemary CLI, GitHub Actions and docs were aligned
   to the new layout.
 - Every feature refactored to SOLID services/repositories with thin routes and
   the splent testing pyramid (unit / repository / service / integration / e2e /
-  load); the hub ↔ UVL-domain coupling is inverted via splent signals.
+  load); the hub <-> UVL-domain coupling is inverted via splent signals.
 - Editing a synchronized dataset without an explicit type no longer clears its
   Zenodo DOI.
 
