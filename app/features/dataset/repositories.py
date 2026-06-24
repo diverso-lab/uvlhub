@@ -75,6 +75,18 @@ class DataSetRepository(BaseRepository):
             return True
         return False
 
+    def _exclude_superseded(self, query):
+        """Keep only the latest version of each lineage.
+
+        A dataset is superseded when a newer version points at it via
+        dataset_origin_id, so we drop every id that appears as some other
+        dataset's origin.
+        """
+        superseded = self.model.query.with_entities(DataSet.dataset_origin_id).filter(
+            DataSet.dataset_origin_id.isnot(None)
+        )
+        return query.filter(DataSet.id.notin_(superseded))
+
     """
         Synchronised dataset
     """
@@ -88,12 +100,10 @@ class DataSetRepository(BaseRepository):
         )
 
     def get_synchronized_datasets_by_user(self, current_user_id: int) -> List[DataSet]:
-        return (
-            self.model.query.join(DSMetaData)
-            .filter(DataSet.user_id == current_user_id, DSMetaData.dataset_doi.isnot(None))
-            .order_by(self.model.created_at.desc())
-            .all()
+        query = self.model.query.join(DSMetaData).filter(
+            DataSet.user_id == current_user_id, DSMetaData.dataset_doi.isnot(None)
         )
+        return self._exclude_superseded(query).order_by(self.model.created_at.desc()).all()
 
     def get_synchronized_dataset_by_user(self, current_user_id: int, dataset_id: int) -> DataSet:
         return (
@@ -122,12 +132,10 @@ class DataSetRepository(BaseRepository):
         )
 
     def get_unsynchronized_datasets_by_user(self, current_user_id: int) -> List[DataSet]:
-        return (
-            self.model.query.join(DSMetaData)
-            .filter(DataSet.user_id == current_user_id, DSMetaData.dataset_doi.is_(None))
-            .order_by(self.model.created_at.desc())
-            .all()
+        query = self.model.query.join(DSMetaData).filter(
+            DataSet.user_id == current_user_id, DSMetaData.dataset_doi.is_(None)
         )
+        return self._exclude_superseded(query).order_by(self.model.created_at.desc()).all()
 
     def get_unsynchronized_dataset_by_user(self, current_user_id: int, dataset_id: int) -> DataSet:
         return (
