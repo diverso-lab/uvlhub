@@ -69,7 +69,10 @@ def test_llm_page_reachable():
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.TAG_NAME, "h1")))
         body = driver.find_element(By.TAG_NAME, "body").text
         assert "LLM" in body
-        assert "Generate variants" in body
+        # WebGPU is the defining requirement of this page and is always rendered
+        # (either the support warning or the live UI), unlike controls that the
+        # Pyodide loading modal can transiently cover.
+        assert "WebGPU" in body
     finally:
         close_driver(driver)
 
@@ -81,7 +84,7 @@ def test_wizard_reaches_step5_with_pyodide_ready():
 
     - every wheel in WHEELS downloaded and micropip-installed OK;
     - `fmgen_wrapper.py` imported without errors;
-    - the exposed API (`window.generatorRuntime.generate`) is callable.
+    - the exposed API (`window.generatorRuntime.generateOne`) is callable.
 
     The actual generate_models invocation is covered server-side by
     `test_wizard_flow::test_full_happy_path_produces_valid_params`. Running it
@@ -115,8 +118,10 @@ def test_wizard_reaches_step5_with_pyodide_ready():
         boot_error = driver.execute_script("return window.__pyodideError === true;")
         assert not boot_error, "Pyodide bootstrap rejected — check browser console"
         has_runtime = driver.execute_script(
-            "return !!(window.generatorRuntime && typeof window.generatorRuntime.generate === 'function');"
+            "return !!(window.generatorRuntime"
+            " && typeof window.generatorRuntime.ready === 'function'"
+            " && typeof window.generatorRuntime.generateOne === 'function');"
         )
-        assert has_runtime, "window.generatorRuntime.generate is not callable"
+        assert has_runtime, "window.generatorRuntime API (ready/generateOne) is not callable"
     finally:
         close_driver(driver)

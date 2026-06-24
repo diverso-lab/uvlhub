@@ -12,7 +12,9 @@ back-nav can't silently lose state from later steps, and every validator
 is independent of the others.
 """
 
-from flask import jsonify, redirect, render_template, request, session, url_for
+import os
+
+from flask import jsonify, redirect, render_template, request, send_from_directory, session, url_for
 
 from app.features.generator import generator_bp
 from app.features.generator.wizard import (
@@ -54,6 +56,36 @@ def random_entry():
 @generator_bp.route("/generator/llm/", methods=["GET"])
 def llm():
     return render_template("generator/llm.html")
+
+
+# ─── Browser assets (Pyodide runtime + wheels) ───────────────────────────
+#
+# splent's BaseBlueprint asset route can't serve what the in-browser generator
+# needs: its <filename> matches a single path segment (so the nested
+# assets/js/pyodide/ tree is unreachable) and it reads files in text mode (so
+# binary assets — wheels, .wasm, .zip — raise UnicodeDecodeError). This route
+# serves the whole assets/js/ tree with a path converter and binary-safe
+# streaming, taking precedence over BaseBlueprint for /generator/js/* thanks to
+# its longer static prefix. MIME types browsers are strict about are pinned: ES
+# modules (.mjs) must be a JavaScript type or the import is rejected, and .wasm
+# must be application/wasm for streaming instantiation.
+
+_JS_ASSETS_DIR = os.path.join(os.path.dirname(__file__), "assets", "js")
+
+_RUNTIME_MIMETYPES = {
+    ".mjs": "text/javascript",
+    ".js": "text/javascript",
+    ".wasm": "application/wasm",
+}
+
+
+@generator_bp.route("/generator/js/<path:filename>", methods=["GET"])
+def js_asset(filename):
+    response = send_from_directory(_JS_ASSETS_DIR, filename)
+    mimetype = _RUNTIME_MIMETYPES.get(os.path.splitext(filename)[1])
+    if mimetype:
+        response.headers["Content-Type"] = mimetype
+    return response
 
 
 # ─── Step 1 · Batch ──────────────────────────────────────────────────────

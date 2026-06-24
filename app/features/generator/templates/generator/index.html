@@ -152,10 +152,10 @@
 <script src="{{ url_for('generator.assets', subfolder='js', filename='wizard-spa.js') }}"></script>
 <!-- Pyodide runtime (persists for the whole wizard session, boots once, reused for every generation). -->
 <script type="module">
-    import { loadPyodide } from "{{ url_for('generator.assets', subfolder='js', filename='pyodide/pyodide.mjs') }}";
+    import { loadPyodide } from "{{ url_for('generator.js_asset', filename='pyodide/pyodide.mjs') }}";
     window.loadPyodide = loadPyodide;
 </script>
-<script src="{{ url_for('generator.assets', subfolder='js', filename='pyodide/pyodide.js') }}"></script>
+<script src="{{ url_for('generator.js_asset', filename='pyodide/pyodide.js') }}"></script>
 <script type="module" src="{{ url_for('generator.assets', subfolder='dist', filename='generator.bundle.js') }}"></script>
 {# CodeMirror + UVL mode — loaded once here (outside the wizard swap area)
    so SPA navigations between steps don't re-insert the CDN <link>/<script>
