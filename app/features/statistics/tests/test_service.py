@@ -179,3 +179,40 @@ def test_dashboard_is_deterministic_between_calls(test_app, clean_database):
     service = DashboardService()
 
     assert service.build_dashboard(use_cache=True) == service.build_dashboard(use_cache=True)
+
+
+def test_dashboard_corpus_aggregates_hubfile_metrics(test_app, clean_database):
+    from app import db
+    from app.features.factlabel.models import HubfileMetrics
+
+    user = UserRepository().create(email="corpus@example.com", password="pw-123456")
+    meta = DSMetaDataRepository().create(
+        title="Corpus", description="d", publication_type=PublicationType.BOOK, dataset_doi="10.1/corpus"
+    )
+    dataset = DataSetRepository().create(user_id=user.id, ds_meta_data_id=meta.id)
+    fm = FeatureModelRepository().create(dataset_id=dataset.id)
+    for i, features in enumerate((10, 20, 30)):
+        hubfile = HubfileRepository().create(
+            name=f"m{i}.uvl", checksum=str(i), size=1, feature_model_id=fm.id, dataset_id=dataset.id
+        )
+        db.session.add(
+            HubfileMetrics(
+                hubfile_id=hubfile.id,
+                extractor_version="1",
+                parse_error=None,
+                features=features,
+                cross_tree_constraints=i,
+                depth_of_tree=2,
+                satisfiable=True,
+            )
+        )
+    db.session.commit()
+
+    corpus = DashboardService().build_dashboard(use_cache=False).corpus
+
+    assert corpus.metrics_rows == 3
+    assert corpus.metrics_ok == 3
+    assert corpus.summary_features.count == 3
+    assert corpus.summary_features.max == 30.0
+    assert corpus.satisfiable_count == 3
+    assert len(corpus.top_by_features) == 3

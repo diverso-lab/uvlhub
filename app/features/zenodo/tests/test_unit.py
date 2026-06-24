@@ -21,6 +21,10 @@ def _dataset(authors=None, tags=None, pub_type_value="journalarticle"):
     return SimpleNamespace(ds_meta_data=meta)
 
 
+def _response(status_code, payload=None, text="", reason=""):
+    return SimpleNamespace(status_code=status_code, json=lambda: payload, text=text, reason=reason)
+
+
 def test_build_metadata_uses_anonymous_creator_when_anonymous():
     metadata = ZenodoService().build_metadata(_dataset(), anonymous=True)
 
@@ -96,3 +100,75 @@ def test_test_connection_is_false_on_network_error(mock_get):
     mock_get.side_effect = requests.RequestException("boom")
 
     assert ZenodoService().test_connection() is False
+
+
+@patch("app.features.zenodo.services.requests.get")
+def test_get_all_depositions_returns_json(mock_get):
+    mock_get.return_value = _response(200, [{"id": 1}])
+
+    assert ZenodoService().get_all_depositions() == [{"id": 1}]
+
+
+@patch("app.features.zenodo.services.requests.get")
+def test_get_all_depositions_raises_on_failure(mock_get):
+    mock_get.return_value = _response(500)
+
+    with pytest.raises(Exception):
+        ZenodoService().get_all_depositions()
+
+
+@patch("app.features.zenodo.services.requests.request")
+def test_upload_zip_returns_json_on_success(mock_request, tmp_path):
+    zip_path = tmp_path / "dataset.zip"
+    zip_path.write_bytes(b"PK\x05\x06" + b"\x00" * 18)
+    mock_request.return_value = _response(201, {"id": 9})
+
+    assert ZenodoService().upload_zip(_dataset(), 9, str(zip_path))["id"] == 9
+
+
+@patch("app.features.zenodo.services.requests.request")
+def test_upload_zip_raises_unavailable_on_5xx(mock_request, tmp_path):
+    zip_path = tmp_path / "dataset.zip"
+    zip_path.write_bytes(b"PK\x05\x06" + b"\x00" * 18)
+    mock_request.return_value = _response(
+        503,
+        None,
+    )
+
+    with pytest.raises(ZenodoUnavailableError):
+        ZenodoService().upload_zip(_dataset(), 9, str(zip_path))
+
+
+@patch("app.features.zenodo.services.requests.request")
+def test_publish_deposition_succeeds_on_202(mock_request):
+    mock_request.return_value = _response(202)
+
+    ZenodoService().publish_deposition(9)  # must not raise
+
+
+@patch("app.features.zenodo.services.requests.request")
+def test_publish_deposition_raises_on_error(mock_request):
+    mock_request.return_value = _response(400, {"error": "bad"})
+
+    with pytest.raises(Exception):
+        ZenodoService().publish_deposition(9)
+
+
+@patch("app.features.zenodo.services.requests.request")
+def test_get_deposition_and_get_doi(mock_request):
+    mock_request.return_value = _response(200, {"id": 9, "doi": "10.5072/zenodo.9"})
+    service = ZenodoService()
+
+    assert service.get_deposition(9)["id"] == 9
+    assert service.get_doi(9) == "10.5072/zenodo.9"
+
+
+@patch("app.features.zenodo.services.requests.request")
+def test_update_deposition_edits_updates_and_publishes(mock_request):
+    # edit (201) -> update (200) -> publish (202)
+    mock_request.side_effect = [_response(201), _response(200, {"id": 9}), _response(202)]
+
+    result = ZenodoService().update_deposition(9, {"title": "t"})
+
+    assert result == {"id": 9}
+    assert mock_request.call_count == 3
