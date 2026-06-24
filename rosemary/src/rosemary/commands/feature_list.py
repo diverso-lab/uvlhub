@@ -1,6 +1,5 @@
 import click
 from flask.cli import with_appcontext
-
 from splent_framework.managers.feature_manager import FeatureManager
 
 

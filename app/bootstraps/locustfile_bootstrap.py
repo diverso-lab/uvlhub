@@ -4,6 +4,7 @@ Kept in the product (not from splent_framework) because it must discover
 ``locustfile.py`` under ``app/features/*/tests/`` — the framework's bootstrap
 scans ``app/modules`` and does not cover diverso's feature layout.
 """
+
 import glob
 import importlib.util
 import inspect

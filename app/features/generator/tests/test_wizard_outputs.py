@@ -17,10 +17,10 @@ import re
 import tempfile
 
 import pytest
-
-pytestmark = pytest.mark.unit
 from fm_generator.FMGenerator.models.config import Params
 from fm_generator.FMGenerator.models.models import FmgeneratorModel
+
+pytestmark = pytest.mark.integration
 
 # ── Fixtures & helpers ───────────────────────────────────────────────────
 

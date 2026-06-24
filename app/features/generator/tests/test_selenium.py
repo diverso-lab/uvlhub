@@ -11,8 +11,6 @@ call is already exercised server-side by `test_wizard_flow.py`.
 """
 
 import pytest
-
-pytestmark = pytest.mark.e2e
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
@@ -20,6 +18,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 from app.environment.host import get_host_for_selenium_testing
 from app.selenium.common import close_driver, initialize_driver
+
+pytestmark = pytest.mark.e2e
 
 
 def _submit_next(driver, expected_url_fragment, wait):

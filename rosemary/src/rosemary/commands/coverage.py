@@ -4,6 +4,7 @@ Same flag surface as ``rosemary test``: pick which markers run and the
 coverage report covers exactly what those tests exercise. ``--html`` also
 emits an htmlcov/ tree at the workspace root.
 """
+
 import os
 import subprocess
 
@@ -15,18 +16,24 @@ DEFAULT_MARKERS = ("unit", "repository", "service", "integration")
 @click.command("coverage", help="Run pytest with coverage at the framework's granularity.")
 @click.argument("feature", required=False)
 @click.option("-k", "keyword", help="Only run tests matching the substring expression.")
-@click.option("--unit", "selected", flag_value="unit", multiple=True,
-              help="Pure unit tests (no app, no DB).")
-@click.option("--repository", "selected", flag_value="repository", multiple=True,
-              help="Repository tests against the database.")
-@click.option("--service", "selected", flag_value="service", multiple=True,
-              help="Service-level tests against the database.")
-@click.option("--integration", "selected", flag_value="integration", multiple=True,
-              help="HTTP integration tests via Flask test client.")
-@click.option("--e2e", "selected", flag_value="e2e", multiple=True,
-              help="Selenium end-to-end tests (requires the grid).")
-@click.option("--all", "all_", is_flag=True,
-              help="Shortcut for unit + repository + service + integration + e2e.")
+@click.option("--unit", "selected", flag_value="unit", multiple=True, help="Pure unit tests (no app, no DB).")
+@click.option(
+    "--repository", "selected", flag_value="repository", multiple=True, help="Repository tests against the database."
+)
+@click.option(
+    "--service", "selected", flag_value="service", multiple=True, help="Service-level tests against the database."
+)
+@click.option(
+    "--integration",
+    "selected",
+    flag_value="integration",
+    multiple=True,
+    help="HTTP integration tests via Flask test client.",
+)
+@click.option(
+    "--e2e", "selected", flag_value="e2e", multiple=True, help="Selenium end-to-end tests (requires the grid)."
+)
+@click.option("--all", "all_", is_flag=True, help="Shortcut for unit + repository + service + integration + e2e.")
 @click.option("--html", is_flag=True, help="Also write an HTML report to htmlcov/.")
 def coverage(feature, keyword, selected, all_, html):
     target = _resolve_target(feature)

@@ -2,7 +2,6 @@ import os
 import shutil
 
 import click
-
 from splent_framework.configuration.configuration import uploads_folder_name
 
 

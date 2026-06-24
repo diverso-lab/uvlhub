@@ -20,6 +20,7 @@ For each selected feature, in order:
   4. Every Flask ``Blueprint`` instance found in the feature root or any of
      its submodules is registered. Names are deduplicated.
 """
+
 import importlib
 import pkgutil
 import sys

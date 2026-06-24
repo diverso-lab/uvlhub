@@ -4,6 +4,7 @@ Each ``handle_<code>(app, e)`` overrides the framework default for that status.
 Only 404 is customised here: API paths get a JSON body instead of the HTML page
 (the rest fall back to the framework's render_template defaults).
 """
+
 from flask import jsonify, render_template, request
 
 

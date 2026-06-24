@@ -15,9 +15,6 @@ is independent of the others.
 from flask import jsonify, redirect, render_template, request, session, url_for
 
 from app.features.generator import generator_bp
-from app.features.generator.services import GeneratorService
-
-generator_service = GeneratorService()
 
 TOTAL_STEPS = 6
 

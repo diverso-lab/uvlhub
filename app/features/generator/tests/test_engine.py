@@ -1,7 +1,3 @@
-import pytest
-
-pytestmark = pytest.mark.unit
-
 """Engine-level unit tests: drive generate_single_model/FmgeneratorModel
 directly and assert each knob in Params actually affects the output.
 
@@ -15,10 +11,13 @@ import os
 import re
 import tempfile
 
+import pytest
 from flamapy.metamodels.fm_metamodel.models import Attribute, Domain
 from fm_generator.FMGenerator.models.config import Params
 from fm_generator.FMGenerator.models.models import FmgeneratorModel
 from fm_generator.FMGenerator.operations.generate_models import generate_single_model
+
+pytestmark = pytest.mark.unit
 
 
 def _base_params(**overrides) -> Params:

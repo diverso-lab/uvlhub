@@ -5,6 +5,7 @@ behaviours the framework's TaskQueueManager does not yet provide:
   * it returns the RQ ``job`` (flamapy reads ``job.id`` for ``check_uvl_async``);
   * it falls back to fakeredis under TESTING so the suite runs without Redis.
 """
+
 import logging
 from datetime import datetime
 

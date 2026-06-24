@@ -4,6 +4,7 @@ Kept in the product (not from splent_framework) because diverso resolves the
 ``/workspace/`` selenium host to the ``web`` service (``http://web:5000``),
 whereas the framework's map points ``/workspace/`` selenium at ``http://localhost``.
 """
+
 import os
 
 from dotenv import load_dotenv

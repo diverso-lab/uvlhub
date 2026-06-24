@@ -1,7 +1,3 @@
-import pytest
-
-pytestmark = pytest.mark.unit
-
 """Contract tests between the wizard form mapping and the vendor Params dataclass.
 
 These assert that:
@@ -17,7 +13,10 @@ These assert that:
 
 from dataclasses import fields
 
+import pytest
 from fm_generator.FMGenerator.models.config import Params
+
+pytestmark = pytest.mark.unit
 
 
 def _params_field_names():

@@ -13,6 +13,7 @@ Each flag toggles one marker on. Combining flags ORs them. The default
 (``rosemary test`` with no flag) runs unit + repository + service +
 integration — the fast pyramid layers that don't depend on external infra.
 """
+
 import os
 import subprocess
 
@@ -24,20 +25,25 @@ DEFAULT_MARKERS = ("unit", "repository", "service", "integration")
 @click.command("test", help="Run pytest at the framework's granularity.")
 @click.argument("feature", required=False)
 @click.option("-k", "keyword", help="Only run tests matching the substring expression.")
-@click.option("--unit", "selected", flag_value="unit", multiple=True,
-              help="Pure unit tests (no app, no DB).")
-@click.option("--repository", "selected", flag_value="repository", multiple=True,
-              help="Repository tests against the database.")
-@click.option("--service", "selected", flag_value="service", multiple=True,
-              help="Service-level tests against the database.")
-@click.option("--integration", "selected", flag_value="integration", multiple=True,
-              help="HTTP integration tests via Flask test client.")
-@click.option("--e2e", "selected", flag_value="e2e", multiple=True,
-              help="Selenium end-to-end tests (requires the grid).")
-@click.option("--all", "all_", is_flag=True,
-              help="Shortcut for unit + repository + service + integration + e2e.")
-@click.option("--load", "load_", is_flag=True,
-              help="Forward to ``rosemary locust`` for load testing.")
+@click.option("--unit", "selected", flag_value="unit", multiple=True, help="Pure unit tests (no app, no DB).")
+@click.option(
+    "--repository", "selected", flag_value="repository", multiple=True, help="Repository tests against the database."
+)
+@click.option(
+    "--service", "selected", flag_value="service", multiple=True, help="Service-level tests against the database."
+)
+@click.option(
+    "--integration",
+    "selected",
+    flag_value="integration",
+    multiple=True,
+    help="HTTP integration tests via Flask test client.",
+)
+@click.option(
+    "--e2e", "selected", flag_value="e2e", multiple=True, help="Selenium end-to-end tests (requires the grid)."
+)
+@click.option("--all", "all_", is_flag=True, help="Shortcut for unit + repository + service + integration + e2e.")
+@click.option("--load", "load_", is_flag=True, help="Forward to ``rosemary locust`` for load testing.")
 def test(feature, keyword, selected, all_, load_):
     if load_:
         click.echo("Use ``rosemary locust`` (optionally with a feature name) for load tests.")

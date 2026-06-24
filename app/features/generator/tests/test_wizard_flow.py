@@ -11,9 +11,9 @@ scenarios we've already fixed.
 import json
 
 import pytest
-
-pytestmark = pytest.mark.unit
 from fm_generator.FMGenerator.models.config import Params
+
+pytestmark = pytest.mark.integration
 
 # Minimum valid payloads, coherent with each step's validator.
 STEP1 = {"num_models_val": "3", "seed": "42", "name_prefix": "fm"}

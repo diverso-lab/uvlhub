@@ -5,6 +5,7 @@ through a Selenium Grid (selenium-hub) with both Chrome and Firefox, switchable
 via ``rosemary selenium --driver``. The framework's helper only spins up a local
 Chrome driver, which does not cover this topology.
 """
+
 import os
 
 from selenium import webdriver

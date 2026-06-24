@@ -1,7 +1,3 @@
-import pytest
-
-pytestmark = pytest.mark.unit
-
 """Unit tests for the per-step form validators.
 
 The validators are pure functions (no DB, no request context) so we drive
@@ -9,6 +5,7 @@ each branch with parametrised inputs here. Covers every knob in every
 step, both happy and sad paths.
 """
 
+import pytest
 from werkzeug.datastructures import MultiDict
 
 from app.features.generator.routes import (
@@ -20,6 +17,8 @@ from app.features.generator.routes import (
     validate_step5_form,
     validate_step6_form,
 )
+
+pytestmark = pytest.mark.unit
 
 # ─── _safe_float helper ──────────────────────────────────────────────────
 

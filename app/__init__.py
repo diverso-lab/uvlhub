@@ -7,7 +7,6 @@ from flask_cors import CORS
 from flask_login import LoginManager
 from flask_migrate import Migrate
 from flask_session import Session
-
 from splent_framework.configuration.configuration import get_app_version
 from splent_framework.db import db
 from splent_framework.managers.config_manager import ConfigManager
