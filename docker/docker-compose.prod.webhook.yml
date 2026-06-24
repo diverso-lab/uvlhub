@@ -12,10 +12,10 @@ services:
     env_file:
       - ../.env
     volumes:
-      - ../:/app
-      - /app/node_modules
+      - ../:/workspace
+      - /workspace/node_modules
       - /var/run/docker.sock:/var/run/docker.sock
-    command: [ "bash", "-c", "bash /app/docker/entrypoints/webhook_entrypoint.sh" ]
+    command: [ "bash", "-c", "bash /workspace/docker/entrypoints/webhook_entrypoint.sh" ]
     restart: always
     networks:
       - uvlhub_network
@@ -31,10 +31,10 @@ services:
     env_file:
       - ../.env
     volumes:
-      - ../:/app
-      - /app/node_modules
+      - ../:/workspace
+      - /workspace/node_modules
       - /var/run/docker.sock:/var/run/docker.sock
-    command: [ "bash", "-c", "bash /app/docker/entrypoints/worker_entrypoint.sh" ]
+    command: [ "bash", "-c", "bash /workspace/docker/entrypoints/worker_entrypoint.sh" ]
     restart: always
     networks:
       - uvlhub_network

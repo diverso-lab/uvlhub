@@ -3,29 +3,196 @@ requires = ["setuptools>=80.3.1", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "rosemary"
+name = "uvlhub"
 version = "1.0.0"
-description = "Rosemary is a CLI to be able to work on UVLHub development more easily."
-readme = "README.md"
+description = "UVLHub — Flask product built on splent_framework."
 requires-python = ">=3.13"
 dependencies = [
-    "click",
-    "python-dotenv",
+    "afmparser==1.0.3",
+    "alembic==1.18.4",
+    "aniso8601==10.0.1",
+    "antlr4-python3-runtime==4.13.1",
+    "astutils==0.0.6",
+    "async-generator==1.10",
+    "attrs==25.4.0",
+    "Authlib==1.6.11",
+    "autoflake==2.3.3",
+    "Babel==2.18.0",
+    "beautifulsoup4==4.14.3",
+    "bidict==0.23.1",
+    "black==26.3.1",
+    "bleach==6.3.0",
+    "blinker==1.9.0",
+    "brotli==1.2.0",
+    "bs4==0.0.2",
+    "cachelib==0.13.0",
+    "captcha==0.7.1",
+    "certifi==2026.2.25",
+    "cffi==2.0.0",
+    "charset-normalizer==3.4.4",
+    "click==8.3.1",
+    "ConfigArgParse==1.7.1",
+    "coverage==7.13.4",
+    "croniter==6.0.0",
+    "cryptography==46.0.7",
+    "dd==0.6.0",
+    "detect-secrets==1.5.0",
+    "dnspython==2.8.0",
+    "docker==7.1.0",
+    "elastic-transport==8.17.1",
+    "elasticsearch==8.18.1",
+    "email-validator==2.3.0",
+    "Faker==40.5.1",
+    "fakeredis==2.34.1",
+    "flake8==7.3.0",
+    "Flake8-pyproject==1.2.4",
+    "flamapy==2.5.0",
+    "flamapy-bdd==2.5.0",
+    "flamapy-fm==2.5.0",
+    "flamapy-fw==2.5.0",
+    "flamapy-sat==2.5.0",
+    "flasgger==0.9.7.2.dev2",
+    "Flask==3.1.0",
+    "Flask-Babel==4.0.0",
+    "flask-cors==6.0.2",
+    "Flask-Login==0.6.3",
+    "Flask-Mail==0.10.0",
+    "Flask-Migrate==4.1.0",
+    "Flask-RESTful==0.3.10",
+    "Flask-Session==0.8.0",
+    "Flask-SQLAlchemy==3.1.1",
+    "Flask-WTF==1.2.2",
+    "fmfactlabel==1.8.2",
+    "gevent==25.9.1",
+    "geventhttpclient==2.3.8",
+    "graphviz==0.21",
+    "greenlet==3.3.2",
+    "gunicorn==25.1.0",
+    "h11==0.16.0",
+    "h2==4.3.0",
+    "hpack==4.1.0",
+    "hyperframe==6.1.0",
+    "idna==3.11",
+    "importlib_metadata==8.7.1",
+    "iniconfig==2.3.0",
+    "isort==8.0.1",
+    "itsdangerous==2.2.0",
+    "Jinja2==3.1.6",
+    "jsonschema==4.26.0",
+    "jsonschema-specifications==2025.9.1",
+    "kaitaistruct==0.11",
+    "locust==2.43.4.dev13",
+    "locust-cloud==1.30.0",
+    "Mako==1.3.11",
+    "MarkupSafe==3.0.3",
+    "mccabe==0.7.0",
+    "mistune==3.2.0",
+    "msgpack==1.1.2",
+    "msgspec==0.20.0",
+    "mypy_extensions==1.1.0",
+    "networkx==3.6.1",
+    "outcome==1.3.0.post0",
+    "packaging==26.0",
+    "pathspec==1.0.4",
+    "pillow==12.2.0",
+    "platformdirs==4.9.2",
+    "pluggy==1.6.0",
+    "ply==3.10",
+    "psutil==6.1.1",
+    "pyasn1==0.6.3",
+    "pycodestyle==2.14.0",
+    "pycparser==3.0",
+    "pydot==4.0.1",
+    "pyflakes==3.4.0",
+    "Pygments==2.20.0",
+    "PyMySQL==1.1.1",
+    "pyOpenSSL==26.0.0",
+    "pyparsing==3.3.2",
+    "PySocks==1.7.1",
+    "pytest==9.0.3",
+    "pytest-cov==7.0.0",
+    "python-dateutil==2.9.0.post0",
+    "python-dotenv==1.0.1",
+    "python-engineio==4.13.1",
+    "python-sat==0.1.8.dev17",
+    "python-socketio==5.16.1",
+    "pytokens==0.4.1",
+    "pytz==2024.2",
+    "PyYAML==6.0.3",
+    "pyzmq==27.1.0",
+    "qrcode==7.4.2",
+    "redis==5.2.1",
+    "referencing==0.37.0",
+    "requests==2.33.0",
+    "rpds-py==0.30.0",
+    "rq==2.7.0",
+    "selenium==4.41.0",
+    "selenium-wire==5.1.0",
+    "setuptools==82.0.0",
+    "simple-websocket==1.1.0",
+    "six==1.17.0",
+    "sniffio==1.3.1",
+    "sortedcontainers==2.4.0",
+    "soupsieve==2.8.3",
+    "splent_framework==1.6.1",
+    "SQLAlchemy==2.0.37",
+    "SQLAlchemy-Utils==0.42.1",
+    "trio==0.33.0",
+    "trio-typing==0.10.0",
+    "trio-websocket==0.12.2",
+    "types-certifi==2021.10.8.3",
+    "types-urllib3==1.26.25.14",
+    "typing_extensions==4.15.0",
+    "tzdata==2025.3",
+    "Unidecode==1.4.0",
+    "urllib3==2.6.3",
+    "uvlparser==2.5.0",
+    "webdriver-manager==4.0.2",
+    "webencodings==0.5.1",
+    "websocket-client==1.9.0",
+    "Werkzeug==3.1.6",
+    "wheel==0.46.3",
+    "wsproto==1.3.2",
+    "WTForms==3.2.1",
+    "zipp==3.23.0",
+    "zope.event==6.1",
+    "zope.interface==8.2",
+    "zstandard==0.25.0",
 ]
 
-[project.optional-dependencies]
-dev = [
-    "black",
-    "isort",
-    "flake8",
-    "autoflake",
-]
-
-[project.scripts]
-rosemary = "rosemary.cli:cli"
-
+# The product itself ships no importable package via pip: `app` is imported
+# from the working directory (PYTHONPATH=/app). `pip install .` exists only to
+# install the pinned dependencies declared above.
 [tool.setuptools]
-packages = ["rosemary"]
+packages = []
+
+[tool.splent]
+features = [
+    "apikeys",
+    "auth",
+    "captcha",
+    "confirmemail",
+    "dataset",
+    "downloadqueue",
+    "elasticsearch",
+    "explore",
+    "factlabel",
+    "featuremodel",
+    "flamapy",
+    "generator",
+    "hubfile",
+    "mail",
+    "orcid",
+    "profile",
+    "public",
+    "reset",
+    "statistics",
+    "team",
+    "webhook",
+    "zenodo",
+]
+features_dev = []
+features_prod = []
 
 # --------------------
 # Formatting & linting
@@ -55,10 +222,26 @@ extend_skip_glob = [
 [tool.flake8]
 max-line-length = 120
 extend-ignore = ["E203", "W503"]
-# Additive to flake8's built-in excludes. `vendor/` holds bundled third-party
-# source distributed as wheels; style debt there isn't ours to fix.
 extend-exclude = [
     "*/vendor/*",
     "*/node_modules/*",
     "*/migrations/*",
+]
+
+# --------------------
+# Testing
+# --------------------
+
+[tool.pytest.ini_options]
+testpaths = ["app/features", "tests"]
+python_files = ["test_*.py"]
+filterwarnings = ["ignore::DeprecationWarning"]
+markers = [
+    "unit: pure unit tests, no Flask app, no database",
+    "repository: repository tests against the database (no business logic)",
+    "service: service-level tests against the database (orchestration + repos)",
+    "integration: HTTP-level integration tests via Flask test client",
+    "e2e: browser-driven end-to-end tests (requires the selenium grid)",
+    "load: locust load tests (run via `rosemary locust`)",
+    "slow: long-running tests (Pyodide boot, browser E2E) — skip with `-m 'not slow'`",
 ]

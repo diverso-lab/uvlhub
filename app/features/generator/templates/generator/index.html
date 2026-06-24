@@ -1,0 +1,166 @@
+{% extends "base_template.html" %}
+
+{% block title %}Generate random feature models{% endblock %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb text-muted fs-6 fw-semibold">
+    <li class="breadcrumb-item"><a href="/" class="">Home</a></li>
+    <li class="breadcrumb-item text-muted">Generate random models</li>
+</ol>
+{% endblock %}
+
+{% from "generator/_macros.html" import summary_panel %}
+
+{% block content %}
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nouislider@15.8.1/dist/nouislider.min.css">
+<style>
+  .rel-swatch {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+      flex-shrink: 0;
+  }
+  .rel-slider.noUi-target.noUi-horizontal {
+      height: 18px !important;
+      border: none !important;
+      box-shadow: none !important;
+      border-radius: 9px !important;
+      padding: 0 !important;
+  }
+  .rel-slider.noUi-target .noUi-base,
+  .rel-slider.noUi-target .noUi-connects {
+      height: 100% !important;
+      border-radius: 9px !important;
+  }
+  .rel-slider.noUi-horizontal .noUi-handle {
+      width: 22px !important;
+      height: 22px !important;
+      border-radius: 50% !important;
+      border: 2px solid #fff !important;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.25) !important;
+      background: #3f4254 !important;
+      cursor: ew-resize !important;
+      top: -3px !important;
+      right: -11px !important;
+  }
+  .rel-slider .noUi-handle::before,
+  .rel-slider .noUi-handle::after { display: none !important; }
+</style>
+
+
+{% set steps = [
+    ('Batch', 'Models, seed, name'),
+    ('Language levels', 'Pick the expressivity'),
+    ('Feature tree', 'Shape and relation mix'),
+    ('Constraints', 'Cross-tree constraints'),
+    ('Attributes', 'Attribute catalog'),
+    ('Output', 'Final options & download')
+] %}
+
+<div class="stepper stepper-pills stepper-column d-flex flex-column flex-xl-row flex-row-fluid gap-10" id="stepper_generator">
+
+    <!--begin::Aside-->
+    <div class="card d-flex justify-content-center justify-content-xl-start flex-row-auto w-100 w-xl-300px w-xxl-400px">
+        <div class="card-body px-6 px-lg-10 px-xxl-15 py-20">
+            <div class="stepper-nav">
+                {% for step in steps %}
+                    {% set i = loop.index %}
+                    {% set state = 'current' if i == current_step else ('completed' if i < current_step else 'pending') %}
+                    <div class="stepper-item {{ state }}" data-kt-stepper-element="nav">
+                        <div class="stepper-wrapper">
+                            <div class="stepper-icon w-40px h-40px">
+                                <i class="ki-duotone ki-check fs-2 stepper-check"></i>
+                                <span class="stepper-number">{{ i }}</span>
+                            </div>
+                            <div class="stepper-label">
+                                <h3 class="stepper-title">{{ step[0] }}</h3>
+                                <div class="stepper-desc fw-semibold">{{ step[1] }}</div>
+                            </div>
+                        </div>
+                        {% if not loop.last %}
+                            <div class="stepper-line h-40px"></div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div id="wizard_summary">
+                {{ summary_panel(session.get('params', {})) }}
+            </div>
+        </div>
+    </div>
+    <!--end::Aside-->
+
+    <!--begin::Content-->
+    <div class="card d-flex flex-row-fluid flex-center">
+        <div class="card-body py-10 w-100 mw-xl-900px px-9">
+
+            <form method="POST" action="{{ url_for('generator.step' ~ current_step) }}" novalidate>
+                <input type="hidden" id="nav_action" name="nav" value="next">
+
+                <div class="current" data-kt-stepper-element="content">
+                    <div class="w-100">
+                        <div class="pb-8 pb-lg-10">
+                            <h2 class="fw-bold text-gray-900">{{ steps[current_step - 1][0] }}</h2>
+                            <div class="text-gray-600 fw-semibold fs-6">{{ steps[current_step - 1][1] }}</div>
+                        </div>
+
+                        {% block wizard_content %}{% endblock %}
+                    </div>
+                </div>
+
+                <div class="d-flex flex-stack pt-10">
+                    <div class="mr-2">
+                        {% if current_step > 1 %}
+                        <button type="submit"
+                                name="nav"
+                                value="prev"
+                                class="btn btn-lg btn-light-primary me-3">
+                            <i class="ki-duotone ki-arrow-left fs-3 me-1"><span class="path1"></span><span class="path2"></span></i>
+                            Previous
+                        </button>
+                        {% endif %}
+                    </div>
+                    <div>
+                        {% if current_step < 6 %}
+                        <button type="submit"
+                                name="nav"
+                                value="next"
+                                class="btn btn-lg btn-primary">
+                            Next
+                            <i class="ki-duotone ki-arrow-right fs-3 ms-1"><span class="path1"></span><span class="path2"></span></i>
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </form>
+
+        </div>
+    </div>
+    <!--end::Content-->
+
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<!-- Wizard helpers (auto-clamp + probability groups). -->
+<script src="{{ url_for('generator.assets', subfolder='js', filename='wizard.js') }}"></script>
+<!-- SPA navigation: intercept step submits so Pyodide survives across steps. -->
+<script src="{{ url_for('generator.assets', subfolder='js', filename='wizard-spa.js') }}"></script>
+<!-- Pyodide runtime (persists for the whole wizard session, boots once, reused for every generation). -->
+<script type="module">
+    import { loadPyodide } from "{{ url_for('generator.js_asset', filename='pyodide/pyodide.mjs') }}";
+    window.loadPyodide = loadPyodide;
+</script>
+<script src="{{ url_for('generator.js_asset', filename='pyodide/pyodide.js') }}"></script>
+<script type="module" src="{{ url_for('generator.assets', subfolder='dist', filename='generator.bundle.js') }}"></script>
+{# CodeMirror + UVL mode — loaded once here (outside the wizard swap area)
+   so SPA navigations between steps don't re-insert the CDN <link>/<script>
+   nodes on every step change. Needed by step6's "View" variant preview. #}
+{% include "generator/_codemirror_uvl.html" %}
+
+{% block wizard_scripts %}{% endblock %}
+{% endblock %}

@@ -1,0 +1,467 @@
+{% extends "base_template.html" %}
+{% set title = "My datasets" %}
+
+{% block breadcrumb %}
+
+<ol class="breadcrumb text-muted fs-6 fw-semibold">
+    <li class="breadcrumb-item"><a href="/" class="">Home</a></li>
+    <li class="breadcrumb-item text-muted">My datasets</li>
+</ol>
+
+{% endblock %}
+
+{% block content %}
+
+{% if datasets %}
+<div class="card mb-10">
+    <div class="card-header">
+        <h3 class="card-title">Synchronized datasets</h3>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table align-middle table-row-dashed gy-5" id="synchronizedDatasetsTable">
+                <thead>
+                    <tr class="text-start text-muted fw-bold fs-7 text-uppercase gs-0">
+                        <th>Title</th>
+                        <th>Publication type</th>
+                        <th>Dataset DOI</th>
+                        <th>Created at</th>
+                        <th>Options</th>
+                    </tr>
+                </thead>
+                <tbody class="text-gray-600 fw-semibold">
+                    {% for dataset in datasets %}
+                    <tr>
+                        <td>
+                            <a href="{{ dataset.get_uvlhub_doi() }}">
+                                {{ dataset.ds_meta_data.title }}
+                            </a>
+                            {% if dataset.dataset_version > 1 %}
+                                <span class="badge badge-light-primary ms-2"
+                                      title="Latest of {{ dataset.dataset_version }} versions">v{{ dataset.dataset_version }}</span>
+                            {% endif %}
+                            {% if dataset.is_anonymous() %}
+                                <span class="badge badge-light-warning ms-2">Anonymous</span>
+                            {% endif %}
+                            {% if not dataset.is_metadata_synchronized() %}
+                                <span class="badge badge-light-danger ms-2">Pending Zenodo sync</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ dataset.get_publication() }}</td>
+                        <td>
+                            <a href="{{ dataset.get_uvlhub_doi() }}" target="_blank">
+                                {{ dataset.get_uvlhub_doi() }}
+                            </a>
+                        </td>
+                        <td>{{ dataset.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td>
+                            <a href="{{ dataset.get_uvlhub_doi() }}" class="btn btn-sm btn-icon btn-light-info me-1" title="View">
+                                <i class="ki-duotone ki-eye fs-2">
+                                    <span class="path1"></span>
+                                    <span class="path2"></span>
+                                    <span class="path3"></span>
+                                </i>
+                            </a>
+                            <a href="{{ url_for('dataset.edit_metadata', dataset_id=dataset.id) }}"
+                               class="btn btn-sm btn-icon btn-light-primary me-1"
+                               title="Edit Metadata">
+                                <i class="ki-duotone ki-pencil fs-2">
+                                    <span class="path1"></span>
+                                    <span class="path2"></span>
+                                </i>
+                            </a>
+                            {% if not dataset.is_metadata_synchronized() %}
+                            <a href="javascript:void(0);"
+                               class="btn btn-sm btn-icon btn-light-warning me-1 btn-retry-sync"
+                               data-dataset-id="{{ dataset.id }}"
+                               title="Retry sync to Zenodo"
+                               data-bs-toggle="tooltip"
+                               data-bs-placement="top">
+                                <span class="fw-bold" style="font-size: 1rem; font-family: sans-serif;">Z</span>
+                            </a>
+                            {% endif %}
+                            <div class="position-relative d-inline-block">
+                                <button class="btn btn-sm btn-icon btn-light-success"
+                                        title="Download"
+                                        data-kt-menu-trigger="click"
+                                        data-kt-menu-placement="bottom-end"
+                                        data-kt-menu-attach="parent">
+                                    <i class="ki-duotone ki-folder-down fs-2">
+                                        <span class="path1"></span>
+                                        <span class="path2"></span>
+                                    </i>
+                                </button>
+                                <div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-title-gray-700 menu-icon-gray-500 fw-semibold py-4 px-4 fs-base w-200px" data-kt-menu="true" data-download-menu>
+                                    <div class="menu-item px-0 py-1">
+                                        <label class="form-check form-check-custom form-check-solid align-items-center m-0">
+                                            <input class="form-check-input me-3 download-format-checkbox" type="checkbox" value="uvl" checked />
+                                            <span class="menu-title">UVL</span>
+                                        </label>
+                                    </div>
+                                    <div class="menu-item px-0 py-1">
+                                        <label class="form-check form-check-custom form-check-solid align-items-center m-0">
+                                            <input class="form-check-input me-3 download-format-checkbox" type="checkbox" value="glencoe" checked />
+                                            <span class="menu-title">Glencoe</span>
+                                        </label>
+                                    </div>
+                                    <div class="menu-item px-0 py-1">
+                                        <label class="form-check form-check-custom form-check-solid align-items-center m-0">
+                                            <input class="form-check-input me-3 download-format-checkbox" type="checkbox" value="dimacs" checked />
+                                            <span class="menu-title">DIMACS</span>
+                                        </label>
+                                    </div>
+                                    <div class="menu-item px-0 py-1">
+                                        <label class="form-check form-check-custom form-check-solid align-items-center m-0">
+                                            <input class="form-check-input me-3 download-format-checkbox" type="checkbox" value="splot" checked />
+                                            <span class="menu-title">SPLOT</span>
+                                        </label>
+                                    </div>
+                                    <div class="separator my-3"></div>
+                                    <button type="button"
+                                            class="btn btn-light-primary btn-sm w-100"
+                                            data-download-formats-action
+                                            data-download-base-url="{{ url_for('dataset.download_dataset', dataset_id=dataset.id) }}">
+                                        Download
+                                    </button>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="alert alert-warning">
+    <i class="ki-duotone ki-database fs-2 me-2"></i> No synchronized datasets found. 
+    <a href="{{ url_for('dataset.create_dataset') }}" class="ms-2">Upload one</a>.
+</div>
+{% endif %}
+
+
+{% if local_datasets %}
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Unsynchronized datasets</h3>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table align-middle table-row-dashed gy-5" id="unsynchronizedDatasetsTable">
+                <thead>
+                    <tr class="text-start text-muted fw-bold fs-7 text-uppercase gs-0">
+                        <th>Title</th>
+                        <th>Publication type</th>
+                        <th>Created at</th>
+                        <th>Options</th>
+                    </tr>
+                </thead>
+                <tbody class="text-gray-600 fw-semibold">
+                    {% for dataset in local_datasets %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('dataset.get_unsynchronized_dataset', dataset_id=dataset.id) }}">
+                                {{ dataset.ds_meta_data.title }}
+                            </a>
+                            <span class="badge badge-light-info ms-2">Unsynchronized</span>
+                        </td>
+                        <td>{{ dataset.get_publication() }}</td>
+                        <td>{{ dataset.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td>
+                            <a href="{{ url_for('dataset.get_unsynchronized_dataset', dataset_id=dataset.id) }}" class="btn btn-sm btn-icon btn-light-info me-1" title="View">
+                                <i class="ki-duotone ki-eye fs-2">
+                                    <span class="path1"></span>
+                                    <span class="path2"></span>
+                                    <span class="path3"></span>
+                                </i></i>
+                            </a>
+                            <div class="position-relative d-inline-block">
+                                <button class="btn btn-sm btn-icon btn-light-success"
+                                        title="Download"
+                                        data-kt-menu-trigger="click"
+                                        data-kt-menu-placement="bottom-end"
+                                        data-kt-menu-attach="parent">
+                                    <i class="ki-duotone ki-folder-down fs-2">
+                                        <span class="path1"></span>
+                                        <span class="path2"></span>
+                                    </i>
+                                </button>
+                                <div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-title-gray-700 menu-icon-gray-500 fw-semibold py-4 px-4 fs-base w-200px" data-kt-menu="true" data-download-menu>
+                                    <div class="menu-item px-0 py-1">
+                                        <label class="form-check form-check-custom form-check-solid align-items-center m-0">
+                                            <input class="form-check-input me-3 download-format-checkbox" type="checkbox" value="uvl" checked />
+                                            <span class="menu-title">UVL</span>
+                                        </label>
+                                    </div>
+                                    <div class="menu-item px-0 py-1">
+                                        <label class="form-check form-check-custom form-check-solid align-items-center m-0">
+                                            <input class="form-check-input me-3 download-format-checkbox" type="checkbox" value="glencoe" checked />
+                                            <span class="menu-title">Glencoe</span>
+                                        </label>
+                                    </div>
+                                    <div class="menu-item px-0 py-1">
+                                        <label class="form-check form-check-custom form-check-solid align-items-center m-0">
+                                            <input class="form-check-input me-3 download-format-checkbox" type="checkbox" value="dimacs" checked />
+                                            <span class="menu-title">DIMACS</span>
+                                        </label>
+                                    </div>
+                                    <div class="menu-item px-0 py-1">
+                                        <label class="form-check form-check-custom form-check-solid align-items-center m-0">
+                                            <input class="form-check-input me-3 download-format-checkbox" type="checkbox" value="splot" checked />
+                                            <span class="menu-title">SPLOT</span>
+                                        </label>
+                                    </div>
+                                    <div class="separator my-3"></div>
+                                    <button type="button"
+                                            class="btn btn-light-primary btn-sm w-100"
+                                            data-download-formats-action
+                                            data-download-base-url="{{ url_for('dataset.download_dataset', dataset_id=dataset.id) }}">
+                                        Download
+                                    </button>
+                                </div>
+                            </div>
+                            <a href="{{ url_for('dataset.edit_metadata', dataset_id=dataset.id) }}" 
+                                class="btn btn-sm btn-icon btn-light-primary me-1" 
+                                title="Edit Metadata">
+                                    <i class="ki-duotone ki-pencil fs-2">
+                                        <span class="path1"></span>
+                                        <span class="path2"></span>
+                                    </i>
+                                </a>
+                            <a href="javascript:void(0);" 
+                                class="btn btn-sm btn-light-primary me-1 btn-sync d-inline-flex align-items-center"
+                                data-dataset-id="{{ dataset.id }}" 
+                                title="Sync to Zenodo and make public">
+                                <i class="ki-duotone ki-folder-up fs-3">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                                </i>
+                                Sync to Zenodo and make public
+                            </a>
+
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="modal fade" tabindex="-1" id="retrySyncConfirmModal">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title d-flex align-items-center">
+          <span class="fw-bold me-2" style="font-size: 1.2rem; font-family: sans-serif;">Z</span>
+          Retry sync to Zenodo
+        </h5>
+        <button type="button" class="btn btn-sm btn-icon" data-bs-dismiss="modal">
+          <i class="ki-duotone ki-cross fs-2"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div id="retrySyncStatusAlert" class="alert d-flex align-items-center mb-4">
+          <span class="me-3 fw-bold" id="retrySyncAlertIcon" style="font-size: 1.6rem; line-height: 1; font-family: sans-serif;">Z</span>
+          <div>
+            <strong id="retrySyncAlertTitle"></strong><br>
+            <span class="fs-7" id="retrySyncAlertBody"></span>
+          </div>
+        </div>
+        <p class="fw-semibold text-gray-700">
+          This will attempt to push the pending metadata changes to Zenodo.
+        </p>
+        <p class="text-muted fs-7">
+          Make sure you have an active internet connection before retrying.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-warning" id="confirmRetrySyncBtn">
+          <span class="fw-bold me-2" style="font-size: 1rem; font-family: sans-serif;">Z</span>
+          <span class="btn-text">Retry now</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" tabindex="-1" id="syncConfirmModal">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      
+      <div class="modal-header">
+        <h5 class="modal-title d-flex align-items-center">
+        <i class="ki-duotone ki-folder-up fs-2 me-2">
+            <span class="path1"></span>
+            <span class="path2"></span>
+        </i>
+        Confirm sync to Zenodo and make public
+        </h5>
+
+        <button type="button" class="btn btn-sm btn-icon" data-bs-dismiss="modal">
+          <i class="ki-duotone ki-cross fs-2"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <p class="fw-semibold text-gray-700">
+          Once synchronized, the dataset will be uploaded permanently to Zenodo.  
+          <b>This action cannot be undone.</b>
+        </p>
+        <p class="text-muted fs-7">
+          Synchronization with Zenodo is required for your dataset to become public in UVLHub.
+        </p>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="confirmSyncBtn">
+        <i class="ki-duotone ki-folder-up fs-2 me-2">
+        <span class="path1"></span>
+        <span class="path2"></span>
+        </i>
+        <span class="btn-text">Sync now</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    let selectedRetrySyncDatasetId = null;
+    const retrySyncBtn = document.getElementById("confirmRetrySyncBtn");
+    const retrySyncBtnText = retrySyncBtn.querySelector(".btn-text");
+
+    const alertEl     = document.getElementById("retrySyncStatusAlert");
+    const alertIcon   = document.getElementById("retrySyncAlertIcon");
+    const alertTitle  = document.getElementById("retrySyncAlertTitle");
+    const alertBody   = document.getElementById("retrySyncAlertBody");
+
+    function setRetrySyncAlert(available) {
+        if (available) {
+            alertEl.className = "alert alert-success d-flex align-items-center mb-4";
+            alertIcon.className = "me-3 fw-bold text-success";
+            alertTitle.textContent = "Zenodo is now available.";
+            alertBody.textContent = "The connection has been restored. Your pending changes can now be pushed.";
+        } else {
+            alertEl.className = "alert alert-warning d-flex align-items-center mb-4";
+            alertIcon.className = "me-3 fw-bold text-warning";
+            alertTitle.textContent = "Zenodo is currently unavailable.";
+            alertBody.textContent = "Metadata changes are saved locally but could not be pushed to Zenodo.";
+        }
+    }
+
+    $("#synchronizedDatasetsTable").on("click", ".btn-retry-sync", function (e) {
+        e.preventDefault();
+        selectedRetrySyncDatasetId = this.dataset.datasetId;
+
+        // Estado de carga mientras comprueba
+        alertEl.className = "alert alert-secondary d-flex align-items-center mb-4";
+        alertIcon.className = "me-3 fw-bold text-muted";
+        alertTitle.textContent = "Checking Zenodo connection…";
+        alertBody.textContent = "";
+
+        const modal = new bootstrap.Modal(document.getElementById("retrySyncConfirmModal"));
+        modal.show();
+
+        fetch("/zenodo/test")
+            .then(r => r.json())
+            .then(data => setRetrySyncAlert(data.success === true))
+            .catch(() => setRetrySyncAlert(false));
+    });
+
+    retrySyncBtn.addEventListener("click", function () {
+        if (!selectedRetrySyncDatasetId) return;
+
+        retrySyncBtn.disabled = true;
+        retrySyncBtnText.textContent = "Syncing...";
+        retrySyncBtn.insertAdjacentHTML("beforeend", '<span class="spinner-border spinner-border-sm ms-2"></span>');
+
+        fetch(`/datasets/retry-sync/${selectedRetrySyncDatasetId}`, { method: "POST" })
+            .then(r => r.json())
+            .then(data => {
+                if (data.message) {
+                    toastr.success(data.message);
+                    location.reload();
+                } else {
+                    toastr.error(data.error || "Failed to retry sync.");
+                }
+            })
+            .catch(err => toastr.error("Unexpected error: " + err))
+            .finally(() => {
+                retrySyncBtn.disabled = false;
+                retrySyncBtnText.textContent = "Retry now";
+                retrySyncBtn.querySelector(".spinner-border")?.remove();
+            });
+    });
+});
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    let selectedDatasetId = null;
+    const syncBtn = document.getElementById("confirmSyncBtn");
+    const syncBtnText = syncBtn.querySelector(".btn-text");
+
+    // Abrir modal al pulsar Sync
+    $("#unsynchronizedDatasetsTable").on("click", ".btn-sync", function (e) {
+        e.preventDefault();
+        selectedDatasetId = this.dataset.datasetId;
+        const modal = new bootstrap.Modal(document.getElementById('syncConfirmModal'));
+        modal.show();
+    });
+
+    // Confirmation action
+    syncBtn.addEventListener("click", function () {
+        if (!selectedDatasetId) return;
+
+        // Toggle button state
+        syncBtn.disabled = true;
+        syncBtnText.textContent = "Synchronizing...";
+        syncBtn.insertAdjacentHTML("beforeend", '<span class="spinner-border spinner-border-sm ms-2"></span>');
+
+        fetch(`/datasets/sync/${selectedDatasetId}`, {method: "POST"})
+            .then(r => r.json())
+            .then(data => {
+                if (data.doi) {
+                    toastr.success("Dataset synchronized! DOI: " + data.doi);
+                    location.reload();
+                } else {
+                    toastr.error(data.error || "Failed to sync dataset.");
+                }
+            })
+            .catch(err => toastr.error("Unexpected error: " + err))
+            .finally(() => {
+                // Restore the button if we're not reloading
+                syncBtn.disabled = false;
+                syncBtnText.textContent = "Sync now";
+                syncBtn.querySelector(".spinner-border")?.remove();
+            });
+    });
+});
+</script>
+
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        $("#synchronizedDatasetsTable").DataTable({
+            order: [[3, "desc"]]
+        });
+        $("#unsynchronizedDatasetsTable").DataTable({
+            order: [[2, "desc"]]
+        });
+    });
+</script>
+{% endblock %}

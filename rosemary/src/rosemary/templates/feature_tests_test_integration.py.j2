@@ -1,0 +1,13 @@
+"""HTTP integration tests for the {{ feature_name }} feature.
+
+Drive the application through the Flask test client. The ``test_client``
+fixture rebuilds a clean DB per test for full isolation.
+"""
+import pytest
+
+pytestmark = pytest.mark.integration
+
+
+def test_{{ feature_name }}_index_responds(test_client):
+    response = test_client.get("/{{ feature_name }}")
+    assert response.status_code == 200, "/{{ feature_name }} did not return 200"

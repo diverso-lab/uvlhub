@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-24.04
 
     steps:
-      
+
       # Step 1: Checkout the repository code
       - name: Checkout
         uses: actions/checkout@v5
@@ -36,12 +36,12 @@ jobs:
 
       # Step 4: Run flake8 for PEP8 linting
       - name: Lint with flake8
-        run: flake8 app rosemary core
+        run: flake8 app rosemary
 
       # Step 5: Verify code formatting with Black
       - name: Check formatting with black
-        run: black --check app rosemary core
+        run: black --check app rosemary
 
       # Step 6: Verify import ordering with isort
       - name: Check import order with isort
-        run: isort --check-only app rosemary core
+        run: isort --check-only app rosemary

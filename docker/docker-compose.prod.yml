@@ -6,12 +6,12 @@ services:
     env_file:
       - ../.env
     volumes:
-      - ./entrypoints/production_entrypoint.sh:/app/entrypoint.sh
-      - ../scripts:/app/scripts
-      - ../migrations:/app/migrations
-      - ../uploads:/app/uploads
-      - ../docker:/app/docker
-    command: [ "bash", "-c", "bash /app/entrypoint.sh" ]
+      - ./entrypoints/production_entrypoint.sh:/workspace/entrypoint.sh
+      - ../scripts:/workspace/scripts
+      - ../migrations:/workspace/migrations
+      - ../uploads:/workspace/uploads
+      - ../docker:/workspace/docker
+    command: [ "bash", "-c", "bash /workspace/entrypoint.sh" ]
     restart: always
     depends_on:
       - db
@@ -26,12 +26,12 @@ services:
     env_file:
       - ../.env
     volumes:
-      - ./entrypoints/worker_entrypoint.sh:/app/entrypoint.sh
-      - ../scripts:/app/scripts
-      - ../migrations:/app/migrations
-      - ../uploads:/app/uploads
-      - ../docker:/app/docker
-    command: [ "bash", "-c", "bash /app/entrypoint.sh" ]
+      - ./entrypoints/worker_entrypoint.sh:/workspace/entrypoint.sh
+      - ../scripts:/workspace/scripts
+      - ../migrations:/workspace/migrations
+      - ../uploads:/workspace/uploads
+      - ../docker:/workspace/docker
+    command: [ "bash", "-c", "bash /workspace/entrypoint.sh" ]
     restart: always
     depends_on:
       - db
