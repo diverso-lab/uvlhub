@@ -83,7 +83,7 @@ def selenium(module, driver):
         if module:
             validate_module(module)
 
-        if working_dir == "/app/":
+        if working_dir == "/workspace/":
             run_selenium_tests(module, env="docker")
         elif working_dir == "":
             run_selenium_tests(module, env="local")
