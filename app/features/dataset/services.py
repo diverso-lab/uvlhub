@@ -13,6 +13,7 @@ from zipfile import ZipFile
 
 import bleach
 from flask import current_app, request
+from splent_framework.services.BaseService import BaseService
 from werkzeug.datastructures import MultiDict
 from werkzeug.utils import secure_filename
 
@@ -37,7 +38,6 @@ from app.features.hubfile.repositories import (
 from app.features.hubfile.services import UploadIngestService
 from app.features.statistics.services import StatisticsService
 from app.features.zenodo.services import ZenodoUnavailableError
-from splent_framework.services.BaseService import BaseService
 
 logger = logging.getLogger(__name__)
 ORCID_REGEX = re.compile(r"^\d{4}-\d{4}-\d{4}-\d{3}[0-9X]$")
@@ -72,6 +72,13 @@ class DataSetService(BaseService):
         self.hubfilerepository = HubfileRepository()
         self.dsviewrecord_repostory = DSViewRecordRepository()
         self.hubfileviewrecord_repository = HubfileViewRecordRepository()
+
+    def paginate(self, page: int = 1, per_page: int = 5):
+        return self.repository.model.query.paginate(page=page, per_page=per_page, error_out=False)
+
+    def mark_metadata_synced(self, dataset: DataSet) -> None:
+        dataset.ds_meta_data.metadata_synced = True
+        self.repository.session.commit()
 
     def create_basic_dataset(self, user: User) -> DataSet:
         dataset = self.create(commit=False, user_id=user.id, ds_meta_data_id=None)

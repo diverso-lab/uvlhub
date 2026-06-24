@@ -2,12 +2,12 @@ import os
 import shutil
 
 from dotenv import load_dotenv
+from splent_framework.seeders.BaseSeeder import BaseSeeder
 
 from app.features.auth.models import User
 from app.features.dataset.models import Author, DataSet, DSMetaData, DSMetrics, PublicationType
 from app.features.featuremodel.models import FeatureModel
 from app.features.hubfile.models import Hubfile
-from splent_framework.seeders.BaseSeeder import BaseSeeder
 
 
 class DataSetSeeder(BaseSeeder):

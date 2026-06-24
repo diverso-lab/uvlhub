@@ -1,7 +1,7 @@
 from locust import HttpUser, TaskSet, task
+from splent_framework.locust.common import get_csrf_token
 
 from app.environment.host import get_host_for_locust_testing
-from splent_framework.locust.common import get_csrf_token
 
 
 class DatasetBehavior(TaskSet):

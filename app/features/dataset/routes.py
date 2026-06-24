@@ -29,7 +29,6 @@ from qrcode.image.styledpil import StyledPilImage
 from qrcode.image.styles.moduledrawers.pil import RoundedModuleDrawer
 from werkzeug.utils import secure_filename
 
-from app import db
 from app.features.apikeys.decorators import require_api_key
 from app.features.auth.services import AuthenticationService
 from app.features.dataset import dataset_bp, fair_metadata
@@ -50,7 +49,6 @@ from app.features.dataset.services import (
 from app.features.elasticsearch.services import IndexingService
 from app.features.elasticsearch.utils import index_dataset, index_hubfile
 from app.features.featuremodel.services import FeatureModelService
-from app.features.hubfile.models import Hubfile
 from app.features.hubfile.services import HubfileService
 from app.features.zenodo.services import ZenodoDatasetService, ZenodoService
 
@@ -681,8 +679,7 @@ def retry_sync_dataset(dataset_id):
 
     try:
         dataset_service._sync_metadata_in_zenodo_if_needed(dataset, zenodo_service)
-        dataset.ds_meta_data.metadata_synced = True
-        db.session.commit()
+        dataset_service.mark_metadata_synced(dataset)
     except Exception as exc:
         logger.exception(f"[RETRY SYNC ERROR] {exc}")
         return jsonify({"error": f"Zenodo sync failed: {exc}"}), 500
@@ -848,7 +845,7 @@ def api_list_datasets():
     page = request.args.get("page", 1, type=int)
     per_page = 5
 
-    pagination = DataSet.query.paginate(page=page, per_page=per_page, error_out=False)
+    pagination = dataset_service.paginate(page=page, per_page=per_page)
     items = [ds.to_dict() for ds in pagination.items]
 
     return jsonify(
@@ -903,7 +900,7 @@ def api_dataset_detail(dataset_id):
       404:
         description: Dataset not found
     """
-    dataset = DataSet.query.get(dataset_id)
+    dataset = dataset_service.get_by_id(dataset_id)
     if not dataset:
         return jsonify({"error": "Dataset not found"}), 404
     return jsonify(dataset.to_dict())
@@ -966,7 +963,7 @@ def api_dataset_summary(dataset_id):
       404:
         description: Dataset not found
     """
-    dataset = DataSet.query.get(dataset_id)
+    dataset = dataset_service.get_by_id(dataset_id)
     if not dataset:
         return jsonify({"error": "Dataset not found"}), 404
 
@@ -1046,7 +1043,7 @@ def api_list_files(dataset_id):
       404:
         description: Dataset not found
     """
-    dataset = DataSet.query.get(dataset_id)
+    dataset = dataset_service.get_by_id(dataset_id)
     if not dataset:
         return jsonify({"error": "Dataset not found"}), 404
 
@@ -1113,7 +1110,7 @@ def api_file_detail(file_id):
       404:
         description: File not found
     """
-    file = Hubfile.query.get(file_id)
+    file = hubfile_service.get_by_id(file_id)
     if not file:
         return jsonify({"error": "File not found"}), 404
 
@@ -1153,7 +1150,7 @@ def api_file_raw(file_id):
       500:
         description: Error reading file from disk
     """
-    file = Hubfile.query.get(file_id)
+    file = hubfile_service.get_by_id(file_id)
     if not file:
         return jsonify({"error": "File not found"}), 404
 
@@ -1241,7 +1238,7 @@ def api_file_metadata(file_id):
       404:
         description: File not found or metadata not available
     """
-    file = Hubfile.query.get(file_id)
+    file = hubfile_service.get_by_id(file_id)
     if not file:
         return jsonify({"error": "File not found"}), 404
 

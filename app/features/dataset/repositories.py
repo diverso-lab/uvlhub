@@ -4,10 +4,10 @@ from typing import List, Optional
 
 import pytz
 from flask_login import current_user
+from splent_framework.repositories.BaseRepository import BaseRepository
 from sqlalchemy import desc
 
 from app.features.dataset.models import Author, DataSet, DOIMapping, DSDownloadRecord, DSMetaData, DSViewRecord
-from splent_framework.repositories.BaseRepository import BaseRepository
 
 logger = logging.getLogger(__name__)
 
