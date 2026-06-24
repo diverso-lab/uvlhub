@@ -8,7 +8,22 @@ from flask import abort
 
 import docker
 
-client = docker.from_env()
+_client = None
+
+
+def _get_client():
+    """Lazily build the Docker client on first use, not at import time.
+
+    Importing this module must not require a Docker daemon: the rosemary CLI
+    imports every command module (which pulls in the app, and therefore this
+    service) while running 'rosemary webpack:compile' during 'docker build',
+    where no daemon exists. Connecting at import broke the release image build.
+    """
+    global _client
+    if _client is None:
+        _client = docker.from_env()
+    return _client
+
 
 # Commands run inside every target container, in order, on each deploy.
 DEPLOY_COMMANDS = (
@@ -31,13 +46,13 @@ class WebhookService:
 
     def get_web_container(self):
         try:
-            return client.containers.get("web_app_container")
+            return _get_client().containers.get("web_app_container")
         except docker.errors.NotFound:
             abort(404, description="Web container not found.")
 
     def get_worker_container(self):
         try:
-            return client.containers.get("rq_worker_container")
+            return _get_client().containers.get("rq_worker_container")
         except docker.errors.NotFound:
             abort(404, description="Worker container not found.")
 

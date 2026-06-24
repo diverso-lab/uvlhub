@@ -123,7 +123,7 @@ def locust(module):
     if module:
         validate_module(module)
 
-    if working_dir == "/app/":
+    if working_dir == "/workspace/":
         client = docker.from_env()
 
         try:
@@ -132,7 +132,7 @@ def locust(module):
                 (
                     mount.get("Name") or mount.get("Source")
                     for mount in web_container.attrs["Mounts"]
-                    if mount["Destination"] == "/app"
+                    if mount["Destination"] == "/workspace"
                 ),
                 None,
             )
@@ -180,7 +180,7 @@ def stop():
         # Remove the Locust container
         subprocess.run(rm_command)
 
-    if working_dir == "/app/":
+    if working_dir == "/workspace/":
         stop_docker_locust()
 
     elif working_dir == "" or working_dir == "/vagrant/":
