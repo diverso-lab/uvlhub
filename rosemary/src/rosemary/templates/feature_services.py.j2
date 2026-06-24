@@ -1,0 +1,7 @@
+from app.features.{{ feature_name }}.repositories import {{ feature_name | pascalcase }}Repository
+from splent_framework.services.BaseService import BaseService
+
+
+class {{ feature_name | pascalcase }}Service(BaseService):
+    def __init__(self):
+        super().__init__({{ feature_name | pascalcase }}Repository())
