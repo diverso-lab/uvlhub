@@ -19,9 +19,10 @@ jobs:
       MARIADB_HOSTNAME: 127.0.0.1
       MARIADB_PORT: 3306
       FLASK_ENV: testing
-
-      # Critical: make constraints apply to build isolation envs too
-      PIP_CONSTRAINT: constraints.txt
+      # Lets splent_framework's ConfigManager/ErrorHandlerManager find app.config / app.errors
+      SPLENT_APP: app
+      # Installed entry-point scripts run without cwd on sys.path; make `app` importable
+      PYTHONPATH: ${{ github.workspace }}
 
     services:
       mariadb:
@@ -47,22 +48,19 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: '3.13'
+          cache: 'pip'
+          cache-dependency-path: pyproject.toml
 
-      - name: Delete rosemary editable mode
-        run: sed -i '/rosemary @ file:\/\/\/app/d' requirements.txt
-
-      - name: Install dependencies
+      - name: Install dependencies (pinned in pyproject.toml)
         run: |
           python -m pip install --upgrade pip
-          # constraints.txt must contain: setuptools<82
-          pip install -r requirements.txt -c constraints.txt
+          pip install --pre .
 
       - name: Install generator vendor package
-        # The generator module pulls its feature-model generator from a
-        # vendored source tree (bundled as a wheel for Pyodide at runtime).
-        # pytest also imports Params from it directly, so install it editable
-        # into the CI Python env.
-        run: pip install --no-cache-dir -e ./app/modules/generator/vendor
+        # The generator feature pulls its feature-model generator from a
+        # vendored source tree; pytest imports Params from it directly, so
+        # install it editable into the CI Python env.
+        run: pip install --no-cache-dir -e ./app/features/generator/vendor
 
-      - name: Run Tests
-        run: pytest app/modules/ --ignore-glob='*selenium*' -m 'not slow'
+      - name: Run tests (fast pyramid — unit + repository + service + integration)
+        run: pytest app/features -m "(unit or repository or service or integration) and not slow"

@@ -29,6 +29,8 @@ jobs:
 
       # Step 3: Build and push the Docker image
       - name: Build and push Docker image
+        env:
+          DOCKER_BUILDKIT: "1"
         run: |
           TAG=${{ github.event.release.tag_name }}
           IMAGE=${{ secrets.DOCKER_USER }}/uvlhub
