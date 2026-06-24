@@ -2,13 +2,13 @@ from datetime import datetime
 
 import pytz
 from flask_login import current_user
+from splent_framework.repositories.BaseRepository import BaseRepository
 
 from app import db
 from app.features.auth.models import User
 from app.features.dataset.models import DataSet
 from app.features.featuremodel.models import FeatureModel
 from app.features.hubfile.models import Hubfile, HubfileDownloadRecord, HubfileViewRecord
-from splent_framework.repositories.BaseRepository import BaseRepository
 
 
 class HubfileRepository(BaseRepository):

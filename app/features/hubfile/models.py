@@ -11,7 +11,7 @@ from sqlalchemy.orm import joinedload, object_session
 from app import db
 from app.features.auth.models import User
 from app.features.dataset.models import DataSet
-from app.managers.task_queue_manager import TaskQueueManager
+from app.features.hubfile.signals import hubfile_created
 
 logger = logging.getLogger(__name__)
 load_dotenv()
@@ -254,15 +254,6 @@ def hubfile_after_insert_listener(mapper, connection, target):
     )
     path = hubfile_with_fm.get_full_path()
 
-    task_manager = TaskQueueManager()
-
-    # UVL transformation
-    task_manager.enqueue_task("app.features.hubfile.tasks.transform_uvl", path=path, timeout=5)
-
-    # Fact Label
-    task_manager.enqueue_task("app.features.hubfile.tasks.compute_factlabel", hubfile_id=target.id, timeout=5)
-
-    # Fact Label (light)
-    task_manager.enqueue_task(
-        "app.features.hubfile.tasks.compute_factlabel", hubfile_id=target.id, light_fact_label=True, timeout=5
-    )
+    # Announce the creation; domain features (flamapy, factlabel) subscribe and
+    # enqueue their own processing. The hub stays unaware of the UVL domain.
+    hubfile_created.send(target, hubfile_id=target.id, path=path)

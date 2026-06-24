@@ -16,7 +16,6 @@ from flask_login import current_user, login_required
 
 from app.features.dataset.decorators import is_dataset_owner
 from app.features.dataset.services import DataSetService, DOIMappingService, DSMetaDataService
-from app.features.flamapy.services import FlamapyService
 from app.features.hubfile import hubfile_bp
 from app.features.hubfile.services import (
     HubfileDownloadRecordService,
@@ -27,7 +26,6 @@ from app.features.hubfile.services import (
 hubfile_view_record_service = HubfileViewRecordService()
 hubfile_download_record_service = HubfileDownloadRecordService()
 
-flamapy_service = FlamapyService()
 doi_mapping_service = DOIMappingService()
 dsmetadata_service = DSMetaDataService()
 hubfile_service = HubfileService()
@@ -138,7 +136,11 @@ def download_file(file_id):
 @hubfile_bp.route("/hubfile/clear_temp", methods=["POST"])
 @login_required
 def clear_temp():
-    return hubfile_service.clear_temp()
+    try:
+        hubfile_service.clear_temp()
+        return jsonify({"message": "Temp folder cleared"}), 200
+    except Exception as e:
+        return jsonify({"error": f"Error clearing temp folder: {str(e)}"}), 500
 
 
 @hubfile_bp.route("/datasets/unsynchronized/<int:dataset_id>/files/<int:file_id>")

@@ -2,7 +2,7 @@
 import click
 from flask.cli import with_appcontext
 
-from app.features.hubfile.tasks import compute_factlabel
+from app.features.factlabel.tasks import compute_factlabel
 
 
 @click.command(

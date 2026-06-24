@@ -1,4 +1,5 @@
 import logging
+import os
 from typing import Any
 
 from antlr4 import CommonTokenStream, FileStream
@@ -13,64 +14,58 @@ from flamapy.metamodels.pysat_metamodel.transformations import FmToPysat  # noqa
 from uvl.UVLCustomLexer import UVLCustomLexer
 from uvl.UVLPythonParser import UVLPythonParser
 
-from app.features.flamapy.repositories import FlamapyRepository
+from app.features.hubfile.services import HubfileService
 from app.managers.task_queue_manager import TaskQueueManager
-from splent_framework.services.BaseService import BaseService
 
 logger = logging.getLogger(__name__)
 
 
-class FlamapyService(BaseService):
+class _UVLErrorListener(ErrorListener):
+    """Collects lexer/parser syntax problems as human-readable messages."""
+
     def __init__(self):
-        super().__init__(FlamapyRepository())
+        self.errors: list[str] = []
+
+    def syntaxError(self, recognizer, offendingSymbol, line, column, msg, e):
+        kind = "warning" if "\\t" in msg else "error"
+        self.errors.append(f"The UVL has the following {kind} that prevents reading it: Line {line}:{column} - {msg}")
+
+
+class FlamapyService:
+    """Stateless service around the flamapy toolchain; owns no entity of its own."""
+
+    def __init__(self):
+        self.hubfile_service = HubfileService()
 
     def get_metrics(self, fm_model: FeatureModel) -> list[dict[str, Any]]:
-
-        logger.info(f"feature model: {fm_model}")
-
-        fm_metrics = FMMetrics().execute(fm_model)
-        logger.info(f"fm_metrics: {fm_metrics}")
-        result = fm_metrics.get_result()
-        return result
+        return FMMetrics().execute(fm_model).get_result()
 
     def get_analysis_results(self, fm_model: FeatureModel) -> list[dict[str, Any]]:
-        fm_results = BDDMetrics().execute(fm_model).get_result()
-        return fm_results
+        return BDDMetrics().execute(fm_model).get_result()
+
+    def transformed_file_path(self, file_id: int, extension: str, subdirectory: str) -> str | None:
+        """Resolve the path of a transformed export for a hubfile, or None if it
+        has not been generated yet."""
+        hubfile = self.hubfile_service.get_or_404(file_id)
+        dataset_dir = os.path.dirname(os.path.dirname(hubfile.get_path()))
+        transformed_filename = os.path.basename(hubfile.get_path()).replace(".uvl", extension)
+        path = os.path.join(dataset_dir, subdirectory, transformed_filename)
+        return path if os.path.exists(path) else None
 
     def check_uvl_async(self, filepath: str):
         task = TaskQueueManager().enqueue_task("app.features.flamapy.tasks.check_uvl", filepath=filepath, timeout=5)
         return {"task_id": task.id}
 
     def check_uvl(self, filepath: str):
-
-        class CustomErrorListener(ErrorListener):
-            def __init__(self):
-                self.errors = []
-
-            def syntaxError(self, recognizer, offendingSymbol, line, column, msg, e):
-                if "\\t" in msg:
-                    warning_message = (
-                        f"The UVL has the following warning that prevents reading it: " f"Line {line}:{column} - {msg}"
-                    )
-                    self.errors.append(warning_message)
-                else:
-                    error_message = (
-                        f"The UVL has the following error that prevents reading it: " f"Line {line}:{column} - {msg}"
-                    )
-                    self.errors.append(error_message)
-
+        error_listener = _UVLErrorListener()
         try:
             input_stream = FileStream(filepath)
             lexer = UVLCustomLexer(input_stream)
-
-            error_listener = CustomErrorListener()
-
             lexer.removeErrorListeners()
             lexer.addErrorListener(error_listener)
 
             stream = CommonTokenStream(lexer)
             parser = UVLPythonParser(stream)
-
             parser.removeErrorListeners()
             parser.addErrorListener(error_listener)
 
@@ -81,9 +76,8 @@ class FlamapyService(BaseService):
             try:
                 FLAMAFeatureModel(filepath)
                 return {"message": "Valid Model"}, 200
-
             except Exception as fe:
-                logger.warning(f"[UVL Parser] FLAMA failed but will be ignored: {str(fe)}")
+                logger.warning(f"[UVL Parser] FLAMA failed but will be ignored: {fe}")
                 return {"message": "Valid Model (FLAMA transformation skipped due to unsupported attributes)"}, 200
 
         except Exception as e:

@@ -7,10 +7,10 @@ import zipfile
 from pathlib import Path
 from typing import List, Tuple
 
-from flask import jsonify, request
+from flask import request
 from flask_login import current_user
+from splent_framework.services.BaseService import BaseService
 
-from app import db
 from app.features.auth.models import User
 from app.features.dataset.models import DataSet
 from app.features.hubfile.models import Hubfile, HubfileViewRecord
@@ -20,7 +20,6 @@ from app.features.hubfile.repositories import (
     HubfileViewRecordRepository,
 )
 from app.features.statistics.services import StatisticsService
-from splent_framework.services.BaseService import BaseService
 
 UUID_PREFIX_RE = re.compile(r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}_")
 
@@ -71,17 +70,16 @@ class HubfileService(BaseService):
         if not os.path.isfile(filepath):
             raise FileNotFoundError(f"File not found: {filepath}")
 
-        name = os.path.basename(filepath)
-        size = os.path.getsize(filepath)
-        checksum = self._calculate_checksum(filepath)
+        return self.repository.create(
+            commit=False,
+            feature_model_id=feature_model_id,
+            name=os.path.basename(filepath),
+            size=os.path.getsize(filepath),
+            checksum=self._calculate_checksum(filepath),
+        )
 
-        hubfile = Hubfile(feature_model_id=feature_model_id, name=name, size=size, checksum=checksum)
-        db.session.add(hubfile)
-        db.session.flush()
-
-        return hubfile
-
-    def _calculate_checksum(self, filepath: str) -> str:
+    @staticmethod
+    def _calculate_checksum(filepath: str) -> str:
         """Compute the SHA256 hash of the file."""
         sha256 = hashlib.sha256()
         with open(filepath, "rb") as f:
@@ -100,16 +98,12 @@ class HubfileService(BaseService):
         return path
 
     def clear_temp(self):
+        """Wipe and recreate the current user's temp folder. Raises on I/O error;
+        the route maps the outcome to an HTTP response."""
         temp_folder = current_user.temp_folder()
-
-        try:
-            if os.path.exists(temp_folder):
-                shutil.rmtree(temp_folder, ignore_errors=True)
-            os.makedirs(temp_folder, exist_ok=True)
-
-            return jsonify({"message": "Temp folder cleared"}), 200
-        except Exception as e:
-            return jsonify({"error": f"Error clearing temp folder: {str(e)}"}), 500
+        if os.path.exists(temp_folder):
+            shutil.rmtree(temp_folder, ignore_errors=True)
+        os.makedirs(temp_folder, exist_ok=True)
 
 
 class HubfileDownloadRecordService(BaseService):
