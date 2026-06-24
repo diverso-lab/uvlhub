@@ -468,7 +468,7 @@ class DataSetService(BaseService):
         try:
             dsmetadata_data = form.get_dsmetadata()
 
-            # Limpiar HTML en el campo description
+            # Clean the HTML in the description field
             raw_description = dsmetadata_data.get("description", "")
             clean_description = bleach.clean(
                 raw_description,

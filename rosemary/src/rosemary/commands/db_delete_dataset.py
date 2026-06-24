@@ -43,7 +43,7 @@ def delete_dataset(doi, yes):
     app = create_app()
     with app.app_context():
 
-        # 1. localizar dataset por DOI
+        # 1. locate the dataset by DOI
         dataset = db.session.query(DataSet).join(DSMetaData).filter(DSMetaData.dataset_doi == doi).one_or_none()
 
         if dataset is None:
@@ -58,7 +58,7 @@ def delete_dataset(doi, yes):
             f"dataset_{dataset.id}",
         )
 
-        # --- INFO PREVIA ---
+        # --- PREVIEW INFO ---
         click.echo("")
         click.echo("Dataset to be deleted:")
         click.echo(f"  Dataset ID: {dataset.id}")
@@ -78,7 +78,7 @@ def delete_dataset(doi, yes):
                 click.echo("Aborted.")
                 return
 
-        # --- 2. BORRADO DE FICHEROS ---
+        # --- 2. DELETE FILES ---
         try:
             deleted_path = delete_dataset_uploads(dataset)
             if deleted_path:
@@ -90,7 +90,7 @@ def delete_dataset(doi, yes):
             click.echo("Nothing else was modified.")
             return
 
-        # --- 3. BORRADO EN ELASTICSEARCH ---
+        # --- 3. DELETE FROM ELASTICSEARCH ---
         try:
             es_service = ElasticsearchService()
             es_service.delete_document(f"dataset-{dataset.id}")
@@ -100,37 +100,37 @@ def delete_dataset(doi, yes):
             click.echo("Database was NOT modified.")
             return
 
-        # --- 4. BORRADO EN BASE DE DATOS ---
+        # --- 4. DELETE FROM DATABASE ---
 
         try:
             with db.session.no_autoflush:
 
-                # --- vistas de dataset ---
+                # --- dataset views ---
                 db.session.query(DSViewRecord).filter(DSViewRecord.dataset_id == dataset.id).delete(
                     synchronize_session=False
                 )
 
-                # --- descargas de dataset ---
+                # --- dataset downloads ---
                 db.session.query(DSDownloadRecord).filter(DSDownloadRecord.dataset_id == dataset.id).delete(
                     synchronize_session=False
                 )
 
-                # --- autores ---
+                # --- authors ---
                 db.session.query(Author).filter(Author.ds_meta_data_id == ds_meta_data.id).delete(
                     synchronize_session=False
                 )
 
-                # --- ids de hubfiles del dataset ---
+                # --- hubfile ids of the dataset ---
                 hubfile_ids = select(Hubfile.id).where(
                     Hubfile.feature_model_id.in_(fm.id for fm in dataset.feature_models)
                 )
 
-                # --- vistas de hubfiles ---
+                # --- hubfile views ---
                 db.session.query(HubfileViewRecord).filter(HubfileViewRecord.file_id.in_(hubfile_ids)).delete(
                     synchronize_session=False
                 )
 
-                # --- descargas de hubfiles ---
+                # --- hubfile downloads ---
                 db.session.query(HubfileDownloadRecord).filter(HubfileDownloadRecord.file_id.in_(hubfile_ids)).delete(
                     synchronize_session=False
                 )
