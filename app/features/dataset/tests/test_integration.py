@@ -227,3 +227,77 @@ def test_api_upload_dataset_creates_draft_when_authenticated(test_client):
     assert payload["feature_models_created"] == 1
     mock_create.assert_called_once()
     test_client.get("/logout", follow_redirects=True)
+
+
+# --- Edit metadata route -------------------------------------------------
+
+
+def _test_user_id(test_client):
+    with test_client.application.app_context():
+        from app.features.auth.models import User
+
+        return User.query.filter_by(email="test@example.com").first().id
+
+
+def test_edit_metadata_requires_login(test_client):
+    test_client.get("/logout", follow_redirects=True)
+    response = test_client.get("/dataset/edit/1")
+    assert response.status_code == 302
+    assert "/login" in response.headers.get("Location", "")
+
+
+def test_edit_metadata_forbidden_for_non_owner(test_client):
+    _login(test_client)
+    with patch.object(dataset_routes.dataset_service, "get_or_404", return_value=MagicMock(user_id=999999)):
+        response = test_client.get("/dataset/edit/123")
+    assert response.status_code == 403
+    test_client.get("/logout", follow_redirects=True)
+
+
+def test_edit_metadata_not_found_returns_404(test_client):
+    _login(test_client)
+    response = test_client.get("/dataset/edit/999999")
+    assert response.status_code == 404
+    test_client.get("/logout", follow_redirects=True)
+
+
+def test_edit_metadata_post_ajax_returns_success(test_client):
+    _login(test_client)
+    owned = MagicMock(user_id=_test_user_id(test_client))
+    with (
+        patch.object(dataset_routes.dataset_service, "get_or_404", return_value=owned),
+        patch.object(
+            dataset_routes.dataset_service,
+            "update_metadata_from_request",
+            return_value={"metadata_synced": True, "sync_deferred": False},
+        ),
+    ):
+        response = test_client.post(
+            "/dataset/edit/123",
+            data={"title": "Edited", "dataset_type": "draft"},
+            headers={"X-Requested-With": "XMLHttpRequest"},
+        )
+    assert response.status_code == 200
+    assert response.get_json()["metadata_synced"] is True
+    test_client.get("/logout", follow_redirects=True)
+
+
+def test_edit_metadata_post_ajax_validation_error_returns_400(test_client):
+    _login(test_client)
+    owned = MagicMock(user_id=_test_user_id(test_client))
+    with (
+        patch.object(dataset_routes.dataset_service, "get_or_404", return_value=owned),
+        patch.object(
+            dataset_routes.dataset_service,
+            "update_metadata_from_request",
+            side_effect=DatasetMetadataValidationError("Invalid ORCID format"),
+        ),
+    ):
+        response = test_client.post(
+            "/dataset/edit/123",
+            data={"title": "Edited"},
+            headers={"X-Requested-With": "XMLHttpRequest"},
+        )
+    assert response.status_code == 400
+    assert "Invalid ORCID" in response.get_json()["message"]
+    test_client.get("/logout", follow_redirects=True)

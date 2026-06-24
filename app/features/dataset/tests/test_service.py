@@ -340,3 +340,45 @@ def test_update_metadata_from_request_unsynced_dataset_to_zenodo_fails_when_unav
         service.update_metadata_from_request(dataset, form_data, zenodo_service=zenodo_service)
 
     service.repository.session.rollback.assert_called_once()
+
+
+def test_update_metadata_from_request_without_type_preserves_synced_state():
+    # A POST that omits dataset_type must default to the dataset's current state,
+    # not "draft": editing a synced dataset re-syncs Zenodo and keeps the DOI.
+    service = DataSetService()
+    service.repository.session = MagicMock()
+    dataset = _mock_dataset_for_edit()
+    dataset.ds_meta_data.dataset_doi = "10.1234/demo"
+    dataset.ds_meta_data.deposition_id = 99
+
+    zenodo_service = MagicMock()
+    zenodo_service.build_metadata.return_value = {"title": "Updated dataset"}
+
+    form_data = MultiDict([("title", "Updated dataset"), ("description", "Updated description")])
+
+    result = service.update_metadata_from_request(dataset, form_data, zenodo_service=zenodo_service)
+
+    zenodo_service.update_deposition.assert_called_once_with(99, {"title": "Updated dataset"})
+    assert dataset.ds_meta_data.dataset_doi == "10.1234/demo"
+    assert result == {"metadata_synced": True, "sync_deferred": False}
+
+
+def test_update_metadata_from_request_without_type_keeps_anonymous_synced_state():
+    # Same guard for anonymous datasets: omitting dataset_type keeps them synced.
+    service = DataSetService()
+    service.repository.session = MagicMock()
+    dataset = _mock_dataset_for_edit()
+    dataset.ds_meta_data.dataset_doi = "10.1234/anon"
+    dataset.ds_meta_data.deposition_id = 7
+    dataset.ds_meta_data.dataset_anonymous = True
+
+    zenodo_service = MagicMock()
+    zenodo_service.build_metadata.return_value = {"title": "Anon"}
+
+    form_data = MultiDict([("title", "Anon")])
+
+    result = service.update_metadata_from_request(dataset, form_data, zenodo_service=zenodo_service)
+
+    zenodo_service.update_deposition.assert_called_once_with(7, {"title": "Anon"})
+    assert dataset.ds_meta_data.dataset_doi == "10.1234/anon"
+    assert result == {"metadata_synced": True, "sync_deferred": False}
