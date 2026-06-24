@@ -8,7 +8,7 @@ step, both happy and sad paths.
 import pytest
 from werkzeug.datastructures import MultiDict
 
-from app.features.generator.routes import (
+from app.features.generator.wizard import (
     _safe_float,
     validate_step1_form,
     validate_step2_form,
