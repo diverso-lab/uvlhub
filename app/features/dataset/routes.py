@@ -21,6 +21,7 @@ from flask import (
     render_template,
     request,
     send_file,
+    send_from_directory,
     url_for,
 )
 from flask_login import current_user, login_required
@@ -343,6 +344,32 @@ def new_dataset_version(dataset_id):
         ),
         200,
     )
+
+
+_DATASET_ASSETS_DIR = os.path.join(os.path.dirname(__file__), "assets")
+
+_ASSET_MIMETYPES = {
+    ".js": "text/javascript",
+    ".mjs": "text/javascript",
+    ".css": "text/css",
+}
+
+
+@dataset_bp.route("/dataset/dist/<path:filename>", methods=["GET"])
+def dist_asset(filename):
+    """Serve the dataset's compiled front-end assets.
+
+    splent's BaseBlueprint asset route only matches a single path segment and
+    reads files in text mode, so it cannot serve the nested TinyMCE runtime
+    (models/, themes/, skins/, icons/, plugins/) the description editor loads
+    from base_url '/dataset/dist'. This route serves that tree with a path
+    converter and binary-safe streaming, taking precedence via its longer prefix.
+    """
+    response = send_from_directory(os.path.join(_DATASET_ASSETS_DIR, "dist"), filename)
+    mimetype = _ASSET_MIMETYPES.get(os.path.splitext(filename)[1])
+    if mimetype:
+        response.headers["Content-Type"] = mimetype
+    return response
 
 
 @dataset_bp.route("/datasets/list", methods=["GET"])

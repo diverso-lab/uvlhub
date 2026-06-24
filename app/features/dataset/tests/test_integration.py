@@ -414,3 +414,20 @@ def test_new_version_validation_error_returns_400(test_client):
         response = test_client.post("/dataset/1/new-version", data={}, content_type="multipart/form-data")
     assert response.status_code == 400
     test_client.get("/logout", follow_redirects=True)
+
+
+# --- Compiled asset serving (nested TinyMCE files) -----------------------
+
+
+def test_dist_asset_serves_nested_tinymce_model(test_client):
+    # splent's BaseBlueprint asset route 404s on nested paths; dist_asset must
+    # serve them so the TinyMCE description editor can load (base_url /dataset/dist).
+    response = test_client.get("/dataset/dist/models/dom/model.js")
+    assert response.status_code == 200
+    assert "javascript" in response.headers["Content-Type"]
+
+
+def test_dist_asset_serves_nested_skin_css(test_client):
+    response = test_client.get("/dataset/dist/skins/ui/oxide/skin.min.css")
+    assert response.status_code == 200
+    assert "text/css" in response.headers["Content-Type"]
