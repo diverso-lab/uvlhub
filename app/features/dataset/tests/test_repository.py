@@ -23,3 +23,31 @@ def test_count_synchronized_only_counts_datasets_with_a_doi(test_app, clean_data
 
     assert repo.count_synchronized_datasets() == 1
     assert repo.count_unsynchronized_datasets() == 1
+
+
+def test_dataset_version_lineage(test_app, clean_database):
+    user = UserRepository().create(email="lineage@example.com", password="pw-123456")
+    repo = DataSetRepository()
+
+    def make(version, origin_id=None):
+        meta = DSMetaDataRepository().create(
+            title=f"v{version}", description="d", publication_type=PublicationType.BOOK
+        )
+        return repo.create(
+            user_id=user.id, ds_meta_data_id=meta.id, dataset_version=version, dataset_origin_id=origin_id
+        )
+
+    v1 = make(1)
+    v2 = make(2, origin_id=v1.id)
+    v3 = make(3, origin_id=v2.id)
+
+    # Originals have version 1 and no origin.
+    assert v1.dataset_version == 1
+    assert v1.dataset_origin_id is None
+    # Each version points back at the one it was derived from.
+    assert v3.dataset_origin.id == v2.id
+    assert v2.dataset_origin.id == v1.id
+    # version_root() walks the chain back to the first version.
+    assert v3.version_root().id == v1.id
+    # The backref exposes the versions derived from a dataset.
+    assert [d.id for d in v1.dataset_versions] == [v2.id]

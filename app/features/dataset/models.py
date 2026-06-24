@@ -108,6 +108,27 @@ class DataSet(db.Model):
 
     feature_model_count = db.Column(db.Integer, nullable=False, default=0)
 
+    # Versioning / lineage: replacing a UVL on a published dataset creates a new
+    # dataset (a new version) that points at the one it was derived from via
+    # dataset_origin_id, so the history stays navigable (mirrors Zenodo's
+    # concept-DOI version chain). Version 1 with origin=None is an original.
+    dataset_version = db.Column(db.Integer, nullable=False, default=1)
+    dataset_origin_id = db.Column(db.Integer, db.ForeignKey("datasets.id"), nullable=True)
+    dataset_origin = db.relationship(
+        "DataSet",
+        remote_side=[id],
+        backref=db.backref("dataset_versions", lazy=True),
+    )
+
+    def version_root(self) -> "DataSet":
+        """Walk back up the lineage to the first version (origin=None)."""
+        node = self
+        seen = {node.id}
+        while node.dataset_origin is not None and node.dataset_origin.id not in seen:
+            node = node.dataset_origin
+            seen.add(node.id)
+        return node
+
     def name(self) -> str:
         return self.ds_meta_data.title
 
@@ -182,6 +203,8 @@ class DataSet(db.Model):
             "publication_type": self.get_cleaned_publication_type(),
             "publication_doi": self.ds_meta_data.publication_doi,
             "dataset_doi": self.ds_meta_data.dataset_doi,
+            "dataset_version": self.dataset_version,
+            "dataset_origin_id": self.dataset_origin_id,
             "metadata_synced": self.ds_meta_data.metadata_synced,
             "tags": self.ds_meta_data.tags.split(",") if self.ds_meta_data.tags else [],
             "url": self.get_uvlhub_doi(),
