@@ -383,6 +383,83 @@ class DataSetService(BaseService):
         hubfile_created.send(hubfile, hubfile_id=hubfile.id, path=dest_path)
         return hubfile
 
+    def create_new_version(self, dataset: DataSet, file_storage, current_user, zenodo_service):
+        """Publish a new version of a published dataset with a replaced UVL.
+
+        Uses Zenodo's newversion action so the new version gets its own DOI within
+        the same concept lineage, and records a new local dataset linked to the
+        previous one via dataset_origin_id. Drafts are replaced in place instead.
+        """
+        meta = dataset.ds_meta_data
+        if not (meta.dataset_doi and meta.deposition_id):
+            raise DatasetMetadataUpdateError(
+                "Only published datasets are versioned. Replace the file directly for drafts."
+            )
+        if not (file_storage and file_storage.filename and file_storage.filename.lower().endswith(".uvl")):
+            raise DatasetMetadataValidationError("A .uvl file is required.")
+
+        new_dataset = self._clone_as_new_version(dataset, current_user)
+        self._attach_uvl_file(new_dataset, file_storage)
+
+        new_deposition_id = zenodo_service.create_new_version_draft(meta.deposition_id)
+        zenodo_service.delete_all_deposition_files(new_deposition_id)
+        zip_path = self.zip_dataset(new_dataset)
+        try:
+            zenodo_service.upload_zip(new_dataset, new_deposition_id, zip_path)
+        finally:
+            if zip_path and os.path.exists(zip_path):
+                shutil.rmtree(os.path.dirname(zip_path), ignore_errors=True)
+
+        new_metadata = zenodo_service.build_metadata(
+            new_dataset, anonymous=bool(meta.dataset_anonymous), version=new_dataset.dataset_version
+        )
+        zenodo_service.update_draft_metadata(new_deposition_id, new_metadata)
+        zenodo_service.publish_deposition(new_deposition_id)
+        new_doi = zenodo_service.get_doi(new_deposition_id)
+        if not new_doi:
+            raise DatasetMetadataUpdateError("Zenodo did not return a DOI for the new version.")
+
+        new_dataset.ds_meta_data.deposition_id = new_deposition_id
+        new_dataset.ds_meta_data.dataset_doi = new_doi
+        new_dataset.ds_meta_data.metadata_synced = True
+        self.repository.session.commit()
+        return new_dataset
+
+    def _clone_as_new_version(self, source: DataSet, current_user) -> DataSet:
+        src = source.ds_meta_data
+        new_meta = DSMetaDataService().create(
+            title=src.title,
+            description=src.description,
+            publication_type=src.publication_type,
+            publication_doi=src.publication_doi,
+            tags=src.tags,
+            dataset_anonymous=src.dataset_anonymous,
+            metadata_synced=True,
+        )
+        author_service = AuthorService()
+        for author in src.authors:
+            author_service.create(
+                ds_meta_data_id=new_meta.id, name=author.name, affiliation=author.affiliation, orcid=author.orcid
+            )
+        return self.repository.create(
+            user_id=current_user.id,
+            ds_meta_data_id=new_meta.id,
+            dataset_version=(source.dataset_version or 1) + 1,
+            dataset_origin_id=source.id,
+        )
+
+    def _attach_uvl_file(self, dataset: DataSet, file_storage) -> None:
+        from app.features.featuremodel.services import FeatureModelService
+
+        stage_dir = tempfile.mkdtemp()
+        try:
+            file_storage.save(os.path.join(stage_dir, secure_filename(file_storage.filename)))
+            created = FeatureModelService().create_from_uvl_files(dataset, base_dir=stage_dir)
+            dataset.feature_model_count = len(created)
+            self.repository.session.commit()
+        finally:
+            shutil.rmtree(stage_dir, ignore_errors=True)
+
     def _replace_authors_from_form(self, dataset: DataSet, form_data) -> None:
         authors = self._parse_authors_from_form(form_data)
         seen_author_keys = set()

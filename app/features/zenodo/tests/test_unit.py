@@ -172,3 +172,43 @@ def test_update_deposition_edits_updates_and_publishes(mock_request):
 
     assert result == {"id": 9}
     assert mock_request.call_count == 3
+
+
+def test_build_metadata_includes_version_when_provided():
+    metadata = ZenodoService().build_metadata(_dataset(), version="3")
+
+    assert metadata["version"] == "3"
+
+
+@patch("app.features.zenodo.services.requests.request")
+def test_create_new_version_draft_returns_new_deposition_id(mock_request):
+    mock_request.return_value = _response(
+        201, {"links": {"latest_draft": "https://sandbox.zenodo.org/api/deposit/depositions/777"}}
+    )
+
+    assert ZenodoService().create_new_version_draft(111) == 777
+
+
+@patch("app.features.zenodo.services.requests.request")
+def test_create_new_version_draft_raises_without_latest_draft(mock_request):
+    mock_request.return_value = _response(201, {"links": {}})
+
+    with pytest.raises(Exception, match="latest_draft"):
+        ZenodoService().create_new_version_draft(111)
+
+
+@patch("app.features.zenodo.services.requests.request")
+def test_delete_all_deposition_files_deletes_every_file(mock_request):
+    mock_request.side_effect = [_response(200, [{"id": "a"}, {"id": "b"}]), _response(204), _response(204)]
+
+    ZenodoService().delete_all_deposition_files(5)
+
+    assert mock_request.call_count == 3
+
+
+@patch("app.features.zenodo.services.requests.request")
+def test_update_draft_metadata_raises_on_error(mock_request):
+    mock_request.return_value = _response(400, {"error": "bad"})
+
+    with pytest.raises(Exception):
+        ZenodoService().update_draft_metadata(5, {"title": "x"})

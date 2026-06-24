@@ -359,3 +359,58 @@ def test_replace_hubfile_validation_error_returns_400(test_client):
     assert response.status_code == 400
     assert ".uvl" in response.get_json()["message"]
     test_client.get("/logout", follow_redirects=True)
+
+
+# --- New version route ---------------------------------------------------
+
+
+def test_new_version_requires_login(test_client):
+    test_client.get("/logout", follow_redirects=True)
+    response = test_client.post("/dataset/1/new-version")
+    assert response.status_code == 302
+
+
+def test_new_version_forbidden_for_non_owner(test_client):
+    _login(test_client)
+    with patch.object(dataset_routes.dataset_service, "get_or_404", return_value=MagicMock(user_id=999999)):
+        response = test_client.post("/dataset/1/new-version")
+    assert response.status_code == 403
+    test_client.get("/logout", follow_redirects=True)
+
+
+def test_new_version_success_returns_doi(test_client):
+    _login(test_client)
+    owned = MagicMock(user_id=_test_user_id(test_client))
+    new_dataset = MagicMock(id=42, dataset_version=2)
+    new_dataset.ds_meta_data.dataset_doi = "10.5072/zenodo.999"
+    with (
+        patch.object(dataset_routes.dataset_service, "get_or_404", return_value=owned),
+        patch.object(dataset_routes.dataset_service, "create_new_version", return_value=new_dataset),
+    ):
+        response = test_client.post(
+            "/dataset/1/new-version",
+            data={"file": (io.BytesIO(b"features\n    Root"), "v2.uvl")},
+            content_type="multipart/form-data",
+        )
+    assert response.status_code == 200
+    body = response.get_json()
+    assert body["dataset_id"] == 42
+    assert body["doi"] == "10.5072/zenodo.999"
+    assert body["version"] == 2
+    test_client.get("/logout", follow_redirects=True)
+
+
+def test_new_version_validation_error_returns_400(test_client):
+    _login(test_client)
+    owned = MagicMock(user_id=_test_user_id(test_client))
+    with (
+        patch.object(dataset_routes.dataset_service, "get_or_404", return_value=owned),
+        patch.object(
+            dataset_routes.dataset_service,
+            "create_new_version",
+            side_effect=DatasetMetadataValidationError("A .uvl file is required."),
+        ),
+    ):
+        response = test_client.post("/dataset/1/new-version", data={}, content_type="multipart/form-data")
+    assert response.status_code == 400
+    test_client.get("/logout", follow_redirects=True)

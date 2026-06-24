@@ -317,6 +317,34 @@ def replace_hubfile(dataset_id, hubfile_id):
     return jsonify({"message": "UVL replaced successfully"}), 200
 
 
+@dataset_bp.route("/dataset/<int:dataset_id>/new-version", methods=["POST"])
+@login_required
+def new_dataset_version(dataset_id):
+    dataset = dataset_service.get_or_404(dataset_id)
+    if dataset.user_id != current_user.id:
+        abort(403)
+    try:
+        new_dataset = dataset_service.create_new_version(
+            dataset, request.files.get("file"), current_user, zenodo_service=zenodo_service
+        )
+    except (DatasetMetadataValidationError, DatasetMetadataUpdateError) as exc:
+        return jsonify({"message": str(exc)}), 400
+    except Exception as exc:  # noqa: BLE001 - surface Zenodo/versioning failures to the client
+        logger.exception("[NEW VERSION] Unexpected error for dataset %s", dataset_id)
+        return jsonify({"message": f"Unexpected error creating the new version: {exc}"}), 400
+    return (
+        jsonify(
+            {
+                "message": "New version published to Zenodo.",
+                "dataset_id": new_dataset.id,
+                "doi": new_dataset.ds_meta_data.dataset_doi,
+                "version": new_dataset.dataset_version,
+            }
+        ),
+        200,
+    )
+
+
 @dataset_bp.route("/datasets/list", methods=["GET"])
 @login_required
 def list_dataset():

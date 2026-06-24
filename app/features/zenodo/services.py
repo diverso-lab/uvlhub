@@ -176,7 +176,7 @@ class ZenodoService:
             raise Exception("Failed to get depositions")
         return response.json()
 
-    def build_metadata(self, dataset: DataSet, anonymous: bool = False) -> dict:
+    def build_metadata(self, dataset: DataSet, anonymous: bool = False, version: str = None) -> dict:
         pub_type = dataset.ds_meta_data.publication_type.value if dataset.ds_meta_data.publication_type else None
 
         upload_type = "dataset" if pub_type == "none" else "publication"
@@ -200,7 +200,7 @@ class ZenodoService:
             else dataset.ds_meta_data.tags.replace(", ", ",").split(",") + ["uvlhub"]
         )
 
-        return {
+        metadata = {
             "title": dataset.ds_meta_data.title,
             "upload_type": upload_type,
             "publication_type": publication_type,
@@ -210,6 +210,12 @@ class ZenodoService:
             "access_right": "open",
             "license": "CC-BY-4.0",
         }
+
+        version_tag = version if version is not None else getattr(dataset, "dataset_version", None)
+        if version_tag:
+            metadata["version"] = str(version_tag)
+
+        return metadata
 
     def create_new_deposition(self, dataset: DataSet, anonymous: bool = False) -> dict:
         """
@@ -401,6 +407,66 @@ class ZenodoService:
             str: The DOI of the deposition.
         """
         return self.get_deposition(deposition_id).get("doi")
+
+    def create_new_version_draft(self, prev_deposition_id: int) -> int:
+        """Create a new-version draft of a published deposition (newversion action).
+
+        Zenodo copies the previous version's files into the draft and returns it
+        under links.latest_draft. Returns the new draft deposition id.
+        """
+        url = f"{self.ZENODO_API_URL}/{prev_deposition_id}/actions/newversion"
+        response = self._request(
+            "POST", url, "Zenodo is currently unavailable.", params=self.params, headers=self.headers
+        )
+        self._raise_for_zenodo_response(
+            response,
+            expected_status=201,
+            failure_message="Failed to create new version draft on Zenodo",
+            unavailable_message="Zenodo is currently unavailable.",
+        )
+        latest_draft_url = response.json().get("links", {}).get("latest_draft")
+        if not latest_draft_url:
+            raise Exception("Zenodo did not return a latest_draft URL for the new version.")
+        new_deposition_id = int(latest_draft_url.rstrip("/").split("/")[-1])
+        logger.info(f"[ZENODO] New version draft {new_deposition_id} created from {prev_deposition_id}")
+        return new_deposition_id
+
+    def delete_all_deposition_files(self, deposition_id: int) -> None:
+        """Delete every file on a draft (clears the files copied from the previous version)."""
+        files_url = f"{self.ZENODO_API_URL}/{deposition_id}/files"
+        response = self._request(
+            "GET", files_url, "Zenodo is currently unavailable.", params=self.params, headers=self.headers
+        )
+        if response.status_code != 200:
+            logger.warning(f"[ZENODO] Could not list files for deposition {deposition_id}: {response.status_code}")
+            return
+        for entry in response.json():
+            file_id = entry.get("id")
+            if not file_id:
+                continue
+            del_response = self._request(
+                "DELETE", f"{files_url}/{file_id}", "Zenodo is currently unavailable.", params=self.params
+            )
+            if del_response.status_code not in (200, 204):
+                logger.warning(f"[ZENODO] Failed to delete file {file_id}: {del_response.status_code}")
+
+    def update_draft_metadata(self, deposition_id: int, metadata: dict) -> None:
+        """Set metadata on an editable draft (no edit/publish cycle needed)."""
+        url = f"{self.ZENODO_API_URL}/{deposition_id}"
+        response = self._request(
+            "PUT",
+            url,
+            "Zenodo is currently unavailable.",
+            params=self.params,
+            json={"metadata": metadata},
+            headers=self.headers,
+        )
+        self._raise_for_zenodo_response(
+            response,
+            expected_status=200,
+            failure_message="Failed to update metadata on new version draft",
+            unavailable_message="Zenodo is currently unavailable.",
+        )
 
 
 class ZenodoDatasetService:

@@ -438,3 +438,63 @@ def test_replace_hubfile_overwrites_content_and_resignals():
     service.repository.session.commit.assert_called_once()
     mock_send.assert_called_once()
     assert result is hubfile
+
+
+def test_create_new_version_rejects_draft():
+    service = DataSetService()
+    dataset = _mock_dataset_for_edit()
+    dataset.ds_meta_data.dataset_doi = None
+    dataset.ds_meta_data.deposition_id = None
+
+    with pytest.raises(DatasetMetadataUpdateError, match="Only published"):
+        service.create_new_version(dataset, MagicMock(filename="a.uvl"), MagicMock(), zenodo_service=MagicMock())
+
+
+def test_create_new_version_requires_uvl_extension():
+    service = DataSetService()
+    dataset = _mock_dataset_for_edit()
+    dataset.ds_meta_data.dataset_doi = "10.5072/zenodo.1"
+    dataset.ds_meta_data.deposition_id = 111
+
+    with pytest.raises(DatasetMetadataValidationError, match=".uvl"):
+        service.create_new_version(dataset, MagicMock(filename="a.txt"), MagicMock(), zenodo_service=MagicMock())
+
+
+def test_create_new_version_creates_linked_dataset(test_app, clean_database):
+    import io
+
+    from werkzeug.datastructures import FileStorage
+
+    from app.features.auth.repositories import UserRepository
+    from app.features.dataset.models import PublicationType
+    from app.features.dataset.repositories import DataSetRepository, DSMetaDataRepository
+
+    user = UserRepository().create(email="version@example.com", password="pw-123456")
+    meta = DSMetaDataRepository().create(
+        title="Original",
+        description="d",
+        publication_type=PublicationType.BOOK,
+        dataset_doi="10.5072/zenodo.111",
+        deposition_id=111,
+    )
+    old = DataSetRepository().create(user_id=user.id, ds_meta_data_id=meta.id, dataset_version=1)
+
+    zenodo = MagicMock()
+    zenodo.create_new_version_draft.return_value = 222
+    zenodo.build_metadata.return_value = {"title": "Original", "version": "2"}
+    zenodo.get_doi.return_value = "10.5072/zenodo.222"
+
+    file_storage = FileStorage(
+        stream=io.BytesIO(b"features\n    Root\n        mandatory\n            A\n"), filename="v2.uvl"
+    )
+
+    new = DataSetService().create_new_version(old, file_storage, user, zenodo_service=zenodo)
+
+    assert new.id != old.id
+    assert new.dataset_version == 2
+    assert new.dataset_origin_id == old.id
+    assert new.ds_meta_data.dataset_doi == "10.5072/zenodo.222"
+    assert new.ds_meta_data.deposition_id == 222
+    zenodo.create_new_version_draft.assert_called_once_with(111)
+    zenodo.delete_all_deposition_files.assert_called_once_with(222)
+    zenodo.publish_deposition.assert_called_once_with(222)
