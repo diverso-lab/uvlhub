@@ -54,19 +54,22 @@ def test_generator_landing_shows_both_cards():
         body = driver.find_element(By.TAG_NAME, "body").text
         assert "Random generator" in body
         assert "LLM generator" in body
-        assert "Coming soon" in body
+        # The two cards advertise their status.
+        assert "Available" in body
+        assert "Experimental" in body
     finally:
         close_driver(driver)
 
 
-def test_llm_placeholder_page_reachable():
+def test_llm_page_reachable():
     driver = initialize_driver()
     try:
         host = get_host_for_selenium_testing()
         driver.get(f"{host}/generator/llm")
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.TAG_NAME, "h1")))
         body = driver.find_element(By.TAG_NAME, "body").text
-        assert "Coming soon" in body
+        assert "LLM" in body
+        assert "Generate variants" in body
     finally:
         close_driver(driver)
 
