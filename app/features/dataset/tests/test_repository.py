@@ -51,6 +51,11 @@ def test_dataset_version_lineage(test_app, clean_database):
     assert v3.version_root().id == v1.id
     # The backref exposes the versions derived from a dataset.
     assert [d.id for d in v1.dataset_versions] == [v2.id]
+    # all_versions() returns the whole chain oldest-first from any node.
+    assert [d.id for d in v3.all_versions()] == [v1.id, v2.id, v3.id]
+    assert [d.id for d in v1.all_versions()] == [v1.id, v2.id, v3.id]
+    assert v1.has_versions() is True
+    assert v3.has_versions() is True
 
 
 def test_get_synchronized_by_user_returns_only_latest_versions(test_app, clean_database):
@@ -77,3 +82,5 @@ def test_get_synchronized_by_user_returns_only_latest_versions(test_app, clean_d
     assert standalone.id in ids
     assert v1.id not in ids
     assert v2.id not in ids
+    # A dataset with no lineage reports no versions.
+    assert standalone.has_versions() is False

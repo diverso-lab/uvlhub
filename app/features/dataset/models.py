@@ -129,6 +129,23 @@ class DataSet(db.Model):
             seen.add(node.id)
         return node
 
+    def all_versions(self) -> List["DataSet"]:
+        """Return the whole version lineage, oldest first (linear chain)."""
+        node = self.version_root()
+        chain = [node]
+        seen = {node.id}
+        while node.dataset_versions:
+            nxt = node.dataset_versions[0]
+            if nxt.id in seen:
+                break
+            chain.append(nxt)
+            seen.add(nxt.id)
+            node = nxt
+        return chain
+
+    def has_versions(self) -> bool:
+        return self.dataset_origin_id is not None or bool(self.dataset_versions)
+
     def name(self) -> str:
         return self.ds_meta_data.title
 

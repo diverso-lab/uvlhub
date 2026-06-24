@@ -153,6 +153,31 @@
                 </div>
                 {% endif %}
 
+                {% if dataset.has_versions() %}
+                {% set versions = dataset.all_versions() %}
+                <div class="mb-4">
+                    <label class="form-label fs-7 fw-bold text-muted text-uppercase mb-2">
+                        Versions <span class="text-gray-500 fw-normal">({{ versions|length }})</span>
+                    </label>
+                    <div class="d-flex flex-column gap-2">
+                        {% for v in versions|reverse %}
+                        <div class="d-flex align-items-center gap-2 fs-7">
+                            <span class="badge {% if v.id == dataset.id %}badge-primary{% else %}badge-light{% endif %}">v{{ v.dataset_version }}</span>
+                            {% if v.id == dataset.id %}
+                                <span class="fw-bold text-gray-900">This version</span>
+                            {% elif v.ds_meta_data.dataset_doi %}
+                                <a href="{{ url_for('dataset.subdomain_index', doi=v.ds_meta_data.dataset_doi) }}" class="text-gray-800">{{ v.ds_meta_data.title }}</a>
+                            {% else %}
+                                <span class="text-gray-800">{{ v.ds_meta_data.title }}</span>
+                            {% endif %}
+                            <span class="text-gray-400">·</span>
+                            <span class="text-muted">{{ v.created_at.strftime('%b %d, %Y') }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
                 {# Actions — primary download + icon-only secondary actions #}
                 <label class="form-label fs-7 fw-bold text-muted text-uppercase mb-2">Actions</label>
                 <div class="d-flex flex-wrap align-items-center gap-1">
