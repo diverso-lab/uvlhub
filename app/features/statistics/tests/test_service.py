@@ -29,7 +29,9 @@ def test_refresh_statistics_rebuilds_counters_from_records(_enqueue, test_app, c
     )
     dataset = DataSetRepository().create(user_id=user.id, ds_meta_data_id=meta.id)
     feature_model = FeatureModelRepository().create(dataset_id=dataset.id)
-    hubfile = HubfileRepository().create(name="stats.uvl", checksum="abc", size=123, feature_model_id=feature_model.id)
+    hubfile = HubfileRepository().create(
+        name="stats.uvl", checksum="abc", size=123, feature_model_id=feature_model.id, dataset_id=dataset.id
+    )
 
     DSViewRecordRepository().create(dataset_id=dataset.id, view_cookie="view-1")
     DSViewRecordRepository().create(dataset_id=dataset.id, view_cookie="view-2")
@@ -56,7 +58,9 @@ def test_refresh_statistics_excludes_private_datasets(_enqueue, test_app, clean_
     )
     public_ds = DataSetRepository().create(user_id=user.id, ds_meta_data_id=public_meta.id)
     public_fm = FeatureModelRepository().create(dataset_id=public_ds.id)
-    public_hubfile = HubfileRepository().create(name="public.uvl", checksum="p", size=1, feature_model_id=public_fm.id)
+    public_hubfile = HubfileRepository().create(
+        name="public.uvl", checksum="p", size=1, feature_model_id=public_fm.id, dataset_id=public_ds.id
+    )
     DSViewRecordRepository().create(dataset_id=public_ds.id, view_cookie="pub-v")
     DSDownloadRecordRepository().create(dataset_id=public_ds.id, download_cookie="pub-d")
     HubfileViewRecordRepository().create(file_id=public_hubfile.id, view_cookie="pub-fv")
@@ -67,7 +71,9 @@ def test_refresh_statistics_excludes_private_datasets(_enqueue, test_app, clean_
     )
     private_ds = DataSetRepository().create(user_id=user.id, ds_meta_data_id=private_meta.id)
     private_fm = FeatureModelRepository().create(dataset_id=private_ds.id)
-    private_hubfile = HubfileRepository().create(name="priv.uvl", checksum="pr", size=1, feature_model_id=private_fm.id)
+    private_hubfile = HubfileRepository().create(
+        name="priv.uvl", checksum="pr", size=1, feature_model_id=private_fm.id, dataset_id=private_ds.id
+    )
     DSViewRecordRepository().create(dataset_id=private_ds.id, view_cookie="priv-v")
     DSDownloadRecordRepository().create(dataset_id=private_ds.id, download_cookie="priv-d")
     HubfileViewRecordRepository().create(file_id=private_hubfile.id, view_cookie="priv-fv")

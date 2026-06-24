@@ -5,6 +5,28 @@ import pytz
 from app import db
 
 
+class FactLabel(db.Model):
+    """The computed fact label (JSON) for a hubfile.
+
+    UVL-domain data, stored in its own table keyed 1:1 by hubfile_id rather than
+    as a column on the generic ``hubfiles`` table. Set for both light and full
+    fact-label runs (unlike HubfileMetrics, which only the full run populates).
+    """
+
+    __tablename__ = "hubfile_factlabel"
+
+    hubfile_id = db.Column(db.Integer, db.ForeignKey("hubfiles.id", ondelete="CASCADE"), primary_key=True)
+    factlabel_json = db.Column(db.Text, nullable=True)
+
+    hubfile = db.relationship(
+        "Hubfile",
+        backref=db.backref("factlabel", uselist=False, cascade="all, delete-orphan"),
+    )
+
+    def __repr__(self):
+        return f"<FactLabel hubfile_id={self.hubfile_id}>"
+
+
 class HubfileMetrics(db.Model):
     """Materialised fact-label metrics for a hubfile.
 

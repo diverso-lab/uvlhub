@@ -24,7 +24,7 @@ def test_creating_a_hubfile_fans_out_to_the_domain_via_signal(test_client):
     fm = FeatureModelRepository().create(dataset_id=dataset.id)
 
     with patch("app.managers.task_queue_manager.TaskQueueManager.enqueue_task") as enqueue:
-        HubfileRepository().create(name="t.uvl", checksum="1", size=1, feature_model_id=fm.id)
+        HubfileRepository().create(name="t.uvl", checksum="1", size=1, feature_model_id=fm.id, dataset_id=dataset.id)
 
     enqueued_tasks = [call.args[0] for call in enqueue.call_args_list]
     assert "app.features.flamapy.tasks.transform_uvl" in enqueued_tasks

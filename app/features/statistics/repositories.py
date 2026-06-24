@@ -74,17 +74,10 @@ class StatisticsRepository(BaseRepository):
         synchronized_dataset_ids = (
             self.session.query(DataSet.id).join(DSMetaData).filter(DSMetaData.dataset_doi.isnot(None)).scalar_subquery()
         )
-        synchronized_featuremodel_ids = (
-            self.session.query(FeatureModel.id)
-            .filter(FeatureModel.dataset_id.in_(synchronized_dataset_ids))
-            .scalar_subquery()
-        )
         from app.features.hubfile.models import Hubfile
 
         synchronized_hubfile_ids = (
-            self.session.query(Hubfile.id)
-            .filter(Hubfile.feature_model_id.in_(synchronized_featuremodel_ids))
-            .scalar_subquery()
+            self.session.query(Hubfile.id).filter(Hubfile.dataset_id.in_(synchronized_dataset_ids)).scalar_subquery()
         )
 
         return {

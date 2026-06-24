@@ -100,9 +100,10 @@ class DataSetSeeder(BaseSeeder):
 
             uvl_file = Hubfile(
                 name=file_name,
-                checksum=f"checksum{i+1}",  # Puedes calcularlo si quieres con hashlib
+                checksum=f"checksum{i+1}",
                 size=os.path.getsize(dest_path),
                 feature_model_id=feature_model.id,
+                dataset_id=feature_model.dataset_id,
             )
 
             self.seed([uvl_file])

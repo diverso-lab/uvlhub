@@ -21,7 +21,7 @@ def test_create_from_file_persists_a_hubfile(test_app, clean_database, tmp_path)
     path = tmp_path / "model.uvl"
     path.write_text("features\n    Root")
 
-    hubfile = HubfileService().create_from_file(feature_model.id, str(path))
+    hubfile = HubfileService().create_from_file(feature_model.id, feature_model.dataset_id, str(path))
 
     assert hubfile.id is not None
     assert hubfile.name == "model.uvl"
@@ -30,4 +30,4 @@ def test_create_from_file_persists_a_hubfile(test_app, clean_database, tmp_path)
 
 def test_create_from_file_raises_for_a_missing_file(test_app, clean_database):
     with pytest.raises(FileNotFoundError):
-        HubfileService().create_from_file(1, "/nonexistent/model.uvl")
+        HubfileService().create_from_file(1, 1, "/nonexistent/model.uvl")

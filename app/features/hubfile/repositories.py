@@ -7,7 +7,6 @@ from splent_framework.repositories.BaseRepository import BaseRepository
 from app import db
 from app.features.auth.models import User
 from app.features.dataset.models import DataSet
-from app.features.featuremodel.models import FeatureModel
 from app.features.hubfile.models import Hubfile, HubfileDownloadRecord, HubfileViewRecord
 
 
@@ -18,15 +17,14 @@ class HubfileRepository(BaseRepository):
     def get_owner_user_by_hubfile(self, hubfile: Hubfile) -> User:
         return (
             db.session.query(User)
-            .join(DataSet)
-            .join(FeatureModel)
-            .join(Hubfile)
+            .join(DataSet, DataSet.user_id == User.id)
+            .join(Hubfile, Hubfile.dataset_id == DataSet.id)
             .filter(Hubfile.id == hubfile.id)
             .first()
         )
 
     def get_dataset_by_hubfile(self, hubfile: Hubfile) -> DataSet:
-        return db.session.query(DataSet).join(FeatureModel).join(Hubfile).filter(Hubfile.id == hubfile.id).first()
+        return db.session.get(DataSet, hubfile.dataset_id)
 
     def get_by_ids(self, ids: list[int]) -> list[Hubfile]:
         return self.model.query.filter(self.model.id.in_(ids)).all()

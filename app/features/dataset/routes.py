@@ -1154,7 +1154,7 @@ def api_file_raw(file_id):
     if not file:
         return jsonify({"error": "File not found"}), 404
 
-    dataset = file.feature_model.dataset
+    dataset = file.dataset
 
     file_path = os.path.join(
         current_app.root_path,

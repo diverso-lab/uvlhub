@@ -2,6 +2,7 @@ import json
 import logging
 
 from app import create_app, db
+from app.features.factlabel.models import FactLabel
 from app.features.factlabel.services import FactlabelService
 from app.features.hubfile.models import Hubfile
 
@@ -22,9 +23,10 @@ def compute_factlabel(hubfile_id: int, light_fact_label: bool = False):
                 return
 
             content = FactlabelService().get_characterization(hubfile, light_fact_label=light_fact_label)
-            hubfile.factlabel_json = json.dumps(content)
+            factlabel = db.session.get(FactLabel, hubfile_id) or FactLabel(hubfile_id=hubfile_id)
+            factlabel.factlabel_json = json.dumps(content)
 
-            db.session.add(hubfile)
+            db.session.add(factlabel)
             db.session.commit()
             logger.info(f"[FACTLABEL] FactLabel computed and stored for Hubfile {hubfile_id}")
 

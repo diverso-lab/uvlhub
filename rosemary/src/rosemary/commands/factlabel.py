@@ -29,14 +29,13 @@ from app.features.factlabel.tasks import compute_factlabel
 @with_appcontext
 def factlabel_generate(force, light, timeout):
     from app import db
+    from app.features.factlabel.models import FactLabel
     from app.features.hubfile.models import Hubfile
     from app.managers.task_queue_manager import TaskQueueManager
 
     if force:
         click.echo(click.style("🗑️ Deleting all existing FactLabels...", fg="cyan"))
-        updated = Hubfile.query.filter(Hubfile.factlabel_json.isnot(None)).update(
-            {Hubfile.factlabel_json: None}, synchronize_session=False
-        )
+        updated = FactLabel.query.delete()
         db.session.commit()
         click.echo(click.style(f"✅ Cleared FactLabels for {updated} hubfiles.", fg="yellow"))
 
@@ -44,7 +43,11 @@ def factlabel_generate(force, light, timeout):
         click.echo(click.style(f"🔄 Regenerating FactLabels for {len(hubfiles)} hubfiles.", fg="cyan"))
     else:
         click.echo(click.style("🔎 Looking for hubfiles without FactLabel...", fg="cyan"))
-        hubfiles = Hubfile.query.filter((Hubfile.factlabel_json.is_(None)) | (Hubfile.factlabel_json == "")).all()
+        hubfiles = (
+            Hubfile.query.outerjoin(FactLabel, FactLabel.hubfile_id == Hubfile.id)
+            .filter((FactLabel.hubfile_id.is_(None)) | (FactLabel.factlabel_json == ""))
+            .all()
+        )
 
         if not hubfiles:
             click.echo(click.style("✅ All hubfiles already have FactLabels!", fg="green"))
@@ -78,9 +81,14 @@ def factlabel_generate(force, light, timeout):
 )
 @with_appcontext
 def factlabel_pending():
+    from app.features.factlabel.models import FactLabel
     from app.features.hubfile.models import Hubfile
 
-    missing = Hubfile.query.filter((Hubfile.factlabel_json.is_(None)) | (Hubfile.factlabel_json == "")).count()
+    missing = (
+        Hubfile.query.outerjoin(FactLabel, FactLabel.hubfile_id == Hubfile.id)
+        .filter((FactLabel.hubfile_id.is_(None)) | (FactLabel.factlabel_json == ""))
+        .count()
+    )
 
     if missing == 0:
         click.echo(click.style("✅ No pending FactLabels. All hubfiles are up to date!", fg="green"))

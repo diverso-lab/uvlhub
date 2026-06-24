@@ -42,7 +42,7 @@ class FeatureModelService(BaseService):
             logger.info(f"[FM] Moved {filename} to {dest_path}")
 
             feature_model = self.repository.create(commit=False, dataset_id=dataset.id)
-            hubfile = self.hubfile_service.create_from_file(feature_model.id, dest_path)
+            hubfile = self.hubfile_service.create_from_file(feature_model.id, dataset.id, dest_path)
             logger.info(f"[FM] Hubfile {hubfile.id} created for FeatureModel {feature_model.id}")
 
             created_models.append(feature_model)

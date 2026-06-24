@@ -5,7 +5,7 @@ from datetime import datetime
 import pytz
 from dotenv import load_dotenv
 from flask import url_for
-from sqlalchemy import Text, event
+from sqlalchemy import event
 from sqlalchemy.orm import joinedload, object_session
 
 from app import db
@@ -25,9 +25,12 @@ class Hubfile(db.Model):
     checksum = db.Column(db.String(120), nullable=False)
     size = db.Column(db.Integer, nullable=False)
     feature_model_id = db.Column(db.Integer, db.ForeignKey("feature_model.id"), nullable=False)
+    # Generic anchor: a hubfile belongs to its dataset (the container) directly.
+    # feature_model_id is kept as the UVL-domain grouping link.
+    dataset_id = db.Column(db.Integer, db.ForeignKey("datasets.id"), nullable=False, index=True)
 
     feature_model = db.relationship("FeatureModel", back_populates="hubfiles")
-    factlabel_json = db.Column(Text, nullable=True)
+    dataset = db.relationship("DataSet")
 
     def get_formatted_size(self):
         from app.features.dataset.services import SizeService
@@ -58,8 +61,8 @@ class Hubfile(db.Model):
         return os.path.join(
             os.getenv("WORKING_DIR", ""),
             "uploads",
-            f"user_{self.feature_model.dataset.user_id}",
-            f"dataset_{self.feature_model.dataset_id}",
+            f"user_{self.dataset.user_id}",
+            f"dataset_{self.dataset_id}",
             "uvl",
             self.name,
         )
@@ -143,10 +146,10 @@ class HubfileDownloadRecord(db.Model):
 def hubfile_after_insert_listener(mapper, connection, target):
     session = object_session(target)
 
-    hubfile_with_fm = (
-        session.query(Hubfile).options(joinedload(Hubfile.feature_model)).filter(Hubfile.id == target.id).first()
+    hubfile_with_dataset = (
+        session.query(Hubfile).options(joinedload(Hubfile.dataset)).filter(Hubfile.id == target.id).first()
     )
-    path = hubfile_with_fm.get_full_path()
+    path = hubfile_with_dataset.get_full_path()
 
     # Announce the creation; domain features (flamapy, factlabel) subscribe and
     # enqueue their own processing. The hub stays unaware of the UVL domain.

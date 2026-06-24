@@ -389,14 +389,14 @@ class DashboardService:
         much simpler than 10 separate aggregate queries and lets us share
         the same row scan for summaries, histograms and breakdowns.
         """
-        from app.features.factlabel.models import HubfileMetrics
+        from app.features.factlabel.models import FactLabel, HubfileMetrics
         from app.features.hubfile.models import Hubfile
 
         total_hubfiles = db.session.query(func.count(Hubfile.id)).scalar() or 0
         hubfiles_with_factlabel = (
-            db.session.query(func.count(Hubfile.id))
-            .filter(Hubfile.factlabel_json.isnot(None))
-            .filter(Hubfile.factlabel_json != "")
+            db.session.query(func.count(FactLabel.hubfile_id))
+            .filter(FactLabel.factlabel_json.isnot(None))
+            .filter(FactLabel.factlabel_json != "")
             .scalar()
             or 0
         )
@@ -512,20 +512,17 @@ class DashboardService:
     def _top_corpus_by(self, column, extra_filter=None) -> list[DashboardRow]:
         """Top-N hubfiles ordered by `column` desc, joined back to dataset metadata.
 
-        Uses `Hubfile → FeatureModel → DataSet → DSMetaData` to surface a
-        clickable title; the `value` is the raw column value (e.g. number of
-        features) for context.
+        Uses `Hubfile → DataSet → DSMetaData` to surface a clickable title; the
+        `value` is the raw column value (e.g. number of features) for context.
         """
         from app.features.dataset.models import DataSet, DSMetaData
         from app.features.factlabel.models import HubfileMetrics
-        from app.features.featuremodel.models import FeatureModel
         from app.features.hubfile.models import Hubfile
 
         q = (
             db.session.query(Hubfile, DataSet, column)
             .join(HubfileMetrics, HubfileMetrics.hubfile_id == Hubfile.id)
-            .join(FeatureModel, FeatureModel.id == Hubfile.feature_model_id)
-            .join(DataSet, DataSet.id == FeatureModel.dataset_id)
+            .join(DataSet, DataSet.id == Hubfile.dataset_id)
             .join(DSMetaData, DSMetaData.id == DataSet.ds_meta_data_id)
             .filter(HubfileMetrics.parse_error.is_(None))
             .filter(column.isnot(None))
@@ -857,7 +854,6 @@ class CorpusExportService:
         ``yield_per`` so large corpora don't materialise in memory."""
         from app.features.dataset.models import DataSet, DSMetaData
         from app.features.factlabel.models import HubfileMetrics
-        from app.features.featuremodel.models import FeatureModel
         from app.features.hubfile.models import Hubfile
 
         metric_cols = [c for c in self.export_columns() if c not in self._BASE_COLUMNS]
@@ -865,8 +861,7 @@ class CorpusExportService:
         query = (
             db.session.query(HubfileMetrics, Hubfile, DataSet, DSMetaData)
             .join(Hubfile, Hubfile.id == HubfileMetrics.hubfile_id)
-            .join(FeatureModel, FeatureModel.id == Hubfile.feature_model_id)
-            .join(DataSet, DataSet.id == FeatureModel.dataset_id)
+            .join(DataSet, DataSet.id == Hubfile.dataset_id)
             .join(DSMetaData, DSMetaData.id == DataSet.ds_meta_data_id)
             .order_by(HubfileMetrics.hubfile_id)
         )

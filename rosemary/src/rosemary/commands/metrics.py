@@ -26,14 +26,14 @@ def metrics_status():
 
     from app import db
     from app.features.factlabel.metrics_extraction import EXTRACTOR_VERSION
-    from app.features.factlabel.models import HubfileMetrics
+    from app.features.factlabel.models import FactLabel, HubfileMetrics
     from app.features.hubfile.models import Hubfile
 
     total = db.session.query(func.count(Hubfile.id)).scalar() or 0
     with_factlabel = (
-        db.session.query(func.count(Hubfile.id))
-        .filter(Hubfile.factlabel_json.isnot(None))
-        .filter(Hubfile.factlabel_json != "")
+        db.session.query(func.count(FactLabel.hubfile_id))
+        .filter(FactLabel.factlabel_json.isnot(None))
+        .filter(FactLabel.factlabel_json != "")
         .scalar()
         or 0
     )
@@ -92,13 +92,12 @@ def metrics_status():
 def metrics_backfill(force: bool, limit: int | None, batch_size: int):
     from app import db
     from app.features.factlabel.metrics_extraction import EXTRACTOR_VERSION, extract_metrics
-    from app.features.factlabel.models import HubfileMetrics
-    from app.features.hubfile.models import Hubfile
+    from app.features.factlabel.models import FactLabel, HubfileMetrics
 
     base = (
-        db.session.query(Hubfile.id, Hubfile.factlabel_json)
-        .filter(Hubfile.factlabel_json.isnot(None))
-        .filter(Hubfile.factlabel_json != "")
+        db.session.query(FactLabel.hubfile_id, FactLabel.factlabel_json)
+        .filter(FactLabel.factlabel_json.isnot(None))
+        .filter(FactLabel.factlabel_json != "")
     )
 
     if not force:
@@ -109,7 +108,7 @@ def metrics_backfill(force: bool, limit: int | None, batch_size: int):
         from sqlalchemy.orm import aliased
 
         hm = aliased(HubfileMetrics)
-        base = base.outerjoin(hm, hm.hubfile_id == Hubfile.id).filter(
+        base = base.outerjoin(hm, hm.hubfile_id == FactLabel.hubfile_id).filter(
             (hm.hubfile_id.is_(None)) | (hm.extractor_version != EXTRACTOR_VERSION)
         )
 

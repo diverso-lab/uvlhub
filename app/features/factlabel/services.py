@@ -27,10 +27,11 @@ class FactlabelService:
         self.view_record_repository = HubfileViewRecordRepository()
 
     def parse_factlabel(self, hubfile: Hubfile) -> dict:
-        if not hubfile.factlabel_json:
+        factlabel = hubfile.factlabel
+        if not factlabel or not factlabel.factlabel_json:
             raise FactlabelNotReady("FactLabel not ready yet")
         try:
-            return json.loads(hubfile.factlabel_json)
+            return json.loads(factlabel.factlabel_json)
         except (ValueError, TypeError):
             raise InvalidFactlabel("Invalid FactLabel JSON in DB")
 

@@ -118,7 +118,7 @@ def download_file(file_id):
     directory_path = os.path.join(
         "uploads",
         f"user_{user_owner.id}",
-        f"dataset_{hubfile.feature_model.dataset_id}",
+        f"dataset_{hubfile.dataset_id}",
         "uvl",
     )
 
@@ -214,7 +214,7 @@ def raw_uvl(file_id, filename):
     # fmfactlabel.github.io and ide.flamapy.org fetch this endpoint
     # cross-origin — same behaviour as GitHub's raw URLs.
     selected_file = HubfileService().get_or_404(file_id)
-    dataset = selected_file.feature_model.dataset
+    dataset = selected_file.dataset
 
     directory_path = os.path.join("uploads", f"user_{dataset.user_id}", f"dataset_{dataset.id}", "uvl")
     file_path = os.path.join(current_app.root_path, "..", directory_path, selected_file.name)
@@ -241,7 +241,7 @@ def workbench_content(file_id):
     import json as _json
 
     selected_file = HubfileService().get_or_404(file_id)
-    dataset = selected_file.feature_model.dataset
+    dataset = selected_file.dataset
 
     is_public = bool(dataset.ds_meta_data and dataset.ds_meta_data.dataset_doi)
     if not is_public:
@@ -257,9 +257,9 @@ def workbench_content(file_id):
         uvl = f"[Error reading file: {e}]"
 
     factlabel = None
-    if selected_file.factlabel_json:
+    if selected_file.factlabel and selected_file.factlabel.factlabel_json:
         try:
-            factlabel = _json.loads(selected_file.factlabel_json)
+            factlabel = _json.loads(selected_file.factlabel.factlabel_json)
         except Exception:
             factlabel = None
 

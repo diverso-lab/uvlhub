@@ -56,12 +56,12 @@ class HubfileService(BaseService):
     def get_by_ids(self, ids: list[int]) -> list[Hubfile]:
         return self.repository.get_by_ids(ids)
 
-    def create_from_file(self, feature_model_id: int, filepath: str) -> Hubfile:
-        """
-        Create a Hubfile from a .uvl file already placed in the destination directory.
+    def create_from_file(self, feature_model_id: int, dataset_id: int, filepath: str) -> Hubfile:
+        """Create a Hubfile from a .uvl file already placed in the destination directory.
 
         Args:
             feature_model_id (int): ID of the FeatureModel the file belongs to.
+            dataset_id (int): ID of the dataset (container) the file belongs to.
             filepath (str): Full path to the UVL file.
 
         Returns:
@@ -73,6 +73,7 @@ class HubfileService(BaseService):
         return self.repository.create(
             commit=False,
             feature_model_id=feature_model_id,
+            dataset_id=dataset_id,
             name=os.path.basename(filepath),
             size=os.path.getsize(filepath),
             checksum=self._calculate_checksum(filepath),
