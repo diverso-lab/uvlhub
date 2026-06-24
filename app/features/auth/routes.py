@@ -1,21 +1,14 @@
 from flask import flash, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_user, logout_user
-from pymysql import IntegrityError
 
-from app import db
 from app.features.auth import auth_bp
 from app.features.auth.decorators import guest_required
 from app.features.auth.forms import LoginForm, SignupForm
 from app.features.auth.services import AuthenticationService
 from app.features.captcha.services import CaptchaService
-from app.features.confirmemail.services import ConfirmemailService
-from app.features.profile.services import UserProfileService
-from app.managers.task_queue_manager import TaskQueueManager
 
 authentication_service = AuthenticationService()
-user_profile_service = UserProfileService()
 captcha_service = CaptchaService()
-confirmemail_service = ConfirmemailService()
 
 
 @auth_bp.route("/signup/", methods=["GET", "POST"])
@@ -27,32 +20,24 @@ def signup():
     form = SignupForm()
 
     if request.method == "POST" and form.validate_on_submit():
-        email = form.email.data.strip().lower()
-
-        if not authentication_service.is_email_available(email):
-            flash(f"The email '{email}' is already registered.", "danger")
+        if not authentication_service.is_email_available(form.email.data):
+            flash(f"The email '{form.email.data}' is already registered.", "danger")
             return render_template("auth/signup_form.html", form=form, next_url=next_url)
 
-        user_input = request.form.get("captcha", "")
-        if not captcha_service.validate_captcha(user_input):
+        if not captcha_service.validate_captcha(request.form.get("captcha", "")):
             flash("Please complete the CAPTCHA correctly.", "danger")
             return render_template("auth/signup_form.html", form=form, next_url=next_url)
 
         try:
             user = authentication_service.create_with_profile(**form.data)
-            login_user(user, remember=True)
-            flash("Account created successfully. Welcome!", "success")
+        except ValueError as exc:
+            flash(str(exc), "danger")
+            return render_template("auth/signup_form.html", form=form, next_url=next_url)
 
-            print(">>> SIGNUP reached end: before enqueuing email", flush=True)
-
-            task_manager = TaskQueueManager()
-            task_manager.enqueue_task("app.features.auth.tasks.send_confirmation_email", email=user.email, timeout=10)
-
-            return redirect(next_url or url_for("public.index"))
-
-        except IntegrityError:
-            db.session.rollback()
-            flash("An error occurred while creating your account.", "danger")
+        login_user(user, remember=True)
+        flash("Account created successfully. Welcome!", "success")
+        authentication_service.enqueue_confirmation_email(user.email)
+        return redirect(next_url or url_for("public.index"))
 
     return render_template("auth/signup_form.html", form=form, next_url=next_url)
 

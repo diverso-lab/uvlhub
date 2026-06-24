@@ -2,7 +2,7 @@ from flask import flash, redirect, render_template, url_for
 from flask_login import login_user
 
 from app.features.confirmemail import confirmemail_bp
-from app.features.confirmemail.services import ConfirmemailService
+from app.features.confirmemail.services import ConfirmemailService, EmailConfirmationError
 
 confirmemail_service = ConfirmemailService()
 
@@ -16,10 +16,9 @@ def index():
 def confirm_user(token):
     try:
         user = confirmemail_service.confirm_user_with_token(token)
-    except Exception as exc:
-        flash(exc.args[0], "danger")
+    except (EmailConfirmationError, ValueError) as exc:
+        flash(str(exc), "danger")
         return redirect(url_for("auth.signup"))
 
-    # Log user
     login_user(user, remember=True)
     return redirect(url_for("public.index"))

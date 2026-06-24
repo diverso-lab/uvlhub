@@ -1,26 +1,23 @@
 import pytest
 
+from app.features.captcha.services import ALLOWED_CHARACTERS, CaptchaService
+
 pytestmark = pytest.mark.unit
 
 
-@pytest.fixture(scope="module")
-def test_client(test_client):
-    """
-    Extends the test_client fixture to add additional specific data for module testing.
-    """
-    with test_client.application.app_context():
-        # Add HERE new elements to the database that you want to exist in the test context.
-        # DO NOT FORGET to use db.session.add(<element>) and db.session.commit() to save the data.
-        pass
-
-    yield test_client
+def test_generate_captcha_text_has_the_default_length():
+    assert len(CaptchaService().generate_captcha_text()) == 6
 
 
-def test_sample_assertion(test_client):
-    """
-    Sample test to verify that the test framework and environment are working correctly.
-    It does not communicate with the Flask application; it only performs a simple assertion to
-    confirm that the tests in this module can be executed.
-    """
-    greeting = "Hello, World!"
-    assert greeting == "Hello, World!", "The greeting does not coincide with 'Hello, World!'"
+def test_generate_captcha_text_honours_a_custom_length():
+    assert len(CaptchaService().generate_captcha_text(10)) == 10
+
+
+def test_generate_captcha_text_uses_only_allowed_characters():
+    text = CaptchaService().generate_captcha_text(50)
+
+    assert set(text) <= set(ALLOWED_CHARACTERS)
+
+
+def test_allowed_characters_exclude_ambiguous_glyphs():
+    assert not set("O0I1") & set(ALLOWED_CHARACTERS)

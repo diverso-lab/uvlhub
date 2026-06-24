@@ -1,6 +1,3 @@
-# app/features/apikeys/models.py
-
-import secrets
 from datetime import datetime
 
 from app import db
@@ -18,10 +15,9 @@ class ApiKey(db.Model):
 
     user = db.relationship("User", back_populates="api_keys")
 
-    @staticmethod
-    def generate(user, scopes: list[str]):
-        token = secrets.token_hex(32)
-        api_key = ApiKey(key=token, user=user, scopes=",".join(scopes))
-        db.session.add(api_key)
-        db.session.commit()
-        return api_key, token
+    @property
+    def scope_list(self) -> list[str]:
+        return [scope for scope in self.scopes.split(",") if scope]
+
+    def __repr__(self) -> str:
+        return f"<ApiKey {self.id} user={self.user_id}>"

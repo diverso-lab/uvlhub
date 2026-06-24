@@ -1,8 +1,8 @@
-from datetime import datetime
 from functools import wraps
 
-import pytz
 from flask import jsonify, request
+
+from app.features.apikeys.services import ApiKeyService
 
 
 def require_api_key(required_scope):
@@ -13,18 +13,14 @@ def require_api_key(required_scope):
             if not key:
                 return jsonify({"error": "Missing API key"}), 401
 
-            from app import db
-            from app.features.apikeys.models import ApiKey
-
-            api_key = ApiKey.query.filter_by(key=key).first()
-            if not api_key:
+            service = ApiKeyService()
+            api_key = service.get_valid_key(key)
+            if api_key is None:
                 return jsonify({"error": "Invalid API key"}), 403
-
-            if required_scope not in api_key.scopes.split(","):
+            if required_scope not in api_key.scope_list:
                 return jsonify({"error": "Forbidden: scope not allowed"}), 403
 
-            api_key.last_used_at = datetime.now(pytz.utc)
-            db.session.commit()
+            service.mark_used(api_key)
             return f(*args, **kwargs)
 
         return wrapper

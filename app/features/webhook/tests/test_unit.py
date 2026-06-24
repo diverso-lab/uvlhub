@@ -1,27 +1,29 @@
 import pytest
 
+from app.features.webhook.services import WebhookService
+
 pytestmark = pytest.mark.unit
 
 
-@pytest.fixture(scope="module")
-def test_client(test_client):
-    """
-    Extends the test_client fixture to add additional specific data for module testing.
-    for module testing (por example, new users)
-    """
-    with test_client.application.app_context():
-        # Add HERE new elements to the database that you want to exist in the test context.
-        # DO NOT FORGET to use db.session.add(<element>) and db.session.commit() to save the data.
-        pass
+def test_is_authorized_accepts_the_matching_bearer_token(monkeypatch):
+    monkeypatch.setenv("WEBHOOK_TOKEN", "s3cr3t")
 
-    yield test_client
+    assert WebhookService().is_authorized("Bearer s3cr3t") is True
 
 
-def test_sample_assertion(test_client):
-    """
-    Sample test to verify that the test framework and environment are working correctly.
-    It does not communicate with the Flask application; it only performs a simple assertion to
-    confirm that the tests in this module can be executed.
-    """
-    greeting = "Hello, World!"
-    assert greeting == "Hello, World!", "The greeting does not coincide with 'Hello, World!'"
+def test_is_authorized_rejects_a_wrong_token(monkeypatch):
+    monkeypatch.setenv("WEBHOOK_TOKEN", "s3cr3t")
+
+    assert WebhookService().is_authorized("Bearer wrong") is False
+
+
+def test_is_authorized_rejects_a_missing_header(monkeypatch):
+    monkeypatch.setenv("WEBHOOK_TOKEN", "s3cr3t")
+
+    assert WebhookService().is_authorized(None) is False
+
+
+def test_is_authorized_rejects_when_no_token_is_configured(monkeypatch):
+    monkeypatch.delenv("WEBHOOK_TOKEN", raising=False)
+
+    assert WebhookService().is_authorized("Bearer anything") is False

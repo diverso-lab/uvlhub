@@ -1,42 +1,22 @@
-import os
-import zipfile
-from io import BytesIO
-
 from flask import render_template, request, send_file
 
 from app.features.downloadqueue import downloadqueue_bp
-from app.features.hubfile.services import HubfileService
+from app.features.downloadqueue.services import DownloadqueueService
 
-hubfile_service = HubfileService()
+downloadqueue_service = DownloadqueueService()
 
 
 @downloadqueue_bp.route("/downloadqueue", methods=["GET"])
 def downloadqueue():
-    param_files = request.args.get("files", "")
-    hubfiles_ids = [int(x) for x in param_files.split(",") if x]
-    hubfiles = hubfile_service.get_by_ids(hubfiles_ids)
+    file_ids = downloadqueue_service.parse_file_ids(request.args.get("files", ""))
+    hubfiles = downloadqueue_service.get_hubfiles(file_ids)
     return render_template("downloadqueue/queue.html", hubfiles=hubfiles)
 
 
 @downloadqueue_bp.route("/dataset/build/download/", methods=["GET"])
 def download_build_dataset():
-    param_files = request.args.get("files", "")
-    hubfiles_ids = [int(x) for x in param_files.split(",") if x]
-    hubfiles = hubfile_service.get_by_ids(hubfiles_ids)
-
-    # Create Zip
-    memory_file = BytesIO()
-    with zipfile.ZipFile(memory_file, "w", zipfile.ZIP_DEFLATED) as zf:
-        for hubfile in hubfiles:
-            file_path = hubfile.get_full_path()
-            if os.path.exists(file_path):
-                zf.write(file_path, os.path.basename(file_path))
-            else:
-                print(f"The file {file_path} does not exist.")
-
-    memory_file.seek(0)
-
-    # Send Zip to user
+    file_ids = downloadqueue_service.parse_file_ids(request.args.get("files", ""))
+    memory_file = downloadqueue_service.build_zip_for_ids(file_ids)
     return send_file(
         memory_file,
         mimetype="application/zip",

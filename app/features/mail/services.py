@@ -2,14 +2,12 @@ import os
 
 from flask_mail import Mail, Message
 
-from app.features.mail.repositories import MailRepository
-from splent_framework.services.BaseService import BaseService
 
-
-class MailService(BaseService):
+class MailService:
+    """Infrastructure service around Flask-Mail. It owns no domain entity, so it
+    is a plain service rather than a repository-backed one."""
 
     def __init__(self):
-        super().__init__(MailRepository())
         self.mail = None
         self.sender = None
 

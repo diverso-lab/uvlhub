@@ -1,5 +1,6 @@
-from app.features.profile.models import UserProfile
 from splent_framework.repositories.BaseRepository import BaseRepository
+
+from app.features.profile.models import UserProfile
 
 
 class UserProfileRepository(BaseRepository):

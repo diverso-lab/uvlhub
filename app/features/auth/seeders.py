@@ -1,6 +1,7 @@
+from splent_framework.seeders.BaseSeeder import BaseSeeder
+
 from app.features.auth.models import User
 from app.features.profile.models import UserProfile
-from splent_framework.seeders.BaseSeeder import BaseSeeder
 
 
 class AuthSeeder(BaseSeeder):

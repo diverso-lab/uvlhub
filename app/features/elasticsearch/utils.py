@@ -11,7 +11,7 @@ def init_search_index():
 
         search.create_index_if_not_exists()
     except Exception as e:
-        print(f"[ERROR init_search_index] {e}")
+        logger.exception("init_search_index failed: %s", e)
         raise
 
 
@@ -22,7 +22,7 @@ def index_dataset(dataset):
     search = ElasticsearchService()
 
     if not dataset.ds_meta_data.dataset_doi:
-        print(f"[SKIP] Dataset {dataset.id} has no dataset_doi. Skipping indexing.")
+        logger.info("[SKIP] Dataset %s has no dataset_doi. Skipping indexing.", dataset.id)
         return
 
     doc = {
@@ -72,7 +72,7 @@ def index_hubfile(hubfile):
     dataset = hubfile.feature_model.dataset if hubfile.feature_model else None
 
     if not dataset or not dataset.ds_meta_data.dataset_doi:
-        print(f"[SKIP] Hubfile {hubfile.id} skipped (no dataset or dataset has no DOI).")
+        logger.info("[SKIP] Hubfile %s skipped (no dataset or dataset has no DOI).", hubfile.id)
         return
 
     doc = {
@@ -102,7 +102,7 @@ def reindex_all():
     datasets = DataSet.query.all()
     hubfiles = Hubfile.query.all()
 
-    print(f"[REINDEX] Reindexing {len(datasets)} datasets and {len(hubfiles)} hubfiles...")
+    logger.info("[REINDEX] Reindexing %s datasets and %s hubfiles...", len(datasets), len(hubfiles))
 
     for dataset in datasets:
         index_dataset(dataset)
@@ -110,4 +110,4 @@ def reindex_all():
     for hubfile in hubfiles:
         index_hubfile(hubfile)
 
-    print("[REINDEX] Reindexing completed.")
+    logger.info("[REINDEX] Reindexing completed.")

@@ -1,15 +1,14 @@
-import pytest
-
-pytestmark = pytest.mark.e2e
-
 import time
 
+import pytest
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 
 from app.environment.host import get_host_for_selenium_testing
 from app.selenium.common import close_driver, initialize_driver
+
+pytestmark = pytest.mark.e2e
 
 
 def test_login_and_check_element():

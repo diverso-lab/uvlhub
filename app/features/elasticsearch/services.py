@@ -1,18 +1,17 @@
+import logging
 import time
 from datetime import datetime
 
 from elasticsearch import ApiError, BadRequestError, ConnectionError, Elasticsearch, NotFoundError
 
-from app.features.elasticsearch.repositories import ElasticsearchRepository
-from splent_framework.services.BaseService import BaseService
+logger = logging.getLogger(__name__)
 
 
-class ElasticsearchService(BaseService):
+class ElasticsearchService:
+    """Thin wrapper around the Elasticsearch client. It owns no relational entity,
+    so it is a plain service rather than a repository-backed one."""
+
     def __init__(self, host="http://elasticsearch:9200", index_name="search_index"):
-        print("[INIT] Initializing ElasticsearchService...")
-        print(f"[INIT] Host: {host}")
-        print(f"[INIT] Index name: '{index_name}'")
-
         if not isinstance(index_name, str):
             raise ValueError("Index name must be a string.")
         if not index_name:
@@ -24,152 +23,121 @@ class ElasticsearchService(BaseService):
         if index_name.startswith(("-", "_", "+")):
             raise ValueError("Index name cannot start with -, _ or +.")
 
-        super().__init__(ElasticsearchRepository())
-
         self.es = Elasticsearch(hosts=[host])
         self.index_name = index_name
 
+        logger.info("Initializing ElasticsearchService (host=%s, index='%s')", host, index_name)
         if not self.wait_for_elasticsearch():
-            print("[ERROR] Elasticsearch is not responding after several attempts. Continuing, but may fail later.")
-
-        print("[INIT] ElasticsearchService initialized successfully.\n")
+            logger.error("Elasticsearch is not responding after several attempts; it may fail later.")
 
     def wait_for_elasticsearch(self, retries=5, delay=2):
-        print("[WAIT] Waiting for Elasticsearch to become available...")
         for attempt in range(retries):
             if self.es.ping():
-                print(f"[WAIT] Elasticsearch responded to ping on attempt {attempt + 1}.")
+                logger.debug("Elasticsearch responded to ping on attempt %s.", attempt + 1)
                 return True
-            print(f"[WAIT] Attempt {attempt + 1} failed. Retrying in {delay} seconds...")
+            logger.debug("Elasticsearch ping attempt %s failed; retrying in %ss.", attempt + 1, delay)
             time.sleep(delay)
         return False
 
     def create_index_if_not_exists(self):
-        print(f"[DEBUG] Checking whether index '{self.index_name}' exists...")
         try:
-            exists = self.es.indices.exists(index=self.index_name)
-            print(f"[DEBUG] Does index '{self.index_name}' exist? {exists}")
+            if self.es.indices.exists(index=self.index_name):
+                logger.info("Index '%s' already exists.", self.index_name)
+                return
 
-            if not exists:
-                print(f"[DEBUG] Creating index '{self.index_name}'...")
-
-                self.es.indices.create(
-                    index=self.index_name,
-                    body={
-                        "settings": {
-                            "analysis": {
-                                "analyzer": {
-                                    "custom_text_analyzer": {
-                                        "type": "custom",
-                                        "tokenizer": "standard",
-                                        "filter": ["lowercase", "asciifolding"],
-                                    },
-                                    "custom_filename_analyzer": {
-                                        "type": "custom",
-                                        "tokenizer": "custom_filename_tokenizer",
-                                        "filter": ["lowercase", "asciifolding"],
-                                    },
+            logger.info("Creating index '%s'...", self.index_name)
+            self.es.indices.create(
+                index=self.index_name,
+                body={
+                    "settings": {
+                        "analysis": {
+                            "analyzer": {
+                                "custom_text_analyzer": {
+                                    "type": "custom",
+                                    "tokenizer": "standard",
+                                    "filter": ["lowercase", "asciifolding"],
                                 },
-                                "tokenizer": {
-                                    "custom_filename_tokenizer": {
-                                        "type": "pattern",
-                                        "pattern": "[_\\W]+",
-                                    }
+                                "custom_filename_analyzer": {
+                                    "type": "custom",
+                                    "tokenizer": "custom_filename_tokenizer",
+                                    "filter": ["lowercase", "asciifolding"],
                                 },
                             },
-                            "index": {"number_of_shards": 1, "number_of_replicas": 0},
+                            "tokenizer": {
+                                "custom_filename_tokenizer": {
+                                    "type": "pattern",
+                                    "pattern": "[_\\W]+",
+                                }
+                            },
                         },
-                        "mappings": {
-                            "properties": {
-                                "type": {"type": "keyword"},
-                                "title": {
-                                    "type": "text",
-                                    "analyzer": "custom_text_analyzer",
-                                },
-                                "filename": {
-                                    "type": "text",
-                                    "analyzer": "custom_filename_analyzer",
-                                },
-                                "created_at": {"type": "date"},
-                                "doi": {"type": "keyword"},
-                                "authors": {
-                                    "type": "nested",  # or "object" if you won't query internal fields
-                                    "properties": {
-                                        "name": {
-                                            "type": "text",
-                                            "analyzer": "custom_text_analyzer",
-                                        },
-                                        "affiliation": {
-                                            "type": "text",
-                                            "analyzer": "custom_text_analyzer",
-                                        },
-                                        "orcid": {"type": "keyword"},
-                                    },
-                                },
-                                "content": {
-                                    "type": "text",
-                                    "analyzer": "custom_text_analyzer",
-                                },
-                                "dataset_id": {"type": "integer"},
-                                "feature_model_id": {"type": "integer"},
-                                "dataset_title": {
-                                    "type": "text",
-                                    "analyzer": "custom_text_analyzer",
-                                },
-                            }
-                        },
+                        "index": {"number_of_shards": 1, "number_of_replicas": 0},
                     },
-                )
-
-                print(f"[SUCCESS] Index '{self.index_name}' created successfully.")
-            else:
-                print(f"[INFO] Index '{self.index_name}' already exists.")
+                    "mappings": {
+                        "properties": {
+                            "type": {"type": "keyword"},
+                            "title": {"type": "text", "analyzer": "custom_text_analyzer"},
+                            "filename": {"type": "text", "analyzer": "custom_filename_analyzer"},
+                            "created_at": {"type": "date"},
+                            "doi": {"type": "keyword"},
+                            "authors": {
+                                "type": "nested",
+                                "properties": {
+                                    "name": {"type": "text", "analyzer": "custom_text_analyzer"},
+                                    "affiliation": {"type": "text", "analyzer": "custom_text_analyzer"},
+                                    "orcid": {"type": "keyword"},
+                                },
+                            },
+                            "content": {"type": "text", "analyzer": "custom_text_analyzer"},
+                            "dataset_id": {"type": "integer"},
+                            "feature_model_id": {"type": "integer"},
+                            "dataset_title": {"type": "text", "analyzer": "custom_text_analyzer"},
+                        }
+                    },
+                },
+            )
+            logger.info("Index '%s' created successfully.", self.index_name)
         except BadRequestError as e:
-            print(f"[ERROR] BadRequestError while checking/creating index: {e}")
-            print(f"[DETAIL] Error body: {getattr(e, 'body', 'no body')}")
+            logger.error("BadRequestError while checking/creating index: %s (body=%s)", e, getattr(e, "body", None))
             raise
         except ConnectionError as e:
-            print(f"[ERROR] Could not connect to Elasticsearch: {e}")
+            logger.error("Could not connect to Elasticsearch: %s", e)
             raise
         except ApiError as e:
-            print(f"[ERROR] API error while creating index: {e}")
+            logger.error("API error while creating index: %s", e)
             raise
         except Exception as e:
-            print(f"[ERROR] Unexpected error while creating index: {e}")
+            logger.exception("Unexpected error while creating index: %s", e)
             raise
 
     def index_document(self, doc_id: str, data: dict):
         try:
-            print(f"[DEBUG] Indexing document with ID '{doc_id}' in '{self.index_name}'")
             self.es.index(index=self.index_name, id=doc_id, document=data)
-            print(f"[SUCCESS] Document '{doc_id}' indexed successfully.")
+            logger.debug("Document '%s' indexed in '%s'.", doc_id, self.index_name)
         except Exception as e:
-            print(f"[ERROR] Could not index document '{doc_id}': {e}")
+            logger.error("Could not index document '%s': %s", doc_id, e)
             raise
 
     def delete_document(self, doc_id: str):
         try:
-            print(f"[DEBUG] Deleting document with ID '{doc_id}' from '{self.index_name}'")
             self.es.delete(index=self.index_name, id=doc_id)
-            print(f"[SUCCESS] Document '{doc_id}' deleted.")
+            logger.debug("Document '%s' deleted from '%s'.", doc_id, self.index_name)
         except NotFoundError:
-            print(f"[INFO] Document '{doc_id}' not found. Nothing to delete.")
+            logger.info("Document '%s' not found. Nothing to delete.", doc_id)
         except Exception as e:
-            print(f"[ERROR] Could not delete document '{doc_id}': {e}")
+            logger.error("Could not delete document '%s': %s", doc_id, e)
             raise
 
     def delete_by_dataset_id(self, dataset_id: int):
         try:
-            print(f"[DEBUG] Deleting Elasticsearch docs for dataset_id={dataset_id}")
             self.es.delete_by_query(
                 index=self.index_name,
                 body={"query": {"term": {"dataset_id": dataset_id}}},
-                conflicts="proceed",  # KEY
-                refresh=True,  # optional but recommended
+                conflicts="proceed",
+                refresh=True,
             )
-            print(f"[SUCCESS] Elasticsearch docs deleted for dataset_id={dataset_id}")
+            logger.debug("Elasticsearch docs deleted for dataset_id=%s.", dataset_id)
         except Exception as e:
-            print(f"[ERROR] Failed to delete ES docs for dataset_id={dataset_id}: {e}")
+            logger.error("Failed to delete ES docs for dataset_id=%s: %s", dataset_id, e)
             raise
 
     def search(
@@ -184,19 +152,9 @@ class ElasticsearchService(BaseService):
         size=10,
     ):
         try:
-            print(
-                f"[DEBUG] Searching in '{self.index_name}' "
-                f"with query: '{query}', "
-                f"type: {publication_type}, "
-                f"tags: {tags}, "
-                f"order: {sorting}, "
-                f"page: {page}, size: {size}"
-            )
-
             must_clauses = []
             filter_clauses = []
 
-            # Free text
             if query:
                 must_clauses.append(
                     {
@@ -215,41 +173,18 @@ class ElasticsearchService(BaseService):
                     }
                 )
 
-            # Filter by publication type
             if publication_type:
                 filter_clauses.append({"term": {"publication_type.keyword": publication_type}})
 
-            # Filter by tags
             if tags:
                 filter_clauses.append({"terms": {"tags.keyword": tags}})
 
-            # Filter by dates
             if date_from or date_to:
-                try:
-                    range_query = {"range": {"created_at": {}}}
+                filter_clauses.extend(self._date_range_filter(date_from, date_to))
 
-                    if date_from:
-                        # Normalize and validate format
-                        dt_from = datetime.strptime(date_from, "%Y-%m-%d")
-                        range_query["range"]["created_at"]["gte"] = dt_from.strftime("%Y-%m-%dT00:00:00Z")
-
-                    if date_to:
-                        dt_to = datetime.strptime(date_to, "%Y-%m-%d")
-                        range_query["range"]["created_at"]["lte"] = dt_to.strftime("%Y-%m-%dT23:59:59Z")
-
-                    if "gte" in range_query["range"]["created_at"] or "lte" in range_query["range"]["created_at"]:
-                        filter_clauses.append(range_query)
-
-                except ValueError as e:
-                    print(f"[WARN] Invalid date format received: from={date_from}, to={date_to}. Error: {e}")
-
-            # Sorting
             sort_clause = [
                 {"created_at": {"order": "desc"}} if sorting == "newest" else {"created_at": {"order": "asc"}}
             ]
-
-            # Compute offset
-            from_ = (page - 1) * size
 
             body = {
                 "query": {
@@ -261,39 +196,50 @@ class ElasticsearchService(BaseService):
                 "sort": sort_clause,
             }
 
-            result = self.es.search(index=self.index_name, body=body, from_=from_, size=size)
+            result = self.es.search(index=self.index_name, body=body, from_=(page - 1) * size, size=size)
             hits = result["hits"]["hits"]
             total = result["hits"]["total"]["value"]
 
-            print(f"[SUCCESS] Search completed. Page {page}, results: {len(hits)}, total: {total}")
-
+            logger.debug("Search completed (page %s, results %s, total %s).", page, len(hits), total)
             return [self._format_hit(hit) for hit in hits], total
 
         except Exception as e:
-            print(f"[ERROR] Search failed: {e}")
+            logger.error("Search failed: %s", e)
             raise
 
-    def _format_hit(self, hit):
-        """Formats an Elasticsearch hit with human-readable dates and sizes."""
-        from datetime import datetime
+    @staticmethod
+    def _date_range_filter(date_from, date_to):
+        try:
+            created_at = {}
+            if date_from:
+                created_at["gte"] = datetime.strptime(date_from, "%Y-%m-%d").strftime("%Y-%m-%dT00:00:00Z")
+            if date_to:
+                created_at["lte"] = datetime.strptime(date_to, "%Y-%m-%d").strftime("%Y-%m-%dT23:59:59Z")
+            return [{"range": {"created_at": created_at}}] if created_at else []
+        except ValueError as e:
+            logger.warning("Invalid date format received: from=%s, to=%s. Error: %s", date_from, date_to, e)
+            return []
 
+    @staticmethod
+    def _format_hit(hit):
+        """Formats an Elasticsearch hit with human-readable dates and sizes."""
         source = hit["_source"]
 
-        # Date format
         if "created_at" in source:
             try:
-                dt = datetime.fromisoformat(source["created_at"])
-                source["created_at"] = dt.strftime("%d %b %Y, %H:%M")
+                source["created_at"] = datetime.fromisoformat(source["created_at"]).strftime("%d %b %Y, %H:%M")
             except Exception:
                 pass
 
-        # Human-readable size
         if "total_size_in_bytes" in source:
-            source["total_size_in_human_format"] = self._human_readable_size(source["total_size_in_bytes"])
+            source["total_size_in_human_format"] = ElasticsearchService._human_readable_size(
+                source["total_size_in_bytes"]
+            )
 
         return source
 
-    def _human_readable_size(self, size_bytes):
+    @staticmethod
+    def _human_readable_size(size_bytes):
         if size_bytes is None:
             return ""
         if size_bytes == 0:
@@ -306,9 +252,7 @@ class ElasticsearchService(BaseService):
 
 
 class IndexingService:
-    """
-    Encapsulates Elasticsearch indexing logic.
-    """
+    """Encapsulates Elasticsearch indexing logic."""
 
     def __init__(self, index_dataset_fn, index_hubfile_fn, logger):
         self.index_dataset = index_dataset_fn
@@ -317,7 +261,6 @@ class IndexingService:
 
     def index_dataset_and_hubfiles(self, dataset, created_fms):
         try:
-            # Re-fetch the updated dataset
             self.index_dataset(dataset)
             self.logger.info(f"[INDEX] Dataset {dataset.id} indexed")
 

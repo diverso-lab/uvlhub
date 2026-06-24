@@ -6,8 +6,8 @@ from app.features.explore import explore_bp
 
 @explore_bp.route("/explore", methods=["GET", "POST"])
 def index():
-    # value = se usa en el filtro (Enum.value) → ej: "conferencepaper"
-    # label = se muestra en el select (bonito) → ej: "Conference Paper"
+    # value -> used by the filter (Enum.value, e.g. "conferencepaper")
+    # label -> shown in the select (pretty, e.g. "Conference Paper")
     publication_type_choices = [(pt.value, pt.name.replace("_", " ").title()) for pt in PublicationType]
     return render_template(
         "explore/index.html",
@@ -17,7 +17,7 @@ def index():
 
 @explore_bp.route("/search")
 def search():
-    """Legacy endpoint (mantener si hay dependencias en front viejo)."""
+    """Legacy endpoint, kept for older front-end dependencies."""
     from app.features.elasticsearch.services import ElasticsearchService
 
     search_service = ElasticsearchService()

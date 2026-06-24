@@ -11,19 +11,10 @@ reset_service = ResetService()
 @guest_required
 def forgot():
     if request.method == "POST":
-
-        email = request.form["email"]
-        token = reset_service.send_reset_password_mail(email=email)
-        reset_service.add_token(token=token)
-
         try:
-            email = request.form["email"]
-            token = reset_service.send_reset_password_mail(email=email)
+            token = reset_service.send_reset_password_mail(email=request.form["email"])
             reset_service.add_token(token=token)
-            flash(
-                "Check your email for the instructions to reset your password",
-                "success",
-            )
+            flash("Check your email for the instructions to reset your password", "success")
         except Exception as exc:
             flash(f"An error occurred while trying to reset the password: {exc}", "danger")
 

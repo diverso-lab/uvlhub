@@ -1,26 +1,48 @@
+from unittest.mock import MagicMock
+
 import pytest
+from flask import Flask
+
+from app.features.mail.services import MailService
 
 pytestmark = pytest.mark.unit
 
 
-@pytest.fixture(scope="module")
-def test_client(test_client):
-    """
-    Extends the test_client fixture to add additional specific data for module testing.
-    """
-    with test_client.application.app_context():
-        # Add HERE new elements to the database that you want to exist in the test context.
-        # DO NOT FORGET to use db.session.add(<element>) and db.session.commit() to save the data.
-        pass
-
-    yield test_client
+def _service_with_mock_mail():
+    service = MailService()
+    service.mail = MagicMock()
+    service.sender = "noreply@example.com"
+    return service
 
 
-def test_sample_assertion(test_client):
-    """
-    Sample test to verify that the test framework and environment are working correctly.
-    It does not communicate with the Flask application; it only performs a simple assertion to
-    confirm that the tests in this module can be executed.
-    """
-    greeting = "Hello, World!"
-    assert greeting == "Hello, World!", "The greeting does not coincide with 'Hello, World!'"
+def test_send_email_builds_and_sends_the_message():
+    service = _service_with_mock_mail()
+
+    service.send_email("Subject", ["to@example.com"], "Body", html_body="<b>Body</b>")
+
+    service.mail.send.assert_called_once()
+    message = service.mail.send.call_args.args[0]
+    assert message.subject == "Subject"
+    assert message.recipients == ["to@example.com"]
+    assert message.body == "Body"
+    assert message.html == "<b>Body</b>"
+
+
+def test_send_email_attaches_files():
+    service = _service_with_mock_mail()
+
+    service.send_email("S", ["to@example.com"], "B", attachments=[("report.pdf", b"data")])
+
+    message = service.mail.send.call_args.args[0]
+    assert len(message.attachments) == 1
+
+
+def test_init_app_populates_mail_configuration():
+    app = Flask(__name__)
+
+    MailService().init_app(app)
+
+    assert isinstance(app.config["MAIL_PORT"], int)
+    assert app.config["MAIL_USE_TLS"] in (True, False)
+    assert app.config["MAIL_SERVER"]
+    assert app.config["MAIL_DEFAULT_SENDER"]

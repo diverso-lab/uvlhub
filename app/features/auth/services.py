@@ -3,14 +3,16 @@ from urllib.parse import urljoin, urlparse
 
 from flask import request, url_for
 from flask_login import current_user, login_user
+from splent_framework.configuration.configuration import uploads_folder_name
+from splent_framework.services.BaseService import BaseService
 
-from app import db
 from app.features.auth.models import User
 from app.features.auth.repositories import UserRepository
 from app.features.profile.models import UserProfile
 from app.features.profile.repositories import UserProfileRepository
-from splent_framework.configuration.configuration import uploads_folder_name
-from splent_framework.services.BaseService import BaseService
+from app.managers.task_queue_manager import TaskQueueManager
+
+CONFIRMATION_EMAIL_TASK = "app.features.auth.tasks.send_confirmation_email"
 
 
 class AuthenticationService(BaseService):
@@ -30,56 +32,52 @@ class AuthenticationService(BaseService):
         return self.repository.get_by_email(email) is None
 
     def create_with_profile(self, **kwargs):
+        email = (kwargs.get("email") or "").strip().lower()
+        password = kwargs.get("password")
+        name = kwargs.get("name")
+        surname = kwargs.get("surname")
+
+        if not email:
+            raise ValueError("Email is required.")
+        if not password:
+            raise ValueError("Password is required.")
+        if not name:
+            raise ValueError("Name is required.")
+        if not surname:
+            raise ValueError("Surname is required.")
+        if not self.is_email_available(email):
+            raise ValueError("This email is already registered. Try logging in or using ORCID.")
+
         try:
-            email = kwargs.pop("email", None)
-            password = kwargs.pop("password", None)
-            name = kwargs.pop("name", None)
-            surname = kwargs.pop("surname", None)
-
-            if not email:
-                raise ValueError("Email is required.")
-            if not password:
-                raise ValueError("Password is required.")
-            if not name:
-                raise ValueError("Name is required.")
-            if not surname:
-                raise ValueError("Surname is required.")
-
-            if not self.is_email_available(email):
-                raise ValueError("This email is already registered. Try logging in or using ORCID.")
-
-            # Create user
-            user = User(email=email, active=True)
-            user.set_password(password)
-            self.repository.session.add(user)
-            self.repository.session.flush()  # guarantees user.id is available
-
-            # Create profile
-            profile = UserProfile(user_id=user.id, name=name, surname=surname)
-            self.repository.session.add(profile)
+            # The repositories own persistence; the service only orchestrates the
+            # user + profile pair as a single atomic unit of work.
+            user = self.repository.create(commit=False, email=email, password=password, active=True)
+            self.user_profile_repository.create(commit=False, user_id=user.id, name=name, surname=surname)
             self.repository.session.commit()
-
             return user
-
-        except Exception as exc:
+        except Exception:
             self.repository.session.rollback()
-            raise exc
+            raise
+
+    def enqueue_confirmation_email(self, email: str) -> None:
+        """Schedule the confirmation email for asynchronous delivery."""
+        TaskQueueManager().enqueue_task(CONFIRMATION_EMAIL_TASK, email=email, timeout=10)
 
     def update_profile(self, user_profile_id, form):
         if not form.validate():
             return None, form.errors
 
-        profile = UserProfile.query.get(user_profile_id)
-        if not profile:
+        if self.user_profile_repository.get_by_id(user_profile_id) is None:
             return None, {"error": "Profile not found"}
 
-        # Only update fields the user is allowed to edit
-        profile.name = form.name.data
-        profile.surname = form.surname.data
-        profile.affiliation = form.affiliation.data
-
-        # Do NOT touch ORCID: it is managed exclusively through the OAuth login flow.
-        db.session.commit()
+        # Only update the fields the user is allowed to edit. ORCID is left
+        # untouched on purpose: it is managed exclusively through the OAuth flow.
+        profile = self.user_profile_repository.update(
+            user_profile_id,
+            name=form.name.data,
+            surname=form.surname.data,
+            affiliation=form.affiliation.data,
+        )
         return profile, None
 
     def get_authenticated_user(self) -> User | None:
@@ -97,6 +95,14 @@ class AuthenticationService(BaseService):
 
     def get_by_email(self, email: str, active: bool = True) -> User:
         return self.repository.get_by_email(email, active)
+
+    def activate_user(self, email: str) -> User:
+        user = self.repository.get_by_email(email, active=None)
+        if user is None:
+            raise ValueError(f"No account is associated with {email}.")
+        if not user.active:
+            self.repository.update(user.id, active=True)
+        return user
 
     def is_safe_redirect_target(self, target: str | None) -> bool:
         if not target:

@@ -1,3 +1,5 @@
+import hmac
+import os
 import subprocess
 from datetime import datetime
 
@@ -5,15 +7,27 @@ import pytz
 from flask import abort
 
 import docker
-from app.features.webhook.repositories import WebhookRepository
-from splent_framework.services.BaseService import BaseService
 
 client = docker.from_env()
 
+# Commands run inside every target container, in order, on each deploy.
+DEPLOY_COMMANDS = (
+    "/workspace/scripts/git_update.sh",  # pull the latest code
+    "pip install --pre .",  # update dependencies pinned in pyproject.toml
+    "pip install -e ./rosemary",  # update the Rosemary CLI
+)
 
-class WebhookService(BaseService):
-    def __init__(self):
-        super().__init__(WebhookRepository())
+
+class WebhookService:
+    """Drives container redeploys triggered by an authenticated webhook. Owns no
+    domain entity, so it is a plain service."""
+
+    def is_authorized(self, auth_header: str | None) -> bool:
+        token = os.getenv("WEBHOOK_TOKEN")
+        if not token or not auth_header:
+            return False
+        # Constant-time comparison to avoid leaking the token via timing.
+        return hmac.compare_digest(auth_header, f"Bearer {token}")
 
     def get_web_container(self):
         try:
@@ -75,3 +89,11 @@ class WebhookService(BaseService):
 
     def restart_container(self, container):
         subprocess.Popen(["/bin/sh", "/workspace/scripts/restart_container.sh", container.id])
+
+    def deploy(self):
+        """Update and restart the worker and web containers."""
+        for container in (self.get_worker_container(), self.get_web_container()):
+            for command in DEPLOY_COMMANDS:
+                self.execute_container_command(container, command)
+            self.log_deployment(container)
+            self.restart_container(container)

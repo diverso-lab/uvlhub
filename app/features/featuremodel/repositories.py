@@ -1,8 +1,8 @@
+from splent_framework.repositories.BaseRepository import BaseRepository
 from sqlalchemy import func
 
 from app.features.dataset.models import DataSet, DSMetaData
 from app.features.featuremodel.models import FeatureModel
-from splent_framework.repositories.BaseRepository import BaseRepository
 
 
 class FeatureModelRepository(BaseRepository):
