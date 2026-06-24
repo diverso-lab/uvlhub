@@ -1,3 +1,4 @@
+import io
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 
@@ -300,4 +301,61 @@ def test_edit_metadata_post_ajax_validation_error_returns_400(test_client):
         )
     assert response.status_code == 400
     assert "Invalid ORCID" in response.get_json()["message"]
+    test_client.get("/logout", follow_redirects=True)
+
+
+# --- Replace UVL route ---------------------------------------------------
+
+
+def test_replace_hubfile_requires_login(test_client):
+    test_client.get("/logout", follow_redirects=True)
+    response = test_client.post("/dataset/1/hubfile/1/replace")
+    assert response.status_code == 302
+    assert "/login" in response.headers.get("Location", "")
+
+
+def test_replace_hubfile_forbidden_for_non_owner(test_client):
+    _login(test_client)
+    with patch.object(dataset_routes.dataset_service, "get_or_404", return_value=MagicMock(user_id=999999)):
+        response = test_client.post("/dataset/1/hubfile/1/replace")
+    assert response.status_code == 403
+    test_client.get("/logout", follow_redirects=True)
+
+
+def test_replace_hubfile_success(test_client):
+    _login(test_client)
+    owned = MagicMock(user_id=_test_user_id(test_client))
+    with (
+        patch.object(dataset_routes.dataset_service, "get_or_404", return_value=owned),
+        patch.object(dataset_routes.dataset_service, "replace_hubfile", return_value=MagicMock()) as mock_replace,
+    ):
+        response = test_client.post(
+            "/dataset/1/hubfile/9/replace",
+            data={"file": (io.BytesIO(b"features\n    Root"), "new.uvl")},
+            content_type="multipart/form-data",
+        )
+    assert response.status_code == 200
+    assert "replaced" in response.get_json()["message"].lower()
+    mock_replace.assert_called_once()
+    test_client.get("/logout", follow_redirects=True)
+
+
+def test_replace_hubfile_validation_error_returns_400(test_client):
+    _login(test_client)
+    owned = MagicMock(user_id=_test_user_id(test_client))
+    with (
+        patch.object(dataset_routes.dataset_service, "get_or_404", return_value=owned),
+        patch.object(
+            dataset_routes.dataset_service,
+            "replace_hubfile",
+            side_effect=DatasetMetadataValidationError("A .uvl file is required."),
+        ),
+    ):
+        response = test_client.post(
+            "/dataset/1/hubfile/9/replace",
+            data={},
+            content_type="multipart/form-data",
+        )
+    assert response.status_code == 400
+    assert ".uvl" in response.get_json()["message"]
     test_client.get("/logout", follow_redirects=True)

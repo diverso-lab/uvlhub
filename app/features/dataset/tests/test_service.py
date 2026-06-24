@@ -382,3 +382,59 @@ def test_update_metadata_from_request_without_type_keeps_anonymous_synced_state(
     zenodo_service.update_deposition.assert_called_once_with(7, {"title": "Anon"})
     assert dataset.ds_meta_data.dataset_doi == "10.1234/anon"
     assert result == {"metadata_synced": True, "sync_deferred": False}
+
+
+def test_replace_hubfile_rejects_published_dataset():
+    service = DataSetService()
+    dataset = _mock_dataset_for_edit()
+    dataset.ds_meta_data.dataset_doi = "10.1234/published"
+
+    with pytest.raises(DatasetMetadataUpdateError, match="versioned"):
+        service.replace_hubfile(dataset, 1, MagicMock(filename="a.uvl"))
+
+
+def test_replace_hubfile_rejects_file_not_in_dataset():
+    service = DataSetService()
+    dataset = _mock_dataset_for_edit()
+    dataset.ds_meta_data.dataset_doi = None
+    dataset.feature_models = []
+
+    with pytest.raises(DatasetMetadataValidationError, match="does not belong"):
+        service.replace_hubfile(dataset, 999, MagicMock(filename="a.uvl"))
+
+
+def test_replace_hubfile_requires_uvl_extension():
+    service = DataSetService()
+    dataset = _mock_dataset_for_edit()
+    dataset.ds_meta_data.dataset_doi = None
+    hubfile = MagicMock(id=5)
+    dataset.feature_models = [MagicMock(hubfiles=[hubfile])]
+
+    with pytest.raises(DatasetMetadataValidationError, match=".uvl"):
+        service.replace_hubfile(dataset, 5, MagicMock(filename="a.txt"))
+
+
+def test_replace_hubfile_overwrites_content_and_resignals():
+    service = DataSetService()
+    service.repository.session = MagicMock()
+    dataset = _mock_dataset_for_edit()
+    dataset.ds_meta_data.dataset_doi = None
+    hubfile = MagicMock(id=5)
+    hubfile.get_full_path.return_value = "/data/uploads/user_1/dataset_1/uvl/m.uvl"
+    dataset.feature_models = [MagicMock(hubfiles=[hubfile])]
+    file_storage = MagicMock(filename="new_model.uvl")
+
+    with (
+        patch("app.features.dataset.services.os.makedirs"),
+        patch("app.features.dataset.services.os.path.getsize", return_value=123),
+        patch("app.features.hubfile.services.HubfileService._calculate_checksum", return_value="abc123"),
+        patch("app.features.hubfile.signals.hubfile_created.send") as mock_send,
+    ):
+        result = service.replace_hubfile(dataset, 5, file_storage)
+
+    file_storage.save.assert_called_once_with("/data/uploads/user_1/dataset_1/uvl/m.uvl")
+    assert hubfile.checksum == "abc123"
+    assert hubfile.size == 123
+    service.repository.session.commit.assert_called_once()
+    mock_send.assert_called_once()
+    assert result is hubfile

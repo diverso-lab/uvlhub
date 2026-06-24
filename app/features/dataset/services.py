@@ -337,6 +337,52 @@ class DataSetService(BaseService):
             return "zenodo_anonymous" if meta.dataset_anonymous else "zenodo"
         return "draft"
 
+    @staticmethod
+    def _find_dataset_hubfile(dataset: DataSet, hubfile_id):
+        """Return the hubfile with ``hubfile_id`` if it belongs to ``dataset``."""
+        target = int(hubfile_id)
+        for feature_model in dataset.feature_models:
+            for hubfile in feature_model.hubfiles:
+                if hubfile.id == target:
+                    return hubfile
+        return None
+
+    def replace_hubfile(self, dataset: DataSet, hubfile_id, file_storage):
+        """Swap the content of a draft dataset's UVL file with a new upload.
+
+        Published datasets are versioned instead (a new linked dataset), so this
+        refuses to edit them in place — that would desync the Zenodo deposition.
+        The file keeps its stored name; only its content (and checksum/size) and
+        the derived domain artefacts (fact label, flamapy transform) change.
+        """
+        from app.features.hubfile.services import HubfileService
+        from app.features.hubfile.signals import hubfile_created
+
+        if dataset.ds_meta_data.dataset_doi:
+            raise DatasetMetadataUpdateError(
+                "Published datasets are versioned, not edited in place. Create a new version instead."
+            )
+
+        hubfile = self._find_dataset_hubfile(dataset, hubfile_id)
+        if hubfile is None:
+            raise DatasetMetadataValidationError("The file does not belong to this dataset.")
+
+        if not (file_storage and file_storage.filename and file_storage.filename.lower().endswith(".uvl")):
+            raise DatasetMetadataValidationError("A .uvl file is required.")
+
+        dest_path = hubfile.get_full_path()
+        os.makedirs(os.path.dirname(dest_path), exist_ok=True)
+        file_storage.save(dest_path)
+
+        hubfile.checksum = HubfileService._calculate_checksum(dest_path)
+        hubfile.size = os.path.getsize(dest_path)
+        self.repository.session.commit()
+
+        # Re-run the domain processing the creation signal would have triggered,
+        # now against the replaced content (fact label + flamapy transform).
+        hubfile_created.send(hubfile, hubfile_id=hubfile.id, path=dest_path)
+        return hubfile
+
     def _replace_authors_from_form(self, dataset: DataSet, form_data) -> None:
         authors = self._parse_authors_from_form(form_data)
         seen_author_keys = set()

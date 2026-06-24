@@ -311,6 +311,55 @@
                         <h2 class="fw-bold text-gray-900">{% if is_edit %}Save dataset{% else %}Upload dataset{% endif %}</h2>
                     </div>
                     <div id="summary"></div>
+
+                    {# ── UVL file management (edit mode, drafts only) ── #}
+                    {% if is_edit and dataset and not dataset.ds_meta_data.dataset_doi %}
+                    <div class="separator my-8"></div>
+                    <div class="w-100" id="uvl-files-manager">
+                        <h3 class="fw-bold text-gray-900 mb-2">UVL files</h3>
+                        <p class="text-muted fs-7 mb-4">Replace a UVL with a different file. The draft is updated in place.</p>
+                        {% for fm in dataset.feature_models %}
+                            {% for hf in fm.hubfiles %}
+                            <div class="d-flex align-items-center justify-content-between border border-gray-300 rounded p-3 mb-2">
+                                <span class="fw-semibold text-gray-800"><i class="ki-duotone ki-file fs-2 me-2"></i>{{ hf.name }}</span>
+                                <label class="btn btn-sm btn-light-primary mb-0">
+                                    Replace
+                                    <input type="file" accept=".uvl" class="d-none js-replace-uvl"
+                                           data-dataset-id="{{ dataset.id }}" data-hubfile-id="{{ hf.id }}" />
+                                </label>
+                            </div>
+                            {% endfor %}
+                        {% endfor %}
+                        <div id="uvl-replace-msg" class="mt-3 fs-7"></div>
+                    </div>
+                    <script>
+                        document.querySelectorAll('.js-replace-uvl').forEach(function (input) {
+                            input.addEventListener('change', function () {
+                                var file = this.files[0];
+                                if (!file) return;
+                                var did = this.getAttribute('data-dataset-id');
+                                var hid = this.getAttribute('data-hubfile-id');
+                                var msg = document.getElementById('uvl-replace-msg');
+                                var fd = new FormData();
+                                fd.append('file', file);
+                                msg.innerHTML = '<span class="text-muted">Replacing with ' + file.name + '…</span>';
+                                fetch('/dataset/' + did + '/hubfile/' + hid + '/replace', {
+                                    method: 'POST', body: fd, headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                                })
+                                    .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+                                    .then(function (res) {
+                                        if (res.ok) {
+                                            msg.innerHTML = '<span class="text-success">✓ ' + res.j.message + '. Reloading…</span>';
+                                            setTimeout(function () { location.reload(); }, 900);
+                                        } else {
+                                            msg.innerHTML = '<span class="text-danger">' + (res.j.message || 'Replace failed') + '</span>';
+                                        }
+                                    })
+                                    .catch(function () { msg.innerHTML = '<span class="text-danger">Network error</span>'; });
+                            });
+                        });
+                    </script>
+                    {% endif %}
                 </div>
                 <!--end::Wrapper-->
             </div>

@@ -304,6 +304,19 @@ def edit_metadata(dataset_id):
     )
 
 
+@dataset_bp.route("/dataset/<int:dataset_id>/hubfile/<int:hubfile_id>/replace", methods=["POST"])
+@login_required
+def replace_hubfile(dataset_id, hubfile_id):
+    dataset = dataset_service.get_or_404(dataset_id)
+    if dataset.user_id != current_user.id:
+        abort(403)
+    try:
+        dataset_service.replace_hubfile(dataset, hubfile_id, request.files.get("file"))
+    except (DatasetMetadataValidationError, DatasetMetadataUpdateError) as exc:
+        return jsonify({"message": str(exc)}), 400
+    return jsonify({"message": "UVL replaced successfully"}), 200
+
+
 @dataset_bp.route("/datasets/list", methods=["GET"])
 @login_required
 def list_dataset():
