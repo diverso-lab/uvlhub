@@ -416,18 +416,32 @@ def test_new_version_validation_error_returns_400(test_client):
     test_client.get("/logout", follow_redirects=True)
 
 
-# --- Compiled asset serving (nested TinyMCE files) -----------------------
+# --- Compiled asset serving (nested paths) -------------------------------
+# dist/ holds webpack build artifacts (git-ignored, not built in CI), so these
+# probe the route with a temporary nested tree instead of the real TinyMCE files.
 
 
-def test_dist_asset_serves_nested_tinymce_model(test_client):
-    # splent's BaseBlueprint asset route 404s on nested paths; dist_asset must
-    # serve them so the TinyMCE description editor can load (base_url /dataset/dist).
+def test_dist_asset_serves_nested_js(test_client, tmp_path, monkeypatch):
+    # BaseBlueprint's single-segment asset route 404s on nested paths; dist_asset
+    # must serve them so the TinyMCE editor loads from base_url /dataset/dist.
+    nested = tmp_path / "dist" / "models" / "dom"
+    nested.mkdir(parents=True)
+    (nested / "model.js").write_text("// probe")
+    monkeypatch.setattr(dataset_routes, "_DATASET_ASSETS_DIR", str(tmp_path))
+
     response = test_client.get("/dataset/dist/models/dom/model.js")
+
     assert response.status_code == 200
     assert "javascript" in response.headers["Content-Type"]
 
 
-def test_dist_asset_serves_nested_skin_css(test_client):
+def test_dist_asset_pins_css_mimetype(test_client, tmp_path, monkeypatch):
+    nested = tmp_path / "dist" / "skins" / "ui" / "oxide"
+    nested.mkdir(parents=True)
+    (nested / "skin.min.css").write_text("body{}")
+    monkeypatch.setattr(dataset_routes, "_DATASET_ASSETS_DIR", str(tmp_path))
+
     response = test_client.get("/dataset/dist/skins/ui/oxide/skin.min.css")
+
     assert response.status_code == 200
     assert "text/css" in response.headers["Content-Type"]
