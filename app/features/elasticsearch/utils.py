@@ -34,14 +34,18 @@ def index_dataset(dataset):
         "publication_doi": dataset.ds_meta_data.publication_doi,
         "dataset_doi": dataset.ds_meta_data.dataset_doi,
         "url": dataset.get_uvlhub_doi(),
-        "authors": [
-            {
-                "name": a.name,
-                "affiliation": getattr(a, "affiliation", None),
-                "orcid": getattr(a, "orcid", None),
-            }
-            for a in dataset.ds_meta_data.authors
-        ] if not dataset.ds_meta_data.dataset_anonymous else [],
+        "authors": (
+            [
+                {
+                    "name": a.name,
+                    "affiliation": getattr(a, "affiliation", None),
+                    "orcid": getattr(a, "orcid", None),
+                }
+                for a in dataset.ds_meta_data.authors
+            ]
+            if not dataset.ds_meta_data.dataset_anonymous
+            else []
+        ),
         "authors_is_anonymous": dataset.ds_meta_data.dataset_anonymous,
         "tags": ([t.strip() for t in dataset.ds_meta_data.tags.split(",")] if dataset.ds_meta_data.tags else []),
         "publication_type": (
