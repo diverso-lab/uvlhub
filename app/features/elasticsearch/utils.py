@@ -41,7 +41,8 @@ def index_dataset(dataset):
                 "orcid": getattr(a, "orcid", None),
             }
             for a in dataset.ds_meta_data.authors
-        ],
+        ] if not dataset.ds_meta_data.dataset_anonymous else [],
+        "authors_is_anonymous": dataset.ds_meta_data.dataset_anonymous,
         "tags": ([t.strip() for t in dataset.ds_meta_data.tags.split(",")] if dataset.ds_meta_data.tags else []),
         "publication_type": (
             dataset.ds_meta_data.publication_type.value if dataset.ds_meta_data.publication_type else None
@@ -51,7 +52,7 @@ def index_dataset(dataset):
             f"{dataset.ds_meta_data.title} "
             f"{dataset.ds_meta_data.description} "
             f"{dataset.ds_meta_data.publication_doi} "
-            f"{' '.join(a.name for a in dataset.ds_meta_data.authors)}"
+            f"{' '.join(a.name for a in dataset.ds_meta_data.authors) if not dataset.ds_meta_data.dataset_anonymous else ''} "
         ),
         "created_at": dataset.created_at.isoformat(),
         "total_size_in_bytes": dataset.get_file_total_size(),

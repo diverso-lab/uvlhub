@@ -41,6 +41,9 @@
                         <!-- Autores estilo Zenodo -->
                         <div class="row mb-3">
                             <div class="col-12">
+                              {% if dataset.ds_meta_data.dataset_anonymous %}
+                                <p class="text-muted fst-italic">Anonymous</p>
+                              {% else %}
                                 <ul class="list-unstyled mb-0" style="font-size: 0.85rem;">
                                 {% for author in dataset.ds_meta_data.authors %}
                                     <li class="d-flex align-items-center mb-1" style="line-height: 1.2;">
@@ -70,6 +73,7 @@
                                     </li>
                                 {% endfor %}
                                 </ul>
+                              {% endif %}
                             </div>
                         </div>
 

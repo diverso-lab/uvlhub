@@ -249,6 +249,7 @@ def edit_metadata(dataset_id):
                 request.form,
                 zenodo_service=zenodo_service,
             )
+            index_dataset(dataset)  # re-index after metadata update
             if update_result.get("sync_deferred"):
                 warning_message = (
                     "Dataset metadata updated locally. Zenodo is currently unavailable, "
@@ -328,6 +329,8 @@ def new_dataset_version(dataset_id):
         new_dataset = dataset_service.create_new_version(
             dataset, request.files.get("file"), current_user, zenodo_service=zenodo_service
         )
+        indexing_service = IndexingService(index_dataset, index_hubfile, logger)
+        indexing_service.index_dataset_and_hubfiles(new_dataset, new_dataset.feature_models)
     except (DatasetMetadataValidationError, DatasetMetadataUpdateError) as exc:
         return jsonify({"message": str(exc)}), 400
     except Exception as exc:  # noqa: BLE001 - surface Zenodo/versioning failures to the client
@@ -748,6 +751,7 @@ def retry_sync_dataset(dataset_id):
     try:
         dataset_service._sync_metadata_in_zenodo_if_needed(dataset, zenodo_service)
         dataset_service.mark_metadata_synced(dataset)
+        index_dataset(dataset)  # re-index after metadata update
     except Exception as exc:
         logger.exception(f"[RETRY SYNC ERROR] {exc}")
         return jsonify({"error": f"Zenodo sync failed: {exc}"}), 500
