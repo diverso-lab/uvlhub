@@ -25,6 +25,16 @@ def index_dataset(dataset):
         logger.info("[SKIP] Dataset %s has no dataset_doi. Skipping indexing.", dataset.id)
         return
 
+    authors_text = (
+        " ".join(a.name for a in dataset.ds_meta_data.authors) if not dataset.ds_meta_data.dataset_anonymous else ""
+    )
+    content = (
+        f"{dataset.ds_meta_data.title} "
+        f"{dataset.ds_meta_data.description} "
+        f"{dataset.ds_meta_data.publication_doi} "
+        f"{authors_text} "
+    )
+
     doc = {
         "type": "dataset",
         "id": dataset.id,
@@ -52,12 +62,7 @@ def index_dataset(dataset):
             dataset.ds_meta_data.publication_type.value if dataset.ds_meta_data.publication_type else None
         ),
         "publication_type_label": dataset.get_cleaned_publication_type(),
-        "content": (
-            f"{dataset.ds_meta_data.title} "
-            f"{dataset.ds_meta_data.description} "
-            f"{dataset.ds_meta_data.publication_doi} "
-            f"{' '.join(a.name for a in dataset.ds_meta_data.authors) if not dataset.ds_meta_data.dataset_anonymous else ''} "
-        ),
+        "content": content,
         "created_at": dataset.created_at.isoformat(),
         "total_size_in_bytes": dataset.get_file_total_size(),
         "files_count": dataset.get_files_count(),
