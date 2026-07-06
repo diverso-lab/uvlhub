@@ -10,9 +10,11 @@ authentication_service = AuthenticationService()
 
 @orcid_bp.before_app_request
 def before_request():
-    # OAuth client is request-scoped for now; moving it to the app factory is a
-    # future improvement, but creating it here keeps it always available.
-    current_app.orcid_service = OrcidService()
+    # Build the OAuth client once per process instead of on every request
+    # (this hook is app-wide and would otherwise run for every static asset).
+    # Moving it to the app factory is a future improvement.
+    if not hasattr(current_app, "orcid_service"):
+        current_app.orcid_service = OrcidService()
 
 
 def _back_to_login(next_url):

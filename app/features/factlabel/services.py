@@ -5,10 +5,15 @@ from typing import Any
 from bs4 import BeautifulSoup
 from fmfactlabel import FMCharacterization
 
+from app.features.factlabel import _flamapy_patches
 from app.features.hubfile.models import Hubfile
 from app.features.hubfile.repositories import HubfileViewRecordRepository
 
 logger = logging.getLogger(__name__)
+
+# flamapy 2.5.0 crashes classifying top-level negations like `!(A & B)`; patch it
+# before any characterization runs (both the web app and the RQ worker import this).
+_flamapy_patches.apply()
 
 
 class FactlabelNotReady(Exception):
