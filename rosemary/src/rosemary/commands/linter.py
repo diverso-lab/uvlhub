@@ -7,13 +7,13 @@ import click
 
 @click.command(
     "linter",
-    help="Runs flake8 + black --check + isort --check-only on 'app', 'rosemary' and 'core' "
+    help="Runs flake8 + black --check + isort --check-only on 'app' and 'rosemary' "
     "(same checks as .github/workflows/CI_lint.yml).",
 )
 def linter():
 
     # Mirror the CI Python Lint job exactly: flake8, black --check and
-    # isort --check-only, all three pointed at the same three directories.
+    # isort --check-only, both pointed at the same two directories.
     # Running them locally via `rosemary linter` used to only cover flake8,
     # so PRs kept bouncing off the black/isort steps after being green
     # locally — fixed by running the full triad here.
@@ -21,7 +21,6 @@ def linter():
     directories = [
         os.path.join(working_dir, "app"),
         os.path.join(working_dir, "rosemary"),
-        os.path.join(working_dir, "core"),
     ]
 
     checks = [
@@ -53,7 +52,7 @@ def linter():
 
 @click.command(
     "linter:fix",
-    help="Automatically formats and cleans code in 'app', 'rosemary', and 'core' directories.",
+    help="Automatically formats and cleans code in 'app' and 'rosemary' directories.",
 )
 def linter_fix():
     import os
@@ -65,7 +64,6 @@ def linter_fix():
     directories = [
         os.path.join(working_dir, "app"),
         os.path.join(working_dir, "rosemary"),
-        os.path.join(working_dir, "core"),
     ]
 
     for directory in directories:

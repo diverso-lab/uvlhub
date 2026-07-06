@@ -13,6 +13,7 @@ the method defensively until the fix lands upstream.
 
 Ref: flamapy.metamodels.fm_metamodel.models.feature_model.is_single_feature_constraint
 """
+
 import logging
 
 logger = logging.getLogger(__name__)
