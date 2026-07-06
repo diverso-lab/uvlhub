@@ -21,7 +21,7 @@ class OrcidService(BaseService):
         self.client_secret = self.get_orcid_client_secret()
 
         if not self.client_id or not self.client_secret:
-            current_app.logger.error("ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured")
+            current_app.logger.warning("ORCID_CLIENT_ID/ORCID_CLIENT_SECRET not configured; ORCID login disabled")
 
         self.oauth, self.orcid_client = self.configure_oauth(current_app)
 
