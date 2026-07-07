@@ -32,8 +32,11 @@ class FeatureModelService(BaseService):
         dest_dir = os.path.join(working_dir, "uploads", f"user_{user.id}", f"dataset_{dataset.id}", "uvl")
         os.makedirs(dest_dir, exist_ok=True)
 
+        all_files = os.listdir(source_dir)
+        logger.info(f"[FM] source_dir={source_dir}, all_files={all_files}")
+
         created_models = []
-        for filename in os.listdir(source_dir):
+        for filename in all_files:
             if not filename.endswith(".uvl"):
                 continue
 

@@ -247,13 +247,15 @@ class UploadIngestService:
 
         for src in uvl_sources:
             h = file_hash(src)
-            if h in seen:
+            dest_name = self._strip_uuid_prefix(src.name)
+
+            # Deduplicate only by (name, hash) pair, not just hash.
+            # This allows multiple files with identical content but different names.
+            dedup_key = (dest_name, h)
+            if dedup_key in seen:
                 self.logger.info(f"[INGEST] Duplicate ignored: {src}")
                 continue
-            seen.add(h)
-
-            # Strip UUID prefix if present.
-            dest_name = self._strip_uuid_prefix(src.name)
+            seen.add(dedup_key)
 
             # Only add a hash suffix if another file with the same name already exists.
             if (Path(stage_dir) / dest_name).exists():
