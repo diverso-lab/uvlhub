@@ -232,6 +232,40 @@
                                 </div>
                             </div>
                         </form>
+                        <!-- GitHub Upload Section -->
+                        <div class="separator my-5"></div>
+                        <div class="mb-5">
+                            <h4 class="fw-bold mb-3">Or, upload from GitHub</h4>
+                            <div class="fv-row mb-3">
+                                <label class="form-label required">Repository URL</label>
+                                <input type="text" id="github_repo_url" class="form-control" 
+                                    placeholder="https://github.com/username/repo" />
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Branch</label>
+                                    <input type="text" id="github_branch" class="form-control" 
+                                        placeholder="main" value="main" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label required">Path (file or folder)</label>
+                                    <input type="text" id="github_path" class="form-control" 
+                                        placeholder="models/feature.uvl or models/" />
+                                </div>
+                            </div>
+                            
+                            <!-- File/Folder selection area -->
+                            <div id="github_file_list_container" class="mb-3" style="display: none;">
+                                <label class="form-label fw-bold">Select files to download:</label>
+                                <div id="github_file_list" class="border rounded p-3" style="max-height: 300px; overflow-y: auto;">
+                                </div>
+                            </div>
+                            
+                            <button type="button" id="github_upload_btn" class="btn btn-sm btn-primary">
+                                Upload from GitHub
+                            </button>
+                            <div id="github_upload_status" class="mt-3 fs-7"></div>
+                        </div>
                     </div>
                 </div>
             </div>

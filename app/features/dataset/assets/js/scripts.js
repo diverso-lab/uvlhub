@@ -4,6 +4,7 @@ import { initializeTinyMCE } from './editor.js';
 import { initializeTagify } from './tagify.js';
 import { initializeSummary } from './summary.js';
 import { initializeSubmit } from './submit.js';
+import { initializeGithubUpload } from './github_upload.js';
 
 document.addEventListener('DOMContentLoaded', function () {
     initializeStepper();
@@ -12,4 +13,5 @@ document.addEventListener('DOMContentLoaded', function () {
     initializeTagify();
     initializeSummary();
     initializeSubmit();
+    initializeGithubUpload();
 });

@@ -1,5 +1,7 @@
 import os
+import uuid as uuid_module
 
+import requests
 from flask import (
     abort,
     current_app,
@@ -85,6 +87,202 @@ def upload_file():
         ),
         200,
     )
+
+
+@hubfile_bp.route("/hubfile/upload-github", methods=["POST"])
+@login_required
+def upload_from_github():
+    """Download a UVL file from GitHub and save it to temp folder"""
+    current_app.logger.info("Entering /hubfile/upload-github")
+
+    try:
+        data = request.get_json()
+        github_url = data.get("github_url", "").strip()
+        branch = data.get("branch", "main").strip()
+        file_path = data.get("file_path", "").strip()
+
+        current_app.logger.info(f"github_url={github_url}, branch={branch}, file_path={file_path}")
+
+        # Validar parámetros
+        if not github_url:
+            current_app.logger.warning("GitHub URL is missing")
+            return jsonify({"message": "GitHub URL is required"}), 400
+
+        if not file_path:
+            current_app.logger.warning("File path is missing")
+            return jsonify({"message": "File path is required"}), 400
+
+        # Validar que sea GitHub
+        if "github.com" not in github_url.lower():
+            current_app.logger.warning(f"Invalid GitHub URL: {github_url}")
+            return jsonify({"message": "Invalid GitHub URL. Must be from github.com"}), 400
+
+        # Limpiar URL (remover .git, https://, github.com/, etc)
+        github_url = github_url.rstrip("/").replace(".git", "")
+        if github_url.startswith("https://"):
+            github_url = github_url[8:]
+        elif github_url.startswith("http://"):
+            github_url = github_url[7:]
+
+        # Remove github.com/ prefix
+        if github_url.startswith("github.com/"):
+            github_url = github_url[11:]
+
+        # Construir URL raw de GitHub
+        # Formato: https://raw.githubusercontent.com/owner/repo/branch/path/file.uvl
+        raw_url = f"https://raw.githubusercontent.com/{github_url}/{branch}/{file_path}"
+        current_app.logger.info(f"Downloading from: {raw_url}")
+
+        # Descargar archivo
+        try:
+            response = requests.get(raw_url, timeout=10)
+            response.raise_for_status()
+        except requests.exceptions.Timeout:
+            current_app.logger.warning("GitHub download timeout")
+            return jsonify({"message": "GitHub download timeout. File is too large or connection is slow"}), 408
+        except requests.exceptions.HTTPError as e:
+            current_app.logger.warning(f"GitHub HTTP error: {e.response.status_code}")
+            if e.response.status_code == 404:
+                return jsonify({"message": "File not found on GitHub. Check repository, branch, and path"}), 404
+            return jsonify({"message": f"GitHub error: {e.response.status_code}"}), 400
+        except requests.exceptions.RequestException as e:
+            current_app.logger.exception(f"Error downloading from GitHub: {e}")
+            return jsonify({"message": f"Error downloading from GitHub: {str(e)}"}), 500
+
+        # Validar que sea archivo .uvl
+        filename = file_path.split("/")[-1]
+        if not filename.lower().endswith(".uvl"):
+            current_app.logger.warning(f"Invalid file extension: {filename}")
+            return jsonify({"message": "File must be a .uvl file"}), 400
+
+        # Validar tamaño (100 MB)
+        max_size = 100 * 1024 * 1024
+        if len(response.content) > max_size:
+            current_app.logger.warning(f"File too large: {len(response.content)} bytes")
+            return jsonify({"message": "File too large. Maximum size is 100 MB"}), 413
+
+        # Obtener temp folder del usuario
+        temp_folder = current_user.temp_folder()
+
+        # Crear carpeta temporal
+        try:
+            os.makedirs(temp_folder, exist_ok=True)
+            current_app.logger.info(f"Temporary folder ready: {temp_folder}")
+        except Exception as e:
+            current_app.logger.exception("Error creating temporary folder")
+            return jsonify({"message": f"Error creating temp folder: {str(e)}"}), 500
+
+        # Generar nombre único
+        unique_id = str(uuid_module.uuid4())
+        unique_filename = f"{unique_id}_{filename}"
+        temp_file_path = os.path.join(temp_folder, unique_filename)
+        current_app.logger.info(f"unique_filename={unique_filename}, temp_file_path={temp_file_path}")
+
+        # Guardar archivo
+        try:
+            with open(temp_file_path, "wb") as f:
+                f.write(response.content)
+            current_app.logger.info(f"File saved at {temp_file_path}")
+        except Exception as e:
+            current_app.logger.exception("Error saving file")
+            return jsonify({"message": f"Error saving file: {str(e)}"}), 500
+
+        # Retornar éxito
+        current_app.logger.info(f"File {unique_filename} accepted from GitHub")
+        return (
+            jsonify(
+                {
+                    "message": "UVL uploaded successfully from GitHub",
+                    "filename": unique_filename,
+                }
+            ),
+            200,
+        )
+
+    except Exception as e:
+        current_app.logger.exception(f"Unexpected error in upload_from_github: {e}")
+        return jsonify({"message": f"Unexpected error: {str(e)}"}), 500
+
+
+@hubfile_bp.route("/hubfile/list-github-files", methods=["POST"])
+@login_required
+def list_github_files():
+    """List all .uvl files in a GitHub folder"""
+    current_app.logger.info("Entering /hubfile/list-github-files")
+
+    try:
+        data = request.get_json()
+        github_url = data.get("github_url", "").strip()
+        branch = data.get("branch", "main").strip()
+        folder_path = data.get("folder_path", "").strip()
+
+        current_app.logger.info(f"github_url={github_url}, branch={branch}, folder_path={folder_path}")
+
+        # Validar parámetros
+        if not github_url:
+            return jsonify({"message": "GitHub URL is required"}), 400
+
+        if not folder_path:
+            return jsonify({"message": "Folder path is required"}), 400
+
+        # Validar que sea GitHub
+        if "github.com" not in github_url.lower():
+            return jsonify({"message": "Invalid GitHub URL. Must be from github.com"}), 400
+
+        # Limpiar URL
+        github_url = github_url.rstrip("/").replace(".git", "")
+        if github_url.startswith("https://"):
+            github_url = github_url[8:]
+        elif github_url.startswith("http://"):
+            github_url = github_url[7:]
+
+        if github_url.startswith("github.com/"):
+            github_url = github_url[11:]
+
+        # Normalizar folder path (remover .git, etc)
+        folder_path = folder_path.rstrip("/")
+
+        # Usar GitHub API para listar archivos
+        # Formato: https://api.github.com/repos/owner/repo/contents/folder
+        api_url = f"https://api.github.com/repos/{github_url}/contents/{folder_path}"
+
+        current_app.logger.info(f"Fetching from API: {api_url}")
+
+        try:
+            response = requests.get(api_url, params={"ref": branch}, timeout=10)
+            response.raise_for_status()
+        except requests.exceptions.Timeout:
+            return jsonify({"message": "GitHub API timeout"}), 408
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 404:
+                return jsonify({"message": "Folder not found on GitHub"}), 404
+            return jsonify({"message": f"GitHub API error: {e.response.status_code}"}), 400
+        except requests.exceptions.RequestException as e:
+            current_app.logger.exception(f"Error fetching from GitHub API: {e}")
+            return jsonify({"message": f"Error connecting to GitHub API: {str(e)}"}), 500
+
+        # Procesar respuesta
+        contents = response.json()
+
+        # Si no es una lista, significa que es un archivo único
+        if not isinstance(contents, list):
+            return jsonify({"message": "Path is not a folder"}), 400
+
+        # Filtrar solo archivos .uvl
+        uvl_files = [
+            item["name"] for item in contents if item["type"] == "file" and item["name"].lower().endswith(".uvl")
+        ]
+
+        if not uvl_files:
+            return jsonify({"message": "No .uvl files found in this folder"}), 404
+
+        current_app.logger.info(f"Found {len(uvl_files)} .uvl files")
+
+        return jsonify({"files": uvl_files}), 200
+
+    except Exception as e:
+        current_app.logger.exception(f"Unexpected error in list_github_files: {e}")
+        return jsonify({"message": f"Unexpected error: {str(e)}"}), 500
 
 
 @hubfile_bp.route("/hubfile/delete", methods=["POST"])
