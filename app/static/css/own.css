@@ -140,6 +140,16 @@ a {
     border-color: #8fbf2f !important;
 }
 
+.btn-github {
+    background-color: #24292f !important;
+    border-color: #24292f !important;
+    color: #fff !important;
+}
+.btn-github:hover {
+    background-color: #1a1e23 !important; /* darker shade on hover */
+    border-color: #1a1e23 !important;
+}
+
 /* ============================================================
    Skeleton placeholders — shared shimmer used for loading states
    in the main page, explore results, and dataset workbench.

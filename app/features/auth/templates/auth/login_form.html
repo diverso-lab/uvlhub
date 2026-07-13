@@ -44,16 +44,19 @@
                     </div>
                     {% endif %}
 
-                    <!-- Submit + ORCID -->
-                    <div class="d-flex align-items-center justify-content-between mb-4">
-                        {{ form.submit(class="btn btn-primary me-3") }}
+                    <!-- Submit + OAuth -->
+                    <div class="d-flex align-items-center justify-content-between mb-4 gap-2">
+                        {{ form.submit(class="btn btn-primary") }}
+                        <span class="text-muted">or</span>
+                        <a href="{{ url_for('github.login', next=next_url) if next_url else url_for('github.login') }}"
+                        class="btn btn-github d-flex align-items-center">
+                            GitHub
+                        </a>
                         <span class="text-muted">or</span>
                         <a href="{{ url_for('orcid.login', next=next_url) if next_url else url_for('orcid.login') }}"
                         class="btn btn-orcid d-flex align-items-center">
-                            Login with ORCID
+                            ORCID
                         </a>
-
-
                     </div>
 
                     <!-- Signup / Forgot password -->

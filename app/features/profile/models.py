@@ -11,6 +11,10 @@ class UserProfile(db.Model):
     surname = db.Column(db.String(100), nullable=False)
 
     orcid = db.relationship("Orcid", backref="profile", uselist=False)
+    github = db.relationship("Github", backref="profile", uselist=False)
 
     def get_orcid(self):
         return self.orcid.orcid_id if self.orcid else None
+
+    def get_github(self):
+        return self.github.github_login if self.github else None

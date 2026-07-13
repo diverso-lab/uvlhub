@@ -57,6 +57,13 @@
                     </div>
                     {% endif %}
 
+                    {% if profile.get_github() %}
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">GitHub</label>
+                        <input class="form-control" id="github" type="text" value="{{ profile.get_github() }}" readonly>
+                        <div class="form-text">Your GitHub account is linked via GitHub Login.</div>
+                    </div>
+                    {% endif %}
 
                     {% if error %}
                     <div class="alert alert-danger d-flex align-items-center p-3 mb-4">
