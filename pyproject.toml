@@ -180,6 +180,7 @@ features = [
     "featuremodel",
     "flamapy",
     "generator",
+    "github",
     "hubfile",
     "mail",
     "orcid",
