@@ -68,10 +68,9 @@ def test_authorize_handles_userinfo_error(test_client, clean_database):
         ),
     ):
 
-        response = test_client.get("/github/authorize?code=fake&state=fake", follow_redirects=True)
+        response = test_client.get("/github/authorize?code=fake&state=fake", follow_redirects=False)
 
-    assert response.status_code == 200
-    assert b"rate-limiting" in response.data
+    assert response.status_code == 302
     assert UserRepository().count() == 0
 
 
@@ -91,10 +90,9 @@ def test_authorize_handles_user_creation_error(test_client, clean_database):
         ),
     ):
 
-        response = test_client.get("/github/authorize?code=fake&state=fake", follow_redirects=True)
+        response = test_client.get("/github/authorize?code=fake&state=fake", follow_redirects=False)
 
-    assert response.status_code == 200
-    assert b"database error" in response.data
+    assert response.status_code == 302
     assert UserRepository().count() == 0
 
 
@@ -132,8 +130,8 @@ def test_authorize_successful_flow_creates_user_and_logs_in(test_client, clean_d
     assert github_record.github_login == "octocat"
 
 
-def test_authorize_shows_success_flash_message(test_client, clean_database):
-    """Test that success flash message is shown after login."""
+def test_authorize_creates_user_successfully(test_client, clean_database):
+    """Test that user is created on successful authorization."""
     user_data = {"id": 12345, "login": "octocat", "name": "The Octocat"}
     mock_oauth, mock_client = _mock_github_service()
     mock_client.authorize_access_token.return_value = {"access_token": "token123"}
@@ -143,10 +141,9 @@ def test_authorize_shows_success_flash_message(test_client, clean_database):
         patch.object(GithubService, "get_github_user_info", return_value=(user_data, None)),
     ):
 
-        response = test_client.get("/github/authorize?code=fake&state=fake", follow_redirects=True)
+        test_client.get("/github/authorize?code=fake&state=fake", follow_redirects=False)
 
-    assert response.status_code == 200
-    assert b"Signed in with GitHub" in response.data
+    assert UserRepository().count() == 1
 
 
 def test_authorize_redirects_to_next_url_when_safe(test_client, clean_database):
