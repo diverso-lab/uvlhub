@@ -69,16 +69,6 @@ def test_models_range_filter_with_only_min():
     assert range_filter == {"gte": 5}
 
 
-def test_size_range_filter_with_only_max():
-    """Test size filter with only maximum value"""
-    range_filter = {}
-    size_max = 1024 * 1024 * 100  # 100 MB in bytes
-    if size_max is not None:
-        range_filter["lte"] = size_max
-
-    assert range_filter == {"lte": 104857600}
-
-
 def test_files_count_range_filter():
     """Test files count filter"""
     range_filter = {}

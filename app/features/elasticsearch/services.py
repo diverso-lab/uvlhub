@@ -157,8 +157,6 @@ class ElasticsearchService:
         features_max=None,
         models_min=None,
         models_max=None,
-        size_min=None,
-        size_max=None,
         files_min=None,
         files_max=None,
         year=None,
@@ -214,15 +212,6 @@ class ElasticsearchService:
                     range_filter["lte"] = models_max
                 if range_filter:
                     filter_clauses.append({"range": {"number_of_models": range_filter}})
-
-            if size_min is not None or size_max is not None:
-                range_filter = {}
-                if size_min is not None:
-                    range_filter["gte"] = size_min
-                if size_max is not None:
-                    range_filter["lte"] = size_max
-                if range_filter:
-                    filter_clauses.append({"range": {"total_size_in_bytes": range_filter}})
 
             if files_min is not None or files_max is not None:
                 range_filter = {}

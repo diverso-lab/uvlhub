@@ -47,7 +47,7 @@
               <input id="search-query" type="text" class="form-control mb-3" placeholder="Search datasets..." autofocus>
 
               <!-- Filter: publication type -->
-              <div class="mb-3">
+              <div class="filter-spacing">
                   <label class="form-label">Publication type</label>
                   <select class="form-select" id="filter-publication-type">
                     <option value="">Any</option>
@@ -73,7 +73,7 @@
               </div>
 
               <!-- Filter: tags -->
-              <div class="mb-3">
+              <div class="filter-spacing">
                 <label class="form-label">Tags</label>
                 <input id="filter-tags" 
                       type="text" 
@@ -82,15 +82,15 @@
               </div>
 
               <!-- Filter: date -->
-              <div class="mb-3">
-                <label class="form-label mb-0">Creation date</label>
+              <div class="filter-spacing">
+                <label class="form-label mb-0 filter-main-label">Creation date</label>
                 <div class="d-flex">
                   <div class="flex-fill">
-                    <label class="form-text d-block">From</label>
+                    <label class="form-text d-block filter-sublabel">From</label>
                     <input id="filter-date-from" type="date" class="form-control" />
                   </div>
                   <div class="flex-fill">
-                    <label class="form-text d-block">To</label>
+                    <label class="form-text d-block filter-sublabel">To</label>
                     <input id="filter-date-to" type="date" class="form-control" />
                   </div>
                 </div>
@@ -102,67 +102,52 @@
               </div>
 
               <!-- Filter: number of features -->
-              <div class="mb-3">
-                <label class="form-label mb-0">Number of features</label>
+              <div class="filter-spacing">
+                <label class="form-label mb-0 filter-main-label">Number of features</label>
                 <div class="d-flex">
                   <div class="flex-fill">
-                    <label class="form-text d-block">Min</label>
+                    <label class="form-text d-block filter-sublabel">Min</label>
                     <input id="filter-features-min" type="number" class="form-control" placeholder="0" min="0" />
                   </div>
                   <div class="flex-fill">
-                    <label class="form-text d-block">Max</label>
+                    <label class="form-text d-block filter-sublabel">Max</label>
                     <input id="filter-features-max" type="number" class="form-control" placeholder="∞" min="0" />
                   </div>
                 </div>
               </div>
 
               <!-- Filter: number of models -->
-              <div class="mb-3">
-                <label class="form-label mb-0">Number of models</label>
+              <div class="filter-spacing">
+                <label class="form-label mb-0 filter-main-label">Number of models</label>
                 <div class="d-flex">
                   <div class="flex-fill">
-                    <label class="form-text d-block">Min</label>
+                    <label class="form-text d-block filter-sublabel">Min</label>
                     <input id="filter-models-min" type="number" class="form-control" placeholder="0" min="0" />
                   </div>
                   <div class="flex-fill">
-                    <label class="form-text d-block">Max</label>
+                    <label class="form-text d-block filter-sublabel">Max</label>
                     <input id="filter-models-max" type="number" class="form-control" placeholder="∞" min="0" />
                   </div>
                 </div>
               </div>
 
-              <!-- Filter: dataset size -->
-              <div class="mb-3">
-                <label class="form-label mb-0">Dataset size (MB)</label>
-                <div class="d-flex">
-                  <div class="flex-fill">
-                    <label class="form-text d-block">Min</label>
-                    <input id="filter-size-min" type="number" class="form-control" placeholder="0" min="0" />
-                  </div>
-                  <div class="flex-fill">
-                    <label class="form-text d-block">Max</label>
-                    <input id="filter-size-max" type="number" class="form-control" placeholder="∞" min="0" />
-                  </div>
-                </div>
-              </div>
-
               <!-- Filter: number of files -->
-              <div class="mb-3">
-                <label class="form-label mb-0">Number of files</label>
+              <div class="filter-spacing">
+                <label class="form-label mb-0 filter-main-label">Number of files</label>
                 <div class="d-flex">
                   <div class="flex-fill">
-                    <label class="form-text d-block">Min</label>
+                    <label class="form-text d-block filter-sublabel">Min</label>
                     <input id="filter-files-min" type="number" class="form-control" placeholder="0" min="0" />
                   </div>
                   <div class="flex-fill">
-                    <label class="form-text d-block">Max</label>
+                    <label class="form-text d-block filter-sublabel">Max</label>
                     <input id="filter-files-max" type="number" class="form-control" placeholder="∞" min="0" />
                   </div>
                 </div>
               </div>
 
               <!-- Filter: year -->
-              <div class="mb-3">
+              <div class="filter-spacing">
                 <label class="form-label">Year</label>
                 <select class="form-select" id="filter-year">
                   <option value="">Any year</option>
@@ -178,7 +163,7 @@
               </div>
 
               <!-- Filter: only with authors -->
-              <div class="mb-3">
+              <div class="filter-spacing">
                 <div class="form-check">
                   <input class="form-check-input" type="checkbox" id="filter-only-authors" />
                   <label class="form-check-label" for="filter-only-authors">
@@ -188,7 +173,7 @@
               </div>
 
               <!-- Filter: sort order -->
-              <div class="mb-3">
+              <div class="filter-spacing">
                   <label class="form-label">Sort by</label>
                   <select class="form-select" id="filter-sorting">
                       <option value="newest">Newest first</option>

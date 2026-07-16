@@ -20,8 +20,6 @@ class TestExploreFiltersFrontend:
         assert selenium_driver.find_element("id", "filter-features-max")
         assert selenium_driver.find_element("id", "filter-models-min")
         assert selenium_driver.find_element("id", "filter-models-max")
-        assert selenium_driver.find_element("id", "filter-size-min")
-        assert selenium_driver.find_element("id", "filter-size-max")
         assert selenium_driver.find_element("id", "filter-files-min")
         assert selenium_driver.find_element("id", "filter-files-max")
         assert selenium_driver.find_element("id", "filter-year")
@@ -64,24 +62,6 @@ class TestExploreFiltersFrontend:
         models_max_input.send_keys("20")
 
         assert models_max_input.get_attribute("value") == "20"
-
-    def test_size_min_input_accepts_numbers(self, selenium_driver):
-        """Test that size min input accepts numeric input"""
-        selenium_driver.get("http://localhost:5000/explore")
-
-        size_min_input = selenium_driver.find_element("id", "filter-size-min")
-        size_min_input.send_keys("10")
-
-        assert size_min_input.get_attribute("value") == "10"
-
-    def test_size_max_input_accepts_numbers(self, selenium_driver):
-        """Test that size max input accepts numeric input"""
-        selenium_driver.get("http://localhost:5000/explore")
-
-        size_max_input = selenium_driver.find_element("id", "filter-size-max")
-        size_max_input.send_keys("500")
-
-        assert size_max_input.get_attribute("value") == "500"
 
     def test_files_min_input_accepts_numbers(self, selenium_driver):
         """Test that files min input accepts numeric input"""

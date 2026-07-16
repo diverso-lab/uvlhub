@@ -302,6 +302,4 @@ def create_ds_metrics_on_metadata_create(mapper, connection, target):
     if target.ds_metrics is None:
         metrics = DSMetrics(number_of_features=0, number_of_models=0)
         db.session.add(metrics)
-        db.session.flush()
         target.ds_metrics = metrics
-        db.session.commit()

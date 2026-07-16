@@ -41,16 +41,6 @@ class TestExploreRoutes:
         response = test_client.get("/api/v1/search?models_max=20")
         assert response.status_code == 200
 
-    def test_size_min_parameter_accepted(self, test_client):
-        """Test that size_min parameter (in bytes) is accepted"""
-        response = test_client.get("/api/v1/search?size_min=1048576")
-        assert response.status_code == 200
-
-    def test_size_max_parameter_accepted(self, test_client):
-        """Test that size_max parameter (in bytes) is accepted"""
-        response = test_client.get("/api/v1/search?size_max=1073741824")
-        assert response.status_code == 200
-
     def test_files_min_parameter_accepted(self, test_client):
         """Test that files_min parameter is accepted"""
         response = test_client.get("/api/v1/search?files_min=1")

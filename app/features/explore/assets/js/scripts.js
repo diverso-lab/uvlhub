@@ -50,7 +50,7 @@ function bindFilters() {
         }
     });
 
-    ['#filter-publication-type', '#filter-sorting', '#filter-date-from', '#filter-date-to', '#filter-features-min', '#filter-features-max', '#filter-models-min', '#filter-models-max', '#filter-size-min', '#filter-size-max', '#filter-files-min', '#filter-files-max', '#filter-year', '#filter-only-authors'].forEach(selector => {
+    ['#filter-publication-type', '#filter-sorting', '#filter-date-from', '#filter-date-to', '#filter-features-min', '#filter-features-max', '#filter-models-min', '#filter-models-max', '#filter-files-min', '#filter-files-max', '#filter-year', '#filter-only-authors'].forEach(selector => {
         const el = document.querySelector(selector);
         if (el) {
             el.addEventListener('change', () => runSearch(true));
@@ -68,8 +68,6 @@ function bindFilters() {
         document.getElementById('filter-features-max').value = '';
         document.getElementById('filter-models-min').value = '';
         document.getElementById('filter-models-max').value = '';
-        document.getElementById('filter-size-min').value = '';
-        document.getElementById('filter-size-max').value = '';
         document.getElementById('filter-files-min').value = '';
         document.getElementById('filter-files-max').value = '';
         document.getElementById('filter-year').value = '';
@@ -140,8 +138,6 @@ function runSearch(reset = true) {
     const features_max = document.getElementById('filter-features-max').value;
     const models_min = document.getElementById('filter-models-min').value;
     const models_max = document.getElementById('filter-models-max').value;
-    const size_min = document.getElementById('filter-size-min').value ? parseInt(document.getElementById('filter-size-min').value) * 1024 * 1024 : '';
-    const size_max = document.getElementById('filter-size-max').value ? parseInt(document.getElementById('filter-size-max').value) * 1024 * 1024 : '';
     const files_min = document.getElementById('filter-files-min').value;
     const files_max = document.getElementById('filter-files-max').value;
     const year = document.getElementById('filter-year').value;
@@ -162,8 +158,6 @@ function runSearch(reset = true) {
     if (features_max) params.append('features_max', features_max);
     if (models_min) params.append('models_min', models_min);
     if (models_max) params.append('models_max', models_max);
-    if (size_min) params.append('size_min', size_min);
-    if (size_max) params.append('size_max', size_max);
     if (files_min) params.append('files_min', files_min);
     if (files_max) params.append('files_max', files_max);
     if (year) params.append('year', year);

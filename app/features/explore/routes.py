@@ -61,8 +61,6 @@ def api_search():
     features_max = parse_int_or_none(request.args.get("features_max"))
     models_min = parse_int_or_none(request.args.get("models_min"))
     models_max = parse_int_or_none(request.args.get("models_max"))
-    size_min = parse_int_or_none(request.args.get("size_min"))
-    size_max = parse_int_or_none(request.args.get("size_max"))
     files_min = parse_int_or_none(request.args.get("files_min"))
     files_max = parse_int_or_none(request.args.get("files_max"))
 
@@ -87,8 +85,6 @@ def api_search():
         features_max=features_max,
         models_min=models_min,
         models_max=models_max,
-        size_min=size_min,
-        size_max=size_max,
         files_min=files_min,
         files_max=files_max,
         year=year,

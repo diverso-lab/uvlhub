@@ -60,21 +60,6 @@ class TestSearchFilters:
         assert any("number_of_models" in str(f) for f in filters)
 
     @patch("app.features.elasticsearch.services.Elasticsearch")
-    def test_search_with_size_filter(self, mock_es_class):
-        """Test that size_min/max parameters add correct range filter"""
-        mock_es = MagicMock()
-        mock_es_class.return_value = mock_es
-        mock_es.search.return_value = {"hits": {"hits": [], "total": {"value": 0}}}
-
-        service = ElasticsearchService()
-        service.search(query="", size_min=1048576, size_max=104857600)
-
-        call_kwargs = mock_es.search.call_args[1]
-        body = call_kwargs["body"]
-        filters = body["query"]["bool"]["filter"]
-        assert any("total_size_in_bytes" in str(f) for f in filters)
-
-    @patch("app.features.elasticsearch.services.Elasticsearch")
     def test_search_with_files_filter(self, mock_es_class):
         """Test that files_min/max parameters add correct range filter"""
         mock_es = MagicMock()
@@ -133,8 +118,6 @@ class TestSearchFilters:
             features_max=100,
             models_min=1,
             models_max=10,
-            size_min=1024,
-            size_max=1048576,
             files_min=1,
             files_max=50,
             year=2023,
@@ -182,7 +165,7 @@ class TestSearchFilters:
         mock_es.search.return_value = {"hits": {"hits": [], "total": {"value": 0}}}
 
         service = ElasticsearchService()
-        service.search(query="", features_max=50, models_max=10, size_max=1000000)
+        service.search(query="", features_max=50, models_max=10)
 
         call_kwargs = mock_es.search.call_args[1]
         body = call_kwargs["body"]
