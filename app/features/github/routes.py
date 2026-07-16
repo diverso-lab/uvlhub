@@ -26,7 +26,7 @@ def login():
     else:
         session.pop("github_next_url", None)
 
-    redirect_uri = url_for("github.authorize", _external=True, _scheme="http")
+    redirect_uri = url_for("github.authorize", _external=True)
 
     try:
         return current_app.github_service.github_client.authorize_redirect(redirect_uri)
