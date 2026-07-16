@@ -7,6 +7,7 @@ from flask_cors import CORS
 from flask_login import LoginManager
 from flask_migrate import Migrate
 from flask_session import Session
+from werkzeug.middleware.proxy_fix import ProxyFix
 from splent_framework.configuration.configuration import get_app_version
 from splent_framework.db import db
 from splent_framework.managers.config_manager import ConfigManager
@@ -37,6 +38,9 @@ sess = Session()
 
 def create_app(config_name="development"):
     app = Flask(__name__)
+
+    # Trust X-Forwarded-* headers from proxy (e.g., Nginx)
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1, x_for=1, x_port=1)
 
     # Load configuration according to environment (reads app/config.py)
     ConfigManager(app).load_config(config_name=config_name)
