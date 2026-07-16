@@ -234,7 +234,9 @@ class ElasticsearchService:
                     filter_clauses.append({"range": {"files_count": range_filter}})
 
             if year is not None:
-                filter_clauses.append({"range": {"created_at": {"gte": f"{year}-01-01T00:00:00Z", "lte": f"{year}-12-31T23:59:59Z"}}})
+                filter_clauses.append(
+                    {"range": {"created_at": {"gte": f"{year}-01-01T00:00:00Z", "lte": f"{year}-12-31T23:59:59Z"}}}
+                )
 
             if only_with_authors:
                 filter_clauses.append({"term": {"authors_is_anonymous": False}})

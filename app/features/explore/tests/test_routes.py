@@ -78,9 +78,7 @@ class TestExploreRoutes:
 
     def test_combined_filters(self, test_client):
         """Test that multiple filters work together"""
-        response = test_client.get(
-            "/api/v1/search?features_min=5&features_max=50&models_min=1&year=2023"
-        )
+        response = test_client.get("/api/v1/search?features_min=5&features_max=50&models_min=1&year=2023")
         assert response.status_code == 200
         data = response.get_json()
         assert isinstance(data["results"], list)

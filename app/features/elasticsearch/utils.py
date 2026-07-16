@@ -38,6 +38,7 @@ def index_dataset(dataset):
 
     # Calcular total de features: suma de features de todos los hubfiles del dataset
     from app.features.hubfile.models import Hubfile
+
     total_features = 0
     hubfiles = Hubfile.query.filter_by(dataset_id=dataset.id).all()
     for hubfile in hubfiles:

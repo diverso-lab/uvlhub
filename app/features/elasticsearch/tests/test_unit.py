@@ -46,7 +46,7 @@ def test_format_hit_humanises_date_and_size():
 # Tests for new filter functionality
 def test_features_range_filter_builds_correctly():
     """Test that features_min/max create correct range filter"""
-    service = ElasticsearchService()
+    ElasticsearchService()
     # This would be tested in the full search method, but we verify the logic
     range_filter = {}
     features_min = 10
@@ -103,7 +103,6 @@ def test_year_filter_builds_date_range():
 
 def test_authors_filter_term():
     """Test that only_with_authors creates correct term filter"""
-    only_with_authors = True
     filter_clause = {"term": {"authors_is_anonymous": False}}
 
     assert filter_clause["term"]["authors_is_anonymous"] is False

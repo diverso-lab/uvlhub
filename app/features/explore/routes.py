@@ -72,7 +72,7 @@ def api_search():
         except ValueError:
             year = None
 
-    only_with_authors = only_with_authors == 'true'
+    only_with_authors = only_with_authors == "true"
 
     tags_list = [t.strip() for t in tags.split(",") if t.strip()] if tags else []
 
