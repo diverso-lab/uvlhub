@@ -101,6 +101,92 @@
                 âš ï¸ End date must be after start date
               </div>
 
+              <!-- Filter: number of features -->
+              <div class="mb-3">
+                <label class="form-label mb-0">Number of features</label>
+                <div class="d-flex">
+                  <div class="flex-fill">
+                    <label class="form-text d-block">Min</label>
+                    <input id="filter-features-min" type="number" class="form-control" placeholder="0" min="0" />
+                  </div>
+                  <div class="flex-fill">
+                    <label class="form-text d-block">Max</label>
+                    <input id="filter-features-max" type="number" class="form-control" placeholder="∞" min="0" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Filter: number of models -->
+              <div class="mb-3">
+                <label class="form-label mb-0">Number of models</label>
+                <div class="d-flex">
+                  <div class="flex-fill">
+                    <label class="form-text d-block">Min</label>
+                    <input id="filter-models-min" type="number" class="form-control" placeholder="0" min="0" />
+                  </div>
+                  <div class="flex-fill">
+                    <label class="form-text d-block">Max</label>
+                    <input id="filter-models-max" type="number" class="form-control" placeholder="∞" min="0" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Filter: dataset size -->
+              <div class="mb-3">
+                <label class="form-label mb-0">Dataset size (MB)</label>
+                <div class="d-flex">
+                  <div class="flex-fill">
+                    <label class="form-text d-block">Min</label>
+                    <input id="filter-size-min" type="number" class="form-control" placeholder="0" min="0" />
+                  </div>
+                  <div class="flex-fill">
+                    <label class="form-text d-block">Max</label>
+                    <input id="filter-size-max" type="number" class="form-control" placeholder="∞" min="0" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Filter: number of files -->
+              <div class="mb-3">
+                <label class="form-label mb-0">Number of files</label>
+                <div class="d-flex">
+                  <div class="flex-fill">
+                    <label class="form-text d-block">Min</label>
+                    <input id="filter-files-min" type="number" class="form-control" placeholder="0" min="0" />
+                  </div>
+                  <div class="flex-fill">
+                    <label class="form-text d-block">Max</label>
+                    <input id="filter-files-max" type="number" class="form-control" placeholder="∞" min="0" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Filter: year -->
+              <div class="mb-3">
+                <label class="form-label">Year</label>
+                <select class="form-select" id="filter-year">
+                  <option value="">Any year</option>
+                  <option value="2024">2024</option>
+                  <option value="2023">2023</option>
+                  <option value="2022">2022</option>
+                  <option value="2021">2021</option>
+                  <option value="2020">2020</option>
+                  <option value="2019">2019</option>
+                  <option value="2018">2018</option>
+                  <option value="2017">2017</option>
+                </select>
+              </div>
+
+              <!-- Filter: only with authors -->
+              <div class="mb-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="filter-only-authors" />
+                  <label class="form-check-label" for="filter-only-authors">
+                    Only datasets with authors
+                  </label>
+                </div>
+              </div>
+
               <!-- Filter: sort order -->
               <div class="mb-3">
                   <label class="form-label">Sort by</label>

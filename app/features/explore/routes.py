@@ -42,9 +42,37 @@ def api_search():
     tags = request.args.get("tags")
     date_from = request.args.get("date_from")
     date_to = request.args.get("date_to")
+    year = request.args.get("year")
+    only_with_authors = request.args.get("only_with_authors")
 
     page = int(request.args.get("page", 1))
     size = int(request.args.get("size", 10))
+
+    # Parse integer ranges - parse each individually
+    def parse_int_or_none(value):
+        if value:
+            try:
+                return int(value)
+            except ValueError:
+                return None
+        return None
+
+    features_min = parse_int_or_none(request.args.get("features_min"))
+    features_max = parse_int_or_none(request.args.get("features_max"))
+    models_min = parse_int_or_none(request.args.get("models_min"))
+    models_max = parse_int_or_none(request.args.get("models_max"))
+    size_min = parse_int_or_none(request.args.get("size_min"))
+    size_max = parse_int_or_none(request.args.get("size_max"))
+    files_min = parse_int_or_none(request.args.get("files_min"))
+    files_max = parse_int_or_none(request.args.get("files_max"))
+
+    if year:
+        try:
+            year = int(year)
+        except ValueError:
+            year = None
+
+    only_with_authors = only_with_authors == 'true'
 
     tags_list = [t.strip() for t in tags.split(",") if t.strip()] if tags else []
 
@@ -55,6 +83,16 @@ def api_search():
         tags=tags_list,
         date_from=date_from,
         date_to=date_to,
+        features_min=features_min,
+        features_max=features_max,
+        models_min=models_min,
+        models_max=models_max,
+        size_min=size_min,
+        size_max=size_max,
+        files_min=files_min,
+        files_max=files_max,
+        year=year,
+        only_with_authors=only_with_authors,
         page=page,
         size=size,
     )

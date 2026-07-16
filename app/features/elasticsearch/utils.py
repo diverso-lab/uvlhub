@@ -18,6 +18,7 @@ def init_search_index():
 def index_dataset(dataset):
 
     from app.features.elasticsearch.services import ElasticsearchService
+    from app.features.factlabel.models import HubfileMetrics
 
     search = ElasticsearchService()
 
@@ -34,6 +35,15 @@ def index_dataset(dataset):
         f"{dataset.ds_meta_data.publication_doi} "
         f"{authors_text} "
     )
+
+    # Calcular total de features: suma de features de todos los hubfiles del dataset
+    from app.features.hubfile.models import Hubfile
+    total_features = 0
+    hubfiles = Hubfile.query.filter_by(dataset_id=dataset.id).all()
+    for hubfile in hubfiles:
+        hubfile_metrics = HubfileMetrics.query.filter_by(hubfile_id=hubfile.id).first()
+        if hubfile_metrics and hubfile_metrics.features:
+            total_features += hubfile_metrics.features
 
     doc = {
         "type": "dataset",
@@ -66,6 +76,8 @@ def index_dataset(dataset):
         "created_at": dataset.created_at.isoformat(),
         "total_size_in_bytes": dataset.get_file_total_size(),
         "files_count": dataset.get_files_count(),
+        "number_of_features": total_features,  # Suma de features de todos los hubfiles
+        "number_of_models": len(hubfiles),  # Cantidad de hubfiles/modelos
     }
 
     search.index_document(doc_id=f"dataset-{dataset.id}", data=doc)
@@ -76,6 +88,7 @@ def index_dataset(dataset):
 def index_hubfile(hubfile):
 
     from app.features.elasticsearch.services import ElasticsearchService
+    from app.features.factlabel.models import HubfileMetrics
 
     search = ElasticsearchService()
 
@@ -84,6 +97,10 @@ def index_hubfile(hubfile):
     if not dataset or not dataset.ds_meta_data.dataset_doi:
         logger.info("[SKIP] Hubfile %s skipped (no dataset or dataset has no DOI).", hubfile.id)
         return
+
+    # Obtener número de features del hubfile desde HubfileMetrics
+    hubfile_metrics = HubfileMetrics.query.filter_by(hubfile_id=hubfile.id).first()
+    number_of_features = hubfile_metrics.features if hubfile_metrics else 0
 
     doc = {
         "type": "hubfile",
@@ -98,6 +115,7 @@ def index_hubfile(hubfile):
         "url": hubfile.get_url(),
         "size_in_bytes": hubfile.size,
         "size_in_human_format": hubfile.get_formatted_size(),
+        "number_of_features": number_of_features,
     }
 
     search.index_document(doc_id=f"hubfile-{hubfile.id}", data=doc)

@@ -5,7 +5,7 @@ from typing import List
 import pytz
 from flask import request
 from flask_login import current_user
-from sqlalchemy import Boolean
+from sqlalchemy import Boolean, event
 from sqlalchemy import Enum as SQLAlchemyEnum
 
 from app import db
@@ -292,3 +292,15 @@ class DOIMapping(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     dataset_doi_old = db.Column(db.String(120))
     dataset_doi_new = db.Column(db.String(120))
+
+
+# Evento: Crear automáticamente ds_metrics cuando se crea un nuevo dataset
+@event.listens_for(DSMetaData, 'after_insert')
+def create_ds_metrics_on_metadata_create(mapper, connection, target):
+    """Crea automáticamente DSMetrics cuando se crea DSMetaData sin métricas"""
+    if target.ds_metrics is None:
+        metrics = DSMetrics(number_of_features=0, number_of_models=0)
+        db.session.add(metrics)
+        db.session.flush()
+        target.ds_metrics = metrics
+        db.session.commit()
