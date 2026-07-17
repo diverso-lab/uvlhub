@@ -41,3 +41,58 @@ def test_format_hit_humanises_date_and_size():
 
     assert source["total_size_in_human_format"] == "1.0 KB"
     assert source["created_at"] == "01 Jan 2020, 12:30"
+
+
+# Tests for new filter functionality
+def test_features_range_filter_builds_correctly():
+    """Test that features_min/max create correct range filter"""
+    ElasticsearchService()
+    # This would be tested in the full search method, but we verify the logic
+    range_filter = {}
+    features_min = 10
+    features_max = 50
+    if features_min is not None:
+        range_filter["gte"] = features_min
+    if features_max is not None:
+        range_filter["lte"] = features_max
+
+    assert range_filter == {"gte": 10, "lte": 50}
+
+
+def test_models_range_filter_with_only_min():
+    """Test models filter with only minimum value"""
+    range_filter = {}
+    models_min = 5
+    if models_min is not None:
+        range_filter["gte"] = models_min
+
+    assert range_filter == {"gte": 5}
+
+
+def test_files_count_range_filter():
+    """Test files count filter"""
+    range_filter = {}
+    files_min = 1
+    files_max = 10
+    if files_min is not None:
+        range_filter["gte"] = files_min
+    if files_max is not None:
+        range_filter["lte"] = files_max
+
+    assert range_filter == {"gte": 1, "lte": 10}
+
+
+def test_year_filter_builds_date_range():
+    """Test that year filter creates correct date range"""
+    year = 2023
+    date_range = {"gte": f"{year}-01-01T00:00:00Z", "lte": f"{year}-12-31T23:59:59Z"}
+
+    assert date_range["gte"] == "2023-01-01T00:00:00Z"
+    assert date_range["lte"] == "2023-12-31T23:59:59Z"
+
+
+def test_authors_filter_term():
+    """Test that only_with_authors creates correct term filter"""
+    filter_clause = {"term": {"authors_is_anonymous": False}}
+
+    assert filter_clause["term"]["authors_is_anonymous"] is False

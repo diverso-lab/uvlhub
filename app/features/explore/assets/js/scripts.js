@@ -50,7 +50,7 @@ function bindFilters() {
         }
     });
 
-    ['#filter-publication-type', '#filter-sorting', '#filter-date-from', '#filter-date-to'].forEach(selector => {
+    ['#filter-publication-type', '#filter-sorting', '#filter-date-from', '#filter-date-to', '#filter-features-min', '#filter-features-max', '#filter-models-min', '#filter-models-max', '#filter-files-min', '#filter-files-max', '#filter-year', '#filter-only-authors'].forEach(selector => {
         const el = document.querySelector(selector);
         if (el) {
             el.addEventListener('change', () => runSearch(true));
@@ -64,6 +64,14 @@ function bindFilters() {
         document.getElementById('filter-tags').value = '';
         document.getElementById('filter-date-from').value = '';
         document.getElementById('filter-date-to').value = '';
+        document.getElementById('filter-features-min').value = '';
+        document.getElementById('filter-features-max').value = '';
+        document.getElementById('filter-models-min').value = '';
+        document.getElementById('filter-models-max').value = '';
+        document.getElementById('filter-files-min').value = '';
+        document.getElementById('filter-files-max').value = '';
+        document.getElementById('filter-year').value = '';
+        document.getElementById('filter-only-authors').checked = false;
         runSearch(true);
     });
 }
@@ -126,6 +134,14 @@ function runSearch(reset = true) {
     const tags = document.getElementById('filter-tags').value.trim();
     const date_from = fromInput.value;
     const date_to = toInput.value;
+    const features_min = document.getElementById('filter-features-min').value;
+    const features_max = document.getElementById('filter-features-max').value;
+    const models_min = document.getElementById('filter-models-min').value;
+    const models_max = document.getElementById('filter-models-max').value;
+    const files_min = document.getElementById('filter-files-min').value;
+    const files_max = document.getElementById('filter-files-max').value;
+    const year = document.getElementById('filter-year').value;
+    const only_with_authors = document.getElementById('filter-only-authors').checked;
 
     const params = new URLSearchParams({
         q: query,
@@ -138,6 +154,14 @@ function runSearch(reset = true) {
     if (tags) params.append('tags', tags);
     if (date_from) params.append('date_from', date_from);
     if (date_to) params.append('date_to', date_to);
+    if (features_min) params.append('features_min', features_min);
+    if (features_max) params.append('features_max', features_max);
+    if (models_min) params.append('models_min', models_min);
+    if (models_max) params.append('models_max', models_max);
+    if (files_min) params.append('files_min', files_min);
+    if (files_max) params.append('files_max', files_max);
+    if (year) params.append('year', year);
+    if (only_with_authors) params.append('only_with_authors', 'true');
 
     const requestId = ++latestRequestId;
     const controller = new AbortController();

@@ -91,6 +91,11 @@ class ElasticsearchService:
                             "dataset_id": {"type": "integer"},
                             "feature_model_id": {"type": "integer"},
                             "dataset_title": {"type": "text", "analyzer": "custom_text_analyzer"},
+                            "number_of_features": {"type": "integer"},
+                            "number_of_models": {"type": "integer"},
+                            "total_size_in_bytes": {"type": "long"},
+                            "files_count": {"type": "integer"},
+                            "authors_is_anonymous": {"type": "boolean"},
                         }
                     },
                 },
@@ -148,6 +153,14 @@ class ElasticsearchService:
         tags=None,
         date_from=None,
         date_to=None,
+        features_min=None,
+        features_max=None,
+        models_min=None,
+        models_max=None,
+        files_min=None,
+        files_max=None,
+        year=None,
+        only_with_authors=False,
         page=1,
         size=10,
     ):
@@ -181,6 +194,41 @@ class ElasticsearchService:
 
             if date_from or date_to:
                 filter_clauses.extend(self._date_range_filter(date_from, date_to))
+
+            if features_min is not None or features_max is not None:
+                range_filter = {}
+                if features_min is not None:
+                    range_filter["gte"] = features_min
+                if features_max is not None:
+                    range_filter["lte"] = features_max
+                if range_filter:
+                    filter_clauses.append({"range": {"number_of_features": range_filter}})
+
+            if models_min is not None or models_max is not None:
+                range_filter = {}
+                if models_min is not None:
+                    range_filter["gte"] = models_min
+                if models_max is not None:
+                    range_filter["lte"] = models_max
+                if range_filter:
+                    filter_clauses.append({"range": {"number_of_models": range_filter}})
+
+            if files_min is not None or files_max is not None:
+                range_filter = {}
+                if files_min is not None:
+                    range_filter["gte"] = files_min
+                if files_max is not None:
+                    range_filter["lte"] = files_max
+                if range_filter:
+                    filter_clauses.append({"range": {"files_count": range_filter}})
+
+            if year is not None:
+                filter_clauses.append(
+                    {"range": {"created_at": {"gte": f"{year}-01-01T00:00:00Z", "lte": f"{year}-12-31T23:59:59Z"}}}
+                )
+
+            if only_with_authors:
+                filter_clauses.append({"term": {"authors_is_anonymous": False}})
 
             sort_clause = [
                 {"created_at": {"order": "desc"}} if sorting == "newest" else {"created_at": {"order": "asc"}}

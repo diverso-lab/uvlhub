@@ -232,3 +232,15 @@ a {
     filter: brightness(1.08);
     color: #fff;
 }
+
+.filter-spacing {
+    margin-bottom: 3.5rem !important;
+}
+
+.filter-sublabel {
+    margin-bottom: 0.03rem !important;
+}
+
+.filter-main-label {
+    margin-bottom: 0.05rem !important;
+}
