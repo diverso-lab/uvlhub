@@ -157,8 +157,6 @@ class ElasticsearchService:
         features_max=None,
         models_min=None,
         models_max=None,
-        files_min=None,
-        files_max=None,
         year=None,
         only_with_authors=False,
         page=1,
@@ -212,15 +210,6 @@ class ElasticsearchService:
                     range_filter["lte"] = models_max
                 if range_filter:
                     filter_clauses.append({"range": {"number_of_models": range_filter}})
-
-            if files_min is not None or files_max is not None:
-                range_filter = {}
-                if files_min is not None:
-                    range_filter["gte"] = files_min
-                if files_max is not None:
-                    range_filter["lte"] = files_max
-                if range_filter:
-                    filter_clauses.append({"range": {"files_count": range_filter}})
 
             if year is not None:
                 filter_clauses.append(

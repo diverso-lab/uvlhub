@@ -20,8 +20,6 @@ class TestExploreFiltersFrontend:
         assert selenium_driver.find_element("id", "filter-features-max")
         assert selenium_driver.find_element("id", "filter-models-min")
         assert selenium_driver.find_element("id", "filter-models-max")
-        assert selenium_driver.find_element("id", "filter-files-min")
-        assert selenium_driver.find_element("id", "filter-files-max")
         assert selenium_driver.find_element("id", "filter-year")
         assert selenium_driver.find_element("id", "filter-only-authors")
         assert selenium_driver.find_element("id", "filter-sorting")
@@ -62,24 +60,6 @@ class TestExploreFiltersFrontend:
         models_max_input.send_keys("20")
 
         assert models_max_input.get_attribute("value") == "20"
-
-    def test_files_min_input_accepts_numbers(self, selenium_driver):
-        """Test that files min input accepts numeric input"""
-        selenium_driver.get("http://localhost:5000/explore")
-
-        files_min_input = selenium_driver.find_element("id", "filter-files-min")
-        files_min_input.send_keys("1")
-
-        assert files_min_input.get_attribute("value") == "1"
-
-    def test_files_max_input_accepts_numbers(self, selenium_driver):
-        """Test that files max input accepts numeric input"""
-        selenium_driver.get("http://localhost:5000/explore")
-
-        files_max_input = selenium_driver.find_element("id", "filter-files-max")
-        files_max_input.send_keys("100")
-
-        assert files_max_input.get_attribute("value") == "100"
 
     def test_year_dropdown_has_options(self, selenium_driver):
         """Test that year dropdown has selectable options"""

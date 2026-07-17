@@ -25,14 +25,6 @@ def test_api_search_with_models_filter(test_client):
     assert "results" in data
 
 
-def test_api_search_with_files_filter(test_client):
-    """Test /api/v1/search with files_min and files_max parameters"""
-    response = test_client.get("/api/v1/search?files_min=1&files_max=10")
-    assert response.status_code == 200
-    data = response.get_json()
-    assert "results" in data
-
-
 def test_api_search_with_year_filter(test_client):
     """Test /api/v1/search with year parameter"""
     response = test_client.get("/api/v1/search?year=2023")

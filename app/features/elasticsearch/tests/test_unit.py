@@ -69,19 +69,6 @@ def test_models_range_filter_with_only_min():
     assert range_filter == {"gte": 5}
 
 
-def test_files_count_range_filter():
-    """Test files count filter"""
-    range_filter = {}
-    files_min = 1
-    files_max = 10
-    if files_min is not None:
-        range_filter["gte"] = files_min
-    if files_max is not None:
-        range_filter["lte"] = files_max
-
-    assert range_filter == {"gte": 1, "lte": 10}
-
-
 def test_year_filter_builds_date_range():
     """Test that year filter creates correct date range"""
     year = 2023
