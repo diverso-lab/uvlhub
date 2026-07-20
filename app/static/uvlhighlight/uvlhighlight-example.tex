@@ -1,0 +1,53 @@
+\documentclass{article}
+
+% Load your custom package. 
+% Try changing it to: \usepackage[bw]{uvl} to test the black & white mode.
+\usepackage{uvlhighlight}
+\usepackage{geometry}
+\geometry{top=3cm, bottom=3cm}
+
+\uvlattributes{Kcal, Price}
+
+\begin{document}
+
+\section{UVL Code Example}
+
+% Method 1: Inline code environment
+\begin{lstlisting}[language=UVL, caption={A simple Pizza Model.}]
+features
+    /* esto es 
+    otro comentario */
+	Pizza {abstract}
+		optional
+			CheesyCrust {Kcal 370, Price 1.00}
+			Integer SpicyLvl
+			String Name  // Esto es un comentario
+		mandatory
+			Topping {abstract}
+				or
+					Salami {Kcal 462}
+					Ham {Kcal 115}
+					Mozzarella {Kcal 310}
+					Anchovies {Kcal 210, Price 0.50}
+			Size {abstract}
+				alternative
+					"Normal size" {Price 8.00}
+					Big {Price 12.00}
+			Dough {abstract}
+				alternative
+					Neapolitan 
+					Sicilian {Price 0.50}
+constraints
+	(CheesyCrust & Sicilian) => Big
+	Neapolitan => (!Salami & !Ham)
+	sum(Price) < 12
+	Name => len(Name)<10 & Name=='Margherita'
+	SpicyLvl >= 1 & SpicyLvl <= 5
+	SpicyLvl==5 => SpicyLvl.Price==1.00
+	(SpicyLvl>=1 & SpicyLvl<5) => SpicyLvl.Price==0
+\end{lstlisting}
+
+% Method 2: Inline code environment
+\inputuvl[caption={A simple Pizza Model from a .uvl file.}]{uvlhighlight-example.uvl}
+
+\end{document}

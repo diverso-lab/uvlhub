@@ -1,0 +1,377 @@
+%% REFERENCES
+\begin{filecontents}{references.bib}
+@article{Benavides2025_UVL,
+    title = {{UVL}: Feature modelling with the Universal Variability Language},
+    journal = {Journal of Systems and Software},
+    volume = {225},
+    pages = {112326},
+    year = {2025},
+    issn = {0164-1212},
+    doi = {https://doi.org/10.1016/j.jss.2024.112326},
+    author = {David Benavides and Chico Sundermann and Kevin Feichtinger and José A. Galindo and Rick Rabiser and Thomas Thüm},
+}
+\end{filecontents}
+
+%% MAIN DOCUMENT
+\documentclass[a4paper,11pt]{article}
+
+% --- References ---
+%\usepackage[style=numeric]{biblatex}
+%\addbibresource{references.bib}
+
+% --- Packages ---
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{geometry}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{tcolorbox} % For nice boxes in documentation
+
+% --- Load our custom package (Default Theme) ---
+\usepackage{uvlhighlight}
+
+% --- Configuration for the Manual ---
+\geometry{left=2.5cm, right=2.5cm, top=3cm, bottom=3cm}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    urlcolor=blue,
+    pdftitle={uvlhighlight Package Documentation},
+    pdfauthor={José Miguel Horcas}
+}
+
+% --- Metadata ---
+\title{\textbf{The \texttt{uvlhighlight} Package} \\ \large Syntax Highlighting for Universal Variability Language}
+\author{José Miguel Horcas\\horcas@uma.es}
+\date{Version 1.3 -- \today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+The \texttt{uvlhighlight} package provides syntax highlighting for the Universal Variability Language (UVL) in \LaTeX. It is based on the listings package and supports all UVL keywords. The package includes multiple visual themes (default, Flamapy, UVLS dark mode, and black \& white) and provides inline commands for semantic highlighting.
+It also supports user-defined features' attributes and the inclusion of external .uvl files.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Introduction}
+The \emph{Universal Variability Language} (UVL)~\cite{Benavides2025_UVL} is increasingly used in
+Software Product Line Engineering. However, \LaTeX\ lacks native support for properly formatting UVL models.
+
+The \texttt{uvlhighlight} package addresses this limitation by providing:
+\begin{itemize}
+    \item Syntax highlighting.
+    \item Multiple visual themes.
+    \item Inline semantic commands.
+    \item Integration with \texttt{listings}.
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Installation}
+The package is available on CTAN and can be installed via your \TeX\ distribution
+(e.g., TeX Live or MiKTeX). Alternatively, you can install it manually:
+
+\begin{itemize}
+    \item Download the package from CTAN.
+    \item Place \texttt{uvlhighlight.sty} in your local \TeX\ tree.
+    \item Refresh the file database.
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \section{Compatibility}
+% The package is compatible with:
+% \begin{itemize}
+%     \item pdf\LaTeX
+%     \item Xe\LaTeX
+%     \item Lua\LaTeX
+% \end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Quick Start}
+Here is a minimal working example to start using the \texttt{uvlhighlight} package:
+
+{\scriptsize
+\begin{verbatim}
+\documentclass{article}
+\usepackage{uvlhighlight}
+
+\begin{document}
+
+\begin{lstlisting}[language=UVL]
+features
+    Pizza
+        optional
+            Cheese
+\end{lstlisting}
+
+\end{document}
+\end{verbatim}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Package Options}
+You can customize the appearance and typography of the \UVL code by passing one of the following options:
+
+\begin{description}
+    \item[\texttt{default}] (No option) Loads the standard color theme (Purple/Blue/Orange/Green) suitable for white backgrounds.
+    \item[\texttt{flamapy}] Loads the theme based on the Flamapy ecosystem (Blue/Red/Green).
+    \item[\texttt{uvls}] Loads a Dark Theme inspired by the Visual Studio Code \UVL plugin (requires a dark background, which is set automatically).
+    \item[\texttt{bw}] Loads a high-contrast Black \& White theme, optimized for academic papers and printing.
+    \item[\texttt{beramono}] (Default) Loads the \textit{Bera Mono} font. A more compact, slightly rounded monospaced font.
+    \item[\texttt{inconsolata}] Loads the \textit{Inconsolata} font. It is highly recommended for modern look and perfect bold support in \LaTeX.
+    \item[\texttt{nofont}] Disables automatic font loading. The package will use \texttt{lmodern} as a fallback to ensure that bold styles are correctly rendered even if you use the default \LaTeX\ typewriter font.
+\end{description}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{User Interface}
+
+\subsection{Commands}
+
+\subsubsection{Custom attributes: \texttt{\textbackslash uvlattributes}}
+\UVL models often contain domain-specific attributes (e.g., \texttt{Price}, \texttt{Weight}, \texttt{Latency}). To highlight these words specifically, use this command in your preamble.
+
+\begin{verbatim}
+    \uvlattributes{Kcal, Price}
+\end{verbatim}
+
+
+\subsubsection{Inline Formatting Commands}
+The following commands are defined by the package to easily highlight \UVL elements within the regular text of your document, applying the colors defined by the currently selected theme.
+
+\begin{description}
+    \item[\texttt{\textbackslash UVL}] Write the acronym \UVL following the style of the official paper.
+    \item[\texttt{\textbackslash UVLKeyword\{text\}}] Applies the **Keyword** color (\texttt{alternative}, \texttt{mandatory}, etc.) and monospaced font.
+    \item[\texttt{\textbackslash feature\{text\}}] Applies the **Feature** color (\texttt{Pizza}, \texttt{Topping}, etc.) and monospaced font.
+    \item[\texttt{\textbackslash attribute\{text\}}] Applies the **Attribute** color (\texttt{Price}, \texttt{Kcal}, etc.) and monospaced font.
+    \item[\texttt{\textbackslash constraint\{text\}}] Applies monospaced font for entire constraint expressions.
+\end{description}
+
+\noindent \textbf{Example:}
+\begin{tcolorbox}[colback=gray!5, colframe=gray!50, title=Inline Formatting Example]
+    % --- SOURCE CODE (Using listings to show the commands with breaklines) ---
+    \textbf{Source:}
+    \begin{lstlisting}[
+        language={}, % Disable syntax highlighting
+        basicstyle=\ttfamily\small, % Monospaced font, small size
+        breaklines=true, % Enable line wrapping
+        frame=none, % No frame/border
+        numbers=none, % No line numbers
+        breakindent = 0pt,
+        breakautoindent = false,
+    ]
+The \attribute{Price} attribute is used in the constraint \constraint{sum(Price) < 12}. The feature \feature{Pizza} uses the \UVLKeyword{optional} keyword of \UVL.
+    \end{lstlisting}
+
+    % --- RESULT (Executing the commands for colored output) ---
+    \vspace{0.5em}
+    \textbf{Result:} 
+    \par
+    \noindent \small 
+    The \attribute{Price} attribute is used in the constraint \constraint{sum(Price) < 12}.
+    The feature \feature{Pizza} uses the \UVLKeyword{optional} keyword of \UVL.
+\end{tcolorbox}
+
+\subsection{Environments}
+
+\subsubsection{\texttt{lstlisting} with \UVL}
+You can use the standard \texttt{lstlisting} environment with \texttt{language=UVL}:
+
+{\scriptsize
+\begin{verbatim}
+\begin{lstlisting}[language=UVL, caption={Simple Example}]
+features
+    /* Multi-line
+    comment example */
+	Pizza {abstract}
+		optional
+			CheesyCrust {Kcal 370, Price 1.00}
+			Integer SpicyLvl
+			String Name  // Esto es un comentario
+		mandatory
+			Topping {abstract}
+				or
+					Salami {Kcal 462}
+					Ham {Kcal 115}
+					Mozzarella {Kcal 310}
+					Anchovies {Kcal 210, Price 0.50}
+			Size {abstract}
+				alternative
+					"Normal size" {Price 8.00}
+					Big {Price 12.00}
+			Dough {abstract}
+				alternative
+					Neapolitan 
+					Sicilian {Price 0.50}
+constraints
+	(CheesyCrust & Sicilian) => Big
+	Neapolitan => (!Salami & !Ham)
+	sum(Price) < 12
+	Name => len(Name)<10 & Name=='Margherita'
+	SpicyLvl >= 1 & SpicyLvl <= 5
+	SpicyLvl==5 => SpicyLvl.Price==1.00
+	(SpicyLvl>=1 & SpicyLvl<5) => SpicyLvl.Price==0
+\end{lstlisting}
+\end{verbatim}
+}
+
+\subsubsection{\texttt{\textbackslash inputuvl}}
+This command imports an external \texttt{.uvl} file and formats it as a \UVL code block.
+It accepts optional arguments compatible with \texttt{lstinputlisting}.
+
+\begin{verbatim}
+    \inputuvl[caption={My Model}, label={lst:model}]{model.uvl}
+\end{verbatim}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Examples}
+
+\subsection{Typography Gallery}
+The package supports different monospaced fonts optimized for code.
+
+\begin{itemize}
+    \item \textbf{Bera Mono (Default):} {\fontfamily{fvm}\selectfont\small MyFeature \UVLKeyword{cardinality} [1..*] \{\attribute{Price} 2.50\}}
+    \item \textbf{Inconsolata:} {\fontfamily{zi4}\selectfont\small MyFeature \UVLKeyword{cardinality} [1..*] \{\attribute{Price} 2.50\}}
+    \item \textbf{Latin Modern (Fallback):} {\fontfamily{lmtt}\selectfont\small MyFeature \UVLKeyword{cardinality} [1..*] \{\attribute{Price} 2.50\}}
+\end{itemize}
+
+\subsection{Theme Gallery}
+Below is a demonstration of the same \UVL model rendered using the four available themes.
+
+% We define the attributes for the examples
+\uvlattributes{Kcal, Price}
+
+% --- 1. DEFAULT THEME ---
+\subsubsection{Default Theme}
+This is the default style loaded with \texttt{\textbackslash usepackage\{uvlhighlight\}}.
+
+\inputuvl[caption={Pizza Model (Default Theme).}]{uvlhighlight-example.uvl}
+
+
+% --- 2. FLAMAPY THEME ---
+\subsubsection{Flamapy Theme}
+Activated via \texttt{\textbackslash usepackage[flamapy]\{uvlhighlight\}}.
+
+% Manually simulating the Flamapy theme colors for documentation purposes
+\begingroup
+\definecolor{UVLKeyword}{HTML}{0000FF}    
+\definecolor{UVLDelimiter}{HTML}{0431FA}  
+\definecolor{UVLString}{HTML}{A31515}     
+\definecolor{UVLNumber}{HTML}{098658}     
+\definecolor{UVLComment}{HTML}{008000}    
+\definecolor{UVLConstraint}{HTML}{D0A343} 
+\definecolor{UVLType}{HTML}{000000}
+\definecolor{UVLAttribute}{HTML}{000000}
+\definecolor{UVLUserAttribute}{HTML}{000000}
+%\definecolor{UVLBackground}{white}
+%\renewcommand{\uvlbasiccolor}{\color{black}}
+
+\inputuvl[caption={Pizza Model (Flamapy Theme).}]{uvlhighlight-example.uvl}
+\endgroup
+
+
+% --- 3. UVLS (DARK) THEME ---
+\subsubsection{UVLS Theme (Dark Mode)}
+Activated via \texttt{\textbackslash usepackage[uvls]\{uvlhighlight\}}. This style mimics the Visual Studio Code plugin.
+
+% Manually simulating the UVLS theme colors for documentation purposes
+\begingroup
+\definecolor{UVLFeature}{HTML}{9EDCFA}    
+\definecolor{UVLKeyword}{HTML}{C586BF}    
+\definecolor{UVLType}{HTML}{4EC9B0}       
+\definecolor{UVLString}{HTML}{CD9077}     
+\definecolor{UVLComment}{HTML}{58894B}    
+\definecolor{UVLAttribute}{HTML}{41C6F6}  
+\definecolor{UVLUserAttribute}{HTML}{41C6F6}
+\definecolor{UVLConstraint}{HTML}{C2C385} 
+\definecolor{UVLOperator}{HTML}{FFFFFF}    
+\definecolor{UVLNumber}{HTML}{B5CEA8}     
+\definecolor{UVLDelimiter}{HTML}{EECE0C}  
+\definecolor{UVLBackground}{HTML}{000000} 
+\renewcommand{\uvlbasiccolor}{\color{UVLFeature}}
+
+\inputuvl[caption={Pizza Model (UVLS Dark Theme).}]{uvlhighlight-example.uvl}
+\endgroup
+
+
+% --- 4. BW THEME ---
+\subsubsection{Black \& White Theme}
+Activated via \texttt{\textbackslash usepackage[bw]\{uvlhighlight\}}. Optimized for printed academic papers.
+
+% Manually simulating the BW theme colors for documentation purposes
+\begingroup
+\definecolor{UVLKeyword}{HTML}{000000}
+\definecolor{UVLType}{HTML}{000000}
+\definecolor{UVLString}{gray}{0.3}
+\definecolor{UVLComment}{gray}{0.5}
+\definecolor{UVLAttribute}{HTML}{000000} 
+\definecolor{UVLUserAttribute}{HTML}{000000}
+\definecolor{UVLConstraint}{HTML}{000000} 
+\definecolor{UVLFeature}{gray}{0.1}
+\definecolor{UVLOperator}{HTML}{000000}
+\definecolor{UVLNumber}{HTML}{000000}
+\definecolor{UVLDelimiter}{HTML}{000000}
+%\definecolor{UVLBackground}{white}
+%\renewcommand{\uvlbasiccolor}{\color{black}}
+
+\inputuvl[caption={Pizza Model (B\&W Theme).}]{uvlhighlight-example.uvl}
+\endgroup
+
+% \section{Technical details}
+% The package relies on \texttt{listings} and automatically handles:
+% \begin{itemize}
+%     \item \textbf{Case sensitivity}: UVL is treated as case-sensitive.
+%     \item \textbf{Strings}: Defined by single quotes (e.g., \texttt{'Margherita'}). Double quotes are also supported in some contexts.
+%     \item \textbf{Operators}: Symbols like \texttt{=>}, \texttt{\&}, \texttt{|}, \texttt{!=} are specially colored.
+%     \item \textbf{Delimiters}: Braces \texttt{\{\}}, brackets \texttt{[]}, and parentheses \texttt{()} are highlighted to show structure, especially in the UVLS theme.
+% \end{itemize}
+
+% \subsection{Font Encoding and Bold Support}
+% The package automatically loads \texttt{fontenc} with \texttt{T1} encoding. This is crucial for correctly rendering symbols like \texttt{<}, \texttt{>}, and \texttt{|}. 
+
+% To avoid the common issue where \LaTeX\ typewriter fonts do not support bold weights, the package defaults to \textbf{Inconsolata}. If the \texttt{nofont} option is used, the package loads the \texttt{lmodern} (Latin Modern) family as a fallback, which provides the necessary font shapes to render keywords in bold.
+
+
+\section{License}
+This package is distributed under the terms of the
+\href{https://www.latex-project.org/lppl/}{\LaTeX\ Project Public License (LPPL)}, version 1.3c.
+
+% \section{Repository and Support}
+% The development of this package is hosted on GitHub:
+
+% \begin{itemize}
+%     \item Repository: \url{https://github.com/your-repo/uvl}
+%     \item Issue tracker: \url{https://github.com/your-repo/uvl/issues}
+% \end{itemize}
+% Bug reports and feature requests are welcome.
+
+\section{Changelog}
+\begin{itemize}
+    \item Version 1.3 (13th Apr 2026)
+    \begin{itemize}
+        \item Add new \UVL inline command.
+    \end{itemize}
+    \item Version 1.2 (16th Feb 2026)
+    \begin{itemize}
+        \item Support for compatible typography.
+    \end{itemize}
+    \item Version 1.1 (2nd Dec 2025)
+    \begin{itemize}
+        \item Add inline commands.
+    \end{itemize}
+    \item Version 1.0 (1st Dec 2025)
+    \begin{itemize}
+        \item Initial version of the package.
+    \end{itemize}
+\end{itemize}
+
+\bibliographystyle{plain} 
+\bibliography{references.bib}
+
+\end{document}
+

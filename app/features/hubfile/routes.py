@@ -1,5 +1,6 @@
 import os
 import uuid as uuid_module
+from io import BytesIO
 
 import requests
 from flask import (
@@ -486,3 +487,61 @@ def workbench_content(file_id):
     )
     resp.set_cookie("file_view_cookie", user_cookie)
     return resp
+
+
+@hubfile_bp.route("/hubfile/to_latex/<int:file_id>", methods=["GET"])
+def to_latex(file_id):
+    """Export UVL to LaTeX + package files as ZIP."""
+    import zipfile
+    from pathlib import Path
+
+    selected_file = HubfileService().get_or_404(file_id)
+    dataset = selected_file.dataset
+
+    # Leer contenido UVL
+    directory_path = os.path.join("uploads", f"user_{dataset.user_id}", f"dataset_{dataset.id}", "uvl")
+    file_path = os.path.join(current_app.root_path, "..", directory_path, selected_file.name)
+
+    try:
+        with open(file_path, "r") as f:
+            uvl_content = f.read()
+    except Exception as e:
+        current_app.logger.error(f"Error reading UVL file {file_id}: {e}")
+        return jsonify({"error": "Could not read file"}), 500
+
+    # Generar LaTeX
+    include_document = request.args.get("include_document", "false").lower() == "true"
+
+    latex_content = r"\usepackage{uvlhighlight}" + "\n\n"
+
+    if include_document:
+        latex_content += r"\begin{document}" + "\n\n"
+
+    latex_content += r"\begin{lstlisting}[language=UVL]" + "\n"
+    latex_content += uvl_content
+    if not uvl_content.endswith("\n"):
+        latex_content += "\n"
+    latex_content += r"\end{lstlisting}" + "\n"
+
+    if include_document:
+        latex_content += "\n" + r"\end{document}" + "\n"
+
+    # Crear ZIP con el .tex + archivos del paquete
+    zip_buffer = BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+        # Agregar el archivo .tex
+        tex_filename = selected_file.name.replace(".uvl", ".tex")
+        zip_file.writestr(tex_filename, latex_content)
+
+        # Agregar archivos del paquete uvlhighlight
+        package_path = Path(current_app.root_path) / "static" / "uvlhighlight"
+        if package_path.exists():
+            for file in package_path.rglob("*"):
+                if file.is_file():
+                    arcname = file.relative_to(package_path.parent)
+                    zip_file.write(file, arcname)
+
+    zip_buffer.seek(0)
+    zip_filename = selected_file.name.replace(".uvl", ".zip")
+
+    return send_file(zip_buffer, as_attachment=True, download_name=zip_filename, mimetype="application/zip")

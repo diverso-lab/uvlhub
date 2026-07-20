@@ -320,6 +320,12 @@
                                 <li><a class="dropdown-item" href="#" data-export="splot">SPLOT</a></li>
                             </ul>
                         </div>
+                        <button type="button" class="btn btn-sm btn-light" id="workbench-export-latex"
+                                data-bs-toggle="tooltip" title="Export to LaTeX">
+                            <span class="small fw-semibold" style="font-family: serif; letter-spacing: 0.05em;">L<span style="font-size: 0.75em; vertical-align: 0.15em; margin: 0 -0.1em;">A</span>T<span style="font-size: 0.75em; vertical-align: -0.2em; margin: 0 -0.1em;">E</span>X</span>
+                        </button>
+
+
                         <a href="{% if selected_file %}{{ ide_url(selected_file) }}{% else %}#{% endif %}"
                            id="workbench-ide-link" target="_blank" rel="noopener"
                            class="btn btn-sm btn-light d-inline-flex align-items-center"
@@ -441,6 +447,41 @@
                     <button type="button" class="btn btn-light-primary" id="copyButton">
                         <i class="ki-duotone ki-copy me-2"></i> Copy
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ---------- LaTeX Export Modal ---------- #}
+    <div class="modal fade" id="latexExportModal" tabindex="-1" aria-labelledby="latexExportModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow-lg rounded-2xl">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="fw-bold mb-0" id="latexExportModalLabel">Export to LaTeX</h5>
+                    <button type="button" class="btn btn-icon btn-sm btn-light" data-bs-dismiss="modal" aria-label="Close">
+                        <i class="ki-duotone ki-cross fs-2">
+                            <span class="path1"></span><span class="path2"></span>
+                        </i>
+                    </button>
+                </div>
+                <div class="modal-body pt-3">
+                    <div class="alert alert-success d-flex align-items-start gap-3">
+                        <i class="ki-duotone ki-information-5 fs-2 text-success mt-1">
+                            <span class="path1"></span><span class="path2"></span><span class="path3"></span>
+                        </i>
+                        <div>
+                            <p class="fw-semibold mb-2">Your LaTeX package is ready!</p>
+                            <p class="text-muted small mb-0">The ZIP file includes:</p>
+                            <ul class="text-muted small mb-0 ps-3">
+                                <li>Your UVL model as <code class="text-muted">.tex</code> file</li>
+                                <li><code class="text-muted">uvlhighlight</code> package and documentation</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="latexExportConfirm">Download</button>
                 </div>
             </div>
         </div>
@@ -682,7 +723,8 @@ const WORKBENCH = {
             downloadUrl: {{ url_for('hubfile.download_file', file_id=f.id) | tojson }},
             glencoeUrl: {{ url_for('flamapy.to_glencoe', file_id=f.id) | tojson }},
             dimacsUrl: {{ url_for('flamapy.to_cnf', file_id=f.id) | tojson }},
-            splotUrl: {{ url_for('flamapy.to_splot', file_id=f.id) | tojson }}
+            splotUrl: {{ url_for('flamapy.to_splot', file_id=f.id) | tojson }},
+            latexUrl: {{ url_for('hubfile.to_latex', file_id=f.id) | tojson }}
         }{% if not loop.last %},{% endif %}
         {% endfor %}
     ],
@@ -941,6 +983,22 @@ function initActionButtons() {
 
     const dlBtn = document.getElementById('workbench-factlabel-download');
     if (dlBtn) dlBtn.addEventListener('click', downloadFactLabelSvg);
+
+    document.getElementById('workbench-export-latex').addEventListener('click', (e) => {
+        const model = findModel(currentFileId);
+        if (!model || !model.latexUrl) return;
+
+        // Mostrar modal
+        const modal = new bootstrap.Modal(document.getElementById('latexExportModal'));
+        modal.show();
+
+        // Descarga al hacer click en el botón "Download" del modal
+        document.getElementById('latexExportConfirm').onclick = () => {
+            window.location.href = model.latexUrl;
+            modal.hide();
+        };
+    });
+
 }
 
 // Serialize the rendered FactLabel SVG and trigger a download. Named after the

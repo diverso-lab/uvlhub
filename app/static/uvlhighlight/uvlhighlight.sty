@@ -1,0 +1,251 @@
+%% File: uvl.sty
+%% Author: José Miguel Horcas
+%% Description: A LaTeX package to display UVL (Universal Variability Language) code.
+%% Version: 1.3
+
+% --- 1. Package Identification ---
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{uvlhighlight}[2026/04/13 v1.3 UVL Syntax Highlighting]
+
+% --- 2. Dependencies ---
+\RequirePackage{listings} % For code formatting engine
+\RequirePackage{xcolor}   % For color management
+\RequirePackage{xspace}  % For space in UVL command
+
+% --- 3. Font Handling Logic ---
+% Toggle to control font loading (True by default).
+\newif\ifuvlhighlight@loadfont\uvlhighlight@loadfonttrue          % Load default font: yes
+\newif\ifuvlhighlight@beramono\uvlhighlight@beramonotrue          % Load beramono by default: yes
+\newif\ifuvlhighlight@inconsolata\uvlhighlight@inconsolatafalse   % Use inconsolata?: no
+
+% --- 4. Default Color Palette (Standard Theme) ---
+\newcommand{\uvlbasiccolor}{\color{black}} 
+
+% Color Definitions (HTML format for consistency)
+\definecolor{UVLKeyword}{HTML}{A586C0}       % Purple
+\definecolor{UVLType}{HTML}{A586C0}          % Purple
+\definecolor{UVLString}{HTML}{CE723B}        % Red/Orange
+\definecolor{UVLComment}{HTML}{529955}       % Green
+\definecolor{UVLAttribute}{HTML}{4E94CE}     % Light Blue
+\definecolor{UVLUserAttribute}{HTML}{4E94CE} % Light Blue
+\definecolor{UVLConstraint}{HTML}{D0A343}    % Gold
+\definecolor{UVLFeature}{HTML}{000000}       % Black
+\definecolor{UVLOperator}{HTML}{000000}      % Black
+\definecolor{UVLNumber}{HTML}{000000}        % Black
+\definecolor{UVLDelimiter}{HTML}{000000}     % Black
+\definecolor{UVLBackground}{HTML}{FFFFFF}     % White
+
+% --- 5. Options Handling ---
+
+% Option: nofont (Disable automatic font loading)
+\DeclareOption{nofont}{
+    \uvlhighlight@loadfontfalse 
+    \uvlhighlight@beramonofalse
+    \uvlhighlight@inconsolatafalse
+}
+
+% Option: beramono (default, defined for clarity)
+\DeclareOption{beramono}{
+    \uvlhighlight@beramonotrue
+    \uvlhighlight@inconsolatafalse
+}
+
+% Option: inconsolata
+\DeclareOption{inconsolata}{
+    \uvlhighlight@inconsolatatrue
+    \uvlhighlight@beramonofalse
+}
+
+% Option: bw (Black & White - Optimized for printing)
+\DeclareOption{bw}{
+    \definecolor{UVLKeyword}{HTML}{000000}
+    \definecolor{UVLType}{HTML}{000000}
+    \definecolor{UVLString}{gray}{0.3}
+    \definecolor{UVLComment}{gray}{0.5}
+    \definecolor{UVLAttribute}{HTML}{000000} 
+    \definecolor{UVLUserAttribute}{HTML}{000000}
+    \definecolor{UVLConstraint}{HTML}{000000} 
+    \definecolor{UVLFeature}{gray}{0.1}
+    \definecolor{UVLBackground}{white}
+    \renewcommand{\uvlbasiccolor}{\color{black}}
+}
+
+% Option: flamapy (Custom Theme)
+\DeclareOption{flamapy}{
+    \definecolor{UVLKeyword}{HTML}{0000FF}    
+    \definecolor{UVLDelimiter}{HTML}{0431FA}  
+    \definecolor{UVLString}{HTML}{A31515}     
+    \definecolor{UVLNumber}{HTML}{098658}     
+    \definecolor{UVLComment}{HTML}{008000}    
+    \definecolor{UVLConstraint}{HTML}{D0A343} 
+    \definecolor{UVLType}{HTML}{000000}
+    \definecolor{UVLAttribute}{HTML}{000000}
+    \definecolor{UVLUserAttribute}{HTML}{000000}
+    \definecolor{UVLBackground}{white}
+    \renewcommand{\uvlbasiccolor}{\color{black}}
+}
+
+% Option: uvls (Visual Studio / Dark Theme)
+\DeclareOption{uvls}{
+    \definecolor{UVLFeature}{HTML}{9EDCFA}    
+    \definecolor{UVLKeyword}{HTML}{C586BF}    
+    \definecolor{UVLType}{HTML}{4EC9B0}       
+    \definecolor{UVLString}{HTML}{CD9077}     
+    \definecolor{UVLComment}{HTML}{58894B}    
+    \definecolor{UVLAttribute}{HTML}{41C6F6}  
+    \definecolor{UVLUserAttribute}{HTML}{41C6F6}
+    \definecolor{UVLConstraint}{HTML}{C2C385} 
+    \definecolor{UVLOperator}{HTML}{FFFFFF}    
+    \definecolor{UVLNumber}{HTML}{B5CEA8}     
+    \definecolor{UVLDelimiter}{HTML}{EECE0C}  
+    \definecolor{UVLBackground}{HTML}{000000} 
+    \renewcommand{\uvlbasiccolor}{\color{UVLFeature}}
+}
+
+\ProcessOptions\relax
+
+% --- 6. Implementation & Execution ---
+
+% Safe loading of fontenc (T1) to avoid conflicts (needed for symbol such as < > |)
+\@ifpackageloaded{fontenc}{}{%
+    \RequirePackage[T1]{fontenc}%
+}
+
+% Logic for font loading
+\ifuvlhighlight@loadfont
+    \ifuvlhighlight@beramono
+        \RequirePackage[scaled=0.85]{beramono}
+        \renewcommand{\bfdefault}{b} % bold is 'b' for Beramono, not 'bx'
+    \else\ifuvlhighlight@inconsolata
+        \RequirePackage[varqu]{zi4} % zi4 is Inconsolata
+    \fi\fi
+\else
+    % User choose 'nofont'
+    \RequirePackage{lmodern}
+\fi
+
+
+% --- 7. Language Definition (Internal) ---
+\lstdefinelanguage{UVLInternal}{
+  % -- Group 1: Structure Keywords --
+  morekeywords={alternative, or, optional, mandatory, features, constraints, constraint, cardinality, imports, as, include, true, false, attributes, xor, namespace},
+  % -- Group 2: Modifiers --
+  morekeywords=[2]{abstract},
+  % -- Group 3: User Defined (Empty by default) --
+  morekeywords=[3]{},
+  % -- Group 4: Math/Aggr Functions --
+  morekeywords=[4]{sum, avg, ceil, floor, len},
+  % -- Group 5: Types --
+  morekeywords=[5]{Boolean, Integer, Real, String},
+  % -- General Settings --
+  sensitive=true,                % Case sensitive syntax (Capitalization matters)
+  % -- Comments --
+  morecomment=[l]{//},           % Line comment style (//)
+  morecomment=[s]{/*}{*/},       % Block comment style (starts /* ends */)
+  % -- Strings --
+  morestring=[b]',               % Strings defined by single quotes
+  % -- Styles --
+  keywordstyle=\color{UVLKeyword}\bfseries,      % Style for Group 1 (Structure)
+  keywordstyle=[2]\color{UVLAttribute},          % Style for Group 2 (Modifiers)
+  keywordstyle=[3]\color{UVLUserAttribute},      % Style for Group 3 (User Attributes)
+  keywordstyle=[4]\color{UVLConstraint}\bfseries,% Style for Group 4 (Functions)
+  keywordstyle=[5]\color{UVLType}\bfseries,      % Style for Group 5 (Types)
+  commentstyle=\color{UVLComment}\itshape,       % Style for comments (Italic)
+  stringstyle=\color{UVLString},                 % Style for strings
+  % -- Environment Layout --
+  backgroundcolor=\color{UVLBackground},         % Background color
+  basicstyle=\uvlbasiccolor\ttfamily\scriptsize, % Base font family and size (script size)
+  numbers=left,                  % Position of line numbers (left, right, or none)
+  numberstyle=\tiny\color{gray}, % Style of line numbers
+  stepnumber=1,                  % Interval of line numbers (1 = every line)
+  numbersep=2pt,                 % Distance between line numbers and code
+  tabsize=2,                     % Width of tab character (equivalent spaces)
+  showstringspaces=false,        % Do not visualize spaces inside strings
+  breaklines=true,               % Automatically wrap long lines
+  extendedchars=true,            % Allow extended ASCII characters (utf8)
+  upquote=true,                  % Force straight quotes (') instead of curly (’)
+  frame=lines,                   % Draw a line above and below the snippet
+  captionpos=t,                  % Caption position (b = bottom, t = top)
+  rulecolor=\uvlbasiccolor,      % Color of the frame/border
+  % -- Literate (Symbol & Number Replacement) --
+  % Replaces specific characters with colored versions.
+  literate={<=>}{{\textcolor{UVLOperator}{<=>}}}3
+           {=>}{{\textcolor{UVLOperator}{=>}}}2
+           {<=}{{\textcolor{UVLOperator}{<=}}}2
+           {>=}{{\textcolor{UVLOperator}{>=}}}2
+           {==}{{\textcolor{UVLOperator}{==}}}2
+           {!=}{{\textcolor{UVLOperator}{!=}}}2
+           {|}{{\textcolor{UVLOperator}{|}}}1
+           {&}{{\textcolor{UVLOperator}{\&}}}1
+           {!}{{\textcolor{UVLOperator}{!}}}1
+           % Numbers (0-9)
+           {0}{{\textcolor{UVLNumber}{0}}}1
+           {1}{{\textcolor{UVLNumber}{1}}}1
+           {2}{{\textcolor{UVLNumber}{2}}}1
+           {3}{{\textcolor{UVLNumber}{3}}}1
+           {4}{{\textcolor{UVLNumber}{4}}}1
+           {5}{{\textcolor{UVLNumber}{5}}}1
+           {6}{{\textcolor{UVLNumber}{6}}}1
+           {7}{{\textcolor{UVLNumber}{7}}}1
+           {8}{{\textcolor{UVLNumber}{8}}}1
+           {9}{{\textcolor{UVLNumber}{9}}}1
+           % Delimiters (Braces and Brackets)
+           {\{}{{\textcolor{UVLDelimiter}{\{}}}1
+           {\}}{{\textcolor{UVLDelimiter}{\}}}}1
+           {[}{{\textcolor{UVLDelimiter}{[}}}1
+           {]}{{\textcolor{UVLDelimiter}{]}}}1
+           {(}{{\textcolor{UVLDelimiter}{(}}}1
+           {)}{{\textcolor{UVLDelimiter}{)}}}1,
+}
+
+% --- 8. Public Interface ---
+
+% Inheritance: UVL mimics UVLInternal.
+% This allows us to rebuild UVL when adding user keywords without breaking styles.
+\lstdefinelanguage{UVL}[]{UVLInternal}{}
+
+% Command: \inputuvl
+% Usage: \inputuvl[options]{filename.uvl}
+% Description: Helper to import external UVL files.
+\newcommand{\inputuvl}[2][]{%
+    \lstinputlisting[language=UVL, #1]{#2}%
+}
+
+% Command: \uvlattributes
+% Usage: \uvlattributes{Attr1, Attr2}
+% Description: Adds custom keywords to Group 3 dynamically using inheritance.
+\newcommand{\uvlattributes}[1]{%
+    \lstdefinelanguage{UVL}[]{UVLInternal}{%
+        morekeywords=[3]{#1}%
+    }%
+}
+
+% --- Additional User Commands for Inline Use ---
+
+% Command: \UVLKeyword
+% Usage: \UVLKeyword{alternative}
+% Description: Applies the UVL Keyword color and monospaced font.
+\newcommand{\UVLKeyword}[1]{\textcolor{UVLKeyword}{\texttt{#1}}}
+
+% Command: \feature
+% Usage: \feature{Pizza}
+% Description: Applies the UVL Feature color and monospaced font for feature names.
+\newcommand{\feature}[1]{\textcolor{UVLFeature}{\texttt{#1}}}
+
+% Command: \attribute
+% Usage: \attribute{Price}
+% Description: Applies the UVL Attribute color and monospaced font for attributes names.
+\newcommand{\attribute}[1]{\textcolor{UVLAttribute}{\texttt{#1}}}
+
+% Command: \constraint
+% Usage: \constraint{Big => Mozzarella}
+% Description: Applies the monospaced font for constraints.
+\newcommand{\constraint}[1]{\texttt{#1}}
+
+% Command: \UVL
+% Usage: \UVL
+% Description: Write the acronym using the same style as in the official paper.
+\newcommand{\UVL}{\textsf{UVL}\xspace}
+
+\endinput
+%% End of file uvl.sty
