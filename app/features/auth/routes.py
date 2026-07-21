@@ -89,8 +89,8 @@ def disconnect_identity(provider, provider_id):
     identity = external_repo.get_by_provider_id(provider, provider_id)
     if not identity or identity.user_id != current_user.id:
         flash("Identity not found or unauthorized.", "danger")
-        return redirect(url_for("auth.view_identities"))
+        return redirect(url_for("profile.edit_profile"))
 
     external_repo.delete(identity.id)
     flash(f"Disconnected {provider}.", "success")
-    return redirect(url_for("auth.view_identities"))
+    return redirect(url_for("profile.edit_profile"))
