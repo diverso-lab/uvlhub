@@ -64,9 +64,10 @@ def authorize():
             return redirect(url_for("auth.login"))
 
         github_id = user_info.get("id")
+        github_login = (user_info.get("login") or "").strip()
         email = (user_info.get("email") or "").strip().lower() if user_info.get("email") else None
         external_repo = ExternalIdentityRepository()
-        external_repo.create(user_id=current_user.id, provider="github", provider_id=github_id, email=email)
+        external_repo.create(user_id=current_user.id, provider="github", provider_id=github_id, provider_username=github_login, email=email)
         flash("GitHub account connected successfully", "success")
         return redirect(url_for("profile.edit_profile"))
     else:

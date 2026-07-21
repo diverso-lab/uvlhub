@@ -45,6 +45,7 @@ class ExternalIdentity(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     provider = db.Column(db.String(50), nullable=False)
     provider_id = db.Column(db.String(256), nullable=False)
+    provider_username = db.Column(db.String(256), nullable=True)
     email = db.Column(db.String(256), nullable=True)
     created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.utc))
     __table_args__ = (db.UniqueConstraint("provider", "provider_id", name="uq_provider_id"),)
