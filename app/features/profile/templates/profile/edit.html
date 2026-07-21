@@ -73,11 +73,9 @@
                                     <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v 3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
                                 </svg>
                                 <span style="flex-grow: 1;">{{ identity.provider_username or identity.provider_id }}</span>
-                                <form method="POST" action="{{ url_for('auth.disconnect_identity', provider=identity.provider, provider_id=identity.provider_id) }}" style="display:inline;">
-                                    <button type="submit" class="btn btn-sm p-0" style="background:none; border:none; color:#212529; cursor:pointer;" title="Disconnect" onclick="return confirm('Disconnect GitHub?')">
-                                        <i class="ki-duotone ki-cross fs-6"><span class="path1"></span><span class="path2"></span></i>
-                                    </button>
-                                </form>
+                                <button type="button" class="btn btn-sm p-0" style="background:none; border:none; color:#212529; cursor:pointer;" title="Disconnect" data-bs-toggle="modal" data-bs-target="#disconnectModal" data-provider="github" data-provider-id="{{ identity.provider_id }}">
+                                    <i class="ki-duotone ki-cross fs-6"><span class="path1"></span><span class="path2"></span></i>
+                                </button>
                             </div>
                         </div>
                         {% elif identity.provider == 'orcid' %}
@@ -89,11 +87,9 @@
                                     <line x1="16" y1="9" x2="16" y2="15"></line>
                                 </svg>
                                 <span style="flex-grow: 1;">{{ identity.provider_id }}</span>
-                                <form method="POST" action="{{ url_for('auth.disconnect_identity', provider=identity.provider, provider_id=identity.provider_id) }}" style="display:inline;">
-                                    <button type="submit" class="btn btn-sm p-0" style="background:none; border:none; color:#A6CE39; cursor:pointer;" title="Disconnect" onclick="return confirm('Disconnect ORCID?')">
-                                        <i class="ki-duotone ki-cross fs-6"><span class="path1"></span><span class="path2"></span></i>
-                                    </button>
-                                </form>
+                                <button type="button" class="btn btn-sm p-0" style="background:none; border:none; color:#A6CE39; cursor:pointer;" title="Disconnect" data-bs-toggle="modal" data-bs-target="#disconnectModal" data-provider="orcid" data-provider-id="{{ identity.provider_id }}">
+                                    <i class="ki-duotone ki-cross fs-6"><span class="path1"></span><span class="path2"></span></i>
+                                </button>
                             </div>
                         </div>
                         {% endif %}
@@ -102,7 +98,7 @@
                     {% if github_identities | length == 0 %}
                     <div class="mb-4">
                         <label class="form-label fw-semibold">GitHub</label>
-                        <a href="{{ url_for('profile.connect_github') }}" class="form-control text-decoration-none d-flex align-items-center gap-2" style="background-color: #f8f9fa; color: #000; cursor: pointer;">
+                        <a href="{{ url_for('profile.connect_github') }}" class="form-control text-decoration-none d-flex align-items-center gap-2" style="background-color: #f8f9fa; color: #495057; cursor: pointer;">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="#212529">
                                 <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v 3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
                             </svg>
@@ -114,7 +110,7 @@
                     {% if orcid_identities | length == 0 %}
                     <div class="mb-4">
                         <label class="form-label fw-semibold">ORCID</label>
-                        <a href="{{ url_for('profile.connect_orcid') }}" class="form-control text-decoration-none d-flex align-items-center gap-2" style="background-color: #f8f9fa; color: #000; cursor: pointer;">
+                        <a href="{{ url_for('profile.connect_orcid') }}" class="form-control text-decoration-none d-flex align-items-center gap-2" style="background-color: #f8f9fa; color: #495057; cursor: pointer;">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A6CE39" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <circle cx="8" cy="12" r="3" fill="#A6CE39"></circle>
                                 <line x1="16" y1="9" x2="16" y2="15"></line>
@@ -137,6 +133,42 @@
                         {{ form.submit(class="btn btn-primary") }}
                     </div>
                 </form>
+
+                <!-- Disconnect Modal -->
+                <div class="modal fade" id="disconnectModal" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Disconnect Account</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p>Are you sure you want to disconnect <strong id="disconnectProvider"></strong>? You can reconnect it later.</p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <form id="disconnectForm" method="POST" style="display:inline;">
+                                    <button type="submit" class="btn btn-danger">Disconnect</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <script>
+                    const disconnectModal = document.getElementById('disconnectModal');
+                    if (disconnectModal) {
+                        disconnectModal.addEventListener('show.bs.modal', function (event) {
+                            const button = event.relatedTarget;
+                            const provider = button.getAttribute('data-provider');
+                            const providerId = button.getAttribute('data-provider-id');
+
+                            document.getElementById('disconnectProvider').textContent = provider.toUpperCase();
+                            const form = document.getElementById('disconnectForm');
+                            form.action = `/account/disconnect/${provider}/${providerId}`;
+                        });
+                    }
+                </script>
             </div>
         </div>
     </div>
