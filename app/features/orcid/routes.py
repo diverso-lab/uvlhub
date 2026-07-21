@@ -1,5 +1,5 @@
 from flask import current_app, flash, redirect, session, url_for
-from flask_login import login_user
+from flask_login import current_user, login_user
 
 from app.features.auth.services import AuthenticationService
 from app.features.orcid import orcid_bp
@@ -41,14 +41,17 @@ def login():
 
 @orcid_bp.route("/orcid/authorize")
 def authorize():
+    from app.features.auth.repositories import ExternalIdentityRepository
+
     next_url = session.pop("orcid_next_url", None)
     if not authentication_service.is_safe_redirect_target(next_url):
         next_url = None
 
+    connect_mode = session.pop("orcid_connect_mode", False)
+
     try:
         token = current_app.orcid_service.orcid_client.authorize_access_token()
     except Exception as exc:
-        # Covers state mismatch, missing session, provider errors, etc.
         current_app.logger.exception("ORCID authorize_access_token failed: %s", exc)
         flash("ORCID authorization failed (invalid session or provider error). Please try again.", "danger")
         return _back_to_login(next_url)
@@ -58,11 +61,22 @@ def authorize():
         flash(err, "danger")
         return _back_to_login(next_url)
 
-    user, err = current_app.orcid_service.get_or_create_user(user_info)
-    if err:
-        flash(err, "danger")
-        return _back_to_login(next_url)
+    if connect_mode:
+        if not current_user.is_authenticated:
+            flash("You must be logged in to connect ORCID.", "danger")
+            return redirect(url_for("auth.login"))
 
-    login_user(user)
-    flash("Signed in with ORCID.", "success")
-    return redirect(next_url or url_for("public.index"))
+        orcid_id = (user_info.get("sub") or "").strip()
+        external_repo = ExternalIdentityRepository()
+        external_repo.create(user_id=current_user.id, provider="orcid", provider_id=orcid_id, email=None)
+        flash("ORCID account connected successfully", "success")
+        return redirect(url_for("profile.edit_profile"))
+    else:
+        user, err = current_app.orcid_service.get_or_create_user(user_info)
+        if err:
+            flash(err, "danger")
+            return _back_to_login(next_url)
+
+        login_user(user)
+        flash("Signed in with ORCID.", "success")
+        return redirect(next_url or url_for("public.index"))
