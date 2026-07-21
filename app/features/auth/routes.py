@@ -1,9 +1,10 @@
 from flask import flash, jsonify, redirect, render_template, request, url_for
-from flask_login import current_user, login_user, logout_user
+from flask_login import current_user, login_required, login_user, logout_user
 
 from app.features.auth import auth_bp
 from app.features.auth.decorators import guest_required
 from app.features.auth.forms import LoginForm, SignupForm
+from app.features.auth.repositories import ExternalIdentityRepository
 from app.features.auth.services import AuthenticationService
 from app.features.captcha.services import CaptchaService
 
@@ -70,3 +71,26 @@ def logout():
 def auth_status():
     payload, status_code = authentication_service.get_flamapy_ide_auth_status_payload()
     return jsonify(payload), status_code
+
+
+@auth_bp.route("/account/identities", methods=["GET"])
+@login_required
+def view_identities():
+    external_repo = ExternalIdentityRepository()
+    identities = external_repo.get_all_by_user(current_user.id)
+    return render_template("auth/identities.html", identities=identities, user=current_user)
+
+
+@auth_bp.route("/account/disconnect/<provider>/<provider_id>", methods=["POST"])
+@login_required
+def disconnect_identity(provider, provider_id):
+    external_repo = ExternalIdentityRepository()
+
+    identity = external_repo.get_by_provider_id(provider, provider_id)
+    if not identity or identity.user_id != current_user.id:
+        flash("Identity not found or unauthorized.", "danger")
+        return redirect(url_for("auth.view_identities"))
+
+    external_repo.delete(identity.id)
+    flash(f"Disconnected {provider}.", "success")
+    return redirect(url_for("auth.view_identities"))

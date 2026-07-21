@@ -18,6 +18,7 @@ class User(db.Model, UserMixin):
     profile = db.relationship("UserProfile", backref="user", uselist=False)
     active = db.Column(db.Boolean, default=True, nullable=False)
     api_keys = db.relationship("ApiKey", back_populates="user", cascade="all, delete-orphan")
+    external_identities = db.relationship("ExternalIdentity", backref="user", cascade="all, delete-orphan")
 
     def __init__(self, **kwargs):
         super(User, self).__init__(**kwargs)
@@ -37,3 +38,13 @@ class User(db.Model, UserMixin):
         from app.features.auth.services import AuthenticationService
 
         return AuthenticationService().temp_folder_by_user(self)
+
+
+class ExternalIdentity(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    provider = db.Column(db.String(50), nullable=False)
+    provider_id = db.Column(db.String(256), nullable=False)
+    email = db.Column(db.String(256), nullable=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.utc))
+    __table_args__ = (db.UniqueConstraint("provider", "provider_id", name="uq_provider_id"),)

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Connected Identities</h2>
+    <p>Manage your linked accounts.</p>
+
+    <div class="list-group mt-4">
+        {% if user.email %}
+        <div class="list-group-item">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="mb-0">Email</h5>
+                    <p class="text-muted mb-0">{{ user.email }}</p>
+                </div>
+                <span class="badge bg-primary">Primary</span>
+            </div>
+        </div>
+        {% endif %}
+
+        {% for identity in identities %}
+        <div class="list-group-item">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="mb-0">{{ identity.provider.capitalize() }}</h5>
+                    <p class="text-muted mb-0">{{ identity.provider_id }}</p>
+                </div>
+                <form method="POST" action="{{ url_for('auth.disconnect_identity', provider=identity.provider, provider_id=identity.provider_id) }}" style="display:inline;">
+                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Disconnect {{ identity.provider }}?')">
+                        Disconnect
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="mt-4">
+        <a href="{{ url_for('public.index') }}" class="btn btn-secondary">Back</a>
+    </div>
+</div>
+{% endblock %}

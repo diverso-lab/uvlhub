@@ -6,7 +6,7 @@ from flask import current_app
 from splent_framework.services.BaseService import BaseService
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
-from app.features.auth.repositories import UserRepository
+from app.features.auth.repositories import ExternalIdentityRepository, UserRepository
 from app.features.orcid.repositories import OrcidRepository
 from app.features.profile.repositories import UserProfileRepository
 
@@ -83,33 +83,35 @@ class OrcidService(BaseService):
         if not user_info:
             return None, "Missing ORCID user information."
 
-        orcid_id = (user_info.get("sub") or "").strip()
-        if not orcid_id:
-            return None, "Missing ORCID iD."
-
-        given_name = (user_info.get("given_name") or "").strip()
-        family_name = (user_info.get("family_name") or "").strip()
-        affiliation = (user_info.get("affiliation") or "").strip()
-
         try:
-            user, orcid_record = self._existing_user_for_orcid(orcid_id)
-            if user:
-                return user, None
-            if orcid_record:
-                # Dangling link with no user behind it: drop it and start fresh.
-                self.repository.delete(orcid_record.id)
-                self.repository.session.flush()
+            external_repo = ExternalIdentityRepository()
+            orcid_id = (user_info.get("sub") or "").strip()
 
+            if not orcid_id:
+                return None, "Missing ORCID iD."
+
+            given_name = (user_info.get("given_name") or "").strip()
+            family_name = (user_info.get("family_name") or "").strip()
+            affiliation = (user_info.get("affiliation") or "").strip()
+
+            # 1. Check if ORCID ID already exists
+            existing_identity = external_repo.get_by_provider_id("orcid", orcid_id)
+            if existing_identity and existing_identity.user_id:
+                user = self.user_repository.get_by_id(existing_identity.user_id)
+                if user:
+                    return user, None
+
+            # 2. Create new user (ORCID doesn't provide email)
             user = self.user_repository.create(commit=False, password=secrets.token_urlsafe(24), active=True)
             profile = self.user_profile_repository.create(
                 commit=False, user_id=user.id, name=given_name, surname=family_name, affiliation=affiliation
             )
             self.repository.create(commit=False, orcid_id=orcid_id, profile_id=profile.id)
+            external_repo.create(commit=False, user_id=user.id, provider="orcid", provider_id=orcid_id, email=None)
             self.repository.session.commit()
             return user, None
 
         except IntegrityError as exc:
-            # Two concurrent callbacks racing to create the same ORCID account.
             current_app.logger.warning("IntegrityError creating ORCID user (%s): %s", orcid_id, exc)
             self.repository.session.rollback()
             user, _ = self._existing_user_for_orcid(orcid_id)

@@ -89,20 +89,62 @@ class GithubService(BaseService):
         if not name:
             name = github_login
 
-        try:
-            user, github_record = self._existing_user_for_github(github_id)
-            if user:
-                return user, None
-            if github_record:
-                self.repository.delete(github_record.id)
-                self.repository.session.flush()
+        email = (user_info.get("email") or "").strip().lower() if user_info.get("email") else None
 
-            user = self.user_repository.create(commit=False, password=secrets.token_urlsafe(24), active=True)
+        try:
+            from app.features.auth.repositories import ExternalIdentityRepository
+
+            external_repo = ExternalIdentityRepository()
+
+            # 1. Check if this GitHub ID already exists
+            existing_identity = external_repo.get_by_provider_id("github", github_id)
+            if existing_identity and existing_identity.user_id:
+                user = self.user_repository.get_by_id(existing_identity.user_id)
+                if user:
+                    return user, None
+
+            # 2. Check if email exists in ExternalIdentity
+            if email:
+                email_identity = external_repo.get_by_email(email)
+                if email_identity and email_identity.user_id:
+                    user = self.user_repository.get_by_id(email_identity.user_id)
+                    if user:
+                        # Link this GitHub account to existing user
+                        external_repo.create(
+                            commit=False, user_id=user.id, provider="github", provider_id=github_id, email=email
+                        )
+                        self.repository.create(
+                            commit=False, github_id=github_id, github_login=github_login, profile_id=user.profile.id
+                        )
+                        self.repository.session.commit()
+                        return user, None
+
+            # 3. Check if email exists in User table
+            if email:
+                existing_user = self.user_repository.get_by_email(email)
+                if existing_user:
+                    # Link GitHub to existing user
+                    external_repo.create(
+                        commit=False, user_id=existing_user.id, provider="github", provider_id=github_id, email=email
+                    )
+                    self.repository.create(
+                        commit=False,
+                        github_id=github_id,
+                        github_login=github_login,
+                        profile_id=existing_user.profile.id,
+                    )
+                    self.repository.session.commit()
+                    return existing_user, None
+
+            # 4. Create new user if nothing found
+            user = self.user_repository.create(
+                commit=False, password=secrets.token_urlsafe(24), active=True, email=email
+            )
             profile = self.user_profile_repository.create(commit=False, user_id=user.id, name=name, surname="")
             self.repository.create(commit=False, github_id=github_id, github_login=github_login, profile_id=profile.id)
+            external_repo.create(commit=False, user_id=user.id, provider="github", provider_id=github_id, email=email)
             self.repository.session.commit()
             return user, None
-
         except IntegrityError as exc:
             current_app.logger.warning("IntegrityError creating GitHub user (%s): %s", github_id, exc)
             self.repository.session.rollback()

@@ -1,6 +1,6 @@
 from splent_framework.repositories.BaseRepository import BaseRepository
 
-from app.features.auth.models import User
+from app.features.auth.models import ExternalIdentity, User
 
 
 class UserRepository(BaseRepository):
@@ -24,3 +24,19 @@ class UserRepository(BaseRepository):
         if active is not None:
             query = query.filter_by(active=active)
         return query.first()
+
+
+class ExternalIdentityRepository(BaseRepository):
+    def __init__(self):
+        super().__init__(ExternalIdentity)
+
+    def get_by_provider_id(self, provider: str, provider_id: str):
+        return self.session.query(ExternalIdentity).filter_by(provider=provider, provider_id=str(provider_id)).first()
+
+    def get_all_by_user(self, user_id: int):
+        return self.session.query(ExternalIdentity).filter_by(user_id=user_id).all()
+
+    def get_by_email(self, email: str):
+        if not email:
+            return None
+        return self.session.query(ExternalIdentity).filter_by(email=email).first()
