@@ -68,7 +68,9 @@ def authorize():
 
         orcid_id = (user_info.get("sub") or "").strip()
         external_repo = ExternalIdentityRepository()
-        external_repo.create(user_id=current_user.id, provider="orcid", provider_id=orcid_id, provider_username=orcid_id, email=None)
+        external_repo.create(
+            user_id=current_user.id, provider="orcid", provider_id=orcid_id, provider_username=orcid_id, email=None
+        )
         flash("ORCID account connected successfully", "success")
         return redirect(url_for("profile.edit_profile"))
     else:
