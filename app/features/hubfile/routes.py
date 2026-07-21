@@ -539,7 +539,7 @@ def to_latex(file_id):
             for file in package_path.rglob("*"):
                 if file.is_file():
                     arcname = file.relative_to(package_path.parent)
-                    zip_file.write(file, arcname)
+                    zip_file.writestr(str(arcname), file.read_bytes())
 
     zip_buffer.seek(0)
     zip_filename = selected_file.name.replace(".uvl", ".zip")

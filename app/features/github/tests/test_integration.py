@@ -105,6 +105,10 @@ def test_authorize_successful_flow_creates_user_and_logs_in(test_client, clean_d
     with (
         patch.object(GithubService, "configure_oauth", return_value=(mock_oauth, mock_client)),
         patch.object(GithubService, "get_github_user_info", return_value=(user_data, None)),
+        patch(
+            "app.features.github.routes.current_app.github_service.github_client.authorize_access_token",
+            return_value={"access_token": "token123"},
+        ),
     ):
 
         response = test_client.get("/github/authorize?code=fake&state=fake", follow_redirects=False)
@@ -139,6 +143,10 @@ def test_authorize_creates_user_successfully(test_client, clean_database):
     with (
         patch.object(GithubService, "configure_oauth", return_value=(mock_oauth, mock_client)),
         patch.object(GithubService, "get_github_user_info", return_value=(user_data, None)),
+        patch(
+            "app.features.github.routes.current_app.github_service.github_client.authorize_access_token",
+            return_value={"access_token": "token123"},
+        ),
     ):
 
         test_client.get("/github/authorize?code=fake&state=fake", follow_redirects=False)
@@ -158,6 +166,10 @@ def test_authorize_redirects_to_next_url_when_safe(test_client, clean_database):
     with (
         patch.object(GithubService, "configure_oauth", return_value=(mock_oauth, mock_client)),
         patch.object(GithubService, "get_github_user_info", return_value=(user_data, None)),
+        patch(
+            "app.features.github.routes.current_app.github_service.github_client.authorize_access_token",
+            return_value={"access_token": "token123"},
+        ),
     ):
 
         response = test_client.get("/github/authorize?code=fake&state=fake", follow_redirects=False)
@@ -178,6 +190,10 @@ def test_authorize_ignores_unsafe_next_url(test_client, clean_database):
     with (
         patch.object(GithubService, "configure_oauth", return_value=(mock_oauth, mock_client)),
         patch.object(GithubService, "get_github_user_info", return_value=(user_data, None)),
+        patch(
+            "app.features.github.routes.current_app.github_service.github_client.authorize_access_token",
+            return_value={"access_token": "token123"},
+        ),
     ):
 
         response = test_client.get("/github/authorize?code=fake&state=fake", follow_redirects=False)
@@ -199,6 +215,10 @@ def test_authorize_returns_existing_user_on_second_login(test_client, clean_data
     with (
         patch.object(GithubService, "configure_oauth", return_value=(mock_oauth, mock_client)),
         patch.object(GithubService, "get_github_user_info", return_value=(user_data, None)),
+        patch(
+            "app.features.github.routes.current_app.github_service.github_client.authorize_access_token",
+            return_value={"access_token": "token123"},
+        ),
     ):
 
         test_client.get("/github/authorize?code=fake1&state=fake1", follow_redirects=False)
@@ -211,6 +231,10 @@ def test_authorize_returns_existing_user_on_second_login(test_client, clean_data
     with (
         patch.object(GithubService, "configure_oauth", return_value=(mock_oauth, mock_client)),
         patch.object(GithubService, "get_github_user_info", return_value=(user_data, None)),
+        patch(
+            "app.features.github.routes.current_app.github_service.github_client.authorize_access_token",
+            return_value={"access_token": "token123"},
+        ),
     ):
 
         test_client.get("/github/authorize?code=fake2&state=fake2", follow_redirects=False)

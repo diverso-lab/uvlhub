@@ -272,6 +272,7 @@ def test_edit_metadata_post_ajax_returns_success(test_client):
             "update_metadata_from_request",
             return_value={"metadata_synced": True, "sync_deferred": False},
         ),
+        patch("app.features.dataset.routes.index_dataset"),
     ):
         response = test_client.post(
             "/dataset/edit/123",
@@ -383,9 +384,11 @@ def test_new_version_success_returns_doi(test_client):
     owned = MagicMock(user_id=_test_user_id(test_client))
     new_dataset = MagicMock(id=42, dataset_version=2)
     new_dataset.ds_meta_data.dataset_doi = "10.5072/zenodo.999"
+    new_dataset.feature_models = []
     with (
         patch.object(dataset_routes.dataset_service, "get_or_404", return_value=owned),
         patch.object(dataset_routes.dataset_service, "create_new_version", return_value=new_dataset),
+        patch("app.features.elasticsearch.services.IndexingService"),
     ):
         response = test_client.post(
             "/dataset/1/new-version",
