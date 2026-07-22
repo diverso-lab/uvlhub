@@ -1,0 +1,31 @@
+{% extends "base_template.html" %}
+{% set title = "ORCID Login" %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb text-muted fs-6 fw-semibold">
+    <li class="breadcrumb-item"><a href="/">Home</a></li>
+    <li class="breadcrumb-item text-muted">ORCID Login</li>
+</ol>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title fw-bold">Sign in with ORCID</h3>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-4">Please enter your email address to sign in with ORCID.</p>
+                <form method="POST" action="{{ url_for('orcid.login_email') }}" class="needs-validation" novalidate>
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Email Address</label>
+                        <input type="email" name="email" class="form-control" placeholder="Enter your email" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Continue with ORCID</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

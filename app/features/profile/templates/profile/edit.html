@@ -134,6 +134,31 @@
                     </div>
                 </form>
 
+                <!-- ORCID Email Modal -->
+                <div class="modal fade" id="orcidEmailModal" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Connect ORCID</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p class="text-muted mb-4">Please enter your email address to connect your ORCID account.</p>
+                                <form id="orcidEmailForm" method="POST" action="{{ url_for('profile.connect_orcid_with_email') }}">
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold">Email Address</label>
+                                        <input type="email" name="email" class="form-control" placeholder="Enter your email" required>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" form="orcidEmailForm" class="btn btn-primary">Continue</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Disconnect Modal -->
                 <div class="modal fade" id="disconnectModal" tabindex="-1">
                     <div class="modal-dialog">

@@ -1,4 +1,4 @@
-from flask import flash, jsonify, redirect, render_template, request, url_for
+from flask import flash, jsonify, redirect, render_template, request, session, url_for
 from flask_login import current_user, login_required
 
 from app.features.auth.services import AuthenticationService
@@ -81,7 +81,18 @@ def connect_github():
 @profile_bp.route("/account/connect/orcid")
 @login_required
 def connect_orcid():
-    from flask import session as flask_session
+    session["orcid_connect_mode"] = True
+    return redirect(url_for("orcid.login"))
 
-    flask_session["orcid_connect_mode"] = True
+
+@profile_bp.route("/account/connect/orcid-with-email", methods=["POST"])
+@login_required
+def connect_orcid_with_email():
+    email = request.form.get("email", "").strip().lower()
+    if not email:
+        flash("Email is required.", "danger")
+        return redirect(url_for("profile.edit_profile"))
+
+    session["orcid_connect_mode"] = True
+    session["orcid_connect_email"] = email
     return redirect(url_for("orcid.login"))

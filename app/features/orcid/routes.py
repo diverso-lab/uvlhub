@@ -1,4 +1,4 @@
-from flask import current_app, flash, redirect, session, url_for
+from flask import current_app, flash, redirect, render_template, request, session, url_for
 from flask_login import current_user, login_user
 
 from app.features.auth.services import AuthenticationService
@@ -19,6 +19,24 @@ def before_request():
 
 def _back_to_login(next_url):
     return redirect(url_for("auth.login", next=next_url) if next_url else url_for("auth.login"))
+
+
+@orcid_bp.route("/orcid/login-email", methods=["GET", "POST"])
+def login_email():
+    next_url = authentication_service.get_safe_next_url()
+
+    if request.method == "POST":
+        email = request.form.get("email", "").strip().lower()
+        if not email:
+            flash("Email is required.", "danger")
+            return render_template("orcid/login_email.html", next_url=next_url)
+
+        session["orcid_login_email"] = email
+        if next_url:
+            session["orcid_next_url"] = next_url
+        return redirect(url_for("orcid.login"))
+
+    return render_template("orcid/login_email.html", next_url=next_url)
 
 
 @orcid_bp.route("/orcid/login")
@@ -48,6 +66,8 @@ def authorize():
         next_url = None
 
     connect_mode = session.pop("orcid_connect_mode", False)
+    login_email = session.pop("orcid_login_email", None)
+    connect_email = session.pop("orcid_connect_email", None)
 
     try:
         token = current_app.orcid_service.orcid_client.authorize_access_token()
@@ -69,12 +89,12 @@ def authorize():
         orcid_id = (user_info.get("sub") or "").strip()
         external_repo = ExternalIdentityRepository()
         external_repo.create(
-            user_id=current_user.id, provider="orcid", provider_id=orcid_id, provider_username=orcid_id, email=None
+            user_id=current_user.id, provider="orcid", provider_id=orcid_id, provider_username=orcid_id, email=connect_email
         )
         flash("ORCID account connected successfully", "success")
         return redirect(url_for("profile.edit_profile"))
     else:
-        user, err = current_app.orcid_service.get_or_create_user(user_info)
+        user, err = current_app.orcid_service.get_or_create_user(user_info, login_email)
         if err:
             flash(err, "danger")
             return _back_to_login(next_url)

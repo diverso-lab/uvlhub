@@ -79,7 +79,7 @@ class OrcidService(BaseService):
         user = self.user_repository.get_by_id(profile.user_id) if profile else None
         return user, orcid_record
 
-    def get_or_create_user(self, user_info):
+    def get_or_create_user(self, user_info, email=None):
         if not user_info:
             return None, "Missing ORCID user information."
 
@@ -101,13 +101,21 @@ class OrcidService(BaseService):
                 if user:
                     return user, None
 
-            # 2. Create new user (ORCID doesn't provide email)
-            user = self.user_repository.create(commit=False, password=secrets.token_urlsafe(24), active=True)
+            # 2. Check if email exists and link to existing user
+            if email:
+                existing_by_email = self.user_repository.get_by_email(email)
+                if existing_by_email:
+                    external_repo.create(commit=False, user_id=existing_by_email.id, provider="orcid", provider_id=orcid_id, provider_username=orcid_id, email=email)
+                    self.repository.session.commit()
+                    return existing_by_email, None
+
+            # 3. Create new user
+            user = self.user_repository.create(commit=False, email=email, password=secrets.token_urlsafe(24), active=True)
             profile = self.user_profile_repository.create(
                 commit=False, user_id=user.id, name=given_name, surname=family_name, affiliation=affiliation
             )
             self.repository.create(commit=False, orcid_id=orcid_id, profile_id=profile.id)
-            external_repo.create(commit=False, user_id=user.id, provider="orcid", provider_id=orcid_id, email=None)
+            external_repo.create(commit=False, user_id=user.id, provider="orcid", provider_id=orcid_id, provider_username=orcid_id, email=email)
             self.repository.session.commit()
             return user, None
 
