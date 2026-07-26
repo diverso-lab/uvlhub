@@ -22,6 +22,14 @@ def test_generate_for_user_persists_and_returns_a_token(test_app, clean_database
     assert ApiKeyRepository().count() == 1
 
 
+def test_generate_for_user_drops_unknown_scopes(test_app, clean_database):
+    user = _user()
+
+    api_key, _ = ApiKeyService().generate_for_user(user, ["read_dataset", "admin", "delete_everything"])
+
+    assert api_key.scope_list == ["read_dataset"]
+
+
 def test_list_for_user_returns_only_the_owners_keys(test_app, clean_database):
     owner = _user()
     other = _user("other@example.com")

@@ -16,6 +16,9 @@ class Config:
     TIMEZONE = "Europe/Madrid"
     TEMPLATES_AUTO_RELOAD = True
     UPLOAD_FOLDER = "uploads"
+    # Global request-body cap: Flask rejects larger payloads with a 413 before
+    # any route code runs. UVL uploads have a tighter per-endpoint limit.
+    MAX_CONTENT_LENGTH = 20 * 1024 * 1024
     SESSION_TYPE = "redis"
     SESSION_PERMANENT = False
     SESSION_USE_SIGNER = True

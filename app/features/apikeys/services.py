@@ -9,14 +9,19 @@ from app.features.apikeys.repositories import ApiKeyRepository
 
 TOKEN_BYTES = 32
 
+# Canonical list of scopes a key can be granted. Anything else sent in the
+# generation form is silently dropped.
+AVAILABLE_SCOPES = ("read_dataset", "write_dataset")
+
 
 class ApiKeyService(BaseService):
     def __init__(self):
         super().__init__(ApiKeyRepository())
 
     def generate_for_user(self, user, scopes: list[str]) -> tuple[ApiKey, str]:
+        clean_scopes = [scope for scope in scopes if scope in AVAILABLE_SCOPES]
         token = secrets.token_hex(TOKEN_BYTES)
-        api_key = self.repository.create(key=token, user_id=user.id, scopes=",".join(scopes))
+        api_key = self.repository.create(key=token, user_id=user.id, scopes=",".join(clean_scopes))
         return api_key, token
 
     def list_for_user(self, user) -> list[ApiKey]:

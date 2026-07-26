@@ -416,6 +416,406 @@ def test_new_version_validation_error_returns_400(test_client):
     test_client.get("/logout", follow_redirects=True)
 
 
+# --- API-key write API ----------------------------------------------------
+
+
+def _api_token(test_client, scopes, email="test@example.com"):
+    """Create a real API key in the database and return its token.
+
+    Runs on the test module's active app context (no nested context): the
+    commit ends the shared session's transaction, so the next request sees
+    the new key even under MariaDB's REPEATABLE READ isolation.
+    """
+    from app import db
+    from app.features.apikeys.services import ApiKeyService
+    from app.features.auth.models import User
+
+    user = User.query.filter_by(email=email).first()
+    if user is None:
+        user = User(email=email, password="test1234")
+        db.session.add(user)
+        db.session.commit()
+    _, token = ApiKeyService().generate_for_user(user, scopes)
+    return token
+
+
+def test_api_publish_rejects_missing_api_key(test_client):
+    test_client.get("/logout", follow_redirects=True)
+
+    response = test_client.post("/api/v1/datasets/1/publish")
+
+    assert response.status_code == 401
+
+
+def test_api_publish_rejects_key_without_write_scope(test_client):
+    token = _api_token(test_client, ["read_dataset"])
+
+    response = test_client.post("/api/v1/datasets/1/publish", headers={"X-API-Key": token})
+
+    assert response.status_code == 403
+    assert "scope" in response.get_json()["error"]
+
+
+def test_api_publish_forbidden_for_another_users_dataset(test_client):
+    token = _api_token(test_client, ["write_dataset"], email="rival@example.com")
+
+    with patch.object(dataset_routes.dataset_service, "get_by_id", return_value=MagicMock(user_id=424242)):
+        response = test_client.post("/api/v1/datasets/1/publish", headers={"X-API-Key": token})
+
+    assert response.status_code == 403
+    assert "own" in response.get_json()["error"]
+
+
+def test_api_publish_not_found_returns_404(test_client):
+    token = _api_token(test_client, ["write_dataset"])
+
+    with patch.object(dataset_routes.dataset_service, "get_by_id", return_value=None):
+        response = test_client.post("/api/v1/datasets/999999/publish", headers={"X-API-Key": token})
+
+    assert response.status_code == 404
+
+
+def test_api_publish_already_published_returns_400(test_client):
+    token = _api_token(test_client, ["write_dataset"])
+    owned = MagicMock(user_id=_test_user_id(test_client))
+    owned.ds_meta_data.dataset_doi = "10.1234/already"
+
+    with patch.object(dataset_routes.dataset_service, "get_by_id", return_value=owned):
+        response = test_client.post("/api/v1/datasets/1/publish", headers={"X-API-Key": token})
+
+    assert response.status_code == 400
+    assert "already" in response.get_json()["error"].lower()
+
+
+def test_api_upload_rejects_key_without_write_scope(test_client):
+    test_client.get("/logout", follow_redirects=True)
+    token = _api_token(test_client, ["read_dataset"])
+
+    response = test_client.post(
+        "/api/v1/datasets/upload",
+        headers={"X-API-Key": token},
+        json={"title": "Model", "uvl_content": "features\n    Root"},
+    )
+
+    assert response.status_code == 403
+
+
+def test_api_upload_with_key_rejects_invalid_uvl(test_client):
+    test_client.get("/logout", follow_redirects=True)
+    token = _api_token(test_client, ["write_dataset"])
+
+    response = test_client.post(
+        "/api/v1/datasets/upload",
+        headers={"X-API-Key": token},
+        json={"title": "Broken model", "uvl_content": "this is not a uvl model {{{"},
+    )
+
+    assert response.status_code == 400
+    assert "error" in response.get_json()
+    assert response.get_json()["error"]
+
+
+def test_api_upload_session_path_skips_uvl_validation(test_client):
+    # flamapyIDE uploads through the session cookie and must keep its current
+    # behaviour: no synchronous flamapy check on that path.
+    _login(test_client)
+    dataset = MagicMock()
+    dataset.id = 88
+
+    with (
+        patch.object(
+            dataset_routes.dataset_service, "create_draft_from_uvl_import", return_value=(dataset, [MagicMock()])
+        ),
+        patch.object(dataset_routes.flamapy_service, "check_uvl") as mock_check,
+    ):
+        response = test_client.post(
+            "/api/v1/datasets/upload",
+            json={"title": "IDE model", "uvl_content": "this is not a uvl model {{{"},
+        )
+
+    assert response.status_code == 201
+    mock_check.assert_not_called()
+    test_client.get("/logout", follow_redirects=True)
+
+
+def test_api_upload_multipart_happy_path(test_client):
+    # The CLI sends multipart/form-data (title/description fields plus a
+    # uvl_file part); this pins that contract end to end: a real draft is
+    # created and its stored content matches the uploaded bytes.
+    test_client.get("/logout", follow_redirects=True)
+    token = _api_token(test_client, ["write_dataset"])
+    uvl_bytes = b"features\n    Root"
+
+    response = test_client.post(
+        "/api/v1/datasets/upload",
+        headers={"X-API-Key": token},
+        data={
+            "title": "CLI multipart model",
+            "description": "Uploaded through the multipart contract.",
+            "uvl_file": (io.BytesIO(uvl_bytes), "cli_model.uvl"),
+        },
+        content_type="multipart/form-data",
+    )
+
+    assert response.status_code == 201
+    dataset_id = response.get_json()["dataset_id"]
+    dataset = dataset_routes.dataset_service.get_by_id(dataset_id)
+    assert dataset.ds_meta_data.title == "CLI multipart model"
+    assert dataset.ds_meta_data.description == "Uploaded through the multipart contract."
+    hubfiles = dataset.files()
+    assert [hubfile.name for hubfile in hubfiles] == ["cli_model.uvl"]
+    with open(hubfiles[0].get_full_path(), "rb") as stored:
+        assert stored.read() == uvl_bytes
+
+
+def test_api_upload_multipart_rejects_invalid_uvl(test_client):
+    # Same multipart contract, invalid model: proves the synchronous flamapy
+    # check also runs on the file-upload path, not only on json uvl_content.
+    test_client.get("/logout", follow_redirects=True)
+    token = _api_token(test_client, ["write_dataset"])
+
+    response = test_client.post(
+        "/api/v1/datasets/upload",
+        headers={"X-API-Key": token},
+        data={
+            "title": "Broken multipart model",
+            "description": "Should be rejected by flamapy.",
+            "uvl_file": (io.BytesIO(b"this is not a uvl model {{{"), "broken.uvl"),
+        },
+        content_type="multipart/form-data",
+    )
+
+    assert response.status_code == 400
+    assert response.get_json()["error"]
+
+
+def test_api_upload_rejects_oversized_uvl(test_client):
+    test_client.get("/logout", follow_redirects=True)
+    token = _api_token(test_client, ["write_dataset"])
+    oversized = b"a" * (1024 * 1024 + 1)
+
+    with patch.object(dataset_routes.flamapy_service, "check_uvl") as mock_check:
+        response = test_client.post(
+            "/api/v1/datasets/upload",
+            headers={"X-API-Key": token},
+            data={"title": "Huge model", "uvl_file": (io.BytesIO(oversized), "huge.uvl")},
+            content_type="multipart/form-data",
+        )
+
+    assert response.status_code == 413
+    assert "too large" in response.get_json()["error"]
+    mock_check.assert_not_called()
+
+
+def test_api_new_version_rejects_key_without_write_scope(test_client):
+    token = _api_token(test_client, ["read_dataset"])
+
+    response = test_client.post("/api/v1/datasets/1/new-version", headers={"X-API-Key": token})
+
+    assert response.status_code == 403
+
+
+def test_api_new_version_forbidden_for_another_users_dataset(test_client):
+    token = _api_token(test_client, ["write_dataset"], email="rival@example.com")
+
+    with patch.object(dataset_routes.dataset_service, "get_by_id", return_value=MagicMock(user_id=424242)):
+        response = test_client.post("/api/v1/datasets/1/new-version", headers={"X-API-Key": token})
+
+    assert response.status_code == 403
+
+
+def test_api_new_version_without_file_returns_400(test_client):
+    token = _api_token(test_client, ["write_dataset"])
+    owned = MagicMock(user_id=_test_user_id(test_client))
+
+    with patch.object(dataset_routes.dataset_service, "get_by_id", return_value=owned):
+        response = test_client.post(
+            "/api/v1/datasets/1/new-version",
+            headers={"X-API-Key": token},
+            data={},
+            content_type="multipart/form-data",
+        )
+
+    assert response.status_code == 400
+    assert ".uvl" in response.get_json()["error"]
+
+
+def test_api_new_version_success_returns_doi_and_files(test_client):
+    token = _api_token(test_client, ["write_dataset"])
+    owned = MagicMock(user_id=_test_user_id(test_client))
+    new_dataset = MagicMock(id=43, dataset_version=2)
+    new_dataset.ds_meta_data.dataset_doi = "10.5072/zenodo.1000"
+    hubfile = MagicMock()
+    hubfile.name = "v2.uvl"
+    new_dataset.files.return_value = [hubfile]
+
+    with (
+        patch.object(dataset_routes.dataset_service, "get_by_id", return_value=owned),
+        patch.object(dataset_routes.dataset_service, "create_new_version", return_value=new_dataset),
+        patch("app.features.dataset.routes.IndexingService"),
+    ):
+        response = test_client.post(
+            "/api/v1/datasets/1/new-version",
+            headers={"X-API-Key": token},
+            data={"file": (io.BytesIO(b"features\n    Root"), "v2.uvl")},
+            content_type="multipart/form-data",
+        )
+
+    assert response.status_code == 200
+    body = response.get_json()
+    assert body["doi"] == "10.5072/zenodo.1000"
+    assert body["version"] == 2
+    assert body["files"][0]["name"] == "v2.uvl"
+    assert body["files"][0]["raw_url"].endswith("/doi/10.5072/zenodo.1000/files/raw/v2.uvl/")
+
+
+def test_api_new_version_with_key_rejects_invalid_uvl(test_client):
+    # Mirror of test_api_upload_with_key_rejects_invalid_uvl: the replacement
+    # UVL must go through the synchronous flamapy check before any Zenodo call.
+    token = _api_token(test_client, ["write_dataset"])
+    owned = MagicMock(user_id=_test_user_id(test_client))
+
+    with (
+        patch.object(dataset_routes.dataset_service, "get_by_id", return_value=owned),
+        patch.object(dataset_routes.dataset_service, "create_new_version") as mock_create,
+    ):
+        response = test_client.post(
+            "/api/v1/datasets/1/new-version",
+            headers={"X-API-Key": token},
+            data={"file": (io.BytesIO(b"this is not a uvl model {{{"), "broken.uvl")},
+            content_type="multipart/form-data",
+        )
+
+    assert response.status_code == 400
+    assert response.get_json()["error"]
+    mock_create.assert_not_called()
+
+
+def test_api_new_version_rejects_non_utf8_file(test_client):
+    token = _api_token(test_client, ["write_dataset"])
+    owned = MagicMock(user_id=_test_user_id(test_client))
+
+    with (
+        patch.object(dataset_routes.dataset_service, "get_by_id", return_value=owned),
+        patch.object(dataset_routes.dataset_service, "create_new_version") as mock_create,
+    ):
+        response = test_client.post(
+            "/api/v1/datasets/1/new-version",
+            headers={"X-API-Key": token},
+            data={"file": (io.BytesIO(b"\xff\xfe\x00garbage"), "binary.uvl")},
+            content_type="multipart/form-data",
+        )
+
+    assert response.status_code == 400
+    assert "UTF-8" in response.get_json()["error"]
+    mock_create.assert_not_called()
+
+
+def test_api_new_version_rejects_oversized_uvl(test_client):
+    token = _api_token(test_client, ["write_dataset"])
+    owned = MagicMock(user_id=_test_user_id(test_client))
+    oversized = b"a" * (1024 * 1024 + 1)
+
+    with (
+        patch.object(dataset_routes.dataset_service, "get_by_id", return_value=owned),
+        patch.object(dataset_routes.dataset_service, "create_new_version") as mock_create,
+        patch.object(dataset_routes.flamapy_service, "check_uvl") as mock_check,
+    ):
+        response = test_client.post(
+            "/api/v1/datasets/1/new-version",
+            headers={"X-API-Key": token},
+            data={"file": (io.BytesIO(oversized), "huge.uvl")},
+            content_type="multipart/form-data",
+        )
+
+    assert response.status_code == 413
+    assert "too large" in response.get_json()["error"]
+    mock_check.assert_not_called()
+    mock_create.assert_not_called()
+
+
+def test_api_new_version_indexes_new_dataset(test_client):
+    # The new DOI must reach Elasticsearch so the version shows up in explore.
+    token = _api_token(test_client, ["write_dataset"])
+    owned = MagicMock(user_id=_test_user_id(test_client))
+    new_dataset = MagicMock(id=44, dataset_version=3)
+    new_dataset.ds_meta_data.dataset_doi = "10.5072/zenodo.1001"
+    new_dataset.files.return_value = []
+
+    with (
+        patch.object(dataset_routes.dataset_service, "get_by_id", return_value=owned),
+        patch.object(dataset_routes.dataset_service, "create_new_version", return_value=new_dataset),
+        patch("app.features.dataset.routes.IndexingService") as mock_indexing,
+    ):
+        response = test_client.post(
+            "/api/v1/datasets/1/new-version",
+            headers={"X-API-Key": token},
+            data={"file": (io.BytesIO(b"features\n    Root"), "v3.uvl")},
+            content_type="multipart/form-data",
+        )
+
+    assert response.status_code == 200
+    mock_indexing.return_value.index_dataset_and_hubfiles.assert_called_once_with(
+        new_dataset, new_dataset.feature_models
+    )
+
+
+def test_api_dataset_by_doi_requires_read_scope(test_client):
+    token = _api_token(test_client, ["write_dataset"])
+
+    response = test_client.get("/api/v1/datasets/doi/10.1234/whatever", headers={"X-API-Key": token})
+
+    assert response.status_code == 403
+
+
+def test_api_dataset_by_doi_not_found_returns_404(test_client):
+    token = _api_token(test_client, ["read_dataset"])
+
+    response = test_client.get("/api/v1/datasets/doi/10.9999/does-not-exist", headers={"X-API-Key": token})
+
+    assert response.status_code == 404
+
+
+def test_api_upload_publish_lookup_happy_path(test_client):
+    # Full API-key flow with the Zenodo primitives mocked: a real draft is
+    # created on disk and in the DB, published through the real
+    # ZenodoDatasetService orchestration, then looked up by DOI.
+    test_client.get("/logout", follow_redirects=True)
+    token = _api_token(test_client, ["read_dataset", "write_dataset"])
+
+    upload = test_client.post(
+        "/api/v1/datasets/upload",
+        headers={"X-API-Key": token},
+        json={"title": "API model", "filename": "api_model.uvl", "uvl_content": "features\n    Root"},
+    )
+    assert upload.status_code == 201
+    dataset_id = upload.get_json()["dataset_id"]
+
+    with (
+        patch.object(dataset_routes.zenodo_service, "create_new_deposition", return_value={"id": 4321}),
+        patch.object(dataset_routes.zenodo_service, "upload_zip"),
+        patch.object(dataset_routes.zenodo_service, "publish_deposition"),
+        patch.object(dataset_routes.zenodo_service, "get_doi", return_value="10.5072/zenodo.4321"),
+        patch("app.features.dataset.routes.IndexingService"),
+    ):
+        publish = test_client.post(f"/api/v1/datasets/{dataset_id}/publish", headers={"X-API-Key": token})
+
+    assert publish.status_code == 200
+    body = publish.get_json()
+    assert body["doi"] == "10.5072/zenodo.4321"
+    assert body["deposition_id"] == 4321
+    assert body["files"][0]["name"] == "api_model.uvl"
+    assert body["files"][0]["raw_url"].endswith("/doi/10.5072/zenodo.4321/files/raw/api_model.uvl/")
+
+    lookup = test_client.get("/api/v1/datasets/doi/10.5072/zenodo.4321", headers={"X-API-Key": token})
+    assert lookup.status_code == 200
+    found = lookup.get_json()
+    assert found["dataset_id"] == dataset_id
+    assert found["title"] == "API model"
+    assert found["files"][0]["name"] == "api_model.uvl"
+    assert found["files"][0]["raw_url"].endswith("/doi/10.5072/zenodo.4321/files/raw/api_model.uvl/")
+
+
 # --- Compiled asset serving (nested paths) -------------------------------
 # dist/ holds webpack build artifacts (git-ignored, not built in CI), so these
 # probe the route with a temporary nested tree instead of the real TinyMCE files.

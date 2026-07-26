@@ -4,6 +4,40 @@ All notable changes to this project are documented in this file. The format is
 based on [Keep a Changelog](https://keepachangelog.com/) and the project follows
 [Semantic Versioning](https://semver.org/).
 
+## [2.10] - 2026-07-26
+
+Programmatic publication: datasets can now be created, published and
+versioned through the REST API with an API key — no browser involved.
+This powers `splent spl:publish`, closing the SPLENT loop (local UVL →
+UVLHub → `spl:fetch` anywhere).
+
+### Added
+
+- `write_dataset` API-key scope (selectable in /developer/api-keys) and
+  API-key resolution exposing the owning user to write endpoints.
+- `POST /api/v1/datasets/upload` now accepts `X-API-Key` (multipart
+  `uvl_file` + `title`/`description`), with synchronous UVL validation.
+- `POST /api/v1/datasets/<id>/publish` — publish a draft to Zenodo and
+  get `{doi, deposition_id, files[]}` back.
+- `POST /api/v1/datasets/<id>/new-version` — upload a replacement UVL
+  and mint a new linked Zenodo version, with validation and indexing.
+- `GET /api/v1/datasets/doi/<doi>` — dataset lookup by DOI.
+
+### Fixed
+
+- `FlamapyService.check_uvl` never invoked the parser, reporting any
+  file as a valid model; it now genuinely parses (affects the async
+  upload check too, which now reports real errors).
+- New dataset versions created via the API are indexed in Elasticsearch
+  so they appear in explore/search.
+
+### Security
+
+- Request bodies capped via `MAX_CONTENT_LENGTH` (20 MB) and UVL
+  payloads capped at 1 MB before parsing, closing a CPU/memory
+  exhaustion vector in the synchronous validator.
+- Unknown scopes are rejected when generating API keys.
+
 ## [2.9] - 2026-06-25
 
 Major release: uvlhub is rebuilt on **splent_framework** and gains **dataset

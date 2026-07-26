@@ -15,6 +15,7 @@ from flask import (
     abort,
     current_app,
     flash,
+    g,
     jsonify,
     make_response,
     redirect,
@@ -30,7 +31,7 @@ from qrcode.image.styledpil import StyledPilImage
 from qrcode.image.styles.moduledrawers.pil import RoundedModuleDrawer
 from werkzeug.utils import secure_filename
 
-from app.features.apikeys.decorators import require_api_key
+from app.features.apikeys.decorators import require_api_key, resolve_api_key
 from app.features.auth.services import AuthenticationService
 from app.features.dataset import dataset_bp, fair_metadata
 from app.features.dataset.decorators import is_dataset_owner
@@ -50,6 +51,7 @@ from app.features.dataset.services import (
 from app.features.elasticsearch.services import IndexingService
 from app.features.elasticsearch.utils import index_dataset, index_hubfile
 from app.features.featuremodel.services import FeatureModelService
+from app.features.flamapy.services import FlamapyService
 from app.features.hubfile.services import HubfileService
 from app.features.zenodo.services import ZenodoDatasetService, ZenodoService
 
@@ -65,6 +67,7 @@ ds_view_record_service = DSViewRecordService()
 ds_download_record_service = DSDownloadRecordService()
 hubfile_service = HubfileService()
 authentication_service = AuthenticationService()
+flamapy_service = FlamapyService()
 
 
 def _import_remote_uvl_to_temp(import_url: str, user) -> dict:
@@ -789,6 +792,50 @@ def sync_dataset(dataset_id):
 
 # REST API
 
+# Hard cap for UVL payloads on the API-key write endpoints: the synchronous
+# flamapy check parses slowly and with heavy memory amplification, so oversized
+# models are rejected before reaching the parser.
+UVL_MAX_BYTES = 1 * 1024 * 1024
+
+
+def _check_uvl_content(uvl_content: str, filename: str | None) -> str | None:
+    """Run the synchronous flamapy syntax check on raw UVL content.
+
+    Returns None when the model parses, or a human-readable error message
+    otherwise. The content is staged in a temp file because check_uvl works
+    on file paths.
+    """
+    safe_name = secure_filename(os.path.basename(filename or "model.uvl")) or "model.uvl"
+    if not safe_name.lower().endswith(".uvl"):
+        safe_name = f"{safe_name}.uvl"
+
+    check_dir = tempfile.mkdtemp(prefix="uvl_check_")
+    try:
+        check_path = os.path.join(check_dir, safe_name)
+        with open(check_path, "w", encoding="utf-8", newline="\n") as check_file:
+            check_file.write(uvl_content or "")
+        result, status_code = flamapy_service.check_uvl(check_path)
+        if status_code == 200:
+            return None
+        errors = result.get("errors") or [result.get("error") or "Invalid UVL model."]
+        return " ".join(errors)
+    finally:
+        shutil.rmtree(check_dir, ignore_errors=True)
+
+
+def _api_dataset_files_payload(dataset: DataSet) -> list[dict]:
+    """Serialize a dataset's files for API responses, with the public raw URL
+    (/doi/<doi>/files/raw/<name>/) when the dataset has a DOI."""
+    doi = dataset.ds_meta_data.dataset_doi
+    host_url = request.host_url.rstrip("/")
+    files = []
+    for hubfile in dataset.files():
+        entry = {"name": hubfile.name}
+        if doi:
+            entry["raw_url"] = f"{host_url}/doi/{doi}/files/raw/{hubfile.name}/"
+        files.append(entry)
+    return files
+
 
 @dataset_bp.route("/api/v1/datasets/upload", methods=["POST"])
 def api_upload_dataset():
@@ -797,6 +844,8 @@ def api_upload_dataset():
     ---
     tags:
       - Datasets
+    security:
+      - ApiKeyAuth: []
     consumes:
       - multipart/form-data
       - application/json
@@ -830,12 +879,26 @@ def api_upload_dataset():
       201:
         description: Draft dataset created successfully
       400:
-        description: Invalid import payload
+        description: Invalid import payload or UVL that does not parse
       401:
         description: Authentication required
+      403:
+        description: API key invalid or missing the write_dataset scope
+      413:
+        description: UVL payload exceeds the 1 MB limit
     """
 
+    # Two auth mechanisms: the flamapyIDE session (cookie) and an API key with
+    # the write_dataset scope. Only the API-key path runs the synchronous
+    # flamapy check, so the IDE flow keeps its current behaviour.
     authenticated_user = authentication_service.get_authenticated_user()
+    api_key_user = None
+    if not authenticated_user and request.headers.get("X-API-Key"):
+        _, api_key_error = resolve_api_key("write_dataset")
+        if api_key_error:
+            return api_key_error
+        api_key_user = g.api_user
+        authenticated_user = api_key_user
     if not authenticated_user:
         payload, status_code = authentication_service.get_flamapy_ide_auth_status_payload()
         return jsonify(payload), status_code
@@ -858,6 +921,13 @@ def api_upload_dataset():
     if not title:
         inferred_filename = filename or "model.uvl"
         title = os.path.splitext(os.path.basename(inferred_filename))[0].replace("_", " ").strip() or "Imported model"
+
+    if api_key_user is not None and (uvl_content or "").strip():
+        if len(uvl_content.encode("utf-8")) > UVL_MAX_BYTES:
+            return jsonify({"error": "UVL file too large (max 1 MB)."}), 413
+        uvl_error = _check_uvl_content(uvl_content, filename)
+        if uvl_error:
+            return jsonify({"error": uvl_error}), 400
 
     try:
         dataset, created_fms = dataset_service.create_draft_from_uvl_import(
@@ -885,6 +955,260 @@ def api_upload_dataset():
             }
         ),
         201,
+    )
+
+
+@dataset_bp.route("/api/v1/datasets/<int:dataset_id>/publish", methods=["POST"])
+@require_api_key("write_dataset")
+def api_publish_dataset(dataset_id):
+    """
+    Publish a draft dataset to Zenodo
+    ---
+    tags:
+      - Datasets
+    security:
+      - ApiKeyAuth: []
+    parameters:
+      - name: dataset_id
+        in: path
+        type: integer
+        required: true
+        description: ID of the draft dataset to publish
+    responses:
+      200:
+        description: Dataset published and indexed
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                doi:
+                  type: string
+                deposition_id:
+                  type: integer
+                files:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      raw_url:
+                        type: string
+              example:
+                doi: "10.5072/zenodo.123"
+                deposition_id: 123
+                files:
+                  - name: "model.uvl"
+                    raw_url: "https://www.uvlhub.io/doi/10.5072/zenodo.123/files/raw/model.uvl/"
+      400:
+        description: Dataset already published or Zenodo upload failed
+      403:
+        description: API key invalid, missing write_dataset scope, or not the dataset owner
+      404:
+        description: Dataset not found
+    """
+    dataset = dataset_service.get_by_id(dataset_id)
+    if not dataset:
+        return jsonify({"error": "Dataset not found"}), 404
+    if dataset.user_id != g.api_user.id:
+        return jsonify({"error": "Forbidden: you do not own this dataset"}), 403
+    if dataset.ds_meta_data.dataset_doi:
+        return jsonify({"error": "Dataset already synchronized"}), 400
+
+    zenodo_service_facade = ZenodoDatasetService(zenodo_service, dataset_service, logger)
+    try:
+        doi = zenodo_service_facade.upload_to_zenodo(dataset, dataset.ds_meta_data, "zenodo", g.api_user)
+    except Exception as exc:
+        logger.exception(f"[API PUBLISH ERROR] {exc}")
+        return jsonify({"error": f"Zenodo upload failed: {exc}"}), 400
+
+    indexing_service = IndexingService(index_dataset, index_hubfile, logger)
+    try:
+        dataset = dataset_service.get_by_id(dataset_id)
+        indexing_service.index_dataset_and_hubfiles(dataset, dataset.feature_models)
+    except Exception as exc:
+        logger.warning(f"[API PUBLISH] Dataset {dataset_id} published, but indexing failed: {exc}")
+
+    return (
+        jsonify(
+            {
+                "message": "Dataset published successfully.",
+                "dataset_id": dataset.id,
+                "doi": doi,
+                "deposition_id": dataset.ds_meta_data.deposition_id,
+                "files": _api_dataset_files_payload(dataset),
+            }
+        ),
+        200,
+    )
+
+
+@dataset_bp.route("/api/v1/datasets/<int:dataset_id>/new-version", methods=["POST"])
+@require_api_key("write_dataset")
+def api_new_dataset_version(dataset_id):
+    """
+    Publish a new version of a published dataset with a replaced UVL
+    ---
+    tags:
+      - Datasets
+    security:
+      - ApiKeyAuth: []
+    consumes:
+      - multipart/form-data
+    parameters:
+      - name: dataset_id
+        in: path
+        type: integer
+        required: true
+        description: ID of the published dataset to version
+      - name: file
+        in: formData
+        type: file
+        required: true
+        description: Replacement .uvl file for the new version
+    responses:
+      200:
+        description: New version published to Zenodo
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                doi:
+                  type: string
+                version:
+                  type: integer
+                files:
+                  type: array
+                  items:
+                    type: object
+              example:
+                doi: "10.5072/zenodo.124"
+                version: 2
+                files:
+                  - name: "model_v2.uvl"
+                    raw_url: "https://www.uvlhub.io/doi/10.5072/zenodo.124/files/raw/model_v2.uvl/"
+      400:
+        description: Missing or invalid .uvl file, dataset not published yet, or Zenodo failure
+      403:
+        description: API key invalid, missing write_dataset scope, or not the dataset owner
+      404:
+        description: Dataset not found
+      413:
+        description: UVL payload exceeds the 1 MB limit
+    """
+    dataset = dataset_service.get_by_id(dataset_id)
+    if not dataset:
+        return jsonify({"error": "Dataset not found"}), 404
+    if dataset.user_id != g.api_user.id:
+        return jsonify({"error": "Forbidden: you do not own this dataset"}), 403
+
+    uploaded_file = request.files.get("file")
+    if uploaded_file is None:
+        return jsonify({"error": "A .uvl file is required."}), 400
+
+    # Validate the replacement UVL before touching Zenodo: a new version mints
+    # a permanent DOI, so garbage must be rejected here.
+    raw_content = uploaded_file.read()
+    if len(raw_content) > UVL_MAX_BYTES:
+        return jsonify({"error": "UVL file too large (max 1 MB)."}), 413
+    try:
+        uvl_content = raw_content.decode("utf-8")
+    except UnicodeDecodeError:
+        return jsonify({"error": "UVL file must be UTF-8 encoded."}), 400
+    uvl_error = _check_uvl_content(uvl_content, uploaded_file.filename)
+    if uvl_error:
+        return jsonify({"error": uvl_error}), 400
+    # create_new_version re-reads the file, so rewind after the checks.
+    uploaded_file.stream.seek(0)
+
+    try:
+        new_dataset = dataset_service.create_new_version(
+            dataset, uploaded_file, g.api_user, zenodo_service=zenodo_service
+        )
+    except (DatasetMetadataValidationError, DatasetMetadataUpdateError) as exc:
+        return jsonify({"error": str(exc)}), 400
+    except Exception as exc:  # noqa: BLE001 - surface Zenodo/versioning failures to the client
+        logger.exception("[API NEW VERSION] Unexpected error for dataset %s", dataset_id)
+        return jsonify({"error": f"Unexpected error creating the new version: {exc}"}), 400
+
+    indexing_service = IndexingService(index_dataset, index_hubfile, logger)
+    try:
+        indexing_service.index_dataset_and_hubfiles(new_dataset, new_dataset.feature_models)
+    except Exception as exc:
+        logger.warning(f"[API NEW VERSION] Dataset {new_dataset.id} versioned, but indexing failed: {exc}")
+
+    return (
+        jsonify(
+            {
+                "message": "New version published to Zenodo.",
+                "dataset_id": new_dataset.id,
+                "doi": new_dataset.ds_meta_data.dataset_doi,
+                "version": new_dataset.dataset_version,
+                "files": _api_dataset_files_payload(new_dataset),
+            }
+        ),
+        200,
+    )
+
+
+@dataset_bp.route("/api/v1/datasets/doi/<path:doi>", methods=["GET"])
+@require_api_key("read_dataset")
+def api_dataset_by_doi(doi):
+    """
+    Get a dataset by DOI
+    ---
+    tags:
+      - Datasets
+    security:
+      - ApiKeyAuth: []
+    parameters:
+      - name: doi
+        in: path
+        type: string
+        required: true
+        description: DOI of the dataset to retrieve
+    responses:
+      200:
+        description: Dataset matching the DOI
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                dataset_id:
+                  type: integer
+                doi:
+                  type: string
+                title:
+                  type: string
+                files:
+                  type: array
+                  items:
+                    type: object
+              example:
+                dataset_id: 4
+                doi: "10.5072/zenodo.123"
+                title: "My Dataset"
+                files:
+                  - name: "model.uvl"
+                    raw_url: "https://www.uvlhub.io/doi/10.5072/zenodo.123/files/raw/model.uvl/"
+      404:
+        description: No dataset with that DOI
+    """
+    ds_meta_data = dsmetadata_service.filter_by_doi(doi)
+    if not ds_meta_data or not ds_meta_data.dataset:
+        return jsonify({"error": "Dataset not found"}), 404
+
+    dataset = ds_meta_data.dataset
+    return jsonify(
+        {
+            "dataset_id": dataset.id,
+            "doi": ds_meta_data.dataset_doi,
+            "title": ds_meta_data.title,
+            "files": _api_dataset_files_payload(dataset),
+        }
     )
 
 

@@ -73,6 +73,10 @@ class FlamapyService:
             parser = UVLPythonParser(stream)
             parser.removeErrorListeners()
             parser.addErrorListener(error_listener)
+            # Actually drive the parser: antlr streams are lazy, so without
+            # invoking the entry rule no token is consumed and the error
+            # listener never fires, reporting garbage as a valid model.
+            parser.featureModel()
 
             if error_listener.errors:
                 logger.warning(f"[UVL Parser] Syntax errors detected: {error_listener.errors}")
