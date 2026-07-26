@@ -84,3 +84,57 @@ def test_get_synchronized_by_user_returns_only_latest_versions(test_app, clean_d
     assert v2.id not in ids
     # A dataset with no lineage reports no versions.
     assert standalone.has_versions() is False
+
+
+def _lineage_with_concept_doi(email, concept_doi, versions=2):
+    user = UserRepository().create(email=email, password="pw-123456")
+    repo = DataSetRepository()
+    created = []
+    origin_id = None
+    for version in range(1, versions + 1):
+        meta = DSMetaDataRepository().create(
+            title=f"v{version}",
+            description="d",
+            publication_type=PublicationType.BOOK,
+            dataset_doi=f"10.5072/zenodo.{version}",
+            dataset_concept_doi=concept_doi,
+        )
+        dataset = repo.create(
+            user_id=user.id, ds_meta_data_id=meta.id, dataset_version=version, dataset_origin_id=origin_id
+        )
+        created.append(dataset)
+        origin_id = dataset.id
+    return created
+
+
+def test_get_by_concept_doi_returns_the_oldest_version(test_app, clean_database):
+    v1, v2 = _lineage_with_concept_doi("concept@example.com", "10.5072/zenodo.0")
+
+    found = DataSetRepository().get_by_concept_doi("10.5072/zenodo.0")
+
+    assert found.id == v1.id
+    assert [dataset.id for dataset in found.all_versions()] == [v1.id, v2.id]
+
+
+def test_get_by_concept_doi_is_none_for_unknown_or_empty_values(test_app, clean_database):
+    _lineage_with_concept_doi("concept2@example.com", "10.5072/zenodo.0")
+
+    repo = DataSetRepository()
+
+    assert repo.get_by_concept_doi("10.5072/zenodo.404") is None
+    assert repo.get_by_concept_doi("") is None
+    assert repo.get_by_concept_doi(None) is None
+
+
+def test_concept_doi_column_tolerates_older_records(test_app, clean_database):
+    # Datasets published before the column existed keep it null and stay usable.
+    user = UserRepository().create(email="legacy@example.com", password="pw-123456")
+    meta = DSMetaDataRepository().create(
+        title="legacy", description="d", publication_type=PublicationType.BOOK, dataset_doi="10.5072/zenodo.9"
+    )
+    dataset = DataSetRepository().create(user_id=user.id, ds_meta_data_id=meta.id)
+
+    assert dataset.ds_meta_data.dataset_concept_doi is None
+    assert dataset.get_concept_doi() is None
+    assert dataset.is_latest_version() is True
+    assert dataset.latest_version().id == dataset.id

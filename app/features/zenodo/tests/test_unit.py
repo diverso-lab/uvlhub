@@ -212,3 +212,39 @@ def test_update_draft_metadata_raises_on_error(mock_request):
 
     with pytest.raises(Exception):
         ZenodoService().update_draft_metadata(5, {"title": "x"})
+
+
+# --- Concept DOI ---------------------------------------------------------
+
+
+@patch("app.features.zenodo.services.requests.request")
+def test_get_concept_doi_reads_the_conceptdoi_field(mock_request):
+    mock_request.return_value = _response(
+        200, {"id": 9, "doi": "10.5072/zenodo.9", "conceptdoi": "10.5072/zenodo.8", "conceptrecid": "8"}
+    )
+
+    assert ZenodoService().get_concept_doi(9) == "10.5072/zenodo.8"
+
+
+@patch("app.features.zenodo.services.requests.request")
+def test_get_concept_doi_falls_back_to_conceptrecid(mock_request):
+    # Some depositions come back with the concept record id but no conceptdoi;
+    # the concept DOI is then the version DOI with the concept record id.
+    mock_request.return_value = _response(200, {"id": 9, "doi": "10.5072/zenodo.9", "conceptrecid": "8"})
+
+    assert ZenodoService().get_concept_doi(9) == "10.5072/zenodo.8"
+
+
+@patch("app.features.zenodo.services.requests.request")
+def test_get_concept_doi_is_none_when_zenodo_reports_neither(mock_request):
+    mock_request.return_value = _response(200, {"id": 9, "doi": "10.5072/zenodo.9"})
+
+    assert ZenodoService().get_concept_doi(9) is None
+
+
+def test_extract_concept_doi_ignores_blank_values():
+    assert ZenodoService._extract_concept_doi({"conceptdoi": "   ", "doi": "10.5072/zenodo.9"}) is None
+
+
+def test_extract_concept_doi_needs_a_parseable_version_doi_for_the_fallback():
+    assert ZenodoService._extract_concept_doi({"conceptrecid": "8", "doi": "not-a-doi"}) is None

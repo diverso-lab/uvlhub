@@ -1,17 +1,21 @@
 import hashlib
+import json
 import logging
 import os
 import re
 import shutil
 import tempfile
+import unicodedata
 import uuid
 import zipfile
+from datetime import datetime
 from typing import List, Optional
 from urllib import error as urllib_error
 from urllib import request as urllib_request
 from zipfile import ZipFile
 
 import bleach
+import pytz
 from flask import current_app, request
 from splent_framework.services.BaseService import BaseService
 from werkzeug.datastructures import MultiDict
@@ -20,10 +24,19 @@ from werkzeug.utils import secure_filename
 from app import db
 from app.features.auth.models import User
 from app.features.dataset.forms import AuthorForm, DataSetForm, FeatureModelForm
-from app.features.dataset.models import DataSet, DSDownloadRecord, DSMetaData, DSViewRecord, PublicationType
+from app.features.dataset.models import (
+    DataSet,
+    DatasetTransferRequest,
+    DatasetTransferStatus,
+    DSDownloadRecord,
+    DSMetaData,
+    DSViewRecord,
+    PublicationType,
+)
 from app.features.dataset.repositories import (
     AuthorRepository,
     DataSetRepository,
+    DatasetTransferRequestRepository,
     DOIMappingRepository,
     DSDownloadRecordRepository,
     DSMetaDataRepository,
@@ -42,6 +55,11 @@ from app.features.zenodo.services import ZenodoUnavailableError
 logger = logging.getLogger(__name__)
 ORCID_REGEX = re.compile(r"^\d{4}-\d{4}-\d{4}-\d{3}[0-9X]$")
 
+# Upper bound for author lists accepted by the API. Author name/affiliation are
+# 120-char columns, so oversized payloads are rejected before any DB write.
+MAX_API_AUTHORS = 25
+AUTHOR_FIELD_MAX_LENGTH = 120
+
 
 class DatasetMetadataValidationError(Exception):
     pass
@@ -49,6 +67,10 @@ class DatasetMetadataValidationError(Exception):
 
 class DatasetMetadataUpdateError(Exception):
     pass
+
+
+class DatasetOwnershipError(Exception):
+    """Raised when a dataset (or its lineage) cannot change owner."""
 
 
 def calculate_checksum_and_size(file_path):
@@ -72,6 +94,7 @@ class DataSetService(BaseService):
         self.hubfilerepository = HubfileRepository()
         self.dsviewrecord_repostory = DSViewRecordRepository()
         self.hubfileviewrecord_repository = HubfileViewRecordRepository()
+        self.transfer_request_repository = DatasetTransferRequestRepository()
 
     def paginate(self, page: int = 1, per_page: int = 5):
         return self.repository.model.query.paginate(page=page, per_page=per_page, error_out=False)
@@ -91,15 +114,33 @@ class DataSetService(BaseService):
         uvl_content: str,
         filename: str = None,
         description: str = "",
+        authors: Optional[List[dict]] = None,
+        api_publisher: Optional[User] = None,
     ) -> tuple[DataSet, list]:
-        clean_title = " ".join((title or "").split())
+        """Create a draft dataset from raw UVL content.
+
+        ``authors`` is optional. When given (already normalized by
+        ``normalize_authors``) it becomes the dataset credit, which lets a
+        service account publish on behalf of the real developer. When omitted
+        the draft is credited to the uploading account's profile, exactly as
+        before.
+
+        ``api_publisher`` is the account whose API key made the request. It is
+        recorded on the metadata so a credit given to somebody else stays
+        traceable back to whoever made the claim.
+        """
+        clean_title = self._sanitize_person_field(title)
         if not clean_title:
             raise DatasetMetadataValidationError("Title is required.")
 
         if not (uvl_content or "").strip():
             raise DatasetMetadataValidationError("UVL content is required.")
 
-        clean_description = (description or "").strip() or "Imported from flamapyIDE."
+        # The dataset page renders the description with |safe, and the web
+        # upload already runs it through bleach. This entry point feeds the
+        # same column from an API request, so it has to clean it the same way
+        # or an API key turns a public DOI landing page into a script sink.
+        clean_description = self.sanitize_description(description) or "Imported from flamapyIDE."
 
         base_filename = filename or f"{clean_title}.uvl"
         safe_filename = secure_filename(base_filename) or "model.uvl"
@@ -123,13 +164,19 @@ class DataSetService(BaseService):
                     ("publication_doi", ""),
                 ]
             )
-            profile = getattr(current_user, "profile", None)
-            if profile and (profile.name or profile.surname):
-                author_parts = [part.strip() for part in [profile.surname, profile.name] if part and part.strip()]
-                author_name = ", ".join(author_parts) if len(author_parts) > 1 else author_parts[0]
-                import_form.add("authors[0][name]", author_name)
-                import_form.add("authors[0][affiliation]", (profile.affiliation or "").strip())
-                import_form.add("authors[0][orcid]", profile.get_orcid() if hasattr(profile, "get_orcid") else "")
+            if authors:
+                for index, author in enumerate(authors):
+                    import_form.add(f"authors[{index}][name]", author["name"])
+                    import_form.add(f"authors[{index}][affiliation]", author.get("affiliation") or "")
+                    import_form.add(f"authors[{index}][orcid]", author.get("orcid") or "")
+            else:
+                profile = getattr(current_user, "profile", None)
+                if profile and (profile.name or profile.surname):
+                    author_parts = [part.strip() for part in [profile.surname, profile.name] if part and part.strip()]
+                    author_name = ", ".join(author_parts) if len(author_parts) > 1 else author_parts[0]
+                    import_form.add("authors[0][name]", author_name)
+                    import_form.add("authors[0][affiliation]", (profile.affiliation or "").strip())
+                    import_form.add("authors[0][orcid]", profile.get_orcid() if hasattr(profile, "get_orcid") else "")
 
             from app.features.featuremodel.services import FeatureModelService
 
@@ -140,11 +187,14 @@ class DataSetService(BaseService):
                 feature_model_service=FeatureModelService(),
                 logger=logger,
             )
-            dataset, _, created_fms = local_service.create_local_dataset(
+            dataset, ds_meta, created_fms = local_service.create_local_dataset(
                 import_form,
                 current_user,
                 temp_root=import_dir,
             )
+            if api_publisher is not None:
+                ds_meta.api_publisher_user_id = api_publisher.id
+                self.repository.session.commit()
             return dataset, created_fms
         except Exception:
             self.repository.session.rollback()
@@ -229,7 +279,8 @@ class DataSetService(BaseService):
         check_digit = "X" if result == 10 else str(result)
         return digits[15] == check_digit
 
-    def _validate_orcid(self, orcid: str) -> str:
+    def _validate_orcid_format(self, orcid: str) -> str:
+        """Offline ORCID validation: shape plus check digit, no network call."""
         normalized = self._normalize_orcid(orcid)
         if not normalized:
             return ""
@@ -239,6 +290,13 @@ class DataSetService(BaseService):
 
         if not self._is_valid_orcid_checksum(normalized):
             raise DatasetMetadataValidationError("Invalid ORCID checksum.")
+
+        return normalized
+
+    def _validate_orcid(self, orcid: str) -> str:
+        normalized = self._validate_orcid_format(orcid)
+        if not normalized:
+            return ""
 
         try:
             req = urllib_request.Request(
@@ -298,9 +356,161 @@ class DataSetService(BaseService):
             for name, aff, orcid in zip(author_names, author_affiliations, author_orcids)
         ]
 
+    def extract_authors_from_request(self, payload: Optional[dict], form_data) -> Optional[List[dict]]:
+        """Collect optional author data from an API request.
+
+        Three shapes are accepted, in this order of precedence:
+        JSON ``{"authors": [{"name": ..., "affiliation": ..., "orcid": ...}]}``,
+        a form field ``authors`` holding that same JSON array, and the
+        ``authors[0][name]`` form fields the web upload already uses.
+
+        Returns None when the request carries no author data at all, which
+        callers read as "keep the default behaviour".
+        """
+        if payload and "authors" in payload:
+            return self.normalize_authors(payload.get("authors"))
+
+        raw_authors = form_data.get("authors") if form_data is not None else None
+        if raw_authors:
+            try:
+                decoded = json.loads(raw_authors)
+            except ValueError:
+                raise DatasetMetadataValidationError("The authors field must be a JSON array of author objects.")
+            return self.normalize_authors(decoded)
+
+        if form_data is not None:
+            form_authors = self._parse_authors_from_form(form_data)
+            if form_authors:
+                return self.normalize_authors(form_authors)
+
+        return None
+
+    @staticmethod
+    def sanitize_description(raw_description: str) -> str:
+        """Clean a dataset description down to the formatting uvlhub renders.
+
+        ``view_dataset.html`` prints the description with the ``safe`` filter,
+        so whatever survives here is live HTML on a public page. The allowlist
+        matches the one the web upload has always used.
+        """
+        return bleach.clean(
+            raw_description or "",
+            tags=["b", "i", "u", "a", "p", "br"],
+            attributes={"a": ["href", "title", "target"]},
+            strip=True,
+        ).strip()
+
+    @staticmethod
+    def _sanitize_person_field(value) -> str:
+        """Strip anything that could make a rendered name lie.
+
+        Author names travel to a permanent, public Zenodo record and to the
+        dataset page. Unicode control and format characters are removed, which
+        covers the bidirectional overrides that let "Bad‮Name" render as
+        something else entirely, plus newlines and tabs that break a one-line
+        credit into several. Whitespace is collapsed and the result normalized
+        to NFC so visually identical names compare equal.
+        """
+        text = unicodedata.normalize("NFC", str(value or ""))
+        cleaned = "".join(
+            " " if character.isspace() else character
+            for character in text
+            if unicodedata.category(character) not in {"Cc", "Cf", "Co", "Cs", "Cn"}
+        )
+        return " ".join(cleaned.split())
+
+    def _assert_orcid_is_claimable(self, orcid: str, name: str) -> None:
+        """Only let an API client attach an ORCID that uvlhub can vouch for.
+
+        An ORCID is machine resolvable: Zenodo turns it into a link to that
+        researcher's profile, permanently. Accepting one on the word of
+        whoever holds an API key is enough to attribute an arbitrary record to
+        a real named person. uvlhub cannot ask ORCID for consent, but it does
+        know which ORCIDs have signed in here through ORCID's own OAuth flow,
+        which proves the holder controls that identifier and gives them an
+        account where they can see and contest the record. Anything else is
+        refused, and the author can still be credited by name.
+        """
+        from app.features.orcid.models import Orcid
+
+        if Orcid.query.filter_by(orcid_id=orcid).first() is not None:
+            return
+        raise DatasetMetadataValidationError(
+            f"ORCID {orcid} cannot be credited for author '{name}': it is not linked to any uvlhub account. "
+            "Ask the author to sign in with ORCID once, or send the author without an orcid field."
+        )
+
+    def normalize_authors(self, raw_authors, verify_orcid_ownership: bool = True) -> List[dict]:
+        """Validate and clean author data coming from an API client.
+
+        Names and affiliations are sanitized before anything else, so nothing
+        that reaches Zenodo can carry control or bidi characters. ORCIDs are
+        checked offline (shape plus check digit) so a publication never depends
+        on orcid.org being reachable, and then checked against the ORCIDs that
+        have actually authenticated on uvlhub, so a key holder cannot pin a
+        record on a researcher who has no relationship with it. Duplicates are
+        rejected the same way the web form rejects them.
+        """
+        if raw_authors is None:
+            return []
+        if not isinstance(raw_authors, list):
+            raise DatasetMetadataValidationError("The authors field must be a list of author objects.")
+        if len(raw_authors) > MAX_API_AUTHORS:
+            raise DatasetMetadataValidationError(f"Too many authors (max {MAX_API_AUTHORS}).")
+
+        authors = []
+        seen_author_keys = set()
+        seen_orcids = set()
+
+        for entry in raw_authors:
+            if isinstance(entry, str):
+                entry = {"name": entry}
+            if not isinstance(entry, dict):
+                raise DatasetMetadataValidationError("Each author must be an object with a name.")
+
+            name = self._sanitize_person_field(entry.get("name"))
+            if not name:
+                raise DatasetMetadataValidationError("Each author must have a name.")
+            if len(name) > AUTHOR_FIELD_MAX_LENGTH:
+                raise DatasetMetadataValidationError(
+                    f"Author name is too long (max {AUTHOR_FIELD_MAX_LENGTH} characters)."
+                )
+
+            affiliation = self._sanitize_person_field(entry.get("affiliation"))
+            if len(affiliation) > AUTHOR_FIELD_MAX_LENGTH:
+                raise DatasetMetadataValidationError(
+                    f"Author affiliation is too long (max {AUTHOR_FIELD_MAX_LENGTH} characters)."
+                )
+
+            try:
+                orcid = self._validate_orcid_format(entry.get("orcid"))
+            except DatasetMetadataValidationError as exc:
+                raise DatasetMetadataValidationError(f"Invalid ORCID for author '{name}': {exc}")
+
+            if orcid and verify_orcid_ownership:
+                self._assert_orcid_is_claimable(orcid, name)
+
+            if orcid:
+                if orcid in seen_orcids:
+                    raise DatasetMetadataValidationError(
+                        f"Duplicate author detected: ORCID {orcid} is already in the list."
+                    )
+                seen_orcids.add(orcid)
+            else:
+                author_key = (self._normalize_text(name), self._normalize_text(affiliation))
+                if author_key in seen_author_keys:
+                    raise DatasetMetadataValidationError("Duplicate author detected: same name and affiliation.")
+                seen_author_keys.add(author_key)
+
+            authors.append({"name": name, "affiliation": affiliation, "orcid": orcid})
+
+        return authors
+
     def _apply_metadata_from_form(self, dataset: DataSet, form_data) -> None:
         dataset.ds_meta_data.title = form_data.get("title", "").strip()
-        dataset.ds_meta_data.description = form_data.get("description", "")
+        # Same sink as the creation paths: the description is rendered with
+        # |safe on the public dataset page.
+        dataset.ds_meta_data.description = self.sanitize_description(form_data.get("description", ""))
         dataset.ds_meta_data.publication_doi = (form_data.get("publication_doi", "") or "").strip()
         dataset.ds_meta_data.tags = self._parse_tags_from_form(form_data)
         dataset.ds_meta_data.dataset_anonymous = form_data.get("dataset_type", "draft") == "zenodo_anonymous"
@@ -395,43 +605,500 @@ class DataSetService(BaseService):
             raise DatasetMetadataUpdateError(
                 "Only published datasets are versioned. Replace the file directly for drafts."
             )
+        self._reject_if_superseded(dataset)
         if not (file_storage and file_storage.filename and file_storage.filename.lower().endswith(".uvl")):
             raise DatasetMetadataValidationError("A .uvl file is required.")
 
+        # The clone is committed before Zenodo is touched (the file ingest needs
+        # a real dataset id on disk), so every failure past this point has to
+        # remove it again. An abandoned clone would sit in the lineage forever,
+        # with no DOI, and the lineage endpoints would advertise it.
         new_dataset = self._clone_as_new_version(dataset, current_user)
-        self._attach_uvl_file(new_dataset, file_storage)
-
-        new_deposition_id = zenodo_service.create_new_version_draft(meta.deposition_id)
-        zenodo_service.delete_all_deposition_files(new_deposition_id)
-        zip_path = self.zip_dataset(new_dataset)
         try:
-            zenodo_service.upload_zip(new_dataset, new_deposition_id, zip_path)
-        finally:
-            if zip_path and os.path.exists(zip_path):
-                shutil.rmtree(os.path.dirname(zip_path), ignore_errors=True)
+            self._claim_sole_successor(dataset, new_dataset)
+            self._attach_uvl_file(new_dataset, file_storage)
 
-        new_metadata = zenodo_service.build_metadata(
-            new_dataset, anonymous=bool(meta.dataset_anonymous), version=new_dataset.dataset_version
+            new_deposition_id = zenodo_service.create_new_version_draft(meta.deposition_id)
+            zenodo_service.delete_all_deposition_files(new_deposition_id)
+            zip_path = self.zip_dataset(new_dataset)
+            try:
+                zenodo_service.upload_zip(new_dataset, new_deposition_id, zip_path)
+            finally:
+                if zip_path and os.path.exists(zip_path):
+                    shutil.rmtree(os.path.dirname(zip_path), ignore_errors=True)
+
+            new_metadata = zenodo_service.build_metadata(
+                new_dataset, anonymous=bool(meta.dataset_anonymous), version=new_dataset.dataset_version
+            )
+            zenodo_service.update_draft_metadata(new_deposition_id, new_metadata)
+            zenodo_service.publish_deposition(new_deposition_id)
+            new_doi = zenodo_service.get_doi(new_deposition_id)
+            if not new_doi:
+                raise DatasetMetadataUpdateError("Zenodo did not return a DOI for the new version.")
+
+            new_dataset.ds_meta_data.deposition_id = new_deposition_id
+            new_dataset.ds_meta_data.dataset_doi = new_doi
+            new_dataset.ds_meta_data.metadata_synced = True
+            self.repository.session.commit()
+        except Exception:
+            self._discard_unpublished_version(new_dataset)
+            raise
+
+        # Same lineage, same concept DOI. Zenodo returns it on the new version
+        # too; the previous version's value is the fallback when it does not.
+        # Deliberately after the commit above and deliberately non-fatal: the
+        # DOI is already minted and stored, so nothing here may turn a
+        # successful publication into an error for the client.
+        self.resolve_and_store_concept_doi(
+            new_dataset,
+            zenodo_service,
+            new_deposition_id,
+            fallback=dataset.get_concept_doi(),
+            propagate=True,
         )
-        zenodo_service.update_draft_metadata(new_deposition_id, new_metadata)
-        zenodo_service.publish_deposition(new_deposition_id)
-        new_doi = zenodo_service.get_doi(new_deposition_id)
-        if not new_doi:
-            raise DatasetMetadataUpdateError("Zenodo did not return a DOI for the new version.")
-
-        new_dataset.ds_meta_data.deposition_id = new_deposition_id
-        new_dataset.ds_meta_data.dataset_doi = new_doi
-        new_dataset.ds_meta_data.metadata_synced = True
-        self.repository.session.commit()
         return new_dataset
+
+    @staticmethod
+    def _reject_if_superseded(dataset: DataSet, exclude_id: Optional[int] = None) -> None:
+        """Refuse to branch a lineage.
+
+        Zenodo versions are a chain, not a tree, and so is the local mirror.
+        Versioning a node that already has a successor (a client retrying after
+        a timeout, a duplicated job, a stale dataset id) would create two
+        siblings claiming the same predecessor. Nothing downstream can then
+        answer "which one is the newest version" honestly, and a transfer would
+        move one branch and leave the other behind.
+        """
+        successors = sorted(
+            (version for version in dataset.dataset_versions if version.id != exclude_id),
+            key=lambda version: ((version.dataset_version or 1), version.id),
+        )
+        if not successors:
+            return
+        newest = successors[-1]
+        raise DatasetMetadataUpdateError(
+            f"Dataset {dataset.id} has already been superseded by version {newest.dataset_version} "
+            f"(dataset {newest.id}). Create the new version from the newest one."
+        )
+
+    def _claim_sole_successor(self, origin: DataSet, candidate: DataSet) -> None:
+        """Re-run the branch check once the clone row is visible to everyone.
+
+        The pre-check runs before the clone is committed, so two concurrent
+        requests can both pass it. After the commit each of them can see the
+        other, and the lowest id wins: a rival clone created before ours makes
+        us back off, while one created after ours will back off itself. Exactly
+        one request goes on to mint a Zenodo version.
+        """
+        self.repository.session.expire(origin, ["dataset_versions"])
+        rivals = [
+            version for version in origin.dataset_versions if version.id != candidate.id and version.id < candidate.id
+        ]
+        if not rivals:
+            return
+        newest = max(rivals, key=lambda version: ((version.dataset_version or 1), version.id))
+        raise DatasetMetadataUpdateError(
+            f"Dataset {origin.id} has already been superseded by version {newest.dataset_version} "
+            f"(dataset {newest.id}). Create the new version from the newest one."
+        )
+
+    def _discard_unpublished_version(self, dataset: DataSet) -> None:
+        """Remove a version clone that never made it to Zenodo.
+
+        Best effort and never raises: the caller is already propagating the
+        real failure, and leaving the half-created row behind is worse than a
+        failed cleanup because it becomes a permanent phantom in the lineage.
+        """
+        dataset_id = getattr(dataset, "id", None)
+        owner_id = getattr(dataset, "user_id", None)
+        try:
+            self.repository.session.rollback()
+            fresh = self.repository.get_by_id(dataset_id) if dataset_id else None
+            if fresh is None:
+                return
+            if fresh.ds_meta_data and fresh.ds_meta_data.dataset_doi:
+                # Published after all, keep it.
+                return
+            meta = fresh.ds_meta_data
+            self.repository.session.delete(fresh)
+            if meta is not None:
+                self.repository.session.delete(meta)
+            self.repository.session.commit()
+            logger.info("[VERSION] Discarded unpublished version %s after a failed publication", dataset_id)
+        except Exception as exc:  # noqa: BLE001 - cleanup must not mask the original failure
+            self.repository.session.rollback()
+            logger.error("[VERSION] Could not discard unpublished version %s: %s", dataset_id, exc)
+            return
+
+        if dataset_id and owner_id:
+            shutil.rmtree(self._dataset_storage_dir(owner_id, dataset_id), ignore_errors=True)
+
+    """
+        Concept DOI (Zenodo lineage identifier)
+    """
+
+    def resolve_and_store_concept_doi(
+        self,
+        dataset: DataSet,
+        zenodo_service,
+        deposition_id: int,
+        fallback: Optional[str] = None,
+        propagate: bool = False,
+    ) -> Optional[str]:
+        """Read the concept DOI from Zenodo and persist it.
+
+        Never fatal, for real: by the time this runs the version DOI is already
+        minted at Zenodo and already committed locally, so no failure here may
+        reach the client. A Zenodo hiccup, a deposition without a conceptdoi, a
+        lock timeout on the UPDATE, a dropped connection: all of them leave the
+        column null and everything else keeps working. Every exit path that
+        touched the session leaves it clean for the caller.
+
+        ``propagate`` backfills the rest of the lineage. It is only true when
+        the deposition really belongs to the lineage's Zenodo concept, which is
+        the case for the newversion action. A first publication creates a brand
+        new deposition in its own concept, so it speaks only for itself.
+        """
+        concept_doi = None
+        try:
+            concept_doi = zenodo_service.get_concept_doi(deposition_id)
+        except Exception as exc:  # noqa: BLE001 - the DOI is already minted, do not fail the publish
+            logger.warning("[ZENODO] Could not read the concept DOI of deposition %s: %s", deposition_id, exc)
+
+        if not isinstance(concept_doi, str) or not concept_doi.strip():
+            concept_doi = fallback
+
+        if not isinstance(concept_doi, str) or not concept_doi.strip():
+            logger.info("[ZENODO] No concept DOI available for deposition %s", deposition_id)
+            return None
+
+        try:
+            return self.store_concept_doi(dataset, concept_doi.strip(), propagate=propagate)
+        except Exception as exc:  # noqa: BLE001 - the version DOI is already committed, never fail here
+            logger.error(
+                "[ZENODO] Could not persist the concept DOI of deposition %s: %s",
+                deposition_id,
+                exc,
+            )
+            try:
+                self.repository.session.rollback()
+            except Exception:  # noqa: BLE001 - a broken session must not surface either
+                logger.exception("[ZENODO] Could not roll back after a failed concept DOI write")
+            return None
+
+    def store_concept_doi(self, dataset: DataSet, concept_doi: str, propagate: bool = True) -> str:
+        """Persist the concept DOI on a dataset, optionally across its lineage.
+
+        The value always lands on ``dataset`` itself, overwriting whatever was
+        there. It comes from the deposition that dataset actually points at, so
+        it is the authoritative answer for that row: a stale value inherited
+        from somewhere else would advertise a Zenodo concept the record is not
+        in, and nothing would ever correct it.
+
+        Other versions of the lineage are only backfilled when they have none.
+        A version that already carries a different value belongs to a different
+        Zenodo concept, which is a real (if unusual) state, so it is logged
+        rather than silently rewritten.
+        """
+        concept_doi = (concept_doi or "").strip()
+        if not concept_doi:
+            return concept_doi
+
+        previous = dataset.ds_meta_data.dataset_concept_doi
+        if previous and previous != concept_doi:
+            logger.warning(
+                "[ZENODO] Dataset %s changed concept DOI from %s to %s",
+                dataset.id,
+                previous,
+                concept_doi,
+            )
+        dataset.ds_meta_data.dataset_concept_doi = concept_doi
+
+        if propagate:
+            for version in dataset.all_versions():
+                if version.id == dataset.id:
+                    continue
+                current = version.ds_meta_data.dataset_concept_doi
+                if not current:
+                    version.ds_meta_data.dataset_concept_doi = concept_doi
+                elif current != concept_doi:
+                    logger.warning(
+                        "[ZENODO] Version %s of the lineage carries concept DOI %s, not %s; left untouched",
+                        version.id,
+                        current,
+                        concept_doi,
+                    )
+
+        self.repository.session.commit()
+        return concept_doi
+
+    """
+        Version lineage
+    """
+
+    def get_lineage(self, dataset: DataSet) -> List[DataSet]:
+        """The whole version chain of a dataset, oldest first."""
+        return dataset.all_versions()
+
+    def get_lineage_by_concept_doi(self, concept_doi: str) -> List[DataSet]:
+        """Resolve a version chain from the stable concept DOI.
+
+        The lineage is walked from any member that carries the concept DOI, so
+        it stays complete even when older versions predate the column.
+        """
+        entry_point = self.repository.get_by_concept_doi(concept_doi)
+        if entry_point is None:
+            return []
+        return entry_point.all_versions()
+
+    """
+        Ownership
+    """
+
+    @staticmethod
+    def _dataset_storage_dir(user_id: int, dataset_id: int) -> str:
+        return os.path.join(os.getenv("WORKING_DIR", ""), "uploads", f"user_{user_id}", f"dataset_{dataset_id}")
+
+    def request_ownership_transfer(
+        self,
+        dataset: DataSet,
+        current_owner: User,
+        new_owner: User,
+        message: Optional[str] = None,
+    ) -> DatasetTransferRequest:
+        """Offer a dataset lineage to another account, pending their answer.
+
+        Nothing moves here. A published dataset carries a permanent Zenodo DOI
+        and appears in its owner's public listings, so an account that never
+        asked for it must be able to say no; otherwise any key holder could
+        publish a record crediting a real person and then drop it on them.
+        The offer is created, the recipient is told, and ownership moves only
+        when they accept.
+        """
+        lineage = self.get_lineage(dataset)
+        self._assert_lineage_is_transferable(dataset, lineage, current_owner, new_owner)
+
+        blocking = self.transfer_request_repository.get_pending_for_datasets([version.id for version in lineage])
+        if blocking:
+            raise DatasetOwnershipError(
+                f"A transfer of this dataset is already pending (transfer {blocking[0].id}). "
+                "Cancel it before opening another one."
+            )
+
+        clean_message = self._sanitize_person_field(message)[:500] if message else None
+        transfer = self.transfer_request_repository.create(
+            dataset_id=dataset.id,
+            from_user_id=current_owner.id,
+            to_user_id=new_owner.id,
+            status=DatasetTransferStatus.PENDING,
+            message=clean_message,
+        )
+        logger.info(
+            "[TRANSFER] Offer %s created for lineage %s from user %s to user %s",
+            transfer.id,
+            [version.id for version in lineage],
+            current_owner.id,
+            new_owner.id,
+        )
+        self._notify_transfer_offer(transfer, dataset, current_owner, new_owner)
+        return transfer
+
+    def accept_ownership_transfer(self, transfer: DatasetTransferRequest, recipient: User) -> List[DataSet]:
+        """Accept a pending offer and move the whole lineage."""
+        if not transfer.is_pending():
+            raise DatasetOwnershipError(f"This transfer is already {transfer.status.value}.")
+        if transfer.to_user_id != recipient.id:
+            raise DatasetOwnershipError("Only the account the dataset was offered to can accept it.")
+
+        dataset = self.repository.get_by_id(transfer.dataset_id)
+        if dataset is None:
+            raise DatasetOwnershipError("The dataset offered no longer exists.")
+
+        sender = dataset.user
+        if dataset.user_id != transfer.from_user_id:
+            raise DatasetOwnershipError("The dataset changed owner after the offer was made.")
+
+        lineage = self.transfer_ownership(dataset, recipient)
+        transfer.status = DatasetTransferStatus.ACCEPTED
+        transfer.resolved_at = datetime.now(pytz.utc)
+        self.transfer_request_repository.session.commit()
+        self._notify_transfer_resolution(transfer, dataset, sender, recipient, "accepted")
+        return lineage
+
+    def decline_ownership_transfer(self, transfer: DatasetTransferRequest, recipient: User) -> DatasetTransferRequest:
+        """Refuse a pending offer. Nothing changes owner."""
+        if not transfer.is_pending():
+            raise DatasetOwnershipError(f"This transfer is already {transfer.status.value}.")
+        if transfer.to_user_id != recipient.id:
+            raise DatasetOwnershipError("Only the account the dataset was offered to can decline it.")
+
+        transfer.status = DatasetTransferStatus.DECLINED
+        transfer.resolved_at = datetime.now(pytz.utc)
+        self.transfer_request_repository.session.commit()
+        dataset = self.repository.get_by_id(transfer.dataset_id)
+        self._notify_transfer_resolution(transfer, dataset, transfer.from_user, recipient, "declined")
+        return transfer
+
+    def cancel_ownership_transfer(self, transfer: DatasetTransferRequest, sender: User) -> DatasetTransferRequest:
+        """Withdraw an offer that has not been answered yet."""
+        if not transfer.is_pending():
+            raise DatasetOwnershipError(f"This transfer is already {transfer.status.value}.")
+        if transfer.from_user_id != sender.id:
+            raise DatasetOwnershipError("Only the account that offered the dataset can cancel the transfer.")
+
+        transfer.status = DatasetTransferStatus.CANCELLED
+        transfer.resolved_at = datetime.now(pytz.utc)
+        self.transfer_request_repository.session.commit()
+        return transfer
+
+    def get_transfer_request(self, transfer_id: int) -> Optional[DatasetTransferRequest]:
+        return self.transfer_request_repository.get_by_id(transfer_id)
+
+    def get_transfer_requests_for_user(self, user_id: int, status: Optional[str] = None):
+        parsed_status = None
+        if status:
+            try:
+                parsed_status = DatasetTransferStatus(status)
+            except ValueError:
+                raise DatasetOwnershipError(
+                    "Unknown transfer status. Use one of: "
+                    + ", ".join(member.value for member in DatasetTransferStatus)
+                )
+        return self.transfer_request_repository.get_involving_user(user_id, parsed_status)
+
+    def _assert_lineage_is_transferable(
+        self,
+        dataset: DataSet,
+        lineage: List[DataSet],
+        current_owner: User,
+        new_owner: User,
+    ) -> None:
+        if new_owner.id == current_owner.id:
+            raise DatasetOwnershipError("The dataset already belongs to that account.")
+        if not any(version.id == dataset.id for version in lineage):
+            # all_versions walks the whole tree from the root, so this cannot
+            # happen; if it ever did, moving a lineage the dataset is not part
+            # of would move the wrong rows and report success.
+            raise DatasetOwnershipError("The dataset is not part of the lineage it resolves to.")
+        foreign = [version.id for version in lineage if version.user_id != current_owner.id]
+        if foreign:
+            raise DatasetOwnershipError(
+                f"This version lineage is split across several accounts (datasets {foreign}) "
+                "and cannot be transferred automatically."
+            )
+
+    def _notify_transfer_offer(
+        self,
+        transfer: DatasetTransferRequest,
+        dataset: DataSet,
+        sender: User,
+        recipient: User,
+    ) -> None:
+        """Tell the recipient a dataset is waiting for their answer.
+
+        Best effort. A mail outage must not block the offer, which is visible
+        through the transfers endpoint either way.
+        """
+        body = (
+            f"uvlhub account {sender.id} wants to transfer the dataset "
+            f'"{dataset.ds_meta_data.title}" (dataset {dataset.id}) and all of its versions to you.\n\n'
+            f"Nothing has changed yet. Accept or decline transfer {transfer.id} "
+            "through the uvlhub API to answer."
+        )
+        self._send_transfer_email(recipient, "A uvlhub dataset has been offered to you", body)
+
+    def _notify_transfer_resolution(
+        self,
+        transfer: DatasetTransferRequest,
+        dataset: Optional[DataSet],
+        sender: Optional[User],
+        recipient: User,
+        outcome: str,
+    ) -> None:
+        if sender is None:
+            return
+        title = dataset.ds_meta_data.title if dataset is not None else f"dataset {transfer.dataset_id}"
+        body = f'Account {recipient.id} {outcome} the transfer of "{title}" (transfer {transfer.id}).'
+        self._send_transfer_email(sender, f"Your uvlhub dataset transfer was {outcome}", body)
+
+    @staticmethod
+    def _send_transfer_email(user: Optional[User], subject: str, body: str) -> None:
+        recipient_email = getattr(user, "email", None)
+        if not recipient_email:
+            return
+        try:
+            from app.features.mail.services import MailService
+
+            MailService().send_email(subject, [recipient_email], body)
+        except Exception as exc:  # noqa: BLE001 - notification is not part of the transaction
+            logger.warning("[TRANSFER] Could not notify %s: %s", recipient_email, exc)
+
+    def transfer_ownership(self, dataset: DataSet, new_owner: User) -> List[DataSet]:
+        """Move a dataset and its whole version lineage to another account.
+
+        The lineage moves as a unit on purpose. Versioning requires owning the
+        node being versioned, and every file lives under
+        ``uploads/user_<owner>/dataset_<id>``, so moving a single node would
+        scatter one logical record across two accounts and leave the rest of
+        the chain unversionable by either of them.
+
+        Returns the moved lineage, oldest first.
+        """
+        lineage = self.get_lineage(dataset)
+        previous_owner = dataset.user
+        previous_owner_id = dataset.user_id
+        self._assert_lineage_is_transferable(dataset, lineage, previous_owner, new_owner)
+
+        moved_directories = []
+        try:
+            for version in lineage:
+                source_dir = self._dataset_storage_dir(previous_owner_id, version.id)
+                target_dir = self._dataset_storage_dir(new_owner.id, version.id)
+                if not os.path.isdir(source_dir):
+                    continue
+                if os.path.exists(target_dir):
+                    raise DatasetOwnershipError(f"The target account already has storage for dataset {version.id}.")
+                os.makedirs(os.path.dirname(target_dir), exist_ok=True)
+                shutil.move(source_dir, target_dir)
+                moved_directories.append((source_dir, target_dir))
+
+            for version in lineage:
+                version.user_id = new_owner.id
+            self.repository.session.commit()
+        except Exception:
+            self.repository.session.rollback()
+            self._undo_directory_moves(moved_directories)
+            raise
+
+        logger.info(
+            "[TRANSFER] Lineage %s moved from user %s to user %s",
+            [version.id for version in lineage],
+            previous_owner_id,
+            new_owner.id,
+        )
+        return lineage
+
+    @staticmethod
+    def _undo_directory_moves(moved_directories) -> None:
+        for source_dir, target_dir in reversed(moved_directories):
+            try:
+                shutil.move(target_dir, source_dir)
+            except OSError as exc:  # noqa: PERF203 - best effort, the original error matters more
+                logger.error("[TRANSFER] Could not restore %s after a failed transfer: %s", source_dir, exc)
 
     def _clone_as_new_version(self, source: DataSet, current_user) -> DataSet:
         src = source.ds_meta_data
+        # dataset_concept_doi is deliberately not copied. Zenodo decides which
+        # concept a deposition belongs to, and it has not been asked yet; the
+        # value is written after publication from the deposition the clone
+        # actually got. Copying it up front would leave a wrong, permanent
+        # concept DOI behind on any clone that ends up in its own deposition.
         new_meta = DSMetaDataService().create(
             title=src.title,
             description=src.description,
             publication_type=src.publication_type,
             publication_doi=src.publication_doi,
+            api_publisher_user_id=src.api_publisher_user_id,
             tags=src.tags,
             dataset_anonymous=src.dataset_anonymous,
             metadata_synced=True,
@@ -536,6 +1203,20 @@ class DataSetService(BaseService):
 
         dataset.ds_meta_data.deposition_id = deposition_id
         dataset.ds_meta_data.dataset_doi = doi
+        self._set_concept_doi_from_zenodo(dataset, zenodo_service, deposition_id)
+
+    def _set_concept_doi_from_zenodo(self, dataset: DataSet, zenodo_service, deposition_id: int) -> None:
+        """Read the concept DOI and stage it on the metadata being written.
+
+        Used inside flows that own their own commit, hence no commit here.
+        """
+        try:
+            concept_doi = zenodo_service.get_concept_doi(deposition_id)
+        except Exception as exc:  # noqa: BLE001 - the DOI is already minted, do not fail the publish
+            logger.warning("[ZENODO] Could not read the concept DOI of deposition %s: %s", deposition_id, exc)
+            return
+        if isinstance(concept_doi, str) and concept_doi.strip():
+            dataset.ds_meta_data.dataset_concept_doi = concept_doi.strip()
 
     def _transition_dataset_state_if_needed(self, dataset: DataSet, dataset_type: str, zenodo_service) -> None:
         wants_sync = dataset_type in {"zenodo", "zenodo_anonymous"}
@@ -605,14 +1286,7 @@ class DataSetService(BaseService):
             dsmetadata_data = form.get_dsmetadata()
 
             # Clean the HTML in the description field
-            raw_description = dsmetadata_data.get("description", "")
-            clean_description = bleach.clean(
-                raw_description,
-                tags=["b", "i", "u", "a", "p", "br"],
-                attributes={"a": ["href", "title", "target"]},
-                strip=True,
-            )
-            dsmetadata_data["description"] = clean_description
+            dsmetadata_data["description"] = self.sanitize_description(dsmetadata_data.get("description", ""))
 
             logger.info(f"Creating dsmetadata...: {dsmetadata_data}")
             dsmetadata = self.dsmetadata_repository.create(**dsmetadata_data)

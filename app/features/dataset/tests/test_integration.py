@@ -645,6 +645,7 @@ def test_api_new_version_success_returns_doi_and_files(test_client):
     owned = MagicMock(user_id=_test_user_id(test_client))
     new_dataset = MagicMock(id=43, dataset_version=2)
     new_dataset.ds_meta_data.dataset_doi = "10.5072/zenodo.1000"
+    new_dataset.ds_meta_data.dataset_concept_doi = "10.5072/zenodo.999"
     hubfile = MagicMock()
     hubfile.name = "v2.uvl"
     new_dataset.files.return_value = [hubfile]
@@ -740,6 +741,7 @@ def test_api_new_version_indexes_new_dataset(test_client):
     owned = MagicMock(user_id=_test_user_id(test_client))
     new_dataset = MagicMock(id=44, dataset_version=3)
     new_dataset.ds_meta_data.dataset_doi = "10.5072/zenodo.1001"
+    new_dataset.ds_meta_data.dataset_concept_doi = "10.5072/zenodo.999"
     new_dataset.files.return_value = []
 
     with (
@@ -796,6 +798,7 @@ def test_api_upload_publish_lookup_happy_path(test_client):
         patch.object(dataset_routes.zenodo_service, "upload_zip"),
         patch.object(dataset_routes.zenodo_service, "publish_deposition"),
         patch.object(dataset_routes.zenodo_service, "get_doi", return_value="10.5072/zenodo.4321"),
+        patch.object(dataset_routes.zenodo_service, "get_concept_doi", return_value="10.5072/zenodo.4320"),
         patch("app.features.dataset.routes.IndexingService"),
     ):
         publish = test_client.post(f"/api/v1/datasets/{dataset_id}/publish", headers={"X-API-Key": token})
@@ -803,6 +806,7 @@ def test_api_upload_publish_lookup_happy_path(test_client):
     assert publish.status_code == 200
     body = publish.get_json()
     assert body["doi"] == "10.5072/zenodo.4321"
+    assert body["concept_doi"] == "10.5072/zenodo.4320"
     assert body["deposition_id"] == 4321
     assert body["files"][0]["name"] == "api_model.uvl"
     assert body["files"][0]["raw_url"].endswith("/doi/10.5072/zenodo.4321/files/raw/api_model.uvl/")
@@ -814,6 +818,11 @@ def test_api_upload_publish_lookup_happy_path(test_client):
     assert found["title"] == "API model"
     assert found["files"][0]["name"] == "api_model.uvl"
     assert found["files"][0]["raw_url"].endswith("/doi/10.5072/zenodo.4321/files/raw/api_model.uvl/")
+    # Lineage discovery: a single published dataset is its own latest version.
+    assert found["concept_doi"] == "10.5072/zenodo.4320"
+    assert found["version"] == 1
+    assert found["is_latest"] is True
+    assert found["latest"] == {"dataset_id": dataset_id, "version": 1, "doi": "10.5072/zenodo.4321"}
 
 
 # --- Compiled asset serving (nested paths) -------------------------------
@@ -845,3 +854,383 @@ def test_dist_asset_pins_css_mimetype(test_client, tmp_path, monkeypatch):
 
     assert response.status_code == 200
     assert "text/css" in response.headers["Content-Type"]
+
+
+# --- Version lineage API --------------------------------------------------
+
+
+def _seed_lineage(email, concept_doi, doi_prefix, versions=2, user_id=None):
+    """Create a real published lineage in the database, oldest first."""
+    from app.features.auth.models import User
+    from app.features.auth.repositories import UserRepository
+    from app.features.dataset.models import PublicationType
+    from app.features.dataset.repositories import DataSetRepository, DSMetaDataRepository
+
+    if user_id is None:
+        user = User.query.filter_by(email=email).first()
+        if user is None:
+            user = UserRepository().create(email=email, password="pw-123456")
+        user_id = user.id
+
+    created = []
+    origin_id = None
+    for version in range(1, versions + 1):
+        meta = DSMetaDataRepository().create(
+            title=f"Lineage v{version}",
+            description="d",
+            publication_type=PublicationType.BOOK,
+            dataset_doi=f"{doi_prefix}.{version}",
+            dataset_concept_doi=concept_doi,
+            deposition_id=version,
+            tags="",
+        )
+        dataset = DataSetRepository().create(
+            user_id=user_id, ds_meta_data_id=meta.id, dataset_version=version, dataset_origin_id=origin_id
+        )
+        created.append(dataset)
+        origin_id = dataset.id
+    return created
+
+
+def test_api_dataset_versions_returns_the_whole_lineage(test_client):
+    token = _api_token(test_client, ["read_dataset"])
+    v1, v2 = _seed_lineage("versions@example.com", "10.5072/zenodo.7000", "10.5072/zenodo.700")
+
+    response = test_client.get(f"/api/v1/datasets/{v1.id}/versions", headers={"X-API-Key": token})
+
+    assert response.status_code == 200
+    body = response.get_json()
+    assert body["dataset_id"] == v1.id
+    assert body["concept_doi"] == "10.5072/zenodo.7000"
+    assert body["total_versions"] == 2
+    assert body["latest"] == {"dataset_id": v2.id, "version": 2, "doi": "10.5072/zenodo.700.2"}
+    assert [entry["dataset_id"] for entry in body["versions"]] == [v1.id, v2.id]
+    assert [entry["version"] for entry in body["versions"]] == [1, 2]
+    assert [entry["is_latest"] for entry in body["versions"]] == [False, True]
+    assert all(entry["publication_date"] for entry in body["versions"])
+
+
+def test_api_dataset_versions_requires_read_scope(test_client):
+    token = _api_token(test_client, ["write_dataset"])
+
+    response = test_client.get("/api/v1/datasets/1/versions", headers={"X-API-Key": token})
+
+    assert response.status_code == 403
+
+
+def test_api_dataset_versions_requires_an_api_key(test_client):
+    test_client.get("/logout", follow_redirects=True)
+
+    assert test_client.get("/api/v1/datasets/1/versions").status_code == 401
+
+
+def test_api_dataset_versions_not_found_returns_404(test_client):
+    token = _api_token(test_client, ["read_dataset"])
+
+    response = test_client.get("/api/v1/datasets/999999/versions", headers={"X-API-Key": token})
+
+    assert response.status_code == 404
+    assert response.get_json()["error"] == "Dataset not found"
+
+
+def test_api_lineage_by_concept_doi_resolves_the_latest_version(test_client):
+    token = _api_token(test_client, ["read_dataset"])
+    v1, v2 = _seed_lineage("concept-api@example.com", "10.5072/zenodo.7100", "10.5072/zenodo.710")
+
+    response = test_client.get("/api/v1/datasets/concept-doi/10.5072/zenodo.7100", headers={"X-API-Key": token})
+
+    assert response.status_code == 200
+    body = response.get_json()
+    assert body["concept_doi"] == "10.5072/zenodo.7100"
+    assert body["latest"]["dataset_id"] == v2.id
+    assert [entry["dataset_id"] for entry in body["versions"]] == [v1.id, v2.id]
+
+
+def test_api_lineage_by_concept_doi_not_found_returns_404(test_client):
+    token = _api_token(test_client, ["read_dataset"])
+
+    response = test_client.get("/api/v1/datasets/concept-doi/10.5072/zenodo.404", headers={"X-API-Key": token})
+
+    assert response.status_code == 404
+
+
+def test_api_lineage_by_concept_doi_requires_read_scope(test_client):
+    token = _api_token(test_client, ["write_dataset"])
+
+    response = test_client.get("/api/v1/datasets/concept-doi/10.5072/zenodo.1", headers={"X-API-Key": token})
+
+    assert response.status_code == 403
+
+
+def test_api_dataset_by_doi_exposes_the_newer_version(test_client):
+    # A client holding an old DOI must be able to discover the newest version.
+    token = _api_token(test_client, ["read_dataset"])
+    v1, v2 = _seed_lineage("old-doi@example.com", "10.5072/zenodo.7200", "10.5072/zenodo.720")
+
+    response = test_client.get("/api/v1/datasets/doi/10.5072/zenodo.720.1", headers={"X-API-Key": token})
+
+    assert response.status_code == 200
+    body = response.get_json()
+    # Existing keys keep working.
+    assert body["dataset_id"] == v1.id
+    assert body["doi"] == "10.5072/zenodo.720.1"
+    assert body["title"] == "Lineage v1"
+    assert "files" in body
+    # Lineage discovery.
+    assert body["concept_doi"] == "10.5072/zenodo.7200"
+    assert body["version"] == 1
+    assert body["total_versions"] == 2
+    assert body["is_latest"] is False
+    assert body["latest"] == {"dataset_id": v2.id, "version": 2, "doi": "10.5072/zenodo.720.2"}
+    assert body["versions_url"].endswith(f"/api/v1/datasets/{v1.id}/versions")
+
+
+# --- Ownership transfer ---------------------------------------------------
+
+
+def test_api_transfer_requires_an_api_key(test_client):
+    test_client.get("/logout", follow_redirects=True)
+
+    assert test_client.post("/api/v1/datasets/1/transfer").status_code == 401
+
+
+def test_api_transfer_requires_write_scope(test_client):
+    token = _api_token(test_client, ["read_dataset"])
+
+    response = test_client.post("/api/v1/datasets/1/transfer", headers={"X-API-Key": token})
+
+    assert response.status_code == 403
+
+
+def test_api_transfer_not_found_returns_404(test_client):
+    token = _api_token(test_client, ["write_dataset"])
+
+    with patch.object(dataset_routes.dataset_service, "get_by_id", return_value=None):
+        response = test_client.post("/api/v1/datasets/999999/transfer", headers={"X-API-Key": token})
+
+    assert response.status_code == 404
+
+
+def test_api_transfer_forbidden_for_another_users_dataset(test_client):
+    token = _api_token(test_client, ["write_dataset"], email="rival@example.com")
+
+    with patch.object(dataset_routes.dataset_service, "get_by_id", return_value=MagicMock(user_id=424242)):
+        response = test_client.post("/api/v1/datasets/1/transfer", headers={"X-API-Key": token}, json={"user_id": 1})
+
+    assert response.status_code == 403
+    assert "own" in response.get_json()["error"]
+
+
+def test_api_transfer_without_target_returns_400(test_client):
+    token = _api_token(test_client, ["write_dataset"])
+    owned = MagicMock(user_id=_test_user_id(test_client))
+
+    with patch.object(dataset_routes.dataset_service, "get_by_id", return_value=owned):
+        response = test_client.post("/api/v1/datasets/1/transfer", headers={"X-API-Key": token}, json={})
+
+    assert response.status_code == 400
+    assert "target account is required" in response.get_json()["error"]
+
+
+def test_api_transfer_unknown_target_returns_404(test_client):
+    token = _api_token(test_client, ["write_dataset"])
+    owned = MagicMock(user_id=_test_user_id(test_client))
+
+    with patch.object(dataset_routes.dataset_service, "get_by_id", return_value=owned):
+        response = test_client.post(
+            "/api/v1/datasets/1/transfer",
+            headers={"X-API-Key": token},
+            json={"email": "nobody@example.com"},
+        )
+
+    assert response.status_code == 404
+    assert response.get_json()["error"] == "Target account not found"
+
+
+def test_api_transfer_to_the_current_owner_returns_400(test_client):
+    token = _api_token(test_client, ["write_dataset"])
+    owner_id = _test_user_id(test_client)
+    (dataset,) = _seed_lineage(
+        "transfer-noop@example.com", "10.5072/zenodo.7300", "10.5072/zenodo.730", versions=1, user_id=owner_id
+    )
+
+    response = test_client.post(
+        f"/api/v1/datasets/{dataset.id}/transfer",
+        headers={"X-API-Key": token},
+        json={"user_id": owner_id},
+    )
+
+    assert response.status_code == 400
+    assert "already belongs" in response.get_json()["error"]
+
+
+def test_api_transfer_moves_the_whole_lineage(test_client, tmp_path, monkeypatch):
+    # A half-moved lineage would be a broken state: every version travels
+    # together, and the API key of the new owner can keep versioning it.
+    from app.features.auth.repositories import UserRepository
+
+    monkeypatch.setenv("WORKING_DIR", str(tmp_path))
+    token = _api_token(test_client, ["write_dataset"])
+    owner_id = _test_user_id(test_client)
+    v1, v2 = _seed_lineage("transfer-api@example.com", "10.5072/zenodo.7400", "10.5072/zenodo.740", user_id=owner_id)
+    service_account = UserRepository().create(email="service-account@example.com", password="pw-123456")
+
+    response = test_client.post(
+        f"/api/v1/datasets/{v1.id}/transfer",
+        headers={"X-API-Key": token},
+        json={"email": "service-account@example.com"},
+    )
+
+    assert response.status_code == 200
+    body = response.get_json()
+    assert body["previous_owner_id"] == owner_id
+    assert body["new_owner_id"] == service_account.id
+    assert body["transferred_dataset_ids"] == [v1.id, v2.id]
+    assert v1.user_id == service_account.id
+    assert v2.user_id == service_account.id
+
+    # The previous owner can no longer version it; the new owner is in charge.
+    denied = test_client.post(
+        f"/api/v1/datasets/{v2.id}/new-version",
+        headers={"X-API-Key": token},
+        data={"file": (io.BytesIO(b"features\n    Root"), "v3.uvl")},
+        content_type="multipart/form-data",
+    )
+    assert denied.status_code == 403
+
+
+# --- Optional authors on the upload API -----------------------------------
+
+
+def test_api_upload_credits_the_authors_it_is_given(test_client):
+    # The marketplace publishes with its own key while crediting the developer.
+    test_client.get("/logout", follow_redirects=True)
+    token = _api_token(test_client, ["write_dataset"])
+
+    response = test_client.post(
+        "/api/v1/datasets/upload",
+        headers={"X-API-Key": token},
+        json={
+            "title": "Credited model",
+            "filename": "credited.uvl",
+            "uvl_content": "features\n    Root",
+            "authors": [
+                {"name": "Lovelace, Ada", "affiliation": "Analytical Engine", "orcid": "0000-0002-1825-0097"},
+                {"name": "Hopper, Grace"},
+            ],
+        },
+    )
+
+    assert response.status_code == 201
+    body = response.get_json()
+    assert [author["name"] for author in body["authors"]] == ["Lovelace, Ada", "Hopper, Grace"]
+
+    dataset = dataset_routes.dataset_service.get_by_id(body["dataset_id"])
+    stored = [(author.name, author.affiliation, author.orcid) for author in dataset.ds_meta_data.authors]
+    assert stored == [
+        ("Lovelace, Ada", "Analytical Engine", "0000-0002-1825-0097"),
+        ("Hopper, Grace", "", ""),
+    ]
+
+    # And they reach Zenodo, not only the local database.
+    creators = dataset_routes.zenodo_service.build_metadata(dataset)["creators"]
+    assert creators == [
+        {"name": "Lovelace, Ada", "affiliation": "Analytical Engine", "orcid": "0000-0002-1825-0097"},
+        {"name": "Hopper, Grace"},
+    ]
+
+
+def test_api_upload_accepts_authors_as_a_multipart_json_field(test_client):
+    test_client.get("/logout", follow_redirects=True)
+    token = _api_token(test_client, ["write_dataset"])
+
+    response = test_client.post(
+        "/api/v1/datasets/upload",
+        headers={"X-API-Key": token},
+        data={
+            "title": "Multipart credited model",
+            "authors": '[{"name": "Hopper, Grace", "affiliation": "US Navy"}]',
+            "uvl_file": (io.BytesIO(b"features\n    Root"), "credited_multipart.uvl"),
+        },
+        content_type="multipart/form-data",
+    )
+
+    assert response.status_code == 201
+    dataset = dataset_routes.dataset_service.get_by_id(response.get_json()["dataset_id"])
+    assert [author.name for author in dataset.ds_meta_data.authors] == ["Hopper, Grace"]
+    assert dataset.ds_meta_data.authors[0].affiliation == "US Navy"
+
+
+def test_api_upload_without_authors_keeps_crediting_the_key_owner(test_client):
+    test_client.get("/logout", follow_redirects=True)
+    token = _api_token(test_client, ["write_dataset"])
+
+    response = test_client.post(
+        "/api/v1/datasets/upload",
+        headers={"X-API-Key": token},
+        json={"title": "Uncredited model", "filename": "uncredited.uvl", "uvl_content": "features\n    Root"},
+    )
+
+    assert response.status_code == 201
+    dataset = dataset_routes.dataset_service.get_by_id(response.get_json()["dataset_id"])
+    assert [author.name for author in dataset.ds_meta_data.authors] == ["User, Test"]
+
+
+def test_api_upload_rejects_invalid_author_data(test_client):
+    test_client.get("/logout", follow_redirects=True)
+    token = _api_token(test_client, ["write_dataset"])
+
+    with patch.object(dataset_routes.dataset_service, "create_draft_from_uvl_import") as mock_create:
+        response = test_client.post(
+            "/api/v1/datasets/upload",
+            headers={"X-API-Key": token},
+            json={
+                "title": "Bad author model",
+                "uvl_content": "features\n    Root",
+                "authors": [{"name": "Ada", "orcid": "0000-0002-1825-0096"}],
+            },
+        )
+
+    assert response.status_code == 400
+    assert "ORCID" in response.get_json()["error"]
+    mock_create.assert_not_called()
+
+
+def test_api_upload_rejects_an_author_without_a_name(test_client):
+    test_client.get("/logout", follow_redirects=True)
+    token = _api_token(test_client, ["write_dataset"])
+
+    response = test_client.post(
+        "/api/v1/datasets/upload",
+        headers={"X-API-Key": token},
+        json={
+            "title": "Nameless author model",
+            "uvl_content": "features\n    Root",
+            "authors": [{"affiliation": "Uni"}],
+        },
+    )
+
+    assert response.status_code == 400
+    assert "name" in response.get_json()["error"]
+
+
+def test_api_transfer_to_an_inactive_account_returns_400(test_client):
+    from app.features.auth.repositories import UserRepository
+
+    token = _api_token(test_client, ["write_dataset"])
+    owner_id = _test_user_id(test_client)
+    (dataset,) = _seed_lineage(
+        "transfer-inactive@example.com", "10.5072/zenodo.7500", "10.5072/zenodo.750", versions=1, user_id=owner_id
+    )
+    inactive = UserRepository().create(email="inactive-account@example.com", password="pw-123456")
+    inactive.active = False
+    UserRepository().session.commit()
+
+    response = test_client.post(
+        f"/api/v1/datasets/{dataset.id}/transfer",
+        headers={"X-API-Key": token},
+        json={"email": "inactive-account@example.com"},
+    )
+
+    assert response.status_code == 400
+    assert "not active" in response.get_json()["error"]

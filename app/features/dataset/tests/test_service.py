@@ -7,6 +7,7 @@ from app import create_app
 from app.features.dataset.services import (
     DatasetMetadataUpdateError,
     DatasetMetadataValidationError,
+    DatasetOwnershipError,
     DataSetService,
 )
 from app.features.zenodo.services import ZenodoUnavailableError
@@ -498,3 +499,241 @@ def test_create_new_version_creates_linked_dataset(test_app, clean_database):
     zenodo.create_new_version_draft.assert_called_once_with(111)
     zenodo.delete_all_deposition_files.assert_called_once_with(222)
     zenodo.publish_deposition.assert_called_once_with(222)
+
+
+# --- Concept DOI ---------------------------------------------------------
+
+
+def _make_lineage(email, versions=2, concept_doi=None, user=None):
+    """Create a real published lineage in the database, oldest first."""
+    from app.features.auth.repositories import UserRepository
+    from app.features.dataset.models import PublicationType
+    from app.features.dataset.repositories import DataSetRepository, DSMetaDataRepository
+
+    owner = user or UserRepository().create(email=email, password="pw-123456")
+    created = []
+    origin_id = None
+    for version in range(1, versions + 1):
+        meta = DSMetaDataRepository().create(
+            title=f"v{version}",
+            description="d",
+            publication_type=PublicationType.BOOK,
+            dataset_doi=f"10.5072/zenodo.{version}",
+            dataset_concept_doi=concept_doi,
+            deposition_id=version,
+        )
+        dataset = DataSetRepository().create(
+            user_id=owner.id, ds_meta_data_id=meta.id, dataset_version=version, dataset_origin_id=origin_id
+        )
+        created.append(dataset)
+        origin_id = dataset.id
+    return owner, created
+
+
+def test_store_concept_doi_backfills_every_version_of_the_lineage(test_app, clean_database):
+    _, (v1, v2) = _make_lineage("concept-store@example.com")
+
+    DataSetService().store_concept_doi(v2, "10.5072/zenodo.0")
+
+    assert v1.ds_meta_data.dataset_concept_doi == "10.5072/zenodo.0"
+    assert v2.ds_meta_data.dataset_concept_doi == "10.5072/zenodo.0"
+
+
+def test_store_concept_doi_never_rewrites_an_existing_value(test_app, clean_database):
+    _, (v1, v2) = _make_lineage("concept-keep@example.com", concept_doi="10.5072/zenodo.0")
+
+    DataSetService().store_concept_doi(v2, "10.5072/zenodo.999")
+
+    assert v1.ds_meta_data.dataset_concept_doi == "10.5072/zenodo.0"
+    assert v2.ds_meta_data.dataset_concept_doi == "10.5072/zenodo.0"
+
+
+def test_resolve_and_store_concept_doi_persists_the_zenodo_value(test_app, clean_database):
+    _, (v1,) = _make_lineage("concept-resolve@example.com", versions=1)
+    zenodo = MagicMock()
+    zenodo.get_concept_doi.return_value = "10.5072/zenodo.0"
+
+    result = DataSetService().resolve_and_store_concept_doi(v1, zenodo, 1)
+
+    assert result == "10.5072/zenodo.0"
+    assert v1.ds_meta_data.dataset_concept_doi == "10.5072/zenodo.0"
+
+
+def test_resolve_and_store_concept_doi_uses_the_fallback_when_zenodo_fails(test_app, clean_database):
+    # Publishing already succeeded, so a Zenodo error must not lose the lineage.
+    _, (v1,) = _make_lineage("concept-fallback@example.com", versions=1)
+    zenodo = MagicMock()
+    zenodo.get_concept_doi.side_effect = RuntimeError("Zenodo is down")
+
+    result = DataSetService().resolve_and_store_concept_doi(v1, zenodo, 1, fallback="10.5072/zenodo.0")
+
+    assert result == "10.5072/zenodo.0"
+    assert v1.ds_meta_data.dataset_concept_doi == "10.5072/zenodo.0"
+
+
+def test_resolve_and_store_concept_doi_leaves_the_column_null_when_unavailable(test_app, clean_database):
+    _, (v1,) = _make_lineage("concept-none@example.com", versions=1)
+    zenodo = MagicMock()
+    zenodo.get_concept_doi.return_value = None
+
+    assert DataSetService().resolve_and_store_concept_doi(v1, zenodo, 1) is None
+    assert v1.ds_meta_data.dataset_concept_doi is None
+
+
+def test_publishing_stores_the_concept_doi(test_app, clean_database):
+    _, (dataset,) = _make_lineage("concept-publish@example.com", versions=1)
+    dataset.ds_meta_data.dataset_doi = None
+    dataset.ds_meta_data.deposition_id = None
+    service = DataSetService()
+    zenodo = MagicMock()
+    zenodo.create_new_deposition.return_value = {"id": 101}
+    zenodo.get_doi.return_value = "10.5072/zenodo.101"
+    zenodo.get_concept_doi.return_value = "10.5072/zenodo.100"
+
+    with (
+        patch.object(service, "zip_dataset", return_value="/tmp/dataset_1.zip"),
+        patch("app.features.dataset.services.os.path.exists", return_value=False),
+    ):
+        service._publish_dataset_to_zenodo(dataset, zenodo)
+
+    assert dataset.ds_meta_data.dataset_doi == "10.5072/zenodo.101"
+    assert dataset.ds_meta_data.dataset_concept_doi == "10.5072/zenodo.100"
+
+
+def test_create_new_version_shares_the_concept_doi_with_its_origin(test_app, clean_database):
+    import io
+
+    from werkzeug.datastructures import FileStorage
+
+    owner, (old,) = _make_lineage("concept-version@example.com", versions=1)
+    zenodo = MagicMock()
+    zenodo.create_new_version_draft.return_value = 222
+    zenodo.build_metadata.return_value = {"title": "v1", "version": "2"}
+    zenodo.get_doi.return_value = "10.5072/zenodo.222"
+    zenodo.get_concept_doi.return_value = "10.5072/zenodo.0"
+
+    file_storage = FileStorage(
+        stream=io.BytesIO(b"features\n    Root\n        mandatory\n            A\n"), filename="v2.uvl"
+    )
+
+    new = DataSetService().create_new_version(old, file_storage, owner, zenodo_service=zenodo)
+
+    assert new.ds_meta_data.dataset_concept_doi == "10.5072/zenodo.0"
+    # The older version is backfilled, so the whole lineage shares one handle.
+    assert old.ds_meta_data.dataset_concept_doi == "10.5072/zenodo.0"
+
+
+# --- Lineage resolution ---------------------------------------------------
+
+
+def test_get_lineage_by_concept_doi_returns_the_chain_oldest_first(test_app, clean_database):
+    _, (v1, v2, v3) = _make_lineage("lineage-concept@example.com", versions=3, concept_doi="10.5072/zenodo.0")
+
+    lineage = DataSetService().get_lineage_by_concept_doi("10.5072/zenodo.0")
+
+    assert [dataset.id for dataset in lineage] == [v1.id, v2.id, v3.id]
+
+
+def test_get_lineage_by_concept_doi_is_empty_when_unknown(test_app, clean_database):
+    _make_lineage("lineage-unknown@example.com", versions=1, concept_doi="10.5072/zenodo.0")
+
+    assert DataSetService().get_lineage_by_concept_doi("10.5072/zenodo.404") == []
+
+
+# --- Ownership transfer ---------------------------------------------------
+
+
+def _dataset_dir(root, user_id, dataset_id):
+    import os
+
+    return os.path.join(str(root), "uploads", f"user_{user_id}", f"dataset_{dataset_id}")
+
+
+def _seed_storage(root, user_id, dataset_id, content="features\n    Root"):
+    import os
+
+    uvl_dir = os.path.join(_dataset_dir(root, user_id, dataset_id), "uvl")
+    os.makedirs(uvl_dir, exist_ok=True)
+    with open(os.path.join(uvl_dir, "model.uvl"), "w", encoding="utf-8") as handle:
+        handle.write(content)
+
+
+def test_transfer_ownership_moves_the_whole_lineage_and_its_files(test_app, clean_database, tmp_path, monkeypatch):
+    import os
+
+    from app.features.auth.repositories import UserRepository
+
+    monkeypatch.setenv("WORKING_DIR", str(tmp_path))
+    owner, (v1, v2) = _make_lineage("transfer-from@example.com")
+    service_account = UserRepository().create(email="transfer-to@example.com", password="pw-123456")
+    _seed_storage(tmp_path, owner.id, v1.id)
+    _seed_storage(tmp_path, owner.id, v2.id)
+
+    lineage = DataSetService().transfer_ownership(v2, service_account)
+
+    assert [dataset.id for dataset in lineage] == [v1.id, v2.id]
+    assert v1.user_id == service_account.id
+    assert v2.user_id == service_account.id
+    for dataset in (v1, v2):
+        assert os.path.isdir(_dataset_dir(tmp_path, service_account.id, dataset.id))
+        assert not os.path.exists(_dataset_dir(tmp_path, owner.id, dataset.id))
+    # Files stay reachable: the stored path follows the new owner.
+    assert os.path.exists(os.path.join(_dataset_dir(tmp_path, service_account.id, v1.id), "uvl", "model.uvl"))
+
+
+def test_transfer_ownership_works_without_files_on_disk(test_app, clean_database, tmp_path, monkeypatch):
+    from app.features.auth.repositories import UserRepository
+
+    monkeypatch.setenv("WORKING_DIR", str(tmp_path))
+    _, (v1,) = _make_lineage("transfer-nofiles@example.com", versions=1)
+    service_account = UserRepository().create(email="transfer-nofiles-to@example.com", password="pw-123456")
+
+    DataSetService().transfer_ownership(v1, service_account)
+
+    assert v1.user_id == service_account.id
+
+
+def test_transfer_ownership_rejects_the_current_owner(test_app, clean_database, tmp_path, monkeypatch):
+    monkeypatch.setenv("WORKING_DIR", str(tmp_path))
+    owner, (v1,) = _make_lineage("transfer-self@example.com", versions=1)
+
+    with pytest.raises(DatasetOwnershipError, match="already belongs"):
+        DataSetService().transfer_ownership(v1, owner)
+
+
+def test_transfer_ownership_refuses_a_lineage_split_across_accounts(test_app, clean_database, tmp_path, monkeypatch):
+    from app.features.auth.repositories import UserRepository
+
+    monkeypatch.setenv("WORKING_DIR", str(tmp_path))
+    owner, (v1, v2) = _make_lineage("transfer-split@example.com")
+    other = UserRepository().create(email="transfer-split-other@example.com", password="pw-123456")
+    target = UserRepository().create(email="transfer-split-target@example.com", password="pw-123456")
+    v1.user_id = other.id
+
+    with pytest.raises(DatasetOwnershipError, match="split across several accounts"):
+        DataSetService().transfer_ownership(v2, target)
+
+    assert v2.user_id == owner.id
+
+
+def test_transfer_ownership_restores_the_files_it_moved_when_it_fails(test_app, clean_database, tmp_path, monkeypatch):
+    import os
+
+    from app.features.auth.repositories import UserRepository
+
+    monkeypatch.setenv("WORKING_DIR", str(tmp_path))
+    owner, (v1, v2) = _make_lineage("transfer-rollback@example.com")
+    target = UserRepository().create(email="transfer-rollback-to@example.com", password="pw-123456")
+    _seed_storage(tmp_path, owner.id, v1.id)
+    _seed_storage(tmp_path, owner.id, v2.id)
+    # The target already holds a directory for the second version: half a
+    # lineage must never be left behind, so the first move is undone.
+    os.makedirs(_dataset_dir(tmp_path, target.id, v2.id))
+
+    with pytest.raises(DatasetOwnershipError, match="already has storage"):
+        DataSetService().transfer_ownership(v1, target)
+
+    assert os.path.isdir(_dataset_dir(tmp_path, owner.id, v1.id))
+    assert os.path.isdir(_dataset_dir(tmp_path, owner.id, v2.id))
+    assert v1.user_id == owner.id
+    assert v2.user_id == owner.id

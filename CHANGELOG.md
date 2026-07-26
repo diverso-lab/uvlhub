@@ -4,6 +4,39 @@ All notable changes to this project are documented in this file. The format is
 based on [Keep a Changelog](https://keepachangelog.com/) and the project follows
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+Durable links for programmatic publication: a dataset published through
+the API can now be followed across its whole life, from the first version
+to the newest one, and can be handed over to another account.
+
+### Added
+
+- Zenodo concept DOI stored in `ds_meta_data.dataset_concept_doi` (new
+  migration `b8c9d0e1f2a3`, nullable so older records keep working). It
+  is read on first publish and on every new version, and every version of
+  a lineage shares it. `ZenodoService.get_concept_doi` exposes it, with a
+  fallback that derives it from `conceptrecid` when Zenodo omits
+  `conceptdoi`.
+- `GET /api/v1/datasets/doi/<doi>` now also returns `concept_doi`,
+  `version`, `total_versions`, `is_latest`, `latest` and `versions_url`,
+  so a client holding an old DOI can discover the newest version. The
+  existing keys are untouched.
+- `GET /api/v1/datasets/<id>/versions`, returning the whole version
+  lineage oldest first, with dataset id, version, DOI and publication
+  date for each entry.
+- `GET /api/v1/datasets/concept-doi/<concept_doi>`, which resolves a
+  lineage (and therefore the latest version) from the stable concept DOI.
+- `POST /api/v1/datasets/<id>/transfer`, which hands a dataset over to
+  another account by `user_id` or `email`, restricted to the current
+  owner. The whole version lineage moves as a unit, files included.
+- `POST /api/v1/datasets/upload` accepts optional `authors` (JSON array,
+  or the usual `authors[0][name]` form fields), so a service account can
+  publish while crediting the real developer. The authors are stored as
+  `Author` rows and become the Zenodo creators. Without them the previous
+  behaviour is unchanged.
+- `concept_doi` in the publish and new-version API responses.
+
 ## [2.10] - 2026-07-26
 
 Programmatic publication: datasets can now be created, published and
