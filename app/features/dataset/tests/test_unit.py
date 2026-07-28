@@ -1,5 +1,7 @@
+import importlib.util
 import zipfile
 from datetime import datetime
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 from urllib.error import HTTPError
@@ -150,18 +152,42 @@ def test_normalize_authors_returns_empty_list_for_none():
 
 
 def test_normalize_authors_cleans_and_keeps_every_field():
+    # verify_orcid_ownership=False keeps this a pure unit test: the ownership
+    # check reads the orcid table, and a unit test must not touch the database.
     authors = DataSetService().normalize_authors(
-        [{"name": "  Lovelace, Ada ", "affiliation": " Analytical Engine ", "orcid": "0000-0002-1825-0097"}]
+        [{"name": "  Lovelace, Ada ", "affiliation": " Analytical Engine ", "orcid": "0000-0002-1825-0097"}],
+        verify_orcid_ownership=False,
     )
 
     assert authors == [{"name": "Lovelace, Ada", "affiliation": "Analytical Engine", "orcid": "0000-0002-1825-0097"}]
 
 
 def test_normalize_authors_accepts_orcid_urls():
-    authors = DataSetService().normalize_authors([{"name": "Ada", "orcid": "https://orcid.org/0000-0002-1825-0097"}])
+    authors = DataSetService().normalize_authors(
+        [{"name": "Ada", "orcid": "https://orcid.org/0000-0002-1825-0097"}],
+        verify_orcid_ownership=False,
+    )
 
     assert authors[0]["orcid"] == "0000-0002-1825-0097"
     assert authors[0]["affiliation"] == ""
+
+
+def test_normalize_authors_strips_control_and_bidi_characters():
+    # A right-to-left override in a name renders as something else entirely on
+    # the Zenodo record and on the dataset page, and newlines or tabs split a
+    # one-line credit. Neither may survive into a permanent public record.
+    authors = DataSetService().normalize_authors(
+        [{"name": "Bad‮Name\nwith newline\tand tab", "affiliation": "Uni​versity"}],
+        verify_orcid_ownership=False,
+    )
+
+    assert authors[0]["name"] == "BadName with newline and tab"
+    assert authors[0]["affiliation"] == "University"
+
+
+def test_normalize_authors_rejects_a_name_made_only_of_control_characters():
+    with pytest.raises(DatasetMetadataValidationError, match="must have a name"):
+        DataSetService().normalize_authors([{"name": "‮​"}], verify_orcid_ownership=False)
 
 
 def test_normalize_authors_validates_orcid_offline():
@@ -188,7 +214,8 @@ def test_normalize_authors_rejects_duplicate_orcid():
             [
                 {"name": "Ada", "orcid": "0000-0002-1825-0097"},
                 {"name": "Ada Lovelace", "orcid": "0000-0002-1825-0097"},
-            ]
+            ],
+            verify_orcid_ownership=False,
         )
 
 
@@ -240,6 +267,29 @@ def test_extract_authors_from_request_returns_none_without_author_data():
     assert DataSetService().extract_authors_from_request({"title": "t"}, MultiDict()) is None
 
 
+@pytest.mark.parametrize("value", [12345, 1.5, True, ["0000-0002-1825-0097"], {"orcid": "x"}])
+def test_normalize_orcid_rejects_a_non_string_instead_of_crashing(value):
+    # JSON puts no constraint on the type of this field. (value or "").strip()
+    # raised AttributeError on every one of these, and the upload route only
+    # catches DatasetMetadataValidationError, so the request came back a 500.
+    with pytest.raises(DatasetMetadataValidationError, match="text value"):
+        DataSetService()._normalize_orcid(value)
+
+
+def test_normalize_orcid_still_accepts_none_and_strings():
+    service = DataSetService()
+
+    assert service._normalize_orcid(None) == ""
+    assert service._normalize_orcid("  ") == ""
+    assert service._normalize_orcid("https://orcid.org/0000-0002-1825-0097") == "0000-0002-1825-0097"
+
+
+@pytest.mark.parametrize("value", [12345, 1.5, True, ["0000-0002-1825-0097"], {"orcid": "x"}])
+def test_normalize_authors_rejects_a_non_string_orcid(value):
+    with pytest.raises(DatasetMetadataValidationError, match="Invalid ORCID for author"):
+        DataSetService().normalize_authors([{"name": "A", "orcid": value}])
+
+
 # --- Version lineage payloads --------------------------------------------
 
 
@@ -280,3 +330,68 @@ def test_api_version_entry_has_no_publication_date_without_doi():
     assert entry["publication_date"] is None
     assert entry["created_at"] == "2026-07-01T10:00:00"
     assert entry["is_latest"] is True
+
+
+def test_api_latest_of_skips_a_version_that_was_never_published():
+    # A clone whose Zenodo publication failed sits at the end of the lineage
+    # with no DOI. Advertising it as the newest record would send clients at
+    # something that does not exist on Zenodo.
+    lineage = [_version(1, 1, "10.5072/zenodo.1"), _version(2, 2, None)]
+
+    payload = dataset_routes._api_lineage_payload(lineage)
+
+    assert payload["latest"] == {"dataset_id": 1, "version": 1, "doi": "10.5072/zenodo.1"}
+    assert [entry["is_latest"] for entry in payload["versions"]] == [True, False]
+
+
+def test_api_latest_of_falls_back_to_the_newest_when_nothing_is_published():
+    lineage = [_version(1, 1, None), _version(2, 2, None)]
+
+    assert dataset_routes._api_latest_of(lineage).id == 2
+
+
+# --- Transfer target parsing ---------------------------------------------
+
+
+def test_parse_strict_int_accepts_whole_numbers_in_both_shapes():
+    assert dataset_routes._parse_strict_int(7) == 7
+    assert dataset_routes._parse_strict_int("7") == 7
+    assert dataset_routes._parse_strict_int(" -7 ") == -7
+
+
+@pytest.mark.parametrize("value", [True, False, 1.9, 1.0, "1.9", "", "  ", "seven", None, [1], {"id": 1}])
+def test_parse_strict_int_rejects_anything_that_is_not_a_whole_number(value):
+    # int(True) is 1 and int(1.9) is 1: a permissive cast would offer the
+    # dataset to whichever account holds that id instead of failing.
+    assert dataset_routes._parse_strict_int(value) is None
+
+
+# --- Migrations ----------------------------------------------------------
+
+
+def _load_migration(module_name):
+    path = Path(__file__).resolve().parents[4] / "migrations" / "versions" / f"{module_name}.py"
+    spec = importlib.util.spec_from_file_location(module_name, path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_transfer_migration_downgrade_drops_the_table_without_dropping_its_indexes():
+    # MySQL and MariaDB back every foreign key with an index and refuse to drop
+    # it while the constraint exists (error 1553), so dropping the indexes one
+    # by one leaves the downgrade stuck halfway. Dropping the table takes its
+    # indexes with it.
+    #
+    # This is a cheap ordering guard and nothing more: patching op means no
+    # statement ever reaches an engine, so on its own it could not have caught
+    # the original failure. The proof is
+    # test_repository.py::test_transfer_migration_downgrades_on_a_real_database_with_rows,
+    # which runs the real upgrade and downgrade against live MariaDB.
+    migration = _load_migration("c9d0e1f2a3b4_add_api_publisher_and_transfers")
+
+    with patch.object(migration, "op") as op:
+        migration.downgrade()
+
+    op.drop_table.assert_called_once_with("dataset_transfer_request")
+    assert op.drop_index.call_args_list == []

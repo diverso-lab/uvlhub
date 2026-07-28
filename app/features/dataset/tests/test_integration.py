@@ -589,6 +589,54 @@ def test_api_upload_multipart_rejects_invalid_uvl(test_client):
     assert response.get_json()["error"]
 
 
+def test_api_upload_rejects_a_key_whose_account_was_deactivated(test_client):
+    # An administrator deactivating an account has to stop its API keys too.
+    # write_dataset mints permanent public DOIs, so a key that outlives its
+    # account keeps that power with nobody accountable for it.
+    from app import db
+    from app.features.auth.models import User
+
+    test_client.get("/logout", follow_redirects=True)
+    token = _api_token(test_client, ["write_dataset"], email="deactivated@example.com")
+
+    user = User.query.filter_by(email="deactivated@example.com").first()
+    user.active = False
+    db.session.commit()
+
+    response = test_client.post(
+        "/api/v1/datasets/upload",
+        headers={"X-API-Key": token},
+        json={"title": "Model from a dead account", "uvl_content": "features\n    Root"},
+    )
+
+    assert response.status_code == 403
+
+    user.active = True
+    db.session.commit()
+
+
+@pytest.mark.parametrize("orcid", [12345, 1.5, ["0000-0002-1825-0097"], {"id": "x"}])
+def test_api_upload_rejects_a_non_string_orcid_with_400(test_client, orcid):
+    # JSON allows any type here. The normalizer assumed a string and raised
+    # AttributeError, which the route does not catch, so a malformed author
+    # payload surfaced as a 500 instead of the documented 400.
+    test_client.get("/logout", follow_redirects=True)
+    token = _api_token(test_client, ["write_dataset"])
+
+    response = test_client.post(
+        "/api/v1/datasets/upload",
+        headers={"X-API-Key": token},
+        json={
+            "title": "Model with a bad author",
+            "uvl_content": "features\n    Root",
+            "authors": [{"name": "A", "orcid": orcid}],
+        },
+    )
+
+    assert response.status_code == 400
+    assert "ORCID" in response.get_json()["error"]
+
+
 def test_api_upload_rejects_oversized_uvl(test_client):
     test_client.get("/logout", follow_redirects=True)
     token = _api_token(test_client, ["write_dataset"])
@@ -1064,9 +1112,11 @@ def test_api_transfer_to_the_current_owner_returns_400(test_client):
     assert "already belongs" in response.get_json()["error"]
 
 
-def test_api_transfer_moves_the_whole_lineage(test_client, tmp_path, monkeypatch):
-    # A half-moved lineage would be a broken state: every version travels
-    # together, and the API key of the new owner can keep versioning it.
+def test_api_transfer_offers_the_lineage_and_moves_it_only_once_accepted(test_client, tmp_path, monkeypatch):
+    # Nothing moves on the sender's word alone: a published dataset carries a
+    # permanent DOI and shows up in its owner's public listings, so the
+    # receiving account has to say yes. Once it does, the whole lineage travels
+    # together; a half-moved lineage would be unversionable by both accounts.
     from app.features.auth.repositories import UserRepository
 
     monkeypatch.setenv("WORKING_DIR", str(tmp_path))
@@ -1075,17 +1125,40 @@ def test_api_transfer_moves_the_whole_lineage(test_client, tmp_path, monkeypatch
     v1, v2 = _seed_lineage("transfer-api@example.com", "10.5072/zenodo.7400", "10.5072/zenodo.740", user_id=owner_id)
     service_account = UserRepository().create(email="service-account@example.com", password="pw-123456")
 
-    response = test_client.post(
-        f"/api/v1/datasets/{v1.id}/transfer",
-        headers={"X-API-Key": token},
-        json={"email": "service-account@example.com"},
-    )
+    with patch("app.features.mail.services.MailService"):
+        response = test_client.post(
+            f"/api/v1/datasets/{v1.id}/transfer",
+            headers={"X-API-Key": token},
+            json={"email": "service-account@example.com"},
+        )
 
-    assert response.status_code == 200
+    assert response.status_code == 202
     body = response.get_json()
-    assert body["previous_owner_id"] == owner_id
-    assert body["new_owner_id"] == service_account.id
-    assert body["transferred_dataset_ids"] == [v1.id, v2.id]
+    assert body["status"] == "pending"
+    assert body["to_user_id"] == service_account.id
+    assert body["lineage_dataset_ids"] == [v1.id, v2.id]
+    # Still the sender's until the offer is answered.
+    assert v1.user_id == owner_id
+    assert v2.user_id == owner_id
+
+    # The sender cannot accept on the recipient's behalf.
+    refused = test_client.post(f"/api/v1/datasets/transfers/{body['transfer_id']}/accept", headers={"X-API-Key": token})
+    assert refused.status_code == 403
+    assert v1.user_id == owner_id
+
+    recipient_token = _api_token(test_client, ["write_dataset"], email="service-account@example.com")
+    with patch("app.features.mail.services.MailService"):
+        accepted = test_client.post(
+            f"/api/v1/datasets/transfers/{body['transfer_id']}/accept",
+            headers={"X-API-Key": recipient_token},
+        )
+
+    assert accepted.status_code == 200
+    accepted_body = accepted.get_json()
+    assert accepted_body["status"] == "accepted"
+    assert accepted_body["previous_owner_id"] == owner_id
+    assert accepted_body["new_owner_id"] == service_account.id
+    assert accepted_body["transferred_dataset_ids"] == [v1.id, v2.id]
     assert v1.user_id == service_account.id
     assert v2.user_id == service_account.id
 
@@ -1099,13 +1172,144 @@ def test_api_transfer_moves_the_whole_lineage(test_client, tmp_path, monkeypatch
     assert denied.status_code == 403
 
 
+def test_api_transfer_can_be_declined_and_the_dataset_stays_put(test_client, tmp_path, monkeypatch):
+    from app.features.auth.repositories import UserRepository
+
+    monkeypatch.setenv("WORKING_DIR", str(tmp_path))
+    token = _api_token(test_client, ["write_dataset"])
+    owner_id = _test_user_id(test_client)
+    (dataset,) = _seed_lineage(
+        "transfer-declined@example.com", "10.5072/zenodo.7600", "10.5072/zenodo.760", versions=1, user_id=owner_id
+    )
+    UserRepository().create(email="declining-account@example.com", password="pw-123456")
+
+    with patch("app.features.mail.services.MailService"):
+        offer = test_client.post(
+            f"/api/v1/datasets/{dataset.id}/transfer",
+            headers={"X-API-Key": token},
+            json={"email": "declining-account@example.com"},
+        )
+        transfer_id = offer.get_json()["transfer_id"]
+        recipient_token = _api_token(test_client, ["write_dataset"], email="declining-account@example.com")
+        declined = test_client.post(
+            f"/api/v1/datasets/transfers/{transfer_id}/decline", headers={"X-API-Key": recipient_token}
+        )
+
+    assert declined.status_code == 200
+    assert declined.get_json()["status"] == "declined"
+    assert dataset.user_id == owner_id
+
+    read_token = _api_token(test_client, ["read_dataset"])
+    listed = test_client.get("/api/v1/datasets/transfers", headers={"X-API-Key": read_token})
+    assert listed.status_code == 200
+    outgoing = {entry["transfer_id"]: entry["status"] for entry in listed.get_json()["outgoing"]}
+    assert outgoing[transfer_id] == "declined"
+
+
+@pytest.mark.parametrize("bad_user_id", [True, 1.9])
+def test_api_transfer_rejects_a_user_id_that_is_not_a_whole_number(test_client, bad_user_id):
+    # int(True) is 1 and int(1.9) is 1, so a permissive cast would offer the
+    # dataset to whichever account holds id 1.
+    token = _api_token(test_client, ["write_dataset"])
+    owner_id = _test_user_id(test_client)
+    (dataset,) = _seed_lineage(
+        f"transfer-coerce-{str(bad_user_id).lower()}@example.com",
+        "10.5072/zenodo.7700",
+        f"10.5072/zenodo.77{int(bad_user_id)}",
+        versions=1,
+        user_id=owner_id,
+    )
+
+    response = test_client.post(
+        f"/api/v1/datasets/{dataset.id}/transfer",
+        headers={"X-API-Key": token},
+        json={"user_id": bad_user_id},
+    )
+
+    assert response.status_code == 400
+    assert response.get_json()["error"] == "user_id must be an integer."
+    assert dataset.user_id == owner_id
+
+
+def test_api_versions_reports_every_branch_of_a_split_lineage(test_client):
+    # Legacy rows can hold two children of the same node. A client asking for
+    # the newest version must not be handed a sibling while a published
+    # version is missing from the listing entirely.
+    from app.features.dataset.models import PublicationType
+    from app.features.dataset.repositories import DataSetRepository, DSMetaDataRepository
+
+    token = _api_token(test_client, ["read_dataset"])
+    owner_id = _test_user_id(test_client)
+    (v1,) = _seed_lineage(
+        "branched-api@example.com", "10.5072/zenodo.7800", "10.5072/zenodo.780", versions=1, user_id=owner_id
+    )
+
+    def branch(doi):
+        meta = DSMetaDataRepository().create(
+            title="branch",
+            description="d",
+            publication_type=PublicationType.BOOK,
+            dataset_doi=doi,
+            dataset_concept_doi="10.5072/zenodo.7800",
+            deposition_id=2,
+            tags="",
+        )
+        return DataSetRepository().create(
+            user_id=owner_id, ds_meta_data_id=meta.id, dataset_version=2, dataset_origin_id=v1.id
+        )
+
+    branch_a = branch("10.5072/zenodo.780.2a")
+    branch_b = branch("10.5072/zenodo.780.2b")
+
+    response = test_client.get(f"/api/v1/datasets/{branch_b.id}/versions", headers={"X-API-Key": token})
+
+    assert response.status_code == 200
+    body = response.get_json()
+    assert body["total_versions"] == 3
+    assert [entry["dataset_id"] for entry in body["versions"]] == [v1.id, branch_a.id, branch_b.id]
+    assert body["latest"]["dataset_id"] == branch_b.id
+
+    # And the DOI of the newest branch resolves to itself, not to a sibling.
+    by_doi = test_client.get("/api/v1/datasets/doi/10.5072/zenodo.780.2b", headers={"X-API-Key": token})
+    assert by_doi.status_code == 200
+    assert by_doi.get_json()["is_latest"] is True
+
+
 # --- Optional authors on the upload API -----------------------------------
+
+
+def _link_orcid(orcid_id, email):
+    """Register an ORCID as belonging to a uvlhub account.
+
+    Mirrors what the ORCID OAuth flow leaves behind once a researcher has
+    signed in here at least once.
+    """
+    from app import db
+    from app.features.auth.models import User
+    from app.features.orcid.models import Orcid
+    from app.features.profile.models import UserProfile
+
+    user = User.query.filter_by(email=email).first()
+    if user is None:
+        user = User(email=email, password="test1234")
+        db.session.add(user)
+        db.session.commit()
+    profile = UserProfile.query.filter_by(user_id=user.id).first()
+    if profile is None:
+        profile = UserProfile(user_id=user.id, name="Ada", surname="Lovelace")
+        db.session.add(profile)
+        db.session.commit()
+    if Orcid.query.filter_by(orcid_id=orcid_id).first() is None:
+        db.session.add(Orcid(orcid_id=orcid_id, profile_id=profile.id))
+        db.session.commit()
+    return user
 
 
 def test_api_upload_credits_the_authors_it_is_given(test_client):
     # The marketplace publishes with its own key while crediting the developer.
     test_client.get("/logout", follow_redirects=True)
     token = _api_token(test_client, ["write_dataset"])
+    _link_orcid("0000-0002-1825-0097", "ada@example.com")
 
     response = test_client.post(
         "/api/v1/datasets/upload",
@@ -1133,11 +1337,85 @@ def test_api_upload_credits_the_authors_it_is_given(test_client):
     ]
 
     # And they reach Zenodo, not only the local database.
-    creators = dataset_routes.zenodo_service.build_metadata(dataset)["creators"]
-    assert creators == [
+    metadata = dataset_routes.zenodo_service.build_metadata(dataset)
+    assert metadata["creators"] == [
         {"name": "Lovelace, Ada", "affiliation": "Analytical Engine", "orcid": "0000-0002-1825-0097"},
         {"name": "Hopper, Grace"},
     ]
+    # Credit given to someone else stays traceable to the account that claimed
+    # it, on the permanent record itself.
+    assert dataset.ds_meta_data.api_publisher_user_id == _test_user_id(test_client)
+    assert f"uvlhub account {_test_user_id(test_client)}" in metadata["notes"]
+
+
+def test_api_upload_refuses_an_orcid_that_belongs_to_nobody_here(test_client):
+    # An ORCID is machine resolvable: Zenodo turns it into a permanent link to
+    # that researcher's profile. Accepting one on the word of whoever holds an
+    # API key is enough to pin an arbitrary record on a real named person.
+    test_client.get("/logout", follow_redirects=True)
+    token = _api_token(test_client, ["write_dataset"])
+
+    with patch.object(dataset_routes.dataset_service, "create_draft_from_uvl_import") as mock_create:
+        response = test_client.post(
+            "/api/v1/datasets/upload",
+            headers={"X-API-Key": token},
+            json={
+                "title": "Planted credit",
+                "uvl_content": "features\n    Root",
+                "authors": [{"name": "Carberry, Josiah", "orcid": "0000-0003-1419-2405"}],
+            },
+        )
+
+    assert response.status_code == 400
+    assert "not linked to any uvlhub account" in response.get_json()["error"]
+    mock_create.assert_not_called()
+
+
+def test_api_upload_sanitizes_the_description_it_stores(test_client):
+    # The dataset page renders the description with |safe, so an API key must
+    # not be able to run script on a public DOI landing page.
+    test_client.get("/logout", follow_redirects=True)
+    token = _api_token(test_client, ["write_dataset"])
+
+    response = test_client.post(
+        "/api/v1/datasets/upload",
+        headers={"X-API-Key": token},
+        json={
+            "title": "Scripted description",
+            "filename": "scripted.uvl",
+            "uvl_content": "features\n    Root",
+            "description": '<img src=x onerror="alert(1)"><b>bold</b><script>alert(2)</script>',
+        },
+    )
+
+    assert response.status_code == 201
+    dataset = dataset_routes.dataset_service.get_by_id(response.get_json()["dataset_id"])
+    description = dataset.ds_meta_data.description
+    assert "onerror" not in description
+    assert "<script>" not in description
+    assert "<img" not in description
+    # The formatting the web upload has always allowed survives.
+    assert "<b>bold</b>" in description
+
+
+def test_api_upload_strips_control_characters_from_the_author_name(test_client):
+    test_client.get("/logout", follow_redirects=True)
+    token = _api_token(test_client, ["write_dataset"])
+
+    response = test_client.post(
+        "/api/v1/datasets/upload",
+        headers={"X-API-Key": token},
+        json={
+            "title": "Spoofed author",
+            "filename": "spoofed.uvl",
+            "uvl_content": "features\n    Root",
+            "authors": [{"name": "Bad‮Name\nwith newline\tand tab"}],
+        },
+    )
+
+    assert response.status_code == 201
+    dataset = dataset_routes.dataset_service.get_by_id(response.get_json()["dataset_id"])
+    assert [author.name for author in dataset.ds_meta_data.authors] == ["BadName with newline and tab"]
 
 
 def test_api_upload_accepts_authors_as_a_multipart_json_field(test_client):

@@ -338,7 +338,11 @@ class DatasetTransferRequest(db.Model):
     __tablename__ = "dataset_transfer_request"
 
     id = db.Column(db.Integer, primary_key=True)
-    dataset_id = db.Column(db.Integer, db.ForeignKey("datasets.id"), nullable=False, index=True)
+    # ON DELETE CASCADE: an offer is meaningless without the dataset it offers.
+    # Without it the constraint blocked every deletion of a dataset that had
+    # ever been offered, including the admin cleanup command, with a bare
+    # foreign key error and no way to proceed.
+    dataset_id = db.Column(db.Integer, db.ForeignKey("datasets.id", ondelete="CASCADE"), nullable=False, index=True)
     from_user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, index=True)
     to_user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, index=True)
     status = db.Column(

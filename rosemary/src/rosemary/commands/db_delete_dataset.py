@@ -9,6 +9,7 @@ from app import create_app, db
 from app.features.dataset.models import (
     Author,
     DataSet,
+    DatasetTransferRequest,
     DSDownloadRecord,
     DSMetaData,
     DSViewRecord,
@@ -117,6 +118,16 @@ def delete_dataset(doi, yes):
 
                 # --- authors ---
                 db.session.query(Author).filter(Author.ds_meta_data_id == ds_meta_data.id).delete(
+                    synchronize_session=False
+                )
+
+                # --- ownership transfer offers ---
+                # Deleted explicitly rather than left to the database cascade,
+                # so the command also works against a database created before
+                # the cascade existed. Without this the delete aborts with a
+                # foreign key error on any dataset that has ever been offered,
+                # accepted or declined.
+                db.session.query(DatasetTransferRequest).filter(DatasetTransferRequest.dataset_id == dataset.id).delete(
                     synchronize_session=False
                 )
 

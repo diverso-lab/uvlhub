@@ -260,7 +260,19 @@ class DataSetService(BaseService):
     def _normalize_text(self, value: str) -> str:
         return " ".join((value or "").strip().lower().split())
 
-    def _normalize_orcid(self, value: str) -> str:
+    def _normalize_orcid(self, value) -> str:
+        """Normalize an ORCID coming from JSON, where the type is not a given.
+
+        The web form only ever sends strings, but an API client can put any
+        JSON value in this field. ``(value or "").strip()`` raised
+        AttributeError on an int, a float, a list or a dict, and the upload
+        route only catches DatasetMetadataValidationError, so the request came
+        back as a 500 instead of the documented 400. Rejected explicitly here
+        rather than coerced with str(), so the message names the real problem
+        instead of complaining about the shape of "12345".
+        """
+        if value is not None and not isinstance(value, str):
+            raise DatasetMetadataValidationError("ORCID must be a text value.")
         raw = (value or "").strip()
         if not raw:
             return ""
@@ -413,9 +425,12 @@ class DataSetService(BaseService):
         """
         text = unicodedata.normalize("NFC", str(value or ""))
         cleaned = "".join(
+            # Whitespace is turned into a plain space before anything is
+            # dropped: a newline or a tab is a control character, and removing
+            # it outright would glue "Ada\nLovelace" into "AdaLovelace".
             " " if character.isspace() else character
             for character in text
-            if unicodedata.category(character) not in {"Cc", "Cf", "Co", "Cs", "Cn"}
+            if character.isspace() or unicodedata.category(character) not in {"Cc", "Cf", "Co", "Cs", "Cn"}
         )
         return " ".join(cleaned.split())
 
@@ -613,7 +628,14 @@ class DataSetService(BaseService):
         # a real dataset id on disk), so every failure past this point has to
         # remove it again. An abandoned clone would sit in the lineage forever,
         # with no DOI, and the lineage endpoints would advertise it.
+        #
+        # Only up to the point of no return, though. publish_deposition mints a
+        # permanent public DOI that nobody can withdraw, so once it has been
+        # called the clone is the only local trace of a real Zenodo record and
+        # deleting it would strand that record forever.
         new_dataset = self._clone_as_new_version(dataset, current_user)
+        published = False
+        new_deposition_id = None
         try:
             self._claim_sole_successor(dataset, new_dataset)
             self._attach_uvl_file(new_dataset, file_storage)
@@ -631,17 +653,31 @@ class DataSetService(BaseService):
                 new_dataset, anonymous=bool(meta.dataset_anonymous), version=new_dataset.dataset_version
             )
             zenodo_service.update_draft_metadata(new_deposition_id, new_metadata)
+
+            # Committed before the irreversible call, not after it. The
+            # deposition id is the only handle that ties the local row to the
+            # Zenodo record, and everything between here and the DOI commit can
+            # fail. Writing it first means a crash at any point leaves a row
+            # that names the deposition, which is what makes reconciliation
+            # possible at all.
+            new_dataset.ds_meta_data.deposition_id = new_deposition_id
+            self.repository.session.commit()
+
             zenodo_service.publish_deposition(new_deposition_id)
+            published = True
+
             new_doi = zenodo_service.get_doi(new_deposition_id)
             if not new_doi:
                 raise DatasetMetadataUpdateError("Zenodo did not return a DOI for the new version.")
 
-            new_dataset.ds_meta_data.deposition_id = new_deposition_id
             new_dataset.ds_meta_data.dataset_doi = new_doi
             new_dataset.ds_meta_data.metadata_synced = True
             self.repository.session.commit()
         except Exception:
-            self._discard_unpublished_version(new_dataset)
+            if published:
+                self._preserve_published_version(new_dataset, new_deposition_id)
+            else:
+                self._discard_unpublished_version(new_dataset)
             raise
 
         # Same lineage, same concept DOI. Zenodo returns it on the new version
@@ -702,12 +738,54 @@ class DataSetService(BaseService):
             f"(dataset {newest.id}). Create the new version from the newest one."
         )
 
+    def _preserve_published_version(self, dataset: DataSet, deposition_id: Optional[int]) -> None:
+        """Keep a clone whose Zenodo deposition was already published.
+
+        The counterpart of _discard_unpublished_version, for the window between
+        publish_deposition and the DOI commit. A public DOI exists by now and
+        holds the user's files, so the local row must survive even though the
+        request is about to fail: it is the only thing that records which
+        deposition the record lives in. The row is left with its deposition id
+        and no DOI, which is exactly the shape an operator can reconcile.
+
+        Never raises, for the same reason as the discard path.
+        """
+        dataset_id = getattr(dataset, "id", None)
+        try:
+            self.repository.session.rollback()
+            fresh = self.repository.get_by_id(dataset_id) if dataset_id else None
+            if fresh is not None and fresh.ds_meta_data and not fresh.ds_meta_data.deposition_id and deposition_id:
+                # The pre-publication commit is expected to have stored this
+                # already. Restore it if anything rolled it back, because
+                # losing it is what makes the record unreconcilable.
+                fresh.ds_meta_data.deposition_id = deposition_id
+                self.repository.session.commit()
+        except Exception as exc:  # noqa: BLE001 - the original failure matters more
+            self.repository.session.rollback()
+            logger.error("[VERSION] Could not record deposition %s on version %s: %s", deposition_id, dataset_id, exc)
+
+        logger.error(
+            "[VERSION] Deposition %s was PUBLISHED at Zenodo but version %s could not be completed. "
+            "The DOI is permanent and the local row was kept on purpose so the two can be reconciled. "
+            "Do not delete dataset %s.",
+            deposition_id,
+            dataset_id,
+            dataset_id,
+        )
+
     def _discard_unpublished_version(self, dataset: DataSet) -> None:
         """Remove a version clone that never made it to Zenodo.
 
         Best effort and never raises: the caller is already propagating the
         real failure, and leaving the half-created row behind is worse than a
         failed cleanup because it becomes a permanent phantom in the lineage.
+
+        Refuses to delete anything that carries a deposition id or a DOI. Both
+        mean Zenodo already knows about this row, and a Zenodo record whose
+        local trace has been erased can never be reconciled. The check is
+        deliberately made against freshly read, committed state: the rollback
+        below throws away every uncommitted attribute, so reading the in-memory
+        object here would answer about values that no longer exist.
         """
         dataset_id = getattr(dataset, "id", None)
         owner_id = getattr(dataset, "user_id", None)
@@ -716,8 +794,15 @@ class DataSetService(BaseService):
             fresh = self.repository.get_by_id(dataset_id) if dataset_id else None
             if fresh is None:
                 return
-            if fresh.ds_meta_data and fresh.ds_meta_data.dataset_doi:
-                # Published after all, keep it.
+            if fresh.ds_meta_data and (fresh.ds_meta_data.dataset_doi or fresh.ds_meta_data.deposition_id):
+                # Zenodo has seen this one. Keeping a phantom in the lineage is
+                # recoverable; erasing the only pointer to a public record is not.
+                logger.error(
+                    "[VERSION] Refusing to discard version %s: it already points at deposition %s (DOI %s).",
+                    dataset_id,
+                    fresh.ds_meta_data.deposition_id,
+                    fresh.ds_meta_data.dataset_doi,
+                )
                 return
             meta = fresh.ds_meta_data
             self.repository.session.delete(fresh)
@@ -844,12 +929,24 @@ class DataSetService(BaseService):
         """Resolve a version chain from the stable concept DOI.
 
         The lineage is walked from any member that carries the concept DOI, so
-        it stays complete even when older versions predate the column.
+        it stays complete even when older versions predate the column and have
+        it empty.
+
+        A version that carries a *different* concept DOI is left out. Zenodo
+        decides which concept a deposition belongs to, and resolving this
+        concept DOI at Zenodo will never return that version, so answering with
+        it (or worse, naming it the latest) would contradict the record this
+        endpoint exists to point at.
         """
-        entry_point = self.repository.get_by_concept_doi(concept_doi)
+        wanted = (concept_doi or "").strip()
+        entry_point = self.repository.get_by_concept_doi(wanted)
         if entry_point is None:
             return []
-        return entry_point.all_versions()
+        return [
+            version
+            for version in entry_point.all_versions()
+            if (version.ds_meta_data.dataset_concept_doi or wanted) == wanted
+        ]
 
     """
         Ownership

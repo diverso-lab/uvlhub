@@ -59,7 +59,10 @@ def upgrade():
         sa.Column("message", sa.String(length=500), nullable=True),
         sa.Column("created_at", sa.DateTime(), nullable=False),
         sa.Column("resolved_at", sa.DateTime(), nullable=True),
-        sa.ForeignKeyConstraint(["dataset_id"], ["datasets.id"]),
+        # An offer cannot outlive the dataset it offers. Without the cascade
+        # the constraint refuses every deletion of a dataset that has ever been
+        # offered, which breaks the admin cleanup command permanently.
+        sa.ForeignKeyConstraint(["dataset_id"], ["datasets.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["from_user_id"], ["user.id"]),
         sa.ForeignKeyConstraint(["to_user_id"], ["user.id"]),
         sa.PrimaryKeyConstraint("id"),
@@ -82,9 +85,11 @@ def upgrade():
 
 
 def downgrade():
-    op.drop_index("ix_dataset_transfer_request_to_user_id", table_name="dataset_transfer_request")
-    op.drop_index("ix_dataset_transfer_request_from_user_id", table_name="dataset_transfer_request")
-    op.drop_index("ix_dataset_transfer_request_dataset_id", table_name="dataset_transfer_request")
+    # The indexes are not dropped one by one on purpose. MySQL/MariaDB back
+    # every foreign key with an index and refuse to drop it while the
+    # constraint exists ("Cannot drop index ...: needed in a foreign key
+    # constraint", error 1553), which made this downgrade fail halfway.
+    # Dropping the table takes its indexes with it.
     op.drop_table("dataset_transfer_request")
     TRANSFER_STATUS.drop(op.get_bind(), checkfirst=True)
 

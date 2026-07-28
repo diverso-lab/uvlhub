@@ -248,3 +248,39 @@ def test_extract_concept_doi_ignores_blank_values():
 
 def test_extract_concept_doi_needs_a_parseable_version_doi_for_the_fallback():
     assert ZenodoService._extract_concept_doi({"conceptrecid": "8", "doi": "not-a-doi"}) is None
+
+
+def test_extract_concept_doi_drops_a_value_that_does_not_fit_the_column():
+    # ds_meta_data.dataset_concept_doi is 120 characters. Returning a longer
+    # value would blow up the UPDATE that runs after the version DOI has
+    # already been minted and committed.
+    oversized = "10.5072/zenodo." + "9" * 120
+
+    assert ZenodoService._extract_concept_doi({"conceptdoi": oversized, "doi": "10.5072/zenodo.9"}) is None
+    assert ZenodoService._extract_concept_doi({"conceptdoi": "10.5072/zenodo.8", "doi": "10.5072/zenodo.9"}) == (
+        "10.5072/zenodo.8"
+    )
+
+
+# --- API provenance -------------------------------------------------------
+
+
+def test_build_metadata_records_the_publishing_account_when_it_came_from_the_api():
+    # Author credit sent by an API client is a claim about somebody else, and a
+    # Zenodo DOI is permanent, so the record has to say where the claim came
+    # from. Only the account id travels: enough to trace it, without putting an
+    # email address on a public page.
+    dataset = _dataset(authors=[SimpleNamespace(name="Ada", affiliation=None, orcid=None)])
+    dataset.ds_meta_data.api_publisher_user_id = 42
+
+    notes = ZenodoService().build_metadata(dataset)["notes"]
+
+    assert "uvlhub account 42" in notes
+    assert "not verified by uvlhub" in notes
+
+
+def test_build_metadata_adds_no_provenance_note_for_a_web_upload():
+    dataset = _dataset()
+    dataset.ds_meta_data.api_publisher_user_id = None
+
+    assert "notes" not in ZenodoService().build_metadata(dataset)
