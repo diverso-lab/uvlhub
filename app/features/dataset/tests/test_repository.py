@@ -230,11 +230,11 @@ def test_transfer_migration_downgrades_on_a_real_database_with_rows(test_app, cl
     rows.
     """
     from datetime import datetime
+    from unittest.mock import patch
 
     from alembic.migration import MigrationContext
     from alembic.operations import Operations
     from sqlalchemy import inspect, text
-    from unittest.mock import patch
 
     from app import db
 
