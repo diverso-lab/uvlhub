@@ -4,7 +4,7 @@ All notable changes to this project are documented in this file. The format is
 based on [Keep a Changelog](https://keepachangelog.com/) and the project follows
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [2.11] - 2026-07-28
 
 Durable links for programmatic publication: a dataset published through
 the API can now be followed across its whole life, from the first version
