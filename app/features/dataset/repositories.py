@@ -7,7 +7,16 @@ from flask_login import current_user
 from splent_framework.repositories.BaseRepository import BaseRepository
 from sqlalchemy import desc
 
-from app.features.dataset.models import Author, DataSet, DOIMapping, DSDownloadRecord, DSMetaData, DSViewRecord
+from app.features.dataset.models import (
+    Author,
+    DataSet,
+    DatasetTransferRequest,
+    DatasetTransferStatus,
+    DOIMapping,
+    DSDownloadRecord,
+    DSMetaData,
+    DSViewRecord,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -15,6 +24,37 @@ logger = logging.getLogger(__name__)
 class AuthorRepository(BaseRepository):
     def __init__(self):
         super().__init__(Author)
+
+
+class DatasetTransferRequestRepository(BaseRepository):
+    def __init__(self):
+        super().__init__(DatasetTransferRequest)
+
+    def get_pending_for_dataset(self, dataset_id: int) -> Optional[DatasetTransferRequest]:
+        return self.model.query.filter_by(dataset_id=dataset_id, status=DatasetTransferStatus.PENDING).first()
+
+    def get_pending_for_datasets(self, dataset_ids: List[int]) -> List[DatasetTransferRequest]:
+        """Any pending offer touching one of these datasets.
+
+        A transfer moves a whole lineage, so an offer on any of its members
+        blocks a second offer on any other member.
+        """
+        if not dataset_ids:
+            return []
+        return (
+            self.model.query.filter(
+                self.model.dataset_id.in_(dataset_ids),
+                self.model.status == DatasetTransferStatus.PENDING,
+            )
+            .order_by(self.model.id.asc())
+            .all()
+        )
+
+    def get_involving_user(self, user_id: int, status: Optional[DatasetTransferStatus] = None):
+        query = self.model.query.filter((self.model.from_user_id == user_id) | (self.model.to_user_id == user_id))
+        if status is not None:
+            query = query.filter(self.model.status == status)
+        return query.order_by(self.model.id.desc()).all()
 
 
 class DSDownloadRecordRepository(BaseRepository):
@@ -74,6 +114,21 @@ class DataSetRepository(BaseRepository):
         if dataset and dataset.ds_meta_data.dataset_doi:
             return True
         return False
+
+    def get_by_concept_doi(self, concept_doi: str) -> Optional[DataSet]:
+        """Any dataset carrying this concept DOI, oldest version first.
+
+        One member is enough to walk the lineage, and taking the oldest keeps
+        the answer stable when only some versions store the value.
+        """
+        if not concept_doi:
+            return None
+        return (
+            self.model.query.join(DSMetaData)
+            .filter(DSMetaData.dataset_concept_doi == concept_doi)
+            .order_by(self.model.dataset_version.asc(), self.model.id.asc())
+            .first()
+        )
 
     def _exclude_superseded(self, query):
         """Keep only the latest version of each lineage.

@@ -35,7 +35,25 @@ class ApiKeyService(BaseService):
         return True
 
     def get_valid_key(self, key: str) -> ApiKey | None:
-        return self.repository.get_by_key(key)
+        """Resolve a key only if the account behind it may still act.
+
+        The lookup used to be the bare row, which meant deactivating an account
+        did nothing to its keys: the token kept full write_dataset power, and
+        write_dataset publishes permanent public records to Zenodo. Ownership
+        transfers already refuse to hand a dataset to an inactive account, so
+        the caller's own state is checked here for the same reason, on the way
+        in rather than at each endpoint.
+
+        A key whose owner row is missing is treated as invalid too, since there
+        is then nobody to attribute the request to.
+        """
+        api_key = self.repository.get_by_key(key)
+        if api_key is None:
+            return None
+        owner = api_key.user
+        if owner is None or not owner.active:
+            return None
+        return api_key
 
     def mark_used(self, api_key: ApiKey) -> ApiKey | None:
         return self.repository.update(api_key.id, last_used_at=datetime.now(pytz.utc))
