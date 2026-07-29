@@ -531,10 +531,7 @@ def to_latex_content(file_id):
     selected_file = HubfileService().get_or_404(file_id)
     tex_filename = selected_file.name.replace(".uvl", ".tex")
 
-    return jsonify({
-        "content": latex_content,
-        "filename": tex_filename
-    }), 200
+    return jsonify({"content": latex_content, "filename": tex_filename}), 200
 
 
 @hubfile_bp.route("/hubfile/to_latex_zip/<int:file_id>", methods=["GET"])
