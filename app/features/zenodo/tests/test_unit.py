@@ -212,3 +212,75 @@ def test_update_draft_metadata_raises_on_error(mock_request):
 
     with pytest.raises(Exception):
         ZenodoService().update_draft_metadata(5, {"title": "x"})
+
+
+# --- Concept DOI ---------------------------------------------------------
+
+
+@patch("app.features.zenodo.services.requests.request")
+def test_get_concept_doi_reads_the_conceptdoi_field(mock_request):
+    mock_request.return_value = _response(
+        200, {"id": 9, "doi": "10.5072/zenodo.9", "conceptdoi": "10.5072/zenodo.8", "conceptrecid": "8"}
+    )
+
+    assert ZenodoService().get_concept_doi(9) == "10.5072/zenodo.8"
+
+
+@patch("app.features.zenodo.services.requests.request")
+def test_get_concept_doi_falls_back_to_conceptrecid(mock_request):
+    # Some depositions come back with the concept record id but no conceptdoi;
+    # the concept DOI is then the version DOI with the concept record id.
+    mock_request.return_value = _response(200, {"id": 9, "doi": "10.5072/zenodo.9", "conceptrecid": "8"})
+
+    assert ZenodoService().get_concept_doi(9) == "10.5072/zenodo.8"
+
+
+@patch("app.features.zenodo.services.requests.request")
+def test_get_concept_doi_is_none_when_zenodo_reports_neither(mock_request):
+    mock_request.return_value = _response(200, {"id": 9, "doi": "10.5072/zenodo.9"})
+
+    assert ZenodoService().get_concept_doi(9) is None
+
+
+def test_extract_concept_doi_ignores_blank_values():
+    assert ZenodoService._extract_concept_doi({"conceptdoi": "   ", "doi": "10.5072/zenodo.9"}) is None
+
+
+def test_extract_concept_doi_needs_a_parseable_version_doi_for_the_fallback():
+    assert ZenodoService._extract_concept_doi({"conceptrecid": "8", "doi": "not-a-doi"}) is None
+
+
+def test_extract_concept_doi_drops_a_value_that_does_not_fit_the_column():
+    # ds_meta_data.dataset_concept_doi is 120 characters. Returning a longer
+    # value would blow up the UPDATE that runs after the version DOI has
+    # already been minted and committed.
+    oversized = "10.5072/zenodo." + "9" * 120
+
+    assert ZenodoService._extract_concept_doi({"conceptdoi": oversized, "doi": "10.5072/zenodo.9"}) is None
+    assert ZenodoService._extract_concept_doi({"conceptdoi": "10.5072/zenodo.8", "doi": "10.5072/zenodo.9"}) == (
+        "10.5072/zenodo.8"
+    )
+
+
+# --- API provenance -------------------------------------------------------
+
+
+def test_build_metadata_records_the_publishing_account_when_it_came_from_the_api():
+    # Author credit sent by an API client is a claim about somebody else, and a
+    # Zenodo DOI is permanent, so the record has to say where the claim came
+    # from. Only the account id travels: enough to trace it, without putting an
+    # email address on a public page.
+    dataset = _dataset(authors=[SimpleNamespace(name="Ada", affiliation=None, orcid=None)])
+    dataset.ds_meta_data.api_publisher_user_id = 42
+
+    notes = ZenodoService().build_metadata(dataset)["notes"]
+
+    assert "uvlhub account 42" in notes
+    assert "not verified by uvlhub" in notes
+
+
+def test_build_metadata_adds_no_provenance_note_for_a_web_upload():
+    dataset = _dataset()
+    dataset.ds_meta_data.api_publisher_user_id = None
+
+    assert "notes" not in ZenodoService().build_metadata(dataset)

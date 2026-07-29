@@ -45,3 +45,23 @@ def test_check_uvl_reports_internal_error_for_a_missing_file(test_app):
 
     assert status == 500
     assert "error" in payload
+
+
+def test_check_uvl_reports_syntax_errors_for_an_invalid_model(test_app, tmp_path):
+    bad = tmp_path / "bad.uvl"
+    bad.write_text("this is not a uvl model {{{\n")
+
+    payload, status = FlamapyService().check_uvl(str(bad))
+
+    assert status == 400
+    assert payload["errors"]
+
+
+def test_check_uvl_accepts_a_valid_model(test_app, tmp_path):
+    good = tmp_path / "good.uvl"
+    good.write_text("features\n    Root\n")
+
+    payload, status = FlamapyService().check_uvl(str(good))
+
+    assert status == 200
+    assert "message" in payload

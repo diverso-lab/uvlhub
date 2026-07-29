@@ -13,6 +13,9 @@ logger = logging.getLogger(__name__)
 
 load_dotenv()
 
+# Mirrors the width of ds_meta_data.dataset_concept_doi.
+CONCEPT_DOI_MAX_LENGTH = 120
+
 
 class ZenodoUnavailableError(Exception):
     pass
@@ -215,7 +218,31 @@ class ZenodoService:
         if version_tag:
             metadata["version"] = str(version_tag)
 
+        provenance = self.build_api_provenance_note(dataset)
+        if provenance:
+            metadata["notes"] = provenance
+
         return metadata
+
+    @staticmethod
+    def build_api_provenance_note(dataset: DataSet) -> str | None:
+        """Say, on the record itself, who published it through the API.
+
+        Author credit sent by an API client is a claim about somebody else, and
+        a Zenodo DOI is permanent. Without this the record carries a name and
+        possibly an ORCID with no indication of where the attribution came
+        from, so it can be neither traced nor contested. Web uploads are
+        already attributed to the account that filled the form, and get no
+        note. Only the account id is published: it identifies the publisher for
+        uvlhub staff without putting an email address on a public page.
+        """
+        publisher_id = getattr(dataset.ds_meta_data, "api_publisher_user_id", None)
+        if not isinstance(publisher_id, int):
+            return None
+        return (
+            f"Published through the uvlhub API by uvlhub account {publisher_id}. "
+            "The author credit on this record was supplied by that client and is not verified by uvlhub."
+        )
 
     def create_new_deposition(self, dataset: DataSet, anonymous: bool = False) -> dict:
         """
@@ -408,6 +435,61 @@ class ZenodoService:
         """
         return self.get_deposition(deposition_id).get("doi")
 
+    def get_concept_doi(self, deposition_id: int) -> str | None:
+        """Get the concept DOI of a deposition from Zenodo.
+
+        The concept DOI is the permanent identifier of the whole version
+        lineage: it always resolves to the newest version, while the version
+        DOI returned by ``get_doi`` pins one specific version.
+
+        Zenodo exposes it as ``conceptdoi``; when only the numeric
+        ``conceptrecid`` is present it is expanded with the same DOI prefix as
+        the version DOI. Returns None when Zenodo reports neither, which is a
+        tolerated state: the dataset keeps working without it.
+
+        Args:
+            deposition_id (int): The ID of the deposition in Zenodo.
+
+        Returns:
+            str | None: The concept DOI of the deposition, or None.
+        """
+        return self._extract_concept_doi(self.get_deposition(deposition_id))
+
+    @staticmethod
+    def _extract_concept_doi(deposition: dict) -> str | None:
+        concept_doi = (deposition.get("conceptdoi") or "").strip()
+        if concept_doi:
+            return ZenodoService._fit_concept_doi(concept_doi)
+
+        concept_recid = str(deposition.get("conceptrecid") or "").strip()
+        version_doi = (deposition.get("doi") or "").strip()
+        if concept_recid and "/" in version_doi:
+            prefix, _, suffix = version_doi.partition("/")
+            # Zenodo suffixes look like "zenodo.<recid>"; keep the same shape.
+            namespace = suffix.rpartition(".")[0]
+            if namespace:
+                return ZenodoService._fit_concept_doi(f"{prefix}/{namespace}.{concept_recid}")
+        return None
+
+    @staticmethod
+    def _fit_concept_doi(concept_doi: str) -> str | None:
+        """Drop a concept DOI that cannot be stored.
+
+        ``ds_meta_data.dataset_concept_doi`` is 120 characters. A longer value
+        would blow up on INSERT after the version DOI is already committed, and
+        the concept DOI is an optimisation, not a requirement, so an unusable
+        one is discarded with a warning instead.
+        """
+        if len(concept_doi) > CONCEPT_DOI_MAX_LENGTH:
+            logger.warning(
+                "[ZENODO] Ignoring a concept DOI of %s characters (max %s): %s",
+                len(concept_doi),
+                CONCEPT_DOI_MAX_LENGTH,
+                concept_doi[:60],
+            )
+            return None
+        return concept_doi
+
     def create_new_version_draft(self, prev_deposition_id: int) -> int:
         """Create a new-version draft of a published deposition (newversion action).
 
@@ -505,6 +587,9 @@ class ZenodoDatasetService:
                 self.dataset_service.update_dsmetadata(ds_meta.id, dataset_doi=doi)
                 dataset = self.dataset_service.get_by_id(dataset.id)
                 self.logger.info(f"[ZENODO] Dataset {dataset.id} published with DOI: {doi}")
+                # Concept DOI: the permanent handle of the lineage. Best effort,
+                # the record is already published if Zenodo does not return it.
+                self.dataset_service.resolve_and_store_concept_doi(dataset, self.zenodo_service, deposition_id)
             else:
                 self.logger.warning(f"[ZENODO] No DOI received for deposition {deposition_id}")
 

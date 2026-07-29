@@ -15,6 +15,7 @@ from flask import (
     abort,
     current_app,
     flash,
+    g,
     jsonify,
     make_response,
     redirect,
@@ -30,7 +31,7 @@ from qrcode.image.styledpil import StyledPilImage
 from qrcode.image.styles.moduledrawers.pil import RoundedModuleDrawer
 from werkzeug.utils import secure_filename
 
-from app.features.apikeys.decorators import require_api_key
+from app.features.apikeys.decorators import require_api_key, resolve_api_key
 from app.features.auth.services import AuthenticationService
 from app.features.dataset import dataset_bp, fair_metadata
 from app.features.dataset.decorators import is_dataset_owner
@@ -40,6 +41,7 @@ from app.features.dataset.services import (
     AuthorService,
     DatasetMetadataUpdateError,
     DatasetMetadataValidationError,
+    DatasetOwnershipError,
     DataSetService,
     DOIMappingService,
     DSDownloadRecordService,
@@ -50,6 +52,7 @@ from app.features.dataset.services import (
 from app.features.elasticsearch.services import IndexingService
 from app.features.elasticsearch.utils import index_dataset, index_hubfile
 from app.features.featuremodel.services import FeatureModelService
+from app.features.flamapy.services import FlamapyService
 from app.features.hubfile.services import HubfileService
 from app.features.zenodo.services import ZenodoDatasetService, ZenodoService
 
@@ -65,6 +68,7 @@ ds_view_record_service = DSViewRecordService()
 ds_download_record_service = DSDownloadRecordService()
 hubfile_service = HubfileService()
 authentication_service = AuthenticationService()
+flamapy_service = FlamapyService()
 
 
 def _import_remote_uvl_to_temp(import_url: str, user) -> dict:
@@ -793,6 +797,99 @@ def sync_dataset(dataset_id):
 
 # REST API
 
+# Hard cap for UVL payloads on the API-key write endpoints: the synchronous
+# flamapy check parses slowly and with heavy memory amplification, so oversized
+# models are rejected before reaching the parser.
+UVL_MAX_BYTES = 1 * 1024 * 1024
+
+
+def _check_uvl_content(uvl_content: str, filename: str | None) -> str | None:
+    """Run the synchronous flamapy syntax check on raw UVL content.
+
+    Returns None when the model parses, or a human-readable error message
+    otherwise. The content is staged in a temp file because check_uvl works
+    on file paths.
+    """
+    safe_name = secure_filename(os.path.basename(filename or "model.uvl")) or "model.uvl"
+    if not safe_name.lower().endswith(".uvl"):
+        safe_name = f"{safe_name}.uvl"
+
+    check_dir = tempfile.mkdtemp(prefix="uvl_check_")
+    try:
+        check_path = os.path.join(check_dir, safe_name)
+        with open(check_path, "w", encoding="utf-8", newline="\n") as check_file:
+            check_file.write(uvl_content or "")
+        result, status_code = flamapy_service.check_uvl(check_path)
+        if status_code == 200:
+            return None
+        errors = result.get("errors") or [result.get("error") or "Invalid UVL model."]
+        return " ".join(errors)
+    finally:
+        shutil.rmtree(check_dir, ignore_errors=True)
+
+
+def _api_version_entry(dataset: DataSet, latest_id: int) -> dict:
+    """One node of a version lineage as returned by the API.
+
+    ``publication_date`` is the moment the version record was created, which is
+    when it was published for datasets minted through the API. It is null while
+    a version has no DOI, so an unpublished draft never looks published.
+    """
+    doi = dataset.ds_meta_data.dataset_doi
+    return {
+        "dataset_id": dataset.id,
+        "version": dataset.dataset_version,
+        "doi": doi,
+        "publication_date": dataset.created_at.isoformat() if (doi and dataset.created_at) else None,
+        "created_at": dataset.created_at.isoformat() if dataset.created_at else None,
+        "is_latest": dataset.id == latest_id,
+    }
+
+
+def _api_latest_of(lineage: list[DataSet]) -> DataSet:
+    """The version a client should be sent to.
+
+    Published versions win over unpublished ones. The last element of the
+    lineage is not good enough on its own: a version whose publication failed
+    would be advertised as the newest record with a null DOI, sending clients
+    at something that does not exist on Zenodo.
+    """
+    published = [dataset for dataset in lineage if dataset.ds_meta_data.dataset_doi]
+    return (published or lineage)[-1]
+
+
+def _api_lineage_payload(lineage: list[DataSet]) -> dict:
+    """Serialize a whole version lineage, oldest first."""
+    latest = _api_latest_of(lineage)
+    concept_doi = next(
+        (ds.ds_meta_data.dataset_concept_doi for ds in lineage if ds.ds_meta_data.dataset_concept_doi),
+        None,
+    )
+    return {
+        "concept_doi": concept_doi,
+        "total_versions": len(lineage),
+        "latest": {
+            "dataset_id": latest.id,
+            "version": latest.dataset_version,
+            "doi": latest.ds_meta_data.dataset_doi,
+        },
+        "versions": [_api_version_entry(dataset, latest.id) for dataset in lineage],
+    }
+
+
+def _api_dataset_files_payload(dataset: DataSet) -> list[dict]:
+    """Serialize a dataset's files for API responses, with the public raw URL
+    (/doi/<doi>/files/raw/<name>/) when the dataset has a DOI."""
+    doi = dataset.ds_meta_data.dataset_doi
+    host_url = request.host_url.rstrip("/")
+    files = []
+    for hubfile in dataset.files():
+        entry = {"name": hubfile.name}
+        if doi:
+            entry["raw_url"] = f"{host_url}/doi/{doi}/files/raw/{hubfile.name}/"
+        files.append(entry)
+    return files
+
 
 @dataset_bp.route("/api/v1/datasets/upload", methods=["POST"])
 def api_upload_dataset():
@@ -801,6 +898,8 @@ def api_upload_dataset():
     ---
     tags:
       - Datasets
+    security:
+      - ApiKeyAuth: []
     consumes:
       - multipart/form-data
       - application/json
@@ -830,16 +929,46 @@ def api_upload_dataset():
         type: string
         required: false
         description: Raw UVL content when no file is provided.
+      - name: authors
+        in: formData
+        type: string
+        required: false
+        description: >
+          Optional JSON array of authors to credit, each with name (required),
+          affiliation and orcid; a plain string entry is read as a name. In a
+          JSON body it is a real array. When omitted, the dataset is credited
+          to the account owning the request, exactly as before. These authors
+          are the creators sent to Zenodo on publication. An orcid is only
+          accepted when that ORCID has signed in to uvlhub at least once, since
+          it becomes a permanent public link to a named researcher; authors
+          without one are credited by name. The publishing account is recorded
+          and published in the Zenodo record's notes.
     responses:
       201:
         description: Draft dataset created successfully
       400:
-        description: Invalid import payload
+        description: >
+          Invalid import payload, invalid or unverifiable author data, or UVL
+          that does not parse
       401:
         description: Authentication required
+      403:
+        description: API key invalid or missing the write_dataset scope
+      413:
+        description: UVL payload exceeds the 1 MB limit
     """
 
+    # Two auth mechanisms: the flamapyIDE session (cookie) and an API key with
+    # the write_dataset scope. Only the API-key path runs the synchronous
+    # flamapy check, so the IDE flow keeps its current behaviour.
     authenticated_user = authentication_service.get_authenticated_user()
+    api_key_user = None
+    if not authenticated_user and request.headers.get("X-API-Key"):
+        _, api_key_error = resolve_api_key("write_dataset")
+        if api_key_error:
+            return api_key_error
+        api_key_user = g.api_user
+        authenticated_user = api_key_user
     if not authenticated_user:
         payload, status_code = authentication_service.get_flamapy_ide_auth_status_payload()
         return jsonify(payload), status_code
@@ -863,6 +992,21 @@ def api_upload_dataset():
         inferred_filename = filename or "model.uvl"
         title = os.path.splitext(os.path.basename(inferred_filename))[0].replace("_", " ").strip() or "Imported model"
 
+    if api_key_user is not None and (uvl_content or "").strip():
+        if len(uvl_content.encode("utf-8")) > UVL_MAX_BYTES:
+            return jsonify({"error": "UVL file too large (max 1 MB)."}), 413
+        uvl_error = _check_uvl_content(uvl_content, filename)
+        if uvl_error:
+            return jsonify({"error": uvl_error}), 400
+
+    # Optional credit: the marketplace publishes with its own key while the
+    # dataset is attributed to the real developer. Validated before anything
+    # is written, same discipline as the UVL payload.
+    try:
+        authors = dataset_service.extract_authors_from_request(payload, request.form)
+    except DatasetMetadataValidationError as exc:
+        return jsonify({"error": str(exc)}), 400
+
     try:
         dataset, created_fms = dataset_service.create_draft_from_uvl_import(
             current_user=authenticated_user,
@@ -870,6 +1014,8 @@ def api_upload_dataset():
             uvl_content=uvl_content,
             filename=filename,
             description=description,
+            authors=authors,
+            api_publisher=api_key_user,
         )
     except DatasetMetadataValidationError as exc:
         return jsonify({"error": str(exc)}), 400
@@ -883,6 +1029,7 @@ def api_upload_dataset():
                 "message": "Dataset draft created successfully.",
                 "dataset_id": dataset.id,
                 "feature_models_created": len(created_fms),
+                "authors": [author.to_dict() for author in dataset.ds_meta_data.authors],
                 "edit_url": url_for("dataset.edit_metadata", dataset_id=dataset.id, _external=True),
                 "view_url": url_for("dataset.get_unsynchronized_dataset", dataset_id=dataset.id, _external=True),
                 "list_url": url_for("dataset.list_dataset", _external=True),
@@ -890,6 +1037,881 @@ def api_upload_dataset():
         ),
         201,
     )
+
+
+@dataset_bp.route("/api/v1/datasets/<int:dataset_id>/publish", methods=["POST"])
+@require_api_key("write_dataset")
+def api_publish_dataset(dataset_id):
+    """
+    Publish a draft dataset to Zenodo
+    ---
+    tags:
+      - Datasets
+    security:
+      - ApiKeyAuth: []
+    parameters:
+      - name: dataset_id
+        in: path
+        type: integer
+        required: true
+        description: ID of the draft dataset to publish
+    responses:
+      200:
+        description: Dataset published and indexed
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                doi:
+                  type: string
+                concept_doi:
+                  type: string
+                  nullable: true
+                  description: Permanent DOI of the lineage, always resolving to the newest version
+                deposition_id:
+                  type: integer
+                files:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      raw_url:
+                        type: string
+              example:
+                doi: "10.5072/zenodo.123"
+                concept_doi: "10.5072/zenodo.122"
+                deposition_id: 123
+                files:
+                  - name: "model.uvl"
+                    raw_url: "https://www.uvlhub.io/doi/10.5072/zenodo.123/files/raw/model.uvl/"
+      400:
+        description: Dataset already published or Zenodo upload failed
+      403:
+        description: API key invalid, missing write_dataset scope, or not the dataset owner
+      404:
+        description: Dataset not found
+    """
+    dataset = dataset_service.get_by_id(dataset_id)
+    if not dataset:
+        return jsonify({"error": "Dataset not found"}), 404
+    if dataset.user_id != g.api_user.id:
+        return jsonify({"error": "Forbidden: you do not own this dataset"}), 403
+    if dataset.ds_meta_data.dataset_doi:
+        return jsonify({"error": "Dataset already synchronized"}), 400
+
+    zenodo_service_facade = ZenodoDatasetService(zenodo_service, dataset_service, logger)
+    try:
+        doi = zenodo_service_facade.upload_to_zenodo(dataset, dataset.ds_meta_data, "zenodo", g.api_user)
+    except Exception as exc:
+        logger.exception(f"[API PUBLISH ERROR] {exc}")
+        return jsonify({"error": f"Zenodo upload failed: {exc}"}), 400
+
+    indexing_service = IndexingService(index_dataset, index_hubfile, logger)
+    try:
+        dataset = dataset_service.get_by_id(dataset_id)
+        indexing_service.index_dataset_and_hubfiles(dataset, dataset.feature_models)
+    except Exception as exc:
+        logger.warning(f"[API PUBLISH] Dataset {dataset_id} published, but indexing failed: {exc}")
+
+    return (
+        jsonify(
+            {
+                "message": "Dataset published successfully.",
+                "dataset_id": dataset.id,
+                "doi": doi,
+                "concept_doi": dataset.ds_meta_data.dataset_concept_doi,
+                "deposition_id": dataset.ds_meta_data.deposition_id,
+                "files": _api_dataset_files_payload(dataset),
+            }
+        ),
+        200,
+    )
+
+
+@dataset_bp.route("/api/v1/datasets/<int:dataset_id>/new-version", methods=["POST"])
+@require_api_key("write_dataset")
+def api_new_dataset_version(dataset_id):
+    """
+    Publish a new version of a published dataset with a replaced UVL
+    ---
+    tags:
+      - Datasets
+    security:
+      - ApiKeyAuth: []
+    consumes:
+      - multipart/form-data
+    parameters:
+      - name: dataset_id
+        in: path
+        type: integer
+        required: true
+        description: ID of the published dataset to version
+      - name: file
+        in: formData
+        type: file
+        required: true
+        description: Replacement .uvl file for the new version
+    responses:
+      200:
+        description: New version published to Zenodo
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                doi:
+                  type: string
+                concept_doi:
+                  type: string
+                  nullable: true
+                  description: Same permanent DOI as every other version of this dataset
+                version:
+                  type: integer
+                files:
+                  type: array
+                  items:
+                    type: object
+              example:
+                doi: "10.5072/zenodo.124"
+                concept_doi: "10.5072/zenodo.122"
+                version: 2
+                files:
+                  - name: "model_v2.uvl"
+                    raw_url: "https://www.uvlhub.io/doi/10.5072/zenodo.124/files/raw/model_v2.uvl/"
+      400:
+        description: Missing or invalid .uvl file, dataset not published yet, or Zenodo failure
+      403:
+        description: API key invalid, missing write_dataset scope, or not the dataset owner
+      404:
+        description: Dataset not found
+      413:
+        description: UVL payload exceeds the 1 MB limit
+    """
+    dataset = dataset_service.get_by_id(dataset_id)
+    if not dataset:
+        return jsonify({"error": "Dataset not found"}), 404
+    if dataset.user_id != g.api_user.id:
+        return jsonify({"error": "Forbidden: you do not own this dataset"}), 403
+
+    uploaded_file = request.files.get("file")
+    if uploaded_file is None:
+        return jsonify({"error": "A .uvl file is required."}), 400
+
+    # Validate the replacement UVL before touching Zenodo: a new version mints
+    # a permanent DOI, so garbage must be rejected here.
+    raw_content = uploaded_file.read()
+    if len(raw_content) > UVL_MAX_BYTES:
+        return jsonify({"error": "UVL file too large (max 1 MB)."}), 413
+    try:
+        uvl_content = raw_content.decode("utf-8")
+    except UnicodeDecodeError:
+        return jsonify({"error": "UVL file must be UTF-8 encoded."}), 400
+    uvl_error = _check_uvl_content(uvl_content, uploaded_file.filename)
+    if uvl_error:
+        return jsonify({"error": uvl_error}), 400
+    # create_new_version re-reads the file, so rewind after the checks.
+    uploaded_file.stream.seek(0)
+
+    try:
+        new_dataset = dataset_service.create_new_version(
+            dataset, uploaded_file, g.api_user, zenodo_service=zenodo_service
+        )
+    except (DatasetMetadataValidationError, DatasetMetadataUpdateError) as exc:
+        return jsonify({"error": str(exc)}), 400
+    except Exception as exc:  # noqa: BLE001 - surface Zenodo/versioning failures to the client
+        logger.exception("[API NEW VERSION] Unexpected error for dataset %s", dataset_id)
+        return jsonify({"error": f"Unexpected error creating the new version: {exc}"}), 400
+
+    indexing_service = IndexingService(index_dataset, index_hubfile, logger)
+    try:
+        indexing_service.index_dataset_and_hubfiles(new_dataset, new_dataset.feature_models)
+    except Exception as exc:
+        logger.warning(f"[API NEW VERSION] Dataset {new_dataset.id} versioned, but indexing failed: {exc}")
+
+    return (
+        jsonify(
+            {
+                "message": "New version published to Zenodo.",
+                "dataset_id": new_dataset.id,
+                "doi": new_dataset.ds_meta_data.dataset_doi,
+                "concept_doi": new_dataset.ds_meta_data.dataset_concept_doi,
+                "version": new_dataset.dataset_version,
+                "files": _api_dataset_files_payload(new_dataset),
+            }
+        ),
+        200,
+    )
+
+
+def _resolve_transfer_target(payload: dict):
+    """Find the account a transfer is aimed at, or an error response.
+
+    ``user_id`` is parsed strictly. A permissive ``int()`` accepts JSON true
+    (1) and 1.9 (1), which would offer the dataset to whichever account holds
+    that id instead of failing, so anything that is not a whole number is
+    rejected outright.
+    """
+    raw_user_id = payload.get("user_id", request.form.get("user_id"))
+    raw_email = payload.get("email", request.form.get("email"))
+
+    if raw_user_id not in (None, ""):
+        user_id = _parse_strict_int(raw_user_id)
+        if user_id is None:
+            return None, (jsonify({"error": "user_id must be an integer."}), 400)
+        return authentication_service.get_by_id(user_id), None
+
+    if raw_email:
+        if not isinstance(raw_email, str):
+            return None, (jsonify({"error": "email must be a string."}), 400)
+        # active=None so a deactivated account is reported as such instead of
+        # looking like a typo in the email.
+        return authentication_service.get_by_email(raw_email, active=None), None
+
+    return None, (jsonify({"error": "A target account is required (user_id or email)."}), 400)
+
+
+def _parse_strict_int(value):
+    """Whole numbers only, in either JSON or form shape.
+
+    bool is a subclass of int in Python and float truncates, so both slip past
+    ``int(value)`` untouched and hand the dataset to the wrong account. Only an
+    actual integer, or a string of digits, is accepted.
+    """
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str):
+        text = value.strip()
+        if text.lstrip("+-").isdigit():
+            return int(text)
+    return None
+
+
+def _transfer_payload(transfer, extra: dict | None = None) -> dict:
+    body = transfer.to_dict()
+    if extra:
+        body.update(extra)
+    return body
+
+
+@dataset_bp.route("/api/v1/datasets/<int:dataset_id>/transfer", methods=["POST"])
+@require_api_key("write_dataset")
+def api_transfer_dataset_ownership(dataset_id):
+    """
+    Offer a dataset and its whole version lineage to another account
+    ---
+    tags:
+      - Datasets
+    security:
+      - ApiKeyAuth: []
+    consumes:
+      - application/json
+      - multipart/form-data
+    parameters:
+      - name: dataset_id
+        in: path
+        type: integer
+        required: true
+        description: ID of any version of the lineage to transfer
+      - name: user_id
+        in: formData
+        type: integer
+        required: false
+        description: ID of the account the dataset is offered to
+      - name: email
+        in: formData
+        type: string
+        required: false
+        description: Email of the account the dataset is offered to, when user_id is not known
+      - name: message
+        in: formData
+        type: string
+        required: false
+        description: Optional note shown to the receiving account
+    responses:
+      202:
+        description: >
+          Offer created and waiting for the receiving account to answer.
+          Nothing has changed owner yet.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                transfer_id:
+                  type: integer
+                status:
+                  type: string
+                dataset_id:
+                  type: integer
+                from_user_id:
+                  type: integer
+                to_user_id:
+                  type: integer
+                lineage_dataset_ids:
+                  type: array
+                  items:
+                    type: integer
+              example:
+                message: "Transfer offered. It moves once the receiving account accepts."
+                transfer_id: 12
+                status: "pending"
+                dataset_id: 4
+                from_user_id: 1
+                to_user_id: 7
+                lineage_dataset_ids: [4, 9]
+      400:
+        description: >
+          No target account given, target equals the current owner, an offer is
+          already pending, or the lineage cannot be moved
+      403:
+        description: API key invalid, missing write_dataset scope, or not the dataset owner
+      404:
+        description: Dataset or target account not found
+    """
+    dataset = dataset_service.get_by_id(dataset_id)
+    if not dataset:
+        return jsonify({"error": "Dataset not found"}), 404
+    if dataset.user_id != g.api_user.id:
+        return jsonify({"error": "Forbidden: you do not own this dataset"}), 403
+
+    payload = request.get_json(silent=True) if request.is_json else {}
+    payload = payload or {}
+
+    new_owner, error = _resolve_transfer_target(payload)
+    if error:
+        return error
+    if new_owner is None:
+        return jsonify({"error": "Target account not found"}), 404
+    if not new_owner.active:
+        return jsonify({"error": "The target account is not active."}), 400
+
+    note = payload.get("message", request.form.get("message"))
+    if note is not None and not isinstance(note, str):
+        return jsonify({"error": "message must be a string."}), 400
+
+    try:
+        transfer = dataset_service.request_ownership_transfer(dataset, g.api_user, new_owner, message=note)
+    except DatasetOwnershipError as exc:
+        return jsonify({"error": str(exc)}), 400
+    except Exception as exc:  # noqa: BLE001 - surface storage/DB failures to the client
+        logger.exception("[API TRANSFER] Unexpected error offering dataset %s", dataset_id)
+        return jsonify({"error": f"Unexpected error offering the transfer: {exc}"}), 400
+
+    lineage = dataset_service.get_lineage(dataset)
+    return (
+        jsonify(
+            _transfer_payload(
+                transfer,
+                {
+                    "message": "Transfer offered. It moves once the receiving account accepts.",
+                    "lineage_dataset_ids": [version.id for version in lineage],
+                },
+            )
+        ),
+        202,
+    )
+
+
+@dataset_bp.route("/api/v1/datasets/transfers", methods=["GET"])
+@require_api_key("read_dataset")
+def api_list_dataset_transfers():
+    """
+    List the dataset transfers this account sent or received
+    ---
+    tags:
+      - Datasets
+    security:
+      - ApiKeyAuth: []
+    parameters:
+      - name: status
+        in: query
+        type: string
+        required: false
+        description: Filter by status (pending, accepted, declined, cancelled)
+    responses:
+      200:
+        description: Transfers involving this account, newest first
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                incoming:
+                  type: array
+                  items:
+                    type: object
+                outgoing:
+                  type: array
+                  items:
+                    type: object
+              example:
+                incoming:
+                  - transfer_id: 12
+                    dataset_id: 4
+                    from_user_id: 1
+                    to_user_id: 7
+                    status: "pending"
+                    message: null
+                    created_at: "2026-07-26T10:00:00+00:00"
+                    resolved_at: null
+                outgoing: []
+      400:
+        description: Unknown status filter
+      403:
+        description: API key invalid or missing the read_dataset scope
+    """
+    try:
+        transfers = dataset_service.get_transfer_requests_for_user(g.api_user.id, request.args.get("status"))
+    except DatasetOwnershipError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    return jsonify(
+        {
+            "incoming": [t.to_dict() for t in transfers if t.to_user_id == g.api_user.id],
+            "outgoing": [t.to_dict() for t in transfers if t.from_user_id == g.api_user.id],
+        }
+    )
+
+
+def _load_transfer_or_error(transfer_id):
+    transfer = dataset_service.get_transfer_request(transfer_id)
+    if transfer is None:
+        return None, (jsonify({"error": "Transfer not found"}), 404)
+    if g.api_user.id not in (transfer.from_user_id, transfer.to_user_id):
+        # Not a party to it, so it does not exist as far as this key is concerned.
+        return None, (jsonify({"error": "Transfer not found"}), 404)
+    return transfer, None
+
+
+@dataset_bp.route("/api/v1/datasets/transfers/<int:transfer_id>/accept", methods=["POST"])
+@require_api_key("write_dataset")
+def api_accept_dataset_transfer(transfer_id):
+    """
+    Accept a dataset offered to this account and take over its whole lineage
+    ---
+    tags:
+      - Datasets
+    security:
+      - ApiKeyAuth: []
+    parameters:
+      - name: transfer_id
+        in: path
+        type: integer
+        required: true
+        description: ID of the pending transfer
+    responses:
+      200:
+        description: Ownership transferred
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                transfer_id:
+                  type: integer
+                status:
+                  type: string
+                previous_owner_id:
+                  type: integer
+                new_owner_id:
+                  type: integer
+                transferred_dataset_ids:
+                  type: array
+                  items:
+                    type: integer
+              example:
+                message: "Ownership transferred."
+                transfer_id: 12
+                status: "accepted"
+                dataset_id: 4
+                previous_owner_id: 1
+                new_owner_id: 7
+                transferred_dataset_ids: [4, 9]
+      400:
+        description: Transfer already resolved, or the lineage cannot be moved
+      403:
+        description: API key invalid, missing write_dataset scope, or not the receiving account
+      404:
+        description: Transfer not found
+    """
+    transfer, error = _load_transfer_or_error(transfer_id)
+    if error:
+        return error
+    if transfer.to_user_id != g.api_user.id:
+        return jsonify({"error": "Forbidden: this dataset was not offered to you"}), 403
+
+    previous_owner_id = transfer.from_user_id
+    try:
+        lineage = dataset_service.accept_ownership_transfer(transfer, g.api_user)
+    except DatasetOwnershipError as exc:
+        return jsonify({"error": str(exc)}), 400
+    except Exception as exc:  # noqa: BLE001 - surface storage/DB failures to the client
+        logger.exception("[API TRANSFER] Unexpected error accepting transfer %s", transfer_id)
+        return jsonify({"error": f"Unexpected error transferring ownership: {exc}"}), 400
+
+    return (
+        jsonify(
+            _transfer_payload(
+                transfer,
+                {
+                    "message": "Ownership transferred.",
+                    "previous_owner_id": previous_owner_id,
+                    "new_owner_id": g.api_user.id,
+                    "transferred_dataset_ids": [version.id for version in lineage],
+                    "versions": _api_lineage_payload(lineage)["versions"],
+                },
+            )
+        ),
+        200,
+    )
+
+
+@dataset_bp.route("/api/v1/datasets/transfers/<int:transfer_id>/decline", methods=["POST"])
+@require_api_key("write_dataset")
+def api_decline_dataset_transfer(transfer_id):
+    """
+    Decline a dataset offered to this account
+    ---
+    tags:
+      - Datasets
+    security:
+      - ApiKeyAuth: []
+    parameters:
+      - name: transfer_id
+        in: path
+        type: integer
+        required: true
+        description: ID of the pending transfer
+    responses:
+      200:
+        description: Offer declined, nothing changed owner
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                message: "Transfer declined."
+                transfer_id: 12
+                status: "declined"
+                dataset_id: 4
+      400:
+        description: Transfer already resolved
+      403:
+        description: API key invalid, missing write_dataset scope, or not the receiving account
+      404:
+        description: Transfer not found
+    """
+    transfer, error = _load_transfer_or_error(transfer_id)
+    if error:
+        return error
+    if transfer.to_user_id != g.api_user.id:
+        return jsonify({"error": "Forbidden: this dataset was not offered to you"}), 403
+
+    try:
+        dataset_service.decline_ownership_transfer(transfer, g.api_user)
+    except DatasetOwnershipError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    return jsonify(_transfer_payload(transfer, {"message": "Transfer declined."})), 200
+
+
+@dataset_bp.route("/api/v1/datasets/transfers/<int:transfer_id>/cancel", methods=["POST"])
+@require_api_key("write_dataset")
+def api_cancel_dataset_transfer(transfer_id):
+    """
+    Withdraw a transfer this account offered
+    ---
+    tags:
+      - Datasets
+    security:
+      - ApiKeyAuth: []
+    parameters:
+      - name: transfer_id
+        in: path
+        type: integer
+        required: true
+        description: ID of the pending transfer
+    responses:
+      200:
+        description: Offer withdrawn
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                message: "Transfer cancelled."
+                transfer_id: 12
+                status: "cancelled"
+                dataset_id: 4
+      400:
+        description: Transfer already resolved
+      403:
+        description: API key invalid, missing write_dataset scope, or not the offering account
+      404:
+        description: Transfer not found
+    """
+    transfer, error = _load_transfer_or_error(transfer_id)
+    if error:
+        return error
+    if transfer.from_user_id != g.api_user.id:
+        return jsonify({"error": "Forbidden: you did not offer this dataset"}), 403
+
+    try:
+        dataset_service.cancel_ownership_transfer(transfer, g.api_user)
+    except DatasetOwnershipError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    return jsonify(_transfer_payload(transfer, {"message": "Transfer cancelled."})), 200
+
+
+@dataset_bp.route("/api/v1/datasets/doi/<path:doi>", methods=["GET"])
+@require_api_key("read_dataset")
+def api_dataset_by_doi(doi):
+    """
+    Get a dataset by DOI
+    ---
+    tags:
+      - Datasets
+    security:
+      - ApiKeyAuth: []
+    parameters:
+      - name: doi
+        in: path
+        type: string
+        required: true
+        description: DOI of the dataset to retrieve
+    responses:
+      200:
+        description: Dataset matching the DOI, with its position in the version lineage
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                dataset_id:
+                  type: integer
+                doi:
+                  type: string
+                title:
+                  type: string
+                concept_doi:
+                  type: string
+                  nullable: true
+                  description: Permanent DOI of the lineage, always resolving to the newest version
+                version:
+                  type: integer
+                is_latest:
+                  type: boolean
+                latest:
+                  type: object
+                  properties:
+                    dataset_id:
+                      type: integer
+                    version:
+                      type: integer
+                    doi:
+                      type: string
+                      nullable: true
+                files:
+                  type: array
+                  items:
+                    type: object
+              example:
+                dataset_id: 4
+                doi: "10.5072/zenodo.123"
+                title: "My Dataset"
+                concept_doi: "10.5072/zenodo.122"
+                version: 1
+                is_latest: false
+                latest:
+                  dataset_id: 9
+                  version: 2
+                  doi: "10.5072/zenodo.456"
+                files:
+                  - name: "model.uvl"
+                    raw_url: "https://www.uvlhub.io/doi/10.5072/zenodo.123/files/raw/model.uvl/"
+      404:
+        description: No dataset with that DOI
+    """
+    ds_meta_data = dsmetadata_service.filter_by_doi(doi)
+    if not ds_meta_data or not ds_meta_data.dataset:
+        return jsonify({"error": "Dataset not found"}), 404
+
+    dataset = ds_meta_data.dataset
+    lineage = dataset_service.get_lineage(dataset)
+    lineage_payload = _api_lineage_payload(lineage)
+
+    # Additive only: dataset_id, doi, title and files keep their meaning and
+    # position so existing clients are unaffected.
+    return jsonify(
+        {
+            "dataset_id": dataset.id,
+            "doi": ds_meta_data.dataset_doi,
+            "title": ds_meta_data.title,
+            "files": _api_dataset_files_payload(dataset),
+            "concept_doi": lineage_payload["concept_doi"],
+            "version": dataset.dataset_version,
+            "total_versions": lineage_payload["total_versions"],
+            "is_latest": dataset.id == lineage_payload["latest"]["dataset_id"],
+            "latest": lineage_payload["latest"],
+            "versions_url": url_for("dataset.api_dataset_versions", dataset_id=dataset.id, _external=True),
+        }
+    )
+
+
+@dataset_bp.route("/api/v1/datasets/<int:dataset_id>/versions", methods=["GET"])
+@require_api_key("read_dataset")
+def api_dataset_versions(dataset_id):
+    """
+    List the whole version lineage of a dataset
+    ---
+    tags:
+      - Datasets
+    security:
+      - ApiKeyAuth: []
+    parameters:
+      - name: dataset_id
+        in: path
+        type: integer
+        required: true
+        description: ID of any version of the lineage
+    responses:
+      200:
+        description: Every version of the lineage, oldest first
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                dataset_id:
+                  type: integer
+                concept_doi:
+                  type: string
+                  nullable: true
+                total_versions:
+                  type: integer
+                latest:
+                  type: object
+                versions:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      dataset_id:
+                        type: integer
+                      version:
+                        type: integer
+                      doi:
+                        type: string
+                        nullable: true
+                      publication_date:
+                        type: string
+                        format: date-time
+                        nullable: true
+                      is_latest:
+                        type: boolean
+              example:
+                dataset_id: 4
+                concept_doi: "10.5072/zenodo.122"
+                total_versions: 2
+                latest:
+                  dataset_id: 9
+                  version: 2
+                  doi: "10.5072/zenodo.456"
+                versions:
+                  - dataset_id: 4
+                    version: 1
+                    doi: "10.5072/zenodo.123"
+                    publication_date: "2026-07-01T10:00:00+00:00"
+                    created_at: "2026-07-01T10:00:00+00:00"
+                    is_latest: false
+                  - dataset_id: 9
+                    version: 2
+                    doi: "10.5072/zenodo.456"
+                    publication_date: "2026-07-20T09:30:00+00:00"
+                    created_at: "2026-07-20T09:30:00+00:00"
+                    is_latest: true
+      404:
+        description: Dataset not found
+    """
+    dataset = dataset_service.get_by_id(dataset_id)
+    if not dataset:
+        return jsonify({"error": "Dataset not found"}), 404
+
+    payload = _api_lineage_payload(dataset_service.get_lineage(dataset))
+    payload["dataset_id"] = dataset.id
+    return jsonify(payload)
+
+
+@dataset_bp.route("/api/v1/datasets/concept-doi/<path:concept_doi>", methods=["GET"])
+@require_api_key("read_dataset")
+def api_dataset_lineage_by_concept_doi(concept_doi):
+    """
+    Resolve a version lineage by its concept DOI
+    ---
+    tags:
+      - Datasets
+    security:
+      - ApiKeyAuth: []
+    parameters:
+      - name: concept_doi
+        in: path
+        type: string
+        required: true
+        description: Concept DOI shared by every version of the lineage
+    responses:
+      200:
+        description: Every version of the lineage, oldest first
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                concept_doi:
+                  type: string
+                total_versions:
+                  type: integer
+                latest:
+                  type: object
+                versions:
+                  type: array
+                  items:
+                    type: object
+              example:
+                concept_doi: "10.5072/zenodo.122"
+                total_versions: 2
+                latest:
+                  dataset_id: 9
+                  version: 2
+                  doi: "10.5072/zenodo.456"
+                versions:
+                  - dataset_id: 4
+                    version: 1
+                    doi: "10.5072/zenodo.123"
+                    publication_date: "2026-07-01T10:00:00+00:00"
+                    created_at: "2026-07-01T10:00:00+00:00"
+                    is_latest: false
+                  - dataset_id: 9
+                    version: 2
+                    doi: "10.5072/zenodo.456"
+                    publication_date: "2026-07-20T09:30:00+00:00"
+                    created_at: "2026-07-20T09:30:00+00:00"
+                    is_latest: true
+      404:
+        description: No lineage with that concept DOI
+    """
+    lineage = dataset_service.get_lineage_by_concept_doi(concept_doi)
+    if not lineage:
+        return jsonify({"error": "Dataset not found"}), 404
+
+    payload = _api_lineage_payload(lineage)
+    payload["concept_doi"] = concept_doi
+    return jsonify(payload)
 
 
 @dataset_bp.route("/api/v1/datasets", methods=["GET"])

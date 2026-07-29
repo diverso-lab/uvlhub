@@ -83,6 +83,18 @@ class DSMetaData(db.Model):
     publication_type = db.Column(SQLAlchemyEnum(PublicationType))
     publication_doi = db.Column(db.String(120))
     dataset_doi = db.Column(db.String(120))
+    # Zenodo's "conceptdoi": the permanent identifier of the whole version
+    # lineage, which always resolves to its newest version. Every version of a
+    # dataset shares it. Nullable: records published before this column existed,
+    # and depositions for which Zenodo returns no conceptdoi, keep it empty.
+    dataset_concept_doi = db.Column(db.String(120), index=True)
+    # Provenance for records created through the API. The author credit an API
+    # client sends is a claim about someone else, so the account whose key made
+    # the claim is recorded here and surfaced in the Zenodo metadata. Ownership
+    # can be transferred later, which is why user_id on the dataset is not a
+    # substitute. NULL for everything created through the web interface.
+    api_publisher_user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
+    api_publisher = db.relationship("User", foreign_keys=[api_publisher_user_id])
     tags = db.Column(db.String(120))
     ds_metrics_id = db.Column(db.Integer, db.ForeignKey("ds_metrics.id"))
     ds_metrics = db.relationship("DSMetrics", uselist=False, backref="ds_meta_data", cascade="all, delete")
@@ -131,21 +143,67 @@ class DataSet(db.Model):
         return node
 
     def all_versions(self) -> List["DataSet"]:
-        """Return the whole version lineage, oldest first (linear chain)."""
-        node = self.version_root()
-        chain = [node]
-        seen = {node.id}
-        while node.dataset_versions:
-            nxt = node.dataset_versions[0]
-            if nxt.id in seen:
-                break
-            chain.append(nxt)
-            seen.add(nxt.id)
-            node = nxt
-        return chain
+        """Return every version of this lineage, oldest first.
+
+        The walk covers the whole tree hanging off the root, not just the first
+        child of each node. Versioning a node that is already superseded is
+        refused by the service layer, so new lineages stay linear, but rows
+        created before that guard existed (or by direct DB writes) can have a
+        node with several children. Following a single branch would silently
+        drop versions, and every caller here answers a question that has to be
+        exhaustive: which datasets move on a transfer, which rows get the
+        concept DOI, and what the API reports as the full history.
+
+        Ordering is deterministic: version number first, then id, which for a
+        linear chain is exactly oldest to newest.
+        """
+        root = self.version_root()
+        collected = {root.id: root}
+        pending = [root]
+        while pending:
+            node = pending.pop()
+            for child in node.dataset_versions:
+                if child.id in collected:
+                    continue
+                collected[child.id] = child
+                pending.append(child)
+        return sorted(collected.values(), key=lambda version: (version.dataset_version or 1, version.id))
 
     def has_versions(self) -> bool:
         return self.dataset_origin_id is not None or bool(self.dataset_versions)
+
+    def is_superseded(self) -> bool:
+        """True when another dataset already claims this one as its origin."""
+        return bool(self.dataset_versions)
+
+    def latest_version(self) -> "DataSet":
+        """Return the newest version of this dataset's lineage.
+
+        Published versions win over unpublished ones. A version with no DOI is
+        useless as an answer to "where do I find the newest record", and an
+        unpublished row inside a published lineage only ever happens when
+        something went wrong, so it must never shadow a real Zenodo record.
+        """
+        versions = self.all_versions()
+        published = [version for version in versions if version.ds_meta_data.dataset_doi]
+        return (published or versions)[-1]
+
+    def is_latest_version(self) -> bool:
+        return self.latest_version().id == self.id
+
+    def get_concept_doi(self) -> str | None:
+        """Concept DOI of the lineage, falling back to any sibling version.
+
+        Records published before the concept DOI was stored keep a NULL column,
+        so a version that does know it answers for the whole chain.
+        """
+        own = self.ds_meta_data.dataset_concept_doi
+        if own:
+            return own
+        for version in self.all_versions():
+            if version.ds_meta_data.dataset_concept_doi:
+                return version.ds_meta_data.dataset_concept_doi
+        return None
 
     def name(self) -> str:
         return self.ds_meta_data.title
@@ -221,6 +279,7 @@ class DataSet(db.Model):
             "publication_type": self.get_cleaned_publication_type(),
             "publication_doi": self.ds_meta_data.publication_doi,
             "dataset_doi": self.ds_meta_data.dataset_doi,
+            "dataset_concept_doi": self.ds_meta_data.dataset_concept_doi,
             "dataset_version": self.dataset_version,
             "dataset_origin_id": self.dataset_origin_id,
             "metadata_synced": self.ds_meta_data.metadata_synced,
@@ -258,6 +317,65 @@ class DataSet(db.Model):
 
     def __repr__(self):
         return f"DataSet<{self.id}>"
+
+
+class DatasetTransferStatus(Enum):
+    PENDING = "pending"
+    ACCEPTED = "accepted"
+    DECLINED = "declined"
+    CANCELLED = "cancelled"
+
+
+class DatasetTransferRequest(db.Model):
+    """An offer to hand a dataset lineage over to another account.
+
+    Ownership never moves without the receiving account saying yes. A dataset
+    carries a permanent Zenodo DOI and shows up in its owner's public listings,
+    so pushing one onto somebody unannounced would let any key holder plant a
+    record under a name that cannot refuse it. The offer sits here until the
+    recipient accepts or declines, or the sender cancels.
+    """
+
+    __tablename__ = "dataset_transfer_request"
+
+    id = db.Column(db.Integer, primary_key=True)
+    # ON DELETE CASCADE: an offer is meaningless without the dataset it offers.
+    # Without it the constraint blocked every deletion of a dataset that had
+    # ever been offered, including the admin cleanup command, with a bare
+    # foreign key error and no way to proceed.
+    dataset_id = db.Column(db.Integer, db.ForeignKey("datasets.id", ondelete="CASCADE"), nullable=False, index=True)
+    from_user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, index=True)
+    to_user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, index=True)
+    status = db.Column(
+        SQLAlchemyEnum(DatasetTransferStatus),
+        nullable=False,
+        default=DatasetTransferStatus.PENDING,
+    )
+    message = db.Column(db.String(500))
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.utc))
+    resolved_at = db.Column(db.DateTime)
+
+    dataset = db.relationship("DataSet", foreign_keys=[dataset_id])
+    from_user = db.relationship("User", foreign_keys=[from_user_id])
+    to_user = db.relationship("User", foreign_keys=[to_user_id])
+
+    def is_pending(self) -> bool:
+        return self.status == DatasetTransferStatus.PENDING
+
+    def to_dict(self) -> dict:
+        return {
+            "transfer_id": self.id,
+            "dataset_id": self.dataset_id,
+            "from_user_id": self.from_user_id,
+            "to_user_id": self.to_user_id,
+            "status": self.status.value if self.status else None,
+            "message": self.message,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "resolved_at": self.resolved_at.isoformat() if self.resolved_at else None,
+        }
+
+    def __repr__(self):
+        return f"DatasetTransferRequest<{self.id} dataset={self.dataset_id} status={self.status}>"
 
 
 class DSDownloadRecord(db.Model):

@@ -31,3 +31,27 @@ def test_generate_then_list_returns_ok(test_client):
     assert generated.status_code == 200
     assert listing.status_code == 200
     test_client.get("/logout", follow_redirects=True)
+
+
+def test_generate_form_offers_write_scope(test_client):
+    _login(test_client)
+
+    response = test_client.get("/developer/api-keys/generate")
+
+    assert response.status_code == 200
+    assert b'value="write_dataset"' in response.data
+    test_client.get("/logout", follow_redirects=True)
+
+
+def test_generate_persists_write_scope(test_client):
+    _login(test_client)
+
+    response = test_client.post(
+        "/developer/api-keys/generate",
+        data={"scopes": ["read_dataset", "write_dataset"]},
+        follow_redirects=True,
+    )
+
+    assert response.status_code == 200
+    assert b"write_dataset" in response.data
+    test_client.get("/logout", follow_redirects=True)
