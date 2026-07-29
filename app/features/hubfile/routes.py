@@ -489,16 +489,11 @@ def workbench_content(file_id):
     return resp
 
 
-@hubfile_bp.route("/hubfile/to_latex/<int:file_id>", methods=["GET"])
-def to_latex(file_id):
-    """Export UVL to LaTeX + package files as ZIP."""
-    import zipfile
-    from pathlib import Path
-
+def _generate_latex_content(file_id, include_document=False):
+    """Helper function to generate LaTeX content from UVL file."""
     selected_file = HubfileService().get_or_404(file_id)
     dataset = selected_file.dataset
 
-    # Leer contenido UVL
     directory_path = os.path.join("uploads", f"user_{dataset.user_id}", f"dataset_{dataset.id}", "uvl")
     file_path = os.path.join(current_app.root_path, "..", directory_path, selected_file.name)
 
@@ -507,10 +502,7 @@ def to_latex(file_id):
             uvl_content = f.read()
     except Exception as e:
         current_app.logger.error(f"Error reading UVL file {file_id}: {e}")
-        return jsonify({"error": "Could not read file"}), 500
-
-    # Generar LaTeX
-    include_document = request.args.get("include_document", "false").lower() == "true"
+        return None
 
     latex_content = r"\usepackage{uvlhighlight}" + "\n\n"
 
@@ -526,11 +518,42 @@ def to_latex(file_id):
     if include_document:
         latex_content += "\n" + r"\end{document}" + "\n"
 
+    return latex_content
+
+
+@hubfile_bp.route("/hubfile/to_latex/<int:file_id>", methods=["GET"])
+def to_latex_content(file_id):
+    """Get LaTeX content as JSON (for displaying in modal)."""
+    latex_content = _generate_latex_content(file_id, include_document=False)
+    if latex_content is None:
+        return jsonify({"error": "Could not read file"}), 500
+
+    selected_file = HubfileService().get_or_404(file_id)
+    tex_filename = selected_file.name.replace(".uvl", ".tex")
+
+    return jsonify({
+        "content": latex_content,
+        "filename": tex_filename
+    }), 200
+
+
+@hubfile_bp.route("/hubfile/to_latex_zip/<int:file_id>", methods=["GET"])
+def to_latex_zip(file_id):
+    """Export UVL to LaTeX + package files as ZIP."""
+    import zipfile
+    from pathlib import Path
+
+    selected_file = HubfileService().get_or_404(file_id)
+    latex_content = _generate_latex_content(file_id, include_document=False)
+    if latex_content is None:
+        return jsonify({"error": "Could not read file"}), 500
+
+    tex_filename = selected_file.name.replace(".uvl", ".tex")
+
     # Crear ZIP con el .tex + archivos del paquete
     zip_buffer = BytesIO()
     with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
         # Agregar el archivo .tex
-        tex_filename = selected_file.name.replace(".uvl", ".tex")
         zip_file.writestr(tex_filename, latex_content)
 
         # Agregar archivos del paquete uvlhighlight

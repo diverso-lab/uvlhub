@@ -465,23 +465,62 @@
                     </button>
                 </div>
                 <div class="modal-body pt-3">
-                    <div class="alert alert-success d-flex align-items-start gap-3">
-                        <i class="ki-duotone ki-information-5 fs-2 text-success mt-1">
-                            <span class="path1"></span><span class="path2"></span><span class="path3"></span>
-                        </i>
-                        <div>
-                            <p class="fw-semibold mb-2">Your LaTeX package is ready!</p>
-                            <p class="text-muted small mb-0">The ZIP file includes:</p>
-                            <ul class="text-muted small mb-0 ps-3">
-                                <li>Your UVL model as <code class="text-muted">.tex</code> file</li>
-                                <li><code class="text-muted">uvlhighlight</code> package and documentation</li>
-                            </ul>
-                        </div>
+                    <p class="text-muted mb-4">Choose how you want to export your LaTeX file:</p>
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-outline-primary text-start p-3 latex-export-option" id="latexExportViewOption">
+                            <div class="d-flex align-items-start gap-3">
+                                <i class="ki-duotone ki-eye fs-3 text-primary mt-1">
+                                    <span class="path1"></span><span class="path2"></span>
+                                </i>
+                                <div class="flex-grow-1">
+                                    <h6 class="fw-bold mb-1">View & Copy</h6>
+                                    <p class="text-muted small mb-0">See the .tex file in your browser and copy it to paste anywhere</p>
+                                </div>
+                            </div>
+                        </button>
+                        <button type="button" class="btn btn-outline-primary text-start p-3 latex-export-option" id="latexExportDownloadOption">
+                            <div class="d-flex align-items-start gap-3">
+                                <i class="ki-duotone ki-file-down fs-3 text-primary mt-1">
+                                    <span class="path1"></span><span class="path2"></span>
+                                </i>
+                                <div class="flex-grow-1">
+                                    <h6 class="fw-bold mb-1">Download ZIP</h6>
+                                    <p class="text-muted small mb-0">.tex file + uvlhighlight package & documentation</p>
+                                </div>
+                            </div>
+                        </button>
                     </div>
                 </div>
                 <div class="modal-footer border-0 pt-0">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary" id="latexExportConfirm">Download</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ---------- LaTeX View Modal ---------- #}
+    <div class="modal fade" id="latexViewModal" tabindex="-1" aria-labelledby="latexViewModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content shadow-lg rounded-2xl">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="fw-bold mb-0" id="latexViewModalLabel">LaTeX Code</h5>
+                    <button type="button" class="btn btn-icon btn-sm btn-light" data-bs-dismiss="modal" aria-label="Close">
+                        <i class="ki-duotone ki-cross fs-2">
+                            <span class="path1"></span><span class="path2"></span>
+                        </i>
+                    </button>
+                </div>
+                <div class="modal-body pt-3">
+                    <div class="position-relative">
+                        <pre id="latexCodeBlock" class="bg-light p-3 rounded" style="max-height: 400px; overflow-y: auto; font-size: 0.85rem;"><code></code></pre>
+                        <button type="button" class="btn btn-sm btn-light position-absolute" id="latexCopyButton"
+                                style="top: 10px; right: 10px;" data-bs-toggle="tooltip" title="Copy to clipboard">
+                            <i class="ki-duotone ki-copy fs-4"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
@@ -724,7 +763,8 @@ const WORKBENCH = {
             glencoeUrl: {{ url_for('flamapy.to_glencoe', file_id=f.id) | tojson }},
             dimacsUrl: {{ url_for('flamapy.to_cnf', file_id=f.id) | tojson }},
             splotUrl: {{ url_for('flamapy.to_splot', file_id=f.id) | tojson }},
-            latexUrl: {{ url_for('hubfile.to_latex', file_id=f.id) | tojson }}
+            latexUrl: {{ url_for('hubfile.to_latex_content', file_id=f.id) | tojson }},
+            latexZipUrl: {{ url_for('hubfile.to_latex_zip', file_id=f.id) | tojson }}
         }{% if not loop.last %},{% endif %}
         {% endfor %}
     ],
@@ -984,17 +1024,46 @@ function initActionButtons() {
     const dlBtn = document.getElementById('workbench-factlabel-download');
     if (dlBtn) dlBtn.addEventListener('click', downloadFactLabelSvg);
 
+    document.getElementById('latexCopyButton').addEventListener('click', () => {
+        const codeEl = document.getElementById('latexCodeBlock').querySelector('code');
+        const content = codeEl.textContent;
+        navigator.clipboard.writeText(content).then(() => {
+            const btn = document.getElementById('latexCopyButton');
+            const originalTitle = btn.getAttribute('data-bs-original-title') || btn.getAttribute('title') || 'Copy to clipboard';
+            const tooltip = bootstrap.Tooltip.getOrCreateInstance(btn);
+            tooltip.setContent({ '.tooltip-inner': 'Copied!' });
+            tooltip.show();
+            setTimeout(() => {
+                tooltip.hide();
+                tooltip.setContent({ '.tooltip-inner': originalTitle });
+            }, 1500);
+        }).catch(() => alert('Failed to copy'));
+    });
+
     document.getElementById('workbench-export-latex').addEventListener('click', (e) => {
         const model = findModel(currentFileId);
         if (!model || !model.latexUrl) return;
 
-        // Mostrar modal
         const modal = new bootstrap.Modal(document.getElementById('latexExportModal'));
         modal.show();
 
-        // Descarga al hacer click en el botón "Download" del modal
-        document.getElementById('latexExportConfirm').onclick = () => {
-            window.location.href = model.latexUrl;
+        document.getElementById('latexExportViewOption').onclick = () => {
+            fetch(model.latexUrl)
+                .then(r => r.json())
+                .then(data => {
+                    modal.hide();
+                    const viewModal = new bootstrap.Modal(document.getElementById('latexViewModal'));
+                    document.getElementById('latexCodeBlock').querySelector('code').textContent = data.content;
+                    viewModal.show();
+                })
+                .catch(err => {
+                    console.error('Error fetching LaTeX content:', err);
+                    alert('Error loading LaTeX content');
+                });
+        };
+
+        document.getElementById('latexExportDownloadOption').onclick = () => {
+            window.location.href = model.latexZipUrl;
             modal.hide();
         };
     });
