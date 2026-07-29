@@ -123,6 +123,14 @@
                                             data-download-base-url="{{ url_for('dataset.download_dataset', dataset_id=dataset.id) }}">
                                         Download
                                     </button>
+                                    {% if dataset.ds_meta_data.dataset_doi %}
+                                    <div class="separator my-2"></div>
+                                    <a href="{{ url_for('dataset.export_bibtex', dataset_id=dataset.id) }}"
+                                       class="btn btn-light-info btn-sm w-100"
+                                       title="Export as BibTeX">
+                                        <span style="font-family: Georgia, serif; letter-spacing: 0.05em;">Bib<span style="font-weight: bold;">TeX</span></span>
+                                    </a>
+                                    {% endif %}
                                 </div>
                             </div>
                         </td>

@@ -410,6 +410,105 @@ def download_dataset(dataset_id):
     return resp
 
 
+@dataset_bp.route("/datasets/export-bibtex/<int:dataset_id>", methods=["GET"])
+def export_bibtex(dataset_id):
+    dataset = dataset_service.get_or_404(dataset_id)
+
+    if not dataset.ds_meta_data.dataset_doi:
+        abort(400, description="BibTeX export requires a dataset with DOI.")
+
+    bibtex_content = _generate_bibtex(dataset)
+
+    filename = f"{dataset.id}_bibtex.bib"
+
+    return send_file(
+        BytesIO(bibtex_content.encode("utf-8")),
+        mimetype="application/x-bibtex",
+        as_attachment=True,
+        download_name=filename,
+    )
+
+
+@dataset_bp.route("/doi/<path:doi>/bibtex", methods=["GET"])
+@dataset_bp.route("/doi/<path:doi>/bibtex/", methods=["GET"])
+def export_bibtex_by_doi(doi):
+    from app.features.dataset.models import DSMetaData
+
+    try:
+        ds_meta_data = DSMetaData.query.filter_by(dataset_doi=doi).first()
+        if not ds_meta_data:
+            abort(404, description="Dataset not found for the given DOI.")
+        dataset = ds_meta_data.dataset
+    except Exception:
+        abort(404, description="Dataset not found for the given DOI.")
+
+    bibtex_content = _generate_bibtex(dataset)
+
+    filename = f"{dataset.id}_bibtex.bib"
+
+    return send_file(
+        BytesIO(bibtex_content.encode("utf-8")),
+        mimetype="application/x-bibtex",
+        as_attachment=True,
+        download_name=filename,
+    )
+
+
+def _generate_bibtex(dataset: DataSet) -> str:
+    """Generate BibTeX entry for a dataset with DOI."""
+    import re
+
+    meta = dataset.ds_meta_data
+    title = (meta.title or "").strip()
+    doi = (meta.dataset_doi or "").strip()
+
+    authors = []
+    if meta.authors:
+        for author in meta.authors:
+            name = (author.name or "").strip()
+            if name:
+                authors.append(name)
+
+    author_str = " and ".join(authors) if authors else ""
+
+    year = dataset.created_at.year if dataset.created_at else ""
+
+    description = ""
+    if meta.description:
+        desc = (meta.description or "").strip()
+        desc = re.sub(r"<[^>]+>", "", desc)
+        desc = desc.replace("\n", " ").replace("\r", " ")
+        desc = " ".join(desc.split())
+        description = desc
+
+    doi_url = f"https://doi.org/{doi}" if doi else ""
+
+    citekey = f"dataset{dataset.id}"
+
+    bibtex = f"""@dataset{{{citekey},
+  title = {{{title}}},
+"""
+
+    if author_str:
+        bibtex += f"  author = {{{author_str}}},\n"
+
+    if year:
+        bibtex += f"  year = {{{year}}},\n"
+
+    if doi:
+        bibtex += f"  doi = {{{doi}}},\n"
+
+    if doi_url:
+        bibtex += f"  url = {{{doi_url}}},\n"
+
+    if description:
+        bibtex += f"  description = {{{description}}},\n"
+
+    bibtex += "}\n"
+
+    return bibtex
+
+
 def _build_dataset_qr_response(dataset: DataSet, fmt: str = "png", download: bool = False):
     if not dataset.ds_meta_data.dataset_doi:
         abort(404, description="QR available only for synchronized datasets with DOI.")

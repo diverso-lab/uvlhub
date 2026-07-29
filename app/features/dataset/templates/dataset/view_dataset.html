@@ -184,6 +184,13 @@
                     {% with size=False, button_class='btn-light btn-sm' %}
                         {% include 'dataset/_download_dataset_menu.html' %}
                     {% endwith %}
+                    {% if dataset.ds_meta_data.dataset_doi %}
+                    <a href="{{ url_for('dataset.export_bibtex', dataset_id=dataset.id) }}"
+                       class="btn btn-sm btn-light"
+                       data-bs-toggle="tooltip" title="Export as BibTeX">
+                        <span class="small fw-bold" style="font-family: Georgia, serif; letter-spacing: 0.05em;">BibTeX</span>
+                    </a>
+                    {% endif %}
                     {% if dataset.get_zenodo_url() %}
                     <a href="{{ dataset.get_zenodo_url() }}" target="_blank"
                        class="btn btn-sm btn-icon btn-light"
