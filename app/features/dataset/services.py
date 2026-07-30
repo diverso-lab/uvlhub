@@ -18,6 +18,7 @@ import bleach
 import pytz
 from flask import current_app, request
 from splent_framework.services.BaseService import BaseService
+from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.datastructures import MultiDict
 from werkzeug.utils import secure_filename
 
@@ -1586,6 +1587,60 @@ class DataSetService(BaseService):
             return None
 
         return zip_path
+
+    def delete_dataset(self, dataset: DataSet) -> None:
+        """Delete a dataset and all its related files."""
+        import shutil
+        from app.features.hubfile.models import HubfileDownloadRecord, HubfileViewRecord
+
+        dataset_id = dataset.id
+        user_id = dataset.user_id
+
+        try:
+            dataset_dir = os.path.join("uploads", f"user_{user_id}", f"dataset_{dataset_id}")
+            parent_dir = os.path.dirname(current_app.root_path)
+            full_path = os.path.join(parent_dir, dataset_dir)
+
+            if os.path.exists(full_path):
+                shutil.rmtree(full_path, ignore_errors=True)
+                current_app.logger.info(f"Deleted dataset directory for dataset {dataset_id}: {full_path}")
+
+            # Delete view and download records for all hubfiles in this dataset
+            hubfile_ids = [hf.id for hf in dataset.feature_models for hf in hf.hubfiles]
+            if hubfile_ids:
+                db.session.query(HubfileViewRecord).filter(
+                    HubfileViewRecord.file_id.in_(hubfile_ids)
+                ).delete(synchronize_session=False)
+                db.session.query(HubfileDownloadRecord).filter(
+                    HubfileDownloadRecord.file_id.in_(hubfile_ids)
+                ).delete(synchronize_session=False)
+
+            # Delete dataset view and download records
+            db.session.query(DSViewRecord).filter(
+                DSViewRecord.dataset_id == dataset_id
+            ).delete(synchronize_session=False)
+            db.session.query(DSDownloadRecord).filter(
+                DSDownloadRecord.dataset_id == dataset_id
+            ).delete(synchronize_session=False)
+
+            # Delete all related feature models, hubfiles, and their records
+            for feature_model in dataset.feature_models:
+                for hubfile in feature_model.hubfiles:
+                    db.session.delete(hubfile)
+                db.session.delete(feature_model)
+
+            db.session.delete(dataset)
+            db.session.commit()
+            current_app.logger.info(f"Dataset {dataset_id} deleted successfully")
+
+        except SQLAlchemyError as exc:
+            db.session.rollback()
+            current_app.logger.exception(f"Database error deleting dataset {dataset_id}: {exc}")
+            raise DatasetMetadataUpdateError(f"Could not delete dataset: {str(exc)}")
+        except Exception as exc:
+            db.session.rollback()
+            current_app.logger.exception(f"Error deleting dataset {dataset_id}: {exc}")
+            raise DatasetMetadataUpdateError(f"Could not delete dataset: {str(exc)}")
 
 
 class AuthorService(BaseService):

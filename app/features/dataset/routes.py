@@ -1768,6 +1768,68 @@ def api_cancel_dataset_transfer(transfer_id):
     return jsonify(_transfer_payload(transfer, {"message": "Transfer cancelled."})), 200
 
 
+@dataset_bp.route("/dataset/delete/<int:dataset_id>", methods=["POST"])
+@login_required
+def delete_dataset(dataset_id):
+    """Delete a dataset (draft or synchronized) that belongs to the current user."""
+    dataset = dataset_service.get_or_404(dataset_id)
+
+    if dataset.user_id != current_user.id:
+        abort(403)
+
+    try:
+        dataset_service.delete_dataset(dataset)
+        flash("Dataset deleted successfully.", "success")
+        return redirect(url_for("dataset.list_dataset"))
+    except Exception as exc:
+        current_app.logger.exception(f"Error deleting dataset {dataset_id}: {exc}")
+        flash(f"Error deleting dataset: {str(exc)}", "danger")
+        return redirect(url_for("dataset.list_dataset"))
+
+
+@dataset_bp.route("/api/v1/datasets/<int:dataset_id>", methods=["DELETE"])
+@require_api_key("write_dataset")
+def api_delete_dataset(dataset_id):
+    """
+    Delete a dataset owned by the current API key holder
+    ---
+    tags:
+      - Datasets
+    security:
+      - ApiKeyAuth: []
+    parameters:
+      - name: dataset_id
+        in: path
+        type: integer
+        required: true
+        description: ID of the dataset to delete
+    responses:
+      200:
+        description: Dataset deleted
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                message: "Dataset deleted successfully"
+      403:
+        description: Not the owner of the dataset
+      404:
+        description: Dataset not found
+    """
+    dataset = dataset_service.get_or_404(dataset_id)
+
+    if dataset.user_id != g.api_user.id:
+        return jsonify({"error": "Forbidden: you don't own this dataset"}), 403
+
+    try:
+        dataset_service.delete_dataset(dataset)
+        return jsonify({"message": "Dataset deleted successfully"}), 200
+    except Exception as exc:
+        current_app.logger.exception(f"Error deleting dataset {dataset_id}: {exc}")
+        return jsonify({"error": str(exc)}), 500
+
+
 @dataset_bp.route("/api/v1/datasets/doi/<path:doi>", methods=["GET"])
 @require_api_key("read_dataset")
 def api_dataset_by_doi(doi):
