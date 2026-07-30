@@ -1591,6 +1591,7 @@ class DataSetService(BaseService):
     def delete_dataset(self, dataset: DataSet) -> None:
         """Delete a dataset and all its related files."""
         import shutil
+
         from app.features.hubfile.models import HubfileDownloadRecord, HubfileViewRecord
 
         dataset_id = dataset.id
@@ -1608,20 +1609,20 @@ class DataSetService(BaseService):
             # Delete view and download records for all hubfiles in this dataset
             hubfile_ids = [hf.id for hf in dataset.feature_models for hf in hf.hubfiles]
             if hubfile_ids:
-                db.session.query(HubfileViewRecord).filter(
-                    HubfileViewRecord.file_id.in_(hubfile_ids)
-                ).delete(synchronize_session=False)
-                db.session.query(HubfileDownloadRecord).filter(
-                    HubfileDownloadRecord.file_id.in_(hubfile_ids)
-                ).delete(synchronize_session=False)
+                db.session.query(HubfileViewRecord).filter(HubfileViewRecord.file_id.in_(hubfile_ids)).delete(
+                    synchronize_session=False
+                )
+                db.session.query(HubfileDownloadRecord).filter(HubfileDownloadRecord.file_id.in_(hubfile_ids)).delete(
+                    synchronize_session=False
+                )
 
             # Delete dataset view and download records
-            db.session.query(DSViewRecord).filter(
-                DSViewRecord.dataset_id == dataset_id
-            ).delete(synchronize_session=False)
-            db.session.query(DSDownloadRecord).filter(
-                DSDownloadRecord.dataset_id == dataset_id
-            ).delete(synchronize_session=False)
+            db.session.query(DSViewRecord).filter(DSViewRecord.dataset_id == dataset_id).delete(
+                synchronize_session=False
+            )
+            db.session.query(DSDownloadRecord).filter(DSDownloadRecord.dataset_id == dataset_id).delete(
+                synchronize_session=False
+            )
 
             # Delete all related feature models, hubfiles, and their records
             for feature_model in dataset.feature_models:
