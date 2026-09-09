@@ -113,6 +113,11 @@ class OrcidService(BaseService):
                         provider_username=orcid_id,
                         email=email,
                     )
+                    # Keep the Orcid domain row in step with the identity link so
+                    # profile.get_orcid() works and a later ORCID login resolves
+                    # by orcid_id too.
+                    if existing_by_email.profile and not self.repository.get_by_orcid_id(orcid_id):
+                        self.repository.create(commit=False, orcid_id=orcid_id, profile_id=existing_by_email.profile.id)
                     self.repository.session.commit()
                     return existing_by_email, None
 
@@ -147,3 +152,40 @@ class OrcidService(BaseService):
             current_app.logger.exception("Database error creating ORCID user (%s): %s", orcid_id, exc)
             self.repository.session.rollback()
             return None, "Could not create your account due to a database error. Please try again."
+
+    def link_identity(self, user, user_info, email=None):
+        """Attach an ORCID identity to an already-authenticated user.
+
+        Writes both the ``ExternalIdentity`` row and the ``Orcid`` domain row so
+        the connect flow leaves the account in the same shape an ORCID login
+        would, and a future ORCID login resolves this account by orcid_id.
+        """
+        orcid_id = (user_info.get("sub") or "").strip()
+        if not orcid_id:
+            return None, "Missing ORCID iD."
+
+        email = (email or user_info.get("email") or "").strip().lower() or None
+        external_repo = ExternalIdentityRepository()
+
+        existing = external_repo.get_by_provider_id("orcid", orcid_id)
+        if existing and existing.user_id and existing.user_id != user.id:
+            return None, "This ORCID iD is already linked to another account."
+
+        try:
+            if not existing:
+                external_repo.create(
+                    commit=False,
+                    user_id=user.id,
+                    provider="orcid",
+                    provider_id=orcid_id,
+                    provider_username=orcid_id,
+                    email=email,
+                )
+            if user.profile and not self.repository.get_by_orcid_id(orcid_id):
+                self.repository.create(commit=False, orcid_id=orcid_id, profile_id=user.profile.id)
+            self.repository.session.commit()
+            return user, None
+        except (IntegrityError, SQLAlchemyError) as exc:
+            current_app.logger.warning("Could not link ORCID %s: %s", orcid_id, exc)
+            self.repository.session.rollback()
+            return None, "Could not connect ORCID. Please try again."

@@ -47,6 +47,12 @@ def login():
     else:
         session.pop("orcid_next_url", None)
 
+    # The email entered at /orcid/login-email is the key that converges an ORCID
+    # sign-in onto an existing account. When connecting ORCID to an account the
+    # user is already in, we know who they are, so the step is not needed.
+    if not session.get("orcid_connect_mode") and not session.get("orcid_login_email"):
+        return redirect(url_for("orcid.login_email", next=next_url) if next_url else url_for("orcid.login_email"))
+
     redirect_uri = url_for("orcid.authorize", _external=True, _scheme="https")
 
     try:
@@ -86,19 +92,25 @@ def authorize():
             flash("You must be logged in to connect ORCID.", "danger")
             return redirect(url_for("auth.login"))
 
-        orcid_id = (user_info.get("sub") or "").strip()
-        external_repo = ExternalIdentityRepository()
-        external_repo.create(
-            user_id=current_user.id,
-            provider="orcid",
-            provider_id=orcid_id,
-            provider_username=orcid_id,
-            email=connect_email,
-        )
+        _, err = current_app.orcid_service.link_identity(current_user, user_info, connect_email)
+        if err:
+            flash(err, "danger")
+            return redirect(url_for("profile.edit_profile"))
+
         flash("ORCID account connected successfully", "success")
         return redirect(url_for("profile.edit_profile"))
     else:
-        user, err = current_app.orcid_service.get_or_create_user(user_info, login_email)
+        orcid_id = (user_info.get("sub") or "").strip()
+        effective_email = (login_email or user_info.get("email") or "").strip().lower() or None
+
+        # Without an email and with no prior ORCID link there is no safe way to
+        # tell whether this person already has an account: send them back to the
+        # email step rather than risk creating a duplicate.
+        if not effective_email and not ExternalIdentityRepository().get_by_provider_id("orcid", orcid_id):
+            flash("Please enter your email so we can find or create your account.", "danger")
+            return redirect(url_for("orcid.login_email", next=next_url) if next_url else url_for("orcid.login_email"))
+
+        user, err = current_app.orcid_service.get_or_create_user(user_info, effective_email)
         if err:
             flash(err, "danger")
             return _back_to_login(next_url)

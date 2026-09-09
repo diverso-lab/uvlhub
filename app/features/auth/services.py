@@ -7,7 +7,7 @@ from splent_framework.configuration.configuration import uploads_folder_name
 from splent_framework.services.BaseService import BaseService
 
 from app.features.auth.models import User
-from app.features.auth.repositories import UserRepository
+from app.features.auth.repositories import ExternalIdentityRepository, UserRepository
 from app.features.profile.models import UserProfile
 from app.features.profile.repositories import UserProfileRepository
 from app.managers.task_queue_manager import TaskQueueManager
@@ -30,6 +30,23 @@ class AuthenticationService(BaseService):
 
     def is_email_available(self, email: str) -> bool:
         return self.repository.get_by_email(email) is None
+
+    def get_oauth_only_login_hint(self, email: str) -> str | None:
+        """When email+password login fails, point the user at the provider they
+        actually signed up with (a linked account created via ORCID/GitHub has
+        no usable password until they reset it)."""
+        if not email:
+            return None
+        user = self.repository.get_by_email(email, active=None)
+        if not user:
+            return None
+        providers = sorted({i.provider.upper() for i in ExternalIdentityRepository().get_all_by_user(user.id)})
+        if not providers:
+            return None
+        return (
+            f"This account signs in with {' or '.join(providers)}. "
+            "Use that option above, or reset your password to set one."
+        )
 
     def create_with_profile(self, **kwargs):
         email = (kwargs.get("email") or "").strip().lower()

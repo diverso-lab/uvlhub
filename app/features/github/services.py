@@ -66,7 +66,32 @@ class GithubService(BaseService):
             current_app.logger.error("GitHub userinfo missing 'id': %s", data)
             return None, "GitHub did not provide a user ID. Please try again."
 
+        # A GitHub profile email is private by default, so /user often omits it.
+        # Without an email there is nothing to converge an existing account on,
+        # so fall back to the verified primary address from /user/emails (the
+        # granted ``user:email`` scope covers this).
+        if not data.get("email"):
+            data["email"] = self.get_primary_verified_email(token)
+
         return data, None
+
+    def get_primary_verified_email(self, token):
+        try:
+            resp = self.github_client.get("https://api.github.com/user/emails", token=token)
+        except Exception as exc:
+            current_app.logger.warning("GitHub user/emails request failed: %s", exc)
+            return None
+
+        if not resp or resp.status_code != 200:
+            current_app.logger.warning("GitHub user/emails failed (%s)", getattr(resp, "status_code", None))
+            return None
+
+        emails = resp.json() or []
+        if not isinstance(emails, list):
+            return None
+        entries = [e for e in emails if isinstance(e, dict)]
+        primary = next((e.get("email") for e in entries if e.get("primary") and e.get("verified")), None)
+        return primary or next((e.get("email") for e in entries if e.get("verified")), None)
 
     def _existing_user_for_github(self, github_id: int):
         github_record = self.repository.get_by_github_id(github_id)
@@ -157,3 +182,49 @@ class GithubService(BaseService):
             current_app.logger.exception("Database error creating GitHub user (%s): %s", github_id, exc)
             self.repository.session.rollback()
             return None, "Could not create your account due to a database error. Please try again."
+
+    def link_identity(self, user, user_info):
+        """Attach a GitHub identity to an already-authenticated user.
+
+        Writes both the ``ExternalIdentity`` row (used to resolve future
+        logins) and the ``Github`` domain row (used by ``profile.get_github``),
+        so the connect flow leaves the account in the same shape a GitHub
+        login would.
+        """
+        from app.features.auth.repositories import ExternalIdentityRepository
+
+        github_id = user_info.get("id")
+        if not github_id:
+            return None, "Missing GitHub ID."
+
+        github_login = (user_info.get("login") or "").strip()
+        email = (user_info.get("email") or "").strip().lower() or None
+        external_repo = ExternalIdentityRepository()
+
+        existing = external_repo.get_by_provider_id("github", github_id)
+        if existing and existing.user_id and existing.user_id != user.id:
+            return None, "This GitHub account is already linked to another user."
+
+        try:
+            if not existing:
+                external_repo.create(
+                    commit=False,
+                    user_id=user.id,
+                    provider="github",
+                    provider_id=github_id,
+                    provider_username=github_login,
+                    email=email,
+                )
+            if user.profile and not self.repository.get_by_github_id(github_id):
+                self.repository.create(
+                    commit=False,
+                    github_id=github_id,
+                    github_login=github_login,
+                    profile_id=user.profile.id,
+                )
+            self.repository.session.commit()
+            return user, None
+        except (IntegrityError, SQLAlchemyError) as exc:
+            current_app.logger.warning("Could not link GitHub %s: %s", github_id, exc)
+            self.repository.session.rollback()
+            return None, "Could not connect GitHub. Please try again."

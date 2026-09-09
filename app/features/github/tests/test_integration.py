@@ -76,7 +76,7 @@ def test_authorize_handles_userinfo_error(test_client, clean_database):
 
 def test_authorize_handles_user_creation_error(test_client, clean_database):
     """Test when get_or_create_user() returns error."""
-    user_data = {"id": 99999, "login": "testuser", "name": "Test User"}
+    user_data = {"id": 99999, "login": "testuser", "name": "Test User", "email": "testuser@example.com"}
     mock_oauth, mock_client = _mock_github_service()
     mock_client.authorize_access_token.return_value = {"access_token": "token123"}
 
@@ -98,7 +98,7 @@ def test_authorize_handles_user_creation_error(test_client, clean_database):
 
 def test_authorize_successful_flow_creates_user_and_logs_in(test_client, clean_database):
     """Test complete successful authorization flow."""
-    user_data = {"id": 12345, "login": "octocat", "name": "The Octocat"}
+    user_data = {"id": 12345, "login": "octocat", "name": "The Octocat", "email": "octocat@example.com"}
     mock_oauth, mock_client = _mock_github_service()
     mock_client.authorize_access_token.return_value = {"access_token": "token123"}
 
@@ -136,7 +136,7 @@ def test_authorize_successful_flow_creates_user_and_logs_in(test_client, clean_d
 
 def test_authorize_creates_user_successfully(test_client, clean_database):
     """Test that user is created on successful authorization."""
-    user_data = {"id": 12345, "login": "octocat", "name": "The Octocat"}
+    user_data = {"id": 12345, "login": "octocat", "name": "The Octocat", "email": "octocat@example.com"}
     mock_oauth, mock_client = _mock_github_service()
     mock_client.authorize_access_token.return_value = {"access_token": "token123"}
 
@@ -156,7 +156,7 @@ def test_authorize_creates_user_successfully(test_client, clean_database):
 
 def test_authorize_redirects_to_next_url_when_safe(test_client, clean_database):
     """Test redirect to safe next_url after successful login."""
-    user_data = {"id": 12345, "login": "octocat", "name": "The Octocat"}
+    user_data = {"id": 12345, "login": "octocat", "name": "The Octocat", "email": "octocat@example.com"}
     mock_oauth, mock_client = _mock_github_service()
     mock_client.authorize_access_token.return_value = {"access_token": "token123"}
 
@@ -180,7 +180,7 @@ def test_authorize_redirects_to_next_url_when_safe(test_client, clean_database):
 
 def test_authorize_ignores_unsafe_next_url(test_client, clean_database):
     """Test that unsafe next_url is ignored and redirects to home."""
-    user_data = {"id": 12345, "login": "octocat", "name": "The Octocat"}
+    user_data = {"id": 12345, "login": "octocat", "name": "The Octocat", "email": "octocat@example.com"}
     mock_oauth, mock_client = _mock_github_service()
     mock_client.authorize_access_token.return_value = {"access_token": "token123"}
 
@@ -207,7 +207,7 @@ def test_authorize_returns_existing_user_on_second_login(test_client, clean_data
     """Test that logging in with same GitHub ID returns existing user."""
     from app.features.github.repositories import GithubRepository
 
-    user_data = {"id": 12345, "login": "octocat", "name": "The Octocat"}
+    user_data = {"id": 12345, "login": "octocat", "name": "The Octocat", "email": "octocat@example.com"}
     mock_oauth, mock_client = _mock_github_service()
     mock_client.authorize_access_token.return_value = {"access_token": "token123"}
 
