@@ -5,7 +5,8 @@ import time
 from flamapy.metamodels.fm_metamodel.transformations import GlencoeWriter, SPLOTWriter, UVLReader
 from flamapy.metamodels.pysat_metamodel.transformations import DimacsWriter, FmToPysat
 
-from app.features.flamapy.services import FlamapyService, derived_format_path
+from app.features.flamapy.formats import derived_format_path
+from app.features.flamapy.services import FlamapyService
 
 logger = logging.getLogger(__name__)
 
@@ -47,26 +48,26 @@ def transform_uvl(path, retries=5, delay=2):
         return
 
     # Mirror the UVL folder structure into each derived-format tree.
-    def derived(fmt, ext):
-        p = derived_format_path(path, fmt, ext)
+    def derived(fmt):
+        p = derived_format_path(path, fmt)
         create_directory_if_not_exists(os.path.dirname(p))
         return p
 
-    json_path = derived("glencoe", ".json")
+    json_path = derived("glencoe")
     try:
         GlencoeWriter(json_path, fm).transform()
         logger.info(f"JSON file created at: {json_path}")
     except Exception as e:
         logger.error(f"Error in JSON transformation: {e}")
 
-    splx_path = derived("splot", ".splx")
+    splx_path = derived("splot")
     try:
         SPLOTWriter(splx_path, fm).transform()
         logger.info(f"SPLX file created at: {splx_path}")
     except Exception as e:
         logger.error(f"Error in SPLX transformation: {e}")
 
-    cnf_path = derived("dimacs", ".cnf")
+    cnf_path = derived("dimacs")
     try:
         sat = FmToPysat(fm).transform()
         DimacsWriter(cnf_path, sat).transform()

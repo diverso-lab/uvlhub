@@ -20,25 +20,6 @@ from app.managers.task_queue_manager import TaskQueueManager
 logger = logging.getLogger(__name__)
 
 
-def derived_format_path(uvl_path: str, subdirectory: str, extension: str) -> str:
-    """Path of a format derived from a UVL file, mirroring the folder the UVL
-    lives in: ``.../dataset_N/uvl/<rel>/x.uvl`` -> ``.../dataset_N/<fmt>/<rel>/x.<ext>``."""
-    marker = os.sep + "uvl" + os.sep
-    if marker in uvl_path:
-        base_dir, _, rel = uvl_path.partition(marker)
-        rel_dir = os.path.dirname(rel)
-    else:
-        base_dir = os.path.dirname(os.path.dirname(uvl_path))
-        rel_dir = ""
-
-    name = os.path.basename(uvl_path)
-    if name.endswith(".uvl"):
-        name = name[:-4] + extension
-
-    folder = os.path.join(base_dir, subdirectory, rel_dir) if rel_dir else os.path.join(base_dir, subdirectory)
-    return os.path.join(folder, name)
-
-
 class _UVLErrorListener(ErrorListener):
     """Collects lexer/parser syntax problems as human-readable messages."""
 
@@ -70,9 +51,61 @@ class FlamapyService:
     def transformed_file_path(self, file_id: int, extension: str, subdirectory: str) -> str | None:
         """Resolve the path of a transformed export for a hubfile, or None if it
         has not been generated yet."""
+        from app.features.flamapy.formats import derived_format_path
+
         hubfile = self.hubfile_service.get_or_404(file_id)
-        path = derived_format_path(hubfile.get_path(), subdirectory, extension)
+        path = derived_format_path(hubfile.get_path(), subdirectory)
         return path if os.path.exists(path) else None
+
+    def _scoped_hubfiles(self, dataset_id):
+        from app.features.hubfile.models import Hubfile
+
+        query = Hubfile.query
+        if dataset_id is not None:
+            query = query.filter(Hubfile.dataset_id == dataset_id)
+        return query.order_by(Hubfile.id).all()
+
+    def count_hubfiles_missing_formats(self, dataset_id: int | None = None) -> dict:
+        from app.features.flamapy.formats import missing_derived_formats
+
+        pending = missing_source = 0
+        for hubfile in self._scoped_hubfiles(dataset_id):
+            uvl_path = hubfile.get_full_path()
+            if not os.path.isfile(uvl_path):
+                missing_source += 1
+            elif missing_derived_formats(uvl_path):
+                pending += 1
+        return {"pending": pending, "missing_source": missing_source}
+
+    def enqueue_missing_format_transforms(
+        self, dataset_id: int | None = None, force: bool = False, timeout: int = 120
+    ) -> dict:
+        """Enqueue ``transform_uvl`` for every hubfile missing a derived download
+        format (or all of them when ``force``). Returns a summary."""
+        from app.features.flamapy.formats import DERIVED_FORMATS, missing_derived_formats
+
+        hubfiles = self._scoped_hubfiles(dataset_id)
+        task_manager = TaskQueueManager()
+        summary = {"total": len(hubfiles), "enqueued": [], "up_to_date": 0, "missing_source": [], "failed": []}
+
+        for hubfile in hubfiles:
+            uvl_path = hubfile.get_full_path()
+            if not os.path.isfile(uvl_path):
+                summary["missing_source"].append(hubfile.id)
+                continue
+
+            pending = list(DERIVED_FORMATS) if force else missing_derived_formats(uvl_path)
+            if not pending:
+                summary["up_to_date"] += 1
+                continue
+
+            try:
+                task_manager.enqueue_task("app.features.flamapy.tasks.transform_uvl", path=uvl_path, timeout=timeout)
+                summary["enqueued"].append((hubfile.id, pending))
+            except Exception as exc:
+                summary["failed"].append((hubfile.id, str(exc)))
+
+        return summary
 
     def check_uvl_async(self, filepath: str):
         task = TaskQueueManager().enqueue_task("app.features.flamapy.tasks.check_uvl", filepath=filepath, timeout=5)
