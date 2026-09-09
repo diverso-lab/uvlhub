@@ -57,6 +57,57 @@ def test_prepare_uvls_collects_loose_and_zipped_files(tmp_path):
     assert os.path.isdir(stage_dir)
 
 
+def test_prepare_uvls_preserves_folders_from_a_zip(tmp_path):
+    root = tmp_path / "temp"
+    root.mkdir()
+    with zipfile.ZipFile(root / "models.zip", "w") as zf:
+        zf.writestr("subsystems/auth/login.uvl", "features\n    Login")
+        zf.writestr("subsystems/payment/checkout.uvl", "features\n    Checkout")
+        zf.writestr("root_model.uvl", "features\n    Root")
+
+    stage_dir, staged = _ingest().prepare_uvls(str(root))
+
+    rel = sorted(os.path.relpath(p, stage_dir) for p in staged)
+    assert rel == [
+        "root_model.uvl",
+        os.path.join("subsystems", "auth", "login.uvl"),
+        os.path.join("subsystems", "payment", "checkout.uvl"),
+    ]
+
+
+def test_prepare_uvls_strips_a_single_wrapper_folder(tmp_path):
+    root = tmp_path / "temp"
+    root.mkdir()
+    with zipfile.ZipFile(root / "models.zip", "w") as zf:
+        zf.writestr("my_dataset/a/x.uvl", "features\n    X")
+        zf.writestr("my_dataset/b/y.uvl", "features\n    Y")
+
+    stage_dir, staged = _ingest().prepare_uvls(str(root))
+
+    rel = sorted(os.path.relpath(p, stage_dir) for p in staged)
+    assert rel == [os.path.join("a", "x.uvl"), os.path.join("b", "y.uvl")]
+
+
+def test_prepare_uvls_keeps_same_name_files_in_different_folders(tmp_path):
+    root = tmp_path / "temp"
+    root.mkdir()
+    with zipfile.ZipFile(root / "models.zip", "w") as zf:
+        zf.writestr("a/model.uvl", "features\n    A")
+        zf.writestr("b/model.uvl", "features\n    B")
+
+    _, staged = _ingest().prepare_uvls(str(root))
+
+    assert len(staged) == 2
+
+
+def test_sanitize_rel_dir_drops_traversal_and_normalizes(tmp_path):
+    ingest = _ingest()
+    assert ingest._sanitize_rel_dir("../../etc") == "etc"
+    assert ingest._sanitize_rel_dir("a/./b/../c") == "a/b/c"
+    assert ingest._sanitize_rel_dir("/abs/path/") == "abs/path"
+    assert ingest._sanitize_rel_dir(".") == ""
+
+
 def test_prepare_uvls_deduplicates_identical_content(tmp_path):
     root = tmp_path / "temp"
     root.mkdir()

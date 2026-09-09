@@ -943,6 +943,44 @@ def _seed_lineage(email, concept_doi, doi_prefix, versions=2, user_id=None):
     return created
 
 
+def test_unsynchronized_view_exposes_the_folder_of_each_file(test_client):
+    from app.features.dataset.models import PublicationType
+    from app.features.dataset.repositories import DataSetRepository, DSMetaDataRepository
+    from app.features.featuremodel.repositories import FeatureModelRepository
+    from app.features.hubfile.repositories import HubfileRepository
+
+    _login(test_client)
+    user_id = _test_user_id(test_client)
+
+    meta = DSMetaDataRepository().create(
+        title="Folders draft", description="d", publication_type=PublicationType.BOOK, tags=""
+    )
+    dataset = DataSetRepository().create(user_id=user_id, ds_meta_data_id=meta.id)
+    fm = FeatureModelRepository().create(dataset_id=dataset.id)
+    HubfileRepository().create(
+        feature_model_id=fm.id, dataset_id=dataset.id, name="top.uvl", directory_path="", size=1, checksum="a"
+    )
+    HubfileRepository().create(
+        feature_model_id=fm.id,
+        dataset_id=dataset.id,
+        name="login.uvl",
+        directory_path="subsystems/auth",
+        size=1,
+        checksum="b",
+    )
+
+    response = test_client.get(f"/datasets/unsynchronized/{dataset.id}/")
+
+    assert response.status_code == 200
+    body = response.data.decode()
+    # the file-tree container and its data are on the page
+    assert 'id="file-tree"' in body
+    assert "renderFileTree" in body
+    assert '"subsystems/auth"' in body  # directoryPath on the model object
+    assert "subsystems/auth/login.uvl" in body  # relativePath
+    test_client.get("/logout", follow_redirects=True)
+
+
 def test_api_dataset_versions_returns_the_whole_lineage(test_client):
     token = _api_token(test_client, ["read_dataset"])
     v1, v2 = _seed_lineage("versions@example.com", "10.5072/zenodo.7000", "10.5072/zenodo.700")
