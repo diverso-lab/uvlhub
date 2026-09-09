@@ -56,7 +56,8 @@ def login():
         if authentication_service.login(form.email.data, form.password.data):
             return redirect(next_url or url_for("public.index"))
 
-        return render_template("auth/login_form.html", form=form, error="Invalid credentials", next_url=next_url)
+        error = authentication_service.get_oauth_only_login_hint(form.email.data) or "Invalid credentials"
+        return render_template("auth/login_form.html", form=form, error=error, next_url=next_url)
 
     return render_template("auth/login_form.html", form=form, next_url=next_url)
 

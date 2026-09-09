@@ -63,20 +63,26 @@ def authorize():
             flash("You must be logged in to connect GitHub.", "danger")
             return redirect(url_for("auth.login"))
 
-        github_id = user_info.get("id")
-        github_login = (user_info.get("login") or "").strip()
-        email = (user_info.get("email") or "").strip().lower() if user_info.get("email") else None
-        external_repo = ExternalIdentityRepository()
-        external_repo.create(
-            user_id=current_user.id,
-            provider="github",
-            provider_id=github_id,
-            provider_username=github_login,
-            email=email,
-        )
+        _, err = current_app.github_service.link_identity(current_user, user_info)
+        if err:
+            flash(err, "danger")
+            return redirect(url_for("profile.edit_profile"))
+
         flash("GitHub account connected successfully", "success")
         return redirect(url_for("profile.edit_profile"))
     else:
+        github_id = user_info.get("id")
+        # get_github_user_info already falls back to the verified primary email;
+        # if GitHub still gave us nothing and this account is unknown, bounce to
+        # login rather than create an account that can never be converged.
+        if not user_info.get("email") and not ExternalIdentityRepository().get_by_provider_id("github", github_id):
+            flash(
+                "GitHub did not share a verified email, so we could not link your account. "
+                "Make a primary email verified on GitHub, or sign in with email or ORCID.",
+                "danger",
+            )
+            return _back_to_login(next_url)
+
         user, err = current_app.github_service.get_or_create_user(user_info)
         if err:
             flash(err, "danger")
