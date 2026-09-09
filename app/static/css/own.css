@@ -234,7 +234,14 @@ a {
 }
 
 .filter-spacing {
-    margin-bottom: 3.5rem !important;
+    margin-bottom: 1.75rem !important;
+}
+
+/* Keep the filters panel inside the viewport and let it scroll on its own,
+   so long filter lists don't force scrolling the whole page. */
+#filters-panel .card-body {
+    max-height: calc(100vh - 110px);
+    overflow-y: auto;
 }
 
 .filter-sublabel {
