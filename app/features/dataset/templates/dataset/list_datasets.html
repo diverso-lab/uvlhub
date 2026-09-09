@@ -46,6 +46,13 @@
                             {% if not dataset.is_metadata_synchronized() %}
                                 <span class="badge badge-light-danger ms-2">Pending Zenodo sync</span>
                             {% endif %}
+                            {% if dataset.ds_meta_data.dataset_doi %}
+                                {% set _rating = dataset_rating_counts(dataset) %}
+                                <span class="text-muted ms-2 fs-8" title="Community rating">
+                                    <i class="ki-duotone ki-arrow-up align-middle"><span class="path1"></span><span class="path2"></span></i>{{ _rating.likes }}
+                                    <i class="ki-duotone ki-arrow-down align-middle ms-1"><span class="path1"></span><span class="path2"></span></i>{{ _rating.dislikes }}
+                                </span>
+                            {% endif %}
                         </td>
                         <td>{{ dataset.get_publication() }}</td>
                         <td>

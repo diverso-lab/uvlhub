@@ -96,6 +96,9 @@ class ElasticsearchService:
                             "total_size_in_bytes": {"type": "long"},
                             "files_count": {"type": "integer"},
                             "authors_is_anonymous": {"type": "boolean"},
+                            "likes": {"type": "integer"},
+                            "dislikes": {"type": "integer"},
+                            "net_likes": {"type": "integer"},
                         }
                     },
                 },
@@ -219,9 +222,15 @@ class ElasticsearchService:
             if only_with_authors:
                 filter_clauses.append({"term": {"authors_is_anonymous": False}})
 
-            sort_clause = [
-                {"created_at": {"order": "desc"}} if sorting == "newest" else {"created_at": {"order": "asc"}}
-            ]
+            if sorting == "most_liked":
+                sort_clause = [
+                    {"net_likes": {"order": "desc", "missing": "_last"}},
+                    {"created_at": {"order": "desc"}},
+                ]
+            elif sorting == "oldest":
+                sort_clause = [{"created_at": {"order": "asc"}}]
+            else:  # "newest" (default)
+                sort_clause = [{"created_at": {"order": "desc"}}]
 
             body = {
                 "query": {

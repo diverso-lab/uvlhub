@@ -241,6 +241,8 @@ function renderResults(results, append = false) {
     results.forEach(result => {
         let html = '';
         if (result.type === 'dataset') {
+            if (result.likes === undefined) result.likes = 0;
+            if (result.dislikes === undefined) result.dislikes = 0;
             html = Mustache.render(datasetTemplate, result);
         } else if (result.type === 'hubfile') {
             html = Mustache.render(hubfileTemplate, result);

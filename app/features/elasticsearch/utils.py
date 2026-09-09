@@ -46,6 +46,11 @@ def index_dataset(dataset):
         if hubfile_metrics and hubfile_metrics.features:
             total_features += hubfile_metrics.features
 
+    # like/dislike counts, aggregated over the whole version lineage.
+    from app.features.rating.repositories import DatasetRatingRepository
+
+    rating_counts = DatasetRatingRepository().counts_for(dataset.version_root().id)
+
     doc = {
         "type": "dataset",
         "id": dataset.id,
@@ -79,6 +84,9 @@ def index_dataset(dataset):
         "files_count": dataset.get_files_count(),
         "number_of_features": total_features,  # Suma de features de todos los hubfiles
         "number_of_models": len(hubfiles),  # Cantidad de hubfiles/modelos
+        "likes": rating_counts["likes"],
+        "dislikes": rating_counts["dislikes"],
+        "net_likes": rating_counts["likes"] - rating_counts["dislikes"],
     }
 
     search.index_document(doc_id=f"dataset-{dataset.id}", data=doc)

@@ -186,6 +186,7 @@ features = [
     "orcid",
     "profile",
     "public",
+    "rating",
     "reset",
     "statistics",
     "team",

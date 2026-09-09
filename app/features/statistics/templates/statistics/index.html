@@ -187,6 +187,15 @@
     </div>
 </div>
 
+<div class="row g-4 mb-6">
+    <div class="col-lg-6">
+        {{ _top_table("Best rated datasets", dashboard.best_rated, "Score", "badge-light-success", "trending-up") }}
+    </div>
+    <div class="col-lg-6">
+        {{ _top_table("Worst rated datasets", dashboard.worst_rated, "Score", "badge-light-danger", "trending-down") }}
+    </div>
+</div>
+
 <div class="card mb-6">
     <div class="card-header">
         <h3 class="card-title">

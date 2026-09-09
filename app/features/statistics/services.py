@@ -118,6 +118,8 @@ class DashboardData:
     top_by_downloads: list[DashboardRow] = field(default_factory=list)
     top_by_configurations: list[DashboardRow] = field(default_factory=list)
     latest_datasets: list[DashboardRow] = field(default_factory=list)
+    best_rated: list[DashboardRow] = field(default_factory=list)
+    worst_rated: list[DashboardRow] = field(default_factory=list)
 
     publication_types: list[tuple[str, int]] = field(default_factory=list)
 
@@ -226,7 +228,7 @@ class DashboardService:
 
     # Cache key bumped to v2 because the schema gained the corpus block.
     CACHE_TTL_SECONDS = 300
-    CACHE_KEY = "statistics:dashboard:v2"
+    CACHE_KEY = "statistics:dashboard:v3"
     TOP_N = 5
     TOP_N_CORPUS = 10
     WINDOW_DAYS = 365
@@ -300,6 +302,8 @@ class DashboardService:
         top_by_downloads = self._top_by_record_count(DataSet, DSMetaData, DSDownloadRecord)
         top_by_configurations = self._top_by_metric(DataSet, DSMetaData, DSMetrics, DSMetrics.number_of_models)
         latest_datasets = self._latest_datasets(DataSet, DSMetaData)
+        best_rated = self._top_by_rating(DataSet, DSMetaData, descending=True)
+        worst_rated = self._top_by_rating(DataSet, DSMetaData, descending=False)
 
         publication_types_raw = (
             db.session.query(DSMetaData.publication_type, func.count(DataSet.id).label("count"))
@@ -371,6 +375,8 @@ class DashboardService:
             top_by_downloads=top_by_downloads,
             top_by_configurations=top_by_configurations,
             latest_datasets=latest_datasets,
+            best_rated=best_rated,
+            worst_rated=worst_rated,
             publication_types=publication_types,
             months=months,
             uploads_per_month=uploads_per_month,
@@ -582,6 +588,25 @@ class DashboardService:
         )
         return [self._row(ds, count) for ds, count in rows]
 
+    def _top_by_rating(self, DataSet, DSMetaData, descending: bool = True) -> list[DashboardRow]:
+        """Datasets ranked by net community score (likes − dislikes). Ratings
+        are stored against the lineage root, so DataSet.id here is always a root.
+        Only datasets that have at least one vote are listed."""
+        from app.features.rating.models import DatasetRating
+
+        net = func.sum(case((DatasetRating.is_like, 1), else_=-1)).label("net")
+        rows = (
+            db.session.query(DataSet, net)
+            .join(DatasetRating, DatasetRating.dataset_id == DataSet.id)
+            .join(DSMetaData, DataSet.ds_meta_data_id == DSMetaData.id)
+            .filter(DSMetaData.dataset_doi.isnot(None))
+            .group_by(DataSet.id)
+            .order_by(net.desc() if descending else net.asc(), DataSet.id.asc())
+            .limit(self.TOP_N)
+            .all()
+        )
+        return [self._row(ds, f"+{int(n)}" if int(n) > 0 else str(int(n))) for ds, n in rows]
+
     def _latest_datasets(self, DataSet, DSMetaData) -> list[DashboardRow]:
         rows = (
             db.session.query(DataSet)
@@ -725,6 +750,8 @@ class DashboardService:
             top_by_downloads=rows("top_by_downloads"),
             top_by_configurations=rows("top_by_configurations"),
             latest_datasets=rows("latest_datasets"),
+            best_rated=rows("best_rated"),
+            worst_rated=rows("worst_rated"),
             publication_types=[tuple(pt) for pt in payload.get("publication_types", [])],
             months=payload.get("months", []),
             uploads_per_month=payload.get("uploads_per_month", []),

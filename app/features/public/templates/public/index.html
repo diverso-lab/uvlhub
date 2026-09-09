@@ -36,6 +36,13 @@
 
                         <p class="text-muted mt-2 mb-1">
                             {{ dataset.created_at.strftime('%B %d, %Y at %I:%M %p') }}
+                            {% if dataset.ds_meta_data.dataset_doi %}
+                                {% set _rating = dataset_rating_counts(dataset) %}
+                                <span class="ms-3" title="Community rating">
+                                    <i class="ki-duotone ki-arrow-up fs-5 align-middle"><span class="path1"></span><span class="path2"></span></i>{{ _rating.likes }}
+                                    <i class="ki-duotone ki-arrow-down fs-5 align-middle ms-2"><span class="path1"></span><span class="path2"></span></i>{{ _rating.dislikes }}
+                                </span>
+                            {% endif %}
                         </p>
 
                         <!-- Autores estilo Zenodo -->

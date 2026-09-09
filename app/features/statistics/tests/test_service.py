@@ -174,6 +174,38 @@ def test_dashboard_top_tables_are_ordered_by_metric(test_app, clean_database):
     assert [row.title for row in data.top_by_views][0] == "Popular dataset"
 
 
+def test_dashboard_ranks_datasets_by_community_rating(test_app, clean_database):
+    from app.features.dataset.models import DataSet
+    from app.features.rating.repositories import DatasetRatingRepository
+
+    _seed_dashboard_fixtures()
+    popular = DataSet.query.join(DataSet.ds_meta_data).filter_by(title="Popular dataset").one()
+    quiet = DataSet.query.join(DataSet.ds_meta_data).filter_by(title="Quiet dataset").one()
+    voters = [UserRepository().create(email=f"r{i}@example.com", password="test1234") for i in range(3)]
+
+    ratings = DatasetRatingRepository()
+    for voter in voters:  # Popular: +3
+        ratings.create(dataset_id=popular.id, user_id=voter.id, is_like=True)
+    for voter in voters[:2]:  # Quiet: -2
+        ratings.create(dataset_id=quiet.id, user_id=voter.id, is_like=False)
+
+    data = DashboardService().build_dashboard(use_cache=False)
+
+    assert [row.title for row in data.best_rated] == ["Popular dataset", "Quiet dataset"]
+    assert data.best_rated[0].value == "+3"
+    assert [row.title for row in data.worst_rated][0] == "Quiet dataset"
+    assert data.worst_rated[0].value == "-2"
+
+
+def test_dashboard_rating_tables_are_empty_without_votes(test_app, clean_database):
+    _seed_dashboard_fixtures()
+
+    data = DashboardService().build_dashboard(use_cache=False)
+
+    assert data.best_rated == []
+    assert data.worst_rated == []
+
+
 def test_dashboard_is_deterministic_between_calls(test_app, clean_database):
     _seed_dashboard_fixtures()
     service = DashboardService()

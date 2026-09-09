@@ -104,6 +104,10 @@
                 </div>
                 {% endif %}
 
+                {% if dataset.ds_meta_data.dataset_doi %}
+                    {% include 'rating/_rating_widget.html' %}
+                {% endif %}
+
                 {% if not dataset.ds_meta_data.dataset_anonymous and dataset.ds_meta_data.authors %}
                 <div class="mb-4">
                     <label class="form-label fs-7 fw-bold text-muted text-uppercase mb-2">Authors</label>

@@ -1,0 +1,85 @@
+{# Up/down vote rating for a published dataset. Expects `dataset` in scope. #}
+<div class="mb-4"
+     id="dataset-rating"
+     data-dataset-id="{{ dataset.id }}"
+     data-authenticated="{{ 'true' if current_user.is_authenticated else 'false' }}">
+    <label class="form-label fs-7 fw-bold text-muted text-uppercase mb-2">Community rating</label>
+    <div class="d-flex align-items-center gap-2">
+        <button type="button" class="btn btn-sm btn-light rating-btn d-flex align-items-center gap-1"
+                data-vote="like" title="Upvote this dataset">
+            <i class="ki-duotone ki-arrow-up fs-4"><span class="path1"></span><span class="path2"></span></i>
+            <span class="rating-like-count">0</span>
+        </button>
+        <button type="button" class="btn btn-sm btn-light rating-btn d-flex align-items-center gap-1"
+                data-vote="dislike" title="Downvote this dataset">
+            <i class="ki-duotone ki-arrow-down fs-4"><span class="path1"></span><span class="path2"></span></i>
+            <span class="rating-dislike-count">0</span>
+        </button>
+    </div>
+    <div class="form-text rating-hint mt-1"></div>
+</div>
+
+<style>
+    /* Render the duotone arrow in a single colour so it stays legible on the
+       highlighted (btn-primary / btn-danger) state. */
+    #dataset-rating .rating-btn .ki-duotone .path1:before,
+    #dataset-rating .rating-btn .ki-duotone .path2:before { color: currentColor; opacity: 1; }
+</style>
+
+<script>
+(function () {
+    const box = document.getElementById('dataset-rating');
+    if (!box) return;
+
+    const datasetId = box.dataset.datasetId;
+    const authed = box.dataset.authenticated === 'true';
+    const url = `/datasets/${datasetId}/rating`;
+    const likeBtn = box.querySelector('[data-vote="like"]');
+    const dislikeBtn = box.querySelector('[data-vote="dislike"]');
+    const likeCount = box.querySelector('.rating-like-count');
+    const dislikeCount = box.querySelector('.rating-dislike-count');
+    const hint = box.querySelector('.rating-hint');
+    const buttons = [likeBtn, dislikeBtn];
+
+    function paint(state) {
+        likeCount.textContent = state.likes ?? 0;
+        dislikeCount.textContent = state.dislikes ?? 0;
+        likeBtn.classList.toggle('btn-primary', state.my_vote === 'like');
+        likeBtn.classList.toggle('btn-light', state.my_vote !== 'like');
+        dislikeBtn.classList.toggle('btn-danger', state.my_vote === 'dislike');
+        dislikeBtn.classList.toggle('btn-light', state.my_vote !== 'dislike');
+    }
+
+    function currentVote() {
+        if (likeBtn.classList.contains('btn-primary')) return 'like';
+        if (dislikeBtn.classList.contains('btn-danger')) return 'dislike';
+        return null;
+    }
+
+    fetch(url, { credentials: 'same-origin' })
+        .then(r => (r.ok ? r.json() : null))
+        .then(state => { if (state) paint(state); });
+
+    if (!authed) {
+        hint.innerHTML = '<a href="/login">Sign in</a> to vote.';
+        buttons.forEach(b => (b.disabled = true));
+        return;
+    }
+
+    buttons.forEach(btn => btn.addEventListener('click', () => {
+        const clicked = btn.dataset.vote;
+        const vote = currentVote() === clicked ? 'none' : clicked;  // click again to undo
+        buttons.forEach(b => (b.disabled = true));
+        fetch(url, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ vote }),
+        })
+            .then(r => (r.ok ? r.json() : Promise.reject(r.status)))
+            .then(paint)
+            .catch(() => { hint.textContent = 'Could not save your vote. Try again.'; })
+            .finally(() => buttons.forEach(b => (b.disabled = false)));
+    }));
+})();
+</script>

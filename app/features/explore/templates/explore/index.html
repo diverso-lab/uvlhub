@@ -164,6 +164,7 @@
                   <select class="form-select" id="filter-sorting">
                       <option value="newest">Newest first</option>
                       <option value="oldest">Oldest first</option>
+                      <option value="most_liked">Most liked</option>
                   </select>
               </div>
 
@@ -193,9 +194,15 @@
           <span class="badge bg-secondary">[[publication_type_label]]</span>
         </div>
 
-        <!-- Date -->
+        <!-- Date + ratings -->
         <p class="text-muted mt-2 mb-1">
           [[created_at]]
+          [[#dataset_doi]]
+          <span class="ms-3" title="Community rating">
+            <i class="ki-duotone ki-arrow-up fs-5 align-middle"><span class="path1"></span><span class="path2"></span></i>[[likes]]
+            <i class="ki-duotone ki-arrow-down fs-5 align-middle ms-2"><span class="path1"></span><span class="path2"></span></i>[[dislikes]]
+          </span>
+          [[/dataset_doi]]
         </p>
 
         <!-- Authors -->
