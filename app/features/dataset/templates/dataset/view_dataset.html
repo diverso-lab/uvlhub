@@ -97,6 +97,13 @@
                     <span>{{ dataset.get_file_total_size_for_human() }}</span>
                 </div>
 
+                {% if hubfiles|length > 0 %}
+                <div class="mb-4">
+                    <label class="form-label fs-7 fw-bold text-muted text-uppercase mb-2">Files</label>
+                    <div id="file-tree" class="dataset-file-tree fs-7"></div>
+                </div>
+                {% endif %}
+
                 {% if not dataset.ds_meta_data.dataset_anonymous and dataset.ds_meta_data.authors %}
                 <div class="mb-4">
                     <label class="form-label fs-7 fw-bold text-muted text-uppercase mb-2">Authors</label>
@@ -566,6 +573,28 @@
     /* Meta column */
     .workbench-meta-card .form-label { letter-spacing: 0.04em; }
 
+    /* Dataset file tree (folder structure) */
+    .dataset-file-tree { max-height: 320px; overflow-y: auto; }
+    .dataset-file-tree ul { list-style: none; margin: 0; padding: 0; }
+    .dataset-file-tree li { margin: 0; }
+    .dataset-file-tree .tree-children { padding-left: 0.9rem; border-left: 1px solid var(--bs-border-color, #e5e7eb); }
+    .dataset-file-tree .tree-row {
+        display: flex; align-items: center; gap: 0.35rem;
+        padding: 0.15rem 0.3rem; border-radius: 0.35rem; cursor: pointer;
+        white-space: nowrap; overflow: hidden;
+    }
+    .dataset-file-tree .tree-row:hover { background: var(--bs-secondary-bg, #f3f4f6); }
+    .dataset-file-tree .tree-folder > .tree-row { font-weight: 600; color: var(--bs-gray-700, #495057); }
+    .dataset-file-tree .tree-file .tree-row .tree-label { text-overflow: ellipsis; overflow: hidden; }
+    .dataset-file-tree .tree-file.current > .tree-row {
+        background: var(--bs-primary-bg-subtle, #cfe2ff);
+        color: var(--bs-primary-text-emphasis, #052c65); font-weight: 600;
+    }
+    .dataset-file-tree .tree-caret { transition: transform 0.15s ease; flex: 0 0 auto; }
+    .dataset-file-tree .tree-folder.collapsed > .tree-row .tree-caret { transform: rotate(-90deg); }
+    .dataset-file-tree .tree-folder.collapsed > .tree-children { display: none; }
+    .dataset-file-tree .tree-size { margin-left: auto; padding-left: 0.5rem; font-size: 0.9em; opacity: 0.7; flex: 0 0 auto; }
+
     /* Action list: download-dataset button (from partial) needs to match siblings */
     .workbench-meta-card .d-grid > .position-relative > button[data-kt-menu-trigger] {
         width: 100%;
@@ -763,6 +792,8 @@ const WORKBENCH = {
         {
             id: {{ f.id }},
             name: {{ f.name | tojson }},
+            directoryPath: {{ f.directory_path | tojson }},
+            relativePath: {{ f.relative_path | tojson }},
             sizeHuman: {{ f.get_formatted_size() | tojson }},
             doiViewUrl: {% if dataset.ds_meta_data.dataset_doi %}{{ url_for('hubfile.view_uvl_with_doi', doi=dataset.ds_meta_data.dataset_doi, filename=f.name) | tojson }}{% else %}null{% endif %},
             unsyncViewUrl: {% if not dataset.ds_meta_data.dataset_doi %}{{ url_for('hubfile.view_unsynchronized_file', dataset_id=dataset.id, file_id=f.id) | tojson }}{% else %}null{% endif %},
@@ -790,6 +821,7 @@ document.addEventListener('DOMContentLoaded', function () {
         initPanelToggles();
         initThemeSync();
         initModelPicker();
+        renderFileTree();
         initPrevNext();
         initActionButtons();
         initDescriptionToggle();
@@ -972,19 +1004,37 @@ function renderPickerList(filter) {
     const listEl = document.getElementById('model-picker-list');
     const filtered = !filter
         ? WORKBENCH.models
-        : WORKBENCH.models.filter(m => m.name.toLowerCase().includes(filter));
+        : WORKBENCH.models.filter(m => (m.relativePath || m.name).toLowerCase().includes(filter));
 
     if (!filtered.length) {
         listEl.innerHTML = '<div class="model-picker-empty">No matches.</div>';
         return;
     }
 
-    listEl.innerHTML = filtered.map(m => `
-        <div class="model-picker-item ${m.id === currentFileId ? 'current' : ''}" data-file-id="${m.id}">
-            <span class="text-truncate" title="${escapeAttr(m.name)}">${escapeHtml(m.name)}</span>
-            <span class="text-muted ms-2 small">${escapeHtml(m.sizeHuman)}</span>
-        </div>
-    `).join('');
+    // Group by folder so an uploaded directory structure is visible.
+    const groups = new Map();
+    filtered.forEach(m => {
+        const key = m.directoryPath || '';
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(m);
+    });
+    const sortedKeys = [...groups.keys()].sort();
+
+    listEl.innerHTML = sortedKeys.map(key => {
+        const header = key
+            ? `<div class="model-picker-folder text-muted small fw-bold px-2 pt-2 pb-1">
+                   <i data-feather="folder" class="me-1" style="width:12px;height:12px;"></i>${escapeHtml(key)}
+               </div>`
+            : '';
+        const rows = groups.get(key).map(m => `
+            <div class="model-picker-item ${m.id === currentFileId ? 'current' : ''}" data-file-id="${m.id}">
+                <span class="text-truncate" title="${escapeAttr(m.relativePath || m.name)}">${escapeHtml(m.name)}</span>
+                <span class="text-muted ms-2 small">${escapeHtml(m.sizeHuman)}</span>
+            </div>
+        `).join('');
+        return header + rows;
+    }).join('');
+    if (window.feather) feather.replace();
 
     listEl.querySelectorAll('.model-picker-item').forEach(el => {
         el.addEventListener('click', () => {
@@ -993,6 +1043,68 @@ function renderPickerList(filter) {
             bootstrap.Dropdown.getInstance(document.getElementById('model-picker-toggle'))?.hide();
         });
     });
+}
+
+// ---------- File tree (folder structure) ----------
+function buildFileTree(models) {
+    const root = { folders: new Map(), files: [] };
+    models.forEach(m => {
+        const parts = (m.directoryPath || '').split('/').filter(Boolean);
+        let node = root;
+        parts.forEach(part => {
+            if (!node.folders.has(part)) node.folders.set(part, { folders: new Map(), files: [] });
+            node = node.folders.get(part);
+        });
+        node.files.push(m);
+    });
+    return root;
+}
+
+function renderTreeNode(node) {
+    const folderNames = [...node.folders.keys()].sort();
+    let html = '';
+    folderNames.forEach(name => {
+        const child = node.folders.get(name);
+        html += `
+            <li class="tree-folder">
+                <div class="tree-row" data-toggle-folder>
+                    <i class="tree-caret" data-feather="chevron-down" style="width:12px;height:12px;"></i>
+                    <i data-feather="folder" style="width:13px;height:13px;"></i>
+                    <span class="tree-label">${escapeHtml(name)}</span>
+                </div>
+                <ul class="tree-children">${renderTreeNode(child)}</ul>
+            </li>`;
+    });
+    node.files.slice().sort((a, b) => a.name.localeCompare(b.name)).forEach(m => {
+        html += `
+            <li class="tree-file ${m.id === currentFileId ? 'current' : ''}" data-file-id="${m.id}">
+                <div class="tree-row" title="${escapeAttr(m.relativePath || m.name)}">
+                    <i data-feather="file-text" style="width:13px;height:13px;"></i>
+                    <span class="tree-label">${escapeHtml(m.name)}</span>
+                    <span class="tree-size">${escapeHtml(m.sizeHuman)}</span>
+                </div>
+            </li>`;
+    });
+    return html;
+}
+
+function renderFileTree() {
+    const treeEl = document.getElementById('file-tree');
+    if (!treeEl) return;
+    treeEl.innerHTML = `<ul>${renderTreeNode(buildFileTree(WORKBENCH.models))}</ul>`;
+    if (window.feather) feather.replace();
+
+    treeEl.querySelectorAll('.tree-file').forEach(el => {
+        el.querySelector('.tree-row').addEventListener('click', () => {
+            selectModel(parseInt(el.dataset.fileId, 10));
+        });
+    });
+    treeEl.querySelectorAll('[data-toggle-folder]').forEach(el => {
+        el.addEventListener('click', () => el.closest('.tree-folder').classList.toggle('collapsed'));
+    });
+
+    const current = treeEl.querySelector('.tree-file.current');
+    if (current) current.scrollIntoView({ block: 'nearest' });
 }
 
 // ---------- Prev / Next ----------
@@ -1135,6 +1247,13 @@ function applyFileUi(model) {
     const sizeEl = document.getElementById('workbench-uvl-size');
     if (sizeEl) sizeEl.textContent = model.sizeHuman;
     document.title = `${model.name} · ${WORKBENCH.datasetTitle}`;
+
+    const treeEl = document.getElementById('file-tree');
+    if (treeEl) {
+        treeEl.querySelectorAll('.tree-file.current').forEach(el => el.classList.remove('current'));
+        const row = treeEl.querySelector(`.tree-file[data-file-id="${model.id}"]`);
+        if (row) { row.classList.add('current'); row.scrollIntoView({ block: 'nearest' }); }
+    }
 }
 
 function fetchAndApplyContent(fileId) {

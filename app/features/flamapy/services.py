@@ -20,6 +20,25 @@ from app.managers.task_queue_manager import TaskQueueManager
 logger = logging.getLogger(__name__)
 
 
+def derived_format_path(uvl_path: str, subdirectory: str, extension: str) -> str:
+    """Path of a format derived from a UVL file, mirroring the folder the UVL
+    lives in: ``.../dataset_N/uvl/<rel>/x.uvl`` -> ``.../dataset_N/<fmt>/<rel>/x.<ext>``."""
+    marker = os.sep + "uvl" + os.sep
+    if marker in uvl_path:
+        base_dir, _, rel = uvl_path.partition(marker)
+        rel_dir = os.path.dirname(rel)
+    else:
+        base_dir = os.path.dirname(os.path.dirname(uvl_path))
+        rel_dir = ""
+
+    name = os.path.basename(uvl_path)
+    if name.endswith(".uvl"):
+        name = name[:-4] + extension
+
+    folder = os.path.join(base_dir, subdirectory, rel_dir) if rel_dir else os.path.join(base_dir, subdirectory)
+    return os.path.join(folder, name)
+
+
 class _UVLErrorListener(ErrorListener):
     """Collects lexer/parser syntax problems as human-readable messages."""
 
@@ -52,9 +71,7 @@ class FlamapyService:
         """Resolve the path of a transformed export for a hubfile, or None if it
         has not been generated yet."""
         hubfile = self.hubfile_service.get_or_404(file_id)
-        dataset_dir = os.path.dirname(os.path.dirname(hubfile.get_path()))
-        transformed_filename = os.path.basename(hubfile.get_path()).replace(".uvl", extension)
-        path = os.path.join(dataset_dir, subdirectory, transformed_filename)
+        path = derived_format_path(hubfile.get_path(), subdirectory, extension)
         return path if os.path.exists(path) else None
 
     def check_uvl_async(self, filepath: str):

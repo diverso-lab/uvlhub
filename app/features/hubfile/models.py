@@ -22,6 +22,9 @@ class Hubfile(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), nullable=False)
+    # Relative folder (POSIX, no leading/trailing slash) of this file inside the
+    # dataset's "uvl" tree. Empty string means the dataset root.
+    directory_path = db.Column(db.String(255), nullable=False, default="", server_default="")
     checksum = db.Column(db.String(120), nullable=False)
     size = db.Column(db.Integer, nullable=False)
     feature_model_id = db.Column(db.Integer, db.ForeignKey("feature_model.id"), nullable=False)
@@ -57,13 +60,21 @@ class Hubfile(db.Model):
 
         return HubfileService().get_hubfile_url(self)
 
+    @property
+    def relative_path(self) -> str:
+        """Path of the file relative to the dataset's format folder,
+        e.g. "subsystems/auth/model.uvl" (or just "model.uvl" at the root)."""
+        return f"{self.directory_path}/{self.name}" if self.directory_path else self.name
+
     def get_full_path(self) -> str:
+        segments = tuple(self.directory_path.split("/")) if self.directory_path else ()
         return os.path.join(
             os.getenv("WORKING_DIR", ""),
             "uploads",
             f"user_{self.dataset.user_id}",
             f"dataset_{self.dataset_id}",
             "uvl",
+            *segments,
             self.name,
         )
 

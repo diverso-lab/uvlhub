@@ -10,6 +10,7 @@ from typing import List, Tuple
 from flask import request
 from flask_login import current_user
 from splent_framework.services.BaseService import BaseService
+from werkzeug.utils import secure_filename
 
 from app.features.auth.models import User
 from app.features.dataset.models import DataSet
@@ -48,6 +49,7 @@ class HubfileService(BaseService):
             f"user_{hubfile_user.id}",
             f"dataset_{hubfile_dataset.id}",
             "uvl",
+            *(hubfile.directory_path.split("/") if hubfile.directory_path else ()),
             hubfile.name,
         )
 
@@ -56,13 +58,17 @@ class HubfileService(BaseService):
     def get_by_ids(self, ids: list[int]) -> list[Hubfile]:
         return self.repository.get_by_ids(ids)
 
-    def create_from_file(self, feature_model_id: int, dataset_id: int, filepath: str) -> Hubfile:
+    def create_from_file(
+        self, feature_model_id: int, dataset_id: int, filepath: str, directory_path: str = ""
+    ) -> Hubfile:
         """Create a Hubfile from a .uvl file already placed in the destination directory.
 
         Args:
             feature_model_id (int): ID of the FeatureModel the file belongs to.
             dataset_id (int): ID of the dataset (container) the file belongs to.
             filepath (str): Full path to the UVL file.
+            directory_path (str): POSIX relative folder inside the dataset's uvl
+                tree ("" for the root).
 
         Returns:
             Hubfile: The created instance.
@@ -75,6 +81,7 @@ class HubfileService(BaseService):
             feature_model_id=feature_model_id,
             dataset_id=dataset_id,
             name=os.path.basename(filepath),
+            directory_path=directory_path,
             size=os.path.getsize(filepath),
             checksum=self._calculate_checksum(filepath),
         )
@@ -162,7 +169,7 @@ class UploadIngestService:
     Prepare UVL files for processing:
       - Extract zips safely.
       - Collect every .uvl (from zips and loose).
-      - Flatten into a staging folder.
+      - Stage them, keeping the folder structure found inside each zip.
     """
 
     def __init__(self, logger):
@@ -202,9 +209,34 @@ class UploadIngestService:
             i += 1
         return str(candidate)
 
+    @staticmethod
+    def _sanitize_rel_dir(rel_dir: str) -> str:
+        """Normalize a relative folder to a safe POSIX path with no leading/
+        trailing slash and no ``.``/``..`` segments. Returns "" for the root."""
+        parts = []
+        for segment in Path(rel_dir).as_posix().split("/"):
+            segment = segment.strip()
+            if not segment or segment in (".", ".."):
+                continue
+            parts.append(secure_filename(segment) or "folder")
+        return "/".join(parts)
+
+    @staticmethod
+    def _strip_common_root(rel_dirs: List[str]) -> str | None:
+        """If every file in a zip lives under the same single wrapper folder
+        (the common "I zipped the folder, not its contents" case), return that
+        folder so the caller can drop it. Otherwise return None."""
+        firsts = {d.split("/", 1)[0] for d in rel_dirs if d}
+        if len(firsts) == 1 and all(d for d in rel_dirs):
+            return firsts.pop()
+        return None
+
     # -------- public -------- #
 
     def prepare_uvls(self, temp_root: str) -> Tuple[str, List[str]]:
+        """Stage every uploaded UVL under ``_uvl_stage`` preserving the folder
+        structure found inside uploaded ZIPs. Loose (individually attached)
+        files land at the stage root."""
         stage_dir = str(Path(temp_root) / "_uvl_stage")
         extract_root = str(Path(temp_root) / "_extracted_zips")
 
@@ -214,27 +246,6 @@ class UploadIngestService:
         Path(stage_dir).mkdir(parents=True, exist_ok=True)
         Path(extract_root).mkdir(parents=True, exist_ok=True)
 
-        # 1) Extract every ZIP.
-        zip_paths = [str(p) for p in Path(temp_root).glob("*.zip")]
-        self.logger.info(f"[INGEST] Zips detected: {len(zip_paths)}")
-        for zp in zip_paths:
-            subdir = Path(extract_root) / f"{Path(zp).stem}_{uuid.uuid4().hex[:8]}"
-            subdir.mkdir(parents=True, exist_ok=True)
-            self._safe_extract_zip(zp, str(subdir))
-            self.logger.info(f"[INGEST] Extracted: {zp} -> {subdir}")
-
-        # 2) Collect UVLs (temp_root WITHOUT extract_root + extract_root).
-        def collect_uvls(root: str, exclude: str = None) -> List[Path]:
-            uvls = []
-            for p in Path(root).rglob("*.uvl"):
-                if p.is_file() and (exclude is None or not str(p).startswith(exclude)):
-                    uvls.append(p)
-            return uvls
-
-        uvl_sources = collect_uvls(temp_root, exclude=str(extract_root)) + collect_uvls(extract_root)
-        self.logger.info(f"[INGEST] UVLs found (before deduplication): {len(uvl_sources)}")
-
-        # 3) Deduplicate by hash and copy to stage_dir keeping the exact name.
         def file_hash(path: Path) -> str:
             h = hashlib.sha256()
             with open(path, "rb") as f:
@@ -242,26 +253,55 @@ class UploadIngestService:
                     h.update(chunk)
             return h.hexdigest()
 
+        # (relative_dir, source_path) pairs.
+        sources: List[Tuple[str, Path]] = []
+
+        # 1) Loose .uvl files sitting directly in temp_root -> dataset root.
+        for p in Path(temp_root).rglob("*.uvl"):
+            if not p.is_file():
+                continue
+            if str(p).startswith(extract_root) or str(p).startswith(stage_dir):
+                continue
+            sources.append(("", p))
+
+        # 2) Every ZIP, keeping its internal folders.
+        zip_paths = [str(p) for p in Path(temp_root).glob("*.zip")]
+        self.logger.info(f"[INGEST] Zips detected: {len(zip_paths)}")
+        for zp in zip_paths:
+            subdir = Path(extract_root) / f"{Path(zp).stem}_{uuid.uuid4().hex[:8]}"
+            subdir.mkdir(parents=True, exist_ok=True)
+            self._safe_extract_zip(zp, str(subdir))
+
+            zip_uvls = [p for p in subdir.rglob("*.uvl") if p.is_file()]
+            rel_dirs = [self._sanitize_rel_dir(str(p.parent.relative_to(subdir))) for p in zip_uvls]
+            wrapper = self._strip_common_root(rel_dirs)
+            for p, rel_dir in zip(zip_uvls, rel_dirs):
+                if wrapper and (rel_dir == wrapper or rel_dir.startswith(wrapper + "/")):
+                    rel_dir = rel_dir[len(wrapper) :].lstrip("/")
+                sources.append((rel_dir, p))
+            self.logger.info(f"[INGEST] Extracted {zp}: {len(zip_uvls)} UVLs (wrapper={wrapper})")
+
+        # 3) Deduplicate by (relative_path, hash) and stage keeping the folders.
         seen = set()
         staged_paths: List[str] = []
 
-        for src in uvl_sources:
+        for rel_dir, src in sources:
             h = file_hash(src)
             dest_name = self._strip_uuid_prefix(src.name)
-
-            # Deduplicate only by (name, hash) pair, not just hash.
-            # This allows multiple files with identical content but different names.
-            dedup_key = (dest_name, h)
+            dedup_key = (rel_dir, dest_name, h)
             if dedup_key in seen:
-                self.logger.info(f"[INGEST] Duplicate ignored: {src}")
+                self.logger.info(f"[INGEST] Duplicate ignored: {rel_dir}/{src.name}")
                 continue
             seen.add(dedup_key)
 
-            # Only add a hash suffix if another file with the same name already exists.
-            if (Path(stage_dir) / dest_name).exists():
+            dest_folder = Path(stage_dir) / rel_dir if rel_dir else Path(stage_dir)
+            dest_folder.mkdir(parents=True, exist_ok=True)
+
+            # Only disambiguate a name clash inside the SAME folder.
+            if (dest_folder / dest_name).exists():
                 dest_name = f"{Path(dest_name).stem}_{h[:8]}{Path(dest_name).suffix}"
 
-            dest = Path(stage_dir) / dest_name
+            dest = dest_folder / dest_name
             shutil.copy2(src, dest)
             staged_paths.append(str(dest))
 

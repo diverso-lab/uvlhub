@@ -12,7 +12,6 @@ from flask import (
     render_template,
     request,
     send_file,
-    send_from_directory,
     url_for,
 )
 from flask_login import current_user, login_required
@@ -311,22 +310,12 @@ def delete():
 @hubfile_bp.route("/hubfiles/download/<int:file_id>", methods=["GET"])
 def download_file(file_id):
     hubfile = HubfileService().get_or_404(file_id)
-    user_owner = hubfile.get_owner_user()
-    filename = hubfile.name
 
-    directory_path = os.path.join(
-        "uploads",
-        f"user_{user_owner.id}",
-        f"dataset_{hubfile.dataset_id}",
-        "uvl",
-    )
-
-    parent_directory_path = os.path.dirname(current_app.root_path)
-    file_path = os.path.join(parent_directory_path, directory_path)
+    file_path = hubfile.get_full_path()
 
     user_cookie = hubfile_download_record_service.create_cookie(hubfile=hubfile)
 
-    resp = make_response(send_from_directory(directory=file_path, path=filename, as_attachment=True))
+    resp = make_response(send_file(file_path, as_attachment=True, download_name=hubfile.name))
     resp.set_cookie("file_download_cookie", user_cookie)
 
     return resp
@@ -386,7 +375,7 @@ def view_uvl_with_doi(doi, filename):
 
     # 3. Find the hubfile by name within the dataset.
     selected_file = next(
-        (hf for fm in dataset.feature_models for hf in fm.hubfiles if hf.name == filename),
+        (hf for fm in dataset.feature_models for hf in fm.hubfiles if filename in (hf.name, hf.relative_path)),
         None,
     )
     if not selected_file:
@@ -413,10 +402,9 @@ def raw_uvl(file_id, filename):
     # fmfactlabel.github.io and ide.flamapy.org fetch this endpoint
     # cross-origin — same behaviour as GitHub's raw URLs.
     selected_file = HubfileService().get_or_404(file_id)
-    dataset = selected_file.dataset
+    selected_file.dataset
 
-    directory_path = os.path.join("uploads", f"user_{dataset.user_id}", f"dataset_{dataset.id}", "uvl")
-    file_path = os.path.join(current_app.root_path, "..", directory_path, selected_file.name)
+    file_path = selected_file.get_full_path()
 
     # Security: check that the name matches.
     if filename != selected_file.name:
@@ -447,8 +435,7 @@ def workbench_content(file_id):
         if not current_user.is_authenticated or dataset.user_id != current_user.id:
             abort(403)
 
-    directory_path = os.path.join("uploads", f"user_{dataset.user_id}", f"dataset_{dataset.id}", "uvl")
-    file_path = os.path.join(current_app.root_path, "..", directory_path, selected_file.name)
+    file_path = selected_file.get_full_path()
     try:
         with open(file_path, "r") as f:
             uvl = f.read()
@@ -492,10 +479,9 @@ def workbench_content(file_id):
 def _generate_latex_content(file_id, include_document=False):
     """Helper function to generate LaTeX content from UVL file."""
     selected_file = HubfileService().get_or_404(file_id)
-    dataset = selected_file.dataset
+    selected_file.dataset
 
-    directory_path = os.path.join("uploads", f"user_{dataset.user_id}", f"dataset_{dataset.id}", "uvl")
-    file_path = os.path.join(current_app.root_path, "..", directory_path, selected_file.name)
+    file_path = selected_file.get_full_path()
 
     try:
         with open(file_path, "r") as f:

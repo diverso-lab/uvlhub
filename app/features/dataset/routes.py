@@ -789,7 +789,7 @@ def doi_file_raw(doi, filename):
     selected_file = None
     for fm in dataset.feature_models:
         for hf in fm.hubfiles:
-            if hf.name == filename:
+            if filename in (hf.relative_path, hf.name):
                 selected_file = hf
                 break
         if selected_file:
@@ -798,15 +798,7 @@ def doi_file_raw(doi, filename):
     if not selected_file:
         abort(404, description="File not found in this DOI dataset")
 
-    file_path = os.path.join(
-        current_app.root_path,
-        "..",
-        "uploads",
-        f"user_{dataset.user_id}",
-        f"dataset_{dataset.id}",
-        "uvl",
-        selected_file.name,
-    )
+    file_path = selected_file.get_full_path()
 
     if not os.path.exists(file_path):
         abort(404, description="File missing on disk")
@@ -2409,17 +2401,7 @@ def api_file_raw(file_id):
     if not file:
         return jsonify({"error": "File not found"}), 404
 
-    dataset = file.dataset
-
-    file_path = os.path.join(
-        current_app.root_path,
-        "..",
-        "uploads",
-        f"user_{dataset.user_id}",
-        f"dataset_{dataset.id}",
-        "uvl",
-        file.name,
-    )
+    file_path = file.get_full_path()
 
     try:
         with open(file_path, "r", encoding="utf-8") as f:

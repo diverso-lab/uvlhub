@@ -32,23 +32,30 @@ class FeatureModelService(BaseService):
         dest_dir = os.path.join(working_dir, "uploads", f"user_{user.id}", f"dataset_{dataset.id}", "uvl")
         os.makedirs(dest_dir, exist_ok=True)
 
-        all_files = os.listdir(source_dir)
-        logger.info(f"[FM] source_dir={source_dir}, all_files={all_files}")
-
+        # Walk the staged tree so the folder structure the user uploaded is
+        # preserved on disk and recorded on each Hubfile.
         created_models = []
-        for filename in all_files:
-            if not filename.endswith(".uvl"):
-                continue
+        for subdir, _, files in os.walk(source_dir):
+            rel_dir = os.path.relpath(subdir, source_dir)
+            rel_dir = "" if rel_dir == "." else rel_dir.replace(os.sep, "/")
 
-            dest_path = os.path.join(dest_dir, filename)
-            shutil.move(os.path.join(source_dir, filename), dest_path)
-            logger.info(f"[FM] Moved {filename} to {dest_path}")
+            for filename in sorted(files):
+                if not filename.endswith(".uvl"):
+                    continue
 
-            feature_model = self.repository.create(commit=False, dataset_id=dataset.id)
-            hubfile = self.hubfile_service.create_from_file(feature_model.id, dataset.id, dest_path)
-            logger.info(f"[FM] Hubfile {hubfile.id} created for FeatureModel {feature_model.id}")
+                dest_folder = os.path.join(dest_dir, *rel_dir.split("/")) if rel_dir else dest_dir
+                os.makedirs(dest_folder, exist_ok=True)
+                dest_path = os.path.join(dest_folder, filename)
+                shutil.move(os.path.join(subdir, filename), dest_path)
+                logger.info(f"[FM] Moved {rel_dir}/{filename} to {dest_path}")
 
-            created_models.append(feature_model)
+                feature_model = self.repository.create(commit=False, dataset_id=dataset.id)
+                hubfile = self.hubfile_service.create_from_file(
+                    feature_model.id, dataset.id, dest_path, directory_path=rel_dir
+                )
+                logger.info(f"[FM] Hubfile {hubfile.id} created for FeatureModel {feature_model.id}")
+
+                created_models.append(feature_model)
 
         self.repository.session.commit()
         logger.info(f"[FM] {len(created_models)} feature models created for dataset {dataset.id}")
