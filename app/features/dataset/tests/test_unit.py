@@ -1,15 +1,17 @@
 import importlib.util
 import zipfile
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 from urllib.error import HTTPError
 
 import pytest
+import pytz
 from werkzeug.datastructures import MultiDict
 
 from app.features.dataset import routes as dataset_routes
+from app.features.dataset.models import DataSet
 from app.features.dataset.services import DatasetMetadataValidationError, DataSetService
 
 pytestmark = pytest.mark.unit
@@ -30,6 +32,68 @@ def test_current_dataset_type_is_zenodo_with_doi():
 def test_current_dataset_type_is_anonymous_when_flagged():
     ds = _dataset_for_type(doi="10.5072/zenodo.1", anonymous=True)
     assert DataSetService._current_dataset_type(ds) == "zenodo_anonymous"
+
+
+# --- Dataset deletion window (is_deletable / can_be_deleted_by) -----------
+
+
+def test_is_deletable_true_within_window():
+    dataset = DataSet()
+    dataset.created_at = datetime.now(pytz.utc) - timedelta(days=5)
+    assert dataset.is_deletable() is True
+
+
+def test_is_deletable_false_after_window():
+    dataset = DataSet()
+    dataset.created_at = datetime.now(pytz.utc) - timedelta(days=45)
+    assert dataset.is_deletable() is False
+
+
+def test_is_deletable_handles_naive_datetime():
+    # MariaDB returns naive datetimes for DateTime columns; is_deletable must
+    # not blow up comparing a naive value against an aware "now".
+    dataset = DataSet()
+    dataset.created_at = datetime.now() - timedelta(days=5)
+    assert dataset.is_deletable() is True
+
+
+def test_can_be_deleted_by_owner_within_window():
+    dataset = DataSet()
+    dataset.user_id = 1
+    dataset.created_at = datetime.now(pytz.utc) - timedelta(days=5)
+    owner = SimpleNamespace(id=1, is_authenticated=True)
+    assert dataset.can_be_deleted_by(owner) is True
+
+
+def test_can_be_deleted_by_rejects_non_owner():
+    dataset = DataSet()
+    dataset.user_id = 1
+    dataset.created_at = datetime.now(pytz.utc) - timedelta(days=5)
+    other_user = SimpleNamespace(id=2, is_authenticated=True)
+    assert dataset.can_be_deleted_by(other_user) is False
+
+
+def test_can_be_deleted_by_rejects_owner_after_window():
+    dataset = DataSet()
+    dataset.user_id = 1
+    dataset.created_at = datetime.now(pytz.utc) - timedelta(days=45)
+    owner = SimpleNamespace(id=1, is_authenticated=True)
+    assert dataset.can_be_deleted_by(owner) is False
+
+
+def test_can_be_deleted_by_rejects_unauthenticated_user():
+    dataset = DataSet()
+    dataset.user_id = 1
+    dataset.created_at = datetime.now(pytz.utc) - timedelta(days=5)
+    anon = SimpleNamespace(id=1, is_authenticated=False)
+    assert dataset.can_be_deleted_by(anon) is False
+
+
+def test_can_be_deleted_by_rejects_none_user():
+    dataset = DataSet()
+    dataset.user_id = 1
+    dataset.created_at = datetime.now(pytz.utc) - timedelta(days=5)
+    assert dataset.can_be_deleted_by(None) is False
 
 
 def test_validate_orcid_invalid_format():

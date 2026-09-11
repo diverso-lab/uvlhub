@@ -388,7 +388,9 @@ def test_new_version_success_returns_doi(test_client):
     with (
         patch.object(dataset_routes.dataset_service, "get_or_404", return_value=owned),
         patch.object(dataset_routes.dataset_service, "create_new_version", return_value=new_dataset),
-        patch("app.features.elasticsearch.services.IndexingService"),
+        # routes.py does `from ... import IndexingService`, so the module-level
+        # reference it calls lives in its own namespace, not elasticsearch.services.
+        patch("app.features.dataset.routes.IndexingService"),
     ):
         response = test_client.post(
             "/dataset/1/new-version",
@@ -416,6 +418,69 @@ def test_new_version_validation_error_returns_400(test_client):
     ):
         response = test_client.post("/dataset/1/new-version", data={}, content_type="multipart/form-data")
     assert response.status_code == 400
+    test_client.get("/logout", follow_redirects=True)
+
+
+# --- Delete dataset route --------------------------------------------------
+
+
+def test_delete_dataset_requires_login(test_client):
+    test_client.get("/logout", follow_redirects=True)
+    response = test_client.post("/dataset/delete/1")
+    assert response.status_code == 302
+    assert "/login" in response.headers.get("Location", "")
+
+
+def test_delete_dataset_forbidden_for_non_owner(test_client):
+    _login(test_client)
+    with patch.object(dataset_routes.dataset_service, "get_or_404", return_value=MagicMock(user_id=999999)):
+        response = test_client.post("/dataset/delete/123")
+    assert response.status_code == 403
+    test_client.get("/logout", follow_redirects=True)
+
+
+def test_delete_dataset_blocked_after_30_day_window(test_client):
+    # Owner, but past the 30-day deletion window: must not touch the service.
+    _login(test_client)
+    owned = MagicMock(user_id=_test_user_id(test_client))
+    owned.is_deletable.return_value = False
+    with (
+        patch.object(dataset_routes.dataset_service, "get_or_404", return_value=owned),
+        patch.object(dataset_routes.dataset_service, "delete_dataset") as mock_delete,
+    ):
+        response = test_client.post("/dataset/delete/123", follow_redirects=True)
+    mock_delete.assert_not_called()
+    assert response.status_code == 200
+    assert b"30 days" in response.data
+    test_client.get("/logout", follow_redirects=True)
+
+
+def test_delete_dataset_success_within_window(test_client):
+    _login(test_client)
+    owned = MagicMock(user_id=_test_user_id(test_client))
+    owned.is_deletable.return_value = True
+    with (
+        patch.object(dataset_routes.dataset_service, "get_or_404", return_value=owned),
+        patch.object(dataset_routes.dataset_service, "delete_dataset") as mock_delete,
+    ):
+        response = test_client.post("/dataset/delete/123", follow_redirects=True)
+    mock_delete.assert_called_once_with(owned)
+    assert response.status_code == 200
+    assert b"deleted successfully" in response.data
+    test_client.get("/logout", follow_redirects=True)
+
+
+def test_delete_dataset_handles_service_error(test_client):
+    _login(test_client)
+    owned = MagicMock(user_id=_test_user_id(test_client))
+    owned.is_deletable.return_value = True
+    with (
+        patch.object(dataset_routes.dataset_service, "get_or_404", return_value=owned),
+        patch.object(dataset_routes.dataset_service, "delete_dataset", side_effect=Exception("boom")),
+    ):
+        response = test_client.post("/dataset/delete/123", follow_redirects=True)
+    assert response.status_code == 200
+    assert b"Error deleting dataset" in response.data
     test_client.get("/logout", follow_redirects=True)
 
 
@@ -811,6 +876,75 @@ def test_api_new_version_indexes_new_dataset(test_client):
     mock_indexing.return_value.index_dataset_and_hubfiles.assert_called_once_with(
         new_dataset, new_dataset.feature_models
     )
+
+
+# --- API delete dataset ----------------------------------------------------
+
+
+def test_api_delete_dataset_rejects_missing_api_key(test_client):
+    test_client.get("/logout", follow_redirects=True)
+
+    response = test_client.delete("/api/v1/datasets/1")
+
+    assert response.status_code == 401
+
+
+def test_api_delete_dataset_forbidden_for_another_users_dataset(test_client):
+    token = _api_token(test_client, ["write_dataset"], email="rival-delete@example.com")
+
+    with patch.object(dataset_routes.dataset_service, "get_or_404", return_value=MagicMock(user_id=424242)):
+        response = test_client.delete("/api/v1/datasets/1", headers={"X-API-Key": token})
+
+    assert response.status_code == 403
+    assert "own" in response.get_json()["error"]
+
+
+def test_api_delete_dataset_blocked_after_30_day_window(test_client):
+    # Owner, but past the 30-day deletion window: must not touch the service.
+    token = _api_token(test_client, ["write_dataset"])
+    owned = MagicMock(user_id=_test_user_id(test_client))
+    owned.is_deletable.return_value = False
+
+    with (
+        patch.object(dataset_routes.dataset_service, "get_or_404", return_value=owned),
+        patch.object(dataset_routes.dataset_service, "delete_dataset") as mock_delete,
+    ):
+        response = test_client.delete("/api/v1/datasets/1", headers={"X-API-Key": token})
+
+    mock_delete.assert_not_called()
+    assert response.status_code == 403
+    assert "30 days" in response.get_json()["error"]
+
+
+def test_api_delete_dataset_success_within_window(test_client):
+    token = _api_token(test_client, ["write_dataset"])
+    owned = MagicMock(user_id=_test_user_id(test_client))
+    owned.is_deletable.return_value = True
+
+    with (
+        patch.object(dataset_routes.dataset_service, "get_or_404", return_value=owned),
+        patch.object(dataset_routes.dataset_service, "delete_dataset") as mock_delete,
+    ):
+        response = test_client.delete("/api/v1/datasets/1", headers={"X-API-Key": token})
+
+    mock_delete.assert_called_once_with(owned)
+    assert response.status_code == 200
+    assert "deleted" in response.get_json()["message"].lower()
+
+
+def test_api_delete_dataset_handles_service_error(test_client):
+    token = _api_token(test_client, ["write_dataset"])
+    owned = MagicMock(user_id=_test_user_id(test_client))
+    owned.is_deletable.return_value = True
+
+    with (
+        patch.object(dataset_routes.dataset_service, "get_or_404", return_value=owned),
+        patch.object(dataset_routes.dataset_service, "delete_dataset", side_effect=Exception("boom")),
+    ):
+        response = test_client.delete("/api/v1/datasets/1", headers={"X-API-Key": token})
+
+    assert response.status_code == 500
+    assert "boom" in response.get_json()["error"]
 
 
 def test_api_dataset_by_doi_requires_read_scope(test_client):

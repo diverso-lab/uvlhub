@@ -111,6 +111,7 @@ dependencies = [
     "PySocks==1.7.1",
     "pytest==9.0.3",
     "pytest-cov==7.0.0",
+    "pytest-mock==3.15.1",
     "python-dateutil==2.9.0.post0",
     "python-dotenv==1.0.1",
     "python-engineio==4.13.1",

@@ -1,3 +1,4 @@
+import io
 import zipfile
 from unittest.mock import patch
 
@@ -75,7 +76,7 @@ def test_explore_hubfile_template_links_use_the_result_url(test_client):
 
 
 def test_latex_export_endpoint_returns_zip(test_client, mocker):
-    """Verify that the LaTeX export endpoint returns a valid ZIP file."""
+    """Verify that the ZIP export endpoint returns a valid ZIP file."""
     # Setup
     user = UserRepository().create(email="latex@example.com", password="pw-123456")
     meta = DSMetaDataRepository().create(title="LaTeX Test", description="d", publication_type=PublicationType.BOOK)
@@ -85,20 +86,20 @@ def test_latex_export_endpoint_returns_zip(test_client, mocker):
         name="test.uvl", checksum="1", size=1, feature_model_id=fm.id, dataset_id=dataset.id
     )
 
-    # Mock file reading
+    # Mock file reading, scoped to the hubfile routes module so it doesn't
+    # also intercept unrelated `open()` calls elsewhere (e.g. session storage).
     test_uvl_content = "features\n  Pizza\n    optional\n      Cheese"
-    mocker.patch("builtins.open", mocker.mock_open(read_data=test_uvl_content))
+    mocker.patch("app.features.hubfile.routes.open", mocker.mock_open(read_data=test_uvl_content))
 
     # Request
-    response = test_client.get(f"/hubfile/to_latex/{hubfile.id}")
+    response = test_client.get(f"/hubfile/to_latex_zip/{hubfile.id}")
 
     # Assertions
     assert response.status_code == 200
     assert response.content_type == "application/zip"
 
     # Verify it's a valid ZIP
-    zip_buffer = response.get_data()
-    with zipfile.ZipFile(zip_buffer, "r") as z:
+    with zipfile.ZipFile(io.BytesIO(response.get_data()), "r") as z:
         assert len(z.namelist()) > 0
 
 
@@ -115,17 +116,17 @@ def test_latex_export_contains_tex_file(test_client, mocker):
 
     # Mock file reading
     test_uvl_content = "features\n  Pizza\n    optional\n      Cheese"
-    mocker.patch("builtins.open", mocker.mock_open(read_data=test_uvl_content))
+    mocker.patch("app.features.hubfile.routes.open", mocker.mock_open(read_data=test_uvl_content))
 
     # Request
-    response = test_client.get(f"/hubfile/to_latex/{hubfile.id}")
+    response = test_client.get(f"/hubfile/to_latex_zip/{hubfile.id}")
 
-    # Extract and verify .tex file
-    with zipfile.ZipFile(response.get_data(), "r") as z:
-        tex_files = [f for f in z.namelist() if f.endswith(".tex")]
-        assert len(tex_files) == 1
+    # Extract and verify the dataset's own .tex file (the ZIP also bundles the
+    # uvlhighlight package's example/doc .tex files, so filter by name).
+    with zipfile.ZipFile(io.BytesIO(response.get_data()), "r") as z:
+        assert "pizza.tex" in z.namelist()
 
-        tex_content = z.read(tex_files[0]).decode("utf-8")
+        tex_content = z.read("pizza.tex").decode("utf-8")
         assert r"\usepackage{uvlhighlight}" in tex_content
         assert r"\begin{lstlisting}[language=UVL]" in tex_content
         assert r"\end{lstlisting}" in tex_content
@@ -144,19 +145,19 @@ def test_latex_export_respects_include_document_param(test_client, mocker):
     )
 
     test_uvl_content = "features\n  Root"
-    mocker.patch("builtins.open", mocker.mock_open(read_data=test_uvl_content))
+    mocker.patch("app.features.hubfile.routes.open", mocker.mock_open(read_data=test_uvl_content))
 
     # Test WITHOUT include_document
-    response = test_client.get(f"/hubfile/to_latex/{hubfile.id}?include_document=false")
-    with zipfile.ZipFile(response.get_data(), "r") as z:
-        tex_content = z.read([f for f in z.namelist() if f.endswith(".tex")][0]).decode("utf-8")
+    response = test_client.get(f"/hubfile/to_latex_zip/{hubfile.id}?include_document=false")
+    with zipfile.ZipFile(io.BytesIO(response.get_data()), "r") as z:
+        tex_content = z.read("test.tex").decode("utf-8")
         assert r"\begin{document}" not in tex_content
         assert r"\end{document}" not in tex_content
 
     # Test WITH include_document
-    response = test_client.get(f"/hubfile/to_latex/{hubfile.id}?include_document=true")
-    with zipfile.ZipFile(response.get_data(), "r") as z:
-        tex_content = z.read([f for f in z.namelist() if f.endswith(".tex")][0]).decode("utf-8")
+    response = test_client.get(f"/hubfile/to_latex_zip/{hubfile.id}?include_document=true")
+    with zipfile.ZipFile(io.BytesIO(response.get_data()), "r") as z:
+        tex_content = z.read("test.tex").decode("utf-8")
         assert r"\begin{document}" in tex_content
         assert r"\end{document}" in tex_content
 
@@ -180,13 +181,13 @@ def test_latex_export_includes_uvlhighlight_package_files(test_client, mocker):
     )
 
     test_uvl_content = "features\n  Root"
-    mocker.patch("builtins.open", mocker.mock_open(read_data=test_uvl_content))
+    mocker.patch("app.features.hubfile.routes.open", mocker.mock_open(read_data=test_uvl_content))
 
     # Request
-    response = test_client.get(f"/hubfile/to_latex/{hubfile.id}")
+    response = test_client.get(f"/hubfile/to_latex_zip/{hubfile.id}")
 
     # Verify ZIP contains package files
-    with zipfile.ZipFile(response.get_data(), "r") as z:
+    with zipfile.ZipFile(io.BytesIO(response.get_data()), "r") as z:
         files = z.namelist()
         # Should contain files from uvlhighlight package
         # (At least one file, could be .sty, README, etc.)
@@ -210,20 +211,18 @@ def test_latex_export_filename_is_correct(test_client, mocker):
     )
 
     test_uvl_content = "features\n  Pizza"
-    mocker.patch("builtins.open", mocker.mock_open(read_data=test_uvl_content))
+    mocker.patch("app.features.hubfile.routes.open", mocker.mock_open(read_data=test_uvl_content))
 
     # Request
-    response = test_client.get(f"/hubfile/to_latex/{hubfile.id}")
+    response = test_client.get(f"/hubfile/to_latex_zip/{hubfile.id}")
 
     # Check response headers for download filename
     content_disposition = response.headers.get("Content-Disposition", "")
     assert "pizza.zip" in content_disposition, f"Expected 'pizza.zip' in filename, got: {content_disposition}"
 
     # Verify .tex file inside ZIP
-    with zipfile.ZipFile(response.get_data(), "r") as z:
-        tex_files = [f for f in z.namelist() if f.endswith(".tex")]
-        assert len(tex_files) == 1
-        assert "pizza.tex" in tex_files[0]
+    with zipfile.ZipFile(io.BytesIO(response.get_data()), "r") as z:
+        assert "pizza.tex" in z.namelist()
 
 
 def test_latex_export_only_owner_can_download_private_dataset(test_client, mocker):
@@ -241,10 +240,12 @@ def test_latex_export_only_owner_can_download_private_dataset(test_client, mocke
     )
 
     test_uvl_content = "features\n  Root"
-    mocker.patch("builtins.open", mocker.mock_open(read_data=test_uvl_content))
+    mocker.patch("app.features.hubfile.routes.open", mocker.mock_open(read_data=test_uvl_content))
 
-    # Owner should be able to download
-    test_client.post("/login", data=dict(email="owner@example.com", password="pw-123456"), follow_redirects=True)
+    # Owner should be able to download. No follow_redirects here: the login
+    # redirect target (home page) renders `current_user.profile`, which this
+    # ad-hoc user doesn't have — the login response itself is all we need.
+    test_client.post("/login", data=dict(email="owner@example.com", password="pw-123456"))
     response = test_client.get(f"/hubfile/to_latex/{hubfile.id}")
     assert response.status_code == 200
 
@@ -270,7 +271,7 @@ def test_latex_export_public_dataset_accessible_to_anyone(test_client, mocker):
     )
 
     test_uvl_content = "features\n  Root"
-    mocker.patch("builtins.open", mocker.mock_open(read_data=test_uvl_content))
+    mocker.patch("app.features.hubfile.routes.open", mocker.mock_open(read_data=test_uvl_content))
 
     # Unauthenticated user should be able to download
     response = test_client.get(f"/hubfile/to_latex/{hubfile.id}")
@@ -288,15 +289,14 @@ def test_latex_export_with_empty_uvl_file(test_client, mocker):
     )
 
     # Mock empty file
-    mocker.patch("builtins.open", mocker.mock_open(read_data=""))
+    mocker.patch("app.features.hubfile.routes.open", mocker.mock_open(read_data=""))
 
-    response = test_client.get(f"/hubfile/to_latex/{hubfile.id}")
+    response = test_client.get(f"/hubfile/to_latex_zip/{hubfile.id}")
 
     # Should still return valid ZIP with empty .tex content
     assert response.status_code == 200
-    with zipfile.ZipFile(response.get_data(), "r") as z:
-        tex_files = [f for f in z.namelist() if f.endswith(".tex")]
-        assert len(tex_files) == 1
-        tex_content = z.read(tex_files[0]).decode("utf-8")
+    with zipfile.ZipFile(io.BytesIO(response.get_data()), "r") as z:
+        assert "empty.tex" in z.namelist()
+        tex_content = z.read("empty.tex").decode("utf-8")
         assert r"\usepackage{uvlhighlight}" in tex_content
         assert r"\begin{lstlisting}" in tex_content
