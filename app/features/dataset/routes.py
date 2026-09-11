@@ -1763,11 +1763,20 @@ def api_cancel_dataset_transfer(transfer_id):
 @dataset_bp.route("/dataset/delete/<int:dataset_id>", methods=["POST"])
 @login_required
 def delete_dataset(dataset_id):
-    """Delete a dataset (draft or synchronized) that belongs to the current user."""
+    """Delete a dataset (draft or synchronized) that belongs to the current user,
+    while it is still within its 30-day deletion window."""
     dataset = dataset_service.get_or_404(dataset_id)
 
     if dataset.user_id != current_user.id:
         abort(403)
+
+    if not dataset.is_deletable():
+        flash(
+            f"This dataset can no longer be deleted: datasets can only be removed "
+            f"within {DataSet.DELETE_WINDOW_DAYS} days of creation.",
+            "danger",
+        )
+        return redirect(url_for("dataset.list_dataset"))
 
     try:
         dataset_service.delete_dataset(dataset)
@@ -1805,7 +1814,7 @@ def api_delete_dataset(dataset_id):
               example:
                 message: "Dataset deleted successfully"
       403:
-        description: Not the owner of the dataset
+        description: Not the owner of the dataset, or the 30-day deletion window has passed
       404:
         description: Dataset not found
     """
@@ -1813,6 +1822,11 @@ def api_delete_dataset(dataset_id):
 
     if dataset.user_id != g.api_user.id:
         return jsonify({"error": "Forbidden: you don't own this dataset"}), 403
+
+    if not dataset.is_deletable():
+        return jsonify(
+            {"error": f"Forbidden: datasets can only be deleted within {DataSet.DELETE_WINDOW_DAYS} days of creation"}
+        ), 403
 
     try:
         dataset_service.delete_dataset(dataset)

@@ -1,4 +1,5 @@
 from datetime import datetime
+from datetime import timedelta
 from enum import Enum
 from typing import List
 
@@ -105,6 +106,10 @@ class DSMetaData(db.Model):
 
 class DataSet(db.Model):
     __tablename__ = "datasets"
+
+    # A dataset can only be deleted by its owner within this many days of creation.
+    DELETE_WINDOW_DAYS = 30
+
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     ds_meta_data_id = db.Column(db.Integer, db.ForeignKey("ds_meta_data.id"), nullable=False)
@@ -314,6 +319,23 @@ class DataSet(db.Model):
         if not current_user.is_authenticated:
             return False
         return self.user_id == current_user.id
+
+    def is_deletable(self) -> bool:
+        """Whether this dataset is still within its deletion window.
+
+        Datasets can only be deleted within DELETE_WINDOW_DAYS of creation,
+        regardless of who is asking — ownership is checked separately.
+        """
+        created_at = self.created_at
+        if created_at.tzinfo is None:
+            created_at = pytz.utc.localize(created_at)
+        return datetime.now(pytz.utc) - created_at <= timedelta(days=self.DELETE_WINDOW_DAYS)
+
+    def can_be_deleted_by(self, user) -> bool:
+        """Whether `user` is allowed to delete this dataset right now."""
+        if not user or not getattr(user, "is_authenticated", False):
+            return False
+        return self.user_id == user.id and self.is_deletable()
 
     def __repr__(self):
         return f"DataSet<{self.id}>"

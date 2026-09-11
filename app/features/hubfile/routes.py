@@ -527,7 +527,8 @@ def to_latex_zip(file_id):
     from pathlib import Path
 
     selected_file = HubfileService().get_or_404(file_id)
-    latex_content = _generate_latex_content(file_id, include_document=False)
+    include_document = request.args.get("include_document", "false").lower() == "true"
+    latex_content = _generate_latex_content(file_id, include_document=include_document)
     if latex_content is None:
         return jsonify({"error": "Could not read file"}), 500
 

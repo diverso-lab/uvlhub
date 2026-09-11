@@ -1634,6 +1634,30 @@ class DataSetService(BaseService):
             db.session.commit()
             current_app.logger.info(f"Dataset {dataset_id} deleted successfully")
 
+            # Best-effort side effects: the dataset row is already gone, so a
+            # failure here must not roll back the deletion — just log it.
+            # Remove it (and its hubfile docs) from Explore's search index.
+            try:
+                from app.features.elasticsearch.services import ElasticsearchService
+
+                ElasticsearchService().delete_by_dataset_id(dataset_id)
+            except Exception as exc:
+                current_app.logger.warning(
+                    f"Could not remove dataset {dataset_id} from the search index: {exc}"
+                )
+
+            # Drop it from the cached statistics dashboard so it stops showing
+            # up there immediately instead of waiting for the cache TTL.
+            try:
+                from app.features.statistics.services import DashboardService
+
+                StatisticsService().refresh_statistics()
+                DashboardService().invalidate_cache()
+            except Exception as exc:
+                current_app.logger.warning(
+                    f"Could not refresh statistics after deleting dataset {dataset_id}: {exc}"
+                )
+
         except SQLAlchemyError as exc:
             db.session.rollback()
             current_app.logger.exception(f"Database error deleting dataset {dataset_id}: {exc}")
