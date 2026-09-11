@@ -530,7 +530,7 @@
                 </div>
                 <div class="modal-body pt-3">
                     <div class="position-relative">
-                        <pre id="latexCodeBlock" class="bg-light p-3 rounded" style="max-height: 400px; overflow-y: auto; font-size: 0.85rem;"><code></code></pre>
+                        <pre id="latexCodeBlock" class="bg-light p-3 rounded" style="max-height: 400px; overflow-y: auto; font-size: 0.85rem; font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;"><code></code></pre>
                         <button type="button" class="btn btn-sm btn-light position-absolute" id="latexCopyButton"
                                 style="top: 10px; right: 10px;" data-bs-toggle="tooltip" title="Copy to clipboard">
                             <i class="ki-duotone ki-copy fs-4"></i>
@@ -576,6 +576,27 @@
 
     /* Meta column */
     .workbench-meta-card .form-label { letter-spacing: 0.04em; }
+
+    /* LaTeX export option buttons — btn-outline-primary flips to a solid blue
+       background on hover/focus/active, but the heading, muted description and
+       icon inside keep their own fixed colors (text-primary/text-muted), so they
+       become nearly invisible against the blue fill. Force them to white. */
+    .latex-export-option:hover,
+    .latex-export-option:focus,
+    .latex-export-option:active {
+        color: #fff;
+    }
+    .latex-export-option:hover h6,
+    .latex-export-option:hover p,
+    .latex-export-option:hover i,
+    .latex-export-option:focus h6,
+    .latex-export-option:focus p,
+    .latex-export-option:focus i,
+    .latex-export-option:active h6,
+    .latex-export-option:active p,
+    .latex-export-option:active i {
+        color: #fff !important;
+    }
 
     /* Dataset file tree (folder structure) */
     .dataset-file-tree { max-height: 320px; overflow-y: auto; }
@@ -1176,7 +1197,7 @@ function initActionButtons() {
                 .then(data => {
                     modal.hide();
                     const viewModal = new bootstrap.Modal(document.getElementById('latexViewModal'));
-                    document.getElementById('latexCodeBlock').querySelector('code').textContent = data.content;
+                    document.getElementById('latexCodeBlock').querySelector('code').textContent = '\n' + data.content;
                     viewModal.show();
                 })
                 .catch(err => {

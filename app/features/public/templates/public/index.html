@@ -39,8 +39,8 @@
                             {% if dataset.ds_meta_data.dataset_doi %}
                                 {% set _rating = dataset_rating_counts(dataset) %}
                                 <span class="ms-3" title="Community rating">
-                                    <i class="ki-duotone ki-arrow-up fs-5 align-middle"><span class="path1"></span><span class="path2"></span></i>{{ _rating.likes }}
-                                    <i class="ki-duotone ki-arrow-down fs-5 align-middle ms-2"><span class="path1"></span><span class="path2"></span></i>{{ _rating.dislikes }}
+                                    <i class="ki-duotone ki-like fs-5 align-middle"><span class="path1"></span><span class="path2"></span></i>{{ _rating.likes }}
+                                    <i class="ki-duotone ki-dislike fs-5 align-middle ms-2"><span class="path1"></span><span class="path2"></span></i>{{ _rating.dislikes }}
                                 </span>
                             {% endif %}
                         </p>

@@ -129,4 +129,4 @@ def test_home_page_shows_the_rating_counters(test_client, clean_database):
     assert response.status_code == 200
     body = response.data.decode()
     assert "Community rating" in body
-    assert "ki-arrow-up" in body
+    assert "ki-like" in body

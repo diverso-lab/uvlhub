@@ -1,4 +1,4 @@
-{# Up/down vote rating for a published dataset. Expects `dataset` in scope. #}
+{# Like/dislike rating for a published dataset. Expects `dataset` in scope. #}
 <div class="mb-4"
      id="dataset-rating"
      data-dataset-id="{{ dataset.id }}"
@@ -6,13 +6,13 @@
     <label class="form-label fs-7 fw-bold text-muted text-uppercase mb-2">Community rating</label>
     <div class="d-flex align-items-center gap-2">
         <button type="button" class="btn btn-sm btn-light rating-btn d-flex align-items-center gap-1"
-                data-vote="like" title="Upvote this dataset">
-            <i class="ki-duotone ki-arrow-up fs-4"><span class="path1"></span><span class="path2"></span></i>
+                data-vote="like" title="Like this dataset" data-bs-toggle="tooltip">
+            <i class="ki-duotone ki-like fs-4"><span class="path1"></span><span class="path2"></span></i>
             <span class="rating-like-count">0</span>
         </button>
         <button type="button" class="btn btn-sm btn-light rating-btn d-flex align-items-center gap-1"
-                data-vote="dislike" title="Downvote this dataset">
-            <i class="ki-duotone ki-arrow-down fs-4"><span class="path1"></span><span class="path2"></span></i>
+                data-vote="dislike" title="Dislike this dataset" data-bs-toggle="tooltip">
+            <i class="ki-duotone ki-dislike fs-4"><span class="path1"></span><span class="path2"></span></i>
             <span class="rating-dislike-count">0</span>
         </button>
     </div>
@@ -20,7 +20,7 @@
 </div>
 
 <style>
-    /* Render the duotone arrow in a single colour so it stays legible on the
+    /* Render the duotone thumb icon in a single colour so it stays legible on the
        highlighted (btn-primary / btn-danger) state. */
     #dataset-rating .rating-btn .ki-duotone .path1:before,
     #dataset-rating .rating-btn .ki-duotone .path2:before { color: currentColor; opacity: 1; }
@@ -60,9 +60,21 @@
         .then(r => (r.ok ? r.json() : null))
         .then(state => { if (state) paint(state); });
 
+    // Flash a tooltip with `message` over `btn`, restoring its previous title after.
+    function flashTooltip(btn, message) {
+        const tooltip = bootstrap.Tooltip.getOrCreateInstance(btn);
+        const originalTitle = btn.getAttribute('data-bs-original-title') || btn.getAttribute('title');
+        tooltip.setContent({ '.tooltip-inner': message });
+        tooltip.show();
+        setTimeout(() => {
+            tooltip.hide();
+            tooltip.setContent({ '.tooltip-inner': originalTitle });
+        }, 1500);
+    }
+
     if (!authed) {
         hint.innerHTML = '<a href="/login">Sign in</a> to vote.';
-        buttons.forEach(b => (b.disabled = true));
+        buttons.forEach(btn => btn.addEventListener('click', () => flashTooltip(btn, 'Sign in to vote')));
         return;
     }
 
