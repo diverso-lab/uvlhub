@@ -1838,9 +1838,14 @@ def api_delete_dataset(dataset_id):
         return jsonify({"error": "Forbidden: you don't own this dataset"}), 403
 
     if not dataset.is_deletable():
-        return jsonify(
-            {"error": f"Forbidden: datasets can only be deleted within {DataSet.DELETE_WINDOW_DAYS} days of creation"}
-        ), 403
+        return (
+            jsonify(
+                {
+                    "error": f"Forbidden: datasets can only be deleted within {DataSet.DELETE_WINDOW_DAYS} days of creation"
+                }
+            ),
+            403,
+        )
 
     try:
         dataset_service.delete_dataset(dataset)

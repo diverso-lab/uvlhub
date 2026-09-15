@@ -1642,9 +1642,7 @@ class DataSetService(BaseService):
 
                 ElasticsearchService().delete_by_dataset_id(dataset_id)
             except Exception as exc:
-                current_app.logger.warning(
-                    f"Could not remove dataset {dataset_id} from the search index: {exc}"
-                )
+                current_app.logger.warning(f"Could not remove dataset {dataset_id} from the search index: {exc}")
 
             # Drop it from the cached statistics dashboard so it stops showing
             # up there immediately instead of waiting for the cache TTL.
@@ -1654,9 +1652,7 @@ class DataSetService(BaseService):
                 StatisticsService().refresh_statistics()
                 DashboardService().invalidate_cache()
             except Exception as exc:
-                current_app.logger.warning(
-                    f"Could not refresh statistics after deleting dataset {dataset_id}: {exc}"
-                )
+                current_app.logger.warning(f"Could not refresh statistics after deleting dataset {dataset_id}: {exc}")
 
         except SQLAlchemyError as exc:
             db.session.rollback()
