@@ -1841,7 +1841,10 @@ def api_delete_dataset(dataset_id):
         return (
             jsonify(
                 {
-                    "error": f"Forbidden: datasets can only be deleted within {DataSet.DELETE_WINDOW_DAYS} days of creation"
+                    "error": (
+                        f"Forbidden: datasets can only be deleted within "
+                        f"{DataSet.DELETE_WINDOW_DAYS} days of creation"
+                    )
                 }
             ),
             403,
