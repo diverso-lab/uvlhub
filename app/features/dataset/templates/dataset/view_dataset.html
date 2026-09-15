@@ -196,11 +196,13 @@
                         {% include 'dataset/_download_dataset_menu.html' %}
                     {% endwith %}
                     {% if dataset.ds_meta_data.dataset_doi %}
-                    <a href="{{ url_for('dataset.export_bibtex', dataset_id=dataset.id) }}"
+                    <button type="button" id="dataset-export-bibtex"
                        class="btn btn-sm btn-light"
-                       data-bs-toggle="tooltip" title="Export as BibTeX">
+                       data-bs-toggle="tooltip" title="Export as BibTeX"
+                       data-bibtex-view-url="{{ url_for('dataset.export_bibtex_content', dataset_id=dataset.id) }}"
+                       data-bibtex-download-url="{{ url_for('dataset.export_bibtex', dataset_id=dataset.id) }}">
                         <span class="small fw-bold" style="font-family: Georgia, serif; letter-spacing: 0.05em;">BibTeX</span>
-                    </a>
+                    </button>
                     {% endif %}
                     {% if dataset.get_zenodo_url() %}
                     <a href="{{ dataset.get_zenodo_url() }}" target="_blank"
@@ -532,6 +534,80 @@
                     <div class="position-relative">
                         <pre id="latexCodeBlock" class="bg-light p-3 rounded" style="max-height: 400px; overflow-y: auto; font-size: 0.85rem; font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;"><code></code></pre>
                         <button type="button" class="btn btn-sm btn-light position-absolute" id="latexCopyButton"
+                                style="top: 10px; right: 10px;" data-bs-toggle="tooltip" title="Copy to clipboard">
+                            <i class="ki-duotone ki-copy fs-4"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ---------- BibTeX Export Modal ---------- #}
+    <div class="modal fade" id="bibtexExportModal" tabindex="-1" aria-labelledby="bibtexExportModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow-lg rounded-2xl">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="fw-bold mb-0" id="bibtexExportModalLabel">Export to BibTeX</h5>
+                    <button type="button" class="btn btn-icon btn-sm btn-light" data-bs-dismiss="modal" aria-label="Close">
+                        <i class="ki-duotone ki-cross fs-2">
+                            <span class="path1"></span><span class="path2"></span>
+                        </i>
+                    </button>
+                </div>
+                <div class="modal-body pt-3">
+                    <p class="text-muted mb-4">Choose how you want to export your BibTeX entry:</p>
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-outline-primary text-start p-3 latex-export-option" id="bibtexExportViewOption">
+                            <div class="d-flex align-items-start gap-3">
+                                <i class="ki-duotone ki-eye fs-3 text-primary mt-1">
+                                    <span class="path1"></span><span class="path2"></span>
+                                </i>
+                                <div class="flex-grow-1">
+                                    <h6 class="fw-bold mb-1">View & Copy</h6>
+                                    <p class="text-muted small mb-0">See the .bib entry in your browser and copy it to paste anywhere</p>
+                                </div>
+                            </div>
+                        </button>
+                        <button type="button" class="btn btn-outline-primary text-start p-3 latex-export-option" id="bibtexExportDownloadOption">
+                            <div class="d-flex align-items-start gap-3">
+                                <i class="ki-duotone ki-file-down fs-3 text-primary mt-1">
+                                    <span class="path1"></span><span class="path2"></span>
+                                </i>
+                                <div class="flex-grow-1">
+                                    <h6 class="fw-bold mb-1">Download .bib</h6>
+                                    <p class="text-muted small mb-0">Download the BibTeX entry as a .bib file</p>
+                                </div>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ---------- BibTeX View Modal ---------- #}
+    <div class="modal fade" id="bibtexViewModal" tabindex="-1" aria-labelledby="bibtexViewModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content shadow-lg rounded-2xl">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="fw-bold mb-0" id="bibtexViewModalLabel">BibTeX Entry</h5>
+                    <button type="button" class="btn btn-icon btn-sm btn-light" data-bs-dismiss="modal" aria-label="Close">
+                        <i class="ki-duotone ki-cross fs-2">
+                            <span class="path1"></span><span class="path2"></span>
+                        </i>
+                    </button>
+                </div>
+                <div class="modal-body pt-3">
+                    <div class="position-relative">
+                        <pre id="bibtexCodeBlock" class="bg-light p-3 rounded" style="max-height: 400px; overflow-y: auto; font-size: 0.85rem; font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;"><code></code></pre>
+                        <button type="button" class="btn btn-sm btn-light position-absolute" id="bibtexCopyButton"
                                 style="top: 10px; right: 10px;" data-bs-toggle="tooltip" title="Copy to clipboard">
                             <i class="ki-duotone ki-copy fs-4"></i>
                         </button>
@@ -1420,4 +1496,55 @@ function escapeHtml(s) {
 function escapeAttr(s) { return escapeHtml(s); }
 </script>
 {% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const bibtexBtn = document.getElementById('dataset-export-bibtex');
+    if (!bibtexBtn) return;
+
+    const viewUrl = bibtexBtn.dataset.bibtexViewUrl;
+    const downloadUrl = bibtexBtn.dataset.bibtexDownloadUrl;
+
+    bibtexBtn.addEventListener('click', () => {
+        const modal = new bootstrap.Modal(document.getElementById('bibtexExportModal'));
+        modal.show();
+
+        document.getElementById('bibtexExportViewOption').onclick = () => {
+            fetch(viewUrl)
+                .then(r => r.json())
+                .then(data => {
+                    modal.hide();
+                    const viewModal = new bootstrap.Modal(document.getElementById('bibtexViewModal'));
+                    document.getElementById('bibtexCodeBlock').querySelector('code').textContent = '\n' + data.content;
+                    viewModal.show();
+                })
+                .catch(err => {
+                    console.error('Error fetching BibTeX content:', err);
+                    alert('Error loading BibTeX content');
+                });
+        };
+
+        document.getElementById('bibtexExportDownloadOption').onclick = () => {
+            window.location.href = downloadUrl;
+            modal.hide();
+        };
+    });
+
+    document.getElementById('bibtexCopyButton').addEventListener('click', () => {
+        const codeEl = document.getElementById('bibtexCodeBlock').querySelector('code');
+        const content = codeEl.textContent;
+        navigator.clipboard.writeText(content).then(() => {
+            const btn = document.getElementById('bibtexCopyButton');
+            const originalTitle = btn.getAttribute('data-bs-original-title') || btn.getAttribute('title') || 'Copy to clipboard';
+            const tooltip = bootstrap.Tooltip.getOrCreateInstance(btn);
+            tooltip.setContent({ '.tooltip-inner': 'Copied!' });
+            tooltip.show();
+            setTimeout(() => {
+                tooltip.hide();
+                tooltip.setContent({ '.tooltip-inner': originalTitle });
+            }, 1500);
+        }).catch(() => alert('Failed to copy'));
+    });
+});
+</script>
 {% endblock %}

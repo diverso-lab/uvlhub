@@ -429,6 +429,20 @@ def export_bibtex(dataset_id):
     )
 
 
+@dataset_bp.route("/datasets/export-bibtex-content/<int:dataset_id>", methods=["GET"])
+def export_bibtex_content(dataset_id):
+    """Get BibTeX content as JSON (for displaying in modal)."""
+    dataset = dataset_service.get_or_404(dataset_id)
+
+    if not dataset.ds_meta_data.dataset_doi:
+        abort(400, description="BibTeX export requires a dataset with DOI.")
+
+    bibtex_content = _generate_bibtex(dataset)
+    filename = f"{dataset.id}_bibtex.bib"
+
+    return jsonify({"content": bibtex_content, "filename": filename}), 200
+
+
 @dataset_bp.route("/doi/<path:doi>/bibtex", methods=["GET"])
 @dataset_bp.route("/doi/<path:doi>/bibtex/", methods=["GET"])
 def export_bibtex_by_doi(doi):
