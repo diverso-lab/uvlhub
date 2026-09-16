@@ -4,6 +4,121 @@ All notable changes to this project are documented in this file. The format is
 based on [Keep a Changelog](https://keepachangelog.com/) and the project follows
 [Semantic Versioning](https://semver.org/).
 
+## [2.12] - 2026-09-16
+
+Accounts and datasets you can shape yourself: sign in with GitHub as well
+as ORCID and link both to one account, import UVL files straight from
+GitHub, keep the folder layout of a ZIP, rate datasets, filter Explore by
+size and popularity, delete a recent dataset, and cite a dataset in
+BibTeX or a model in LaTeX.
+
+### Added
+
+- Sign in and sign up with GitHub (`/github/login`), next to ORCID. When
+  the GitHub profile email is private, the account's verified primary
+  address is used instead.
+- Linked identities, stored in the new `external_identity` table. The
+  profile page shows the GitHub account and ORCID iD linked to the
+  account, connects them (`/account/connect/github`,
+  `/account/connect/orcid`) and disconnects them
+  (`POST /account/disconnect/<provider>/<id>`) after a confirmation.
+- ORCID sign-in first asks for an email (`/orcid/login-email`). ORCID
+  rarely shares one, so a new account is created with it.
+- Import UVL files from a public GitHub repository in the dataset form,
+  either one `.uvl` path (`POST /hubfile/upload-github`) or a folder
+  whose `.uvl` files are listed to pick from
+  (`POST /hubfile/list-github-files`). Only public repositories on
+  github.com are supported, with files of up to 100 MB.
+- ZIP uploads keep their folder structure. Each file's folder is stored in
+  `hubfiles.directory_path`, the dataset page shows a file tree and groups
+  the model picker by folder, and the derived Glencoe, DIMACS and SPLOT
+  files mirror the same layout.
+- Dataset ratings. Signed-in users can like or dislike a dataset with a
+  DOI (`GET`/`POST /datasets/<id>/rating`). Each user has one vote, which
+  is shared by every version of the dataset. The counts appear on the
+  dataset page, in "My datasets", on the home page and in Explore, and
+  Statistics gains "Best rated" and "Worst rated" tables.
+- Explore filters by number of features, number of models, year and
+  "only datasets with authors", and a "Most liked" sort.
+- Owners can delete a dataset during the 30 days after creating it, from
+  "My datasets" (`POST /dataset/delete/<id>`) or through the API
+  (`DELETE /api/v1/datasets/<id>`, `write_dataset` scope). Its files,
+  feature models, view and download records and search entry go with it.
+  A Zenodo record, if there is one, is left untouched.
+- BibTeX citation of a dataset with a DOI, from a "BibTeX" button on the
+  dataset page and in "My datasets" (`/datasets/export-bibtex/<id>`,
+  `/doi/<doi>/bibtex`).
+- LaTeX export of a UVL model: a ZIP with the `.tex` listing and the
+  `uvlhighlight` package (`/hubfile/to_latex_zip/<id>`).
+- `rosemary formats:generate [--force] [--dataset ID]` queues the
+  Glencoe, DIMACS and SPLOT conversions that existing files are missing,
+  and `rosemary formats:pending` counts them.
+
+### Changed
+
+- Anonymous datasets show "Anonymous" instead of their authors in Explore
+  and on the home page, and their authors are no longer indexed for
+  search.
+- A failed password login on an account that signs in with GitHub or
+  ORCID says so and suggests resetting the password.
+- The app trusts one proxy hop for the `X-Forwarded-*` headers
+  (`ProxyFix`), so OAuth callback URLs follow the scheme nginx received.
+- The deploy webhook also runs `npm install`, and the Docker images
+  install `node_modules` from `package-lock.json` with `npm ci`, so builds
+  and deployments get the audited versions.
+
+### Fixed
+
+- ZIP uploads silently dropped a file whose content matched another file
+  under a different name. A file is now a duplicate only when its folder,
+  name and content all match.
+- Search results kept showing stale metadata and anonymity after an edit,
+  a new version or a Zenodo sync retry. The dataset is now re-indexed
+  after each of them, and after every vote.
+
+### Security
+
+- Signing in with GitHub or ORCID never joins an existing account because
+  the email matches. uvlhub does not verify account emails, and the ORCID
+  email is typed by hand, so matching on it would let one person into
+  another person's account. Providers are linked from the profile page
+  instead, and a sign-in whose email already belongs to an account is
+  refused with a pointer there.
+- Disconnecting a provider removes its link completely, so that provider
+  can no longer sign in to the account.
+- The LaTeX export of a file from a dataset without a DOI is restricted to
+  the dataset's owner, as the workbench already was.
+- The BibTeX citation of an anonymous dataset carries no authors.
+- Dependencies updated to clear the Dependabot alerts, among them
+  cryptography 50.0.1 (with pyOpenSSL 26.4.0), pillow 12.3.0,
+  urllib3 2.7.0, mistune 3.3.4, Authlib 1.6.12, axios 1.20.0 and
+  tinymce 8.9.1. Flask 3.1.0 and python-dotenv 1.0.1 stay where they are
+  because splent_framework pins them.
+
+### Upgrade notes
+
+- Six new migrations add the `github`, `external_identity` and
+  `dataset_rating` tables and `hubfiles.directory_path` (`fbc6e80289a7`,
+  `9914935ef33e`, `0ffc5113f7d9`, `69b397b5322b`, `a1b2c3d4e5f6`,
+  `e5f6a7b8c9d0`). The production image applies them on start. With the
+  webhook deployment, run `flask db upgrade` in `web_app_container`.
+- Set `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` (a GitHub OAuth App
+  with the callback `<scheme>://<host>/github/authorize`) and
+  `ORCID_CLIENT_ID` and `ORCID_CLIENT_SECRET` (callback
+  `https://<host>/orcid/authorize`) in `.env`. Without them, that
+  provider's sign-in fails.
+- Run `rosemary elasticsearch:reset` so the index gets the new fields.
+  Until then, the new Explore filters and "Most liked" ignore existing
+  datasets.
+- Keep the app reachable only through nginx, since it now trusts the
+  forwarded headers.
+- `WORKING_DIR` must point at the app root (`/workspace/` in Docker),
+  because files are now served from it.
+- Accounts that signed in with ORCID before this release keep working,
+  and their link is recorded the next time they sign in with ORCID.
+- `rosemary formats:generate` fills in missing download formats. It is
+  optional and needs the RQ worker running.
+
 ## [2.11] - 2026-07-28
 
 Durable links for programmatic publication: a dataset published through
