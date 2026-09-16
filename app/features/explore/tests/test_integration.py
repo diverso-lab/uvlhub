@@ -3,6 +3,19 @@ import pytest
 pytestmark = pytest.mark.integration
 
 
+@pytest.fixture(autouse=True)
+def mock_elasticsearch(mocker):
+    """/api/v1/search talks to a real Elasticsearch cluster via ElasticsearchService,
+    and CI has no Elasticsearch service configured. Mock the low-level client the
+    same way app/features/elasticsearch/tests/test_search_filters.py does, so these
+    tests exercise routing/parameter handling without a live cluster."""
+    mock_es_class = mocker.patch("app.features.elasticsearch.services.Elasticsearch")
+    mock_es = mocker.MagicMock()
+    mock_es_class.return_value = mock_es
+    mock_es.search.return_value = {"hits": {"hits": [], "total": {"value": 0}}}
+    return mock_es
+
+
 def test_explore_page_renders(test_client):
     assert test_client.get("/explore").status_code == 200
 
