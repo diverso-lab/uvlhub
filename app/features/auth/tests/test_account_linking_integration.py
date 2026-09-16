@@ -1,4 +1,4 @@
-"""HTTP integration tests for cross-provider account convergence.
+"""HTTP integration tests for provider sign-in and account linking.
 
 Drive the whole flow through the Flask test client with the OAuth boundary
 mocked (``conftest`` blocks real outbound HTTP on purpose). Each provider
@@ -49,6 +49,11 @@ def _mock_oauth_client(provider_url):
     client.authorize_redirect.return_value = redirect(provider_url)
     client.authorize_access_token.return_value = {"access_token": "token123"}
     return (MagicMock(), client)
+
+
+def _logged_in_user_id(test_client):
+    with test_client.session_transaction() as sess:
+        return sess.get("_user_id")
 
 
 def _signup_with_email(test_client):
@@ -119,10 +124,11 @@ def test_orcid_login_email_stores_the_email_in_session(test_client, clean_databa
         assert sess["orcid_login_email"] == EMAIL
 
 
-# --- convergence over HTTP --------------------------------------------
+# --- a matching email never signs anyone into an existing account ------
 
 
-def test_email_signup_then_orcid_callback_converge(test_client, clean_database):
+def test_orcid_callback_with_the_email_of_an_existing_account_is_refused(test_client, clean_database):
+    """Anyone can type someone else's email in the ORCID step."""
     _signup_with_email(test_client)
     assert UserRepository().count() == 1
     account_id = UserRepository().get_by_email(EMAIL).id
@@ -130,33 +136,36 @@ def test_email_signup_then_orcid_callback_converge(test_client, clean_database):
     response = _orcid_authorize(test_client, ORCID_INFO, session_updates={"orcid_login_email": EMAIL})
 
     assert response.status_code == 302
+    assert "/login" in response.location
+    assert _logged_in_user_id(test_client) is None
     assert UserRepository().count() == 1
-    identities = ExternalIdentityRepository().get_all_by_user(account_id)
-    assert {i.provider for i in identities} == {"orcid"}
+    assert ExternalIdentityRepository().get_all_by_user(account_id) == []
 
 
-def test_email_signup_then_github_callback_converge(test_client, clean_database):
+def test_github_callback_with_the_email_of_an_existing_account_is_refused(test_client, clean_database):
     _signup_with_email(test_client)
     account_id = UserRepository().get_by_email(EMAIL).id
 
     response = _github_authorize(test_client, GITHUB_INFO)
 
     assert response.status_code == 302
+    assert "/login" in response.location
+    assert _logged_in_user_id(test_client) is None
     assert UserRepository().count() == 1
-    identities = ExternalIdentityRepository().get_all_by_user(account_id)
-    assert {i.provider for i in identities} == {"github"}
+    assert ExternalIdentityRepository().get_all_by_user(account_id) == []
 
 
-def test_orcid_callback_then_github_callback_converge(test_client, clean_database):
+def test_github_callback_does_not_join_an_orcid_account_with_the_same_email(test_client, clean_database):
     _orcid_authorize(test_client, ORCID_INFO, session_updates={"orcid_login_email": EMAIL})
     test_client.get("/logout", follow_redirects=True)
     account_id = UserRepository().get_by_email(EMAIL).id
 
     _github_authorize(test_client, GITHUB_INFO)
 
+    assert _logged_in_user_id(test_client) is None
     assert UserRepository().count() == 1
     identities = ExternalIdentityRepository().get_all_by_user(account_id)
-    assert {i.provider for i in identities} == {"orcid", "github"}
+    assert {i.provider for i in identities} == {"orcid"}
 
 
 def test_repeated_orcid_callback_does_not_fork_the_account(test_client, clean_database):
@@ -187,27 +196,23 @@ def test_orcid_callback_without_an_email_bounces_back_instead_of_creating_an_acc
 
 
 def test_orcid_callback_uses_the_email_from_the_orcid_claim_when_present(test_client, clean_database):
-    _signup_with_email(test_client)
-    account_id = UserRepository().get_by_email(EMAIL).id
-
-    # no typed email, but ORCID's userinfo carries it -> still converges
+    # no typed email, but ORCID's userinfo carries it -> the new account gets it
     response = _orcid_authorize(test_client, {**ORCID_INFO, "email": EMAIL})
 
     assert response.status_code == 302
     assert UserRepository().count() == 1
-    assert {i.provider for i in ExternalIdentityRepository().get_all_by_user(account_id)} == {"orcid"}
+    account = UserRepository().get_by_email(EMAIL)
+    assert {i.provider for i in ExternalIdentityRepository().get_all_by_user(account.id)} == {"orcid"}
 
 
-def test_github_callback_links_by_the_backfilled_private_email(test_client, clean_database):
-    _signup_with_email(test_client)
-    account_id = UserRepository().get_by_email(EMAIL).id
-
+def test_github_callback_creates_the_account_with_the_backfilled_private_email(test_client, clean_database):
     # get_github_user_info returns the email it recovered from /user/emails
     response = _github_authorize(test_client, {"id": 909090, "login": "grace", "name": "Grace", "email": EMAIL})
 
     assert response.status_code == 302
     assert UserRepository().count() == 1
-    assert {i.provider for i in ExternalIdentityRepository().get_all_by_user(account_id)} == {"github"}
+    account = UserRepository().get_by_email(EMAIL)
+    assert {i.provider for i in ExternalIdentityRepository().get_all_by_user(account.id)} == {"github"}
 
 
 def test_github_callback_without_any_email_does_not_create_an_orphan_account(test_client, clean_database):
@@ -255,6 +260,25 @@ def test_connect_github_while_logged_in_with_email(test_client, clean_database):
     identities = ExternalIdentityRepository().get_all_by_user(account_id)
     assert {i.provider for i in identities} == {"github"}
     assert UserRepository().get_by_email(EMAIL).profile.get_github() == GITHUB_INFO["login"]
+
+
+def test_disconnecting_orcid_stops_it_from_signing_in_to_the_account(test_client, clean_database):
+    _signup_with_email(test_client)
+    test_client.post("/login", data={"email": EMAIL, "password": PASSWORD}, follow_redirects=True)
+    test_client.get("/account/connect/orcid", follow_redirects=False)
+    _orcid_authorize(test_client, ORCID_INFO)
+
+    response = test_client.post(f"/account/disconnect/orcid/{ORCID_INFO['sub']}", follow_redirects=False)
+    assert response.status_code == 302
+    account = UserRepository().get_by_email(EMAIL)
+    assert account.profile.get_orcid() is None
+    assert ExternalIdentityRepository().get_all_by_user(account.id) == []
+
+    test_client.get("/logout", follow_redirects=True)
+    response = _orcid_authorize(test_client, ORCID_INFO)
+
+    assert "/orcid/login-email" in response.location
+    assert _logged_in_user_id(test_client) is None
 
 
 # --- the remaining fields stay editable to verify the account ----------

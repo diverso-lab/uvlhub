@@ -93,5 +93,21 @@ def disconnect_identity(provider, provider_id):
         return redirect(url_for("profile.edit_profile"))
 
     external_repo.delete(identity.id)
+
+    # Drop the provider's domain row too, or a later sign-in with the same
+    # provider would still resolve this account through it.
+    from app.features.github.repositories import GithubRepository
+    from app.features.orcid.repositories import OrcidRepository
+
+    domain_repo, domain_row = None, None
+    if provider == "orcid":
+        domain_repo = OrcidRepository()
+        domain_row = domain_repo.get_by_orcid_id(provider_id)
+    elif provider == "github" and provider_id.isdigit():
+        domain_repo = GithubRepository()
+        domain_row = domain_repo.get_by_github_id(int(provider_id))
+    if domain_row and current_user.profile and domain_row.profile_id == current_user.profile.id:
+        domain_repo.delete(domain_row.id)
+
     flash(f"Disconnected {provider}.", "success")
     return redirect(url_for("profile.edit_profile"))

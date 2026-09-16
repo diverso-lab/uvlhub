@@ -79,6 +79,25 @@ class OrcidService(BaseService):
         user = self.user_repository.get_by_id(profile.user_id) if profile else None
         return user, orcid_record
 
+    def get_linked_user(self, orcid_id: str):
+        """Return the account this ORCID iD is already linked to, if any.
+
+        Accounts created before external identities existed only have the
+        ``Orcid`` row; they are resolved through it and get the missing
+        identity row backfilled.
+        """
+        external_repo = ExternalIdentityRepository()
+        identity = external_repo.get_by_provider_id("orcid", orcid_id)
+        if identity and identity.user_id:
+            return self.user_repository.get_by_id(identity.user_id)
+
+        user, _ = self._existing_user_for_orcid(orcid_id)
+        if user and not identity:
+            external_repo.create(
+                user_id=user.id, provider="orcid", provider_id=orcid_id, provider_username=orcid_id, email=None
+            )
+        return user
+
     def get_or_create_user(self, user_info, email=None):
         if not user_info:
             return None, "Missing ORCID user information."
@@ -94,32 +113,20 @@ class OrcidService(BaseService):
             family_name = (user_info.get("family_name") or "").strip()
             affiliation = (user_info.get("affiliation") or "").strip()
 
-            # 1. Check if ORCID ID already exists
-            existing_identity = external_repo.get_by_provider_id("orcid", orcid_id)
-            if existing_identity and existing_identity.user_id:
-                user = self.user_repository.get_by_id(existing_identity.user_id)
-                if user:
-                    return user, None
+            # 1. An account already linked to this ORCID iD
+            user = self.get_linked_user(orcid_id)
+            if user:
+                return user, None
 
-            # 2. Check if email exists and link to existing user
-            if email:
-                existing_by_email = self.user_repository.get_by_email(email)
-                if existing_by_email:
-                    external_repo.create(
-                        commit=False,
-                        user_id=existing_by_email.id,
-                        provider="orcid",
-                        provider_id=orcid_id,
-                        provider_username=orcid_id,
-                        email=email,
-                    )
-                    # Keep the Orcid domain row in step with the identity link so
-                    # profile.get_orcid() works and a later ORCID login resolves
-                    # by orcid_id too.
-                    if existing_by_email.profile and not self.repository.get_by_orcid_id(orcid_id):
-                        self.repository.create(commit=False, orcid_id=orcid_id, profile_id=existing_by_email.profile.id)
-                    self.repository.session.commit()
-                    return existing_by_email, None
+            # 2. Never link to an existing account by email: nothing proves the
+            # person owns it (the email is typed by hand), so doing it would let
+            # anyone with an ORCID sign in as someone else. Linking goes through
+            # the connect flow, where the account holder is already signed in.
+            if email and (self.user_repository.get_by_email(email) or external_repo.get_by_email(email)):
+                return None, (
+                    "An account with this email already exists. Sign in with your usual method "
+                    "and connect ORCID from your profile."
+                )
 
             # 3. Create new user
             user = self.user_repository.create(

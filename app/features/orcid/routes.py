@@ -47,9 +47,9 @@ def login():
     else:
         session.pop("orcid_next_url", None)
 
-    # The email entered at /orcid/login-email is the key that converges an ORCID
-    # sign-in onto an existing account. When connecting ORCID to an account the
-    # user is already in, we know who they are, so the step is not needed.
+    # The email entered at /orcid/login-email is used for a new account (ORCID
+    # rarely shares one). When connecting ORCID to an account the user is
+    # already in, we know who they are, so the step is not needed.
     if not session.get("orcid_connect_mode") and not session.get("orcid_login_email"):
         return redirect(url_for("orcid.login_email", next=next_url) if next_url else url_for("orcid.login_email"))
 
@@ -65,8 +65,6 @@ def login():
 
 @orcid_bp.route("/orcid/authorize")
 def authorize():
-    from app.features.auth.repositories import ExternalIdentityRepository
-
     next_url = session.pop("orcid_next_url", None)
     if not authentication_service.is_safe_redirect_target(next_url):
         next_url = None
@@ -103,10 +101,9 @@ def authorize():
         orcid_id = (user_info.get("sub") or "").strip()
         effective_email = (login_email or user_info.get("email") or "").strip().lower() or None
 
-        # Without an email and with no prior ORCID link there is no safe way to
-        # tell whether this person already has an account: send them back to the
-        # email step rather than risk creating a duplicate.
-        if not effective_email and not ExternalIdentityRepository().get_by_provider_id("orcid", orcid_id):
+        # A new account needs an email; send people without one and without a
+        # prior ORCID link back to the email step.
+        if not effective_email and not current_app.orcid_service.get_linked_user(orcid_id):
             flash("Please enter your email so we can find or create your account.", "danger")
             return redirect(url_for("orcid.login_email", next=next_url) if next_url else url_for("orcid.login_email"))
 

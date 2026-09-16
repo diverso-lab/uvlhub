@@ -64,8 +64,7 @@ def test_orcid_button_leads_to_the_email_first_step():
         _wait(driver, (By.CSS_SELECTOR, "a[href*='/orcid/login-email']")).click()
 
         WebDriverWait(driver, 10).until(EC.url_contains("/orcid/login-email"))
-        # the email a user types here is what lets ORCID converge onto an
-        # existing account instead of creating a new one
+        # the email a user types here is what a new ORCID account is created with
         assert driver.find_elements(By.NAME, "email")
     finally:
         close_driver(driver)

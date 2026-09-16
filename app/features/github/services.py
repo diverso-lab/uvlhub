@@ -128,40 +128,18 @@ class GithubService(BaseService):
                 if user:
                     return user, None
 
-            # 2. Check if email exists in ExternalIdentity
-            if email:
-                email_identity = external_repo.get_by_email(email)
-                if email_identity and email_identity.user_id:
-                    user = self.user_repository.get_by_id(email_identity.user_id)
-                    if user:
-                        # Link this GitHub account to existing user
-                        external_repo.create(
-                            commit=False, user_id=user.id, provider="github", provider_id=github_id, email=email
-                        )
-                        self.repository.create(
-                            commit=False, github_id=github_id, github_login=github_login, profile_id=user.profile.id
-                        )
-                        self.repository.session.commit()
-                        return user, None
+            # 2. Never link to an existing account by email. GitHub has verified
+            # the address, but uvlhub never verified the account's own email (a
+            # password signup or an ORCID sign-in can claim any address), so
+            # linking would hand this GitHub user someone else's account, or the
+            # other way round. Linking goes through the connect flow instead.
+            if email and (self.user_repository.get_by_email(email) or external_repo.get_by_email(email)):
+                return None, (
+                    "An account with this email already exists. Sign in with your usual method "
+                    "and connect GitHub from your profile."
+                )
 
-            # 3. Check if email exists in User table
-            if email:
-                existing_user = self.user_repository.get_by_email(email)
-                if existing_user:
-                    # Link GitHub to existing user
-                    external_repo.create(
-                        commit=False, user_id=existing_user.id, provider="github", provider_id=github_id, email=email
-                    )
-                    self.repository.create(
-                        commit=False,
-                        github_id=github_id,
-                        github_login=github_login,
-                        profile_id=existing_user.profile.id,
-                    )
-                    self.repository.session.commit()
-                    return existing_user, None
-
-            # 4. Create new user if nothing found
+            # 3. Create new user if nothing found
             user = self.user_repository.create(
                 commit=False, password=secrets.token_urlsafe(24), active=True, email=email
             )

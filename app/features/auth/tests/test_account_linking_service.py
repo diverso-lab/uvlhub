@@ -1,8 +1,9 @@
-"""Service-level tests for cross-provider account convergence.
+"""Service-level tests for provider sign-in and account linking.
 
-Goal: whichever door a person uses (email / ORCID / GitHub), they must land
-on the *same* ``User`` row, and the remaining providers must stay completable
-or editable so they can round out the account.
+Goal: a provider identity always lands on the account it is linked to, a
+sign-in never joins an existing account just because the email matches
+(nothing proves the person owns that address), and linking happens from
+inside the account through the connect flow.
 
 The real linking logic lives in ``OrcidService.get_or_create_user`` and
 ``GithubService.get_or_create_user`` (not in the routes), so it is exercised
@@ -17,6 +18,7 @@ import pytest
 from app.features.auth.repositories import ExternalIdentityRepository, UserRepository
 from app.features.auth.services import AuthenticationService
 from app.features.github.services import GithubService
+from app.features.orcid.repositories import OrcidRepository
 from app.features.orcid.services import OrcidService
 from app.features.profile.repositories import UserProfileRepository
 from app.features.profile.services import UserProfileService
@@ -47,35 +49,40 @@ def _signup_with_email():
     return AuthenticationService().create_with_profile(email=EMAIL, password=PASSWORD, name="Ada", surname="Lovelace")
 
 
-# --- email is the anchor -------------------------------------------------
+# --- a matching email never hands over an account ------------------------
 
 
-def test_email_then_orcid_with_matching_email_converge(test_app, clean_database):
+def test_orcid_login_never_joins_an_existing_account_by_email(test_app, clean_database):
+    """The email of the ORCID step is typed by hand: matching it to an account
+    would let anyone with an ORCID sign in as that account's owner."""
     account = _signup_with_email()
 
     user, err = OrcidService().get_or_create_user(ORCID_INFO, email=EMAIL)
 
-    assert err is None
-    assert user.id == account.id
+    assert user is None
+    assert "connect ORCID from your profile" in err
     assert UserRepository().count() == 1
-    assert "orcid" in _providers(user.id)
+    assert _providers(account.id) == set()
 
 
-def test_email_then_github_with_matching_email_converge(test_app, clean_database):
+def test_github_login_never_joins_an_existing_account_by_email(test_app, clean_database):
+    """GitHub verified the address, but uvlhub never verified the account's."""
     account = _signup_with_email()
 
     user, err = GithubService().get_or_create_user(GITHUB_INFO)
 
-    assert err is None
-    assert user.id == account.id
+    assert user is None
+    assert "connect GitHub from your profile" in err
     assert UserRepository().count() == 1
-    assert "github" in _providers(user.id)
+    assert _providers(account.id) == set()
 
 
-def test_email_then_all_three_resolve_to_one_account(test_app, clean_database):
+def test_email_account_connects_both_providers_and_they_resolve_to_it(test_app, clean_database):
     account = _signup_with_email()
+    OrcidService().link_identity(account, ORCID_INFO, email=EMAIL)
+    GithubService().link_identity(account, GITHUB_INFO)
 
-    orcid_user, _ = OrcidService().get_or_create_user(ORCID_INFO, email=EMAIL)
+    orcid_user, _ = OrcidService().get_or_create_user(ORCID_INFO, email=None)
     github_user, _ = GithubService().get_or_create_user(GITHUB_INFO)
 
     assert orcid_user.id == account.id
@@ -89,24 +96,39 @@ def test_email_then_all_three_resolve_to_one_account(test_app, clean_database):
 # --- OAuth-first, then the other OAuth door -----------------------------
 
 
-def test_orcid_then_github_same_email_converge(test_app, clean_database):
+def test_github_login_does_not_join_an_orcid_account_with_the_same_email(test_app, clean_database):
+    """An ORCID account's email was typed by hand, so a GitHub user with that
+    address must not be let into it (nor the ORCID user into theirs)."""
     orcid_user, _ = OrcidService().get_or_create_user(ORCID_INFO, email=EMAIL)
 
     github_user, err = GithubService().get_or_create_user(GITHUB_INFO)
 
-    assert err is None
-    assert github_user.id == orcid_user.id
+    assert github_user is None and err is not None
     assert UserRepository().count() == 1
+    assert _providers(orcid_user.id) == {"orcid"}
 
 
-def test_github_then_orcid_same_email_converge(test_app, clean_database):
+def test_orcid_login_does_not_join_a_github_account_with_the_same_email(test_app, clean_database):
     github_user, _ = GithubService().get_or_create_user(GITHUB_INFO)
 
     orcid_user, err = OrcidService().get_or_create_user(ORCID_INFO, email=EMAIL)
 
-    assert err is None
-    assert orcid_user.id == github_user.id
+    assert orcid_user is None and err is not None
     assert UserRepository().count() == 1
+    assert _providers(github_user.id) == {"github"}
+
+
+def test_orcid_login_resolves_a_pre_identity_account_and_backfills_the_link(test_app, clean_database):
+    """Accounts from before external identities only have the Orcid row."""
+    account = _signup_with_email()
+    OrcidRepository().create(orcid_id=ORCID_INFO["sub"], profile_id=account.profile.id)
+
+    user, err = OrcidService().get_or_create_user(ORCID_INFO, email="typed@example.com")
+
+    assert err is None
+    assert user.id == account.id
+    assert UserRepository().count() == 1
+    assert _providers(account.id) == {"orcid"}
 
 
 # --- idempotency: the same provider identity never forks the account ----
@@ -157,14 +179,12 @@ def test_github_user_info_backfills_the_verified_primary_email(test_app):
     assert data["email"] == EMAIL
 
 
-def test_github_login_converges_once_the_email_is_backfilled(test_app, clean_database):
-    account = _signup_with_email()
-
+def test_github_login_creates_the_account_with_the_backfilled_email(test_app, clean_database):
     # user_info as it looks after get_github_user_info filled in the email
     user, err = GithubService().get_or_create_user({"id": 999, "login": "ada", "name": "Ada", "email": EMAIL})
 
     assert err is None
-    assert user.id == account.id
+    assert user.email == EMAIL
     assert UserRepository().count() == 1
 
 
@@ -255,7 +275,7 @@ def test_github_login_leaves_surname_blank_for_the_user_to_complete(test_app, cl
     assert updated.affiliation == "Analytical Engine Co."
 
 
-def test_linking_orcid_by_email_keeps_the_existing_profile_untouched(test_app, clean_database):
+def test_a_refused_orcid_login_leaves_the_existing_account_untouched(test_app, clean_database):
     account = _signup_with_email()
     UserProfileRepository().update(account.profile.id, affiliation="Somewhere University")
 
@@ -264,3 +284,4 @@ def test_linking_orcid_by_email_keeps_the_existing_profile_untouched(test_app, c
     profile = UserRepository().get_by_id(account.id).profile
     assert profile.name == "Ada"
     assert profile.affiliation == "Somewhere University"
+    assert profile.get_orcid() is None

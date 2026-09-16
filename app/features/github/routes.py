@@ -74,10 +74,10 @@ def authorize():
         github_id = user_info.get("id")
         # get_github_user_info already falls back to the verified primary email;
         # if GitHub still gave us nothing and this account is unknown, bounce to
-        # login rather than create an account that can never be converged.
+        # login rather than create an account without an email.
         if not user_info.get("email") and not ExternalIdentityRepository().get_by_provider_id("github", github_id):
             flash(
-                "GitHub did not share a verified email, so we could not link your account. "
+                "GitHub did not share a verified email, so we could not create your account. "
                 "Make a primary email verified on GitHub, or sign in with email or ORCID.",
                 "danger",
             )
