@@ -11,6 +11,10 @@ from app.selenium.common import close_driver, initialize_driver
 
 pytestmark = pytest.mark.e2e
 
+# Seeded dataset 1 (see app/features/dataset/seeders.py) always has file1.uvl,
+# so tests can navigate straight to a page with a model selected.
+DATASET_WITH_MODEL_URL = "/doi/10.1234/dataset1/files/file1.uvl"
+
 
 def test_hubfile_index():
 
@@ -48,7 +52,7 @@ def test_latex_export_button_visible_in_workbench():
     try:
         host = get_host_for_selenium_testing()
         # Navigate to a dataset with models (adjust URL as needed)
-        driver.get(f"{host}/dataset/1")
+        driver.get(f"{host}{DATASET_WITH_MODEL_URL}")
 
         time.sleep(3)
 
@@ -70,7 +74,7 @@ def test_latex_export_modal_opens_on_button_click():
 
     try:
         host = get_host_for_selenium_testing()
-        driver.get(f"{host}/dataset/1")
+        driver.get(f"{host}{DATASET_WITH_MODEL_URL}")
 
         time.sleep(3)
 
@@ -98,7 +102,7 @@ def test_latex_export_modal_contains_correct_text():
 
     try:
         host = get_host_for_selenium_testing()
-        driver.get(f"{host}/dataset/1")
+        driver.get(f"{host}{DATASET_WITH_MODEL_URL}")
 
         time.sleep(3)
 
@@ -112,7 +116,7 @@ def test_latex_export_modal_contains_correct_text():
         modal = WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.ID, "latexExportModal")))
 
         modal_text = modal.text
-        assert "Your LaTeX package is ready!" in modal_text
+        assert "Choose how you want to export your LaTeX file" in modal_text
         assert ".tex" in modal_text
         assert "uvlhighlight" in modal_text
 
@@ -124,12 +128,12 @@ def test_latex_export_modal_contains_correct_text():
 
 
 def test_latex_export_modal_download_button_works():
-    """Verify that the Download button in the modal initiates a download."""
+    """Verify that the 'Download ZIP' option in the modal is present and clickable."""
     driver = initialize_driver()
 
     try:
         host = get_host_for_selenium_testing()
-        driver.get(f"{host}/dataset/1")
+        driver.get(f"{host}{DATASET_WITH_MODEL_URL}")
 
         time.sleep(3)
 
@@ -142,13 +146,13 @@ def test_latex_export_modal_download_button_works():
         # Wait for modal
         WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.ID, "latexExportModal")))
 
-        # Click the Download button
-        download_btn = driver.find_element(By.ID, "latexExportConfirm")
-        assert download_btn.text == "Download"
-        assert download_btn.is_enabled()
+        # Check the "Download ZIP" option
+        download_option = driver.find_element(By.ID, "latexExportDownloadOption")
+        assert "Download ZIP" in download_option.text
+        assert download_option.is_enabled()
 
     except (NoSuchElementException, AssertionError) as e:
-        raise AssertionError(f"Download button verification failed: {e}")
+        raise AssertionError(f"Download option verification failed: {e}")
 
     finally:
         close_driver(driver)
@@ -160,7 +164,7 @@ def test_latex_export_modal_closes_with_close_button():
 
     try:
         host = get_host_for_selenium_testing()
-        driver.get(f"{host}/dataset/1")
+        driver.get(f"{host}{DATASET_WITH_MODEL_URL}")
 
         time.sleep(3)
 
@@ -196,7 +200,7 @@ def test_latex_export_modal_header_text():
 
     try:
         host = get_host_for_selenium_testing()
-        driver.get(f"{host}/dataset/1")
+        driver.get(f"{host}{DATASET_WITH_MODEL_URL}")
 
         time.sleep(3)
 
@@ -224,15 +228,17 @@ def test_latex_export_button_has_tooltip():
 
     try:
         host = get_host_for_selenium_testing()
-        driver.get(f"{host}/dataset/1")
+        driver.get(f"{host}{DATASET_WITH_MODEL_URL}")
 
         time.sleep(3)
 
         # Find the LaTeX button
         latex_btn = driver.find_element(By.ID, "workbench-export-latex")
 
-        # Check for tooltip attribute
-        tooltip_title = latex_btn.get_attribute("title")
+        # Bootstrap's tooltip JS moves the original `title` into
+        # `data-bs-original-title` once it initializes, to stop the native
+        # browser tooltip from showing alongside its own. Check both.
+        tooltip_title = latex_btn.get_attribute("title") or latex_btn.get_attribute("data-bs-original-title")
         assert tooltip_title == "Export to LaTeX", f"Expected 'Export to LaTeX', got: {tooltip_title}"
 
         # Optionally, check for data-bs-toggle tooltip
@@ -252,7 +258,7 @@ def test_latex_export_modal_can_be_opened_multiple_times():
 
     try:
         host = get_host_for_selenium_testing()
-        driver.get(f"{host}/dataset/1")
+        driver.get(f"{host}{DATASET_WITH_MODEL_URL}")
 
         time.sleep(3)
 
