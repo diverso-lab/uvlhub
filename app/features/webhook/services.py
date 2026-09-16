@@ -30,6 +30,10 @@ DEPLOY_COMMANDS = (
     "/workspace/scripts/git_update.sh",  # pull the latest code
     "pip install --pre .",  # update dependencies pinned in pyproject.toml
     "pip install -e ./rosemary",  # update the Rosemary CLI
+    # Update node_modules from package-lock.json. --no-save keeps the lockfile
+    # untouched (a dirty tree would break the next git pull) and --include=dev
+    # keeps webpack even where NODE_ENV=production.
+    "npm install --no-save --include=dev",
 )
 
 
