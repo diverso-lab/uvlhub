@@ -39,7 +39,7 @@ RUN git config --global --add safe.directory /workspace
 # -------------------------
 # Dependency manifests first
 # -------------------------
-COPY package.json .
+COPY package.json package-lock.json ./
 COPY pyproject.toml ./
 
 # Python deps (pinned in pyproject [project.dependencies])
@@ -47,7 +47,7 @@ RUN --mount=type=cache,target=/root/.cache/pip pip install --upgrade pip \
  && pip install --pre .
 
 # Node deps
-RUN npm install
+RUN npm ci
 
 # -------------------------
 # Project files

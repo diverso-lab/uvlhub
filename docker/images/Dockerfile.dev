@@ -27,14 +27,14 @@ RUN apt-get update \
 
 RUN git config --global --add safe.directory /workspace
 
-COPY package.json .
+COPY package.json package-lock.json ./
 COPY pyproject.toml ./
 
 # pip's wheel cache lives in a BuildKit cache mount so heavy sdist-only deps
 # (python-sat, dd, gevent, *.dev pins) are compiled once and reused across builds.
 RUN --mount=type=cache,target=/root/.cache/pip pip install --upgrade pip
 RUN --mount=type=cache,target=/root/.cache/pip pip install --pre .
-RUN --mount=type=cache,target=/root/.npm npm install
+RUN --mount=type=cache,target=/root/.npm npm ci
 
 COPY app/ ./app
 COPY rosemary/ ./rosemary
