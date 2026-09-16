@@ -11,7 +11,7 @@
         "acorn": "8.16.0",
         "apexcharts": "5.7.0",
         "autosize": "^6.0.1",
-        "axios": "1.15.1",
+        "axios": "1.20.0",
         "bootstrap": "5.3.8",
         "bootstrap-cookie-alert": "^1.2.2",
         "bootstrap-daterangepicker": "^3.1.0",
@@ -79,7 +79,7 @@
         "string-replace-loader": "3.3.0",
         "sweetalert2": "11.26.21",
         "tiny-slider": "^2.9.4",
-        "tinymce": "8.3.2",
+        "tinymce": "8.9.1",
         "toastr": "^2.1.4",
         "typed.js": "3.0.0",
         "uvl-parser": "^0.5.0",
@@ -87,8 +87,8 @@
         "wnumb": "^1.2.0"
     },
     "devDependencies": {
-        "@babel/core": "7.29.0",
-        "@babel/preset-env": "7.29.0",
+        "@babel/core": "7.29.7",
+        "@babel/preset-env": "7.29.7",
         "@babel/runtime": "7.28.6",
         "babel-loader": "10.0.0",
         "copy-webpack-plugin": "14.0.0",
@@ -107,7 +107,6 @@
         "gulp-rename": "2.1.0",
         "gulp-rewrite-css": "^1.1.2",
         "gulp-rtlcss": "^2.0.0",
-        "gulp-sourcemaps": "^3.0.0",
         "gulp-terser": "^2.1.0",
         "imports-loader": "^5.0.0",
         "lazypipe": "^1.0.2",
@@ -124,7 +123,7 @@
         "webpack": "^5.105.3",
         "webpack-bundle-analyzer": "^5.2.0",
         "webpack-cli": "^6.0.1",
-        "webpack-dev-server": "5.2.3",
+        "webpack-dev-server": "5.2.6",
         "webpack-exclude-assets-plugin": "^0.1.1",
         "webpack-log": "^3.0.2",
         "webpack-merge-and-include-globally": "^2.3.4",
@@ -141,17 +140,20 @@
     },
     "overrides": {
         "babel-traverse": "^6.26.0",
-        "brace-expansion": "^5.0.5",
+        "brace-expansion": "^5.0.8",
         "follow-redirects": "^1.16.0",
-        "immutable": "^5.1.5",
+        "immutable": "^5.1.8",
         "json5": "^2.2.2",
         "lodash": "^4.18.1",
         "lodash-es": "^4.18.1",
-        "nanoid": "^3.3.7",
+        "nanoid": "^3.3.18",
         "path-to-regexp": "^8.0.0",
         "picomatch": "^4.0.4",
-        "postcss": "^8.4.31",
+        "postcss": "^8.5.23",
         "serialize-javascript": "^7.0.5",
-        "svgo": "^4.0.1"
+        "sockjs": {
+            "uuid": "^11.1.1"
+        },
+        "svgo": "^4.1.0"
     }
 }
