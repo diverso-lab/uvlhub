@@ -12,6 +12,9 @@ from app.features.hubfile.repositories import HubfileRepository
 
 pytestmark = pytest.mark.integration
 
+# Files of a dataset with a DOI are public, so the export tests below can run anonymously.
+PUBLIC_DOI = "10.5281/zenodo.7654321"
+
 
 def _login(test_client):
     test_client.post("/login", data=dict(email="test@example.com", password="test1234"), follow_redirects=True)
@@ -79,7 +82,9 @@ def test_latex_export_endpoint_returns_zip(test_client, mocker):
     """Verify that the ZIP export endpoint returns a valid ZIP file."""
     # Setup
     user = UserRepository().create(email="latex@example.com", password="pw-123456")
-    meta = DSMetaDataRepository().create(title="LaTeX Test", description="d", publication_type=PublicationType.BOOK)
+    meta = DSMetaDataRepository().create(
+        title="LaTeX Test", description="d", publication_type=PublicationType.BOOK, dataset_doi=PUBLIC_DOI
+    )
     dataset = DataSetRepository().create(user_id=user.id, ds_meta_data_id=meta.id)
     fm = FeatureModelRepository().create(dataset_id=dataset.id)
     hubfile = HubfileRepository().create(
@@ -107,7 +112,9 @@ def test_latex_export_contains_tex_file(test_client, mocker):
     """Verify that the ZIP contains a .tex file with correct content."""
     # Setup
     user = UserRepository().create(email="latex2@example.com", password="pw-123456")
-    meta = DSMetaDataRepository().create(title="LaTeX Test 2", description="d", publication_type=PublicationType.BOOK)
+    meta = DSMetaDataRepository().create(
+        title="LaTeX Test 2", description="d", publication_type=PublicationType.BOOK, dataset_doi=PUBLIC_DOI
+    )
     dataset = DataSetRepository().create(user_id=user.id, ds_meta_data_id=meta.id)
     fm = FeatureModelRepository().create(dataset_id=dataset.id)
     hubfile = HubfileRepository().create(
@@ -137,7 +144,9 @@ def test_latex_export_respects_include_document_param(test_client, mocker):
     """Verify that ?include_document=true adds \\begin{document}."""
     # Setup
     user = UserRepository().create(email="latex3@example.com", password="pw-123456")
-    meta = DSMetaDataRepository().create(title="LaTeX Test 3", description="d", publication_type=PublicationType.BOOK)
+    meta = DSMetaDataRepository().create(
+        title="LaTeX Test 3", description="d", publication_type=PublicationType.BOOK, dataset_doi=PUBLIC_DOI
+    )
     dataset = DataSetRepository().create(user_id=user.id, ds_meta_data_id=meta.id)
     fm = FeatureModelRepository().create(dataset_id=dataset.id)
     hubfile = HubfileRepository().create(
@@ -173,7 +182,9 @@ def test_latex_export_includes_uvlhighlight_package_files(test_client, mocker):
     """Verify that the ZIP includes uvlhighlight package files."""
     # Setup
     user = UserRepository().create(email="latex_pkg@example.com", password="pw-123456")
-    meta = DSMetaDataRepository().create(title="LaTeX Pkg Test", description="d", publication_type=PublicationType.BOOK)
+    meta = DSMetaDataRepository().create(
+        title="LaTeX Pkg Test", description="d", publication_type=PublicationType.BOOK, dataset_doi=PUBLIC_DOI
+    )
     dataset = DataSetRepository().create(user_id=user.id, ds_meta_data_id=meta.id)
     fm = FeatureModelRepository().create(dataset_id=dataset.id)
     hubfile = HubfileRepository().create(
@@ -202,7 +213,7 @@ def test_latex_export_filename_is_correct(test_client, mocker):
     # Setup
     user = UserRepository().create(email="latex_fname@example.com", password="pw-123456")
     meta = DSMetaDataRepository().create(
-        title="LaTeX Fname Test", description="d", publication_type=PublicationType.BOOK
+        title="LaTeX Fname Test", description="d", publication_type=PublicationType.BOOK, dataset_doi=PUBLIC_DOI
     )
     dataset = DataSetRepository().create(user_id=user.id, ds_meta_data_id=meta.id)
     fm = FeatureModelRepository().create(dataset_id=dataset.id)
@@ -249,10 +260,17 @@ def test_latex_export_only_owner_can_download_private_dataset(test_client, mocke
     response = test_client.get(f"/hubfile/to_latex/{hubfile.id}")
     assert response.status_code == 200
 
-    test_client.get("/logout", follow_redirects=True)
+    test_client.get("/logout")
 
-    # Other user should NOT be able to download (depends on access control implementation)
-    # This test verifies the permission system is in place
+    # Anonymous visitors and other users get 403 on both export routes.
+    assert test_client.get(f"/hubfile/to_latex/{hubfile.id}").status_code == 403
+    assert test_client.get(f"/hubfile/to_latex_zip/{hubfile.id}").status_code == 403
+
+    UserRepository().create(email="intruder@example.com", password="pw-123456")
+    test_client.post("/login", data=dict(email="intruder@example.com", password="pw-123456"))
+    assert test_client.get(f"/hubfile/to_latex/{hubfile.id}").status_code == 403
+    assert test_client.get(f"/hubfile/to_latex_zip/{hubfile.id}").status_code == 403
+    test_client.get("/logout")
 
 
 def test_latex_export_public_dataset_accessible_to_anyone(test_client, mocker):
@@ -281,7 +299,9 @@ def test_latex_export_public_dataset_accessible_to_anyone(test_client, mocker):
 def test_latex_export_with_empty_uvl_file(test_client, mocker):
     """Verify that the endpoint handles empty UVL files gracefully."""
     user = UserRepository().create(email="empty_uvl@example.com", password="pw-123456")
-    meta = DSMetaDataRepository().create(title="Empty UVL Test", description="d", publication_type=PublicationType.BOOK)
+    meta = DSMetaDataRepository().create(
+        title="Empty UVL Test", description="d", publication_type=PublicationType.BOOK, dataset_doi=PUBLIC_DOI
+    )
     dataset = DataSetRepository().create(user_id=user.id, ds_meta_data_id=meta.id)
     fm = FeatureModelRepository().create(dataset_id=dataset.id)
     hubfile = HubfileRepository().create(

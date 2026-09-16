@@ -477,7 +477,8 @@ def _generate_bibtex(dataset: DataSet) -> str:
     doi = (meta.dataset_doi or "").strip()
 
     authors = []
-    if meta.authors:
+    # Anonymous datasets hide their authors everywhere else, so the citation does too.
+    if meta.authors and not meta.dataset_anonymous:
         for author in meta.authors:
             name = (author.name or "").strip()
             if name:

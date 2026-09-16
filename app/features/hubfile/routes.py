@@ -417,6 +417,15 @@ def raw_uvl(file_id, filename):
     return send_file(file_path, mimetype="text/plain", as_attachment=False, download_name=selected_file.name)
 
 
+def _abort_unless_readable(hubfile):
+    """Files of a dataset with a DOI are public; otherwise only the owner may read them."""
+    dataset = hubfile.dataset
+    is_public = bool(dataset.ds_meta_data and dataset.ds_meta_data.dataset_doi)
+    if not is_public:
+        if not current_user.is_authenticated or dataset.user_id != current_user.id:
+            abort(403)
+
+
 @hubfile_bp.route("/hubfiles/<int:file_id>/workbench-content", methods=["GET"])
 def workbench_content(file_id):
     """Return the UVL + FactLabel JSON for a single file.
@@ -428,12 +437,7 @@ def workbench_content(file_id):
     import json as _json
 
     selected_file = HubfileService().get_or_404(file_id)
-    dataset = selected_file.dataset
-
-    is_public = bool(dataset.ds_meta_data and dataset.ds_meta_data.dataset_doi)
-    if not is_public:
-        if not current_user.is_authenticated or dataset.user_id != current_user.id:
-            abort(403)
+    _abort_unless_readable(selected_file)
 
     file_path = selected_file.get_full_path()
     try:
@@ -510,11 +514,13 @@ def _generate_latex_content(file_id, include_document=False):
 @hubfile_bp.route("/hubfile/to_latex/<int:file_id>", methods=["GET"])
 def to_latex_content(file_id):
     """Get LaTeX content as JSON (for displaying in modal)."""
+    selected_file = HubfileService().get_or_404(file_id)
+    _abort_unless_readable(selected_file)
+
     latex_content = _generate_latex_content(file_id, include_document=False)
     if latex_content is None:
         return jsonify({"error": "Could not read file"}), 500
 
-    selected_file = HubfileService().get_or_404(file_id)
     tex_filename = selected_file.name.replace(".uvl", ".tex")
 
     return jsonify({"content": latex_content, "filename": tex_filename}), 200
@@ -527,6 +533,7 @@ def to_latex_zip(file_id):
     from pathlib import Path
 
     selected_file = HubfileService().get_or_404(file_id)
+    _abort_unless_readable(selected_file)
     include_document = request.args.get("include_document", "false").lower() == "true"
     latex_content = _generate_latex_content(file_id, include_document=include_document)
     if latex_content is None:

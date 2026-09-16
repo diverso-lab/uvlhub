@@ -1687,3 +1687,32 @@ def test_api_transfer_to_an_inactive_account_returns_400(test_client):
 
     assert response.status_code == 400
     assert "not active" in response.get_json()["error"]
+
+
+# --- BibTeX export ---------------------------------------------------------
+
+
+@pytest.mark.parametrize("anonymous", [False, True])
+def test_bibtex_export_hides_the_authors_of_an_anonymous_dataset(test_client, anonymous):
+    from app.features.auth.repositories import UserRepository
+    from app.features.dataset.models import PublicationType
+    from app.features.dataset.repositories import AuthorRepository, DataSetRepository, DSMetaDataRepository
+
+    user = UserRepository().create(email=f"bibtex-{anonymous}@example.com", password="pw-123456")
+    meta = DSMetaDataRepository().create(
+        title="Cited dataset",
+        description="d",
+        publication_type=PublicationType.BOOK,
+        dataset_doi="10.5281/zenodo.2468",
+        dataset_anonymous=anonymous,
+    )
+    AuthorRepository().create(name="Ada Lovelace", ds_meta_data_id=meta.id)
+    dataset = DataSetRepository().create(user_id=user.id, ds_meta_data_id=meta.id)
+
+    content = test_client.get(f"/datasets/export-bibtex-content/{dataset.id}").get_json()["content"]
+    download = test_client.get(f"/datasets/export-bibtex/{dataset.id}").get_data(as_text=True)
+
+    for bibtex in (content, download):
+        assert "title = {Cited dataset}" in bibtex
+        assert ("Ada Lovelace" in bibtex) is not anonymous
+        assert ("author =" in bibtex) is not anonymous
