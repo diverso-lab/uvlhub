@@ -65,7 +65,7 @@ class GenerateFeatureModel(Operation):
         includes: list[str] = []
         if self.model.ensure_satisfiable:
             return []
-        
+
         if self.model.levels.group_cardinality:
             includes.append("Boolean.group-cardinality")
 

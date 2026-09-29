@@ -7,11 +7,10 @@
 
 import json
 
-from flamapy.metamodels.fm_metamodel.models.feature_model import FeatureModel
-from flamapy.metamodels.fm_metamodel.transformations.uvl_writer import UVLWriter
-
 from flamapy.metamodels.fm_generator.models import FmgeneratorModel
 from flamapy.metamodels.fm_generator.operations import GenerateFeatureModel
+from flamapy.metamodels.fm_metamodel.models.feature_model import FeatureModel
+from flamapy.metamodels.fm_metamodel.transformations.uvl_writer import UVLWriter
 
 
 def _prepend_uvl_includes(serialized_model: str, includes: list[str]) -> str:

@@ -248,9 +248,7 @@ def test_collect_manual_attributes_keeps_supported_types_only():
         "STRING_CONSTRAINTS": True,
     }
 
-    attributes, probabilities, use_in_constraints = _collect_manual_attributes(
-        form, params
-    )
+    attributes, probabilities, use_in_constraints = _collect_manual_attributes(form, params)
 
     assert [attribute["type"] for attribute in attributes] == [
         "Boolean",

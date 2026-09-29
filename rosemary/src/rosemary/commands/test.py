@@ -42,12 +42,7 @@ DEFAULT_MARKERS = ("unit", "repository", "service", "integration")
 @click.option(
     "--e2e", "selected", flag_value="e2e", multiple=True, help="Selenium end-to-end tests (requires the grid)."
 )
-@click.option(
-    "--all",
-    "all_",
-    is_flag=True,
-    help="Run all tests without filtering by pytest markers."
-)
+@click.option("--all", "all_", is_flag=True, help="Run all tests without filtering by pytest markers.")
 @click.option("--load", "load_", is_flag=True, help="Forward to ``rosemary locust`` for load testing.")
 def test(feature, keyword, selected, all_, load_):
     if load_:

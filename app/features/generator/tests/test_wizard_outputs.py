@@ -13,27 +13,24 @@ show up in the .uvl files (or be absent when you disabled its level).
 
 import json
 import re
-import pytest
+from itertools import product
 from types import SimpleNamespace
 
-from app.features.generator.assets.js import fmgen_wrapper
-from flamapy.metamodels.fm_metamodel.models.feature_model import FeatureModel
-from flamapy.metamodels.fm_metamodel.transformations.uvl_writer import UVLWriter
-from flamapy.metamodels.fm_metamodel.transformations.uvl_reader import UVLReader
-from app.features.generator.assets.js.fmgen_wrapper import _build_one
+import pytest
 from flamapy.metamodels.fm_generator.models import FmgeneratorModel
 from flamapy.metamodels.fm_generator.operations import GenerateFeatureModel
-from app.features.generator.wizard import GeneratorWizardService
-from types import SimpleNamespace
-
-import app.features.generator.wizard as wizard
-
-from itertools import product
-
+from flamapy.metamodels.fm_metamodel.models.feature_model import FeatureModel
+from flamapy.metamodels.fm_metamodel.transformations.uvl_reader import UVLReader
+from flamapy.metamodels.fm_metamodel.transformations.uvl_writer import UVLWriter
 from flamapy.metamodels.pysat_metamodel.operations import PySATSatisfiable
 from flamapy.metamodels.pysat_metamodel.transformations.fm_to_pysat import (
     FmToPysat,
 )
+
+import app.features.generator.wizard as wizard
+from app.features.generator.assets.js import fmgen_wrapper
+from app.features.generator.assets.js.fmgen_wrapper import _build_one
+from app.features.generator.wizard import GeneratorWizardService
 
 pytestmark = pytest.mark.integration
 
@@ -267,11 +264,7 @@ def _fetch_params_and_generate(client, n=3):
     model = _fetch_model_from_wizard(client, n=n)
 
     return "\n".join(
-        _serialize_uvl(
-            GenerateFeatureModel()
-            .execute(model, index=index)
-            .get_result()
-        )
+        _serialize_uvl(GenerateFeatureModel().execute(model, index=index).get_result())
         for index in range(model.num_models)
     )
 
@@ -318,10 +311,7 @@ def _o1_level_combinations():
                 aggregate,
                 False,
                 id=(
-                    "arithmetic-"
-                    f"group-{group_card}-"
-                    f"feature-cardinality-{feature_card}-"
-                    f"aggregate-{aggregate}"
+                    "arithmetic-" f"group-{group_card}-" f"feature-cardinality-{feature_card}-" f"aggregate-{aggregate}"
                 ),
             )
         )
@@ -416,12 +406,10 @@ def test_arithmetic_constraints_do_not_compare_same_expression(client):
             extras={
                 "num_constraints_min": "20",
                 "num_constraints_max": "20",
-
                 "ctc_dist_boolean": "0.0",
                 "ctc_dist_integer": "1.0",
                 "ctc_dist_real": "0.0",
                 "ctc_dist_string": "0.0",
-
                 "prob_eq": "0.2",
                 "prob_lt": "0.2",
                 "prob_gt": "0.2",
@@ -441,11 +429,7 @@ def test_arithmetic_constraints_do_not_compare_same_expression(client):
         ),
     )
 
-    body = "\n".join(
-        _iter_ctc_lines(
-            _fetch_params_and_generate(client, n=5)
-        )
-    )
+    body = "\n".join(_iter_ctc_lines(_fetch_params_and_generate(client, n=5)))
 
     forbidden_patterns = [
         r"\b(F\d+(?:\.Attr\d+)?)\s*(==|<|>|<=|>=)\s*\1\b",
@@ -498,11 +482,7 @@ def test_aggregate_functions_never_generate_more_than_two_arguments(client):
 
     body = "\n".join(_iter_ctc_lines(_fetch_params_and_generate(client, n=5)))
 
-    aggregate_lines = [
-        line
-        for line in body.splitlines()
-        if "sum(" in line or "avg(" in line
-    ]
+    aggregate_lines = [line for line in body.splitlines() if "sum(" in line or "avg(" in line]
 
     assert aggregate_lines, f"no aggregate functions generated:\n{body}"
 
@@ -512,16 +492,9 @@ def test_aggregate_functions_never_generate_more_than_two_arguments(client):
                 start = line.index(function) + len(function)
                 end = line.index(")", start)
 
-                args = [
-                    arg.strip()
-                    for arg in line[start:end].split(",")
-                    if arg.strip()
-                ]
+                args = [arg.strip() for arg in line[start:end].split(",") if arg.strip()]
 
-                assert len(args) <= 2, (
-                    f"invalid aggregate function with more than two "
-                    f"arguments: {line}"
-                )
+                assert len(args) <= 2, f"invalid aggregate function with more than two " f"arguments: {line}"
 
 
 # ── Level-coherence: changing step2 rewrites later step behaviour ───────
@@ -621,10 +594,7 @@ def test_ctc_dist_weights_force_string(client):
         for ln in _iter_ctc_lines(_fetch_params_and_generate(client, n=3))
         if not ln.startswith("include") and not ln.startswith("Type.")
     ]
-    assert all(
-        "len(" in ln or re.search(r"\.Attr\d+\s*==", ln)
-        for ln in lines
-    )
+    assert all("len(" in ln or re.search(r"\.Attr\d+\s*==", ln) for ln in lines)
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -882,13 +852,9 @@ def test_back_navigation_preserves_all_choices(client):
 def test_ensure_satisfiable_retries_until_sat(client, monkeypatch):
     _walk_wizard(
         client,
-        step6=_step6(
-            ensure_satisfiable=True
-        ),
+        step6=_step6(ensure_satisfiable=True),
     )
-    params = json.loads(
-        client.get("/generator/random/params-json").data
-    )
+    params = json.loads(client.get("/generator/random/params-json").data)
     params["NUM_MODELS"] = 1
     calls = []
 
@@ -906,9 +872,7 @@ def test_ensure_satisfiable_retries_until_sat(client, monkeypatch):
         staticmethod(fake_sat),
     )
 
-    results = GeneratorWizardService.generate_sat_models(
-        params
-    )
+    results = GeneratorWizardService.generate_sat_models(params)
 
     assert results
 
@@ -1220,7 +1184,6 @@ def test_wrapper_generate_one_model_returns_download_payload(monkeypatch):
         ("build", model, 2),
         ("filename", model, fm, 2),
     ]
-
 
 
 def test_serialize_generated_model_covers_all_filename_branches(

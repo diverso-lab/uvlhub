@@ -8,17 +8,13 @@ handlers so the routes stay thin.
 import logging
 from dataclasses import dataclass, field
 
-from flask import session
-
 from flamapy.metamodels.fm_generator.models import FmgeneratorModel
 from flamapy.metamodels.fm_generator.operations import GenerateFeatureModel
-
 from flamapy.metamodels.fm_metamodel.models.feature_model import FeatureModel
 from flamapy.metamodels.fm_metamodel.transformations.uvl_writer import UVLWriter
-
-from flamapy.metamodels.pysat_metamodel.transformations.fm_to_pysat import FmToPysat
 from flamapy.metamodels.pysat_metamodel.operations.pysat_satisfiable import PySATSatisfiable
-
+from flamapy.metamodels.pysat_metamodel.transformations.fm_to_pysat import FmToPysat
+from flask import session
 
 logger = logging.getLogger(__name__)
 
@@ -31,10 +27,8 @@ class SatisfiableModelGenerationError(RuntimeError):
     def __init__(self, model_number: int, attempts: int) -> None:
         self.model_number = model_number
         self.attempts = attempts
-        super().__init__(
-            f"No satisfiable model found for model {model_number} "
-            f"after {attempts} attempts."
-        )
+        super().__init__(f"No satisfiable model found for model {model_number} " f"after {attempts} attempts.")
+
 
 # ─── Wizard configuration values ─────────────────────────────────────────
 
@@ -73,6 +67,7 @@ STEP4_UI_DEFAULTS = {
     "prob_len": 0.7,
 }
 
+
 @dataclass
 class WizardRouteResult:
     template: str | None = None
@@ -81,6 +76,7 @@ class WizardRouteResult:
 
 
 # ─── Wizard form value builders ──────────────────────────────────────────
+
 
 def first_or_value(value, default):
     if isinstance(value, (list, tuple)):
@@ -119,17 +115,14 @@ def build_step3_values(params_dict):
             "FEATURE_DIST_BOOLEAN",
             0.7,
         ),
-
         "dist_integer": params_dict.get(
             "FEATURE_DIST_INTEGER",
             0.1,
         ),
-
         "dist_real": params_dict.get(
             "FEATURE_DIST_REAL",
             0.1,
         ),
-
         "dist_string": params_dict.get(
             "FEATURE_DIST_STRING",
             0.1,
@@ -237,12 +230,10 @@ def build_step5_values(params_dict):
         "min_attributes": params_dict.get("MIN_ATTRIBUTES", 1),
         "max_attributes": params_dict.get("MAX_ATTRIBUTES", 5),
         "attributes_list": params_dict.get("ATTRIBUTES_LIST", []),
-
         "dist_boolean_atr": params_dict.get("ATTR_DIST_BOOLEAN", 0.7),
         "dist_integer_atr": params_dict.get("ATTR_DIST_INTEGER", 0.1),
         "dist_real_atr": params_dict.get("ATTR_DIST_REAL", 0.1),
         "dist_string_atr": params_dict.get("ATTR_DIST_STRING", 0.1),
-
         "attr_dist_sum": "1.0000",
     }
 
@@ -256,7 +247,6 @@ def build_step6_values(params_dict):
         "constraint_count_suffix": params_dict.get("INCLUDE_CONSTRAINT_COUNT_SUFFIX", False),
     }
     return load_step_state(6, defaults)
-
 
 
 # ─── Validators ───────────────────────────────────────────────────────────
@@ -604,13 +594,13 @@ def validate_step4_form(form, max_features: int = 10000, params_dict=None):
             ("ctc_dist_string", type_on and str_on),
         ]
         active = 0.0
-        for field, is_active in ctc_fields:
-            v = _safe_float(form.get(field), 0.0)
+        for field_name, is_active in ctc_fields:
+            v = _safe_float(form.get(field_name), 0.0)
             if not is_active:
                 v = 0.0
             if not (0.0 <= v <= 1.0):
-                errors[field] = "Value must be between 0 and 1."
-            values[field] = v
+                errors[field_name] = "Value must be between 0 and 1."
+            values[field_name] = v
             if is_active:
                 active += v
         if abs(active - 1.0) > 0.001:
@@ -668,13 +658,13 @@ def validate_step5_form(form, params_dict=None):
             ("dist_string_atr", type_on),
         ]
         active_total = 0.0
-        for field, is_active in dist_fields:
-            v = _safe_float(form.get(field), 0.0)
+        for field_name, is_active in dist_fields:
+            v = _safe_float(form.get(field_name), 0.0)
             if not is_active:
                 v = 0.0
             if not (0.0 <= v <= 1.0):
-                errors[field] = "Value must be between 0 and 1."
-            values[field] = v
+                errors[field_name] = "Value must be between 0 and 1."
+            values[field_name] = v
             if is_active:
                 active_total += v
         if abs(active_total - 1.0) > 0.001:
@@ -1030,6 +1020,7 @@ def add_level_flags(values: dict, params_dict: dict) -> dict:
     )
     return values
 
+
 # ─── Generic helpers ─────────────────────────────────────────────────────
 
 
@@ -1368,27 +1359,16 @@ class GeneratorWizardService:
         feature_count = len(list(fm.get_features()))
         constraint_count = len(getattr(fm, "ctcs", []))
 
-        base_name = (
-            model.naming.name_prefix.strip()
-            if model.naming.name_prefix
-            else "fm"
-        )
+        base_name = model.naming.name_prefix.strip() if model.naming.name_prefix else "fm"
 
-        if model.naming.include_feature_count_suffix and \
-        model.naming.include_constraint_count_suffix:
-            filename = (
-                f"{base_name}_{feature_count}f_{constraint_count}c.uvl"
-            )
+        if model.naming.include_feature_count_suffix and model.naming.include_constraint_count_suffix:
+            filename = f"{base_name}_{feature_count}f_{constraint_count}c.uvl"
 
         elif model.naming.include_feature_count_suffix:
-            filename = (
-                f"{base_name}_{feature_count}f.uvl"
-            )
+            filename = f"{base_name}_{feature_count}f.uvl"
 
         elif model.naming.include_constraint_count_suffix:
-            filename = (
-                f"{base_name}_{constraint_count}c.uvl"
-            )
+            filename = f"{base_name}_{constraint_count}c.uvl"
 
         elif model.num_models > 1:
             filename = f"{base_name}_{index}.uvl"
@@ -1402,7 +1382,6 @@ class GeneratorWizardService:
             "features": feature_count,
             "constraints": constraint_count,
         }
-
 
     @staticmethod
     def generate_sat_models(params_dict):
@@ -1447,7 +1426,6 @@ class GeneratorWizardService:
             )
 
         return results
-
 
     @staticmethod
     def is_satisfiable(feature_model):

@@ -2,21 +2,16 @@ import pytest
 from flask import session
 from werkzeug.datastructures import MultiDict
 
-import app.features.generator.wizard as wizard
-from app.features.generator.wizard import GeneratorWizardService
 from app.features.generator.wizard import (
     load_step_state,
     save_step_state,
 )
-
 
 pytestmark = pytest.mark.integration
 
 
 def test_save_step_state_preserves_checkbox_false_values(test_client):
     with test_client.application.test_request_context():
-        from flask import session
-
         session["wizard"] = {}
         form = MultiDict({"field": "value", "flag": "on"})
 
@@ -29,8 +24,6 @@ def test_save_step_state_preserves_checkbox_false_values(test_client):
 
 def test_load_step_state_merges_saved_values_over_defaults(test_client):
     with test_client.application.test_request_context():
-        from flask import session
-
         session["wizard"] = {"3": {"value": "saved"}}
 
         values = load_step_state(3, {"value": "default", "other": "x"})
@@ -41,8 +34,6 @@ def test_load_step_state_merges_saved_values_over_defaults(test_client):
 
 def test_save_step_state_does_not_overwrite_other_steps(test_client):
     with test_client.application.test_request_context():
-        from flask import session
-
         session["wizard"] = {
             "2": {"arithmetic_level": True},
             "4": {"num_constraints_min": "1"},
@@ -57,17 +48,17 @@ def test_save_step_state_does_not_overwrite_other_steps(test_client):
 
 def test_step_state_is_preserved_after_returning_to_previous_step(test_client):
     with test_client.application.test_request_context():
-        from flask import session
-
         session["wizard"] = {}
 
-        form = MultiDict({
-            "prob_plus": "0.5",
-            "prob_minus": "0.3",
-            "prob_times": "0.2",
-            "prob_div": "0.0",
-            "prob_len": "0.9",
-        })
+        form = MultiDict(
+            {
+                "prob_plus": "0.5",
+                "prob_minus": "0.3",
+                "prob_times": "0.2",
+                "prob_div": "0.0",
+                "prob_len": "0.9",
+            }
+        )
 
         save_step_state(4, form)
 

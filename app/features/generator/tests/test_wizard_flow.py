@@ -11,10 +11,10 @@ scenarios we've already fixed.
 import json
 
 import pytest
+from flamapy.metamodels.fm_generator.models import FmgeneratorModel
 from flask import Response
 
-from app.features.generator import routes
-from flamapy.metamodels.fm_generator.models import FmgeneratorModel
+from app.features.generator import routes, wizard
 
 pytestmark = pytest.mark.integration
 
@@ -126,6 +126,7 @@ def test_landing_resets_both_session_sections(client):
         assert "params" not in session
         assert "wizard" not in session
 
+
 @pytest.mark.parametrize("path", ["/generator/random", "/generator/random/"])
 def test_random_entry_redirects_to_step1(client, path):
     response = client.get(path)
@@ -139,6 +140,7 @@ def test_llm_page_is_reachable(client, path):
     response = client.get(path)
 
     assert response.status_code == 200
+
 
 def _walk_happy_path(client, step2=None, step3=None, step4=None, step5=None, step6=None):
     r = client.post("/generator/random/step1", data=STEP1)
@@ -157,6 +159,7 @@ def _walk_happy_path(client, step2=None, step3=None, step4=None, step5=None, ste
 
 
 # -- Browser assets -------------------------------------------------------
+
 
 def test_js_asset_sets_runtime_mimetype_for_mjs(client, monkeypatch):
     calls = []
@@ -186,10 +189,8 @@ def test_js_asset_keeps_default_mimetype_for_unknown_extension(client, monkeypat
     assert response.headers["Content-Type"] != "text/javascript"
 
 
-
-
-
 # ── Session recovery ─────────────────────────────────────────────────────
+
 
 def test_step1_get_renders_saved_values(client):
     with client.session_transaction() as session:
@@ -426,32 +427,31 @@ def test_step4_configuration_survives_forward_and_back_navigation(client):
     coming back later. Users should only lose values when they explicitly
     modify them, not because of wizard navigation."""
     client.post("/generator/random/step1", data=STEP1)
-    client.post("/generator/random/step2", data={
-        "arithmetic_level": "on",
-        "type_level": "on",
-        "aggregate_functions": "on",
-        "string_constraints": "on",
-    })
+    client.post(
+        "/generator/random/step2",
+        data={
+            "arithmetic_level": "on",
+            "type_level": "on",
+            "aggregate_functions": "on",
+            "string_constraints": "on",
+        },
+    )
     client.post("/generator/random/step3", data=STEP3)
 
     custom_step4 = {
         **STEP4,
-
         "prob_plus": "0.55",
         "prob_minus": "0.15",
         "prob_times": "0.10",
         "prob_div": "0.05",
         "prob_sum": "0.10",
         "prob_avg": "0.05",
-
         "prob_eq": "0.25",
         "prob_lt": "0.25",
         "prob_gt": "0.25",
         "prob_leq": "0.15",
         "prob_geq": "0.10",
-
         "prob_len": "0.90",
-
         "ctc_dist_boolean": "0.7",
         "ctc_dist_integer": "0.2",
         "ctc_dist_real": "0.1",
@@ -486,9 +486,10 @@ def test_back_nav_from_step6_preserves_output_options(client):
 
 # -- SAT endpoint ---------------------------------------------------------
 
+
 def test_generate_sat_returns_models(client, monkeypatch):
     monkeypatch.setattr(
-        routes.GeneratorWizardService,
+        wizard.GeneratorWizardService,
         "generate_sat_models",
         staticmethod(lambda data: [{"filename": "fm.uvl"}]),
     )
@@ -514,7 +515,7 @@ def test_generate_sat_returns_500_when_generation_fails(client, monkeypatch):
         raise RuntimeError("generation failed")
 
     monkeypatch.setattr(
-        routes.GeneratorWizardService,
+        wizard.GeneratorWizardService,
         "generate_sat_models",
         staticmethod(fail),
     )

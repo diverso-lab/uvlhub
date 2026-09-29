@@ -6,8 +6,9 @@ step, both happy and sad paths.
 """
 
 import pytest
-import app.features.generator.wizard as wizard
 from werkzeug.datastructures import MultiDict
+
+import app.features.generator.wizard as wizard
 from app.features.generator.wizard import (
     validate_step1_form,
     validate_step2_form,
@@ -119,7 +120,6 @@ def test_step3_rejects_invalid_group_cardinality_values(overrides, field):
     )
 
     assert field in errors
-
 
 
 @pytest.mark.parametrize(
@@ -514,18 +514,10 @@ def test_validate_step4_reports_invalid_integer_fields():
         params_dict={},
     )
 
-    assert errors["num_constraints_min"] == (
-        "Min. constraints must be an integer."
-    )
-    assert errors["num_constraints_max"] == (
-        "Max. constraints must be an integer."
-    )
-    assert errors["vars_per_ctc_min"] == (
-        "Min. vars per constraint must be an integer."
-    )
-    assert errors["vars_per_ctc_max"] == (
-        "Max. vars per constraint must be an integer."
-    )
+    assert errors["num_constraints_min"] == ("Min. constraints must be an integer.")
+    assert errors["num_constraints_max"] == ("Max. constraints must be an integer.")
+    assert errors["vars_per_ctc_min"] == ("Min. vars per constraint must be an integer.")
+    assert errors["vars_per_ctc_max"] == ("Max. vars per constraint must be an integer.")
 
 
 def test_validate_step5_reports_invalid_manual_attribute_fields():
@@ -554,10 +546,6 @@ def test_validate_step5_reports_invalid_manual_attribute_fields():
     )
 
     assert errors["attr_name_0"] == "Attribute name is required."
-    assert errors["attr_attach_prob_1"] == (
-        "Attach probability is required."
-    )
-    assert errors["attr_attach_prob_2"] == (
-        "Attach probability must be a number."
-    )
+    assert errors["attr_attach_prob_1"] == ("Attach probability is required.")
+    assert errors["attr_attach_prob_2"] == ("Attach probability must be a number.")
     assert errors["attr_minmax_1"] == "Min and Max are required."

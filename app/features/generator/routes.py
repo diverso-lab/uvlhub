@@ -14,12 +14,11 @@ is independent of the others.
 
 import os
 
-from flask import jsonify, current_app, redirect, render_template, request, send_from_directory, session, url_for
+from flask import current_app, jsonify, redirect, render_template, request, send_from_directory, session, url_for
 
 from app.features.generator import generator_bp
 from app.features.generator.wizard import (
     STEP4_UI_DEFAULTS,
-    GeneratorWizardService,
     _apply_step2_levels,
     _apply_step3_tree,
     _apply_step4_constraints,
@@ -454,10 +453,15 @@ def generate_sat():
     data = request.get_json()
 
     if not data:
-        return jsonify({
-            "code": "MISSING_PARAMETERS",
-            "error": "Missing generation parameters.",
-        }), 400
+        return (
+            jsonify(
+                {
+                    "code": "MISSING_PARAMETERS",
+                    "error": "Missing generation parameters.",
+                }
+            ),
+            400,
+        )
 
     from app.features.generator.wizard import (
         GeneratorWizardService,
@@ -469,19 +473,29 @@ def generate_sat():
         return jsonify({"models": models})
 
     except SatisfiableModelGenerationError as exc:
-        return jsonify({
-            "code": "SAT_MODEL_NOT_FOUND",
-            "error": str(exc),
-            "model_number": exc.model_number,
-            "attempts": exc.attempts,
-        }), 422
+        return (
+            jsonify(
+                {
+                    "code": "SAT_MODEL_NOT_FOUND",
+                    "error": str(exc),
+                    "model_number": exc.model_number,
+                    "attempts": exc.attempts,
+                }
+            ),
+            422,
+        )
 
     except Exception:
         current_app.logger.exception("SAT-checked generation failed.")
-        return jsonify({
-            "code": "SAT_GENERATION_ERROR",
-            "error": "SAT-checked generation could not be completed.",
-        }), 500
+        return (
+            jsonify(
+                {
+                    "code": "SAT_GENERATION_ERROR",
+                    "error": "SAT-checked generation could not be completed.",
+                }
+            ),
+            500,
+        )
 
 
 # Dispatch table for the live-summary endpoint so it stays in sync with

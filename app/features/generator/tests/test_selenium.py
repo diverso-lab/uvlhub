@@ -22,8 +22,7 @@ pytestmark = pytest.mark.e2e
 
 
 def _wait_for_generator_overlay_to_disappear(driver, wait):
-    wait.until(lambda d: "Preparing generator" not in d.find_element(
-        By.TAG_NAME, "body").text)
+    wait.until(lambda d: "Preparing generator" not in d.find_element(By.TAG_NAME, "body").text)
 
 
 def _submit_next(driver, expected_url_fragment, wait):
@@ -42,8 +41,7 @@ def _submit_next(driver, expected_url_fragment, wait):
         _wait_for_generator_overlay_to_disappear(driver, wait)
     except TimeoutException:
         after = driver.current_url
-        body = driver.execute_script(
-            "return document.body.innerText.slice(0, 500);")
+        body = driver.execute_script("return document.body.innerText.slice(0, 500);")
         raise AssertionError(
             f"Navigation to {expected_url_fragment!r} never happened.\n"
             f"before: {before}\nafter: {after}\nbody: {body!r}"
@@ -115,8 +113,7 @@ def test_generator_landing_page_reachable():
 
         driver.get(f"{host}/generator")
 
-        WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.TAG_NAME, "h1")))
+        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.TAG_NAME, "h1")))
 
         body = driver.find_element(By.TAG_NAME, "body").text
 
@@ -145,8 +142,7 @@ def test_step2_type_level_enables_arithmetic_level_in_ui():
         if not type_level.is_selected():
             driver.execute_script("arguments[0].click();", type_level)
 
-        wait.until(lambda d: d.find_element(
-            By.ID, "arithmetic_level").is_selected())
+        wait.until(lambda d: d.find_element(By.ID, "arithmetic_level").is_selected())
 
         assert driver.find_element(By.ID, "type_level").is_selected()
         assert driver.find_element(By.ID, "arithmetic_level").is_selected()
@@ -171,20 +167,16 @@ def test_wizard_preserves_step1_values_after_next_and_previous():
         _submit_next(driver, "/step2", wait)
 
         previous_button = wait.until(
-            EC.presence_of_element_located(
-                (By.CSS_SELECTOR, "button[name='nav'][value='prev']"))
+            EC.presence_of_element_located((By.CSS_SELECTOR, "button[name='nav'][value='prev']"))
         )
         driver.execute_script("arguments[0].click();", previous_button)
 
         wait.until(EC.url_contains("/step1"))
         _wait_for_generator_overlay_to_disappear(driver, wait)
 
-        assert driver.find_element(
-            By.NAME, "num_models_val").get_attribute("value") == "7"
-        assert driver.find_element(
-            By.NAME, "seed").get_attribute("value") == "77"
-        assert driver.find_element(By.NAME, "name_prefix").get_attribute(
-            "value") == "selenium_demo"
+        assert driver.find_element(By.NAME, "num_models_val").get_attribute("value") == "7"
+        assert driver.find_element(By.NAME, "seed").get_attribute("value") == "77"
+        assert driver.find_element(By.NAME, "name_prefix").get_attribute("value") == "selenium_demo"
 
     finally:
         close_driver(driver)
@@ -195,8 +187,7 @@ def test_llm_page_reachable():
     try:
         host = get_host_for_selenium_testing()
         driver.get(f"{host}/generator/llm")
-        WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.TAG_NAME, "h1")))
+        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.TAG_NAME, "h1")))
         body = driver.find_element(By.TAG_NAME, "body").text
         assert "LLM" in body
         # WebGPU is the defining requirement of this page and is always
@@ -227,14 +218,12 @@ def test_wizard_reaches_step5_with_pyodide_ready():
         pyodide_wait = WebDriverWait(driver, 180)
 
         driver.get(f"{host}/generator/random/step1")
-        short.until(EC.presence_of_element_located(
-            (By.NAME, "num_models_val")))
+        short.until(EC.presence_of_element_located((By.NAME, "num_models_val")))
         _wait_for_generator_overlay_to_disappear(driver, short)
         _submit_next(driver, "/step2", short)
 
         for target in ("/step3", "/step4", "/step5"):
-            short.until(EC.presence_of_element_located(
-                (By.CSS_SELECTOR, "button[name='nav'][value='next']")))
+            short.until(EC.presence_of_element_located((By.CSS_SELECTOR, "button[name='nav'][value='next']")))
             _wait_for_generator_overlay_to_disappear(driver, short)
             _submit_next(driver, target, short)
 
@@ -248,8 +237,7 @@ def test_wizard_reaches_step5_with_pyodide_ready():
                 """))
 
         assert driver.execute_script("return window.__pyodideReady === true;")
-        boot_error = driver.execute_script(
-            "return window.__pyodideError === true;")
+        boot_error = driver.execute_script("return window.__pyodideError === true;")
         assert not boot_error, "Pyodide bootstrap rejected — "
         "check browser console"
         has_runtime = driver.execute_script(
@@ -281,20 +269,16 @@ def test_step2_arithmetic_toggles_arithmetic_minor_levels_visibility():
 
         driver.execute_script("arguments[0].click();", arithmetic)
 
-        wait.until(lambda d: d.find_element(
-            By.ID, "feature_cardinality").is_displayed())
-        wait.until(lambda d: d.find_element(
-            By.ID, "aggregate_functions").is_displayed())
+        wait.until(lambda d: d.find_element(By.ID, "feature_cardinality").is_displayed())
+        wait.until(lambda d: d.find_element(By.ID, "aggregate_functions").is_displayed())
 
         assert feature_cardinality.is_displayed()
         assert aggregate_functions.is_displayed()
 
         driver.execute_script("arguments[0].click();", arithmetic)
 
-        wait.until(lambda d: not d.find_element(
-            By.ID, "feature_cardinality").is_displayed())
-        wait.until(lambda d: not d.find_element(
-            By.ID, "aggregate_functions").is_displayed())
+        wait.until(lambda d: not d.find_element(By.ID, "feature_cardinality").is_displayed())
+        wait.until(lambda d: not d.find_element(By.ID, "aggregate_functions").is_displayed())
 
         assert not feature_cardinality.is_displayed()
         assert not aggregate_functions.is_displayed()
@@ -344,8 +328,7 @@ def test_step3_group_cardinality_settings_are_shown_when_enabled():
 
         _submit_next(driver, "/step3", wait)
 
-        wait.until(EC.presence_of_element_located(
-            (By.ID, "group_cardinality_min")))
+        wait.until(EC.presence_of_element_located((By.ID, "group_cardinality_min")))
 
         assert driver.find_element(By.ID, "group_cardinality_min")
         assert driver.find_element(By.ID, "group_cardinality_max")
@@ -430,19 +413,14 @@ def test_step6_generates_one_uvl_model_with_pyodide():
                 !!window.__seleniumGeneratorError;
         """))
 
-        assert driver.execute_script(
-            "return window.__seleniumGeneratorReady === true;")
-        assert not driver.execute_script(
-            "return window.__seleniumGeneratorError === true;")
+        assert driver.execute_script("return window.__seleniumGeneratorReady === true;")
+        assert not driver.execute_script("return window.__seleniumGeneratorError === true;")
 
-        generate_btn = wait.until(
-            EC.element_to_be_clickable((By.ID, "generate-btn")))
+        generate_btn = wait.until(EC.element_to_be_clickable((By.ID, "generate-btn")))
         driver.execute_script("arguments[0].click();", generate_btn)
 
-        pyodide_wait.until(lambda d: d.find_element(
-            By.ID, "gen-counter").text.strip() == "1 / 1")
-        pyodide_wait.until(lambda d: "Done" in d.find_element(
-            By.ID, "gen-panel-title").text)
+        pyodide_wait.until(lambda d: d.find_element(By.ID, "gen-counter").text.strip() == "1 / 1")
+        pyodide_wait.until(lambda d: "Done" in d.find_element(By.ID, "gen-panel-title").text)
 
         rows = driver.find_elements(By.CSS_SELECTOR, "#gen-results .gen-row")
         assert len(rows) == 1
@@ -453,12 +431,10 @@ def test_step6_generates_one_uvl_model_with_pyodide():
         assert driver.find_element(By.ID, "gen-actions").is_displayed()
         assert driver.find_element(By.ID, "download-btn").is_displayed()
 
-        view_btn = driver.find_element(
-            By.CSS_SELECTOR, "#gen-results button[aria-label='View UVL']")
+        view_btn = driver.find_element(By.CSS_SELECTOR, "#gen-results button[aria-label='View UVL']")
         driver.execute_script("arguments[0].click();", view_btn)
 
-        pyodide_wait.until(EC.visibility_of_element_located(
-            (By.ID, "gen-modal-host")))
+        pyodide_wait.until(EC.visibility_of_element_located((By.ID, "gen-modal-host")))
         assert "features" in driver.find_element(By.ID, "gen-modal-host").text
 
     finally:

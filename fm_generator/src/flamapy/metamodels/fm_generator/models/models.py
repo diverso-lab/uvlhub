@@ -8,6 +8,7 @@ from flamapy.core.models import VariabilityModel
 if TYPE_CHECKING:
     from flamapy.metamodels.fm_metamodel.models.feature_model import Attribute
 
+
 def _as_int(value: Any, default: int = 1) -> int:
     if isinstance(value, list):
         value = value[0] if value else default
@@ -538,7 +539,7 @@ class FmgeneratorModel(VariabilityModel):
         self.hierarchy.validate(self.features, self.levels)
         self.constraints.validate(self.levels)
         self.attributes.validate()
-    
+
     @classmethod
     def from_flat_dict(cls, params: dict) -> "FmgeneratorModel":
         """Build a FmgeneratorModel from the flat dictionary currently produced by UVLHub.
