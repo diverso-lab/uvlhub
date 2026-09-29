@@ -28,6 +28,144 @@
             'Upper bound for the tree depth. Cannot exceed the maximum number of features.',
             values, errors, default=5, min=1, max=50, max_from='num_features_max') }}
 
+        {% if values.get('type_level') %}
+
+        <div class="separator separator-dashed my-9"></div>
+
+        {{ section('Feature type distribution',
+            'How often each type of feature appears when Type level is enabled. Drag the handles OR type exact values — both stay in sync and always add up to 1.') }}
+
+        <div class="prob-distribution mb-3">
+
+            <div id="type_dist_slider" class="rel-slider mt-3 mb-5"></div>
+
+
+            <div class="row g-3">
+
+                <div class="col-6 col-md-3">
+
+                    <label for="dist_boolean"
+                        class="form-label fs-7 text-gray-700 d-flex align-items-center gap-2">
+
+                        <span class="rel-swatch" style="background:#5e6278;"></span>
+
+                        Boolean
+
+                        <span class="badge badge-light ms-auto fw-bold"
+                            id="label_dist_boolean">
+                            70%
+                        </span>
+
+                    </label>
+
+                    <input type="number"
+                        id="dist_boolean"
+                        name="dist_boolean"
+                        class="form-control form-control-solid"
+                        step="0.01"
+                        min="0"
+                        max="1"
+                        value="{{ values.get('dist_boolean', 0.7) }}">
+
+                </div>
+
+
+                <div class="col-6 col-md-3">
+
+                    <label for="dist_integer"
+                        class="form-label fs-7 text-gray-700 d-flex align-items-center gap-2">
+
+                        <span class="rel-swatch" style="background:#3f4254;"></span>
+
+                        Integer
+
+                        <span class="badge badge-light ms-auto fw-bold"
+                            id="label_dist_integer">
+                            10%
+                        </span>
+
+                    </label>
+
+                    <input type="number"
+                        id="dist_integer"
+                        name="dist_integer"
+                        class="form-control form-control-solid"
+                        step="0.01"
+                        min="0"
+                        max="1"
+                        value="{{ values.get('dist_integer', 0.1) }}">
+
+                </div>
+
+
+                <div class="col-6 col-md-3">
+
+                    <label for="dist_real"
+                        class="form-label fs-7 text-gray-700 d-flex align-items-center gap-2">
+
+                        <span class="rel-swatch" style="background:#2b2b40;"></span>
+
+                        Real
+
+                        <span class="badge badge-light ms-auto fw-bold"
+                            id="label_dist_real">
+                            10%
+                        </span>
+
+                    </label>
+
+                    <input type="number"
+                        id="dist_real"
+                        name="dist_real"
+                        class="form-control form-control-solid"
+                        step="0.01"
+                        min="0"
+                        max="1"
+                        value="{{ values.get('dist_real', 0.1) }}">
+
+                </div>
+
+
+                <div class="col-6 col-md-3">
+
+                    <label for="dist_string"
+                        class="form-label fs-7 text-gray-700 d-flex align-items-center gap-2">
+
+                        <span class="rel-swatch" style="background:#181c32;"></span>
+
+                        String
+
+                        <span class="badge badge-light ms-auto fw-bold"
+                            id="label_dist_string">
+                            10%
+                        </span>
+
+                    </label>
+
+                    <input type="number"
+                        id="dist_string"
+                        name="dist_string"
+                        class="form-control form-control-solid"
+                        step="0.01"
+                        min="0"
+                        max="1"
+                        value="{{ values.get('dist_string', 0.1) }}">
+
+                </div>
+
+            </div>
+
+
+            {% if errors.get('type_dist_total') %}
+                <div class="text-danger fs-7 mt-3">
+                    {{ errors['type_dist_total'] }}
+                </div>
+            {% endif %}
+
+        </div>
+
+        {% endif %}
+
         <div class="separator separator-dashed my-9"></div>
 
         {{ section('Parent–child distribution',

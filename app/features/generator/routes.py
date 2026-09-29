@@ -14,7 +14,7 @@ is independent of the others.
 
 import os
 
-from flask import jsonify, redirect, render_template, request, send_from_directory, session, url_for
+from flask import current_app, jsonify, redirect, render_template, request, send_from_directory, session, url_for
 
 from app.features.generator import generator_bp
 from app.features.generator.wizard import (
@@ -24,7 +24,6 @@ from app.features.generator.wizard import (
     _apply_step4_constraints,
     _apply_step5_attributes,
     _apply_step6_output,
-    clear_step_state,
     load_step_state,
     save_step_state,
     validate_step1_form,
@@ -117,7 +116,6 @@ def step1():
                 values=request.form,
             )
         session["params"] = p
-        clear_step_state(1)
         return redirect(url_for("generator.step2"))
 
     params_dict = session.get("params", {})
@@ -154,13 +152,11 @@ def step2():
         session["params"] = params_dict
 
         if nav == "prev":
-            clear_step_state(2)
             return redirect(url_for("generator.step1"))
 
         errors, values = validate_step2_form(request.form)
         if errors:
             return render_template("generator/step2.html", current_step=2, errors=errors, values=values)
-        clear_step_state(2)
         return redirect(url_for("generator.step3"))
 
     params_dict = session.get("params", {})
@@ -193,7 +189,6 @@ def step3():
         if nav == "prev":
             _apply_step3_tree(params_dict, request.form)
             session["params"] = params_dict
-            clear_step_state(3)
             return redirect(url_for("generator.step2"))
 
         errors, values = validate_step3_form(request.form, params_dict)
@@ -211,7 +206,6 @@ def step3():
             return render_template("generator/step3.html", current_step=3, errors=errors, values=values)
         _apply_step3_tree(params_dict, request.form)
         session["params"] = params_dict
-        clear_step_state(3)
         return redirect(url_for("generator.step4"))
 
     values = {
@@ -257,7 +251,6 @@ def step4():
         if nav == "prev":
             _apply_step4_constraints(params_dict, request.form)
             session["params"] = params_dict
-            clear_step_state(4)
             return redirect(url_for("generator.step3"))
 
         max_feats = int(params_dict.get("MAX_FEATURES", 10000))
@@ -270,7 +263,6 @@ def step4():
             return render_template("generator/step4.html", current_step=4, errors=errors, values=values)
         _apply_step4_constraints(params_dict, request.form)
         session["params"] = params_dict
-        clear_step_state(4)
         return redirect(url_for("generator.step5"))
 
     wizard = session.get("wizard", {})
@@ -363,7 +355,6 @@ def step5():
         if nav == "prev":
             _apply_step5_attributes(params_dict, request.form)
             session["params"] = params_dict
-            clear_step_state(5)
             return redirect(url_for("generator.step4"))
 
         errors, values = validate_step5_form(request.form, params_dict)
@@ -379,7 +370,6 @@ def step5():
             )
         _apply_step5_attributes(params_dict, request.form)
         session["params"] = params_dict
-        clear_step_state(5)
         return redirect(url_for("generator.step6"))
 
     defaults = {
@@ -387,10 +377,10 @@ def step5():
         "min_attributes": params_dict.get("MIN_ATTRIBUTES", 1),
         "max_attributes": params_dict.get("MAX_ATTRIBUTES", 5),
         "attributes_list": params_dict.get("ATTRIBUTES_LIST", []),
-        "dist_boolean": params_dict.get("DIST_BOOLEAN", 0.7),
-        "dist_integer": params_dict.get("DIST_INTEGER", 0.1),
-        "dist_real": params_dict.get("DIST_REAL", 0.1),
-        "dist_string": params_dict.get("DIST_STRING", 0.1),
+        "dist_boolean_attr": params_dict.get("ATTR_DIST_BOOLEAN", 0.7),
+        "dist_integer_attr": params_dict.get("ATTR_DIST_INTEGER", 0.1),
+        "dist_real_attr": params_dict.get("ATTR_DIST_REAL", 0.1),
+        "dist_string_attr": params_dict.get("ATTR_DIST_STRING", 0.1),
         "attr_dist_sum": "1.0000",
     }
     values = load_step_state(5, defaults)
@@ -428,18 +418,17 @@ def step6():
         _apply_step6_output(params_dict, request.form)
         session["params"] = params_dict
         if nav == "prev":
-            clear_step_state(6)
             return redirect(url_for("generator.step5"))
-        # The actual model generation runs client-side in Pyodide once the
-        # user clicks "Generate & download"; this POST just persists the
-        # output options so params-json reflects them.
-        clear_step_state(6)
+        # The actual generation is triggered by the Generate button.
+        # Pyodide handles normal generation, while ensure_satisfiable
+        # uses the backend SAT endpoint.
         return redirect(url_for("generator.step6"))
 
     defaults = {
-        # ENSURE_SATISFIABLE triggers up to 20 retries per model via pysat;
+        # When ENSURE_SATISFIABLE is activated, it triggers up to 20 retries per model via pysat;
         # on big configurations that can multiply generation time 20×. Keep
         # it OFF by default and warn the user on the step 6 card.
+        # This does not use Pyodide, just back-end
         "ensure_satisfiable": params_dict.get("ENSURE_SATISFIABLE", False),
         "feature_count_suffix": params_dict.get("INCLUDE_FEATURE_COUNT_SUFFIX", False),
         "constraint_count_suffix": params_dict.get("INCLUDE_CONSTRAINT_COUNT_SUFFIX", False),
@@ -457,6 +446,56 @@ def get_params_json():
     if not params:
         return jsonify({"error": "Params missing"}), 400
     return jsonify(params)
+
+
+@generator_bp.route("/generator/random/generate-sat", methods=["POST"])
+def generate_sat():
+    data = request.get_json()
+
+    if not data:
+        return (
+            jsonify(
+                {
+                    "code": "MISSING_PARAMETERS",
+                    "error": "Missing generation parameters.",
+                }
+            ),
+            400,
+        )
+
+    from app.features.generator.wizard import (
+        GeneratorWizardService,
+        SatisfiableModelGenerationError,
+    )
+
+    try:
+        models = GeneratorWizardService.generate_sat_models(data)
+        return jsonify({"models": models})
+
+    except SatisfiableModelGenerationError as exc:
+        return (
+            jsonify(
+                {
+                    "code": "SAT_MODEL_NOT_FOUND",
+                    "error": str(exc),
+                    "model_number": exc.model_number,
+                    "attempts": exc.attempts,
+                }
+            ),
+            422,
+        )
+
+    except Exception:
+        current_app.logger.exception("SAT-checked generation failed.")
+        return (
+            jsonify(
+                {
+                    "code": "SAT_GENERATION_ERROR",
+                    "error": "SAT-checked generation could not be completed.",
+                }
+            ),
+            500,
+        )
 
 
 # Dispatch table for the live-summary endpoint so it stays in sync with

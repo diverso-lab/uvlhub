@@ -29,13 +29,13 @@ def get_host_for_testing(test_type: str) -> str:
     host_mapping = {
         "locust": {
             "": "http://localhost:5000",
-            "/workspace/": "http://nginx_web_server_container",
-            "/vagrant/": "http://localhost:5000",
+            "/workspace": "http://nginx_web_server_container",
+            "/vagrant": "http://localhost:5000",
         },
         "selenium": {
             "": "http://localhost:5000",
-            "/workspace/": "http://web:5000",
-            "/vagrant/": "http://localhost:5000",
+            "/workspace": "http://web:5000",
+            "/vagrant": "http://localhost:5000",
         },
     }
 
@@ -44,7 +44,7 @@ def get_host_for_testing(test_type: str) -> str:
         raise ValueError(f"Unknown test type: {test_type}")
 
     # Get the working directory from the environment variable
-    working_dir = os.getenv("WORKING_DIR", "")
+    working_dir = os.getenv("WORKING_DIR", "").rstrip("/")
 
     # Return the host URL based on the working directory
     if working_dir in host_mapping[test_type]:

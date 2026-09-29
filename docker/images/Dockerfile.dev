@@ -38,6 +38,7 @@ RUN --mount=type=cache,target=/root/.npm npm ci
 
 COPY app/ ./app
 COPY rosemary/ ./rosemary
+COPY fm_generator/ ./fm_generator
 COPY migrations/ ./migrations
 COPY docker/ ./docker
 COPY --chmod=0755 scripts/ ./scripts/
@@ -45,7 +46,10 @@ COPY --chmod=0755 scripts/ ./scripts/
 # Install Rosemary (lives in ./rosemary with its own pyproject)
 RUN --mount=type=cache,target=/root/.cache/pip pip install -e ./rosemary
 
-RUN --mount=type=cache,target=/root/.cache/pip pip install -e ./app/features/generator/vendor
+RUN --mount=type=cache,target=/root/.cache/pip pip install -e ./fm_generator
+RUN pip install --no-cache-dir build
+RUN python -m build --wheel ./fm_generator \
+ && cp fm_generator/dist/fm_generator-*.whl app/features/generator/assets/js/
 
 RUN find . -type d -name "__pycache__" -exec rm -r {} + \
  && find . -type f -name "*.pyc" -exec rm -f {} +

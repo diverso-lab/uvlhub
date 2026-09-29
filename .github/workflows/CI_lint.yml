@@ -36,12 +36,12 @@ jobs:
 
       # Step 4: Run flake8 for PEP8 linting
       - name: Lint with flake8
-        run: flake8 app rosemary
+        run: flake8 app rosemary fm_generator/src
 
       # Step 5: Verify code formatting with Black
       - name: Check formatting with black
-        run: black --check app rosemary
+        run: black --check app rosemary fm_generator/src
 
       # Step 6: Verify import ordering with isort
       - name: Check import order with isort
-        run: isort --check-only app rosemary
+        run: isort --check-only app rosemary fm_generator/src

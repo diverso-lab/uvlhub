@@ -13,10 +13,10 @@ const WHEELS = [
     "astutils-0.0.6-py3-none-any.whl",
     "blinker-1.9.0-py3-none-any.whl",
     "dd-0.5.7-py3-none-any.whl",
-    "flamapy_bdd-2.5.0-py3-none-any.whl",
+    // "flamapy_bdd-2.5.0-py3-none-any.whl",
     "flamapy_fm-2.5.0-py3-none-any.whl",
     "flamapy_fw-2.5.0-py3-none-any.whl",
-    "flamapy_sat-2.5.0-py3-none-any.whl",
+    // "flamapy_sat-2.5.0-py3-none-any.whl",
     "flamapy-2.5.0-py3-none-any.whl",
     "flask-3.1.0-py3-none-any.whl",
     "fm_generator-0.0.1-py3-none-any.whl",
@@ -294,6 +294,8 @@ export async function generateOne(pyodide, paramsObj, index) {
     // Each call re-sets params_json because paramsObj may have changed
     // between invocations (the user flipping checkboxes on step 6 before
     // clicking Generate). Kept cheap — Python parses it lazily.
+
+    
     pyodide.globals.set("params_json", JSON.stringify(paramsObj));
     pyodide.globals.set("model_index", index);
     const resultJson = await pyodide.runPythonAsync(
@@ -539,11 +541,19 @@ const CTC_DIST_SEGMENTS = [
     { id: "ctc_dist_string",  label: "String",  color: "#181c32" },
 ];
 
-const ATTR_DIST_SEGMENTS = [
+const TYPE_DIST_SEGMENTS = [
     { id: "dist_boolean", label: "Boolean", color: "#5e6278" },
     { id: "dist_integer", label: "Integer", color: "#3f4254" },
     { id: "dist_real",    label: "Real",    color: "#2b2b40" },
     { id: "dist_string",  label: "String",  color: "#181c32" },
+];
+
+
+const ATTR_DIST_SEGMENTS = [
+    { id: "dist_boolean_atr", label: "Boolean", color: "#5e6278" },
+    { id: "dist_integer_atr", label: "Integer", color: "#3f4254" },
+    { id: "dist_real_atr",    label: "Real",    color: "#2b2b40" },
+    { id: "dist_string_atr",  label: "String",  color: "#181c32" },
 ];
 
 function initAllDistributionControls() {
@@ -552,7 +562,16 @@ function initAllDistributionControls() {
     initDistributionControl({ sliderId: "arith_slider",      allSegments: ARITH_OPS_SEGMENTS });
     initDistributionControl({ sliderId: "cmp_slider",        allSegments: CMP_OPS_SEGMENTS });
     initDistributionControl({ sliderId: "ctc_dist_slider",   allSegments: CTC_DIST_SEGMENTS });
-    initDistributionControl({ sliderId: "attr_dist_slider",  allSegments: ATTR_DIST_SEGMENTS });
+
+    initDistributionControl({ 
+        sliderId: "type_dist_slider",
+        allSegments: TYPE_DIST_SEGMENTS
+    });
+
+    initDistributionControl({ 
+        sliderId: "attr_dist_slider",
+        allSegments: ATTR_DIST_SEGMENTS
+    });
 }
 
 function initStepHelpers() {

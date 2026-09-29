@@ -269,10 +269,10 @@
                 {{ _kv('Count', '%s – %s' | format(p.get('MIN_ATTRIBUTES','?'), p.get('MAX_ATTRIBUTES','?'))) }}
             {% endif %}
             {% set att_bits = [] %}
-            {% if p.get('DIST_BOOLEAN', 0) > 0 %}{% set _ = att_bits.append('B ' ~ _pct(p.DIST_BOOLEAN)) %}{% endif %}
-            {% if p.get('DIST_INTEGER', 0) > 0 %}{% set _ = att_bits.append('ℤ ' ~ _pct(p.DIST_INTEGER)) %}{% endif %}
-            {% if p.get('DIST_REAL', 0) > 0 %}{% set _ = att_bits.append('ℝ ' ~ _pct(p.DIST_REAL)) %}{% endif %}
-            {% if p.get('DIST_STRING', 0) > 0 %}{% set _ = att_bits.append('S ' ~ _pct(p.DIST_STRING)) %}{% endif %}
+            {% if p.get('ATTR_DIST_BOOLEAN', 0) > 0 %}{% set _ = att_bits.append('B ' ~ _pct(p.ATTR_DIST_BOOLEAN)) %}{% endif %}
+            {% if p.get('ATTR_DIST_INTEGER', 0) > 0 %}{% set _ = att_bits.append('ℤ ' ~ _pct(p.ATTR_DIST_INTEGER)) %}{% endif %}
+            {% if p.get('ATTR_DIST_REAL', 0) > 0 %}{% set _ = att_bits.append('ℝ ' ~ _pct(p.ATTR_DIST_REAL)) %}{% endif %}
+            {% if p.get('ATTR_DIST_STRING', 0) > 0 %}{% set _ = att_bits.append('S ' ~ _pct(p.ATTR_DIST_STRING)) %}{% endif %}
             {% if att_bits %}{{ _kv('Type mix', att_bits | join(' · ')) }}{% endif %}
         {% else %}
             {{ _kv('Mode', 'manual') }}

@@ -56,11 +56,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install --pre .
 
-      - name: Install generator vendor package
-        # The generator feature pulls its feature-model generator from a
-        # vendored source tree; pytest imports Params from it directly, so
-        # install it editable into the CI Python env.
-        run: pip install --no-cache-dir -e ./app/features/generator/vendor
+      - name: Install fm_generator package
+        run: pip install --no-cache-dir -e ./fm_generator
 
       - name: Run tests (fast pyramid — unit + repository + service + integration)
         run: pytest app/features -m "(unit or repository or service or integration) and not slow"

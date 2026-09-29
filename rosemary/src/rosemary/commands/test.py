@@ -42,7 +42,7 @@ DEFAULT_MARKERS = ("unit", "repository", "service", "integration")
 @click.option(
     "--e2e", "selected", flag_value="e2e", multiple=True, help="Selenium end-to-end tests (requires the grid)."
 )
-@click.option("--all", "all_", is_flag=True, help="Shortcut for unit + repository + service + integration + e2e.")
+@click.option("--all", "all_", is_flag=True, help="Run all tests without filtering by pytest markers.")
 @click.option("--load", "load_", is_flag=True, help="Forward to ``rosemary locust`` for load testing.")
 def test(feature, keyword, selected, all_, load_):
     if load_:
@@ -54,7 +54,11 @@ def test(feature, keyword, selected, all_, load_):
         return
 
     markers = _resolve_markers(selected, all_)
-    cmd = ["pytest", "-v", target, "-m", " or ".join(markers)]
+
+    cmd = ["pytest", "-v", target]
+
+    if markers:
+        cmd += ["-m", " or ".join(markers)]
     if keyword:
         cmd += ["-k", keyword]
 
@@ -79,15 +83,16 @@ def _resolve_target(feature):
 
 def _resolve_markers(selected, all_):
     if all_:
-        return ("unit", "repository", "service", "integration", "e2e")
+        return ()
+
     if selected:
-        # Click hands us a tuple via multiple=True; preserve order, drop dupes.
         seen, ordered = set(), []
         for marker in selected:
             if marker not in seen:
                 seen.add(marker)
                 ordered.append(marker)
         return tuple(ordered)
+
     return DEFAULT_MARKERS
 
 

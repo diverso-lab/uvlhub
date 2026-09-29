@@ -25,9 +25,9 @@ def set_service_driver(driver="firefox"):
 
 def initialize_driver():
     # Initialise the browser using WebDriver Manager
-    working_dir = os.environ.get("WORKING_DIR", None)
+    working_dir = os.environ.get("WORKING_DIR", "").rstrip("/")
     selenium_hub_url = "http://selenium-hub:4444/wd/hub"
-    if working_dir == "/workspace/":
+    if working_dir == "/workspace":
         if get_service_driver() == "chrome":
             options = webdriver.ChromeOptions()
             driver = webdriver.Remote(command_executor=selenium_hub_url, options=options)  # Hub URL
@@ -38,7 +38,7 @@ def initialize_driver():
 
         else:
             raise Exception("Driver not supported")
-    elif working_dir == "":
+    elif not working_dir:
         if get_service_driver() == "chrome":
             options = webdriver.ChromeOptions()
             service = ChromeService(ChromeDriverManager().install())

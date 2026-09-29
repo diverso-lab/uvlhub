@@ -35,7 +35,7 @@
         <div id="random-attributes-settings">
             {{ range_field('min_attributes', 'max_attributes', 'Number of attributes',
                 'Min / Max number of attributes sampled per model when the random mode is on.',
-                values, errors, default_min=1, default_max=5, hard_min=1, hard_max=10000) }}
+                values, errors, default_min=1, default_max=5, hard_min=0, hard_max=1000) }}
             <div class="text-gray-600 fs-7 mb-5">Min must be ≤ Max.</div>
 
             {{ section('Attribute type distribution',
@@ -45,53 +45,53 @@
                 <div id="attr_dist_slider" class="rel-slider mt-3 mb-5"></div>
                 <div class="row g-3">
                     <div class="col-6 col-md-3">
-                        <label for="dist_boolean" class="form-label fs-7 text-gray-700 d-flex align-items-center gap-2">
+                        <label for="dist_boolean_atr" class="form-label fs-7 text-gray-700 d-flex align-items-center gap-2">
                             <span class="rel-swatch" style="background: #5e6278;"></span>
                             Boolean
-                            <span class="badge badge-light ms-auto fw-bold" id="label_dist_boolean">70%</span>
+                            <span class="badge badge-light ms-auto fw-bold" id="label_dist_boolean_atr">70%</span>
                         </label>
-                        <input type="number" id="dist_boolean" name="dist_boolean"
+                        <input type="number" id="dist_boolean_atr" name="dist_boolean_atr"
                                class="form-control form-control-solid" step="0.01" min="0" max="1"
-                               value="{{ values.get('dist_boolean', 0.7) }}">
+                               value="{{ values.get('dist_boolean_atr', 0.7) }}">
                     </div>
                     {% if arithmetic_level %}
                     <div class="col-6 col-md-3">
-                        <label for="dist_integer" class="form-label fs-7 text-gray-700 d-flex align-items-center gap-2">
+                        <label for="dist_integer_atr" class="form-label fs-7 text-gray-700 d-flex align-items-center gap-2">
                             <span class="rel-swatch" style="background: #3f4254;"></span>
                             Integer
-                            <span class="badge badge-light ms-auto fw-bold" id="label_dist_integer">10%</span>
+                            <span class="badge badge-light ms-auto fw-bold" id="label_dist_integer_atr">10%</span>
                         </label>
-                        <input type="number" id="dist_integer" name="dist_integer"
+                        <input type="number" id="dist_integer_atr" name="dist_integer_atr"
                                class="form-control form-control-solid" step="0.01" min="0" max="1"
-                               value="{{ values.get('dist_integer', 0.1) }}">
+                               value="{{ values.get('dist_integer_atr', 0.1) }}">
                     </div>
                     <div class="col-6 col-md-3">
-                        <label for="dist_real" class="form-label fs-7 text-gray-700 d-flex align-items-center gap-2">
+                        <label for="dist_real_atr" class="form-label fs-7 text-gray-700 d-flex align-items-center gap-2">
                             <span class="rel-swatch" style="background: #2b2b40;"></span>
                             Real
-                            <span class="badge badge-light ms-auto fw-bold" id="label_dist_real">10%</span>
+                            <span class="badge badge-light ms-auto fw-bold" id="label_dist_real_atr">10%</span>
                         </label>
-                        <input type="number" id="dist_real" name="dist_real"
+                        <input type="number" id="dist_real_atr" name="dist_real_atr"
                                class="form-control form-control-solid" step="0.01" min="0" max="1"
-                               value="{{ values.get('dist_real', 0.1) }}">
+                               value="{{ values.get('dist_real_atr', 0.1) }}">
                     </div>
                     {% else %}
-                    <input type="hidden" name="dist_integer" value="0.0">
-                    <input type="hidden" name="dist_real" value="0.0">
+                    <input type="hidden" name="dist_integer_atr" value="0.0">
+                    <input type="hidden" name="dist_real_atr" value="0.0">
                     {% endif %}
                     {% if type_level %}
                     <div class="col-6 col-md-3">
-                        <label for="dist_string" class="form-label fs-7 text-gray-700 d-flex align-items-center gap-2">
+                        <label for="dist_string_atr" class="form-label fs-7 text-gray-700 d-flex align-items-center gap-2">
                             <span class="rel-swatch" style="background: #181c32;"></span>
                             String
-                            <span class="badge badge-light ms-auto fw-bold" id="label_dist_string">10%</span>
+                            <span class="badge badge-light ms-auto fw-bold" id="label_dist_string_atr">10%</span>
                         </label>
-                        <input type="number" id="dist_string" name="dist_string"
+                        <input type="number" id="dist_string_atr" name="dist_string_atr"
                                class="form-control form-control-solid" step="0.01" min="0" max="1"
-                               value="{{ values.get('dist_string', 0.1) }}">
+                               value="{{ values.get('dist_string_atr', 0.1) }}">
                     </div>
                     {% else %}
-                    <input type="hidden" name="dist_string" value="0.0">
+                    <input type="hidden" name="dist_string_atr" value="0.0">
                     {% endif %}
                 </div>
                 {% if errors.get('attr_dist_sum') %}
@@ -109,10 +109,6 @@
                     <i class="ki-duotone ki-plus fs-4"></i>
                     Add attribute
                 </button>
-                <button type="button" class="btn btn-sm btn-light-danger" id="delete-attribute-btn">
-                    <i class="ki-duotone ki-minus fs-4"></i>
-                    Remove last
-                </button>
             </div>
 
             <div id="manual-attributes-list"></div>
@@ -120,14 +116,18 @@
 
     </div>
 </div>
-{% endblock %}
 
-{% block wizard_scripts %}
 <script>
+(function runStep5() {
 const randomCheckbox = document.getElementById('random_attributes');
 const randomSettings = document.getElementById('random-attributes-settings');
 const manualSection = document.getElementById('manual-attributes-section');
 const manualAttributesList = document.getElementById('manual-attributes-list');
+
+if (!randomCheckbox || !randomSettings || !manualSection || !manualAttributesList) {
+    return;
+}
+
 const savedAttributes = {{ values.get('attributes_list', []) | tojson }};
 const serverErrors = {{ errors | tojson }};
 const values = {{ values | tojson }};
@@ -144,18 +144,18 @@ function toggleAttributeSections() {
     } else {
         randomSettings.style.display = 'none';
         manualSection.style.display  = '';
+
+        if (manualAttributesList.children.length === 0) {
+            addAttributeCard();
+        }
     }
+
+    updateManualAttributesGlobalError();
 }
+
 randomCheckbox.addEventListener('change', toggleAttributeSections);
 
 document.getElementById('add-attribute-btn').addEventListener('click', addAttributeCard);
-document.getElementById('delete-attribute-btn').addEventListener('click', function() {
-    const cards = manualAttributesList.getElementsByClassName('manual-attribute-card');
-    if (cards.length > 0) {
-        cards[cards.length - 1].remove();
-        updateManualAttributesGlobalError();
-    }
-});
 
 function validateBooleanCheckboxes(card) {
     const trueBox  = card.querySelector('.boolean-true');
@@ -254,6 +254,23 @@ function updateValueField(card, type, idx) {
     }
 }
 
+function reindexManualAttributeCards() {
+    const cards = manualAttributesList.querySelectorAll('.manual-attribute-card');
+
+    cards.forEach((card, idx) => {
+        const title = card.querySelector('.attr-title');
+        if (title) title.textContent = `Attribute #${idx + 1}`;
+
+        card.querySelectorAll('[name]').forEach((el) => {
+            el.name = el.name.replace(/_\d+$/, `_${idx}`);
+        });
+
+        card.querySelectorAll('[id]').forEach((el) => {
+            el.id = el.id.replace(/_\d+$/, `_${idx}`);
+        });
+    });
+}
+
 function addAttributeCard() {
     const idx = manualAttributesList.children.length;
     const card = document.createElement('div');
@@ -261,7 +278,11 @@ function addAttributeCard() {
     card.innerHTML = `
         <div class="card-body">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h5 class="fw-bold text-gray-900 mb-0">Attribute #${idx + 1}</h5>
+                <h5 class="fw-bold text-gray-900 mb-0 attr-title">Attribute #${idx + 1}</h5>
+                <button type="button" class="btn btn-sm btn-light-danger remove-attribute-btn">
+                    <i class="ki-duotone ki-trash fs-4"></i>
+                    Remove
+                </button>
             </div>
 
             <div class="row g-4 mb-4">
@@ -303,6 +324,17 @@ function addAttributeCard() {
         </div>
     `;
     manualAttributesList.appendChild(card);
+
+    card.querySelector('.remove-attribute-btn').addEventListener('click', function () {
+        card.remove();
+        reindexManualAttributeCards();
+
+        if (!randomCheckbox.checked && manualAttributesList.children.length === 0) {
+            addAttributeCard();
+        }
+
+        updateManualAttributesGlobalError();
+    });
 
     updateValueField(card, 'integer', idx);
     updateUseInConstraintsAvailability(card, 'integer', idx);
@@ -381,9 +413,9 @@ updateManualAttributesGlobalError();
 (function () {
     const badge = document.getElementById('attr_dist_sum');
     if (!badge) return;
-    const active = ['dist_boolean']
-        .concat(arithmeticLevelEnabled ? ['dist_integer', 'dist_real'] : [])
-        .concat(typeLevelEnabled ? ['dist_string'] : []);
+    const active = ['dist_boolean_atr']
+        .concat(arithmeticLevelEnabled ? ['dist_integer_atr', 'dist_real_atr'] : [])
+        .concat(typeLevelEnabled ? ['dist_string_atr'] : []);
     function update() {
         let s = 0;
         active.forEach((id) => {
@@ -422,5 +454,8 @@ function updateUseInConstraintsAvailability(card, type, idx) {
     if (!enabled) cb.checked = false;
     if (hint) hint.textContent = msg;
 }
+})();
 </script>
 {% endblock %}
+
+{% block wizard_scripts %}{% endblock %}

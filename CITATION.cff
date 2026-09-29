@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite the archived version on Zenodo."
+title: "UVLHub with fm_generator integration"
+authors:
+  - family-names: Ortega
+    given-names: Antonio Jiménez
+    affiliation: Universidad de Sevilla
+doi: 10.5281/zenodo.22963634
+url: "https://github.com/antjimort/uvlhub"
+version: 1.0.0
+license: MIT
+date-released: 2026-09-25

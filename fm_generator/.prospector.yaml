@@ -1,0 +1,20 @@
+strictness: high
+test-warnings: true
+doc-warnings: false
+
+ignore-paths:
+  - build
+  - tests
+  - skel_metamodel
+  - flamapy/__init__.py  # Añadir esta línea
+
+pycodestyle:
+  options:
+    max-line-length: 100
+
+pylint:
+  disable:
+    - unsubscriptable-object
+
+mccabe:
+  run: true

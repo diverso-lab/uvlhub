@@ -54,6 +54,7 @@ RUN npm ci
 # -------------------------
 COPY app/ ./app
 COPY rosemary/ ./rosemary
+COPY fm_generator/ ./fm_generator
 COPY migrations/ ./migrations
 COPY docker/ ./docker
 COPY --chmod=0755 scripts/ ./scripts/
@@ -61,8 +62,13 @@ COPY --chmod=0755 scripts/ ./scripts/
 # Install Rosemary (lives in ./rosemary with its own pyproject)
 RUN pip install -e ./rosemary
 
-# Install vendored fm_generator (server-side use in app/features/generator/routes.py)
-RUN pip install --no-cache-dir -e ./app/features/generator/vendor
+# Install fm_generator plugin
+RUN pip install --no-cache-dir build
+RUN pip install --no-cache-dir -e ./fm_generator
+RUN python -m build --wheel ./fm_generator \
+ && cp fm_generator/dist/fm_generator-*.whl app/features/generator/assets/js/
+
+RUN echo "webhook" > /workspace/.moduleignore
 
 # Remove Python cache
 RUN find . -type d -name "__pycache__" -exec rm -r {} + \
@@ -78,4 +84,8 @@ ENV NODE_ENV=production
 ARG VERSION_TAG
 RUN echo "$VERSION_TAG" > /workspace/.version
 
-EXPOSE 5000
+ENV PORT=10000
+
+EXPOSE 10000
+
+CMD ["bash", "docker/entrypoints/production_entrypoint.sh"]
