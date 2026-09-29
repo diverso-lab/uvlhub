@@ -148,9 +148,7 @@ class FeaturesConfig:
                 raise ValueError("[ERROR] Feature cardinality bounds must be at least 1.")
 
             if self.min_feature_cardinality > self.max_feature_cardinality:
-                raise ValueError(
-                    "[ERROR] min_feature_cardinality cannot be greater than max_feature_cardinality."
-                )
+                raise ValueError("[ERROR] min_feature_cardinality cannot be greater than max_feature_cardinality.")
 
             _validate_probability(
                 self.prob_feature_cardinality,
@@ -203,9 +201,7 @@ class HierarchyConfig:
                 raise ValueError("[ERROR] Group cardinality bounds must be at least 1.")
 
             if self.group_cardinality_min > self.group_cardinality_max:
-                raise ValueError(
-                    "[ERROR] group_cardinality_min cannot be greater than group_cardinality_max."
-                )
+                raise ValueError("[ERROR] group_cardinality_min cannot be greater than group_cardinality_max.")
 
 
 @dataclass
@@ -298,9 +294,7 @@ class ConstraintsConfig:
             raise ValueError("[ERROR] Vars per constraint must be at least 1.")
 
         if self.min_vars_per_constraint > self.max_vars_per_constraint:
-            raise ValueError(
-                "[ERROR] min_vars_per_constraint cannot be greater than max_vars_per_constraint."
-            )
+            raise ValueError("[ERROR] min_vars_per_constraint cannot be greater than max_vars_per_constraint.")
 
     def _validate_constraint_type_distribution(self, levels: LevelConfig) -> None:
         active_values = [self.ctc_dist_boolean]
@@ -393,15 +387,9 @@ class AttributesConfig:
         else:
             self.max_attributes = None
 
-        self.attribute_attach_probs = [
-            _as_float(probability, 0.0)
-            for probability in self.attribute_attach_probs
-        ]
+        self.attribute_attach_probs = [_as_float(probability, 0.0) for probability in self.attribute_attach_probs]
 
-        self.attribute_in_constraints = [
-            _as_bool(value)
-            for value in self.attribute_in_constraints
-        ]
+        self.attribute_in_constraints = [_as_bool(value) for value in self.attribute_in_constraints]
 
         self.dist_boolean_atr = _as_float(
             self.dist_boolean_atr,
@@ -436,9 +424,7 @@ class AttributesConfig:
             )
 
             if self.min_attributes is None or self.max_attributes is None:
-                raise ValueError(
-                    "[ERROR] min_attributes and max_attributes are required in random mode."
-                )
+                raise ValueError("[ERROR] min_attributes and max_attributes are required in random mode.")
 
             if self.min_attributes < 0 or self.max_attributes < 0:
                 raise ValueError("[ERROR] Attribute limits cannot be negative.")
@@ -448,9 +434,7 @@ class AttributesConfig:
 
         else:
             if self.min_attributes is not None or self.max_attributes is not None:
-                raise ValueError(
-                    "[ERROR] min_attributes and max_attributes must be None in manual mode."
-                )
+                raise ValueError("[ERROR] min_attributes and max_attributes must be None in manual mode.")
 
             for index, probability in enumerate(self.attribute_attach_probs):
                 _validate_probability(
@@ -550,13 +534,11 @@ class FmgeneratorModel(VariabilityModel):
             num_models=params.get("NUM_MODELS", 1),
             seed=params.get("SEED", 1),
             ensure_satisfiable=params.get("ENSURE_SATISFIABLE", True),
-
             naming=NamingConfig(
                 name_prefix=params.get("NAME_PREFIX", "fm"),
                 include_feature_count_suffix=params.get("INCLUDE_FEATURE_COUNT_SUFFIX", False),
                 include_constraint_count_suffix=params.get("INCLUDE_CONSTRAINT_COUNT_SUFFIX", False),
             ),
-
             levels=LevelConfig(
                 boolean_level=params.get("BOOLEAN_LEVEL", True),
                 arithmetic_level=params.get("ARITHMETIC_LEVEL", False),
@@ -566,7 +548,6 @@ class FmgeneratorModel(VariabilityModel):
                 aggregate_functions=params.get("AGGREGATE_FUNCTIONS", False),
                 string_constraints=params.get("STRING_CONSTRAINTS", False),
             ),
-
             features=FeaturesConfig(
                 min_features=params.get("MIN_FEATURES", 10),
                 max_features=params.get("MAX_FEATURES", 50),
@@ -578,7 +559,6 @@ class FmgeneratorModel(VariabilityModel):
                 max_feature_cardinality=params.get("MAX_FEATURE_CARDINALITY", 5),
                 prob_feature_cardinality=params.get("PROB_FEATURE_CARDINALITY", 0.1),
             ),
-
             hierarchy=HierarchyConfig(
                 max_tree_depth=params.get("MAX_TREE_DEPTH", 5),
                 dist_optional=params.get("DIST_OPTIONAL", 0.3),
@@ -589,7 +569,6 @@ class FmgeneratorModel(VariabilityModel):
                 group_cardinality_max=params.get("GROUP_CARDINALITY_MAX", 6),
                 dist_group_cardinality=params.get("DIST_GROUP_CARDINALITY", 0.0),
             ),
-
             constraints=ConstraintsConfig(
                 min_constraints=params.get("MIN_CONSTRAINTS", 5),
                 max_constraints=params.get("MAX_CONSTRAINTS", 20),
@@ -599,34 +578,28 @@ class FmgeneratorModel(VariabilityModel):
                 ),
                 min_vars_per_constraint=params.get("MIN_VARS_PER_CONSTRAINT", 1),
                 max_vars_per_constraint=params.get("MAX_VARS_PER_CONSTRAINT", 3),
-
                 ctc_dist_boolean=params.get("CTC_DIST_BOOLEAN", 0.7),
                 ctc_dist_integer=params.get("CTC_DIST_INTEGER", 0.2),
                 ctc_dist_real=params.get("CTC_DIST_REAL", 0.1),
                 ctc_dist_string=params.get("CTC_DIST_STRING", 0.0),
-
                 prob_not=params.get("PROB_NOT", 0.1),
                 prob_and=params.get("PROB_AND", 0.4),
                 prob_or_ct=params.get("PROB_OR_CT", 0.2),
                 prob_implication=params.get("PROB_IMPLICATION", 0.2),
                 prob_equivalence=params.get("PROB_EQUIVALENCE", 0.2),
-
                 prob_sum=params.get("PROB_SUM", 0.7),
                 prob_substract=params.get("PROB_SUBSTRACT", 0.2),
                 prob_multiply=params.get("PROB_MULTIPLY", 0.1),
                 prob_divide=params.get("PROB_DIVIDE", 0.0),
-
                 prob_equals=params.get("PROB_EQUALS", 0.1),
                 prob_less=params.get("PROB_LESS", 0.2),
                 prob_greater=params.get("PROB_GREATER", 0.7),
                 prob_less_equals=params.get("PROB_LESS_EQUALS", 0.0),
                 prob_greater_equals=params.get("PROB_GREATER_EQUALS", 0.0),
-
                 prob_sum_function=params.get("PROB_SUM_FUNCTION", 0.0),
                 prob_avg_function=params.get("PROB_AVG_FUNCTION", 0.0),
                 prob_len_function=params.get("PROB_LEN_FUNCTION", 0.0),
             ),
-
             attributes=AttributesConfig(
                 random_attributes=params.get("RANDOM_ATTRIBUTES", True),
                 min_attributes=params.get("MIN_ATTRIBUTES", 1),

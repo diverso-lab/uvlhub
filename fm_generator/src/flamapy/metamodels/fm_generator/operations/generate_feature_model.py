@@ -190,25 +190,17 @@ class GenerateFeatureModel(Operation):
 
         if relation_kind == "mand":
             for child in children:
-                relations.append(
-                    Relation(parent=parent, children=[child], card_min=1, card_max=1)
-                )
+                relations.append(Relation(parent=parent, children=[child], card_min=1, card_max=1))
 
         elif relation_kind == "opt":
             for child in children:
-                relations.append(
-                    Relation(parent=parent, children=[child], card_min=0, card_max=1)
-                )
+                relations.append(Relation(parent=parent, children=[child], card_min=0, card_max=1))
 
         elif relation_kind == "alt":
-            relations.append(
-                Relation(parent=parent, children=children, card_min=1, card_max=1)
-            )
+            relations.append(Relation(parent=parent, children=children, card_min=1, card_max=1))
 
         elif relation_kind == "or":
-            relations.append(
-                Relation(parent=parent, children=children, card_min=1, card_max=size)
-            )
+            relations.append(Relation(parent=parent, children=children, card_min=1, card_max=size))
 
         else:
             min_bound = max(self.model.hierarchy.group_cardinality_min, 1)
@@ -299,7 +291,7 @@ class GenerateFeatureModel(Operation):
             if depth == max_depth:
                 level_count = remaining
 
-            level_features = features[index:index + level_count]
+            level_features = features[index : index + level_count]
             levels[depth] = level_features
 
             index += level_count
@@ -349,10 +341,7 @@ class GenerateFeatureModel(Operation):
         )
 
         required_numeric_attributes = 0
-        numeric_weight = (
-            self.model.attributes.dist_integer_atr
-            + self.model.attributes.dist_real_atr
-        )
+        numeric_weight = self.model.attributes.dist_integer_atr + self.model.attributes.dist_real_atr
 
         if self.model.levels.arithmetic_level and numeric_weight > 0.0:
             required_numeric_attributes = (
@@ -433,14 +422,8 @@ class GenerateFeatureModel(Operation):
         return attribute
 
     def _assign_manual_attributes(self, features: list[Feature]) -> None:
-        if (
-            self.model.attributes.min_attributes is not None
-            or self.model.attributes.max_attributes is not None
-        ):
-            raise ValueError(
-                "[ERROR] min_attributes and max_attributes must be None "
-                "when using manual attributes."
-            )
+        if self.model.attributes.min_attributes is not None or self.model.attributes.max_attributes is not None:
+            raise ValueError("[ERROR] min_attributes and max_attributes must be None " "when using manual attributes.")
 
         for attribute_dict in self.model.attributes.attributes_list:
             attribute_type = (attribute_dict.get("type", "") or "").strip().lower()
@@ -449,9 +432,7 @@ class GenerateFeatureModel(Operation):
                 continue
 
             for feature in features:
-                attach_probability = float(
-                    attribute_dict.get("attach_probability", 1.0)
-                )
+                attach_probability = float(attribute_dict.get("attach_probability", 1.0))
 
                 if random.random() >= attach_probability:
                     continue
@@ -585,16 +566,10 @@ class GenerateFeatureModel(Operation):
         feature: Feature,
     ) -> tuple[str | None, bool, float, bool]:
         for attribute_dict in self.model.attributes.attributes_list:
-            if (
-                attribute_dict.get("name") == attribute.name
-                and feature.name
-                and attribute.name
-            ):
+            if attribute_dict.get("name") == attribute.name and feature.name and attribute.name:
                 attribute_type = (attribute_dict.get("type", "") or "").lower()
                 use_in_constraints = attribute_dict.get("use_in_constraints", False)
-                constraint_probability = float(
-                    attribute_dict.get("attach_probability", 1.0)
-                )
+                constraint_probability = float(attribute_dict.get("attach_probability", 1.0))
                 return (
                     attribute_type,
                     use_in_constraints,
@@ -616,10 +591,7 @@ class GenerateFeatureModel(Operation):
             if is_manual_attribute:
                 return True
 
-            return (
-                self.model.levels.type_level
-                and self.model.levels.string_constraints
-            )
+            return self.model.levels.type_level and self.model.levels.string_constraints
 
         return attribute_type == "boolean"
 
@@ -681,26 +653,14 @@ class GenerateFeatureModel(Operation):
         self,
         features: list[Feature],
     ) -> tuple[list[Feature], list[Feature], list[Feature]]:
-        feats_bool = [
-            feature
-            for feature in features
-            if self._feature_constraint_bucket(feature) == "bool"
-        ]
+        feats_bool = [feature for feature in features if self._feature_constraint_bucket(feature) == "bool"]
 
         if self._constraints_must_be_boolean_only():
             return feats_bool, [], []
 
-        feats_num = [
-            feature
-            for feature in features
-            if self._feature_constraint_bucket(feature) == "num"
-        ]
+        feats_num = [feature for feature in features if self._feature_constraint_bucket(feature) == "num"]
 
-        feats_str = [
-            feature
-            for feature in features
-            if self._feature_constraint_bucket(feature) == "string"
-        ]
+        feats_str = [feature for feature in features if self._feature_constraint_bucket(feature) == "string"]
 
         return feats_bool, feats_num, feats_str
 
@@ -759,10 +719,7 @@ class GenerateFeatureModel(Operation):
                 feature_id
                 for feature_id in groups
                 if feature_usage.get(feature_id, 0) < max_repetitions
-                and (
-                    feature_id in selected_features
-                    or len(selected_features) < max_features_param
-                )
+                and (feature_id in selected_features or len(selected_features) < max_features_param)
             ]
 
             if not allowed_feature_ids:
@@ -815,11 +772,7 @@ class GenerateFeatureModel(Operation):
             return filtered
 
         for feature_id, values in len_groups.items():
-            selected_values = [
-                value
-                for value in values
-                if random.random() < len_probability
-            ]
+            selected_values = [value for value in values if random.random() < len_probability]
 
             if selected_values:
                 filtered[feature_id] = selected_values
@@ -839,10 +792,7 @@ class GenerateFeatureModel(Operation):
         max_features_param: int,
         max_repetitions: int,
     ) -> int:
-        return (
-            self._distinct_feature_cap(groups, max_features_param)
-            * max_repetitions
-        )
+        return self._distinct_feature_cap(groups, max_features_param) * max_repetitions
 
     # -------------------------------------------------------------------------
     # Constraint predicates
@@ -1010,10 +960,7 @@ class GenerateFeatureModel(Operation):
         if len(keys) < 2:
             return expression
 
-        aggregate_total = (
-            self.model.constraints.prob_sum_function
-            + self.model.constraints.prob_avg_function
-        )
+        aggregate_total = self.model.constraints.prob_sum_function + self.model.constraints.prob_avg_function
 
         if aggregate_total <= 0.0:
             return expression
@@ -1040,10 +987,7 @@ class GenerateFeatureModel(Operation):
     ) -> Node:
         len_eligible_keys = len_eligible_keys or set()
 
-        aggregate_total = (
-            self.model.constraints.prob_sum_function
-            + self.model.constraints.prob_avg_function
-        )
+        aggregate_total = self.model.constraints.prob_sum_function + self.model.constraints.prob_avg_function
 
         binary_total = (
             self.model.constraints.prob_sum
@@ -1054,10 +998,7 @@ class GenerateFeatureModel(Operation):
 
         # Si hay candidatos len(), no permitimos aggregate
         # porque produciría avg(len(...)) o sum(len(...))
-        has_len_candidate = any(
-            key in len_eligible_keys
-            for key in keys
-        )
+        has_len_candidate = any(key in len_eligible_keys for key in keys)
 
         if (
             self.model.levels.aggregate_functions
@@ -1149,9 +1090,7 @@ class GenerateFeatureModel(Operation):
         index = 0
 
         while index + 1 < len(keys):
-            equality_nodes.append(
-                Node(ASTOperation.EQUALS, Node(keys[index]), Node(keys[index + 1]))
-            )
+            equality_nodes.append(Node(ASTOperation.EQUALS, Node(keys[index]), Node(keys[index + 1])))
             index += 2
 
         if not equality_nodes:
@@ -1169,10 +1108,7 @@ class GenerateFeatureModel(Operation):
             if kind == "bool":
                 weights.append(self.model.constraints.ctc_dist_boolean)
             elif kind == "num":
-                weights.append(
-                    self.model.constraints.ctc_dist_integer
-                    + self.model.constraints.ctc_dist_real
-                )
+                weights.append(self.model.constraints.ctc_dist_integer + self.model.constraints.ctc_dist_real)
             elif kind == "string":
                 weights.append(self.model.constraints.ctc_dist_string)
             else:
@@ -1358,18 +1294,15 @@ class GenerateFeatureModel(Operation):
             )
 
             bool_pool = [feature.name for feature in feats_bool] + [
-                f"{feature.name}.{attribute.name}"
-                for feature, attribute in filtered_bool_attrs
+                f"{feature.name}.{attribute.name}" for feature, attribute in filtered_bool_attrs
             ]
 
             num_pool = [feature.name for feature in feats_num] + [
-                f"{feature.name}.{attribute.name}"
-                for feature, attribute in filtered_num_attrs
+                f"{feature.name}.{attribute.name}" for feature, attribute in filtered_num_attrs
             ]
 
             str_pool = [feature.name for feature in feats_str] + [
-                f"{feature.name}.{attribute.name}"
-                for feature, attribute in filtered_str_attrs
+                f"{feature.name}.{attribute.name}" for feature, attribute in filtered_str_attrs
             ]
 
             bool_groups = self._group_keys_by_feature(bool_pool)
@@ -1378,16 +1311,9 @@ class GenerateFeatureModel(Operation):
 
             len_pool: list[str] = []
 
-            if (
-                not boolean_only_constraints
-                and self.model.levels.type_level
-                and self.model.levels.string_constraints
-            ):
+            if not boolean_only_constraints and self.model.levels.type_level and self.model.levels.string_constraints:
                 len_pool.extend([feature.name for feature in feats_str])
-                len_pool.extend(
-                    f"{feature.name}.{attribute.name}"
-                    for feature, attribute in filtered_str_attrs
-                )
+                len_pool.extend(f"{feature.name}.{attribute.name}" for feature, attribute in filtered_str_attrs)
 
             len_groups = self._group_keys_by_feature(len_pool)
             numeric_len_groups = self._filter_len_groups_for_numeric_use(
