@@ -1,8 +1,9 @@
 import random
 import string
 
-from flamapy.core.operations import Operation
 from flamapy.core.models.ast import AST, ASTOperation, Node
+from flamapy.core.operations import Operation
+from flamapy.metamodels.fm_generator.models import FmgeneratorModel
 from flamapy.metamodels.fm_metamodel.models.feature_model import (
     Attribute,
     Cardinality,
@@ -14,8 +15,6 @@ from flamapy.metamodels.fm_metamodel.models.feature_model import (
     Range,
     Relation,
 )
-
-from flamapy.metamodels.fm_generator.models import FmgeneratorModel
 
 SAT_SEED_STRIDE = 100000
 RANDOM_ATTR_CONSTRAINT_PROB = 0.8
