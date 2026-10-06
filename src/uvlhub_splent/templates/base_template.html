@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="App generated with SPLENT (www.splent.io)">
+
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+
+    <title>{% block title %}{{ SPLENT_APP }}{% endblock %}</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/own.css') }}">
+
+    {% block head %}{% endblock %}
+
+    {% for hook in get_template_hooks("layout.head.css") %}
+        {{ hook() | safe }}
+    {% endfor %}
+</head>
+
+<body>
+<div class="wrapper">
+
+    <!-- ── Sidebar ─────────────────────────────────────────────────── -->
+    <nav id="sidebar" class="sidebar js-sidebar">
+        <div class="sidebar-content js-simplebar">
+
+            <a class="sidebar-brand" href="/">
+                {# What the site calls itself, not what the code calls it.
+                   SPLENT_APP is the package name and is the last resort. #}
+                {{ config.SITE_NAME or SPLENT_APP }}
+            </a>
+
+            <ul class="sidebar-nav">
+
+                {% for hook in get_template_hooks("layout.sidebar.top") %}
+                    {{ hook() | safe }}
+                {% endfor %}
+
+                {% if current_user is defined and current_user.is_anonymous %}
+
+                    <li class="sidebar-header">Get started</li>
+
+                    {% for hook in get_template_hooks("layout.anonymous_sidebar") %}
+                        {{ hook() | safe }}
+                    {% endfor %}
+
+                {% elif current_user is defined and current_user.is_authenticated %}
+
+                    <li class="sidebar-header">Menu</li>
+
+                    {% for hook in get_template_hooks("layout.authenticated_sidebar") %}
+                        {{ hook() | safe }}
+                    {% endfor %}
+
+                    {% for hook in get_template_hooks("layout.sidebar.authenticated.items") %}
+                        {{ hook() | safe }}
+                    {% endfor %}
+
+                {% endif %}
+
+            </ul>
+
+        </div>
+    </nav>
+
+    <!-- ── Main ────────────────────────────────────────────────────── -->
+    <div class="main">
+
+        <nav class="navbar navbar-expand navbar-light navbar-bg topbar">
+            <a class="sidebar-toggle js-sidebar-toggle">
+                <i class="hamburger align-self-center"></i>
+            </a>
+
+            {# WordPress keeps the site itself one click away from the toolbar,
+               so the operator always sees what the visitors see. #}
+            <a class="topbar-site" href="/">
+                <i class="align-middle" data-feather="external-link"></i>
+                <span>{{ config.SITE_NAME or SPLENT_APP }}</span>
+            </a>
+
+            <div class="navbar-collapse collapse">
+                <ul class="navbar-nav navbar-align">
+
+                    {% if site is defined and site.locales and site.locales | length > 1 %}
+                        <li class="nav-item topbar-lang">
+                            {% for lc in site.locales %}<a class="topbar-lang__opt {{ 'is-active' if lc == site.locale else '' }}" href="{{ url_for('theme.set_language', code=lc) }}">{{ lc | upper }}</a>{% endfor %}
+                        </li>
+                    {% endif %}
+
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle topbar-user" href="#" data-bs-toggle="dropdown">
+                            <i class="align-middle" data-feather="user"></i>
+                            {% if current_user is defined and current_user.is_authenticated %}
+                                <span class="topbar-user__name">{{ current_user.email }}</span>
+                            {% endif %}
+                        </a>
+
+                        {% if current_user is defined and current_user.is_anonymous %}
+                            {% for hook in get_template_hooks("layout.navbar.anonymous") %}
+                                {{ hook() | safe }}
+                            {% endfor %}
+                        {% elif current_user is defined and current_user.is_authenticated %}
+                            {% for hook in get_template_hooks("layout.navbar.authenticated") %}
+                                {{ hook() | safe }}
+                            {% endfor %}
+                        {% endif %}
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <main class="content">
+            <div class="container p-0">
+
+                {% block breadcrumb %}{% endblock %}
+
+                <div class="card">
+                    <div class="card-body">
+                        {% block content %}{% endblock %}
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <div class="container-fluid">
+                <div class="row text-muted">
+                    <div class="col-6 text-start">
+                        <p class="mb-0">
+                            {{ SPLENT_APP }}
+                        </p>
+                    </div>
+                    <div class="col-6 text-end">
+                        <ul class="list-inline">
+                            {% for hook in get_template_hooks("layout.footer") %}
+                                {{ hook() | safe }}
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </footer>
+
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+
+{% for hook in get_template_hooks("layout.scripts") %}
+    {{ hook() | safe }}
+{% endfor %}
+
+{% block scripts %}{% endblock %}
+
+</body>
+
+</html>

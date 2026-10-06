@@ -1,0 +1,74 @@
+[build-system]
+requires = [
+    "setuptools>=80.3.1",
+    "wheel",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "uvlhub_splent"
+version = "0.0.1"
+description = "uvlhub_splent is an app built with SPLENT (https://www.splent.io)"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "watchdog",
+    "locust",
+]
+core = [
+    "splent_framework",
+]
+
+[tool.splent]
+cli_version = "1.25.1"
+features = [
+    "splent-io/splent_feature_admin@v1.5.0",
+    "splent-io/splent_feature_auth@v1.17.0",
+    "splent-io/splent_feature_confirmemail@v1.2.15",
+    "splent-io/splent_feature_mail@v1.4.3",
+    "splent-io/splent_feature_mailhog@v1.0.8",
+    "splent-io/splent_feature_nginx@v1.2.0",
+    "splent-io/splent_feature_phpmyadmin@v1.0.2",
+    "splent-io/splent_feature_profile@v1.5.7",
+    "splent-io/splent_feature_public@v1.7.3",
+    "splent-io/splent_feature_redis@v1.5.7",
+    "splent-io/splent_feature_reset@v1.3.3",
+    "splent-io/splent_feature_session_redis@v1.1.2",
+    "splent-io/splent_feature_settings@v0.4.0",
+    "splent-io/splent_feature_theme@v0.12.1",
+]
+features_dev = []
+features_prod = []
+spl = "sample_splent_spl"
+
+[tool.splent.spl_model]
+mirror = "uvlhub.io"
+doi = "10.5281/zenodo.23076870"
+concept_doi = "10.5281/zenodo.18873371"
+version = "v4"
+file = "sample_splent_spl.uvl"
+
+[tool.splent.layout]
+base_template = "base_template.html"
+hooks = [
+    "layout.head.css",
+    "layout.sidebar.top",
+    "layout.anonymous_sidebar",
+    "layout.authenticated_sidebar",
+    "layout.sidebar.authenticated.items",
+    "layout.navbar.anonymous",
+    "layout.navbar.authenticated",
+    "layout.footer",
+    "layout.scripts",
+]
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.setuptools.packages.find]
+where = [
+    "src",
+]

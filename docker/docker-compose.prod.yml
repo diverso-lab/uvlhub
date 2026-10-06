@@ -1,0 +1,63 @@
+services:
+
+  uvlhub_splent_web_deploy:
+    image: uvlhub_splent:latest
+    container_name: uvlhub_splent_web_deploy
+    env_file:
+      - ./.env.deploy
+    ports:
+      # Host interface for the published web port, taken from
+      # SPLENT_WEB_BIND_HOST in .env.deploy (marked user-tunable there, so
+      # product:deploy keeps whatever you set). It falls back to 0.0.0.0, all
+      # interfaces, when the variable is absent, which matches the historical
+      # behaviour. 127.0.0.1 is the right value when a proxy on the host
+      # terminates TLS and forwards traffic to loopback.
+      - "${SPLENT_WEB_BIND_HOST:-0.0.0.0}:5012:5000"
+    volumes:
+      # Uploaded and generated files live inside the container and are lost
+      # on every redeploy unless they are kept on named volumes.
+      - uvlhub_splent_web_deploy_uploads:/workspace/uvlhub_splent/src/uvlhub_splent/static/uploads
+      - uvlhub_splent_web_deploy_protected_uploads:${PROTECTED_UPLOADS_DIR:-/workspace/uvlhub_splent/protected_uploads}
+      - uvlhub_splent_web_deploy_archive:${ARCHIVE_DIR:-/workspace/uvlhub_splent/archive}
+    depends_on:
+      uvlhub_splent_db_deploy:
+        condition: service_healthy
+    networks:
+      - splent_network
+    command: [ "bash", "-c", "bash /workspace/uvlhub_splent/entrypoints/entrypoint.prod.sh" ]
+
+  uvlhub_splent_db_deploy:
+    image: mariadb:11.4
+    container_name: uvlhub_splent_db_deploy
+    env_file:
+      - ./.env.deploy
+    command: --default-authentication-plugin=mysql_native_password
+    ports:
+      # Host interface for the published database port, taken from
+      # SPLENT_DB_BIND_HOST in .env.deploy (marked user-tunable there). It
+      # falls back to 0.0.0.0 when the variable is absent, matching the
+      # historical behaviour. 127.0.0.1 keeps the database reachable from the
+      # host itself only. The compose network already connects the web
+      # container to it, so the published port is for host-side tooling.
+      - "${SPLENT_DB_BIND_HOST:-0.0.0.0}:33072:3306"
+    volumes:
+      - uvlhub_splent_db_deploy_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb -u$${MARIADB_USER} -p$${MARIADB_PASSWORD} -e 'SELECT 1'"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+    networks:
+      - splent_network
+
+volumes:
+  uvlhub_splent_db_deploy_data:
+  uvlhub_splent_web_deploy_uploads:
+  uvlhub_splent_web_deploy_protected_uploads:
+  uvlhub_splent_web_deploy_archive:
+
+networks:
+  splent_network:
+    external: true
+    name: ${SPLENT_NETWORK:-splent_network}

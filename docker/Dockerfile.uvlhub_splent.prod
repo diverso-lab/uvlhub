@@ -1,0 +1,99 @@
+# ── Stage 1: Builder ─────────────────────────────────────────────────────────
+FROM python:3.13 AS builder
+WORKDIR /workspace
+
+# System dependencies for building
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    gcc \
+    libffi-dev \
+    libssl-dev \
+    mariadb-client \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Node.js 22 (only needed at build time for asset compilation)
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        ca-certificates gnupg curl \
+    && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends nodejs \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy product source + framework (if available locally)
+COPY uvlhub_splent/ uvlhub_splent/
+COPY splent_framework/ splent_framework/
+
+ENV PIP_ROOT_USER_ACTION=ignore
+
+# Install SPLENT CLI first (needed for feature:pip-install).
+# Always install the latest published CLI so the product is not pinned to the
+# (possibly older) version that scaffolded it.
+RUN pip install --no-cache-dir --upgrade splent_cli
+
+# Install framework from local source (has latest changes), then product
+RUN pip install --no-cache-dir ./splent_framework
+RUN pip install --no-cache-dir ./uvlhub_splent
+
+# Install the features with pip, from PyPI. This is the ONLY place features are
+# installed in a production image: scripts/00_install_features.sh (pip install -e
+# against the local checkout) belongs to the dev entrypoint and never runs here.
+# A feature declared without a version becomes a bare package name, so pip picks
+# whatever PyPI serves rather than the code in the workspace.
+ENV SPLENT_APP=uvlhub_splent
+ENV WORKING_DIR=/workspace
+# The CLI's in-container detection keys on /.dockerenv, which the classic
+# builder created inside RUN steps and BuildKit does not. Restore the marker
+# so feature:compile knows it is already inside the product being built and
+# never reaches for a docker daemon mid-build.
+ENV SPLENT_CONTAINER=product
+RUN touch /.dockerenv
+# Which git forge the pins resolve against. A feature that is not on PyPI falls
+# back to a git+ install, and the URL for that is built from these. They are
+# empty by default, which keeps the historical github.com behaviour; product:build
+# forwards whatever the workspace has configured. No token travels into the image
+# on purpose, so the repositories the fallback reaches must be readable anonymously.
+ARG SPLENT_FORGE_HOST=""
+ARG SPLENT_FORGE_SSH_HOST=""
+ARG SPLENT_FORGE_SSH_PORT=""
+ARG SPLENT_FORGE_API=""
+ENV SPLENT_FORGE_HOST=${SPLENT_FORGE_HOST}
+ENV SPLENT_FORGE_SSH_HOST=${SPLENT_FORGE_SSH_HOST}
+ENV SPLENT_FORGE_SSH_PORT=${SPLENT_FORGE_SSH_PORT}
+ENV SPLENT_FORGE_API=${SPLENT_FORGE_API}
+RUN splent feature:pip-install
+
+# Compile frontend assets (if package.json exists)
+RUN if [ -f uvlhub_splent/package.json ]; then \
+        cd uvlhub_splent && npm install --no-audit --no-fund && \
+        splent feature:compile && \
+        cd /workspace; \
+    fi
+
+# Production server
+RUN pip install --no-cache-dir gunicorn
+
+# ── Stage 2: Runtime ─────────────────────────────────────────────────────────
+FROM python:3.13-slim
+WORKDIR /workspace
+
+# Minimal runtime dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    mariadb-client \
+    curl \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+ENV PIP_ROOT_USER_ACTION=ignore
+ENV SPLENT_APP=uvlhub_splent
+ENV WORKING_DIR=/workspace
+ENV SPLENT_CONTAINER=product
+
+# Copy installed Python packages from builder
+COPY --from=builder /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+
+# Copy product source (includes compiled assets, templates, migrations, entrypoints)
+COPY --from=builder /workspace/ /workspace/
+
+EXPOSE 5000

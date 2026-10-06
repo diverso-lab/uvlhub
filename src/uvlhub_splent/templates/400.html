@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="{{ html_lang | default('en') }}">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="{{ _('This page could not be shown.') }}">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link rel="shortcut icon" href="{{ url_for("static", filename="img/icons/icon-250x250.png") }}"/>
+    {# No canonical, and no indexing. An error page is not a page:
+       the one that used to be here pointed at splent.io, telling
+       search engines that every 404 of every product built with
+       SPLENT was really somebody else's home page. #}
+    <meta name="robots" content="noindex, nofollow">
+
+	<title>Bad Request | {{ SPLENT_APP }}</title>
+
+	<link rel="stylesheet" href="{{ url_for("static", filename="css/app.css") }}">
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+
+<body>
+	<main class="d-flex w-100">
+		<div class="container d-flex flex-column">
+			<div class="row vh-100">
+				<div class="col-sm-10 col-md-8 col-lg-6 mx-auto d-table h-100">
+					<div class="d-table-cell align-middle">
+
+						<div class="text-center mt-4">
+							<h1 style="font-size: 100px">400</h1>
+							<p class="lead">{{ _('Bad Request') }}</p>
+
+						</div>
+
+                        <div class="text-center mt-3">
+                            {# The site root, not an endpoint: a product need not install the public
+                               feature, and an unresolvable endpoint here turns every error page
+                               into a 500. #}
+                            <a href="/" class="btn btn-lg btn-primary">{{ _('Back to the home page') }}</a>
+                        </div>
+
+					</div>
+				</div>
+			</div>
+		</div>
+	</main>
+
+	<script src="{{ url_for("static", filename="js/app.js") }}"></script>
+
+</body>
+
+</html>

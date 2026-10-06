@@ -1,0 +1,16 @@
+{
+    "name": "uvlhub_splent",
+    "version": "0.0.1",
+    "description": "This is the frontend application description package for uvlhub_splent, built with SPLENT (www.splent.io)",
+    "devDependencies": {
+        "@babel/core": "^7.26.0",
+        "@babel/preset-env": "^7.26.0",
+        "babel-loader": "^9.2.1",
+        "dotenv": "^16.4.7",
+        "webpack": "^5.97.1",
+        "webpack-cli": "^6.0.1"
+    },
+    "dependencies": {
+        "npm-check-updates": "^17.1.14"
+    }
+}
