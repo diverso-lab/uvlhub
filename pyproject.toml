@@ -39,6 +39,7 @@ features = [
     "splent-io/splent_feature_session_redis@v1.1.2",
     "splent-io/splent_feature_settings@v0.4.0",
     "splent-io/splent_feature_theme@v0.12.1",
+    "splent-io/splent_feature_public_uvlhub",
 ]
 features_dev = []
 features_prod = []
