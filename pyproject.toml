@@ -40,6 +40,11 @@ features = [
     "splent-io/splent_feature_settings@v0.4.0",
     "splent-io/splent_feature_theme@v0.12.1",
     "splent-io/splent_feature_public_uvlhub",
+    "splent-io/splent_feature_signup@v0.1.0",
+    "splent-io/splent_feature_auth_uvlhub",
+    "splent-io/splent_feature_signup_uvlhub",
+    "splent-io/splent_feature_profile_uvlhub",
+    "splent-io/splent_feature_reset_uvlhub",
 ]
 features_dev = []
 features_prod = []
