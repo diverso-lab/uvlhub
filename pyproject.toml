@@ -45,6 +45,8 @@ features = [
     "splent-io/splent_feature_signup_uvlhub",
     "splent-io/splent_feature_profile_uvlhub",
     "splent-io/splent_feature_reset_uvlhub",
+    "splent-io/splent_feature_apikeys@v0.1.1",
+    "splent-io/splent_feature_apikeys_uvlhub",
 ]
 features_dev = []
 features_prod = []
