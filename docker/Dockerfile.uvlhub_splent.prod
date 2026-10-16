@@ -96,4 +96,8 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 # Copy product source (includes compiled assets, templates, migrations, entrypoints)
 COPY --from=builder /workspace/ /workspace/
 
+# Shown in the sidebar footer (get_app_version reads it), as in uvlhub
+ARG VERSION_TAG
+RUN echo "$VERSION_TAG" > /workspace/.version
+
 EXPOSE 5000

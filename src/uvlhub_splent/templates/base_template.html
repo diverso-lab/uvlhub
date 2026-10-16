@@ -190,9 +190,12 @@
 								</div>
 								<!--end::Citation modal trigger-->
 
+								{# Header buttons features add after "Cite us!" (Download all…). #}
+								{% for hook in get_template_hooks("layout.navbar.items") %}
+									{{ hook() | safe }}
+								{% endfor %}
 
 
-								
 
 								{% if current_user.is_authenticated %}
 								{# profile is optional: fall back to the email when it is missing. #}
