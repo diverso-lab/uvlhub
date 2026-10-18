@@ -54,7 +54,6 @@ features = [
     "splent-io/splent_feature_partners@v0.3.1",
     "splent-io/splent_feature_skin_academic@v0.3.0",
     "splent-io/splent_feature_elasticsearch@v0.1.2",
-    "splent-io/splent_feature_search@v0.4.1",
     "splent-io/splent_feature_spl_registry@v0.1.1",
     "splent-io/splent_feature_team_uvlhub",
     "splent-io/splent_feature_recaptcha_uvlhub",
@@ -64,6 +63,16 @@ features = [
     "splent-io/splent_feature_github",
     "splent-io/splent_feature_webhook",
     "splent-io/splent_feature_dataset",
+    "splent-io/splent_feature_hubfile",
+    "splent-io/splent_feature_featuremodel",
+    "splent-io/splent_feature_flamapy",
+    "splent-io/splent_feature_factlabel",
+    "splent-io/splent_feature_downloadqueue",
+    "splent-io/splent_feature_rating",
+    "splent-io/splent_feature_statistics",
+    "splent-io/splent_feature_explore",
+    "splent-io/splent_feature_zenodo",
+    "splent-io/splent_feature_apidocs",
 ]
 features_dev = []
 features_prod = []
@@ -85,6 +94,7 @@ hooks = [
     "layout.authenticated_sidebar",
     "layout.sidebar.authenticated.items",
     "layout.navbar.anonymous",
+    "layout.header.menu",
     "layout.navbar.items",
     "layout.navbar.authenticated",
     "layout.footer",
