@@ -34,6 +34,27 @@ hubfile_service = HubfileService()
 dataset_service = DataSetService()
 
 
+def _is_plain_name(name):
+    """True for a single file name: no folders, no '.' or '..', nothing hidden in it."""
+    return bool(name) and name not in (".", "..") and not any(c in name for c in ("/", "\\", "\0"))
+
+
+def _staging_path(temp_folder, *parts):
+    """Path inside the user's temp folder for a name built from ``parts``, or None.
+
+    Every part comes from the client, so each one must be a plain file name, and
+    the resolved path must still be a direct child of the temp folder.
+    """
+    if not all(_is_plain_name(part) for part in parts):
+        return None
+    name = "_".join(parts)
+    root = os.path.realpath(temp_folder)
+    path = os.path.realpath(os.path.join(root, name))
+    if os.path.dirname(path) != root:
+        return None
+    return path
+
+
 @hubfile_bp.route("/hubfile/upload", methods=["POST"])
 @login_required
 def upload_file():
@@ -62,8 +83,11 @@ def upload_file():
         return jsonify({"message": f"Error creating temp folder: {str(e)}"}), 500
 
     # Unique name and path
-    unique_filename = f"{uuid}_{file.filename}"
-    temp_file_path = os.path.join(temp_folder, unique_filename)
+    temp_file_path = _staging_path(temp_folder, uuid, file.filename)
+    if temp_file_path is None:
+        current_app.logger.warning("Rejected upload with an invalid file name")
+        return jsonify({"message": "Invalid file name"}), 400
+    unique_filename = os.path.basename(temp_file_path)
     current_app.logger.info(f"unique_filename={unique_filename}, temp_file_path={temp_file_path}")
 
     # Save file temporarily
@@ -174,8 +198,10 @@ def upload_from_github():
 
         # Generar nombre único
         unique_id = str(uuid_module.uuid4())
-        unique_filename = f"{unique_id}_{filename}"
-        temp_file_path = os.path.join(temp_folder, unique_filename)
+        temp_file_path = _staging_path(temp_folder, unique_id, filename)
+        if temp_file_path is None:
+            return jsonify({"message": "Invalid file name"}), 400
+        unique_filename = os.path.basename(temp_file_path)
         current_app.logger.info(f"unique_filename={unique_filename}, temp_file_path={temp_file_path}")
 
         # Guardar archivo
@@ -295,7 +321,9 @@ def delete():
     if not filename:
         return jsonify({"message": "Filename is missing"}), 400
 
-    file_path = os.path.join(temp_folder, filename)
+    file_path = _staging_path(temp_folder, filename)
+    if file_path is None:
+        return jsonify({"message": "Invalid file name"}), 400
 
     if not os.path.exists(file_path):
         return jsonify({"message": "File not found"}), 404

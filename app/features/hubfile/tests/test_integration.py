@@ -1,4 +1,5 @@
 import io
+import os
 import zipfile
 from unittest.mock import patch
 
@@ -52,6 +53,63 @@ def test_delete_requires_a_filename(test_client):
     response = test_client.post("/hubfile/delete", json={})
 
     assert response.status_code == 400
+    test_client.get("/logout", follow_redirects=True)
+
+
+def _temp_folder():
+    return UserRepository().get_by_email("test@example.com").temp_folder()
+
+
+@pytest.mark.parametrize("uuid, filename", [("ok", "sub/model.uvl"), ("a/b", "model.uvl"), ("..", "model.uvl")])
+def test_upload_rejects_names_that_are_not_a_single_file_name(test_client, uuid, filename):
+    _login(test_client)
+
+    response = test_client.post(
+        "/hubfile/upload",
+        data={"uuid": uuid, "file": (io.BytesIO(b"features\n    root"), filename)},
+        content_type="multipart/form-data",
+    )
+
+    assert response.status_code == 400
+    test_client.get("/logout", follow_redirects=True)
+
+
+def test_upload_saves_a_plain_name_in_the_temp_folder(test_client):
+    _login(test_client)
+
+    response = test_client.post(
+        "/hubfile/upload",
+        data={"uuid": "u1", "file": (io.BytesIO(b"features\n    root"), "model.uvl")},
+        content_type="multipart/form-data",
+    )
+
+    assert response.status_code == 200
+    assert response.get_json()["filename"] == "u1_model.uvl"
+    assert os.path.isfile(os.path.join(_temp_folder(), "u1_model.uvl"))
+    test_client.get("/logout", follow_redirects=True)
+
+
+@pytest.mark.parametrize("filename", ["sub/model.uvl", "..", "."])
+def test_delete_rejects_names_that_are_not_a_single_file_name(test_client, filename):
+    _login(test_client)
+
+    response = test_client.post("/hubfile/delete", json={"filename": filename})
+
+    assert response.status_code == 400
+    test_client.get("/logout", follow_redirects=True)
+
+
+def test_delete_removes_a_plain_name_from_the_temp_folder(test_client):
+    _login(test_client)
+    folder = _temp_folder()
+    os.makedirs(folder, exist_ok=True)
+    with open(os.path.join(folder, "u2_model.uvl"), "w") as fh:
+        fh.write("features")
+
+    response = test_client.post("/hubfile/delete", json={"filename": "u2_model.uvl"})
+
+    assert response.status_code == 200
+    assert not os.path.exists(os.path.join(folder, "u2_model.uvl"))
     test_client.get("/logout", follow_redirects=True)
 
 
