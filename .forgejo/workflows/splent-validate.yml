@@ -48,3 +48,18 @@ jobs:
 
       - name: Generate the deploy artifacts
         run: splent product:build --no-image
+
+      # What the build writes is versioned, so a host deploys from a clone.
+      # A change to the features or the configuration that skipped
+      # product:build left them behind, and the CI said nothing.
+      - name: The versioned deploy artifacts are the ones the product generates
+        working-directory: uvlhub_splent
+        run: |
+          paths="deploy docker/requirements.lock splent.contracts.json docker/spl"
+          if [ -n "$(git status --porcelain -- $paths)" ]; then
+            git status --short -- $paths
+            git --no-pager diff --stat -- $paths
+            echo "These differ from what splent product:build generates."
+            echo "Run splent product:build and commit them."
+            exit 1
+          fi
