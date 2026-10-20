@@ -102,6 +102,19 @@ class DSMetaData(db.Model):
     dataset_anonymous = db.Column(Boolean, default=False)
     metadata_synced = db.Column(Boolean, nullable=False, default=True)
 
+    @property
+    def safe_description(self):
+        """The description as HTML, cleaned through the allowlist on every render.
+
+        Rows written before the web upload sanitized its input still hold raw
+        HTML, so the pages that print the description do not trust what is stored.
+        """
+        from markupsafe import Markup
+
+        from app.features.dataset.services import DataSetService
+
+        return Markup(DataSetService.sanitize_description(self.description))
+
 
 class DataSet(db.Model):
     __tablename__ = "datasets"

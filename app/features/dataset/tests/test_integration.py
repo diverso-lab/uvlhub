@@ -1716,3 +1716,36 @@ def test_bibtex_export_hides_the_authors_of_an_anonymous_dataset(test_client, an
         assert "title = {Cited dataset}" in bibtex
         assert ("Ada Lovelace" in bibtex) is not anonymous
         assert ("author =" in bibtex) is not anonymous
+
+
+@pytest.mark.parametrize("page", ["landing", "home"])
+def test_stored_descriptions_render_through_the_allowlist(test_client, page):
+    # Rows written before the web upload sanitized its input still hold raw
+    # HTML, so the pages that print the description as HTML clean it again.
+    from app.features.auth.repositories import UserRepository
+    from app.features.dataset.models import PublicationType
+    from app.features.dataset.repositories import DataSetRepository, DSMetaDataRepository
+
+    user = UserRepository().create(email=f"legacy-{page}@example.com", password="pw-123456")
+    meta = DSMetaDataRepository().create(
+        title="Legacy description",
+        description='<p><strong>kept</strong> <em>it</em></p><ul><li>item</li></ul><iframe src="x"></iframe>',
+        publication_type=PublicationType.BOOK,
+        dataset_doi=f"10.5281/zenodo.97531{len(page)}",
+        tags="legacy",
+    )
+    dataset = DataSetRepository().create(user_id=user.id, ds_meta_data_id=meta.id)
+
+    if page == "landing":
+        html = test_client.get(f"/doi/{meta.dataset_doi}/").get_data(as_text=True)
+    else:
+        # The home page lists the top datasets of the whole database; pin the list
+        # to this one so the assertion does not depend on what other tests created.
+        with patch(
+            "app.features.dataset.services.DataSetService.get_top_5_datasets_by_feature_model_count",
+            return_value=[dataset],
+        ):
+            html = test_client.get("/").get_data(as_text=True)
+
+    assert "<p><strong>kept</strong> <em>it</em></p><ul><li>item</li></ul>" in html
+    assert '<iframe src="x">' not in html

@@ -402,13 +402,14 @@ class DataSetService(BaseService):
     def sanitize_description(raw_description: str) -> str:
         """Clean a dataset description down to the formatting uvlhub renders.
 
-        ``view_dataset.html`` prints the description with the ``safe`` filter,
-        so whatever survives here is live HTML on a public page. The allowlist
-        matches the one the web upload has always used.
+        The DOI landing page, the home page and Explore print the description
+        as HTML, so whatever survives here is live HTML on a public page. The
+        allowlist is what the description editor produces (``valid_elements``
+        in ``assets/js/editor.js``) plus ``u`` and ``br``.
         """
         return bleach.clean(
             raw_description or "",
-            tags=["b", "i", "u", "a", "p", "br"],
+            tags=["p", "br", "strong", "em", "b", "i", "u", "ul", "ol", "li", "a"],
             attributes={"a": ["href", "title", "target"]},
             strip=True,
         ).strip()
@@ -1790,10 +1791,11 @@ class LocalDatasetService:
 
             publication_type = PublicationType(publication_type_id) if publication_type_id else None
 
-            # Create DSMetaData
+            # Create DSMetaData. The description is printed as HTML on public
+            # pages, so it goes through the same allowlist as every other entry point.
             ds_meta = self.dsmetadata_service.create(
                 title=title,
-                description=description,
+                description=DataSetService.sanitize_description(description),
                 publication_type=publication_type,
                 publication_doi=publication_doi,
                 tags=",".join(tags) if tags else "",

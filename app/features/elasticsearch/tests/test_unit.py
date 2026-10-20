@@ -43,6 +43,17 @@ def test_format_hit_humanises_date_and_size():
     assert source["created_at"] == "01 Jan 2020, 12:30"
 
 
+def test_format_hit_cleans_the_description():
+    # Explore prints the description as HTML straight from the index, so a
+    # document indexed before descriptions were sanitized is cleaned on read.
+    raw = "<p><strong>x</strong> <em>y</em></p><ul><li>z</li></ul>" '<iframe src="w"></iframe>'
+    hit = {"_source": {"description": raw}}
+
+    source = ElasticsearchService._format_hit(hit)
+
+    assert source["description"] == "<p><strong>x</strong> <em>y</em></p><ul><li>z</li></ul>"
+
+
 # Tests for new filter functionality
 def test_features_range_filter_builds_correctly():
     """Test that features_min/max create correct range filter"""

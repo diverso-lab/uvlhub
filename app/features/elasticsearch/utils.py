@@ -46,6 +46,8 @@ def index_dataset(dataset):
         if hubfile_metrics and hubfile_metrics.features:
             total_features += hubfile_metrics.features
 
+    from app.features.dataset.services import DataSetService
+
     # like/dislike counts, aggregated over the whole version lineage.
     from app.features.rating.repositories import DatasetRatingRepository
 
@@ -56,7 +58,7 @@ def index_dataset(dataset):
         "id": dataset.id,
         "dataset_id": dataset.id,
         "title": dataset.ds_meta_data.title,
-        "description": dataset.ds_meta_data.description,
+        "description": DataSetService.sanitize_description(dataset.ds_meta_data.description),
         "publication_doi": dataset.ds_meta_data.publication_doi,
         "dataset_doi": dataset.ds_meta_data.dataset_doi,
         "url": dataset.get_uvlhub_doi(),

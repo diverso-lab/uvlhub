@@ -139,7 +139,7 @@
                 {% if dataset.ds_meta_data.description %}
                 <div class="mb-4 dataset-description" data-description-collapsed="true">
                     <label class="form-label fs-7 fw-bold text-muted text-uppercase mb-2">Description</label>
-                    <div class="dataset-description-body fs-7 text-gray-700">{{ dataset.ds_meta_data.description | safe }}</div>
+                    <div class="dataset-description-body fs-7 text-gray-700">{{ dataset.ds_meta_data.safe_description }}</div>
                     <a href="javascript:void(0);" class="dataset-description-toggle fs-7 fw-semibold">Show more</a>
                 </div>
                 {% endif %}

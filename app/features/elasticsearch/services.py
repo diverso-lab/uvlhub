@@ -282,6 +282,13 @@ class ElasticsearchService:
                 source["total_size_in_bytes"]
             )
 
+        # Explore prints the description as HTML. The index is not trusted to
+        # hold a clean copy, so it is cleaned again on the way out.
+        if source.get("description"):
+            from app.features.dataset.services import DataSetService
+
+            source["description"] = DataSetService.sanitize_description(source["description"])
+
         return source
 
     @staticmethod

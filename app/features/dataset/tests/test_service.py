@@ -9,6 +9,7 @@ from app.features.dataset.services import (
     DatasetMetadataValidationError,
     DatasetOwnershipError,
     DataSetService,
+    LocalDatasetService,
 )
 from app.features.zenodo.services import ZenodoUnavailableError
 
@@ -1191,3 +1192,29 @@ def test_db_delete_dataset_removes_a_dataset_that_was_offered(test_app, clean_da
     assert "deleted successfully" in result.output
     assert DataSetRepository().get_by_id(dataset_id) is None
     assert DatasetTransferRequest.query.filter_by(dataset_id=dataset_id).count() == 0
+
+
+def test_create_local_dataset_sanitizes_the_description():
+    # The web upload stores the description that the DOI landing page and the
+    # home page render as HTML, so it goes through the same allowlist as every
+    # other way of creating a dataset.
+    dsmetadata_service = MagicMock()
+    dsmetadata_service.create.return_value = MagicMock(id=1)
+    dataset_service = MagicMock()
+    dataset_service.create.return_value = MagicMock(id=2)
+    feature_model_service = MagicMock()
+    feature_model_service.create_from_uvl_files.return_value = []
+    service = LocalDatasetService(dsmetadata_service, dataset_service, MagicMock(), feature_model_service, MagicMock())
+    # What the description editor (TinyMCE) actually sends, plus markup outside the allowlist.
+    description = "<p><strong>bold</strong> <em>it</em></p><ul><li>a</li></ul>" '<iframe src="x"></iframe>'
+    form = MultiDict({"title": "T", "description": description})
+
+    with (
+        patch("app.features.dataset.services.db"),
+        patch("app.features.dataset.services.UploadIngestService") as ingest,
+    ):
+        ingest.return_value.prepare_uvls.return_value = ("/stage", [])
+        service.create_local_dataset(form, MagicMock(id=3), temp_root="/temp")
+
+    stored = dsmetadata_service.create.call_args.kwargs["description"]
+    assert stored == "<p><strong>bold</strong> <em>it</em></p><ul><li>a</li></ul>"
