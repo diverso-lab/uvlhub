@@ -1,0 +1,40 @@
+# Build-context filter for Dockerfile.uvlhub_splent.prod (BuildKit reads
+# <Dockerfile>.dockerignore next to the Dockerfile). The context is the
+# product's own repository, so paths are relative to its root.
+**/.git
+**/node_modules
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+**/*.pyc
+.forgejo
+.github
+# Development only. features/ holds links into a workspace cache, and the
+# image installs every feature from PyPI instead.
+features
+.splent
+splent.manifest.json
+# The deploy bundle runs the image, it is not part of it.
+deploy
+# Logs and backup copies: a build.log or a pyproject.toml.bak would
+# otherwise ship in the image.
+**/*.log
+**/*.bak
+**/*.bak.*
+*.sql
+*.sql.gz
+*.tar.gz
+# Runtime data that lives on volumes, never in an image.
+archive
+protected_uploads
+src/*/static/uploads
+# Source data of a content import, never part of an image.
+migration
+# Environment files carry credentials (database, mail, captcha, SECRET_KEY).
+# A release pushes the image to a registry, so it carries none of them: the
+# deploy bundle hands the container its environment when it starts. The
+# *.example templates hold no secrets and stay.
+**/.env
+**/.env.*
+!docker/.env.example
+!docker/.env.*.example

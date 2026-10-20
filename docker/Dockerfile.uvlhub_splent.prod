@@ -1,5 +1,22 @@
+# The production image of uvlhub_splent.
+#
+# The build context is this repository and nothing else:
+#
+#     docker build -f docker/Dockerfile.uvlhub_splent.prod .
+#
+# Everything the image needs besides the product's own code comes from PyPI,
+# at versions the repository pins: the framework and the CLI in
+# [tool.splent.runtime] and every feature in [tool.splent] of pyproject.toml,
+# every third-party package in docker/requirements.lock. splent product:build
+# writes those pins, and the two files the image reads, splent.contracts.json
+# and docker/spl/. A clone of the repository builds the same image a release
+# published.
+
 # ── Stage 1: Builder ─────────────────────────────────────────────────────────
-FROM python:3.13 AS builder
+# Both stages on the same Debian release, so the packages the builder compiles
+# run on the runtime's libraries. The Python patch release follows the image,
+# which is how its security fixes arrive.
+FROM python:3.13-trixie AS builder
 WORKDIR /workspace
 
 # System dependencies for building
@@ -11,29 +28,60 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     mariadb-client \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Node.js 22 (only needed at build time for asset compilation)
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-        ca-certificates gnupg curl \
-    && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends nodejs \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+# Node.js 22, only to compile the frontend assets. Copied from the official
+# image rather than installed by a script fetched at build time, and kept out
+# of /usr/local, which the runtime stage copies.
+COPY --from=node:22-trixie-slim /usr/local/bin/node /opt/node/bin/node
+COPY --from=node:22-trixie-slim /usr/local/lib/node_modules/npm /opt/node/lib/node_modules/npm
+RUN ln -s ../lib/node_modules/npm/bin/npm-cli.js /opt/node/bin/npm \
+    && ln -s ../lib/node_modules/npm/bin/npx-cli.js /opt/node/bin/npx
+ENV PATH=/opt/node/bin:$PATH
 
-# Copy product source + framework (if available locally)
-COPY uvlhub_splent/ uvlhub_splent/
-COPY splent_framework/ splent_framework/
+# The product. Dockerfile.uvlhub_splent.prod.dockerignore keeps the env
+# files (credentials), the development links and the deploy bundle out.
+COPY . uvlhub_splent/
+
+# Same protection for a builder that ignores that file (the classic builder,
+# DOCKER_BUILDKIT=0). Only the runtime stage is pushed, and it copies
+# /workspace from this stage, so the env files never reach a published image.
+RUN find uvlhub_splent/docker -maxdepth 1 -name '.env*' ! -name '*.example' \
+        \( -type f -o -type l \) -delete
+
+# The SPL's UVL model. The framework orders features, and their migrations,
+# by its constraints and looks for it in .splent_cache/spls/. splent
+# product:build keeps the model pyproject.toml pins in docker/spl/, and this
+# puts it where the framework and the CLI look. Without it every boot warns
+# that features load in pyproject.toml order.
+RUN if [ -d uvlhub_splent/docker/spl ]; then \
+        mkdir -p .splent_cache/spls && \
+        cp -R uvlhub_splent/docker/spl/. .splent_cache/spls/; \
+    fi
 
 ENV PIP_ROOT_USER_ACTION=ignore
 
-# Install SPLENT CLI first (needed for feature:pip-install).
-# Always install the latest published CLI so the product is not pinned to the
-# (possibly older) version that scaffolded it.
-RUN pip install --no-cache-dir --upgrade splent_cli
+# Every third-party package at the version docker/requirements.lock pins, as
+# a constraint on every pip install below, so a clone of a release builds the
+# set the release built. splent product:build and product:release write the
+# lock by building with SPLENT_FRESH_LOCK=1, which resolves without it.
+ARG SPLENT_FRESH_LOCK=""
+RUN if [ -n "$SPLENT_FRESH_LOCK" ] || [ ! -f uvlhub_splent/docker/requirements.lock ]; then \
+        : > /tmp/constraints.txt; \
+    else \
+        cp uvlhub_splent/docker/requirements.lock /tmp/constraints.txt; \
+    fi
+ENV PIP_CONSTRAINT=/tmp/constraints.txt
 
-# Install framework from local source (has latest changes), then product
-RUN pip install --no-cache-dir ./splent_framework
+# The framework, the CLI and the WSGI server, at the versions
+# [tool.splent.runtime] in pyproject.toml pins (a bare version means exactly
+# that version). splent product:build keeps the framework and the CLI at the
+# versions the product is built with, and a release of the product refuses
+# one PyPI does not serve.
+RUN python -c "import sys, tomllib; \
+runtime = tomllib.load(open('uvlhub_splent/pyproject.toml', 'rb')).get('tool', {}).get('splent', {}).get('runtime') \
+    or sys.exit('[tool.splent.runtime] is missing from pyproject.toml. Run splent product:build.'); \
+print('\\n'.join(name + ('==' + str(spec) if str(spec)[:1].isdigit() else str(spec)) for name, spec in runtime.items()))" \
+        > /tmp/runtime.txt \
+    && pip install --no-cache-dir -r /tmp/runtime.txt
 RUN pip install --no-cache-dir ./uvlhub_splent
 
 # Install the features with pip, from PyPI. This is the ONLY place features are
@@ -50,10 +98,10 @@ ENV WORKING_DIR=/workspace
 ENV SPLENT_CONTAINER=product
 RUN touch /.dockerenv
 # Which git forge the pins resolve against. A feature that is not on PyPI falls
-# back to a git+ install, and the URL for that is built from these. They are
-# empty by default, which keeps the historical github.com behaviour; product:build
-# forwards whatever the workspace has configured. No token travels into the image
-# on purpose, so the repositories the fallback reaches must be readable anonymously.
+# back to a git+ install, and the URL for that is built from these. Empty means
+# the CLI's default forge; product:build and the deploy bundle forward whatever
+# the workspace has configured. No token travels into the image on purpose, so
+# the repositories the fallback reaches must be readable anonymously.
 ARG SPLENT_FORGE_HOST=""
 ARG SPLENT_FORGE_SSH_HOST=""
 ARG SPLENT_FORGE_SSH_PORT=""
@@ -64,21 +112,26 @@ ENV SPLENT_FORGE_SSH_PORT=${SPLENT_FORGE_SSH_PORT}
 ENV SPLENT_FORGE_API=${SPLENT_FORGE_API}
 RUN splent feature:pip-install
 
-# Compile frontend assets (if package.json exists)
+# Compile frontend assets (if package.json exists), minified and without
+# source maps. feature:compile exits non-zero when a feature fails to compile,
+# which stops the build instead of shipping an image without its bundles.
 RUN if [ -f uvlhub_splent/package.json ]; then \
         cd uvlhub_splent && npm install --no-audit --no-fund && \
-        splent feature:compile && \
+        splent feature:compile --prod && \
         cd /workspace; \
     fi
 
-# Production server
-RUN pip install --no-cache-dir gunicorn
+# What only the build needed: the frontend toolchain and pip's build tree.
+# The runtime stage copies /workspace, so they would ship otherwise.
+RUN rm -rf uvlhub_splent/node_modules uvlhub_splent/build
 
 # ── Stage 2: Runtime ─────────────────────────────────────────────────────────
-FROM python:3.13-slim
+FROM python:3.13-slim-trixie
 WORKDIR /workspace
 
-# Minimal runtime dependencies
+# Minimal runtime dependencies. mariadb-client provides mariadb and
+# mariadb-dump, which splent db:dump, db:restore and db:console run inside
+# this container.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     mariadb-client \
     curl \
@@ -89,15 +142,21 @@ ENV SPLENT_APP=uvlhub_splent
 ENV WORKING_DIR=/workspace
 ENV SPLENT_CONTAINER=product
 
+# The user the app runs as. The image keeps root as its user so the entrypoint
+# can hand the named volumes to this one before it drops to it: see
+# entrypoints/entrypoint.prod.sh.
+RUN groupadd --system --gid 10001 splent \
+    && useradd --system --uid 10001 --gid splent --create-home \
+        --home-dir /home/splent --shell /usr/sbin/nologin splent \
+    && mkdir -p /var/log/splent \
+    && chown splent:splent /var/log/splent
+
 # Copy installed Python packages from builder
 COPY --from=builder /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
 
-# Copy product source (includes compiled assets, templates, migrations, entrypoints)
-COPY --from=builder /workspace/ /workspace/
-
-# Shown in the sidebar footer (get_app_version reads it), as in uvlhub
-ARG VERSION_TAG
-RUN echo "$VERSION_TAG" > /workspace/.version
+# Copy product source (includes compiled assets, templates, migrations,
+# entrypoints), owned by the app user, which writes its state file there.
+COPY --from=builder --chown=splent:splent /workspace/ /workspace/
 
 EXPOSE 5000

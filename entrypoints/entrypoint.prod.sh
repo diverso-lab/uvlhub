@@ -1,23 +1,28 @@
 #!/bin/bash
 
-# ---------------------------------------------------------------------------
-# Creative Commons CC BY 4.0 - SPLENT - Diverso Lab
-# ---------------------------------------------------------------------------
-# This script is licensed under the Creative Commons Attribution 4.0 
-# International License.
-# https://creativecommons.org/licenses/by/4.0/
-# ---------------------------------------------------------------------------
-
 set -Eeuo pipefail
 
-if [ "$(id -u)" -eq 0 ]; then
-  LOG_DIR="/var/log/splent"
-else
-  if [ -z "${SPLENT_HOST_PROJECT_DIR:-}" ]; then
-    echo "  error: SPLENT_HOST_PROJECT_DIR not defined."
-    exit 1
-  fi
-  LOG_DIR="${SPLENT_HOST_PROJECT_DIR}/.splent/logs"
+# ---------------------------------------------------------------------------
+# The app runs as the unprivileged user the image creates, never as root.
+# The container starts as root for one thing only: whatever root owns in the
+# named volumes mounted into it (all of it, on a deployment an older image
+# filled as root; a file a `docker exec` left, later) is handed to that user.
+# Then this script runs itself again as that user, and so do the migrations
+# and gunicorn.
+# ---------------------------------------------------------------------------
+APP_USER="splent"
+LOG_DIR="/var/log/splent"
+if [ "$(id -u)" -eq 0 ] && id "$APP_USER" >/dev/null 2>&1; then
+  while read -r mount_point; do
+    if [ -n "$(find "$mount_point" ! -user "$APP_USER" -print -quit)" ]; then
+      echo "  handing what root owns in $mount_point to $APP_USER"
+      find "$mount_point" ! -user "$APP_USER" -exec chown -h "$APP_USER:$APP_USER" {} +
+    fi
+  done < <(awk '$4 ~ /\/volumes\/[^/]+\/_data$/ {print $5}' /proc/self/mountinfo)
+  mkdir -p "$LOG_DIR"
+  chown "$APP_USER:$APP_USER" "$LOG_DIR"
+  export HOME="/home/$APP_USER"
+  exec setpriv --reuid="$APP_USER" --regid="$APP_USER" --init-groups bash "$0" "$@"
 fi
 
 mkdir -p "$LOG_DIR"
@@ -47,17 +52,8 @@ run_step () {
   echo "  ok [$step]"
 }
 
-# ---------------------------------------------------------------------------
-# Ensure the framework's dotenv loader picks up deploy vars, not dev vars.
-# The Docker container already has the correct env vars from env_file;
-# this syncs the on-disk .env so load_dotenv(override=True) is harmless.
-# ---------------------------------------------------------------------------
-ENV_DEPLOY="/workspace/uvlhub_splent/docker/.env.deploy"
-ENV_FILE="/workspace/uvlhub_splent/docker/.env"
-if [ -f "$ENV_DEPLOY" ]; then
-  cp "$ENV_DEPLOY" "$ENV_FILE"
-  echo "  synced .env.deploy -> .env"
-fi
+# The container's settings are its environment, which the deploy bundle hands
+# it from deploy/.env (env_file). The image carries no env file of its own.
 
 # ---------------------------------------------------------------------------
 # MAIN STARTUP SEQUENCE

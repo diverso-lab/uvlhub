@@ -1,4 +1,4 @@
-from importlib import import_module
+import sys
 
 from splent_framework.app_factory import create_splent_app
 from splent_framework.configuration.configuration import get_app_version
@@ -26,10 +26,12 @@ ADMIN_SIDEBAR_LINKS = [
 
 def _remove_admin_sidebar_links():
     for module_name, func_name in ADMIN_SIDEBAR_LINKS:
-        try:
-            func = getattr(import_module(module_name), func_name)
-        except (ImportError, AttributeError):
-            continue  # feature not in this configuration
+        # Only features this product loaded: importing the hooks module of
+        # one it does not use would register that feature's hooks.
+        module = sys.modules.get(module_name)
+        func = getattr(module, func_name, None)
+        if func is None:
+            continue
         remove_template_hook("layout.authenticated_sidebar", func)
 
 

@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# ---------------------------------------------------------------------------
-# Creative Commons CC BY 4.0 - SPLENT - Diverso Lab
-# ---------------------------------------------------------------------------
 # This script installs the features listed in the product's pyproject.toml.
 #
 # It is the DEVELOPMENT install path, and it never contacts PyPI. Every install
@@ -30,7 +27,10 @@ with open("/workspace/uvlhub_splent/pyproject.toml", "rb") as f:
     data = tomllib.load(f)
 splent = data.get("tool", {}).get("splent", {})
 feats = list(splent.get("features", []))
-env = os.getenv("SPLENT_ENV")
+# SPLENT_ENV as the framework reads it: stripped, lowercased, and the long
+# spellings mapped to the short ones, so both install the same features_<env>.
+env = (os.getenv("SPLENT_ENV") or "").strip().lower()
+env = {"development": "dev", "production": "prod", "testing": "test"}.get(env, env)
 if env:
     feats += [f for f in splent.get(f"features_{env}", []) if f not in feats]
 if not feats:

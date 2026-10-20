@@ -1,0 +1,50 @@
+# Written by splent (product:create, product:sync-template --ci).
+#
+# Every push and pull request is checked as a configuration of the product
+# line. The features the product pins are resolved at their releases, the
+# selection is checked against the line's UVL model, and the contracts,
+# refiners and dependencies of the features have to agree. Then the deploy
+# artifacts are generated, as product:build would on a server. A product that
+# fails here is not a valid product of its line, whatever its own tests say.
+name: SPLENT validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    env:
+      WORKING_DIR: ${{ github.workspace }}
+      SPLENT_APP: uvlhub_splent
+      SPLENT_FORGE_HOST: git.splent.io
+      # The features are public, so they are cloned anonymously. Forgejo puts
+      # a token scoped to this repository alone in every job, and with it the
+      # other repositories of the organization would look missing.
+      SPLENT_FORGE_TOKEN: ""
+      GITHUB_TOKEN: ""
+      # The runner has no SSH key, so clones go straight to HTTPS.
+      SPLENT_CLONE_TRANSPORT: https
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: uvlhub_splent
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install the SPLENT CLI
+        run: pip install --quiet --upgrade "splent_cli[uvl]" splent_framework
+
+      - name: Resolve the pinned features
+        run: splent product:resolve --prod --strict
+
+      - name: Validate the product against its line
+        run: splent product:validate
+
+      - name: Generate the deploy artifacts
+        run: splent product:build --no-image

@@ -1,13 +1,5 @@
 #!/bin/bash
 
-# ---------------------------------------------------------------------------
-# Creative Commons CC BY 4.0 - SPLENT - Diverso Lab
-# ---------------------------------------------------------------------------
-# This script is licensed under the Creative Commons Attribution 4.0 
-# International License.
-# https://creativecommons.org/licenses/by/4.0/
-# ---------------------------------------------------------------------------
-
 set -Eeuo pipefail
 
 if [ "$(id -u)" -eq 0 ]; then

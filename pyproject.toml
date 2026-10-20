@@ -23,58 +23,52 @@ core = [
 ]
 
 [tool.splent]
-cli_version = "1.25.1"
+cli_version = "1.34.1"
 features = [
-    "splent-io/splent_feature_admin@v1.5.0",
-    "splent-io/splent_feature_auth@v1.17.0",
-    "splent-io/splent_feature_confirmemail@v1.2.15",
-    "splent-io/splent_feature_mail@v1.4.3",
-    "splent-io/splent_feature_mailhog@v1.0.8",
+    "splent-io/splent_feature_admin@v1.6.1",
+    "splent-io/splent_feature_auth@v1.19.4",
+    "splent-io/splent_feature_mail@v1.4.4",
     "splent-io/splent_feature_nginx@v1.2.0",
-    "splent-io/splent_feature_phpmyadmin@v1.0.2",
     "splent-io/splent_feature_profile@v1.5.7",
-    "splent-io/splent_feature_public@v1.7.3",
+    "splent-io/splent_feature_public@v1.8.0",
     "splent-io/splent_feature_redis@v1.5.7",
-    "splent-io/splent_feature_reset@v1.3.3",
     "splent-io/splent_feature_session_redis@v1.1.2",
-    "splent-io/splent_feature_settings@v0.4.0",
-    "splent-io/splent_feature_theme@v0.12.1",
+    "splent-io/splent_feature_settings@v0.4.3",
+    "splent-io/splent_feature_theme@v0.13.4",
     "splent-io/splent_feature_public_uvlhub",
-    "splent-io/splent_feature_signup@v0.1.0",
+    "splent-io/splent_feature_signup@v0.2.0",
     "splent-io/splent_feature_auth_uvlhub",
     "splent-io/splent_feature_signup_uvlhub",
     "splent-io/splent_feature_profile_uvlhub",
     "splent-io/splent_feature_reset_uvlhub",
-    "splent-io/splent_feature_apikeys@v0.1.1",
+    "splent-io/splent_feature_apikeys@v0.2.1",
     "splent-io/splent_feature_apikeys_uvlhub",
-    "splent-io/splent_feature_legal@v0.1.1",
-    "splent-io/splent_feature_recaptcha@v0.2.2",
-    "splent-io/splent_feature_media@v0.8.0",
-    "splent-io/splent_feature_team@v0.3.4",
-    "splent-io/splent_feature_partners@v0.3.1",
-    "splent-io/splent_feature_skin_academic@v0.3.0",
+    "splent-io/splent_feature_media@v0.9.1",
     "splent-io/splent_feature_elasticsearch@v0.1.2",
-    "splent-io/splent_feature_spl_registry@v0.1.1",
     "splent-io/splent_feature_team_uvlhub",
     "splent-io/splent_feature_recaptcha_uvlhub",
     "splent-io/splent_feature_generator",
     "splent-io/splent_feature_identities",
     "splent-io/splent_feature_orcid",
     "splent-io/splent_feature_github",
-    "splent-io/splent_feature_webhook",
     "splent-io/splent_feature_dataset",
     "splent-io/splent_feature_hubfile",
     "splent-io/splent_feature_featuremodel",
     "splent-io/splent_feature_flamapy",
     "splent-io/splent_feature_factlabel",
-    "splent-io/splent_feature_downloadqueue",
     "splent-io/splent_feature_rating",
     "splent-io/splent_feature_statistics",
     "splent-io/splent_feature_explore",
     "splent-io/splent_feature_zenodo",
     "splent-io/splent_feature_apidocs",
+    "splent-io/splent_feature_autodeploy@v0.1.2",
+    "splent-io/splent_feature_confirmemail@v1.3.0",
+    "splent-io/splent_feature_reset@v1.4.0",
+    "splent-io/splent_feature_team@v0.5.0",
+    "splent-io/splent_feature_partners@v0.5.0",
+    "splent-io/splent_feature_recaptcha@v0.3.0",
 ]
-features_dev = []
+features_dev = ["splent-io/splent_feature_mailhog@v1.1.0", "splent-io/splent_feature_phpmyadmin@v1.0.3"]
 features_prod = []
 spl = "sample_splent_spl"
 
@@ -84,6 +78,16 @@ doi = "10.5281/zenodo.23076870"
 concept_doi = "10.5281/zenodo.18873371"
 version = "v4"
 file = "sample_splent_spl.uvl"
+
+[tool.splent.config]
+SITE_NAME = "uvlhub"
+SITE_TAGLINE = "Repository of feature models in UVL format"
+# The monolith accepted 20 MB; media alone would raise the whole app to 100 MB.
+MEDIA_MAX_UPLOAD_SIZE = "20M"
+# Media is only the internal library for team photos and logos.
+MEDIA_PUBLIC_GALLERY = false
+# Accounts loaded from uvlhub.io start as plain users; staff are promoted by hand.
+AUTH_MIGRATION_LEGACY_ROLE = "user"
 
 [tool.splent.layout]
 base_template = "base_template.html"
