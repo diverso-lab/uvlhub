@@ -4,6 +4,57 @@ All notable changes to this project are documented in this file. The format is
 based on [Keep a Changelog](https://keepachangelog.com/) and the project follows
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Security
+
+- Password reset links are sent to the address the account was registered
+  with, and the token carries that address. The typed address is only used
+  to find the account, because the database collation matches different
+  spellings of an address. Consuming a token now requires the stored
+  address exactly, and the "password changed" notice goes to it.
+- The temporary upload area only accepts plain file names: `/hubfile/upload`,
+  `/hubfile/upload-github` and `/hubfile/delete` reject names with folders,
+  `.` or `..`, and the resolved path must stay inside the user's temp folder.
+- Dataset descriptions go through one allowlist everywhere: the formatting
+  the description editor produces (`p`, `br`, `strong`, `em`, `b`, `i`, `u`,
+  `ul`, `ol`, `li` and `a` with `href`, `title` and `target`). The web upload
+  now applies it when saving, the DOI landing page, the home page and the
+  search results apply it again when showing a description, the search
+  index stores the cleaned text, and migration `f7a8b9c0d1e2` cleans the
+  descriptions already stored.
+- The production compose files publish MariaDB (3306) and Elasticsearch
+  (9200) on `127.0.0.1` only.
+
+### Upgrade notes
+
+The webhook deployment updates and restarts `web_app_container` and
+`rq_worker_container` only. On the host, in this order:
+
+1. Check that the deployed commit is the expected one:
+   `docker exec web_app_container git -C /workspace log -1 --format=%H`.
+2. Back up the descriptions, because the migration rewrites them:
+   `docker exec mariadb_container sh -c 'mariadb-dump -u"$MARIADB_USER" -p"$MARIADB_PASSWORD" --single-transaction "$MARIADB_DATABASE" ds_meta_data' > ds_meta_data_before_f7a8b9c0d1e2.sql`.
+3. Apply the migration: `docker exec web_app_container flask db upgrade`,
+   then check that `flask db current` reports `f7a8b9c0d1e2`.
+4. Recreate the database and search containers so the new port bindings
+   apply. Use the Compose project the containers already belong to
+   (`docker inspect mariadb_container --format '{{ index .Config.Labels "com.docker.compose.project" }}'`)
+   and do not run `down`:
+   `docker compose -p <project> -f docker/docker-compose.prod.webhook.yml up -d --no-deps db elasticsearch`.
+   Then restart `web_app_container` and `rq_worker_container` so they open
+   fresh database connections, and check that
+   `ss -ltnp | grep -E ':(3306|9200)'` only shows `127.0.0.1`.
+5. Rebuild the search index once Elasticsearch answers
+   (`curl -s 127.0.0.1:9200/_cluster/health`):
+   `docker exec web_app_container rosemary elasticsearch:reset`. It drops
+   documents that are not in the database, which matters because the index
+   was reachable without authentication. The command exits with 0 even on
+   failure: check that it prints its success message.
+6. MariaDB was reachable from outside the host too: rotate
+   `MARIADB_PASSWORD` and `MARIADB_ROOT_PASSWORD` and review `mysql.user`
+   for accounts nobody created.
+
 ## [2.12] - 2026-09-16
 
 Accounts and datasets you can shape yourself: sign in with GitHub as well
