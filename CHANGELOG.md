@@ -4,7 +4,12 @@ All notable changes to this project are documented in this file. The format is
 based on [Keep a Changelog](https://keepachangelog.com/) and the project follows
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [2.12.1] - 2026-10-20
+
+A security release: password reset links only reach the account's own
+address, the upload staging area only accepts plain file names, dataset
+descriptions are sanitized on every path, and the production database and
+search services are no longer published outside the host.
 
 ### Security
 
@@ -28,23 +33,26 @@ based on [Keep a Changelog](https://keepachangelog.com/) and the project follows
 
 ### Upgrade notes
 
-The webhook deployment updates and restarts `web_app_container` and
-`rq_worker_container` only. On the host, in this order:
+With the Watchtower deployment, the new image only replaces
+`web_app_container` and `rq_worker_container`, and the web entrypoint
+applies the migrations it finds in the host checkout (`../migrations` is
+bind-mounted). On the host, in this order:
 
-1. Check that the deployed commit is the expected one:
-   `docker exec web_app_container git -C /workspace log -1 --format=%H`.
-2. Back up the descriptions, because the migration rewrites them:
+1. Back up the descriptions, because migration `f7a8b9c0d1e2` rewrites them:
    `docker exec mariadb_container sh -c 'mariadb-dump -u"$MARIADB_USER" -p"$MARIADB_PASSWORD" --single-transaction "$MARIADB_DATABASE" ds_meta_data' > ds_meta_data_before_f7a8b9c0d1e2.sql`.
-3. Apply the migration: `docker exec web_app_container flask db upgrade`,
-   then check that `flask db current` reports `f7a8b9c0d1e2`.
-4. Recreate the database and search containers so the new port bindings
-   apply. Use the Compose project the containers already belong to
-   (`docker inspect mariadb_container --format '{{ index .Config.Labels "com.docker.compose.project" }}'`)
+2. Update the host checkout with `git pull`, so the migration, the scripts
+   and the compose changes are there.
+3. Recreate the database and search containers so the new port bindings
+   apply. Use the project and the files the stack was started with
+   (`docker inspect mariadb_container --format '{{ index .Config.Labels "com.docker.compose.project" }} {{ index .Config.Labels "com.docker.compose.project.config_files" }}'`)
    and do not run `down`:
-   `docker compose -p <project> -f docker/docker-compose.prod.webhook.yml up -d --no-deps db elasticsearch`.
-   Then restart `web_app_container` and `rq_worker_container` so they open
-   fresh database connections, and check that
-   `ss -ltnp | grep -E ':(3306|9200)'` only shows `127.0.0.1`.
+   `docker compose -p <project> -f <files> up -d --no-deps db elasticsearch`.
+   Check that `ss -ltnp | grep -E ':(3306|9200)'` only shows `127.0.0.1`.
+4. Let Watchtower pull the 2.12.1 image, or restart `web_app_container` if
+   it already did before step 2. Check that
+   `docker exec web_app_container flask db current` reports `f7a8b9c0d1e2`,
+   and restart `rq_worker_container` too so both open fresh database
+   connections.
 5. Rebuild the search index once Elasticsearch answers
    (`curl -s 127.0.0.1:9200/_cluster/health`):
    `docker exec web_app_container rosemary elasticsearch:reset`. It drops
@@ -54,6 +62,10 @@ The webhook deployment updates and restarts `web_app_container` and
 6. MariaDB was reachable from outside the host too: rotate
    `MARIADB_PASSWORD` and `MARIADB_ROOT_PASSWORD` and review `mysql.user`
    for accounts nobody created.
+
+With the webhook deployment, steps 1, 3, 5 and 6 are the same, and the
+migration is applied by hand with
+`docker exec web_app_container flask db upgrade`.
 
 ## [2.12] - 2026-09-16
 
