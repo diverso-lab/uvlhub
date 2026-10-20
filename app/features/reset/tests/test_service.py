@@ -58,3 +58,44 @@ def test_send_reset_password_mail_returns_none_for_unknown_email(test_app, clean
         assert ResetService().send_reset_password_mail("ghost@example.com") is None
 
     enqueue.assert_not_called()
+
+
+def test_send_reset_password_mail_uses_the_stored_address(test_app, clean_database):
+    """The link goes to the account's own address, never to what was typed.
+
+    The database collation treats different spellings of an address as equal,
+    so the typed text can match an account it does not belong to.
+    """
+    UserRepository().create(email="owner@example.com", password="old-password")
+    service = ResetService()
+
+    with patch("app.features.reset.services.TaskQueueManager.enqueue_task") as enqueue:
+        token = service.send_reset_password_mail("OWNER@example.com")
+
+    assert token is not None
+    assert enqueue.call_args.kwargs["email"] == "owner@example.com"
+    assert service.get_email_by_token(token) == "owner@example.com"
+
+
+def test_reset_password_only_accepts_the_stored_spelling(test_app, clean_database):
+    # Tokens carry the stored address. One signed for another spelling (issued
+    # before that was the case) must not change the password of the account.
+    UserRepository().create(email="owner2@example.com", password="old-password")
+    service = ResetService()
+
+    with pytest.raises(ValueError):
+        service.reset_password("OWNER2@example.com", "new-password-1")
+
+    assert UserRepository().get_by_email("owner2@example.com").check_password("old-password")
+
+
+def test_reset_and_notify_notifies_the_stored_address(test_app, clean_database):
+    UserRepository().create(email="owner3@example.com", password="old-password")
+    service = ResetService()
+    service.add_token("tok-3")
+
+    with patch("app.features.reset.services.TaskQueueManager.enqueue_task") as enqueue:
+        service.reset_and_notify(email="owner3@example.com", password="new-password-1", token="tok-3")
+
+    assert enqueue.call_args.kwargs["email"] == "owner3@example.com"
+    assert service.token_already_used("tok-3") is True

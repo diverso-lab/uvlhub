@@ -26,19 +26,23 @@ class ResetService(BaseService):
         if not user:
             return None
 
-        token = self.get_serializer().dumps(email, salt=RESET_SALT)
+        # The collation matches different spellings of an address, so the typed
+        # text is only used to find the account: the token and the link carry
+        # the address the account was registered with.
+        address = user.email
+        token = self.get_serializer().dumps(address, salt=RESET_SALT)
         link = url_for("reset.reset_password", token=token, _external=True)
         TaskQueueManager().enqueue_task(
-            "app.features.reset.tasks.send_reset_password_email", email=email, link=link, timeout=10
+            "app.features.reset.tasks.send_reset_password_email", email=address, link=link, timeout=10
         )
         return token
 
     def reset_and_notify(self, email: str, password: str, token: str) -> None:
         """Reset the password, burn the token, and enqueue the confirmation email."""
-        self.reset_password(email=email, password=password)
+        user = self.reset_password(email=email, password=password)
         self.mark_token_as_used(token)
         TaskQueueManager().enqueue_task(
-            "app.features.reset.tasks.send_reset_confirmation_email", email=email, timeout=10
+            "app.features.reset.tasks.send_reset_confirmation_email", email=user.email, timeout=10
         )
 
     def add_token(self, token: str) -> None:
@@ -59,12 +63,16 @@ class ResetService(BaseService):
         reset_token = self.repository.get_by_token(token)
         return bool(reset_token and reset_token.used_at)
 
-    def reset_password(self, email: str, password: str) -> None:
+    def reset_password(self, email: str, password: str):
         user = self.user_repository.get_by_email(email, active=None)
-        if not user:
+        # The token carries the address the account was registered with, so it
+        # must match exactly: a lookup that only matched through the collation
+        # (a token signed for another spelling) does not belong to this account.
+        if not user or user.email != email:
             raise ValueError(f"No account is associated with {email}.")
         user.set_password(password)
         self.user_repository.session.commit()
+        return user
 
     def mark_token_as_used(self, token: str) -> None:
         reset_token = self.repository.get_by_token(token)

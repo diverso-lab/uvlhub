@@ -34,7 +34,11 @@ def reset_password(token):
 
     if request.method == "POST":
         password = request.form["password"]
-        reset_service.reset_and_notify(email=email, password=password, token=token)
+        try:
+            reset_service.reset_and_notify(email=email, password=password, token=token)
+        except ValueError:
+            flash("This reset link is no longer valid. Please request a new one.", "danger")
+            return redirect(url_for("reset.forgot"))
         flash("Your password has been updated!", "success")
         return redirect(url_for("auth.login"))
 
