@@ -88,8 +88,9 @@ AUTH_MIGRATION_LEGACY_ROLE = "user"
 AUTH_PASSWORD_CONFIRM = true
 # The sidebar logo already leads home, so the sidebar has no Home entry.
 PUBLIC_SIDEBAR_HOME_LINK = false
-# A wrong password names the provider (ORCID, GitHub) the account signs in with.
-EXTERNAL_LOGIN_PASSWORD_HINT = true
+# Off: the hint would tell anyone typing an address that the account exists
+# and which provider (ORCID, GitHub) it signs in with.
+EXTERNAL_LOGIN_PASSWORD_HINT = false
 # Tokens carry the dataset scopes only, the ones dataset registers.
 APIKEYS_SCOPES = ["read_dataset", "write_dataset"]
 # A token issued without a choice can read datasets but not upload them.
