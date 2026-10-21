@@ -81,6 +81,26 @@ MEDIA_MAX_UPLOAD_SIZE = "20M"
 MEDIA_PUBLIC_GALLERY = false
 # Accounts loaded from uvlhub.io start as plain users; staff are promoted by hand.
 AUTH_MIGRATION_LEGACY_ROLE = "user"
+# Sign-up and reset ask for the new password twice, as uvlhub did.
+AUTH_PASSWORD_CONFIRM = true
+# The sidebar logo already leads home, so the sidebar has no Home entry.
+PUBLIC_SIDEBAR_HOME_LINK = false
+# A wrong password names the provider (ORCID, GitHub) the account signs in with.
+EXTERNAL_LOGIN_PASSWORD_HINT = true
+# Tokens carry the dataset scopes only, the ones dataset registers.
+APIKEYS_SCOPES = ["read_dataset", "write_dataset"]
+# A token issued without a choice can read datasets but not upload them.
+APIKEYS_DEFAULT_SCOPES = ["read_dataset"]
+# uvlhub's API clients send the token in X-API-Key as well as Bearer.
+APIKEYS_HEADER_ALIASES = ["X-API-Key"]
+# Only the sign-up asks for the image captcha.
+CAPTCHA_IMAGE_FORMS = ["signup"]
+# The publisher named in every dataset's FAIR metadata, mails and API messages.
+DATASET_PUBLISHER_NAME = "uvlhub"
+# The catalog those metadata point to, the public site and not this host.
+DATASET_CATALOG_URL = "https://www.uvlhub.io"
+# The ball drawn in the middle of the PNG and JPG QR codes.
+DATASET_QR_LOGO = "media/logos/uvlhub_ball.png"
 
 [tool.splent.layout]
 base_template = "base_template.html"
