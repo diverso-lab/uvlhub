@@ -1,0 +1,70 @@
+{#- uvlhub's team page, in the app shell instead of team's public_base.html.
+
+    Each team Role is one of the organisations behind uvlhub, with its
+    logo, description and website, and holds its people (the product's
+    seeders create them). team_sections, from create_app, lists every role
+    in the order of Role.order with its published members, so an
+    organisation with nobody listed still has its card. team's own groups
+    is the fallback. -#}
+{% extends "base_template.html" %}
+
+{% block title %}{{ _('Team') }}{% endblock %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb text-muted fs-6 fw-semibold">
+    <li class="breadcrumb-item"><a href="{{ url_for('public.index') }}">{{ _('Home') }}</a></li>
+    <li class="breadcrumb-item text-muted">{{ _('Team') }}</li>
+</ol>
+{% endblock %}
+
+{% block content %}
+{% set sections = team_sections() if team_sections is defined else groups.items() %}
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+
+    {% for role, members in sections %}
+    <div class="col">
+        <div class="card h-100 p-4">
+            {% if role.logo %}
+            <div class="team-logo-frame mb-4">
+                <img src="{{ role.logo | safe_url }}" class="card-img-top logo-img" alt="{{ role.name }}" loading="lazy">
+            </div>
+            {% endif %}
+
+            <div class="card-body custom-card-body">
+                <h5 class="card-title">{{ role.name }}</h5>
+                {% if role.description %}
+                <p class="card-text">{{ role.description }}</p>
+                {% endif %}
+
+                {% for m in members %}
+                <div class="d-flex align-items-center mt-4">
+                    {% if m.photo %}
+                    <img src="{{ m.photo | safe_url }}" alt="{{ m.name }}" class="rounded-circle me-3"
+                         style="width: 64px; height: 64px; object-fit: cover;" loading="lazy">
+                    {% endif %}
+                    <div>
+                        <div class="fw-bold">{{ m.name }}</div>
+                        {% if m.position %}<div class="text-muted">{{ m.position }}</div>{% endif %}
+                        {% if m.email %}
+                        <a href="mailto:{{ m.email }}" class="text-decoration-none">{{ m.email }}</a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            {% if role.link %}
+            <div class="card-footer">
+                <a href="{{ role.link | safe_url }}" target="_blank" rel="noopener">{{ (role.link | safe_url).split('://')[-1].rstrip('/') }}</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% else %}
+    <div class="col">
+        <p class="text-muted">{{ _('No team members yet.') }}</p>
+    </div>
+    {% endfor %}
+
+</div>
+{% endblock %}

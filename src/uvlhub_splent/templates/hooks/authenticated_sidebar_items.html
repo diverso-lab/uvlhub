@@ -1,0 +1,13 @@
+{# auth's "Log out" entry. create_app moves it to the end of the Account
+   section. #}
+<div class="menu-item">
+	<a class="menu-link" href="{{ url_for('auth.logout') }}">
+		<span class="menu-icon">
+			<i class="ki-duotone ki-exit-left fs-2">
+				<span class="path1"></span>
+				<span class="path2"></span>
+			</i>
+		</span>
+		<span class="menu-title">{{ _('Log out') }}</span>
+	</a>
+</div>

@@ -1,0 +1,13 @@
+{# profile's entry in the Account section of the signed-in sidebar. #}
+<div class="menu-item">
+	<a class="menu-link {{ 'active' if request.endpoint == 'profile.edit_profile' else '' }}" href="{{ url_for('profile.edit_profile') }}">
+		<span class="menu-icon">
+			<i class="ki-duotone ki-user-edit fs-2">
+				<span class="path1"></span>
+				<span class="path2"></span>
+				<span class="path3"></span>
+			</i>
+		</span>
+		<span class="menu-title">{{ _('Edit profile') }}</span>
+	</a>
+</div>

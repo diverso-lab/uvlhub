@@ -1,0 +1,36 @@
+{# apikeys' entries, as uvlhub's Developer section of the signed-in
+   sidebar. The API docs link and any other developer link come through
+   apikeys.sidebar.developer. #}
+<div class="menu-item pt-5">
+	<div class="menu-content">
+		<span class="menu-heading fw-bold text-uppercase fs-7">{{ _('Developer') }}</span>
+	</div>
+</div>
+
+{{ render_template_hooks("apikeys.sidebar.developer") }}
+
+<div class="menu-item">
+	<a class="menu-link {{ 'active' if request.endpoint == 'apikeys.index' else '' }}" href="{{ url_for('apikeys.index') }}">
+		<span class="menu-icon">
+			<i class="ki-duotone ki-key fs-2">
+				<span class="path1"></span>
+				<span class="path2"></span>
+			</i>
+		</span>
+		<span class="menu-title">{{ _('API tokens') }}</span>
+	</a>
+</div>
+
+<div class="menu-item">
+	<a class="menu-link {{ 'active' if request.endpoint == 'apikeys.new' else '' }}" href="{{ url_for('apikeys.new') }}">
+		<span class="menu-icon">
+			<i class="ki-duotone ki-code fs-2">
+				<span class="path1"></span>
+				<span class="path2"></span>
+				<span class="path3"></span>
+				<span class="path4"></span>
+			</i>
+		</span>
+		<span class="menu-title">{{ _('New API token') }}</span>
+	</a>
+</div>

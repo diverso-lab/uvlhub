@@ -1,0 +1,5 @@
+{# auth's "Log out" in the user menu of the header. create_app puts it
+   last, after "Edit profile". #}
+<div class="menu-item px-5">
+	<a href="{{ url_for('auth.logout') }}" class="menu-link px-5">{{ _('Log out') }}</a>
+</div>
