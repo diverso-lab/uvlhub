@@ -50,7 +50,6 @@ features = [
     "splent-io/splent_feature_confirmemail@v1.3.0",
     "splent-io/splent_feature_reset@v1.5.0",
     "splent-io/splent_feature_team@v0.6.0",
-    "splent-io/splent_feature_partners@v0.5.0",
     "splent-io/splent_feature_academic_profile@v0.1.0",
     "splent-io/splent_feature_featuremodel@v0.1.0",
     "splent-io/splent_feature_flamapy@v0.1.0",

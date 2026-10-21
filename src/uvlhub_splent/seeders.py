@@ -1,8 +1,13 @@
 """uvlhub's own content for the features it shares with the product line.
 
-The team and partners features seed the diversolab directory; uvlhub shows
-the organisations behind the project instead, so this product takes over
-their seeders (``replaces``) and seeds what uvlhub's team page lists.
+The team feature seeds the diversolab directory. uvlhub's team page groups
+its people by the organisations behind the project instead, so this
+product takes over team's seeder (``replaces``) and seeds one team Role
+per organisation, with its description, logo and website, and the people
+who belong to it.
+
+Images go through the media library with a ``seed://uvlhub/`` source key,
+so seeding again reuses the stored file instead of copying it twice.
 """
 
 import os
@@ -11,82 +16,91 @@ from splent_framework.seeders.BaseSeeder import BaseSeeder
 from splent_framework.utils.text import slugify
 
 from splent_io.splent_feature_media.services import MediaService
-from splent_io.splent_feature_partners.models import Partner
-from splent_io.splent_feature_team.models import TeamMember
+from splent_io.splent_feature_team.models import Role, TeamMember
 
 STATIC_MEDIA = os.path.join(os.path.dirname(__file__), "static", "media")
 
-# In page order. The names are the keys team_uvlhub uses for descriptions and
-# that members' ``affiliation`` must match.
+# In page order. Each one is a team Role, the section its people appear in.
 ORGANISATIONS = [
     {
         "name": "University of Seville, Spain",
         "link": "http://www.us.es",
         "logo": "logos/university_of_seville.svg",
+        "description": (
+            "Performs active development of the application and is responsible "
+            "for code maintenance, deployment, operation of services and new "
+            "functionalities."
+        ),
     },
     {
         "name": "University of Malaga, Spain",
         "link": "http://www.uma.es",
         "logo": "logos/university_of_malaga.svg",
+        "description": "Responsible for active research, technical support",
     },
     {
         "name": "University of Ulm, Germany",
         "link": "http://www.uni-ulm.de",
         "logo": "logos/university_of_ulm.svg",
+        "description": (
+            "Provides population of consistent datasets with rich metadata for "
+            "initial loading of models into UVL. Responsible for the UVL parser. "
+            "Active research."
+        ),
     },
 ]
 
+# ``organisation`` names the Role the member is listed under.
 MEMBERS = [
     {
         "name": "David Romero-Organvidez",
         "position": "PhD Student / Project leader",
         "email": "drorganvidez@us.es",
-        "affiliation": "University of Seville, Spain",
+        "organisation": "University of Seville, Spain",
         "photo": "team/david_romero_organvidez.jpg",
     },
 ]
 
 
 def _import(relative_path, title):
-    item = MediaService().import_from_file(
+    return MediaService().import_from_file(
         os.path.join(STATIC_MEDIA, relative_path),
         title=title,
         source_key="seed://uvlhub/" + relative_path,
     )
-    return item
 
 
 class UvlhubTeamSeeder(BaseSeeder):
-    replaces = (
-        "splent_io.splent_feature_team.seeders",
-        "splent_io.splent_feature_partners.seeders",
-    )
+    replaces = ("splent_io.splent_feature_team.seeders",)
 
     def run(self):
-        self.seed(
+        roles = self.seed(
             [
-                Partner(
-                    media_id=_import(org["logo"], org["name"]).id,
+                Role(
                     name=org["name"],
-                    link=org["link"],
+                    slug=slugify(org["name"]),
                     order=order,
-                    active=True,
+                    description=org["description"],
+                    logo=_import(org["logo"], org["name"]).url,
+                    link=org["link"],
                 )
                 for order, org in enumerate(ORGANISATIONS, start=1)
             ]
         )
-        self.seed(
-            [
-                TeamMember(
-                    name=m["name"],
-                    slug=slugify(m["name"]),
-                    position=m["position"],
-                    affiliation=m["affiliation"],
-                    photo=_import(m["photo"], m["name"]).url,
-                    email=m["email"],
-                    order=order,
-                    published=True,
-                )
-                for order, m in enumerate(MEMBERS, start=1)
-            ]
-        )
+        by_name = {role.name: role for role in roles}
+
+        members = []
+        for order, m in enumerate(MEMBERS, start=1):
+            member = TeamMember(
+                name=m["name"],
+                slug=slugify(m["name"]),
+                position=m["position"],
+                affiliation=m["organisation"],
+                photo=_import(m["photo"], m["name"]).url,
+                email=m["email"],
+                order=order,
+                published=True,
+            )
+            member.roles = [by_name[m["organisation"]]]
+            members.append(member)
+        self.seed(members)

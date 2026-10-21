@@ -24,7 +24,6 @@ ADMIN_SIDEBAR_LINKS = [
     ("splent_io.splent_feature_recaptcha.hooks", "recaptcha_admin_link"),
     ("splent_io.splent_feature_media.hooks", "media_admin_link"),
     ("splent_io.splent_feature_team.hooks", "team_admin_link"),
-    ("splent_io.splent_feature_partners.hooks", "partners_admin_link"),
     ("splent_io.splent_feature_autodeploy.hooks", "deployments_sidebar_item"),
 ]
 
