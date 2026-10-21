@@ -62,14 +62,18 @@ features = [
 ]
 features_dev = ["splent-io/splent_feature_mailhog@v1.1.0", "splent-io/splent_feature_phpmyadmin@v1.0.3"]
 features_prod = []
-spl = "sample_splent_spl"
+spl = "openhubs_spl"
 
+# Where the SPL model itself comes from. The name above is not enough
+# to download anything, so the DOI travels with the product and any
+# clone of this repository can resolve the model from UVLHub alone.
 [tool.splent.spl_model]
 mirror = "uvlhub.io"
-doi = "10.5281/zenodo.23076870"
-concept_doi = "10.5281/zenodo.18873371"
-version = "v4"
-file = "sample_splent_spl.uvl"
+doi = ""
+# Same line, every version. Used to report that a newer model exists.
+concept_doi = ""
+version = ""
+file = "openhubs_spl.uvl"
 
 [tool.splent.config]
 SITE_NAME = "uvlhub"
