@@ -62,6 +62,16 @@ METRONIC_UNTIL_P2 = {"explore", "statistics", "generator", "dataset"}
 # The pages whose content one of those features draws.
 PAGES_OF_METRONIC_FEATURES = {"/explore", "/datasets/list"}
 
+# Bundles the shell links that answer 404 in dev, because nobody has built
+# them yet in the cache of the pinned release (profile 1.6.0, reset 1.5.0).
+# A bundle under dist/ is there once its feature's assets are built
+# (splent feature:compile, the image build), which the product does not do.
+# Each goes once it is built in dev; any other bundle missing is a failure.
+UNBUILT_BUNDLES = {
+    "/profile/dist/profile.bundle.js",
+    "/reset/dist/reset.bundle.js",
+}
+
 
 class _Assets(HTMLParser):
     """The addresses of the <link href> and <script src> of a page."""
@@ -153,9 +163,9 @@ def test_a_page_answers_in_the_shell(browsers, who, page):
 def test_every_asset_a_page_links_on_this_site_is_there(browsers, who, page):
     html = _open(browsers, who, page)
 
-    # A bundle under dist/ is there once the feature's assets are built
-    # (feature:compile, the image build), which the product does not do.
-    assets = [a for a in _assets_on_this_site(html) if "/dist/" not in a]
+    assets = [
+        a for a in _assets_on_this_site(html) if a.split("?")[0] not in UNBUILT_BUNDLES
+    ]
     missing = [a for a in assets if browsers[who].get(a).status_code != 200]
 
     assert assets
