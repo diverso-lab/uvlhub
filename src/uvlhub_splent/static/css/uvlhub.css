@@ -836,6 +836,12 @@ hr {
         background-color: var(--uvl-drawer-overlay);
     }
 
+    /* An open drawer holds the focus, without a ring around all of it. */
+    .uvl-sidebar:focus,
+    .uvl-header-menu:focus {
+        outline: 0;
+    }
+
     .uvl-drawer-open,
     .uvl-header-drawer-open {
         overflow: hidden;
@@ -912,6 +918,11 @@ hr {
     outline-offset: 2px;
 }
 
+/* A menu open under its toggle says where the focus is already. */
+.uvl-header [data-bs-toggle="dropdown"][aria-expanded="true"]:focus-visible {
+    outline: 0;
+}
+
 .uvl-header-logo {
     display: flex;
     align-items: center;
@@ -970,7 +981,6 @@ hr {
 }
 
 .uvl-header-icon:hover,
-.uvl-header-icon.active,
 .uvl-header .nav-icon:hover,
 .uvl-header .nav-icon[aria-expanded="true"],
 .uvl-user-toggle:hover,
@@ -1139,11 +1149,13 @@ hr {
 .uvl-user-menu {
     --bs-dropdown-min-width: 275px;
     width: 275px;
-    padding: 1rem 0;
+    /* Less at the bottom: the last entry's margin adds to it. */
+    padding: 1rem 0 .6rem;
 }
 
+/* Its margins collapse with the identity's and the first entry's. */
 .uvl-user-menu .dropdown-divider {
-    margin: .5rem 0 .625rem;
+    margin: .65rem 0 .9rem;
 }
 
 .uvl-user-identity {
@@ -1163,9 +1175,11 @@ hr {
     font-weight: var(--uvl-fw-medium);
 }
 
-.uvl-user-menu .dropdown-item {
+/* Over the components' .dropdown-menu > .dropdown-item, further down. The
+   entries' margins collapse into one between them. */
+.dropdown-menu.uvl-user-menu > .dropdown-item {
     width: auto;
-    margin: .275rem 1.25rem;
+    margin: .55rem 1.25rem;
     padding: .65rem 1.25rem;
     color: var(--uvl-gray-800);
     font-size: 1.075rem;
@@ -1192,9 +1206,13 @@ hr {
     font-size: 1.35rem;
 }
 
-.uvl-user-identity .px-3 {
-    padding-right: 0 !important;
-    padding-left: 0 !important;
+.uvl-user-identity .px-3,
+.uvl-user-identity .py-2 {
+    padding: 0 !important;
+}
+
+.uvl-user-identity .me-2 {
+    margin-right: 1.25rem !important;
 }
 
 /* ── Shell: the title band and the content ────────────────────────────── */

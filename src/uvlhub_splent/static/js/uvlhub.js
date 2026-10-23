@@ -126,13 +126,11 @@
                 panel: document.getElementById('sidebar'),
                 button: document.querySelector('[data-uvl-drawer-toggle]'),
                 open: DRAWER_OPEN,
-                first: '.sidebar-link',
             },
             {
                 panel: document.getElementById('uvl-header-menu'),
                 button: document.querySelector('[data-uvl-header-drawer-toggle]'),
                 open: HEADER_DRAWER_OPEN,
-                first: 'a[href], button, input',
             },
         ].filter((drawer) => drawer.panel && drawer.button);
         if (!all.length) return;
@@ -151,8 +149,10 @@
             covered(drawer.panel).forEach((part) => { part.inert = open; });
             if (overlay) overlay.hidden = !all.some((one) => body.classList.contains(one.open));
             if (open) {
-                const first = drawer.panel.querySelector(drawer.first);
-                if (first) first.focus({ preventScroll: true });
+                // The drawer itself takes the focus, so the keyboard starts
+                // in it without a ring on its first entry.
+                drawer.panel.setAttribute('tabindex', '-1');
+                drawer.panel.focus({ preventScroll: true });
             } else if (wasOpen && drawer.panel.contains(document.activeElement)) {
                 drawer.button.focus({ preventScroll: true });
             }
