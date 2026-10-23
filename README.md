@@ -76,6 +76,21 @@ When it finishes the app is served at <http://localhost:5012>, and
 | `splent db:migrate` | Generate and apply a migration |
 | `splent product:port` | Print the local URL |
 
+## Frozen URLs
+
+`frozen_urls.toml` lists every public address uvlhub.io 2.12 hands out that
+this product keeps answering, and `tests/test_frozen_urls.py` checks it
+against the app the product builds: the rules it serves, and the CORS and
+the sign-in answer flamapyIDE relies on. No `splent` command runs it yet
+(`product:test` runs the features' tests only) and neither does the CI, so
+run it in the web container whenever the pins change and before a release:
+
+```bash
+docker exec uvlhub_splent_web bash -lc 'cd /workspace/uvlhub_splent && python -m pytest tests -q -p no:cacheprovider'
+```
+
+Its docstring says how to run it against working copies of the features.
+
 ## When something looks wrong
 
 ```bash
