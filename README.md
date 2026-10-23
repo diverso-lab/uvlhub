@@ -1,6 +1,6 @@
 # uvlhub_splent
 
-A web application built with SPLENT, derived from the `sample_splent_spl` product line.
+A web application built with SPLENT, derived from the `openhubs_spl` product line (OpenHubs).
 
 This repository is a thin shell. It declares which features the product installs
 (see `pyproject.toml`) and SPLENT composes, validates and runs them.
