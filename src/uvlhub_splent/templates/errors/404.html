@@ -1,0 +1,11 @@
+{#- The page for an address that does not exist, in place of theme's
+    (errors/404.html, which theme's handler renders by name). uvlhub.io's
+    card, with uvlhub's ball for the zero; the words are the Appearance
+    panel's when it has some, uvlhub's otherwise. -#}
+{% extends "errors/_error_page.html" %}
+
+{% block title %}{{ (setting('site_404_title', '') if setting is defined else '') or _('Page not found') }}{% endblock %}
+{% block heading %}{{ (setting('site_404_title', '') if setting is defined else '') or _('Oops!') }}{% endblock %}
+{% block text %}{{ (setting('site_404_text', '') if setting is defined else '') or _("We can't find that page.") }}{% endblock %}
+{% block code %}<span>4</span><img src="{{ url_for('static', filename='media/logos/uvlhub_ball.png') }}" alt=""><span>4</span>{% endblock %}
+{% block action %}{{ (setting('site_404_cta', '') if setting is defined else '') or _('Return home') }}{% endblock %}
