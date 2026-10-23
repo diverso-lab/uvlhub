@@ -26,8 +26,6 @@ core = [
 cli_version = "1.35.0"
 features = [
     "splent-io/splent_feature_mail@v1.4.4",
-    "splent-io/splent_feature_confirmemail@v1.3.0",
-    "splent-io/splent_feature_reset@v1.5.0",
     "splent-io/splent_feature_academic_profile@v0.1.0",
     "splent-io/splent_feature_dataset@v0.2.0",
     "splent-io/splent_feature_featuremodel@v0.2.0",
@@ -41,11 +39,7 @@ features = [
     "splent-io/splent_feature_theme@v0.14.0",
     "splent-io/splent_feature_settings@v0.5.0",
     "splent-io/splent_feature_media@v0.10.0",
-    "splent-io/splent_feature_admin@v1.7.0",
-    "splent-io/splent_feature_auth@v1.21.0",
     "splent-io/splent_feature_signup@v0.4.0",
-    "splent-io/splent_feature_profile@v1.7.0",
-    "splent-io/splent_feature_apikeys@v0.4.0",
     "splent-io/splent_feature_team@v0.7.0",
     "splent-io/splent_feature_public@v1.10.0",
     "splent-io/splent_feature_apidocs@v0.2.0",
@@ -54,12 +48,18 @@ features = [
     "splent-io/splent_feature_elasticsearch@v0.2.0",
     "splent-io/splent_feature_redis@v1.6.0",
     "splent-io/splent_feature_session_redis@v1.2.0",
-    "splent-io/splent_feature_identities@v0.2.0",
-    "splent-io/splent_feature_orcid@v0.2.0",
-    "splent-io/splent_feature_github@v0.2.0",
     "splent-io/splent_feature_captcha@v0.1.0",
     "splent-io/splent_feature_captcha_image@v0.2.0",
     "splent-io/splent_feature_nginx@v1.4.0",
+    "splent-io/splent_feature_auth@v1.22.0",
+    "splent-io/splent_feature_profile@v1.7.1",
+    "splent-io/splent_feature_admin@v1.8.0",
+    "splent-io/splent_feature_reset@v2.0.0",
+    "splent-io/splent_feature_confirmemail@v2.0.0",
+    "splent-io/splent_feature_identities@v0.2.1",
+    "splent-io/splent_feature_orcid@v0.2.1",
+    "splent-io/splent_feature_github@v0.2.1",
+    "splent-io/splent_feature_apikeys@v0.4.1",
 ]
 features_dev = ["splent-io/splent_feature_mailhog@v1.2.0", "splent-io/splent_feature_phpmyadmin@v1.1.0"]
 features_prod = []
@@ -87,6 +87,9 @@ MEDIA_PUBLIC_GALLERY = false
 AUTH_MIGRATION_LEGACY_ROLE = "user"
 # Sign-up and reset ask for the new password twice, as uvlhub did.
 AUTH_PASSWORD_CONFIRM = true
+# Decision D2: every address is verified before the account opens, with
+# confirmemail; an account from ORCID with a typed address waits as well.
+AUTH_REQUIRE_VERIFIED_EMAIL = true
 # The sidebar logo already leads home, so the sidebar has no Home entry.
 PUBLIC_SIDEBAR_HOME_LINK = false
 # Off: the hint would tell anyone typing an address that the account exists
