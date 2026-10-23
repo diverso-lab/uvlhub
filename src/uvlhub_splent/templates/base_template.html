@@ -61,9 +61,11 @@
 
             <a class="sidebar-brand" href="/">
                 {# theme's site logo (the Appearance panel, then SITE_LOGO), and
-                   uvlhub's own while neither names one. #}
+                   uvlhub's own while neither names one. Its height too comes
+                   from the panel first, as in theme's public pages. #}
                 {% set logo = site.logo if site is defined and site.logo else 'media/logos/default.svg' %}
-                <img src="{{ url_for('static', filename=logo) }}" alt="{{ config.SITE_NAME or SPLENT_APP }}" height="{{ config.get('SITE_LOGO_SIZE') or 40 }}">
+                {% set logo_size = (setting('site_logo_size', '') if setting is defined else '') or config.get('SITE_LOGO_SIZE') or 40 %}
+                <img src="{{ url_for('static', filename=logo) }}" alt="{{ config.SITE_NAME or SPLENT_APP }}" height="{{ logo_size }}">
             </a>
 
             {# The entries features add. The headings come with them: auth's

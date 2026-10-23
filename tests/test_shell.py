@@ -183,6 +183,21 @@ def test_a_page_draws_nothing_of_metronic(
     assert KT_ID.findall(html) == []
 
 
+def test_the_logo_is_as_high_as_the_appearance_panel_says(app, browsers):
+    from splent_framework.services.service_locator import service_proxy
+
+    with app.app_context():
+        service_proxy("SettingsService").set("site_logo_size", "56")
+    try:
+        html = _open(browsers, "anonymous", "/")
+    finally:
+        with app.app_context():
+            service_proxy("SettingsService").set("site_logo_size", "")
+
+    brand = html[html.index('class="sidebar-brand"') :]
+    assert 'height="56"' in brand[: brand.index("</a>")]
+
+
 def test_the_product_templates_carry_nothing_of_metronic():
     found = {
         str(path.relative_to(TEMPLATES)): KEENTHEMES.findall(text) + KT_ID.findall(text)
