@@ -227,12 +227,40 @@ def test_the_sidebar_is_uvlhubs(browsers, who):
     if who == "anonymous":
         assert sidebar.headings == ["Let's get started!"]
         assert "/login" in paths and "/signup/" in paths
-    else:
+    elif who == "user":
         assert sidebar.headings == ["Datasets", "Developer", "Account"]
         assert paths[4:6] == ["/datasets/upload", "/datasets/list"]
         # uvlhub.io's Developer: the docs, the tokens, a new token.
         assert paths[6:9] == ["/apidocs/", "/developer/tokens", "/developer/tokens/new"]
         assert paths[-1] == "/logout"
+    else:
+        # The administration, for the accounts it lets in (decision D-admin),
+        # where the registry puts its section: after Datasets.
+        assert sidebar.headings == ["Datasets", "Administration", "Developer", "Account"]
+        assert paths[4:6] == ["/datasets/upload", "/datasets/list"]
+        docs = paths.index("/apidocs/")
+        assert paths[docs : docs + 3] == [
+            "/apidocs/",
+            "/developer/tokens",
+            "/developer/tokens/new",
+        ]
+        assert paths[-1] == "/logout"
+
+
+@pytest.mark.parametrize("who", ACCOUNTS)
+def test_the_administration_is_offered_to_the_accounts_it_lets_in(browsers, who):
+    """The panels the features add (settings, theme's Appearance...) are in
+    the sidebar of an administrator, between Datasets and Developer, and in
+    nobody else's."""
+    paths = [urlsplit(link).path for link in _sidebar(_open(browsers, who, "/")).links]
+    panels = [p for p in paths if p.startswith("/admin/")]
+
+    if who == "admin":
+        assert {"/admin/settings", "/admin/appearance"} <= set(panels)
+        assert paths.index("/datasets/list") < paths.index("/admin/settings")
+        assert paths.index("/admin/settings") < paths.index("/apidocs/")
+    else:
+        assert panels == []
 
 
 @pytest.mark.parametrize("who", ACCOUNTS)

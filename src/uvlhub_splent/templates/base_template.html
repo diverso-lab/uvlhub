@@ -17,13 +17,14 @@
 
         site                       layout.sidebar.top
         anonymous                  layout.anonymous_sidebar
-        main, admin, developer     layout.authenticated_sidebar
+        main, admin                layout.authenticated_sidebar
         account                    layout.sidebar.authenticated.items
         the user menu              layout.navbar.authenticated
         the user menu, visitors    layout.navbar.anonymous
 
     A section a feature declares for itself (dataset's Datasets) has no slot
-    and is drawn only from the registry.
+    and is drawn only from the registry, and so is Developer, whose entries
+    the product registers itself (create_app).
 
     The shell asks no other site for anything: Inter is served from
     static/fonts, the chrome's icons from static/vendor/phosphor, feather
@@ -154,12 +155,35 @@
 
                 {% else %}
 
+                    {#- The administration, from the slot while no main or admin
+                        entry is in the registry. The product takes every
+                        developer and datasets entry out of that slot into the
+                        registry (create_app), so what is left in it is the
+                        administration's, and it gets the registry's heading
+                        and place: after Datasets, before Developer. It is for
+                        administrators and staff (decision D-admin): some
+                        features still draw their entry there for any account
+                        (the dev tools' links, media 0.9), and within it each
+                        entry keeps its own gate. -#}
+                    {% set admin_slot = '' %}
+                    {% if current_user.role is defined and current_user.role in ('admin', 'staff')
+                          and not (registered | select('in', ['main', 'admin']) | list) %}
+                        {% set admin_slot = slot("layout.authenticated_sidebar") | trim %}
+                    {% endif %}
+                    {% set drawn = namespace(admin=not admin_slot) %}
+
                     {% for section in sections if section.key not in ('site', 'anonymous', 'account') %}
+                        {% if section.key == 'developer' and not drawn.admin %}
+                            <li class="sidebar-header"><span>{{ _('Administration') }}</span></li>
+                            {{ admin_slot }}
+                            {% set drawn.admin = true %}
+                        {% endif %}
                         {{ sidebar_section(section) }}
                     {% endfor %}
 
-                    {% if not (registered | select('in', ['main', 'admin', 'developer']) | list) %}
-                        {{ slot("layout.authenticated_sidebar") }}
+                    {% if not drawn.admin %}
+                        <li class="sidebar-header"><span>{{ _('Administration') }}</span></li>
+                        {{ admin_slot }}
                     {% endif %}
 
                     {% for section in sections if section.key == 'account' %}

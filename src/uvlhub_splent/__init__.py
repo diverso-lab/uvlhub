@@ -20,25 +20,6 @@ from splent_framework.nav.menu_registry import (
 
 from uvlhub_splent.aliases import aliases_bp
 
-# Admin entries the SPLENT features add to the signed-in sidebar. uvlhub's
-# sidebar has no admin section (Datasets, Developer and Account only), so the
-# product drops them; their pages stay reachable under /admin.
-ADMIN_SIDEBAR_LINKS = [
-    ("splent_io.splent_feature_admin.hooks", "admin_sidebar_link"),
-    ("splent_io.splent_feature_auth.hooks", "users_item"),
-    ("splent_io.splent_feature_mailhog.hooks", "mailhog_sidebar_link"),
-    ("splent_io.splent_feature_nginx.hooks", "nginx_sidebar_link"),
-    ("splent_io.splent_feature_phpmyadmin.hooks", "phpmyadmin_sidebar_link"),
-    ("splent_io.splent_feature_settings.hooks", "settings_admin_link"),
-    ("splent_io.splent_feature_theme.hooks", "appearance_admin_link"),
-    ("splent_io.splent_feature_theme.hooks", "menus_admin_link"),
-    ("splent_io.splent_feature_legal.hooks", "legal_admin_link"),
-    ("splent_io.splent_feature_recaptcha.hooks", "recaptcha_admin_link"),
-    ("splent_io.splent_feature_media.hooks", "media_admin_link"),
-    ("splent_io.splent_feature_team.hooks", "team_admin_link"),
-    ("splent_io.splent_feature_autodeploy.hooks", "deployments_sidebar_item"),
-]
-
 # Lower renders first within a slot; features default to 100.
 FIRST = 10
 LAST = 900
@@ -54,11 +35,12 @@ LAST = 900
 #
 # The developer entries are bridged for another reason. apikeys draws its
 # own and, inside it, apidocs' in layout.authenticated_sidebar, the slot the
-# main, admin and developer sections share, which the shell leaves out as
-# soon as any of the three has registry entries: an admin entry from any
-# feature's next release would take the Developer section away. Registered,
-# they no longer depend on what the other features have migrated, and the
-# slot keeps nothing uvlhub shows.
+# main and admin sections share, which the shell leaves out as soon as
+# either has registry entries: an admin entry from any feature's next
+# release would take the Developer section away. Registered, they no longer
+# depend on what the other features have migrated, and the slot keeps the
+# administration's entries only, which the shell heads as the registry
+# does (base_template.html).
 #
 # Each is registered with the key, the endpoint and the icon its feature's
 # next release registers (its working copy does), under the label it shows
@@ -198,13 +180,6 @@ def _place(slot, func, order):
     register_template_hook(slot, func, order=order)
 
 
-def _remove_admin_sidebar_links():
-    for module_name, func_name in ADMIN_SIDEBAR_LINKS:
-        func = _feature_hook(module_name, func_name)
-        if func is not None:
-            remove_template_hook("layout.authenticated_sidebar", func)
-
-
 def account_sidebar_heading():
     return render_template("hooks/account_sidebar_heading.html")
 
@@ -324,7 +299,6 @@ def _answer_not_found(app):
 def create_app(config_name=None):
     # No profile named: the framework follows SPLENT_ENV (dev, prod, test).
     app = create_splent_app(__name__, config_name)
-    _remove_admin_sidebar_links()
     _arrange_menus()
     _bridge_menus()
 
