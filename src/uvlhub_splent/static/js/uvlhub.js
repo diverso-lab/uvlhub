@@ -24,7 +24,7 @@
  *   the skin rings a field only when the keyboard reached it.
  * - The header's menus open right under it, and the account menu and the
  *   menus features put among the header's buttons open on hover from a
- *   desktop, as uvlhub.io's do; a click still works.
+ *   desktop, as uvlhub.io's do; a click on an open one leaves it open.
  * - Bootstrap starts no tooltip or popover by itself, and AdminKit does not
  *   either. Every element that asks for one with data-bs-toggle gets it
  *   once the page is parsed. Content a feature draws later starts its own.
@@ -250,6 +250,19 @@
                 timer = setTimeout(() => dropdown().hide(), 200);
             });
         });
+        // The pointer opened the menu on its way to the button, so a click
+        // there finds it open: Bootstrap would toggle it shut, and nothing
+        // reopens it while the pointer stays. On uvlhub.io the click leaves
+        // it open. Bootstrap listens on the document while the click goes
+        // down, so this listens on the window, before it. A click from the
+        // keyboard (Enter or Space, detail 0) still toggles the menu.
+        window.addEventListener('click', (event) => {
+            if (!DESKTOP.matches || event.detail === 0 || !(event.target instanceof Element)) return;
+            const toggle = event.target.closest('[data-bs-toggle="dropdown"]');
+            if (!toggle || !toggles.has(toggle) || !toggle.classList.contains('show')) return;
+            event.preventDefault();
+            event.stopPropagation();
+        }, true);
     }
 
     // ── The header's menus open under the header ──────────────────────
