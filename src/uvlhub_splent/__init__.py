@@ -224,28 +224,6 @@ def _fill_the_home(app):
     )
 
 
-def team_sections():
-    """Every team role, in page order, with its published members.
-
-    team's own list leaves out a role with nobody published under it.
-    uvlhub's team page shows each organisation behind the project with
-    its logo and description whether or not it lists people, as uvlhub
-    always did.
-    """
-    from splent_framework.services.service_locator import service_proxy
-
-    return [
-        (
-            role,
-            sorted(
-                (m for m in role.members if m.published),
-                key=lambda m: (m.order, m.name),
-            ),
-        )
-        for role in service_proxy("TeamService").roles()
-    ]
-
-
 def _arrange_menus():
     """uvlhub's menus, out of what the features put in them.
 
@@ -343,12 +321,5 @@ def create_app(config_name=None):
     @app.context_processor
     def inject_app_version():
         return {"APP_VERSION": get_app_version()}
-
-    # A callable, so the query only runs on the page that calls it.
-    if "splent_io.splent_feature_team" in sys.modules:
-
-        @app.context_processor
-        def inject_team_sections():
-            return {"team_sections": team_sections}
 
     return app

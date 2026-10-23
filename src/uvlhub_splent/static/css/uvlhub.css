@@ -2333,26 +2333,235 @@ hr {
     font-weight: var(--uvl-fw-semibold);
 }
 
-/* ── Pages: the team page (team/list.html) ────────────────────────────── */
+/* ── Pages: the team page (team's team/list.html and team/detail.html) ── */
 
-.team-logo-frame {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    min-height: 120px;
-    padding: 1rem;
-    border-radius: .75rem;
+/* team draws each role as a header (its logo, name, description and
+   website) followed by its members, all of them siblings in one container.
+   uvlhub.io draws each organisation as a card, three to a row: the logo,
+   the name, the description, the people, and the website in a footer,
+   every footer of a row at the same height. Here the container is a grid
+   of bands of five rows (logo, name, description, people, website) and a
+   gap: each header is the card, spanning its band's five rows as a
+   subgrid, and its members sit on the fourth row of the same column, over
+   the card. One column on a phone, two from 768px, three from 992px, as
+   uvlhub.io's. Each role finds its column and band from its place among
+   the headers, set below for up to twelve organisations. */
+.uvl-content .container.section:has(> .team-group) {
+    --team-cols: 1;
+    display: grid;
+    grid-template-columns: repeat(var(--team-cols), minmax(0, 1fr));
+    grid-auto-rows: auto auto auto auto auto var(--uvl-grid-gutter);
+    column-gap: var(--uvl-grid-gutter);
+    max-width: none;
+    padding: 0;
 }
 
-.logo-img {
+@media (min-width: 768px) {
+    .uvl-content .container.section:has(> .team-group) {
+        --team-cols: 2;
+    }
+}
+
+@media (min-width: 992px) {
+    .uvl-content .container.section:has(> .team-group) {
+        --team-cols: 3;
+    }
+}
+
+.team-group:nth-of-type(1), .team-group:nth-of-type(1) + .member-grid { --team-i: 0; }
+.team-group:nth-of-type(2), .team-group:nth-of-type(2) + .member-grid { --team-i: 1; }
+.team-group:nth-of-type(3), .team-group:nth-of-type(3) + .member-grid { --team-i: 2; }
+.team-group:nth-of-type(4), .team-group:nth-of-type(4) + .member-grid { --team-i: 3; }
+.team-group:nth-of-type(5), .team-group:nth-of-type(5) + .member-grid { --team-i: 4; }
+.team-group:nth-of-type(6), .team-group:nth-of-type(6) + .member-grid { --team-i: 5; }
+.team-group:nth-of-type(7), .team-group:nth-of-type(7) + .member-grid { --team-i: 6; }
+.team-group:nth-of-type(8), .team-group:nth-of-type(8) + .member-grid { --team-i: 7; }
+.team-group:nth-of-type(9), .team-group:nth-of-type(9) + .member-grid { --team-i: 8; }
+.team-group:nth-of-type(10), .team-group:nth-of-type(10) + .member-grid { --team-i: 9; }
+.team-group:nth-of-type(11), .team-group:nth-of-type(11) + .member-grid { --team-i: 10; }
+.team-group:nth-of-type(12), .team-group:nth-of-type(12) + .member-grid { --team-i: 11; }
+
+.uvl-content .team-group,
+.uvl-content .team-group + .member-grid {
+    --team-row: calc(round(down, var(--team-i) / var(--team-cols)) * 6 + 1);
+    grid-column: calc(mod(var(--team-i), var(--team-cols)) + 1);
+}
+
+/* The card. */
+.uvl-content .team-group {
+    display: grid;
+    grid-row: var(--team-row) / span 5;
+    grid-template-rows: subgrid;
+    padding: 1.5rem;
+    border: 1px solid var(--uvl-card-border-color);
+    border-radius: var(--uvl-radius-lg);
+    background: var(--uvl-surface);
+    box-shadow: var(--uvl-shadow-card);
+}
+
+.team-group__body {
+    display: contents;
+}
+
+/* The logo, in a frame 100px high, a step above the name. */
+.team-group > .team-group__logo-link,
+.team-group > .team-group__logo {
+    grid-row: 1;
+    display: block;
+    margin-bottom: 1.5rem;
+}
+
+.team-group__logo {
+    box-sizing: border-box;
     width: 100%;
-    height: 100px;
+    height: calc(100px + 2rem);
+    padding: 1rem;
     object-fit: contain;
     object-position: center;
 }
 
-/* The card around it already has its padding. */
-.custom-card-body {
-    padding: 0;
+.uvl-content .team-group .section-title {
+    grid-row: 2;
+    margin: 0 0 .5rem;
+    color: var(--uvl-heading-color);
+    font-size: var(--uvl-card-title-size);
+    font-weight: var(--uvl-fw-medium);
+    line-height: 1.2;
+}
+
+.team-group__description {
+    grid-row: 3;
+    margin: 0;
+}
+
+/* The website, in the card's footer: a hairline across the card's body,
+   the address inset as a card footer's. */
+.uvl-content .team-group__website {
+    grid-row: 5;
+    display: block;
+    padding: 1.5rem 2.25rem;
+    border-top: 1px solid var(--uvl-card-border-color);
+}
+
+/* The people of the organisation, on the card between its description and
+   its footer, lined up with the card's text. */
+.uvl-content .team-group + .member-grid {
+    grid-row: calc(var(--team-row) + 3);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1.5rem calc(1.5rem + 1px) 0;
+}
+
+.member-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.member-card__link {
+    flex: none;
+}
+
+.member-card__photo,
+.member-card__placeholder {
+    display: block;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.member-card__placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--uvl-primary-light);
+    color: var(--uvl-primary);
+    font-size: 1.5rem;
+    font-weight: var(--uvl-fw-semibold);
+}
+
+.member-card__overlay {
+    min-width: 0;
+}
+
+.uvl-content .member-card__name {
+    margin: 0;
+    color: var(--uvl-heading-color);
+    font-size: 1rem;
+    font-weight: var(--uvl-fw-semibold);
+    line-height: 1.5;
+}
+
+.member-card__role {
+    margin: 0;
+    color: var(--uvl-text-muted);
+}
+
+.member-card__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 .75rem;
+}
+
+/* A member's own page: the photo and what team says about them, in a card. */
+.uvl-content .member-detail {
+    max-width: none;
+    padding: var(--uvl-card-padding-y) var(--uvl-card-padding-x);
+    border: 1px solid var(--uvl-card-border-color);
+    border-radius: var(--uvl-radius-lg);
+    background: var(--uvl-surface);
+    box-shadow: var(--uvl-shadow-card);
+}
+
+.member-detail__photo {
+    display: block;
+    width: 120px;
+    height: 120px;
+    margin-bottom: 1.5rem;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.member-roles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    margin-bottom: 1.5rem;
+}
+
+.member-roles .badge {
+    background: var(--uvl-gray-200);
+    color: var(--uvl-gray-800);
+}
+
+.uvl-content .member-detail .section-title {
+    margin: 1.5rem 0 1rem;
+    color: var(--uvl-heading-color);
+    font-size: var(--uvl-card-title-size);
+    font-weight: var(--uvl-fw-medium);
+}
+
+.member-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    margin-bottom: 1rem;
+}
+
+.member-contact {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+
+.member-contact__icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    color: var(--uvl-text-muted);
+}
+
+.member-contact__label {
+    color: var(--uvl-text-muted);
 }

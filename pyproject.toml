@@ -105,6 +105,11 @@ DATASET_PUBLISHER_NAME = "uvlhub"
 DATASET_CATALOG_URL = "https://www.uvlhub.io"
 # The ball drawn in the middle of the PNG and JPG QR codes.
 DATASET_QR_LOGO = "media/logos/uvlhub_ball.png"
+# /team lists every organisation behind uvlhub, with its logo, description
+# and website, whether or not it lists people yet.
+TEAM_SHOW_EMPTY_ROLES = true
+# uvlhub.io shows the trail on every page below the home: Home / Team.
+SITE_BREADCRUMBS = "all"
 
 [tool.splent.layout]
 base_template = "base_template.html"

@@ -61,7 +61,9 @@ APPEARANCE = {
     "site_404_cta": "Return home",
 }
 
-# ``organisation`` names the Role the member is listed under.
+# ``organisation`` names the Role the member is listed under, whose card
+# already names it, so the member has no affiliation of its own: team would
+# write it again after the position.
 MEMBERS = [
     {
         "name": "David Romero-Organvidez",
@@ -106,7 +108,6 @@ class UvlhubTeamSeeder(BaseSeeder):
                 name=m["name"],
                 slug=slugify(m["name"]),
                 position=m["position"],
-                affiliation=m["organisation"],
                 photo=_import(m["photo"], m["name"]).url,
                 email=m["email"],
                 order=order,

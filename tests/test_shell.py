@@ -266,6 +266,23 @@ def test_the_home_is_publics_with_uvlhubs_cards_beside_it(app, browsers, who):
     assert aside.index("Hub statistics") < aside.index("What is uvlhub.io?")
     assert aside.index("What is uvlhub.io?") < aside.index("Cite us!")
     assert '<h1 class="uvl-page-title">uvlhub — ' in html
+    assert not (TEMPLATES / "public" / "index.html").exists()
+
+
+def test_the_team_is_teams_page_under_the_trail(app, browsers, monkeypatch):
+    """team's own list in the app shell, headed by its name without the
+    site's ("Team — uvlhub_splent" in its title block), under the trail theme
+    derives for it with uvlhub's SITE_BREADCRUMBS."""
+    _until_the_shell_is_public(app, "/team")
+    monkeypatch.setitem(app.config, "SITE_BREADCRUMBS", "all")
+    html = _open(browsers, "anonymous", "/team")
+    trail = html[html.index('<ol class="breadcrumb">') :]
+    trail = trail[: trail.index("</ol>")]
+
+    assert '<h1 class="uvl-page-title">Team</h1>' in html
+    assert '<a href="/">Home</a>' in trail
+    assert '<li class="breadcrumb-item active" aria-current="page">Team</li>' in trail
+    assert not (TEMPLATES / "team" / "list.html").exists()
 
 
 @pytest.mark.parametrize("who", BROWSERS)
