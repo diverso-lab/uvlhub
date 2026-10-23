@@ -29,7 +29,6 @@ features = [
     "splent-io/splent_feature_confirmemail@v1.3.0",
     "splent-io/splent_feature_reset@v1.5.0",
     "splent-io/splent_feature_academic_profile@v0.1.0",
-    "splent-io/splent_feature_captcha_image@v0.1.0",
     "splent-io/splent_feature_dataset@v0.2.0",
     "splent-io/splent_feature_featuremodel@v0.2.0",
     "splent-io/splent_feature_flamapy@v0.1.1",
@@ -59,6 +58,8 @@ features = [
     "splent-io/splent_feature_identities@v0.2.0",
     "splent-io/splent_feature_orcid@v0.2.0",
     "splent-io/splent_feature_github@v0.2.0",
+    "splent-io/splent_feature_captcha",
+    "splent-io/splent_feature_captcha_image",
 ]
 features_dev = ["splent-io/splent_feature_mailhog@v1.2.0", "splent-io/splent_feature_phpmyadmin@v1.1.0"]
 features_prod = []
@@ -97,8 +98,9 @@ APIKEYS_SCOPES = ["read_dataset", "write_dataset"]
 APIKEYS_DEFAULT_SCOPES = ["read_dataset"]
 # uvlhub's API clients send the token in X-API-Key as well as Bearer.
 APIKEYS_HEADER_ALIASES = ["X-API-Key"]
-# Only the sign-up asks for the image captcha.
-CAPTCHA_IMAGE_FORMS = ["signup"]
+# Only the sign-up asks for the captcha, as on uvlhub.io; the login and the
+# request for a reset link do not.
+CAPTCHA_PROTECTED_FORMS = ["signup"]
 # The publisher named in every dataset's FAIR metadata, mails and API messages.
 DATASET_PUBLISHER_NAME = "uvlhub"
 # The catalog those metadata point to, the public site and not this host.
