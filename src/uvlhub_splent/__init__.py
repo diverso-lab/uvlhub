@@ -256,7 +256,12 @@ def _fill_the_home(app):
     _place("home.aside", home_about, LAST)
     _place("home.aside", home_cite, LAST + 10)
     register_asset(
-        "css", "public.assets", order=100, shell="app", subfolder="css", filename="home.css"
+        "css",
+        "public.assets",
+        order=100,
+        shell="app",
+        subfolder="css",
+        filename="home.css",
     )
 
 

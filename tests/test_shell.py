@@ -217,7 +217,9 @@ def _open_in_the_shell(app, browsers, who, page):
     account home), expected in the app shell unless that is a public page
     its feature still draws in theme's public_base.html."""
     response = browsers[who].get(page, follow_redirects=True)
-    assert response.status_code == 200, f"{page} answered {who} with {response.status_code}"
+    assert response.status_code == 200, (
+        f"{page} answered {who} with {response.status_code}"
+    )
     _until_the_shell_is_public(app, response.request.path)
     return response.get_data(as_text=True)
 
@@ -304,7 +306,12 @@ def test_the_sidebar_is_uvlhubs(browsers, who):
     else:
         # The administration, for the accounts it lets in (decision D-admin),
         # where the registry puts its section: after Datasets.
-        assert sidebar.headings == ["Datasets", "Administration", "Developer", "Account"]
+        assert sidebar.headings == [
+            "Datasets",
+            "Administration",
+            "Developer",
+            "Account",
+        ]
         assert paths[4:6] == ["/datasets/upload", "/datasets/list"]
         docs = paths.index("/apidocs/")
         assert paths[docs : docs + 3] == [
@@ -320,7 +327,9 @@ def test_the_administration_is_offered_to_the_accounts_it_lets_in(browsers, who)
     """The panels the features add (settings, theme's Appearance...) are in
     the sidebar of an administrator, between Datasets and Developer, and in
     nobody else's."""
-    paths = [urlsplit(link).path for link in _sidebar(_open(browsers, who, SHELL_PAGE)).links]
+    paths = [
+        urlsplit(link).path for link in _sidebar(_open(browsers, who, SHELL_PAGE)).links
+    ]
     panels = [p for p in paths if p.startswith("/admin/")]
 
     if who == "admin":
@@ -413,9 +422,7 @@ def test_an_admin_section_in_the_registry_leaves_the_developer_section(
     def sections():
         # This one in place of the admin entries the features register.
         return [
-            section
-            for section in every_section()
-            if section["key"] != "admin"
+            section for section in every_section() if section["key"] != "admin"
         ] + registered
 
     monkeypatch.setitem(app.jinja_env.globals, "menu_sections", sections)
