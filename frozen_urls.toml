@@ -603,11 +603,13 @@ methods = ["GET"]
 v212 = "mono/app/features/auth/routes.py:71"
 clients = ["flamapyIDE (ide.flamapy.org)"]
 target = "Served by the UVL layer, uvl or a bridge (UV-11)"
-status = "alias-pending"
+status = "served"
+endpoint = "featuremodel.auth_status"
+served_by = "featuremodel"
 plan = "CO-1, UV-11"
 cors_origin = "https://ide.flamapy.org"
 signed_out_keys = ["authenticated", "message", "login_url", "signup_url", "orcid_url"]
-note = "featuremodel serves it from 0.1.1 on (endpoint featuremodel.auth_status), with dataset 0.1.2. Pinning those two releases turns this entry into served"
+note = "featuremodel serves it since 0.2.0 (the UVL layer, until uvl takes it over in UV-11), with the CORS of FLAMAPY_IDE_ORIGINS that left dataset in 0.2.0"
 
 # ── 13. /api/me ───────────────────────────────────────────────────────────
 
