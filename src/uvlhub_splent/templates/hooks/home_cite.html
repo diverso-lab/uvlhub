@@ -1,0 +1,37 @@
+{#- How to cite uvlhub, last beside the top datasets: a plain card, its
+    references in the text's colour, as on uvlhub.io. The product's, in
+    public's home.aside slot (create_app); the button opens the shell's
+    citation dialog (cites.html). -#}
+<div class="card uvl-home-card">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="mb-0"><b>{{ _('Cite us!') }}</b></h2>
+            <button type="button" class="btn btn-secondary py-2 px-3 fw-bold"
+                    data-bs-toggle="modal" data-bs-target="#citationModal">
+                <i class="uvl-btn-icon-sm" data-feather="heart" aria-hidden="true"></i>
+                <span class="d-none d-md-inline">{{ _('How to cite us?') }}</span>
+            </button>
+        </div>
+
+        <p>
+            David Romero-Organvidez, José A. Galindo, Chico Sundermann, Jose-Miguel Horcas, David Benavides.
+            <i>UVLHub: A feature model data repository using UVL and Open Science principles</i>,
+            Journal of Systems and Software,
+            2024,
+            112150,
+            ISSN 0164-1212,
+            <a href="https://doi.org/10.1016/j.jss.2024.112150" target="_blank" rel="noopener">https://doi.org/10.1016/j.jss.2024.112150</a>
+        </p>
+
+        <p>
+            David Benavides, Chico Sundermann, Kevin Feichtinger, José A. Galindo, Rick Rabiser and Thomas Thüm,
+            <i>Uvl: Feature Modelling with the Universal Variability Language.</i>,
+            Journal of Systems and Software,
+            Volume 225,
+            2025,
+            112326,
+            ISSN 0164-1212,
+            <a href="https://doi.org/10.1016/j.jss.2024.112326" target="_blank" rel="noopener">https://doi.org/10.1016/j.jss.2024.112326</a>
+        </p>
+    </div>
+</div>

@@ -49,6 +49,12 @@ ACCOUNTS = {
 }
 BROWSERS = ["anonymous", *ACCOUNTS]
 PAGES = ["/", "/login", "/signup/", "/explore", "/team", "/datasets/list"]
+# The page the checks of the shell itself open: one every pinned feature
+# draws in the app shell.
+SHELL_PAGE = "/explore"
+# The pages the features write for the public site, which uvlhub draws in
+# the app shell through SPLENT_SHELL_PUBLIC, and the template of each.
+PUBLIC_PAGES = {"/": "public/index.html", "/team": "team/list.html"}
 
 # Keenthemes' names, as the CLI's check:vendor looks for them in a tree.
 KEENTHEMES = re.compile(
@@ -189,6 +195,33 @@ def without_metronic_features(app, monkeypatch):
     monkeypatch.setitem(app.jinja_env.globals, "get_template_hooks", hooks)
 
 
+def _until_the_shell_is_public(app, page):
+    """Expect ``page`` out of uvlhub's shell while its feature's template
+    names theme's public_base.html instead of shell('public').
+
+    public 1.9.0 and team 0.6.0 do, so SPLENT_SHELL_PUBLIC cannot bring the
+    home and /team into the app shell. Their next releases draw
+    shell('public') (their working copies do, and so do these pages under
+    SPLENT_FEATURE_SOURCES); this goes once those releases are pinned.
+    """
+    template = PUBLIC_PAGES.get(page)
+    if template is None:
+        return
+    source = app.jinja_env.loader.get_source(app.jinja_env, template)[0]
+    if 'extends "public_base.html"' in source:
+        pytest.xfail(f"{template} still extends public_base.html by name")
+
+
+def _open_in_the_shell(app, browsers, who, page):
+    """``page`` as ``who`` gets it, where it lands (the forms send an
+    account home), expected in the app shell unless that is a public page
+    its feature still draws in theme's public_base.html."""
+    response = browsers[who].get(page, follow_redirects=True)
+    assert response.status_code == 200, f"{page} answered {who} with {response.status_code}"
+    _until_the_shell_is_public(app, response.request.path)
+    return response.get_data(as_text=True)
+
+
 def _open(browsers, who, page):
     response = browsers[who].get(page, follow_redirects=True)
     status = response.status_code
@@ -198,8 +231,8 @@ def _open(browsers, who, page):
 
 @pytest.mark.parametrize("page", PAGES)
 @pytest.mark.parametrize("who", BROWSERS)
-def test_a_page_answers_in_the_shell(browsers, who, page):
-    html = _open(browsers, who, page)
+def test_a_page_answers_in_the_shell(app, browsers, who, page):
+    html = _open_in_the_shell(app, browsers, who, page)
 
     assert '<aside id="sidebar" class="uvl-sidebar"' in html
     # The page's own heading or, when it draws none, its title.
@@ -210,16 +243,34 @@ def test_a_page_answers_in_the_shell(browsers, who, page):
 
 @pytest.mark.parametrize("page", PAGES)
 @pytest.mark.parametrize("who", BROWSERS)
-def test_the_sidebar_shows_each_entry_once(browsers, who, page):
-    links = _sidebar(_open(browsers, who, page)).links
+def test_the_sidebar_shows_each_entry_once(app, browsers, who, page):
+    links = _sidebar(_open_in_the_shell(app, browsers, who, page)).links
 
     assert links
     assert len(links) == len(set(links))
 
 
 @pytest.mark.parametrize("who", BROWSERS)
+def test_the_home_is_publics_with_uvlhubs_cards_beside_it(app, browsers, who):
+    """public's own home in the app shell: its two columns, the top datasets
+    and, beside them, the product's cards around what the features put
+    there, in uvlhub.io's order. The site's title heads it, in the band."""
+    _until_the_shell_is_public(app, "/")
+    html = _open(browsers, who, "/")
+    aside = html[html.index('<aside class="home-columns__aside">') :]
+
+    # Beside the top datasets, or alone on a hub with none yet.
+    assert '<div class="container home-columns' in html
+    assert "/public/css/home.css" in html
+    assert ("get started!</h2>" in aside) == (who == "anonymous")
+    assert aside.index("Hub statistics") < aside.index("What is uvlhub.io?")
+    assert aside.index("What is uvlhub.io?") < aside.index("Cite us!")
+    assert '<h1 class="uvl-page-title">uvlhub — ' in html
+
+
+@pytest.mark.parametrize("who", BROWSERS)
 def test_the_sidebar_is_uvlhubs(browsers, who):
-    sidebar = _sidebar(_open(browsers, who, "/"))
+    sidebar = _sidebar(_open(browsers, who, SHELL_PAGE))
     paths = [urlsplit(link).path for link in sidebar.links]
 
     # The site's own entries first, for everyone, in uvlhub.io's order.
@@ -252,7 +303,7 @@ def test_the_administration_is_offered_to_the_accounts_it_lets_in(browsers, who)
     """The panels the features add (settings, theme's Appearance...) are in
     the sidebar of an administrator, between Datasets and Developer, and in
     nobody else's."""
-    paths = [urlsplit(link).path for link in _sidebar(_open(browsers, who, "/")).links]
+    paths = [urlsplit(link).path for link in _sidebar(_open(browsers, who, SHELL_PAGE)).links]
     panels = [p for p in paths if p.startswith("/admin/")]
 
     if who == "admin":
@@ -265,7 +316,7 @@ def test_the_administration_is_offered_to_the_accounts_it_lets_in(browsers, who)
 
 @pytest.mark.parametrize("who", ACCOUNTS)
 def test_the_account_menu_names_the_account_and_its_entries(browsers, who):
-    html = _open(browsers, who, "/")
+    html = _open(browsers, who, SHELL_PAGE)
     menu = html[html.index('class="dropdown-menu dropdown-menu-end uvl-user-menu"') :]
     menu = menu[: menu.index("</li>")]
 
@@ -306,7 +357,7 @@ def test_a_section_with_registry_entries_does_not_draw_its_slot(
         return every_section() + registered
 
     monkeypatch.setitem(app.jinja_env.globals, "menu_sections", sections)
-    sidebar = _sidebar(_open(browsers, "anonymous", "/"))
+    sidebar = _sidebar(_open(browsers, "anonymous", SHELL_PAGE))
 
     assert "Registered heading" in sidebar.headings
     assert "Let's get started!" not in sidebar.headings
@@ -346,7 +397,7 @@ def test_an_admin_section_in_the_registry_leaves_the_developer_section(
         return every_section() + registered
 
     monkeypatch.setitem(app.jinja_env.globals, "menu_sections", sections)
-    sidebar = _sidebar(_open(browsers, "admin", "/"))
+    sidebar = _sidebar(_open(browsers, "admin", SHELL_PAGE))
     paths = [urlsplit(link).path for link in sidebar.links]
 
     assert "Developer" in sidebar.headings
@@ -395,7 +446,7 @@ def test_a_page_draws_nothing_of_metronic(
 def test_the_header_offers_the_three_modes(browsers, who):
     """uvlhub.io's Mode menu: Light, Dark and System, and the mode is set
     before the stylesheets, so a dark page does not flash light first."""
-    html = _open(browsers, who, "/")
+    html = _open(browsers, who, SHELL_PAGE)
     menu = html[html.index('class="dropdown-menu dropdown-menu-end uvl-mode-menu"') :]
     menu = menu[: menu.index("</div>")]
 
@@ -472,7 +523,7 @@ def test_the_logo_is_as_high_as_the_appearance_panel_says(app, browsers):
     with app.app_context():
         service_proxy("SettingsService").set("site_logo_size", "56")
     try:
-        html = _open(browsers, "anonymous", "/")
+        html = _open(browsers, "anonymous", SHELL_PAGE)
     finally:
         with app.app_context():
             service_proxy("SettingsService").set("site_logo_size", "")
@@ -482,7 +533,7 @@ def test_the_logo_is_as_high_as_the_appearance_panel_says(app, browsers):
 
 
 def test_the_chrome_icons_are_in_the_sprite(browsers):
-    html = _open(browsers, "user", "/")
+    html = _open(browsers, "user", SHELL_PAGE)
     used = set(re.findall(r'<use href="([^"#]+)[^"#]*#(ph-[a-z0-9-]+)"', html))
     sprites = {address for address, _ in used}
 

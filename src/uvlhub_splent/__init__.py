@@ -185,6 +185,45 @@ def account_sidebar_heading():
     return render_template("hooks/account_sidebar_heading.html")
 
 
+def home_get_started():
+    """Sign up or sign in, for visitors."""
+    from flask_login import current_user
+
+    if not current_user.is_anonymous:
+        return ""
+    return render_template("hooks/home_get_started.html")
+
+
+def home_about():
+    """What uvlhub is and how to contribute."""
+    return render_template("hooks/home_about.html")
+
+
+def home_cite():
+    """How to cite uvlhub."""
+    return render_template("hooks/home_cite.html")
+
+
+def _fill_the_home(app):
+    """uvlhub's cards beside the top datasets, in public's home.aside slot.
+
+    In uvlhub.io's order: Let's get started! first, for visitors, then what
+    the features put there (statistics' counters), then what uvlhub is and
+    how to cite it. public draws the home in two columns once home.aside has
+    something, with a stylesheet of its own for the public shell; the home
+    is drawn in the app shell (SPLENT_SHELL_PUBLIC), so that stylesheet
+    serves the app shell as well.
+    """
+    if "public.index" not in app.view_functions:
+        return
+    _place("home.aside", home_get_started, FIRST)
+    _place("home.aside", home_about, LAST)
+    _place("home.aside", home_cite, LAST + 10)
+    register_asset(
+        "css", "public.assets", order=100, shell="app", subfolder="css", filename="home.css"
+    )
+
+
 def team_sections():
     """Every team role, in page order, with its published members.
 
@@ -278,8 +317,9 @@ def _bridge_menus():
 def _skin_the_public_shell():
     """uvlhub.io's error card on theme's public shell.
 
-    That shell, public_base.html, draws theme's 404, which the product
-    dresses as uvlhub.io's card with its own stylesheet, the one its 400,
+    In uvlhub that shell, public_base.html, only draws theme's 404: the
+    public pages are in the app shell (SPLENT_SHELL_PUBLIC). The product
+    dresses it as uvlhub.io's card with its own stylesheet, the one its 400,
     401 and 500 pages wear. Registered after the features, as a skin is,
     so it comes after theirs."""
     register_asset("css", "static", order=200, filename="css/uvlhub-error.css")
@@ -290,6 +330,7 @@ def create_app(config_name=None):
     app = create_splent_app(__name__, config_name)
     _arrange_menus()
     _bridge_menus()
+    _fill_the_home(app)
 
     # /api/me of uvlhub 2.12, until legacy_urls (CO-2) answers it.
     if "profile.my_profile" in app.view_functions:

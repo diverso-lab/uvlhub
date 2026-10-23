@@ -44,7 +44,21 @@
         once, even to a page that already wrote it by hand. -#}
     {% set page_title %}{% block title %}{{ title }}{% endblock %}{% endset %}
     {% set page_title = page_title | trim %}
-    <title>{% if site_title is defined %}{{ site_title(page_title) }}{% else %}{% if page_title %}{{ page_title }} · {% endif %}{{ config.SITE_NAME or SPLENT_APP }}{% endif %}</title>
+    {% if site_title is defined %}
+    {% set document_title = site_title(page_title) %}
+    {% else %}
+    {% set document_title = (page_title ~ ' · ' if page_title else '') ~ (config.SITE_NAME or SPLENT_APP) %}
+    {% endif %}
+    <title>{{ document_title }}</title>
+    {#- The band names the page as the <title> does before the site's name,
+        so a page that still writes the site after its name by hand
+        ("Team — {{ SPLENT_APP }}") is headed "Team". -#}
+    {% set site_suffix = ' · ' ~ (site.name if site is defined else config.SITE_NAME or SPLENT_APP) %}
+    {% if document_title.endswith(site_suffix) and document_title | length > site_suffix | length %}
+    {% set page_heading = document_title[:-(site_suffix | length)] %}
+    {% else %}
+    {% set page_heading = page_title %}
+    {% endif %}
 
     <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32.png') }}">
     <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='favicon-192.png') }}">
@@ -358,7 +372,7 @@
             datasets) leave it to the shell. -#}
         {% if page_title and '<h1' not in page_content %}
         <div class="uvl-toolbar">
-            <h1 class="uvl-page-title">{{ page_title }}</h1>
+            <h1 class="uvl-page-title">{{ page_heading }}</h1>
         </div>
         {% endif %}
 

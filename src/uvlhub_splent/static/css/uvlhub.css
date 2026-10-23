@@ -2261,12 +2261,35 @@ hr {
 .doi-pill-label { background: var(--uvl-doi-label-bg); }
 .doi-pill-value { background: var(--uvl-doi-value-bg); }
 
-/* ── Pages: the home page (public/index.html) ─────────────────────────── */
+/* ── Pages: the home page (public's public/index.html) ────────────────── */
+
+/* public's two columns (its home.css, which loads after this file), the
+   top datasets and the cards beside them, laid out as uvlhub.io's col-xl-8
+   and col-xl-4: the grid's gutter between them, and one under the other
+   below 1200px. */
+.uvl-content .home-columns {
+    --home-columns: minmax(0, calc((100% + var(--uvl-grid-gutter)) * 2 / 3 - var(--uvl-grid-gutter))) minmax(0, 1fr);
+    gap: var(--uvl-grid-gutter);
+    max-width: none;
+    padding-inline: 0;
+}
+
+@media (max-width: 1199.98px) {
+    .uvl-content .home-columns {
+        --home-columns: minmax(0, 1fr);
+    }
+}
 
 /* The cards of the side column, the product's and the ones features put
-   there (statistics' counters), a step apart as on uvlhub.io. */
-.uvl-home-aside > .row > [class*="col"] > .card {
-    margin-bottom: var(--uvl-card-gap) !important;
+   there (statistics' counters), a step apart as on uvlhub.io, from the top
+   of the column. */
+.uvl-content .home-columns__aside {
+    gap: var(--uvl-card-gap);
+    padding-block: 0;
+}
+
+.uvl-content .home-columns__aside .card {
+    margin-bottom: 0 !important;
 }
 
 /* The words of the two roomy cards are a muted lead; the references of

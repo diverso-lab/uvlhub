@@ -20,9 +20,15 @@ from splent_framework.configuration.default_config import (
 class UvlhubConfig:
     """What every environment of uvlhub shares."""
 
+    # The pages the features write for the public site (public's home,
+    # team's list and profiles) in uvlhub's app shell, with the sidebar, as
+    # uvlhub.io draws them, through the product's public layer over it. A
+    # framework setting no feature reads, so it is the product's to set here.
+    SPLENT_SHELL_PUBLIC = "uvlhub_public.html"
+
     # uvlhub.io's palette and Inter for theme's public shell, which in uvlhub
     # draws the page of an address that leads nowhere (errors/404.html). No
-    # font_url: Inter comes from the product (css/uvlhub-public.css), never
+    # font_url: Inter comes from the product (css/uvlhub-error.css), never
     # from Google. theme 0.13 reads its tokens from here only; the release
     # after it also reads THEME_TOKENS from [tool.splent.config], where this
     # can move once that release is pinned.
