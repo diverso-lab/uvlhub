@@ -135,8 +135,15 @@
     --uvl-shadow-dropdown: 0 0 50px 0 rgba(82, 63, 105, .15);
     --uvl-shadow-modal: 0 .5rem 1rem rgba(0, 0, 0, .1);
     --uvl-shadow-tooltip: 0 0 30px 0 rgba(0, 0, 0, .15);
-    --uvl-focus-ring: 0 0 0 .2rem rgba(var(--uvl-primary-rgb), .25);
     --uvl-transition: .15s ease;
+
+    /* Focus, for the keyboard (uvlhub.io draws none): a ring on the light
+       surfaces, a lighter one on the dark sidebar. */
+    --uvl-focus-color: rgba(var(--uvl-primary-rgb), .5);
+    --uvl-focus-width: 2px;
+    --uvl-focus-ring: 0 0 0 .2rem rgba(var(--uvl-primary-rgb), .25);
+    --uvl-focus-input-border-color: var(--uvl-primary);
+    --uvl-sidebar-focus-color: #3e97ff;
 
     /* The label on a filled colour, and the text of a light alert. Dark on
        the warning and success fills, where white does not read. */
@@ -384,8 +391,22 @@ hr {
 
 /* A focus ring of its own, for the keyboard only (uvlhub.io draws none). */
 :focus-visible {
-    outline: 2px solid rgba(var(--uvl-primary-rgb), .5);
+    outline: var(--uvl-focus-width) solid var(--uvl-focus-color);
     outline-offset: 2px;
+}
+
+/* The link that skips the menus, shown when the keyboard reaches it. */
+.uvl-skip-link:focus {
+    position: fixed !important;
+    top: .75rem;
+    left: .75rem;
+    z-index: 1100;
+    padding: .65rem 1.25rem;
+    border-radius: var(--uvl-radius);
+    background-color: var(--uvl-surface);
+    box-shadow: var(--uvl-shadow-dropdown);
+    color: var(--uvl-primary);
+    font-weight: var(--uvl-fw-semibold);
 }
 
 /* ── Shell: the frame ──────────────────────────────────────────────────── */
@@ -543,6 +564,17 @@ hr {
 .uvl-sidebar .sidebar-link:hover > svg {
     background: transparent;
     color: var(--uvl-sidebar-link-hover-color);
+}
+
+/* AdminKit takes the outline off the sidebar's links and logo on focus:
+   the keyboard gets its ring back, in the lighter blue the dark sidebar
+   needs. */
+.uvl-sidebar .sidebar-link:focus-visible,
+.uvl-sidebar .uvl-sidebar-logo:focus-visible,
+.uvl-sidebar .uvl-sidebar-toggle:focus-visible,
+.uvl-sidebar .uvl-sidebar-version:focus-visible {
+    outline: var(--uvl-focus-width) solid var(--uvl-sidebar-focus-color);
+    outline-offset: -2px;
 }
 
 .uvl-sidebar .sidebar-item.active > .sidebar-link,
@@ -793,6 +825,12 @@ hr {
         gap: .25rem;
         padding-left: calc(var(--uvl-content-gutter) - 9px);
     }
+}
+
+/* AdminKit takes the outline off some of the header's links on focus. */
+.uvl-header :is(a, button):focus-visible {
+    outline: var(--uvl-focus-width) solid var(--uvl-focus-color);
+    outline-offset: 2px;
 }
 
 .uvl-header-logo {
@@ -1067,6 +1105,11 @@ hr {
     flex: 1 0 auto;
     width: 100%;
     padding: 0 var(--uvl-content-gutter) var(--uvl-content-gutter);
+}
+
+/* The skip link's target: focused, but not a control to ring. */
+.uvl-content:focus {
+    outline: 0;
 }
 
 /* A page that draws its own heading starts where the band would end, as
@@ -1551,6 +1594,15 @@ hr {
 .form-control:focus-visible,
 .form-select:focus-visible {
     outline: 0;
+}
+
+/* A field reached with the keyboard shows it: the browser marks every
+   focused field :focus-visible, so uvlhub.js tells the two apart and
+   writes data-uvl-input="keyboard" on <html> while the keyboard moves. */
+[data-uvl-input="keyboard"] .form-control:focus,
+[data-uvl-input="keyboard"] .form-select:focus {
+    border-color: var(--uvl-focus-input-border-color);
+    box-shadow: var(--uvl-focus-ring);
 }
 
 .form-control:disabled,

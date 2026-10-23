@@ -13,7 +13,11 @@
  *   while the pointer is on it; the choice is kept for the next page in
  *   localStorage (a browser that refuses it just forgets). On a phone it is
  *   a drawer over the page, closed by its overlay, Escape or a link, and so
- *   is the header's menu (the search), from the right.
+ *   is the header's menu (the search), from the right. While a drawer is
+ *   open the rest of the page is inert, so the keyboard stays in it.
+ * - Which hand moves the focus. A browser marks every focused text field
+ *   :focus-visible, mouse or keyboard; <html data-uvl-input> says which, so
+ *   the skin rings a field only when the keyboard reached it.
  * - The header's menus open right under it, and the account menu and the
  *   menus features put among the header's buttons open on hover from a
  *   desktop, as uvlhub.io's do; a click still works.
@@ -127,11 +131,18 @@
         ].filter((drawer) => drawer.panel && drawer.button);
         if (!all.length) return;
 
+        // What a drawer covers: the frame's parts that neither hold it nor
+        // are inside it.
+        const covered = (panel) => [...document.querySelectorAll(
+            '.uvl-sidebar, .uvl-header > *, .uvl-toolbar, .uvl-content, .uvl-footer')]
+            .filter((part) => !part.contains(panel) && !panel.contains(part));
+
         const setDrawer = (drawer, open) => {
             if (open) all.filter((other) => other !== drawer).forEach((other) => setDrawer(other, false));
             const wasOpen = body.classList.contains(drawer.open);
             body.classList.toggle(drawer.open, open);
             drawer.button.setAttribute('aria-expanded', String(open));
+            covered(drawer.panel).forEach((part) => { part.inert = open; });
             if (overlay) overlay.hidden = !all.some((one) => body.classList.contains(one.open));
             if (open) {
                 const first = drawer.panel.querySelector(drawer.first);
@@ -160,6 +171,18 @@
         });
     }
 
+    // ── Which hand moves the focus ──────────────────────────────────────
+
+    function inputModality() {
+        const root = document.documentElement;
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Tab' || event.key.startsWith('Arrow')) root.dataset.uvlInput = 'keyboard';
+        }, true);
+        document.addEventListener('pointerdown', () => {
+            root.dataset.uvlInput = 'pointer';
+        }, true);
+    }
+
     // ── Dropdowns that open on hover from a desktop ─────────────────────
 
     function hoverDropdowns() {
@@ -175,7 +198,11 @@
             holder.addEventListener('mouseenter', () => {
                 if (!DESKTOP.matches) return;
                 clearTimeout(timer);
+                const focused = document.activeElement === toggle;
                 dropdown().show();
+                // Bootstrap focuses the toggle as it opens the menu, and the
+                // browser rings it as if the keyboard had: not for a pointer.
+                if (!focused) toggle.blur();
             });
             holder.addEventListener('mouseleave', () => {
                 if (!DESKTOP.matches) return;
@@ -202,6 +229,7 @@
     unknownFeatherIcons();
     sidebar();
     drawers();
+    inputModality();
     headerMenus();
 
     document.addEventListener('DOMContentLoaded', () => {

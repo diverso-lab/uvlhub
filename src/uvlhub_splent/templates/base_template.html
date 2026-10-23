@@ -95,6 +95,7 @@
 {%- set user_sections = user_menu_sections() if user_menu_sections is defined else [] -%}
 
 <body class="uvl-body">
+<a class="visually-hidden-focusable uvl-skip-link" href="#content">{{ _('Skip to content') }}</a>
 {# The folded sidebar is a choice the reader made on an earlier page:
    applied before the page is drawn, so it does not open and fold again. #}
 <script nonce="{{ csp_nonce() }}">try{if(localStorage.getItem('uvl-sidebar-minimized')==='1'){document.body.classList.add('uvl-sidebar-minimized')}}catch(e){}</script>
@@ -308,7 +309,7 @@
         </div>
         {% endif %}
 
-        <main class="uvl-content{{ ' uvl-content-untitled' if not page_title or '<h1' in page_content }}">
+        <main id="content" class="uvl-content{{ ' uvl-content-untitled' if not page_title or '<h1' in page_content }}" tabindex="-1">
 
             {#- The trail, under the band. Its room is kept on a page without
                 one, as uvlhub.io does, so every page starts its content at
