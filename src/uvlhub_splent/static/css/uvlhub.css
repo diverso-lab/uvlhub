@@ -289,6 +289,7 @@ a {
 
 a:hover {
     color: var(--uvl-link);
+    text-decoration: none;
 }
 
 h1, h2, h3, h4, h5, h6,
@@ -341,7 +342,15 @@ b, strong { font-weight: var(--uvl-fw-semibold); }
 .text-primary { color: var(--uvl-primary) !important; }
 .link-primary { color: var(--uvl-primary) !important; }
 .link-primary:hover, .link-primary:focus { color: var(--uvl-primary-active) !important; }
-.text-bg-primary { background-color: var(--uvl-primary) !important; color: #fff !important; }
+/* AdminKit writes its own colours into the text-bg-* utilities. */
+.text-bg-primary { background-color: rgba(var(--uvl-primary-rgb), var(--bs-bg-opacity, 1)) !important; color: #fff !important; }
+.text-bg-secondary { background-color: var(--uvl-secondary) !important; color: var(--uvl-gray-900) !important; }
+.text-bg-success { background-color: rgba(var(--uvl-success-rgb), var(--bs-bg-opacity, 1)) !important; color: #fff !important; }
+.text-bg-info { background-color: rgba(var(--uvl-info-rgb), var(--bs-bg-opacity, 1)) !important; color: #fff !important; }
+.text-bg-warning { background-color: rgba(var(--uvl-warning-rgb), var(--bs-bg-opacity, 1)) !important; color: #fff !important; }
+.text-bg-danger { background-color: rgba(var(--uvl-danger-rgb), var(--bs-bg-opacity, 1)) !important; color: #fff !important; }
+.text-bg-light { background-color: var(--uvl-light) !important; color: var(--uvl-gray-800) !important; }
+.text-bg-dark { background-color: rgba(var(--uvl-dark-rgb), var(--bs-bg-opacity, 1)) !important; color: #fff !important; }
 
 .lead { font-size: 1.15rem; font-weight: var(--uvl-fw-normal); }
 
@@ -602,54 +611,56 @@ hr {
         transform: rotate(180deg);
     }
 
-    .uvl-sidebar-minimized .uvl-sidebar:not(:hover),
+    .uvl-sidebar-minimized .uvl-sidebar:not(:hover):not(:has(:focus-visible)),
     .uvl-sidebar-minimized .uvl-sidebar.uvl-sidebar-resting {
         width: var(--uvl-sidebar-width-minimized);
     }
 
-    .uvl-sidebar-minimized .uvl-sidebar:not(:hover) .uvl-sidebar-brand,
+    .uvl-sidebar-minimized .uvl-sidebar:not(:hover):not(:has(:focus-visible)) .uvl-sidebar-brand,
     .uvl-sidebar-minimized .uvl-sidebar.uvl-sidebar-resting .uvl-sidebar-brand {
         justify-content: center;
         padding: 0;
     }
 
-    .uvl-sidebar-minimized .uvl-sidebar:not(:hover) .uvl-sidebar-logo,
+    .uvl-sidebar-minimized .uvl-sidebar:not(:hover):not(:has(:focus-visible)) .uvl-sidebar-logo,
     .uvl-sidebar-minimized .uvl-sidebar.uvl-sidebar-resting .uvl-sidebar-logo {
         display: none;
     }
 
-    .uvl-sidebar-minimized .uvl-sidebar:not(:hover) .sidebar-link > span,
+    .uvl-sidebar-minimized .uvl-sidebar:not(:hover):not(:has(:focus-visible)) .sidebar-link > span,
     .uvl-sidebar-minimized .uvl-sidebar.uvl-sidebar-resting .sidebar-link > span,
-    .uvl-sidebar-minimized .uvl-sidebar:not(:hover) .sidebar-header,
+    .uvl-sidebar-minimized .uvl-sidebar:not(:hover):not(:has(:focus-visible)) .sidebar-header,
     .uvl-sidebar-minimized .uvl-sidebar.uvl-sidebar-resting .sidebar-header {
         opacity: 0;
     }
 
-    .uvl-sidebar-minimized .uvl-sidebar:not(:hover) .uvl-sidebar-footer,
+    .uvl-sidebar-minimized .uvl-sidebar:not(:hover):not(:has(:focus-visible)) .uvl-sidebar-footer,
     .uvl-sidebar-minimized .uvl-sidebar.uvl-sidebar-resting .uvl-sidebar-footer {
         padding-right: .75rem;
         padding-left: .75rem;
     }
 
-    .uvl-sidebar-minimized .uvl-sidebar:not(:hover) .uvl-sidebar-version,
+    .uvl-sidebar-minimized .uvl-sidebar:not(:hover):not(:has(:focus-visible)) .uvl-sidebar-version,
     .uvl-sidebar-minimized .uvl-sidebar.uvl-sidebar-resting .uvl-sidebar-version {
         width: 36px;
         padding: 0;
         margin: 0 auto;
     }
 
-    .uvl-sidebar-minimized .uvl-sidebar:not(:hover) .uvl-sidebar-version .uvl-icon,
+    .uvl-sidebar-minimized .uvl-sidebar:not(:hover):not(:has(:focus-visible)) .uvl-sidebar-version .uvl-icon,
     .uvl-sidebar-minimized .uvl-sidebar.uvl-sidebar-resting .uvl-sidebar-version .uvl-icon {
         display: block;
     }
 
-    .uvl-sidebar-minimized .uvl-sidebar:not(:hover) .uvl-sidebar-version-label,
+    .uvl-sidebar-minimized .uvl-sidebar:not(:hover):not(:has(:focus-visible)) .uvl-sidebar-version-label,
     .uvl-sidebar-minimized .uvl-sidebar.uvl-sidebar-resting .uvl-sidebar-version-label {
         display: none;
     }
 
-    /* Unfolded by the pointer, over the page and without pushing it. */
-    .uvl-sidebar-minimized .uvl-sidebar:hover:not(.uvl-sidebar-resting) {
+    /* Unfolded by the pointer or the keyboard, over the page and without
+       pushing it. */
+    .uvl-sidebar-minimized .uvl-sidebar:hover:not(.uvl-sidebar-resting),
+    .uvl-sidebar-minimized .uvl-sidebar:has(:focus-visible):not(.uvl-sidebar-resting) {
         box-shadow: 0 0 30px rgba(0, 0, 0, .25);
     }
 
