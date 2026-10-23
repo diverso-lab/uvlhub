@@ -5,7 +5,6 @@ from flask_babel import lazy_gettext as _l
 from splent_framework.app_factory import create_splent_app
 from splent_framework.configuration.configuration import get_app_version
 from splent_framework.hooks.template_hooks import (
-    get_template_hooks,
     register_template_hook,
     remove_template_hook,
 )
@@ -46,17 +45,26 @@ LAST = 900
 
 # Entries of uvlhub's menus whose feature, at the version the product pins,
 # still draws them as markup in a slot the shell cannot bring to uvlhub's
-# look: Metronic's (explore, statistics and dataset in the sidebar), or a
-# menu of its own (profile's name and auth's Log out in the header). The
-# shell draws a section from the menu registry once it has entries there,
-# and generator's Generate models already is in "site", so Explore,
-# Dashboard and Team have to be there as well or the sidebar loses them.
+# look: the monolith's theme markup (explore, statistics and dataset in the
+# sidebar), or a menu of its own (profile's name and auth's Log out in the
+# header, auth's Log in link for visitors). The shell draws a section from
+# the menu registry once it has entries there, and generator's Generate
+# models already is in "site", so Explore, Dashboard and Team have to be
+# there as well or the sidebar loses them.
+#
+# The developer entries are bridged for another reason. apikeys draws its
+# own and, inside it, apidocs' in layout.authenticated_sidebar, the slot the
+# main, admin and developer sections share, which the shell leaves out as
+# soon as any of the three has registry entries: an admin entry from any
+# feature's next release would take the Developer section away. Registered,
+# they no longer depend on what the other features have migrated, and the
+# slot keeps nothing uvlhub shows.
 #
 # Each is registered with the key, the endpoint and the icon its feature's
-# next release registers (its working copy does), and its hook, when it has
-# one in a slot, leaves the slot. A feature that registers the endpoint
-# itself has moved on and is left alone, so each bridge retires with the
-# release of its feature.
+# next release registers (its working copy does), under the label it shows
+# today, and its hook, when it has one in a slot, leaves the slot. A feature
+# that registers the endpoint itself has moved on and is left alone, so each
+# bridge retires with the release of its feature.
 SIDEBAR_BRIDGES = [
     dict(
         key="explore",
@@ -110,12 +118,52 @@ SIDEBAR_BRIDGES = [
         order=20,
         match=("dataset.list_dataset", "dataset.edit_metadata"),
     ),
+    # uvlhub.io's order: the docs, the tokens, a new token.
+    dict(
+        key="apidocs",
+        label=_l("Read the API docs"),
+        endpoint="flasgger.apidocs",
+        icon="book-open",
+        section="developer",
+        order=10,
+        external=True,
+        hook=("splent_io.splent_feature_apidocs.hooks", "developer_link"),
+        slot="apikeys.sidebar.developer",
+    ),
+    dict(
+        key="apikeys",
+        label=_l("API tokens"),
+        endpoint="apikeys.index",
+        icon="key",
+        section="developer",
+        order=20,
+        match="apikeys.",
+        hook=("splent_io.splent_feature_apikeys.hooks", "apikeys_sidebar_item"),
+        slot="layout.authenticated_sidebar",
+    ),
+    dict(
+        key="apikeys_new",
+        label=_l("New API token"),
+        endpoint="apikeys.new",
+        icon="plus-circle",
+        section="developer",
+        order=30,
+    ),
 ]
 
 # The section dataset declares for its entries, while it does not.
 DATASETS_SECTION = dict(key="datasets", label=_l("Datasets"), order=110)
 
 USER_MENU_BRIDGES = [
+    # Visitors: the login button of the header, instead of auth's text link.
+    dict(
+        key="user_login",
+        label=_l("Log in"),
+        endpoint="auth.login",
+        icon="log-in",
+        section="anonymous",
+        order=10,
+    ),
     dict(
         key="user_profile",
         label=_l("Edit profile"),
@@ -161,10 +209,6 @@ def account_sidebar_heading():
     return render_template("hooks/account_sidebar_heading.html")
 
 
-def developer_sidebar_heading():
-    return render_template("hooks/developer_sidebar_heading.html")
-
-
 def team_sections():
     """Every team role, in page order, with its published members.
 
@@ -190,14 +234,13 @@ def team_sections():
 def _arrange_menus():
     """uvlhub's menus, out of what the features put in them.
 
-    The markup is the features' own, but for the Developer and Account
-    headings, which the product draws from its templates/hooks/. This only
-    decides which entries uvlhub shows and in which order, for the sections
-    the shell still draws from the slots (see base_template.html).
+    The markup is the features' own, but for the Account heading, which the
+    product draws from its templates/hooks/. This only decides which entries
+    uvlhub shows and in which order, for the sections the shell still draws
+    from the slots (see base_template.html).
     """
     auth = "splent_io.splent_feature_auth.hooks"
     signup = "splent_io.splent_feature_signup.hooks"
-    apikeys = "splent_io.splent_feature_apikeys.hooks"
 
     # The signed-in sidebar ends with an Account section, the heading first,
     # then profile's Edit profile, then Log out. uvlhub's sidebar never had
@@ -210,13 +253,6 @@ def _arrange_menus():
         remove_template_hook("layout.authenticated_sidebar", logout)
         _place("layout.sidebar.authenticated.items", logout, LAST)
     _place("layout.sidebar.authenticated.items", account_sidebar_heading, FIRST)
-
-    # The tokens and the API docs open a Developer section, as on uvlhub.io.
-    tokens = _feature_hook(apikeys, "apikeys_sidebar_item")
-    if tokens is not None and tokens in get_template_hooks(
-        "layout.authenticated_sidebar"
-    ):
-        _place("layout.authenticated_sidebar", developer_sidebar_heading, FIRST)
 
     # Visitors see only the login button in the header. Signing up is in the
     # sidebar, on the home page and under the login form, where "Don't have

@@ -12,10 +12,11 @@ by section, and from the slots the features fill where the registry has
 nothing: never both, so no entry shows twice. Until their minors are
 pinned, the product registers the entries whose feature still draws them
 as Metronic markup (explore, statistics, dataset) or as a menu of its own
-(profile, auth in the header). Those features still draw Metronic in the
-header and on their pages (explore, dataset), so the check of the rendered
-pages leaves out what they draw, and METRONIC_UNTIL_P2 goes once P2 pins
-them.
+(profile, auth in the header), and the developer entries, which apikeys
+draws in the slot the admin section shares. Those features still draw
+Metronic in the header and on their pages (explore, dataset), so the check
+of the rendered pages leaves out what they draw, and METRONIC_UNTIL_P2 goes
+once P2 pins them.
 
 The chrome draws its icons from a sprite of its own (Phosphor), and the
 page asks for Inter from the product: both are checked to be there.
@@ -229,6 +230,8 @@ def test_the_sidebar_is_uvlhubs(browsers, who):
     else:
         assert sidebar.headings == ["Datasets", "Developer", "Account"]
         assert paths[4:6] == ["/datasets/upload", "/datasets/list"]
+        # uvlhub.io's Developer: the docs, the tokens, a new token.
+        assert paths[6:9] == ["/apidocs/", "/developer/tokens", "/developer/tokens/new"]
         assert paths[-1] == "/logout"
 
 
@@ -281,6 +284,48 @@ def test_a_section_with_registry_entries_does_not_draw_its_slot(
     assert "Let's get started!" not in sidebar.headings
     assert "/only-entry" in sidebar.links
     assert "/login" not in sidebar.links
+
+
+def test_an_admin_section_in_the_registry_leaves_the_developer_section(
+    app, browsers, monkeypatch
+):
+    """The main, admin and developer sections share one slot, left out as
+    soon as one of them has registry entries. An administration entry a
+    feature registers (auth's Users, theme's Appearance...) must not take
+    the Developer section with it."""
+    registered = [
+        {
+            "key": "admin",
+            "label": "Administration",
+            "entries": [
+                {
+                    "key": "users",
+                    "label": "Users",
+                    "url": "/admin/users",
+                    "icon": "users",
+                    "active": False,
+                    "aria_current": None,
+                    "badge": None,
+                    "section": "admin",
+                    "external": False,
+                }
+            ],
+        }
+    ]
+    every_section = app.jinja_env.globals["menu_sections"]
+
+    def sections():
+        return every_section() + registered
+
+    monkeypatch.setitem(app.jinja_env.globals, "menu_sections", sections)
+    sidebar = _sidebar(_open(browsers, "admin", "/"))
+    paths = [urlsplit(link).path for link in sidebar.links]
+
+    assert "Developer" in sidebar.headings
+    assert ["/apidocs/", "/developer/tokens", "/developer/tokens/new"] == [
+        p for p in paths if p.startswith(("/apidocs", "/developer"))
+    ]
+    assert "/admin/users" in paths
 
 
 @pytest.mark.parametrize("page", PAGES)
@@ -366,6 +411,19 @@ def test_the_product_templates_carry_nothing_of_metronic():
         str(path.relative_to(TEMPLATES)): KEENTHEMES.findall(text) + KT_ID.findall(text)
         for path in TEMPLATES.rglob("*.html")
         if (text := path.read_text(encoding="utf-8"))
+    }
+
+    assert {path: names for path, names in found.items() if names} == {}
+
+
+def test_the_product_code_carries_nothing_of_metronic():
+    """What splent check:vendor reads in the product's tree, its code
+    and comments included."""
+    found = {
+        str(path.relative_to(PACKAGE)): KEENTHEMES.findall(
+            path.read_text(encoding="utf-8")
+        )
+        for path in PACKAGE.rglob("*.py")
     }
 
     assert {path: names for path, names in found.items() if names} == {}
