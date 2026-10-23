@@ -58,8 +58,8 @@ features = [
     "splent-io/splent_feature_identities@v0.2.0",
     "splent-io/splent_feature_orcid@v0.2.0",
     "splent-io/splent_feature_github@v0.2.0",
-    "splent-io/splent_feature_captcha",
-    "splent-io/splent_feature_captcha_image",
+    "splent-io/splent_feature_captcha@v0.1.0",
+    "splent-io/splent_feature_captcha_image@v0.2.0",
 ]
 features_dev = ["splent-io/splent_feature_mailhog@v1.2.0", "splent-io/splent_feature_phpmyadmin@v1.1.0"]
 features_prod = []
@@ -70,10 +70,10 @@ spl = "openhubs_spl"
 # clone of this repository can resolve the model from UVLHub alone.
 [tool.splent.spl_model]
 mirror = "uvlhub.io"
-doi = "10.5281/zenodo.23592345"
+doi = "10.5281/zenodo.23604003"
 # Same line, every version. Used to report that a newer model exists.
 concept_doi = ""
-version = "2"
+version = "3"
 file = "openhubs_spl.uvl"
 
 [tool.splent.config]
