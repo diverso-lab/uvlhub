@@ -1,6 +1,7 @@
-{#- The page for a request this site failed to answer. errors.py answers
-    with it, so theme's errors/500.html stays theme's. -#}
-{% extends "errors/_error_page.html" %}
+{#- The page for a request this site failed to answer, which the
+    framework renders by name. theme ships an errors/500.html but answers
+    no 500, so this one is not in its way. -#}
+{% extends "_error_page.html" %}
 
 {% block title %}{{ _('Internal Server Error') }}{% endblock %}
 {% block heading %}{{ _('Internal Server Error') }}{% endblock %}

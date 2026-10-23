@@ -3,6 +3,7 @@ import sys
 from flask import render_template
 from flask_babel import lazy_gettext as _l
 from splent_framework.app_factory import create_splent_app
+from splent_framework.assets.asset_registry import register_asset
 from splent_framework.configuration.configuration import get_app_version
 from splent_framework.hooks.template_hooks import (
     register_template_hook,
@@ -274,26 +275,14 @@ def _bridge_menus():
             register_user_menu_item(**entry)
 
 
-def _answer_not_found(app):
-    """Answer an address that leads nowhere with uvlhub's page, the card of
-    uvlhub.io (errors.handle_404, 404.html).
+def _skin_the_public_shell():
+    """uvlhub.io's error card on theme's public shell.
 
-    The framework registers errors.py's handler, and theme replaces it as
-    it starts with one that renders its errors/404.html in the public
-    shell. Registered again here, after the features, the product's own
-    page answers, and theme's template stays theme's for the products that
-    draw it. A page that cannot be drawn gets Werkzeug's plain answer, as
-    the framework's handlers give."""
-    from uvlhub_splent import errors
-
-    def not_found(e):
-        try:
-            return errors.handle_404(app, e)
-        except Exception:
-            app.logger.exception("The 404 page could not be drawn")
-            return e.get_response()
-
-    app.register_error_handler(404, not_found)
+    That shell, public_base.html, draws theme's 404, which the product
+    dresses as uvlhub.io's card with its own stylesheet, the one its 400,
+    401 and 500 pages wear. Registered after the features, as a skin is,
+    so it comes after theirs."""
+    register_asset("css", "static", order=200, filename="css/uvlhub-error.css")
 
 
 def create_app(config_name=None):
@@ -306,7 +295,7 @@ def create_app(config_name=None):
     if "profile.my_profile" in app.view_functions:
         app.register_blueprint(aliases_bp)
 
-    _answer_not_found(app)
+    _skin_the_public_shell()
 
     # The sidebar footer links the release, as in uvlhub. The prod image
     # writes .version from VERSION_TAG; in dev there is none and it hides.

@@ -1,0 +1,196 @@
+/* uvlhub.io's error card: a white card in the middle of a grey screen,
+ * without the sidebar or the header, the title, a line, the code where
+ * uvlhub.io draws its illustration, and a button home.
+ *
+ * Two pages wear it, with the same markup (.error-page and its
+ * __code, __title and __text, then a .btn-primary):
+ *
+ * - theme's errors/404.html, the page of an address that leads nowhere,
+ *   in theme's public shell (body.cms-public). Its header and footer are
+ *   not drawn, and its code moves under the text. What it says is theme's
+ *   Appearance panel's (the product seeds uvlhub's words, seeders.py), and
+ *   the colours and the font are theme's tokens, which the product sets to
+ *   uvlhub's (THEME_TOKENS, config.py). The create_app registers this file
+ *   for the public shell.
+ * - the product's 400, 401 and 500 pages (_error_page.html), which ask
+ *   for nothing but this file: an error page must render whatever failed.
+ *   They have no theme tokens, so every colour falls back to uvlhub's.
+ *
+ * The sizes are uvlhub.css's, in rem of uvlhub.io's 13px root (12px under
+ * 992px). Theme's 404 styles its parts in its own <style>, after this file,
+ * so each rule here names the main the card is in to come first.
+ */
+
+/* ── Inter, served by the product (fonts/LICENSE.txt) ────────────────────
+   The weights the card draws. */
+
+@font-face {
+    font-family: "Inter";
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url("../fonts/Inter-Regular.woff2") format("woff2");
+}
+
+@font-face {
+    font-family: "Inter";
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url("../fonts/Inter-Medium.woff2") format("woff2");
+}
+
+@font-face {
+    font-family: "Inter";
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url("../fonts/Inter-Bold.woff2") format("woff2");
+}
+
+/* ── The screen ───────────────────────────────────────────────────────── */
+
+html:has(.error-page) {
+    font-size: 13px;
+}
+
+@media (max-width: 991.98px) {
+    html:has(.error-page) {
+        font-size: 12px;
+    }
+}
+
+body.cms-public:has(.error-page),
+body.uvl-error-body {
+    margin: 0;
+    min-height: 100vh;
+    background:
+        radial-gradient(60rem 30rem at 15% 10%, rgba(255, 255, 255, .7), transparent 60%),
+        radial-gradient(50rem 25rem at 85% 60%, rgba(255, 255, 255, .5), transparent 60%),
+        linear-gradient(160deg, #dbdfe9, #c4cada);
+    color: var(--brand-text, #071437);
+    font-family: var(--brand-font-body, "Inter", Helvetica, sans-serif);
+    font-size: 1rem;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* uvlhub.io's card stands alone: no header, no trail, no footer. */
+.cms-public:has(.error-page) .site-header,
+.cms-public:has(.error-page) .site-footer {
+    display: none;
+}
+
+.cms-public .site-main:has(.error-page),
+.uvl-error-main {
+    display: flex;
+    flex: 1 0 auto;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    box-sizing: border-box;
+    padding: 2.5rem;
+}
+
+/* theme's .container.section around the card: the card sets the width. */
+.cms-public .site-main > .container:has(> .error-page) {
+    width: 100%;
+    max-width: 650px;
+    margin: 0;
+    padding: 0;
+}
+
+/* ── The card ─────────────────────────────────────────────────────────── */
+
+main .error-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 650px;
+    margin: 0 auto;
+    padding: 5rem 2.25rem;
+    border: 1px solid var(--brand-border, #f1f1f4);
+    border-radius: .625rem;
+    background: var(--brand-bg, #fff);
+    box-shadow: 0 3px 4px 0 rgba(0, 0, 0, .03);
+    text-align: center;
+}
+
+@media (min-width: 768px) {
+    main .error-page {
+        padding-top: 6.25rem;
+        padding-bottom: 6.25rem;
+    }
+}
+
+main .error-page__title {
+    order: 1;
+    margin: 0 0 1rem;
+    color: var(--brand-heading, #071437);
+    font-family: inherit;
+    font-size: min(2.5rem, calc(1.375rem + 1.5vw));
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+main .error-page__text {
+    order: 2;
+    margin: 0 0 1.75rem;
+    color: var(--brand-muted, #99a1b7);
+    font-size: 1.075rem;
+    font-weight: 500;
+}
+
+/* The code, in the square uvlhub.io gives its illustration, in the grey of
+   the illustration's numbers. */
+main .error-page__code {
+    order: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: min(300px, 70vw);
+    margin: 0 0 .75rem;
+    color: #dbdfe9;
+    font-family: inherit;
+    font-size: min(9rem, 30vw);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -.02em;
+}
+
+/* A small primary button, as uvlhub.io's "Return home". */
+main .error-page .btn {
+    order: 4;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: calc(.55rem + 1px) calc(1rem + 1px);
+    border: 0;
+    border-radius: .425rem;
+    background: var(--brand-primary, #1b84ff);
+    box-shadow: none;
+    color: var(--brand-primary-contrast, #fff);
+    font-family: inherit;
+    font-size: .95rem;
+    font-weight: 500;
+    line-height: 1.5;
+    text-decoration: none;
+    transition: background-color .15s ease;
+}
+
+main .error-page .btn:hover,
+main .error-page .btn:active {
+    transform: none;
+    background: #056ee9;
+    color: var(--brand-primary-contrast, #fff);
+    text-decoration: none;
+}
+
+main .error-page .btn:focus-visible {
+    outline: 0;
+    box-shadow: 0 0 0 .2rem rgba(27, 132, 255, .25);
+}

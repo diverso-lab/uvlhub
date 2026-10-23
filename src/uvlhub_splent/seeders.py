@@ -6,6 +6,9 @@ product takes over team's seeder (``replaces``) and seeds one team Role
 per organisation, with its description, logo and website, and the people
 who belong to it.
 
+theme's page for an address that leads nowhere says what its Appearance
+panel says, so the product seeds uvlhub.io's words there.
+
 Images go through the media library with a ``seed://uvlhub/`` source key,
 so seeding again reuses the stored file instead of copying it twice.
 """
@@ -13,6 +16,7 @@ so seeding again reuses the stored file instead of copying it twice.
 import os
 
 from splent_framework.seeders.BaseSeeder import BaseSeeder
+from splent_framework.services.service_locator import service_proxy
 from splent_framework.utils.text import slugify
 
 from splent_io.splent_feature_media.services import MediaService
@@ -49,6 +53,13 @@ ORGANISATIONS = [
         ),
     },
 ]
+
+# What uvlhub.io's 404 says, in the fields of theme's Appearance panel.
+APPEARANCE = {
+    "site_404_title": "Oops!",
+    "site_404_text": "We can't find that page.",
+    "site_404_cta": "Return home",
+}
 
 # ``organisation`` names the Role the member is listed under.
 MEMBERS = [
@@ -104,3 +115,16 @@ class UvlhubTeamSeeder(BaseSeeder):
             member.roles = [by_name[m["organisation"]]]
             members.append(member)
         self.seed(members)
+
+
+class UvlhubAppearanceSeeder(BaseSeeder):
+    """uvlhub.io's words on theme's 404, in the Appearance panel's fields.
+
+    A field an administrator already filled in keeps what they wrote.
+    """
+
+    def run(self):
+        settings = service_proxy("SettingsService")
+        settings.set_many(
+            {key: value for key, value in APPEARANCE.items() if not settings.get(key)}
+        )

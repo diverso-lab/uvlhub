@@ -403,18 +403,56 @@ def test_the_header_offers_the_three_modes(browsers, who):
     assert html.index("data-bs-theme") < html.index("css/app.css")
 
 
+@pytest.fixture
+def uvlhub_appearance(app):
+    """The words the product's seeder writes in theme's Appearance panel,
+    taken out again afterwards."""
+    from splent_framework.services.service_locator import service_proxy
+
+    from uvlhub_splent.seeders import APPEARANCE, UvlhubAppearanceSeeder
+
+    with app.app_context():
+        UvlhubAppearanceSeeder().run()
+    yield
+    with app.app_context():
+        service_proxy("SettingsService").set_many({key: "" for key in APPEARANCE})
+
+
 @pytest.mark.parametrize("who", BROWSERS)
-def test_an_address_that_leads_nowhere_answers_uvlhubs_page(browsers, who):
-    """uvlhub.io's "Oops!" card (404.html), although theme replaces the
-    product's 404 handler as it starts; theme's errors/404.html is not
-    shadowed."""
+def test_an_address_that_leads_nowhere_answers_uvlhubs_card(
+    browsers, uvlhub_appearance, who
+):
+    """theme's page, which the product neither shadows nor answers for:
+    saying what uvlhub's seeder puts in the Appearance panel, dressed as
+    uvlhub.io's card by the product's stylesheet, and asking no other site
+    for anything (theme's own tokens would load Inter from Google)."""
     response = browsers[who].get("/this-page-does-not-exist")
     html = response.get_data(as_text=True)
 
     assert response.status_code == 404
-    assert 'class="card uvl-error-card"' in html
-    assert "Oops!" in html and "Return home" in html
-    assert not (TEMPLATES / "errors" / "404.html").exists()
+    assert 'class="cms-public"' in html and 'class="error-page"' in html
+    assert '<h1 class="error-page__title">Oops!</h1>' in html
+    assert "We can&#39;t find that page." in html
+    assert ">Return home</a>" in html
+    assert "/static/css/uvlhub-error.css" in html
+    assert [name for name in THIRD_PARTY if name in html] == []
+    assert not (TEMPLATES / "404.html").exists()
+    assert not (PACKAGE / "errors.py").exists()
+
+
+@pytest.mark.parametrize("page", ["400.html", "401.html", "500.html"])
+def test_the_errors_no_feature_answers_wear_the_same_card(app, page):
+    """The framework renders the product's own page for these, in the
+    markup of theme's 404, so one stylesheet draws them all."""
+    from flask import render_template
+
+    with app.test_request_context("/"):
+        html = render_template(page)
+
+    assert 'class="error-page"' in html
+    assert '<a class="btn btn-primary" href="/">' in html
+    assert "/static/css/uvlhub-error.css" in html
+    assert "css/app.css" not in html
 
 
 def test_the_dark_mode_is_a_set_of_tokens():
