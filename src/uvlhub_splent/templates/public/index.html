@@ -19,11 +19,11 @@
 
             {% if current_user.is_anonymous %}
             <div class="col-12">
-                <div class="card uvl-home-card uvl-home-start mb-4 shadow-sm">
+                <div class="card uvl-home-card uvl-home-start uvl-home-roomy mb-4 shadow-sm">
                     <div class="card-body text-center">
                         <h2 class="mb-3">{{ _("Let's get started!") }}</h2>
                         <p class="mb-4">
-                            {{ _('Ready to upload your feature models in UVL format and share them with the world?') }}
+                            {{ _('Ready to upload your amazing feature models in UVL format and share them with the world?') }}
                         </p>
                         <div class="d-grid gap-3">
                             <a href="{{ url_for('signup.show_signup_form') }}" class="btn btn-primary btn-lg">
@@ -43,7 +43,7 @@
             {{ render_template_hooks("home.aside") }}
 
             <div class="col-12">
-                <div class="card uvl-home-card mb-4 shadow-sm">
+                <div class="card uvl-home-card uvl-home-roomy mb-4 shadow-sm">
                     <div class="card-body">
                         <h2 class="mb-3">{{ _('What is uvlhub.io?') }}</h2>
                         <p class="mb-5">

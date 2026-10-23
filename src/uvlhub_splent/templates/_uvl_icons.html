@@ -17,7 +17,7 @@
 -#}
 
 {%- set CHROME_ICONS = {
-    "search": "list-magnifying-glass",
+    "search": "file-magnifying-glass",
     "bar-chart-2": "chart-line-up",
     "users": "users-three",
     "cpu": "stack",
@@ -29,7 +29,7 @@
     "user": "user-gear",
     "log-in": "sign-in",
     "log-out": "sign-out",
-    "user-plus": "user-plus",
+    "user-plus": "user-check",
     "user-check": "user-check",
     "home": "house",
     "grid": "squares-four",
@@ -45,7 +45,7 @@
     "menu": "list",
     "heart": "heart",
     "github": "github-logo",
-    "chevrons-left": "caret-double-left",
+    "sidebar": "sidebar-simple",
     "sun": "sun",
     "moon": "moon",
     "monitor": "monitor",
@@ -55,7 +55,7 @@
     "credit-card": "identification-card",
 } -%}
 
-{#- In the header the magnifier is the search box's, not Explore's list. -#}
+{#- In the header the magnifier is the search box's, not Explore's page. -#}
 {%- set CHROME_HEADER_ICONS = {"search": "magnifying-glass", "user": "user"} -%}
 
 {%- macro chrome_icon(name, header=false, class_="") -%}

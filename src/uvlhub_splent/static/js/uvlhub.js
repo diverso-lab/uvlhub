@@ -6,10 +6,14 @@
  *   icon for with it, from the table the page carries (#uvl-chrome-icons,
  *   built by _uvl_icons.html). It runs before feather replaces the
  *   placeholders on DOMContentLoaded, so feather only draws what is left.
+ * - feather stops at the first name it does not know and leaves every
+ *   icon after it undrawn, the page's and the footer's. A name it lacks is
+ *   drawn as its circle instead, and the console says which it was.
  * - The sidebar. On a desktop it folds to a rail and unfolds over the page
  *   while the pointer is on it; the choice is kept for the next page in
  *   localStorage (a browser that refuses it just forgets). On a phone it is
- *   a drawer over the page, closed by its overlay, Escape or a link.
+ *   a drawer over the page, closed by its overlay, Escape or a link, and so
+ *   is the header's menu (the search), from the right.
  * - The header's menus open right under it, and the account menu and the
  *   menus features put among the header's buttons open on hover from a
  *   desktop, as uvlhub.io's do; a click still works.
@@ -26,6 +30,7 @@
     const DESKTOP = window.matchMedia('(min-width: 992px)');
     const MINIMIZED = 'uvl-sidebar-minimized';
     const DRAWER_OPEN = 'uvl-drawer-open';
+    const HEADER_DRAWER_OPEN = 'uvl-header-drawer-open';
     const STORE_KEY = 'uvl-sidebar-minimized';
 
     // ── The chrome's icons ──────────────────────────────────────────────
@@ -59,6 +64,16 @@
         });
     }
 
+    function unknownFeatherIcons() {
+        if (!window.feather || !window.feather.icons) return;
+        document.querySelectorAll('[data-feather]').forEach((placeholder) => {
+            const name = placeholder.dataset.feather;
+            if (window.feather.icons[name]) return;
+            console.warn(`feather has no icon "${name}"; drawn as a circle.`);
+            placeholder.dataset.feather = 'circle';
+        });
+    }
+
     // ── The sidebar ─────────────────────────────────────────────────────
 
     function remember(minimized) {
@@ -73,8 +88,6 @@
         const body = document.body;
         const aside = document.getElementById('sidebar');
         const toggle = document.querySelector('[data-uvl-sidebar-toggle]');
-        const burger = document.querySelector('[data-uvl-drawer-toggle]');
-        const overlay = document.querySelector('[data-uvl-drawer-close]');
         if (!aside) return;
 
         const pressed = () => toggle && toggle.setAttribute('aria-pressed', String(body.classList.contains(MINIMIZED)));
@@ -91,30 +104,59 @@
             });
             aside.addEventListener('mouseleave', () => aside.classList.remove('uvl-sidebar-resting'));
         }
+    }
 
-        const setDrawer = (open) => {
-            body.classList.toggle(DRAWER_OPEN, open);
-            if (overlay) overlay.hidden = !open;
-            if (burger) burger.setAttribute('aria-expanded', String(open));
+    // ── The drawers of a phone: the sidebar, and the header's menu ──────
+
+    function drawers() {
+        const body = document.body;
+        const overlay = document.querySelector('[data-uvl-drawer-close]');
+        const all = [
+            {
+                panel: document.getElementById('sidebar'),
+                button: document.querySelector('[data-uvl-drawer-toggle]'),
+                open: DRAWER_OPEN,
+                first: '.sidebar-link',
+            },
+            {
+                panel: document.getElementById('uvl-header-menu'),
+                button: document.querySelector('[data-uvl-header-drawer-toggle]'),
+                open: HEADER_DRAWER_OPEN,
+                first: 'a[href], button, input',
+            },
+        ].filter((drawer) => drawer.panel && drawer.button);
+        if (!all.length) return;
+
+        const setDrawer = (drawer, open) => {
+            if (open) all.filter((other) => other !== drawer).forEach((other) => setDrawer(other, false));
+            const wasOpen = body.classList.contains(drawer.open);
+            body.classList.toggle(drawer.open, open);
+            drawer.button.setAttribute('aria-expanded', String(open));
+            if (overlay) overlay.hidden = !all.some((one) => body.classList.contains(one.open));
             if (open) {
-                const first = aside.querySelector('.sidebar-link');
+                const first = drawer.panel.querySelector(drawer.first);
                 if (first) first.focus({ preventScroll: true });
-            } else if (burger && aside.contains(document.activeElement)) {
-                burger.focus({ preventScroll: true });
+            } else if (wasOpen && drawer.panel.contains(document.activeElement)) {
+                drawer.button.focus({ preventScroll: true });
             }
         };
+        const openOne = () => all.find((drawer) => body.classList.contains(drawer.open));
 
-        if (burger) burger.addEventListener('click', () => setDrawer(!body.classList.contains(DRAWER_OPEN)));
-        if (overlay) overlay.addEventListener('click', () => setDrawer(false));
-        document.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape' && body.classList.contains(DRAWER_OPEN)) setDrawer(false);
+        all.forEach((drawer) => {
+            drawer.button.addEventListener('click', () => setDrawer(drawer, !body.classList.contains(drawer.open)));
+            drawer.panel.addEventListener('click', (event) => {
+                if (event.target.closest('a[href]') && body.classList.contains(drawer.open)) setDrawer(drawer, false);
+            });
         });
-        aside.addEventListener('click', (event) => {
-            if (event.target.closest('a[href]') && body.classList.contains(DRAWER_OPEN)) setDrawer(false);
+        if (overlay) overlay.addEventListener('click', () => all.forEach((drawer) => setDrawer(drawer, false)));
+        document.addEventListener('keydown', (event) => {
+            const drawer = openOne();
+            // A menu open inside the drawer takes its own Escape first.
+            if (event.key === 'Escape' && drawer && !drawer.panel.querySelector('.dropdown-menu.show')) setDrawer(drawer, false);
         });
         // A phone turned into a wide screen has no drawer to keep open.
         DESKTOP.addEventListener('change', (event) => {
-            if (event.matches) setDrawer(false);
+            if (event.matches) all.forEach((drawer) => setDrawer(drawer, false));
         });
     }
 
@@ -157,7 +199,9 @@
     }
 
     chromeIcons();
+    unknownFeatherIcons();
     sidebar();
+    drawers();
     headerMenus();
 
     document.addEventListener('DOMContentLoaded', () => {

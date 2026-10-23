@@ -117,3 +117,12 @@
 .tox-promotion {
     display: none !important;
 }
+
+/* ── The monolith's smaller sizes (dataset, explore, hubfile, rating,
+   statistics). fs-7, fs-8 and fs-9 are not Bootstrap's: the templates
+   ported from uvlhub.io still write them. Each goes once those features
+   write Bootstrap's own (small, fs-6). ─────────────────────────────────── */
+
+.fs-7 { font-size: .95rem !important; }
+.fs-8 { font-size: .85rem !important; }
+.fs-9 { font-size: .75rem !important; }

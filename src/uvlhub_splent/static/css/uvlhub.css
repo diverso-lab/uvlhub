@@ -170,7 +170,7 @@
     --uvl-sidebar-version-color: #b5b5c3;
     --uvl-sidebar-drawer-shadow: 0 1px 9px -3px rgba(0, 0, 0, .05);
     --uvl-drawer-overlay: rgba(0, 0, 0, .2);
-    --uvl-icon-duotone-opacity: .3;
+    --uvl-icon-duotone-opacity: .5;
 
     /* The header, the title band, the content and the footer. */
     --uvl-header-height: 70px;
@@ -178,6 +178,10 @@
     --uvl-header-bg: #fff;
     --uvl-header-icon-color: var(--uvl-gray-500);
     --uvl-header-icon-size: 1.75rem;
+    --uvl-header-icon-size-mobile: 1.5rem;
+    --uvl-header-control-size: 40px;
+    --uvl-header-control-size-mobile: 35px;
+    --uvl-header-drawer-width: 225px;
     --uvl-header-btn-color: var(--uvl-gray-900);
     --uvl-content-gutter: 30px;
     --uvl-content-gutter-mobile: 20px;
@@ -219,6 +223,8 @@
         --uvl-content-gutter: var(--uvl-content-gutter-mobile);
         --uvl-toolbar-padding-y: var(--uvl-toolbar-padding-y-mobile);
         --uvl-header-height: var(--uvl-header-height-mobile);
+        --uvl-header-icon-size: var(--uvl-header-icon-size-mobile);
+        --uvl-header-control-size: var(--uvl-header-control-size-mobile);
     }
 }
 
@@ -317,16 +323,13 @@ h4, .h4 { font-size: 1.25rem; }
 h5, .h5 { font-size: 1.15rem; }
 h6, .h6 { font-size: 1.075rem; }
 
-/* uvlhub.io's size scale, which the features ported from it use. */
+/* Bootstrap's size utilities, in uvlhub.io's scale. */
 .fs-1 { font-size: 1.75rem !important; }
 .fs-2 { font-size: 1.5rem !important; }
 .fs-3 { font-size: 1.35rem !important; }
 .fs-4 { font-size: 1.25rem !important; }
 .fs-5 { font-size: 1.15rem !important; }
 .fs-6 { font-size: 1.075rem !important; }
-.fs-7 { font-size: .95rem !important; }
-.fs-8 { font-size: .85rem !important; }
-.fs-9 { font-size: .75rem !important; }
 
 /* The large sizes grow with the screen below 1200px, as uvlhub.io's do. */
 @media (max-width: 1199.98px) {
@@ -462,9 +465,9 @@ hr {
     color: var(--uvl-sidebar-toggle-active-color);
 }
 
-.uvl-sidebar-toggle .uvl-icon {
-    width: 1.15rem;
-    height: 1.15rem;
+.uvl-sidebar-toggle svg {
+    width: 1.5rem;
+    height: 1.5rem;
     transition: transform .3s ease;
 }
 
@@ -618,7 +621,7 @@ hr {
         color: var(--uvl-sidebar-toggle-active-color);
     }
 
-    .uvl-sidebar-minimized .uvl-sidebar-toggle .uvl-icon {
+    .uvl-sidebar-minimized .uvl-sidebar-toggle svg {
         transform: rotate(180deg);
     }
 
@@ -677,6 +680,7 @@ hr {
 
     .uvl-drawer-toggle,
     .uvl-header-logo,
+    .uvl-header-drawer-item,
     .uvl-drawer-overlay {
         display: none !important;
     }
@@ -721,8 +725,44 @@ hr {
         background-color: var(--uvl-drawer-overlay);
     }
 
-    .uvl-drawer-open {
+    .uvl-drawer-open,
+    .uvl-header-drawer-open {
         overflow: hidden;
+    }
+
+    /* The header's menu (the search) is a drawer from the right on a
+       phone, opened from the last button of the header. */
+    .uvl-header-menu {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 106;
+        flex-direction: column;
+        align-items: flex-start;
+        width: var(--uvl-header-drawer-width);
+        padding: .75rem 1rem;
+        background-color: var(--uvl-surface);
+        transform: translateX(100%);
+        visibility: hidden;
+        transition: transform .3s ease, visibility 0s linear .3s;
+    }
+
+    .uvl-header-drawer-open .uvl-header-menu {
+        transform: none;
+        visibility: visible;
+        box-shadow: var(--uvl-sidebar-drawer-shadow);
+        transition: transform .3s ease;
+    }
+
+    .uvl-header-drawer-toggle {
+        width: 30px;
+        height: 30px;
+    }
+
+    /* The panel is on the right: the icon's tinted side too. */
+    .uvl-header-drawer-toggle svg {
+        transform: scaleX(-1);
     }
 }
 
@@ -745,8 +785,11 @@ hr {
 }
 
 @media (max-width: 991.98px) {
+    /* Static on a phone, and no stacking context of its own, so the right
+       drawer it holds opens over the overlay like the sidebar does. */
     .uvl-header {
         position: relative;
+        z-index: auto;
         gap: .25rem;
         padding-left: calc(var(--uvl-content-gutter) - 9px);
     }
@@ -789,8 +832,8 @@ hr {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
+    width: var(--uvl-header-control-size);
+    height: var(--uvl-header-control-size);
     padding: 0;
     border: 0;
     border-radius: var(--uvl-radius);
@@ -824,6 +867,17 @@ hr {
     display: none !important;
 }
 
+/* The account is its initials, at the end of the header, without a box
+   around them (uvlhub.io's), so its menu ends at the gutter too. */
+.uvl-user-toggle,
+.uvl-user-toggle:hover,
+.uvl-user-toggle[aria-expanded="true"] {
+    justify-content: flex-end;
+    width: auto;
+    min-width: 24px;
+    background: transparent;
+}
+
 /* A button with a label (Cite us!), and the links features put among the
    buttons (Download all, Log in), drawn the same. */
 .uvl-header-btn,
@@ -854,6 +908,18 @@ hr {
     height: var(--uvl-header-icon-size);
     color: var(--uvl-header-icon-color);
     transition: color var(--uvl-transition);
+}
+
+/* Cite us! carries a small heart, and Download all a smaller cloud. */
+.uvl-header-btn .uvl-icon-sm {
+    width: 1rem;
+    height: 1rem;
+}
+
+.uvl-header-slot .nav-link .uvl-icon,
+.uvl-header-slot .nav-link svg {
+    width: 1.375rem;
+    height: 1.375rem;
 }
 
 .uvl-header-btn:hover,
@@ -919,15 +985,16 @@ hr {
 .uvl-user-menu {
     --bs-dropdown-min-width: 275px;
     width: 275px;
-    padding: .75rem 0;
+    padding: 1rem 0;
 }
 
 .uvl-user-menu .dropdown-divider {
-    margin: .75rem 0;
+    margin: .5rem 0 .625rem;
 }
 
 .uvl-user-identity {
-    padding: .75rem 1.5rem;
+    margin: .15rem .75rem;
+    padding: .65rem .75rem;
 }
 
 .uvl-user-name {
@@ -943,8 +1010,8 @@ hr {
 }
 
 .uvl-user-menu .dropdown-item {
-    margin: 0 .75rem;
     width: auto;
+    margin: .275rem 1.25rem;
     padding: .65rem 1.25rem;
     color: var(--uvl-gray-800);
     font-size: 1.075rem;
@@ -1002,9 +1069,10 @@ hr {
     padding: 0 var(--uvl-content-gutter) var(--uvl-content-gutter);
 }
 
-/* A page that draws its own heading starts it where the band's would be. */
+/* A page that draws its own heading starts where the band would end, as
+   under uvlhub.io's empty toolbar. */
 .uvl-content-untitled {
-    padding-top: var(--uvl-toolbar-padding-y);
+    padding-top: calc(2 * var(--uvl-toolbar-padding-y));
 }
 
 /* ── Shell: the footer ─────────────────────────────────────────────────── */
@@ -1039,6 +1107,7 @@ hr {
     display: inline-flex;
     align-items: center;
     gap: .5rem;
+    padding: .65rem 0;
     color: var(--uvl-footer-link-color);
     font-weight: var(--uvl-fw-medium);
 }
@@ -1060,6 +1129,7 @@ hr {
     .uvl-footer {
         flex-direction: column-reverse;
         align-items: flex-start;
+        gap: .15rem;
         padding-top: .75rem;
         padding-bottom: .75rem;
     }
@@ -1276,6 +1346,7 @@ hr {
 .btn-info { --bs-btn-color: var(--uvl-info-inverse); --bs-btn-hover-color: var(--uvl-info-inverse); --bs-btn-active-color: var(--uvl-info-inverse); --bs-btn-disabled-color: var(--uvl-info-inverse); }
 .btn-warning { --bs-btn-color: var(--uvl-warning-inverse); --bs-btn-hover-color: var(--uvl-warning-inverse); --bs-btn-active-color: var(--uvl-warning-inverse); --bs-btn-disabled-color: var(--uvl-warning-inverse); }
 .btn-danger { --bs-btn-color: var(--uvl-danger-inverse); --bs-btn-hover-color: var(--uvl-danger-inverse); --bs-btn-active-color: var(--uvl-danger-inverse); --bs-btn-disabled-color: var(--uvl-danger-inverse); }
+
 .btn-success { --bs-btn-bg: var(--uvl-success); --bs-btn-border-color: var(--uvl-success); --bs-btn-hover-bg: var(--uvl-success-active); --bs-btn-hover-border-color: var(--uvl-success-active); --bs-btn-active-bg: var(--uvl-success-active); --bs-btn-active-border-color: var(--uvl-success-active); --bs-btn-disabled-bg: var(--uvl-success); --bs-btn-disabled-border-color: var(--uvl-success); }
 .btn-info { --bs-btn-bg: var(--uvl-info); --bs-btn-border-color: var(--uvl-info); --bs-btn-hover-bg: var(--uvl-info-active); --bs-btn-hover-border-color: var(--uvl-info-active); --bs-btn-active-bg: var(--uvl-info-active); --bs-btn-active-border-color: var(--uvl-info-active); --bs-btn-disabled-bg: var(--uvl-info); --bs-btn-disabled-border-color: var(--uvl-info); }
 .btn-warning { --bs-btn-bg: var(--uvl-warning); --bs-btn-border-color: var(--uvl-warning); --bs-btn-hover-bg: var(--uvl-warning-active); --bs-btn-hover-border-color: var(--uvl-warning-active); --bs-btn-active-bg: var(--uvl-warning-active); --bs-btn-active-border-color: var(--uvl-warning-active); --bs-btn-disabled-bg: var(--uvl-warning); --bs-btn-disabled-border-color: var(--uvl-warning); }
@@ -1687,14 +1758,14 @@ hr {
 
 .dropdown-menu .form-check-label {
     color: var(--uvl-gray-900);
-    font-weight: var(--uvl-fw-semibold);
+    font-weight: var(--uvl-fw-medium);
 }
 
 /* ── Components: dialogs ───────────────────────────────────────────────── */
 
 .modal {
     --bs-modal-padding: 1.75rem;
-    --bs-modal-margin: 1.75rem;
+    --bs-modal-margin: .5rem;
     --bs-modal-bg: var(--uvl-surface);
     --bs-modal-color: var(--uvl-body-color);
     --bs-modal-border-width: 0;
@@ -1707,6 +1778,13 @@ hr {
     --bs-modal-footer-border-color: var(--uvl-border-color);
     --bs-modal-footer-border-width: 1px;
     --bs-modal-title-line-height: 1.5;
+}
+
+/* Nearly the whole width on a phone, a margin from 576px. */
+@media (min-width: 576px) {
+    .modal {
+        --bs-modal-margin: 1.75rem;
+    }
 }
 
 .modal-content {
@@ -1771,6 +1849,15 @@ hr {
 
 .breadcrumb-item a {
     color: var(--uvl-link);
+}
+
+/* The shell's place for it (base_template.html), 1rem above the content. */
+.uvl-breadcrumb {
+    margin-bottom: 1rem;
+}
+
+.uvl-breadcrumb .breadcrumb {
+    margin-bottom: 0;
 }
 
 .pagination {
@@ -1923,6 +2010,11 @@ hr {
     font-size: 2rem;
 }
 
+/* The two cards of words have more room around them. */
+.uvl-home-roomy > .card-body {
+    padding: 2rem;
+}
+
 /* ── Pages: the citation dialog (cites.html) ──────────────────────────── */
 
 .citation {
@@ -1968,7 +2060,7 @@ hr {
     padding: 0;
 }
 
-/* ── Pages: errors (errors/404.html, 400.html, 401.html) ──────────────── */
+/* ── Pages: errors (400.html, 401.html) ───────────────────────────────── */
 
 .uvl-error-page {
     display: flex;

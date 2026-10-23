@@ -49,10 +49,6 @@
     <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='favicon-192.png') }}">
     <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
 
-    {# The two weights of Inter every page draws, asked for before the stylesheet names them. #}
-    <link rel="preload" href="{{ url_for('static', filename='fonts/Inter-Regular.woff2') }}" as="font" type="font/woff2" crossorigin>
-    <link rel="preload" href="{{ url_for('static', filename='fonts/Inter-Medium.woff2') }}" as="font" type="font/woff2" crossorigin>
-
     <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
     {# The Bootstrap components AdminKit's build leaves out (dialogs, alerts, tooltips...). #}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-components.css') }}">
@@ -119,7 +115,8 @@
             </a>
             <button type="button" class="uvl-sidebar-toggle" data-uvl-sidebar-toggle aria-controls="sidebar" aria-pressed="false"
                     aria-label="{{ _('Fold or unfold the menu') }}" title="{{ _('Fold or unfold the menu') }}">
-                {{ chrome_icon('chevrons-left') }}
+                {# feather's chevron: uvlhub.io's is a single thin one. #}
+                {{ chrome_icon('chevron-left') }}
             </button>
         </div>
 
@@ -197,9 +194,11 @@
                 <img src="{{ url_for('static', filename='media/logos/uvlhub_ball.png') }}" alt="{{ config.SITE_NAME or SPLENT_APP }}" height="30">
             </a>
 
-            {# The header menu, where uvlhub has its search box. #}
-            <div class="uvl-header-menu">
-                {{ slot("layout.header.menu") }}
+            {# The header menu, where uvlhub has its search box: in the header
+               on a desktop, a drawer from the right on a phone. #}
+            {% set header_menu = slot("layout.header.menu") %}
+            <div class="uvl-header-menu" id="uvl-header-menu">
+                {{ header_menu }}
             </div>
 
             <ul class="uvl-header-actions">
@@ -212,7 +211,7 @@
 
                 <li class="nav-item">
                     <button type="button" class="uvl-header-btn" data-bs-toggle="modal" data-bs-target="#citationModal" aria-label="{{ _('Cite us!') }}">
-                        {{ chrome_icon('heart', header=true) }}
+                        {{ chrome_icon('heart', header=true, class_='uvl-icon-sm') }}
                         <span class="d-none d-md-inline">{{ _('Cite us!') }}</span>
                     </button>
                 </li>
@@ -283,6 +282,15 @@
                 {% endfor %}
                 {% endif %}
 
+                {% if header_menu | trim %}
+                <li class="nav-item uvl-header-drawer-item">
+                    <button type="button" class="uvl-header-icon uvl-header-drawer-toggle" data-uvl-header-drawer-toggle
+                            aria-controls="uvl-header-menu" aria-expanded="false" aria-label="{{ _('Show or hide the search') }}">
+                        {{ chrome_icon('sidebar', header=true) }}
+                    </button>
+                </li>
+                {% endif %}
+
             </ul>
         </header>
 
@@ -302,7 +310,10 @@
 
         <main class="uvl-content{{ ' uvl-content-untitled' if not page_title or '<h1' in page_content }}">
 
-            {% block breadcrumb %}{% endblock %}
+            {#- The trail, under the band. Its room is kept on a page without
+                one, as uvlhub.io does, so every page starts its content at
+                the same height. -#}
+            <div class="uvl-breadcrumb">{% block breadcrumb %}{% endblock %}</div>
 
             {% include "_flash_messages.html" %}
 
