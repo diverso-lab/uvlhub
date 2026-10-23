@@ -2388,7 +2388,7 @@ hr {
     gap: .5rem;
     height: min(300px, 70vw);
     margin-bottom: .75rem;
-    color: var(--uvl-gray-200);
+    color: var(--uvl-gray-300);
     font-size: min(9rem, 30vw);
     font-weight: var(--uvl-fw-bold);
     line-height: 1;
