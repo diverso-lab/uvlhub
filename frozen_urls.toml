@@ -786,11 +786,13 @@ served_by = "apidocs"
 plan = "AP-6"
 
 # ── Accepted new routes ───────────────────────────────────────────────────
-# CO-1: production exposes no route that is neither above nor in this list.
-# Which of the routes 3.0 adds are accepted (the token pages, profile's
-# /api/v1/profile/me, team, the admin) is the contract owner's decision,
-# so the list starts empty. The test checks every rule listed here is
-# served, so it cannot go stale either.
+# CO-1 also asks that production expose no route that is neither above nor
+# in this list. Which of the routes 3.0 adds are accepted (the token pages,
+# profile's /api/v1/profile/me, team, the admin) is the contract owner's
+# decision, so the list starts empty and that half of CO-1 is not enforced
+# yet: the test reports the rules in neither list as an expected failure,
+# and turns into a check once the owner fills this in. It also checks every
+# rule listed here is served, so the list cannot go stale.
 
 [accepted]
 rules = []

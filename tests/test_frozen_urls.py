@@ -12,6 +12,9 @@ origin back with credentials, and the 401 has to carry those keys. Which
 feature answers does not matter here, so a set of pins that drops the
 CORS of a frozen route fails even when every feature validates.
 
+The routes in neither the manifest nor its accepted list are reported as an
+expected failure until the contract owner decides which ones are accepted.
+
 Run it in the product's web container, which has the features installed:
 
     docker exec uvlhub_splent_web bash -lc \
@@ -187,3 +190,25 @@ def test_every_accepted_new_route_is_served(app):
 
     assert [rule for rule in ACCEPTED if _shape(rule) not in served] == []
 
+
+def test_every_route_is_frozen_or_accepted(app):
+    """The other half of CO-1, not enforced yet: the accepted list is the
+    contract owner's to fill. Until it holds every new route, the ones in
+    neither list are reported here as an expected failure. Once it does,
+    this passes, and the xfail turns into an assert."""
+    listed = {_shape(entry["rule"]) for entry in ENTRIES if "rule" in entry}
+    listed |= {_shape(rule) for rule in ACCEPTED}
+
+    unlisted = sorted(
+        {
+            rule.rule
+            for rule in app.url_map.iter_rules()
+            if _shape(rule.rule) not in listed
+        }
+    )
+
+    if unlisted:
+        pytest.xfail(
+            f"{len(unlisted)} rules are neither frozen nor accepted: "
+            + ", ".join(unlisted)
+        )
