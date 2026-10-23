@@ -2032,8 +2032,11 @@ hr {
 }
 
 .modal-header .btn-close {
-    width: 2.7rem;
-    height: 2.7rem;
+    width: 2.75rem;
+    height: 2.75rem;
+    /* In the header's flow, as uvlhub.io's close button is: it sets the
+       header's height, and the title sits in its middle. */
+    margin: 0 0 0 auto;
     padding: 0;
     background-size: .85rem;
 }
@@ -2303,7 +2306,7 @@ hr {
 .citation-label {
     margin: 0;
     color: var(--uvl-heading-color);
-    font-size: 1.15rem;
+    font-size: 1.075rem;
     font-weight: var(--uvl-fw-semibold);
 }
 
