@@ -138,6 +138,17 @@
     --uvl-focus-ring: 0 0 0 .2rem rgba(var(--uvl-primary-rgb), .25);
     --uvl-transition: .15s ease;
 
+    /* The label on a filled colour, and the text of a light alert. Dark on
+       the warning and success fills, where white does not read. */
+    --uvl-primary-inverse: #fff;
+    --uvl-success-inverse: var(--uvl-gray-900);
+    --uvl-info-inverse: #fff;
+    --uvl-warning-inverse: var(--uvl-gray-900);
+    --uvl-danger-inverse: #fff;
+    --uvl-dark-inverse: #fff;
+    --uvl-success-text: #067a2f;
+    --uvl-warning-text: #7a5e00;
+
     /* The sidebar. */
     --uvl-sidebar-width: 265px;
     --uvl-sidebar-width-minimized: 75px;
@@ -343,14 +354,14 @@ b, strong { font-weight: var(--uvl-fw-semibold); }
 .link-primary { color: var(--uvl-primary) !important; }
 .link-primary:hover, .link-primary:focus { color: var(--uvl-primary-active) !important; }
 /* AdminKit writes its own colours into the text-bg-* utilities. */
-.text-bg-primary { background-color: rgba(var(--uvl-primary-rgb), var(--bs-bg-opacity, 1)) !important; color: #fff !important; }
+.text-bg-primary { background-color: rgba(var(--uvl-primary-rgb), var(--bs-bg-opacity, 1)) !important; color: var(--uvl-primary-inverse) !important; }
 .text-bg-secondary { background-color: var(--uvl-secondary) !important; color: var(--uvl-gray-900) !important; }
-.text-bg-success { background-color: rgba(var(--uvl-success-rgb), var(--bs-bg-opacity, 1)) !important; color: #fff !important; }
-.text-bg-info { background-color: rgba(var(--uvl-info-rgb), var(--bs-bg-opacity, 1)) !important; color: #fff !important; }
-.text-bg-warning { background-color: rgba(var(--uvl-warning-rgb), var(--bs-bg-opacity, 1)) !important; color: #fff !important; }
-.text-bg-danger { background-color: rgba(var(--uvl-danger-rgb), var(--bs-bg-opacity, 1)) !important; color: #fff !important; }
+.text-bg-success { background-color: rgba(var(--uvl-success-rgb), var(--bs-bg-opacity, 1)) !important; color: var(--uvl-success-inverse) !important; }
+.text-bg-info { background-color: rgba(var(--uvl-info-rgb), var(--bs-bg-opacity, 1)) !important; color: var(--uvl-info-inverse) !important; }
+.text-bg-warning { background-color: rgba(var(--uvl-warning-rgb), var(--bs-bg-opacity, 1)) !important; color: var(--uvl-warning-inverse) !important; }
+.text-bg-danger { background-color: rgba(var(--uvl-danger-rgb), var(--bs-bg-opacity, 1)) !important; color: var(--uvl-danger-inverse) !important; }
 .text-bg-light { background-color: var(--uvl-light) !important; color: var(--uvl-gray-800) !important; }
-.text-bg-dark { background-color: rgba(var(--uvl-dark-rgb), var(--bs-bg-opacity, 1)) !important; color: #fff !important; }
+.text-bg-dark { background-color: rgba(var(--uvl-dark-rgb), var(--bs-bg-opacity, 1)) !important; color: var(--uvl-dark-inverse) !important; }
 
 .lead { font-size: 1.15rem; font-weight: var(--uvl-fw-normal); }
 
@@ -1201,16 +1212,16 @@ hr {
 }
 
 .btn-primary {
-    --bs-btn-color: #fff;
+    --bs-btn-color: var(--uvl-primary-inverse);
     --bs-btn-bg: var(--uvl-primary);
     --bs-btn-border-color: var(--uvl-primary);
-    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-color: var(--uvl-primary-inverse);
     --bs-btn-hover-bg: var(--uvl-primary-active);
     --bs-btn-hover-border-color: var(--uvl-primary-active);
-    --bs-btn-active-color: #fff;
+    --bs-btn-active-color: var(--uvl-primary-inverse);
     --bs-btn-active-bg: var(--uvl-primary-active);
     --bs-btn-active-border-color: var(--uvl-primary-active);
-    --bs-btn-disabled-color: #fff;
+    --bs-btn-disabled-color: var(--uvl-primary-inverse);
     --bs-btn-disabled-bg: var(--uvl-primary);
     --bs-btn-disabled-border-color: var(--uvl-primary);
 }
@@ -1250,31 +1261,49 @@ hr {
 }
 
 .btn-dark {
-    --bs-btn-color: #fff;
+    --bs-btn-color: var(--uvl-dark-inverse);
     --bs-btn-bg: var(--uvl-dark);
     --bs-btn-border-color: var(--uvl-dark);
-    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-color: var(--uvl-dark-inverse);
     --bs-btn-hover-bg: var(--uvl-dark-active);
     --bs-btn-hover-border-color: var(--uvl-dark-active);
-    --bs-btn-active-color: #fff;
+    --bs-btn-active-color: var(--uvl-dark-inverse);
     --bs-btn-active-bg: var(--uvl-dark-active);
     --bs-btn-active-border-color: var(--uvl-dark-active);
 }
 
-.btn-success,
-.btn-info,
-.btn-warning,
-.btn-danger {
-    --bs-btn-color: #fff;
-    --bs-btn-hover-color: #fff;
-    --bs-btn-active-color: #fff;
-    --bs-btn-disabled-color: #fff;
-}
-
+.btn-success { --bs-btn-color: var(--uvl-success-inverse); --bs-btn-hover-color: var(--uvl-success-inverse); --bs-btn-active-color: var(--uvl-success-inverse); --bs-btn-disabled-color: var(--uvl-success-inverse); }
+.btn-info { --bs-btn-color: var(--uvl-info-inverse); --bs-btn-hover-color: var(--uvl-info-inverse); --bs-btn-active-color: var(--uvl-info-inverse); --bs-btn-disabled-color: var(--uvl-info-inverse); }
+.btn-warning { --bs-btn-color: var(--uvl-warning-inverse); --bs-btn-hover-color: var(--uvl-warning-inverse); --bs-btn-active-color: var(--uvl-warning-inverse); --bs-btn-disabled-color: var(--uvl-warning-inverse); }
+.btn-danger { --bs-btn-color: var(--uvl-danger-inverse); --bs-btn-hover-color: var(--uvl-danger-inverse); --bs-btn-active-color: var(--uvl-danger-inverse); --bs-btn-disabled-color: var(--uvl-danger-inverse); }
 .btn-success { --bs-btn-bg: var(--uvl-success); --bs-btn-border-color: var(--uvl-success); --bs-btn-hover-bg: var(--uvl-success-active); --bs-btn-hover-border-color: var(--uvl-success-active); --bs-btn-active-bg: var(--uvl-success-active); --bs-btn-active-border-color: var(--uvl-success-active); --bs-btn-disabled-bg: var(--uvl-success); --bs-btn-disabled-border-color: var(--uvl-success); }
 .btn-info { --bs-btn-bg: var(--uvl-info); --bs-btn-border-color: var(--uvl-info); --bs-btn-hover-bg: var(--uvl-info-active); --bs-btn-hover-border-color: var(--uvl-info-active); --bs-btn-active-bg: var(--uvl-info-active); --bs-btn-active-border-color: var(--uvl-info-active); --bs-btn-disabled-bg: var(--uvl-info); --bs-btn-disabled-border-color: var(--uvl-info); }
 .btn-warning { --bs-btn-bg: var(--uvl-warning); --bs-btn-border-color: var(--uvl-warning); --bs-btn-hover-bg: var(--uvl-warning-active); --bs-btn-hover-border-color: var(--uvl-warning-active); --bs-btn-active-bg: var(--uvl-warning-active); --bs-btn-active-border-color: var(--uvl-warning-active); --bs-btn-disabled-bg: var(--uvl-warning); --bs-btn-disabled-border-color: var(--uvl-warning); }
 .btn-danger { --bs-btn-bg: var(--uvl-danger); --bs-btn-border-color: var(--uvl-danger); --bs-btn-hover-bg: var(--uvl-danger-active); --bs-btn-hover-border-color: var(--uvl-danger-active); --bs-btn-active-bg: var(--uvl-danger-active); --bs-btn-active-border-color: var(--uvl-danger-active); --bs-btn-disabled-bg: var(--uvl-danger); --bs-btn-disabled-border-color: var(--uvl-danger); }
+
+/* AdminKit writes the label of its solid buttons outright, white (dark on
+   the light one) in every state, over Bootstrap's variables: Go to GitHub
+   came out white on light grey. The variables again, with the same weight
+   as AdminKit's rules, so each button takes the colours set above. */
+:is(.btn-primary, .btn-secondary, .btn-success, .btn-info, .btn-warning, .btn-danger, .btn-light, .btn-dark),
+:is(.btn-primary, .btn-secondary, .btn-success, .btn-info, .btn-warning, .btn-danger, .btn-light, .btn-dark):focus,
+:is(.btn-primary, .btn-secondary, .btn-success, .btn-info, .btn-warning, .btn-danger, .btn-light, .btn-dark).focus {
+    color: var(--bs-btn-color);
+}
+
+:is(.btn-primary, .btn-secondary, .btn-success, .btn-info, .btn-warning, .btn-danger, .btn-light, .btn-dark):hover:not(:disabled):not(.disabled),
+:is(.btn-primary, .btn-secondary, .btn-success, .btn-info, .btn-warning, .btn-danger, .btn-light, .btn-dark).hover:not(:disabled):not(.disabled) {
+    color: var(--bs-btn-hover-color);
+}
+
+:is(.btn-primary, .btn-secondary, .btn-success, .btn-info, .btn-warning, .btn-danger, .btn-light, .btn-dark):disabled,
+:is(.btn-primary, .btn-secondary, .btn-success, .btn-info, .btn-warning, .btn-danger, .btn-light, .btn-dark).disabled {
+    color: var(--bs-btn-disabled-color);
+}
+
+.show > :is(.btn-primary, .btn-secondary, .btn-success, .btn-info, .btn-warning, .btn-danger, .btn-light, .btn-dark).dropdown-toggle {
+    color: var(--bs-btn-active-color);
+}
 
 /* Outline buttons carry no visible border on uvlhub.io: a dark label on
    nothing, filled on hover. */
@@ -1396,6 +1425,11 @@ hr {
 .badge.text-bg-primary {
     background-color: var(--uvl-primary) !important;
 }
+
+/* A solid warning or success badge (bg-*) with Bootstrap's white label:
+   the dark one, as on the buttons. */
+.badge.bg-warning:not(.bg-opacity-10):not([class*="text-"]) { color: var(--uvl-warning-inverse); }
+.badge.bg-success:not(.bg-opacity-10):not([class*="text-"]) { color: var(--uvl-success-inverse); }
 
 /* Soft badges in plain Bootstrap (bg-success bg-opacity-10 text-success),
    in uvlhub's light tints. */
@@ -1836,9 +1870,9 @@ hr {
 }
 
 .alert-primary { --bs-alert-color: var(--uvl-primary); --bs-alert-bg: var(--uvl-primary-light); --bs-alert-border-color: var(--uvl-primary); }
-.alert-success { --bs-alert-color: var(--uvl-success-active); --bs-alert-bg: var(--uvl-success-light); --bs-alert-border-color: var(--uvl-success); }
+.alert-success { --bs-alert-color: var(--uvl-success-text); --bs-alert-bg: var(--uvl-success-light); --bs-alert-border-color: var(--uvl-success); }
 .alert-info { --bs-alert-color: var(--uvl-info); --bs-alert-bg: var(--uvl-info-light); --bs-alert-border-color: var(--uvl-info); }
-.alert-warning { --bs-alert-color: #9a7700; --bs-alert-bg: var(--uvl-warning-light); --bs-alert-border-color: var(--uvl-warning); }
+.alert-warning { --bs-alert-color: var(--uvl-warning-text); --bs-alert-bg: var(--uvl-warning-light); --bs-alert-border-color: var(--uvl-warning); }
 .alert-danger { --bs-alert-color: var(--uvl-danger-active); --bs-alert-bg: var(--uvl-danger-light); --bs-alert-border-color: var(--uvl-danger); }
 .alert-secondary,
 .alert-light { --bs-alert-color: var(--uvl-gray-800); --bs-alert-bg: var(--uvl-gray-100); --bs-alert-border-color: var(--uvl-gray-300); }
