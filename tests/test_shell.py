@@ -379,8 +379,11 @@ def test_a_section_with_registry_entries_does_not_draw_its_slot(
     ]
     every_section = app.jinja_env.globals["menu_sections"]
 
+    # auth and signup register the visitors' section themselves since auth
+    # 1.21 and signup 0.4, so the made-up one takes its place.
     def sections():
-        return every_section() + registered
+        others = [s for s in every_section() if s["key"] != "anonymous"]
+        return others + registered
 
     monkeypatch.setitem(app.jinja_env.globals, "menu_sections", sections)
     sidebar = _sidebar(_open(browsers, "anonymous", SHELL_PAGE))
