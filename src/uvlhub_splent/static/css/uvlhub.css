@@ -191,6 +191,9 @@
     --uvl-header-control-size-mobile: 35px;
     --uvl-header-drawer-width: 225px;
     --uvl-header-btn-color: var(--uvl-gray-900);
+    --uvl-header-pill-bg: var(--uvl-gray-100);
+    --uvl-header-pill-hover-bg: var(--uvl-gray-200);
+    --uvl-header-pill-color: var(--uvl-gray-800);
     --uvl-content-gutter: 30px;
     --uvl-content-gutter-mobile: 20px;
     --uvl-toolbar-padding-y: 1.5rem;
@@ -305,7 +308,10 @@
     --uvl-footer-bg: #15171c;
     --uvl-sidebar-bg: #15171c;
     --uvl-sidebar-logo-border: 1px dashed #26272f;
-    --uvl-sidebar-toggle-bg: #1b1c22;
+    --uvl-sidebar-toggle-bg: #26272f;
+    --uvl-header-pill-bg: #363843;
+    --uvl-header-pill-hover-bg: #464852;
+    --uvl-header-pill-color: #fff;
     --uvl-doi-label-bg: #26272f;
 }
 
@@ -871,7 +877,8 @@ hr {
         flex-direction: column;
         align-items: flex-start;
         width: var(--uvl-header-drawer-width);
-        padding: .75rem 1rem;
+        /* The search button where uvlhub.io has it, near the top left. */
+        padding: 1.25rem .5rem;
         background-color: var(--uvl-surface);
         transform: translateX(100%);
         visibility: hidden;
@@ -944,8 +951,14 @@ hr {
 
 .uvl-header-menu {
     display: flex;
-    align-items: center;
     min-width: 0;
+}
+
+/* In the header from 992px; below, a drawer that starts at its top left. */
+@media (min-width: 992px) {
+    .uvl-header-menu {
+        align-items: center;
+    }
 }
 
 .uvl-header-actions {
@@ -1078,15 +1091,15 @@ hr {
 /* A menu among the buttons (Download all) is a soft pill, as on uvlhub.io. */
 .uvl-header-slot .dropdown > .nav-link,
 .uvl-header-slot .dropdown > .btn {
-    background-color: var(--uvl-gray-100);
-    color: var(--uvl-gray-800);
+    background-color: var(--uvl-header-pill-bg);
+    color: var(--uvl-header-pill-color);
 }
 
 .uvl-header-slot .dropdown > .nav-link:hover,
 .uvl-header-slot .dropdown > .nav-link[aria-expanded="true"],
 .uvl-header-slot .dropdown > .btn:hover {
-    background-color: var(--uvl-gray-200);
-    color: var(--uvl-gray-800);
+    background-color: var(--uvl-header-pill-hover-bg);
+    color: var(--uvl-header-pill-color);
 }
 
 .uvl-header-actions .topbar-lang .nav-link {
