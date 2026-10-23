@@ -4,10 +4,10 @@
 {% macro citation(id, label) -%}
 <div class="mb-4">
     <div class="d-flex justify-content-between align-items-center mb-2">
-        <h6 class="mb-0">{{ label }}</h6>
-        <button type="button" class="btn btn-sm btn-outline-primary" data-citation-copy="{{ id }}" data-copied-label="{{ _('Copied!') }}">{{ _('Copy') }}</button>
+        <h6 class="citation-label">{{ label }}</h6>
+        <button type="button" class="btn btn-sm uvl-btn-soft-primary" data-citation-copy="{{ id }}" data-copied-label="{{ _('Copied!') }}">{{ _('Copy') }}</button>
     </div>
-    <pre id="{{ id }}" class="citation bg-light p-3 rounded mb-0">{{ caller() | trim }}</pre>
+    <pre id="{{ id }}" class="citation">{{ caller() | trim }}</pre>
 </div>
 {%- endmacro %}
 

@@ -19,15 +19,21 @@
 
             {% if current_user.is_anonymous %}
             <div class="col-12">
-                <div class="card mb-5 shadow-sm">
-                    <div class="card-body text-center p-4">
-                        <h2 class="fw-bold mb-3">{{ _("Let's get started!") }}</h2>
-                        <p class="text-muted mb-4">
+                <div class="card uvl-home-card uvl-home-start mb-4 shadow-sm">
+                    <div class="card-body text-center">
+                        <h2 class="mb-3">{{ _("Let's get started!") }}</h2>
+                        <p class="mb-4">
                             {{ _('Ready to upload your feature models in UVL format and share them with the world?') }}
                         </p>
                         <div class="d-grid gap-3">
-                            <a href="{{ url_for('signup.show_signup_form') }}" class="btn btn-primary btn-lg fw-semibold">{{ _('Sign up') }}</a>
-                            <a href="{{ url_for('auth.login') }}" class="btn btn-outline-primary btn-lg fw-semibold">{{ _("I'm already registered") }}</a>
+                            <a href="{{ url_for('signup.show_signup_form') }}" class="btn btn-primary btn-lg">
+                                <i data-feather="user-plus" aria-hidden="true"></i>
+                                <span>{{ _('Sign Up') }}</span>
+                            </a>
+                            <a href="{{ url_for('auth.login') }}" class="btn btn-outline-primary btn-lg">
+                                <i data-feather="log-in" aria-hidden="true"></i>
+                                <span>{{ _("I'm already registered") }}</span>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -37,16 +43,16 @@
             {{ render_template_hooks("home.aside") }}
 
             <div class="col-12">
-                <div class="card mb-5 shadow-sm">
-                    <div class="card-body p-4">
-                        <h2 class="fw-bold mb-3">{{ _('What is uvlhub.io?') }}</h2>
-                        <p class="text-muted mb-4">
+                <div class="card uvl-home-card mb-4 shadow-sm">
+                    <div class="card-body">
+                        <h2 class="mb-3">{{ _('What is uvlhub.io?') }}</h2>
+                        <p class="mb-5">
                             <strong>uvlhub.io</strong> is a repository of feature models in UVL format integrated with
                             Zenodo and flamapy, developed by <strong>DiversoLab</strong>.
                         </p>
 
-                        <h2 class="fw-bold mb-3">{{ _('Can I contribute?') }}</h2>
-                        <p class="text-muted mb-4">
+                        <h2 class="mb-3">{{ _('Can I contribute?') }}</h2>
+                        <p class="mb-4">
                             Sure! You can fork our official GitHub repository, create fantastic features, and then
                             send us a pull request.
                         </p>
@@ -60,13 +66,13 @@
             </div>
 
             <div class="col-12">
-                <div class="card mb-5">
+                <div class="card uvl-home-card mb-4 shadow-sm">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center mb-4">
-                            <h2 class="mb-0"><b>{{ _('Cite us!') }}</b></h2>
-                            <button type="button" class="btn btn-secondary d-flex align-items-center gap-2 px-4 py-2 fw-bold"
+                            <h2 class="mb-0">{{ _('Cite us!') }}</h2>
+                            <button type="button" class="btn btn-secondary"
                                     data-bs-toggle="modal" data-bs-target="#citationModal">
-                                <i data-feather="heart"></i>
+                                <i data-feather="heart" aria-hidden="true"></i>
                                 <span class="d-none d-md-inline">{{ _('How to cite us?') }}</span>
                             </button>
                         </div>
