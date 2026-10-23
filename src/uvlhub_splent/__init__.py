@@ -89,9 +89,9 @@ def team_sections():
 def _arrange_menus():
     """uvlhub's menus, out of what the features put in them.
 
-    The markup comes from the product's templates/hooks/, which take the
-    place of the features' templates of the same name. This only decides
-    which entries uvlhub shows and in which order.
+    The markup is the features' own, but for the Account heading and the
+    Team link, which the product draws from its templates/hooks/. This only
+    decides which entries uvlhub shows and in which order.
     """
     auth = "splent_io.splent_feature_auth.hooks"
     signup = "splent_io.splent_feature_signup.hooks"
@@ -108,7 +108,8 @@ def _arrange_menus():
         _place("layout.sidebar.authenticated.items", logout, LAST)
     _place("layout.sidebar.authenticated.items", account_sidebar_heading, FIRST)
 
-    # The user menu of the header lists Edit profile first and Log out last.
+    # In the header, auth's menu with Log out opens under profile's button
+    # with the user's name, so it has to come after it.
     navbar_logout = _feature_hook(auth, "navbar_authenticated")
     if navbar_logout is not None:
         _place("layout.navbar.authenticated", navbar_logout, LAST)
