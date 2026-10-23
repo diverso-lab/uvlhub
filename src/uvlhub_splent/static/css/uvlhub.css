@@ -203,6 +203,7 @@
     --uvl-card-padding-y: 2rem;
     --uvl-card-padding-x: 2.25rem;
     --uvl-card-header-height: 70px;
+    --uvl-grid-gutter: 1.5rem;
     --uvl-card-gap: 1.25rem;
     --uvl-card-title-size: 1.275rem;
     --uvl-btn-padding-y: calc(.775rem + 1px);
@@ -214,6 +215,8 @@
     --uvl-btn-lg-padding-y: calc(.825rem + 1px);
     --uvl-btn-lg-padding-x: calc(1.75rem + 1px);
     --uvl-btn-lg-font-size: 1.15rem;
+    --uvl-btn-icon-size: 24px;
+    --uvl-btn-sm-icon-size: 1.25em;
     --uvl-input-padding-y: .775rem;
     --uvl-input-padding-x: 1rem;
     --uvl-input-font-size: 1.1rem;
@@ -434,7 +437,7 @@ h6, .h6 { font-size: 1.075rem; }
 .fw-bold { font-weight: var(--uvl-fw-semibold) !important; }
 .fw-bolder { font-weight: var(--uvl-fw-bold) !important; }
 
-b, strong { font-weight: var(--uvl-fw-semibold); }
+b, strong { font-weight: var(--uvl-fw-bold); }
 
 .text-muted { color: var(--uvl-text-muted) !important; }
 .text-dark { color: var(--uvl-gray-900) !important; }
@@ -1325,6 +1328,15 @@ hr {
     vertical-align: -.125em;
 }
 
+/* ── Components: the grid ──────────────────────────────────────────────── */
+
+/* Bootstrap's gutter, 1.5rem, as on uvlhub.io: AdminKit's build sets 24px,
+   which leaves every column a few pixels narrower (the home's lead wraps
+   to three lines). A row that names its own gutter (g-4, gx-md-2) keeps it. */
+.row:not([class^="g-"], [class*=" g-"], [class^="gx-"], [class*=" gx-"]) {
+    --bs-gutter-x: var(--uvl-grid-gutter);
+}
+
 /* ── Components: cards ─────────────────────────────────────────────────── */
 
 .card {
@@ -1453,9 +1465,28 @@ hr {
     --bs-btn-border-radius: var(--uvl-radius-lg);
 }
 
+/* feather's own 24px, as uvlhub.io leaves it, in a button of the normal
+   size or larger; a small button keeps it to its text. Two steps for the
+   icons uvlhub.io draws smaller in a button (Cite us!'s heart). */
 .btn .feather {
-    width: 1.25em;
-    height: 1.25em;
+    width: var(--uvl-btn-icon-size);
+    height: var(--uvl-btn-icon-size);
+}
+
+.btn-sm .feather,
+.btn-group-sm > .btn .feather {
+    width: var(--uvl-btn-sm-icon-size);
+    height: var(--uvl-btn-sm-icon-size);
+}
+
+.btn .feather.uvl-btn-icon-md {
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+.btn .feather.uvl-btn-icon-sm {
+    width: 1rem;
+    height: 1rem;
 }
 
 .btn-primary {
@@ -2189,9 +2220,21 @@ hr {
 
 /* ── Pages: the home page (public/index.html) ─────────────────────────── */
 
-.uvl-home-card p {
+/* The cards of the side column, the product's and the ones features put
+   there (statistics' counters), a step apart as on uvlhub.io. */
+.uvl-home-aside > .row > [class*="col"] > .card {
+    margin-bottom: var(--uvl-card-gap) !important;
+}
+
+/* The words of the two roomy cards are a muted lead; the references of
+   Cite us! keep the text's colour. */
+.uvl-home-roomy p {
     color: var(--uvl-gray-600);
     font-size: 1.075rem;
+}
+
+.uvl-home-gap {
+    margin-bottom: 2.5rem;
 }
 
 .uvl-home-start h2 {

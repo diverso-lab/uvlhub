@@ -14,12 +14,12 @@
         {{ render_template_hooks("home.section") }}
     </div>
 
-    <div class="col-xl-4 col-12">
+    <div class="col-xl-4 col-12 uvl-home-aside">
         <div class="row">
 
             {% if current_user.is_anonymous %}
             <div class="col-12">
-                <div class="card uvl-home-card uvl-home-start uvl-home-roomy mb-4 shadow-sm">
+                <div class="card uvl-home-card uvl-home-start uvl-home-roomy shadow-sm">
                     <div class="card-body text-center">
                         <h2 class="mb-3">{{ _("Let's get started!") }}</h2>
                         <p class="mb-4">
@@ -43,10 +43,10 @@
             {{ render_template_hooks("home.aside") }}
 
             <div class="col-12">
-                <div class="card uvl-home-card uvl-home-roomy mb-4 shadow-sm">
+                <div class="card uvl-home-card uvl-home-roomy shadow-sm">
                     <div class="card-body">
                         <h2 class="mb-3">{{ _('What is uvlhub.io?') }}</h2>
-                        <p class="mb-5">
+                        <p class="uvl-home-gap">
                             <strong>uvlhub.io</strong> is a repository of feature models in UVL format integrated with
                             Zenodo and flamapy, developed by <strong>DiversoLab</strong>.
                         </p>
@@ -58,7 +58,7 @@
                         </p>
 
                         <a href="https://github.com/diverso-lab/uvlhub" target="_blank" rel="noopener" class="btn btn-secondary">
-                            <i class="align-middle" data-feather="github"></i>
+                            <i class="align-middle uvl-btn-icon-md" data-feather="github" aria-hidden="true"></i>
                             <span class="align-middle">{{ _('Go to GitHub') }}</span>
                         </a>
                     </div>
@@ -66,13 +66,14 @@
             </div>
 
             <div class="col-12">
-                <div class="card uvl-home-card mb-4 shadow-sm">
+                {#- A plain card, its references in the text's colour, as on uvlhub.io. -#}
+                <div class="card uvl-home-card">
                     <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                            <h2 class="mb-0">{{ _('Cite us!') }}</h2>
-                            <button type="button" class="btn btn-secondary"
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h2 class="mb-0"><b>{{ _('Cite us!') }}</b></h2>
+                            <button type="button" class="btn btn-secondary py-2 px-3 fw-bold"
                                     data-bs-toggle="modal" data-bs-target="#citationModal">
-                                <i data-feather="heart" aria-hidden="true"></i>
+                                <i class="uvl-btn-icon-sm" data-feather="heart" aria-hidden="true"></i>
                                 <span class="d-none d-md-inline">{{ _('How to cite us?') }}</span>
                             </button>
                         </div>
