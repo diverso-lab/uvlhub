@@ -3,7 +3,7 @@
     The main column is public's home.section slot (dataset's top datasets
     first), and the side column its home.aside slot (statistics' counters),
     between uvlhub's own cards. -#}
-{% extends "base_template.html" %}
+{% extends shell('app') %}
 
 {% block title %}{{ _('Top datasets with the most feature models') }}{% endblock %}
 
@@ -20,14 +20,14 @@
             {% if current_user.is_anonymous %}
             <div class="col-12">
                 <div class="card mb-5 shadow-sm">
-                    <div class="card-body text-center p-8">
-                        <h2 class="fs-2x fw-bold mb-4">{{ _("Let's get started!") }}</h2>
-                        <p class="fs-6 text-gray-600 mb-6">
+                    <div class="card-body text-center p-4">
+                        <h2 class="fw-bold mb-3">{{ _("Let's get started!") }}</h2>
+                        <p class="text-muted mb-4">
                             {{ _('Ready to upload your feature models in UVL format and share them with the world?') }}
                         </p>
                         <div class="d-grid gap-3">
                             <a href="{{ url_for('signup.show_signup_form') }}" class="btn btn-primary btn-lg fw-semibold">{{ _('Sign up') }}</a>
-                            <a href="{{ url_for('auth.login') }}" class="btn btn-outline btn-outline-primary btn-lg fw-semibold">{{ _("I'm already registered") }}</a>
+                            <a href="{{ url_for('auth.login') }}" class="btn btn-outline-primary btn-lg fw-semibold">{{ _("I'm already registered") }}</a>
                         </div>
                     </div>
                 </div>
@@ -38,25 +38,22 @@
 
             <div class="col-12">
                 <div class="card mb-5 shadow-sm">
-                    <div class="card-body p-8">
-                        <h2 class="fw-bold mb-4">{{ _('What is uvlhub.io?') }}</h2>
-                        <p class="fs-6 text-gray-600 mb-10">
+                    <div class="card-body p-4">
+                        <h2 class="fw-bold mb-3">{{ _('What is uvlhub.io?') }}</h2>
+                        <p class="text-muted mb-4">
                             <strong>uvlhub.io</strong> is a repository of feature models in UVL format integrated with
                             Zenodo and flamapy, developed by <strong>DiversoLab</strong>.
                         </p>
 
-                        <h2 class="fw-bold mb-4">{{ _('Can I contribute?') }}</h2>
-                        <p class="fs-6 text-gray-600 mb-6">
+                        <h2 class="fw-bold mb-3">{{ _('Can I contribute?') }}</h2>
+                        <p class="text-muted mb-4">
                             Sure! You can fork our official GitHub repository, create fantastic features, and then
                             send us a pull request.
                         </p>
 
                         <a href="https://github.com/diverso-lab/uvlhub" target="_blank" rel="noopener" class="btn btn-secondary">
-                            <i class="ki-duotone ki-github fs-2">
-                                <span class="path1"></span>
-                                <span class="path2"></span>
-                            </i>
-                            <span>{{ _('Go to GitHub') }}</span>
+                            <i class="align-middle" data-feather="github"></i>
+                            <span class="align-middle">{{ _('Go to GitHub') }}</span>
                         </a>
                     </div>
                 </div>
@@ -67,12 +64,9 @@
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center mb-4">
                             <h2 class="mb-0"><b>{{ _('Cite us!') }}</b></h2>
-                            <button class="btn btn-secondary d-flex align-items-center gap-2 px-4 py-2 fw-bold"
+                            <button type="button" class="btn btn-secondary d-flex align-items-center gap-2 px-4 py-2 fw-bold"
                                     data-bs-toggle="modal" data-bs-target="#citationModal">
-                                <i class="ki-duotone ki-heart">
-                                    <span class="path1"></span>
-                                    <span class="path2"></span>
-                                </i>
+                                <i data-feather="heart"></i>
                                 <span class="d-none d-md-inline">{{ _('How to cite us?') }}</span>
                             </button>
                         </div>

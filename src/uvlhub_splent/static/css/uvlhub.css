@@ -1,0 +1,266 @@
+/* uvlhub's skin over AdminKit 3.3.0 (css/app.css).
+ *
+ * The blue of uvlhub.io instead of AdminKit's, the system's fonts instead of
+ * Inter (which would come from Google), and a light sidebar, because the
+ * logo (media/logos/default.svg) is written in dark grey. Then the few rules
+ * of uvlhub's own pages.
+ */
+
+/* ── Brand ─────────────────────────────────────────────────────────────── */
+
+:root {
+    --uvlhub-blue: #287fb9;
+    --uvlhub-blue-soft: rgba(40, 127, 185, 0.1);
+    --uvlhub-border: #e5e9f0;
+
+    /* Bootstrap 5.2 reads these for links and the *-primary utilities. */
+    --bs-primary: #287fb9;
+    --bs-primary-rgb: 40, 127, 185;
+    --bs-link-color: #287fb9;
+    --bs-link-hover-color: #206694;
+    --bs-font-sans-serif: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
+
+/* Components that name AdminKit's blue directly instead of the variables. */
+.btn-primary {
+    --bs-btn-bg: #287fb9;
+    --bs-btn-border-color: #287fb9;
+    --bs-btn-hover-bg: #226c9d;
+    --bs-btn-hover-border-color: #206694;
+    --bs-btn-focus-shadow-rgb: 72, 146, 196;
+    --bs-btn-active-bg: #206694;
+    --bs-btn-active-border-color: #1e5f8b;
+    --bs-btn-disabled-bg: #287fb9;
+    --bs-btn-disabled-border-color: #287fb9;
+}
+
+.btn-outline-primary {
+    --bs-btn-color: #287fb9;
+    --bs-btn-border-color: #287fb9;
+    --bs-btn-hover-bg: #287fb9;
+    --bs-btn-hover-border-color: #287fb9;
+    --bs-btn-focus-shadow-rgb: 40, 127, 185;
+    --bs-btn-active-bg: #287fb9;
+    --bs-btn-active-border-color: #287fb9;
+    --bs-btn-disabled-color: #287fb9;
+    --bs-btn-disabled-border-color: #287fb9;
+}
+
+.dropdown-menu {
+    --bs-dropdown-link-active-bg: #287fb9;
+}
+
+.nav-pills {
+    --bs-nav-pills-link-active-bg: #287fb9;
+}
+
+.list-group {
+    --bs-list-group-active-bg: #287fb9;
+    --bs-list-group-active-border-color: #287fb9;
+}
+
+.pagination {
+    --bs-pagination-focus-box-shadow: 0 0 0 0.25rem rgba(40, 127, 185, 0.25);
+    --bs-pagination-active-bg: #287fb9;
+    --bs-pagination-active-border-color: #287fb9;
+}
+
+.progress {
+    --bs-progress-bar-bg: #287fb9;
+}
+
+/* Bootstrap's alerts (css/bootstrap-components.css) in AdminKit's colours,
+   with Bootstrap's recipe: the text 40% darker, the background 80% lighter,
+   the border 70% lighter. Secondary, danger, light and dark are the same in
+   both. */
+.alert-primary {
+    --bs-alert-color: #184c6f;
+    --bs-alert-bg: #d4e5f1;
+    --bs-alert-border-color: #bed9ea;
+}
+
+.alert-primary .alert-link {
+    color: #133d59;
+}
+
+.alert-success {
+    --bs-alert-color: #117054;
+    --bs-alert-bg: #d2f1e8;
+    --bs-alert-border-color: #bbebdc;
+}
+
+.alert-success .alert-link {
+    color: #0e5a43;
+}
+
+.alert-info {
+    --bs-alert-color: #0e616e;
+    --bs-alert-bg: #d1ecf1;
+    --bs-alert-border-color: #b9e3ea;
+}
+
+.alert-info .alert-link {
+    color: #0b4e58;
+}
+
+.alert-warning {
+    --bs-alert-color: #976f1a;
+    --bs-alert-bg: #fef1d5;
+    --bs-alert-border-color: #feeac0;
+}
+
+.alert-warning .alert-link {
+    color: #795915;
+}
+
+.text-bg-primary {
+    background-color: #287fb9 !important;
+}
+
+.link-primary {
+    color: #287fb9 !important;
+}
+
+.link-primary:hover,
+.link-primary:focus {
+    color: #206694 !important;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #94bfdc;
+    box-shadow: 0 0 0 0.2rem rgba(40, 127, 185, 0.25);
+}
+
+.form-check-input:focus {
+    border-color: #94bfdc;
+    box-shadow: 0 0 0 0.2rem rgba(40, 127, 185, 0.25);
+}
+
+.form-check-input:checked,
+.form-check-input[type=checkbox]:indeterminate {
+    background-color: #287fb9;
+    border-color: #287fb9;
+}
+
+.nav-icon:hover,
+.nav-icon.active {
+    color: #287fb9;
+}
+
+.sidebar-toggle:hover .hamburger,
+.sidebar-toggle:hover .hamburger:before,
+.sidebar-toggle:hover .hamburger:after {
+    background: #287fb9;
+}
+
+/* The toggle is a button, so it is reachable from the keyboard. */
+.sidebar-toggle {
+    background: transparent;
+    border: 0;
+    padding: 0;
+    align-items: center;
+}
+
+/* ── Light sidebar ─────────────────────────────────────────────────────── */
+
+.wrapper,
+.sidebar,
+.sidebar-content {
+    background: #fff;
+}
+
+.sidebar {
+    border-right: 1px solid var(--uvlhub-border);
+}
+
+.sidebar-brand {
+    padding: 1rem 1.5rem;
+}
+
+.sidebar-brand img {
+    max-width: 100%;
+    width: auto;
+}
+
+.sidebar-header {
+    color: #6c757d;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.sidebar-link,
+a.sidebar-link {
+    background: transparent;
+    color: #495057;
+}
+
+.sidebar-link i,
+.sidebar-link svg,
+a.sidebar-link i,
+a.sidebar-link svg {
+    color: #6c757d;
+}
+
+.sidebar-link:hover {
+    background: #f5f7fb;
+}
+
+.sidebar-link:hover,
+.sidebar-link:hover i,
+.sidebar-link:hover svg {
+    color: var(--uvlhub-blue);
+}
+
+.sidebar-item.active > .sidebar-link,
+.sidebar-item.active .sidebar-link:hover {
+    background: linear-gradient(90deg, var(--uvlhub-blue-soft), rgba(40, 127, 185, 0.06) 50%, transparent);
+    border-left-color: var(--uvlhub-blue);
+    color: var(--uvlhub-blue);
+}
+
+.sidebar-item.active > .sidebar-link i,
+.sidebar-item.active > .sidebar-link svg,
+.sidebar-item.active .sidebar-link:hover i,
+.sidebar-item.active .sidebar-link:hover svg {
+    color: var(--uvlhub-blue);
+}
+
+/* The release this site runs, at the foot of the sidebar. */
+.sidebar-version {
+    padding: 1rem 1.5rem 1.5rem;
+}
+
+.navbar-logo {
+    margin-right: 1rem;
+}
+
+/* ── Citation dialog ───────────────────────────────────────────────────── */
+
+.citation {
+    white-space: pre-wrap;
+}
+
+/* ── Team page ─────────────────────────────────────────────────────────── */
+
+.team-logo-frame {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 120px;
+    padding: 1rem;
+    border-radius: 0.75rem;
+}
+
+.logo-img {
+    width: 100%;
+    height: 100px;
+    object-fit: contain;
+    object-position: center;
+}
+
+/* The card around it already has its padding. */
+.custom-card-body {
+    padding: 0;
+}
