@@ -138,7 +138,7 @@
         // What a drawer covers: the frame's parts that neither hold it nor
         // are inside it.
         const covered = (panel) => [...document.querySelectorAll(
-            '.uvl-sidebar, .uvl-header > *, .uvl-toolbar, .uvl-content, .uvl-footer')]
+            '.uvl-skip-link, .uvl-sidebar, .uvl-header > *, .uvl-toolbar, .uvl-content, .uvl-footer')]
             .filter((part) => !part.contains(panel) && !panel.contains(part));
 
         const setDrawer = (drawer, open) => {
