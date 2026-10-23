@@ -1,11 +1,22 @@
 import sys
 
 from flask import render_template
+from flask_babel import lazy_gettext as _l
 from splent_framework.app_factory import create_splent_app
 from splent_framework.configuration.configuration import get_app_version
 from splent_framework.hooks.template_hooks import (
+    get_template_hooks,
     register_template_hook,
     remove_template_hook,
+)
+from splent_framework.nav.menu_registry import (
+    ANONYMOUS,
+    get_menu_items,
+    get_menu_sections,
+    get_user_menu_items,
+    register_menu_item,
+    register_menu_section,
+    register_user_menu_item,
 )
 
 from uvlhub_splent.aliases import aliases_bp
@@ -32,6 +43,96 @@ ADMIN_SIDEBAR_LINKS = [
 # Lower renders first within a slot; features default to 100.
 FIRST = 10
 LAST = 900
+
+# Entries of uvlhub's menus whose feature, at the version the product pins,
+# still draws them as markup in a slot the shell cannot bring to uvlhub's
+# look: Metronic's (explore, statistics and dataset in the sidebar), or a
+# menu of its own (profile's name and auth's Log out in the header). The
+# shell draws a section from the menu registry once it has entries there,
+# and generator's Generate models already is in "site", so Explore,
+# Dashboard and Team have to be there as well or the sidebar loses them.
+#
+# Each is registered with the key, the endpoint and the icon its feature's
+# next release registers (its working copy does), and its hook, when it has
+# one in a slot, leaves the slot. A feature that registers the endpoint
+# itself has moved on and is left alone, so each bridge retires with the
+# release of its feature.
+SIDEBAR_BRIDGES = [
+    dict(
+        key="explore",
+        label=_l("Explore"),
+        endpoint="explore.index",
+        icon="search",
+        section="site",
+        order=10,
+        hook=("splent_io.splent_feature_explore.hooks", "explore_sidebar_link"),
+        slot="layout.sidebar.top",
+    ),
+    dict(
+        key="statistics",
+        label=_l("Dashboard"),
+        endpoint="statistics.index",
+        icon="bar-chart-2",
+        section="site",
+        order=20,
+        hook=("splent_io.splent_feature_statistics.hooks", "dashboard_sidebar_link"),
+        slot="layout.sidebar.top",
+    ),
+    # Third, after Explore (10) and Dashboard (20) and before Generate
+    # models (40). team's own entry comes at 50: once it is pinned, the
+    # product puts it back here with [tool.splent.layout.menu] order.
+    dict(
+        key="team",
+        label=_l("Team"),
+        endpoint="team.index",
+        icon="users",
+        section="site",
+        order=30,
+        match=("team.index", "team.detail"),
+    ),
+    dict(
+        key="dataset_upload",
+        label=_l("Upload dataset"),
+        endpoint="dataset.create_dataset",
+        icon="upload",
+        section="datasets",
+        order=10,
+        match=("dataset.create_dataset", "dataset.import_dataset"),
+        hook=("splent_io.splent_feature_dataset.hooks", "sidebar_datasets"),
+        slot="layout.authenticated_sidebar",
+    ),
+    dict(
+        key="dataset_list",
+        label=_l("My datasets"),
+        endpoint="dataset.list_dataset",
+        icon="folder",
+        section="datasets",
+        order=20,
+        match=("dataset.list_dataset", "dataset.edit_metadata"),
+    ),
+]
+
+# The section dataset declares for its entries, while it does not.
+DATASETS_SECTION = dict(key="datasets", label=_l("Datasets"), order=110)
+
+USER_MENU_BRIDGES = [
+    dict(
+        key="user_profile",
+        label=_l("Edit profile"),
+        endpoint="profile.edit_profile",
+        icon="user",
+        section="account",
+        order=10,
+    ),
+    dict(
+        key="user_logout",
+        label=_l("Log out"),
+        endpoint="auth.logout",
+        icon="log-out",
+        section="account",
+        order=900,
+    ),
+]
 
 
 def _feature_hook(module_name, func_name):
@@ -60,8 +161,8 @@ def account_sidebar_heading():
     return render_template("hooks/account_sidebar_heading.html")
 
 
-def team_sidebar_link():
-    return render_template("hooks/sidebar_team.html")
+def developer_sidebar_heading():
+    return render_template("hooks/developer_sidebar_heading.html")
 
 
 def team_sections():
@@ -89,12 +190,14 @@ def team_sections():
 def _arrange_menus():
     """uvlhub's menus, out of what the features put in them.
 
-    The markup is the features' own, but for the Account heading and the
-    Team link, which the product draws from its templates/hooks/. This only
-    decides which entries uvlhub shows and in which order.
+    The markup is the features' own, but for the Developer and Account
+    headings, which the product draws from its templates/hooks/. This only
+    decides which entries uvlhub shows and in which order, for the sections
+    the shell still draws from the slots (see base_template.html).
     """
     auth = "splent_io.splent_feature_auth.hooks"
     signup = "splent_io.splent_feature_signup.hooks"
+    apikeys = "splent_io.splent_feature_apikeys.hooks"
 
     # The signed-in sidebar ends with an Account section, the heading first,
     # then profile's Edit profile, then Log out. uvlhub's sidebar never had
@@ -108,11 +211,12 @@ def _arrange_menus():
         _place("layout.sidebar.authenticated.items", logout, LAST)
     _place("layout.sidebar.authenticated.items", account_sidebar_heading, FIRST)
 
-    # In the header, auth's menu with Log out opens under profile's button
-    # with the user's name, so it has to come after it.
-    navbar_logout = _feature_hook(auth, "navbar_authenticated")
-    if navbar_logout is not None:
-        _place("layout.navbar.authenticated", navbar_logout, LAST)
+    # The tokens and the API docs open a Developer section, as on uvlhub.io.
+    tokens = _feature_hook(apikeys, "apikeys_sidebar_item")
+    if tokens is not None and tokens in get_template_hooks(
+        "layout.authenticated_sidebar"
+    ):
+        _place("layout.authenticated_sidebar", developer_sidebar_heading, FIRST)
 
     # Visitors see only the login button in the header. Signing up is in the
     # sidebar, on the home page and under the login form, where "Don't have
@@ -124,10 +228,39 @@ def _arrange_menus():
     if signup_footer is not None:
         _place("auth.login.form_footer", signup_footer, 50)
 
-    # Team sits third at the top of the sidebar, after Explore (10) and
-    # Dashboard (20) and before Generate models (40).
-    if "splent_io.splent_feature_team" in sys.modules:
-        _place("layout.sidebar.top", team_sidebar_link, 30)
+
+def _bridge_menus():
+    """Register what SIDEBAR_BRIDGES and USER_MENU_BRIDGES name, while the
+    features that own those entries do not register them themselves."""
+    # "Let's get started!", as uvlhub.io heads the visitors' part, instead of
+    # the registry's "Get started"; the same place and audience.
+    for section in get_menu_sections():
+        if section.key == "anonymous":
+            register_menu_section(
+                "anonymous", _l("Let's get started!"), section.order, audience=ANONYMOUS
+            )
+
+    registered = {item.endpoint for item in get_menu_items() if item.endpoint}
+    for bridge in SIDEBAR_BRIDGES:
+        entry = dict(bridge)
+        hook, slot = entry.pop("hook", None), entry.pop("slot", None)
+        if entry["endpoint"] in registered:
+            continue
+        sections = {known.key for known in get_menu_sections()}
+        if (
+            entry["section"] == DATASETS_SECTION["key"]
+            and entry["section"] not in sections
+        ):
+            register_menu_section(**DATASETS_SECTION)
+        register_menu_item(**entry)
+        func = _feature_hook(*hook) if hook else None
+        if func is not None:
+            remove_template_hook(slot, func)
+
+    registered = {item.endpoint for item in get_user_menu_items() if item.endpoint}
+    for entry in USER_MENU_BRIDGES:
+        if entry["endpoint"] not in registered:
+            register_user_menu_item(**entry)
 
 
 def create_app(config_name=None):
@@ -135,6 +268,7 @@ def create_app(config_name=None):
     app = create_splent_app(__name__, config_name)
     _remove_admin_sidebar_links()
     _arrange_menus()
+    _bridge_menus()
 
     # /api/me of uvlhub 2.12, until legacy_urls (CO-2) answers it.
     if "profile.my_profile" in app.view_functions:

@@ -1,20 +1,34 @@
 <!DOCTYPE html>
 <html lang="{{ html_lang | default('en') }}">
-{#- uvlhub's application shell, AdminKit 3.3.0 (Bootstrap 5.2, MIT) as the
-    CLI's product template draws it, with what uvlhub adds: its logo and
-    colours, the header search and buttons features put in
-    layout.header.menu and layout.navbar.items, the release in the sidebar,
-    the citation dialog and the credits in the footer.
+{#- uvlhub's application shell. Bootstrap 5.2 and AdminKit 3.3.0 (MIT) are
+    the components; the frame is uvlhub's own, drawn to look like uvlhub.io:
+    a dark sidebar that folds to a rail on a desktop and slides over the
+    page on a phone, a header with the search, the buttons and the account
+    menu, a band with the page's title, the content and the credits. The
+    skin (css/uvlhub.css) gives every Bootstrap component uvlhub's look, so
+    the features, which draw plain Bootstrap, take it without knowing.
 
-    The menus are still the slots the features fill (layout.sidebar.top,
-    layout.anonymous_sidebar, layout.authenticated_sidebar,
-    layout.sidebar.authenticated.items, layout.navbar.anonymous,
-    layout.navbar.authenticated). A shell draws either those slots or the
-    menu registry, never both, or the features that register their entries
-    and keep their hooks for a minor would show each entry twice.
+    The menus come from the menu registry (menu_sections(),
+    user_menu_sections()) section by section: a section the registry has
+    entries for is drawn from it, and one it has none for from the slot the
+    features filled before the registry existed. Never both, or a feature
+    that registers its entries and keeps its hook for a minor would show
+    each entry twice. The slot of each section:
 
-    The shell asks no other site for anything: the fonts are the system's,
-    feather comes inside AdminKit's app.js, and there is no analytics. -#}
+        site                       layout.sidebar.top
+        anonymous                  layout.anonymous_sidebar
+        main, admin, developer     layout.authenticated_sidebar
+        account                    layout.sidebar.authenticated.items
+        the user menu              layout.navbar.authenticated
+        the user menu, visitors    layout.navbar.anonymous
+
+    A section a feature declares for itself (dataset's Datasets) has no slot
+    and is drawn only from the registry.
+
+    The shell asks no other site for anything: Inter is served from
+    static/fonts, the chrome's icons from static/vendor/phosphor, feather
+    comes inside AdminKit's app.js, and there is no analytics. -#}
+{%- from "_uvl_icons.html" import chrome_icon, chrome_icons_json -%}
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -35,6 +49,10 @@
     <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='favicon-192.png') }}">
     <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
 
+    {# The two weights of Inter every page draws, asked for before the stylesheet names them. #}
+    <link rel="preload" href="{{ url_for('static', filename='fonts/Inter-Regular.woff2') }}" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="{{ url_for('static', filename='fonts/Inter-Medium.woff2') }}" as="font" type="font/woff2" crossorigin>
+
     <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
     {# The Bootstrap components AdminKit's build leaves out (dialogs, alerts, tooltips...). #}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-components.css') }}">
@@ -53,174 +71,259 @@
     {% endfor %}
 </head>
 
-<body>
-<div class="wrapper">
+{#- One entry of the sidebar, drawn from the registry. The slots' entries
+    carry the same classes (AdminKit's sidebar-item and sidebar-link). -#}
+{%- macro sidebar_entry(entry) -%}
+<li class="sidebar-item{{ ' active' if entry.active }}">
+    <a class="sidebar-link" href="{{ entry.url }}"{% if entry.aria_current %} aria-current="{{ entry.aria_current }}"{% endif %}{% if entry.external %} target="_blank" rel="noopener"{% endif %}>
+        {{ chrome_icon(entry.icon or 'circle') }}
+        <span class="sidebar-link-title">{{ entry.label }}</span>
+        {% if entry.badge %}<span class="badge sidebar-badge">{{ entry.badge }}</span>{% endif %}
+    </a>
+</li>
+{%- endmacro -%}
 
-    <nav id="sidebar" class="sidebar js-sidebar" aria-label="{{ _('Main menu') }}">
-        <div class="sidebar-content js-simplebar">
+{%- macro sidebar_section(section) -%}
+{% if section.label %}<li class="sidebar-header"><span>{{ section.label }}</span></li>{% endif %}
+{% for entry in section.entries %}{{ sidebar_entry(entry) }}
+{% endfor %}
+{%- endmacro -%}
 
-            <a class="sidebar-brand" href="/">
+{%- macro slot(name) -%}
+{% for hook in get_template_hooks(name) %}{{ hook() | safe }}
+{% endfor %}
+{%- endmacro -%}
+
+{%- set sections = menu_sections() if menu_sections is defined else [] -%}
+{%- set registered = sections | map(attribute='key') | list -%}
+{%- set user_sections = user_menu_sections() if user_menu_sections is defined else [] -%}
+
+<body class="uvl-body">
+{# The folded sidebar is a choice the reader made on an earlier page:
+   applied before the page is drawn, so it does not open and fold again. #}
+<script nonce="{{ csp_nonce() }}">try{if(localStorage.getItem('uvl-sidebar-minimized')==='1'){document.body.classList.add('uvl-sidebar-minimized')}}catch(e){}</script>
+
+<div class="uvl-app">
+
+    <aside id="sidebar" class="uvl-sidebar" aria-label="{{ _('Main menu') }}">
+
+        <div class="uvl-sidebar-brand">
+            <a class="sidebar-brand uvl-sidebar-logo" href="/">
                 {# theme's site logo (the Appearance panel, then SITE_LOGO), and
-                   uvlhub's own while neither names one. Its height too comes
-                   from the panel first, as in theme's public pages. #}
-                {% set logo = site.logo if site is defined and site.logo else 'media/logos/default.svg' %}
+                   uvlhub's own while neither names one: the one with white
+                   letters, for the dark sidebar. Its height too comes from the
+                   panel first, as in theme's public pages. #}
+                {% set logo = site.logo if site is defined and site.logo else 'media/logos/default-dark.svg' %}
                 {% set logo_size = (setting('site_logo_size', '') if setting is defined else '') or config.get('SITE_LOGO_SIZE') or 40 %}
                 <img src="{{ url_for('static', filename=logo) }}" alt="{{ config.SITE_NAME or SPLENT_APP }}" height="{{ logo_size }}">
             </a>
+            <button type="button" class="uvl-sidebar-toggle" data-uvl-sidebar-toggle aria-controls="sidebar" aria-pressed="false"
+                    aria-label="{{ _('Fold or unfold the menu') }}" title="{{ _('Fold or unfold the menu') }}">
+                {{ chrome_icon('chevrons-left') }}
+            </button>
+        </div>
 
-            {# The entries features add. The headings come with them: auth's
-               "Let's get started!" opens the visitors' part, and the product's
-               Account heading the signed-in one. #}
+        <nav class="uvl-sidebar-menu" aria-label="{{ _('Sections') }}">
             <ul class="sidebar-nav">
 
-                {% for hook in get_template_hooks("layout.sidebar.top") %}
-                    {{ hook() | safe }}
+                {% for section in sections if section.key == 'site' %}
+                    {{ sidebar_section(section) }}
+                {% else %}
+                    {{ slot("layout.sidebar.top") }}
                 {% endfor %}
 
                 {% if current_user.is_anonymous %}
 
-                    {% for hook in get_template_hooks("layout.anonymous_sidebar") %}
-                        {{ hook() | safe }}
+                    {% for section in sections if section.key == 'anonymous' %}
+                        {{ sidebar_section(section) }}
+                    {% else %}
+                        {{ slot("layout.anonymous_sidebar") }}
+                    {% endfor %}
+
+                    {% for section in sections if section.key not in ('site', 'anonymous') %}
+                        {{ sidebar_section(section) }}
                     {% endfor %}
 
                 {% else %}
 
-                    {% for hook in get_template_hooks("layout.authenticated_sidebar") %}
-                        {{ hook() | safe }}
+                    {% for section in sections if section.key not in ('site', 'anonymous', 'account') %}
+                        {{ sidebar_section(section) }}
                     {% endfor %}
 
-                    {% for hook in get_template_hooks("layout.sidebar.authenticated.items") %}
-                        {{ hook() | safe }}
+                    {% if not (registered | select('in', ['main', 'admin', 'developer']) | list) %}
+                        {{ slot("layout.authenticated_sidebar") }}
+                    {% endif %}
+
+                    {% for section in sections if section.key == 'account' %}
+                        {{ sidebar_section(section) }}
+                    {% else %}
+                        {{ slot("layout.sidebar.authenticated.items") }}
                     {% endfor %}
 
                 {% endif %}
 
             </ul>
+        </nav>
 
-            {# The release this site runs, linked to its notes. The prod image
-               writes .version from VERSION_TAG; in dev there is none and it hides. #}
-            {% if APP_VERSION is defined and APP_VERSION not in ('unknown', '') %}
-            <div class="sidebar-version">
-                <a href="https://github.com/diverso-lab/uvlhub/releases/tag/{{ APP_VERSION }}" target="_blank" rel="noopener"
-                   class="btn btn-primary w-100" data-bs-toggle="tooltip" title="{{ _('View source code in GitHub') }}">
-                    <i class="align-middle" data-feather="github"></i> <span class="align-middle">{{ APP_VERSION }}</span>
-                </a>
-            </div>
-            {% endif %}
-
+        {# The release this site runs, linked to its notes. The prod image
+           writes .version from VERSION_TAG; without one it hides. #}
+        {% if APP_VERSION is defined and APP_VERSION not in ('unknown', '') %}
+        {% set release = APP_VERSION if APP_VERSION.startswith('v') else 'v' ~ APP_VERSION %}
+        <div class="uvl-sidebar-footer">
+            <a href="https://github.com/diverso-lab/uvlhub/releases/tag/{{ APP_VERSION }}" target="_blank" rel="noopener"
+               class="uvl-sidebar-version" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ _('View source code in GitHub') }}"
+               aria-label="{{ release }}">
+                {{ chrome_icon('file-text') }}
+                <span class="uvl-sidebar-version-label">{{ release }}</span>
+            </a>
         </div>
-    </nav>
+        {% endif %}
 
-    <div class="main">
+    </aside>
 
-        <nav class="navbar navbar-expand navbar-light navbar-bg">
-            <button type="button" class="sidebar-toggle js-sidebar-toggle" aria-controls="sidebar" aria-label="{{ _('Show or hide the menu') }}">
-                <i class="hamburger align-self-center"></i>
+    {# Under the sidebar while it is open over the page on a phone; a tap closes it. #}
+    <div class="uvl-drawer-overlay" data-uvl-drawer-close hidden></div>
+
+    <div class="uvl-main">
+
+        <header class="uvl-header">
+
+            {# The sidebar is a drawer on a phone, opened from here. #}
+            <button type="button" class="uvl-header-icon uvl-drawer-toggle" data-uvl-drawer-toggle aria-controls="sidebar" aria-expanded="false"
+                    aria-label="{{ _('Show or hide the menu') }}">
+                {{ chrome_icon('menu', header=true) }}
             </button>
-
-            {# The sidebar, and the logo in it, is folded away on a phone. #}
-            <a class="navbar-logo d-lg-none" href="/">
+            <a class="uvl-header-logo" href="/">
                 <img src="{{ url_for('static', filename='media/logos/uvlhub_ball.png') }}" alt="{{ config.SITE_NAME or SPLENT_APP }}" height="30">
             </a>
 
             {# The header menu, where uvlhub has its search box. #}
-            <div class="d-flex align-items-center">
-                {% for hook in get_template_hooks("layout.header.menu") %}
-                    {{ hook() | safe }}
-                {% endfor %}
+            <div class="uvl-header-menu">
+                {{ slot("layout.header.menu") }}
             </div>
 
-            <div class="navbar-collapse collapse">
-                <ul class="navbar-nav navbar-align align-items-center">
+            <ul class="uvl-header-actions">
 
-                    {% if site is defined and site.locales and site.locales | length > 1 %}
-                    <li class="nav-item topbar-lang">
-                        {% for lc in site.locales %}<a class="nav-link d-inline-block {{ 'active' if lc == site.locale else '' }}" href="{{ url_for('theme.set_language', code=lc) }}">{{ lc | upper }}</a>{% endfor %}
-                    </li>
-                    {% endif %}
-
-                    <li class="nav-item">
-                        <a class="nav-link" href="#citationModal" role="button" data-bs-toggle="modal" title="{{ _('Cite us!') }}">
-                            <i class="align-middle" data-feather="heart"></i>
-                            <span class="align-middle d-none d-md-inline">{{ _('Cite us!') }}</span>
-                        </a>
-                    </li>
-
-                    {# Header buttons features add after "Cite us!" (Download all...). #}
-                    <li class="nav-item d-flex align-items-center">
-                        {% for hook in get_template_hooks("layout.navbar.items") %}
-                            {{ hook() | safe }}
-                        {% endfor %}
-                    </li>
-
-                    {% if current_user.is_authenticated %}
-                    {# The account menu. The features fill it: profile's name, which
-                       opens it too from a wider screen, and auth's Log out. #}
-                    <li class="nav-item dropdown d-flex align-items-center">
-                        <a class="nav-icon dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"
-                           aria-label="{{ _('Your account') }}" title="{{ current_user.email }}">
-                            <i class="align-middle" data-feather="user"></i>
-                        </a>
-                        {% for hook in get_template_hooks("layout.navbar.authenticated") %}
-                            {{ hook() | safe }}
-                        {% endfor %}
-                    </li>
-                    {% else %}
-                    <li class="nav-item d-flex align-items-center">
-                        {% for hook in get_template_hooks("layout.navbar.anonymous") %}
-                            {{ hook() | safe }}
-                        {% endfor %}
-                    </li>
-                    {% endif %}
-
-                </ul>
-            </div>
-        </nav>
-
-        <main class="content">
-            <div class="container-fluid p-0">
-
-                {#- The content is rendered before the messages, so a message the
-                    page already shows in a box of its own is not shown twice. -#}
-                {% set page_content %}{% block content %}{% endblock %}{% endset %}
-
-                {#- The page's title as its heading, unless the page draws its
-                    own: the catalog's pages do (the login form, the panel's
-                    screens), the ones written for uvlhub (explore, the
-                    datasets) leave it to the shell. -#}
-                {% if page_title and '<h1' not in page_content %}
-                <h1 class="h3 mb-3">{{ page_title }}</h1>
+                {% if site is defined and site.locales and site.locales | length > 1 %}
+                <li class="nav-item topbar-lang">
+                    {% for lc in site.locales %}<a class="nav-link d-inline-block {{ 'active' if lc == site.locale else '' }}" href="{{ url_for('theme.set_language', code=lc) }}">{{ lc | upper }}</a>{% endfor %}
+                </li>
                 {% endif %}
 
-                {% block breadcrumb %}{% endblock %}
+                <li class="nav-item">
+                    <button type="button" class="uvl-header-btn" data-bs-toggle="modal" data-bs-target="#citationModal" aria-label="{{ _('Cite us!') }}">
+                        {{ chrome_icon('heart', header=true) }}
+                        <span class="d-none d-md-inline">{{ _('Cite us!') }}</span>
+                    </button>
+                </li>
 
-                {% include "_flash_messages.html" %}
+                {# Header buttons features add after "Cite us!" (Download all...). #}
+                {% set navbar_items = slot("layout.navbar.items") %}
+                {% if navbar_items | trim %}
+                <li class="nav-item uvl-header-slot">{{ navbar_items }}</li>
+                {% endif %}
 
-                {{ page_content }}
+                {% if current_user.is_authenticated %}
+                {#- The account menu: who is signed in (profile's layout.navbar.user,
+                    or the account as the shell can tell it), then the entries of
+                    user_menu_sections(), a divider between sections. Without any,
+                    the features' layout.navbar.authenticated draws a menu of its own. -#}
+                {% set profile = current_user.profile if current_user.profile is defined else none %}
+                {% set first_name = (profile.name if profile and profile.name is defined else '') or '' %}
+                {% set surname = (profile.surname if profile and profile.surname is defined else '') or '' %}
+                {% set initials = ((first_name[:1] ~ surname[:1]) or (current_user.email or '?')[:1]) | upper %}
+                {% set display_name = [surname, first_name] | select | join(', ') %}
+                <li class="nav-item dropdown uvl-user">
+                    <button type="button" class="uvl-user-toggle" data-bs-toggle="dropdown" data-uvl-hover-dropdown aria-expanded="false"
+                            aria-label="{{ _('Your account') }}" title="{{ current_user.email }}">
+                        <span class="uvl-avatar" aria-hidden="true">{{ initials }}</span>
+                    </button>
+                    {% if user_sections %}
+                    <div class="dropdown-menu dropdown-menu-end uvl-user-menu">
+                        {% set who = slot("layout.navbar.user") %}
+                        {% if who | trim %}
+                        <div class="uvl-user-identity">{{ who }}</div>
+                        {% else %}
+                        <div class="uvl-user-identity d-flex align-items-center">
+                            <span class="uvl-avatar uvl-avatar-lg" aria-hidden="true">{{ initials }}</span>
+                            <div class="text-truncate">
+                                <div class="uvl-user-name text-truncate">{{ display_name or current_user.email }}</div>
+                                {% if display_name %}<div class="uvl-user-email text-truncate">{{ current_user.email }}</div>{% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% for section in user_sections %}
+                        <div class="dropdown-divider"></div>
+                        {% for entry in section.entries %}
+                        <a class="dropdown-item{{ ' active' if entry.active }}" href="{{ entry.url }}"{% if entry.aria_current %} aria-current="{{ entry.aria_current }}"{% endif %}{% if entry.external %} target="_blank" rel="noopener"{% endif %}>
+                            {{ entry.label }}{% if entry.badge %} <span class="badge bg-primary ms-1">{{ entry.badge }}</span>{% endif %}
+                        </a>
+                        {% endfor %}
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    {{ slot("layout.navbar.authenticated") }}
+                    {% endif %}
+                </li>
+                {% else %}
+                {#- Visitors: each entry of the registry's anonymous user menu as a
+                    button with its icon (log in, sign up), or auth's link. -#}
+                {% for section in user_sections %}
+                {% for entry in section.entries %}
+                <li class="nav-item">
+                    <a class="uvl-header-icon{{ ' active' if entry.active }}" href="{{ entry.url }}" aria-label="{{ entry.label }}" title="{{ entry.label }}"{% if entry.aria_current %} aria-current="{{ entry.aria_current }}"{% endif %}>
+                        {{ chrome_icon(entry.icon or 'log-in', header=true) }}
+                    </a>
+                </li>
+                {% endfor %}
+                {% else %}
+                <li class="nav-item uvl-header-slot">
+                    {{ slot("layout.navbar.anonymous") }}
+                </li>
+                {% endfor %}
+                {% endif %}
 
-            </div>
+            </ul>
+        </header>
+
+        {#- The content is rendered before the messages, so a message the page
+            already shows in a box of its own is not shown twice. -#}
+        {% set page_content %}{% block content %}{% endblock %}{% endset %}
+
+        {#- The page's title as its heading, in a band of its own, unless the
+            page draws its own: the catalog's pages do (the login form, the
+            panel's screens), the ones written for uvlhub (explore, the
+            datasets) leave it to the shell. -#}
+        {% if page_title and '<h1' not in page_content %}
+        <div class="uvl-toolbar">
+            <h1 class="uvl-page-title">{{ page_title }}</h1>
+        </div>
+        {% endif %}
+
+        <main class="uvl-content{{ ' uvl-content-untitled' if not page_title or '<h1' in page_content }}">
+
+            {% block breadcrumb %}{% endblock %}
+
+            {% include "_flash_messages.html" %}
+
+            {{ page_content }}
+
         </main>
 
-        <footer class="footer">
-            <div class="container-fluid">
-                <div class="row text-muted">
-                    <div class="col-12 col-md-6 text-center text-md-start">
-                        <p class="mb-0">2025 &copy; University of Seville · University of Malaga · University of Ulm</p>
-                    </div>
-                    <div class="col-12 col-md-6 text-center text-md-end">
-                        <ul class="list-inline mb-0">
-                            <li class="list-inline-item">
-                                <a class="text-muted" href="https://github.com/diverso-lab/uvlhub" target="_blank" rel="noopener">
-                                    <i class="align-middle" data-feather="github"></i> <span class="align-middle">{{ _('Repository on GitHub') }}</span>
-                                </a>
-                            </li>
-                            {% for hook in get_template_hooks("layout.footer") %}
-                                {{ hook() | safe }}
-                            {% endfor %}
-                        </ul>
-                    </div>
-                </div>
-            </div>
+        <footer class="uvl-footer">
+            <p class="uvl-footer-credits">
+                <span class="uvl-footer-year">2025&copy;</span>
+                <span>University of Seville · University of Malaga · University of Ulm</span>
+            </p>
+            <ul class="uvl-footer-links list-inline">
+                <li class="list-inline-item">
+                    <a class="uvl-footer-link" href="https://github.com/diverso-lab/uvlhub" target="_blank" rel="noopener">
+                        {{ chrome_icon('github') }}
+                        <span>{{ _('Repository on GitHub') }}</span>
+                    </a>
+                </li>
+                {{ slot("layout.footer") }}
+            </ul>
         </footer>
 
     </div>
@@ -228,9 +331,13 @@
 
 {% include "cites.html" %}
 
-{# app.js is AdminKit's: Bootstrap (window.bootstrap), the sidebar toggle,
-   and feather (window.feather), which replaces every data-feather icon once
-   the page is parsed. uvlhub.js starts the tooltips and popovers. #}
+{# The icon table of the chrome, for the slots' feather icons (uvlhub.js). #}
+<script type="application/json" id="uvl-chrome-icons">{{ chrome_icons_json() }}</script>
+
+{# app.js is AdminKit's: Bootstrap (window.bootstrap) and feather
+   (window.feather), which replaces every data-feather icon once the page is
+   parsed. uvlhub.js draws the sidebar's folding and drawer, the chrome's
+   icons, the tooltips and the citation dialog's Copy buttons. #}
 <script src="{{ url_for('static', filename='js/app.js') }}" nonce="{{ csp_nonce() }}"></script>
 <script src="{{ url_for('static', filename='js/uvlhub.js') }}" nonce="{{ csp_nonce() }}"></script>
 {% for src in get_assets('js', shell='app') %}

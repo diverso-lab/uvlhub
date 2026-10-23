@@ -1,7 +1,0 @@
-{# Team, third at the top of the sidebar after Explore and Dashboard, for
-   everyone (see create_app). Until team registers its entry. #}
-<li class="sidebar-item {{ 'active' if request.endpoint in ('team.index', 'team.detail') else '' }}">
-    <a class="sidebar-link" href="{{ url_for('team.index') }}">
-        <i class="align-middle" data-feather="users"></i> <span class="align-middle">{{ _('Team') }}</span>
-    </a>
-</li>
