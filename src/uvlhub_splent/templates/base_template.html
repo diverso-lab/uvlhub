@@ -121,8 +121,13 @@
             </a>
             <button type="button" class="uvl-sidebar-toggle" data-uvl-sidebar-toggle aria-controls="sidebar" aria-pressed="false"
                     aria-label="{{ _('Fold or unfold the menu') }}" title="{{ _('Fold or unfold the menu') }}">
-                {# feather's chevron: uvlhub.io's is a single thin one. #}
-                {{ chrome_icon('chevron-left') }}
+                {# uvlhub.io's double chevron, thin, the back one tinted: feather's
+                   chevrons-left (MIT), its second stroke at the skin's opacity. #}
+                <svg class="uvl-sidebar-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                    <polyline points="11 17 6 12 11 7"></polyline>
+                    <polyline class="uvl-sidebar-toggle-back" points="18 17 13 12 18 7"></polyline>
+                </svg>
             </button>
         </div>
 

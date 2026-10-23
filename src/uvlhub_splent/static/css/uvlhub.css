@@ -164,8 +164,9 @@
     --uvl-sidebar-logo-border: 1px dashed #33446c;
     --uvl-sidebar-logo-img-height: 40px;
     --uvl-sidebar-toggle-bg: #323c55;
-    --uvl-sidebar-toggle-color: var(--uvl-gray-400);
+    --uvl-sidebar-toggle-color: #c4cada;
     --uvl-sidebar-toggle-active-color: #3e97ff;
+    --uvl-sidebar-toggle-back-opacity: .3;
     --uvl-sidebar-link-color: #8d98af;
     --uvl-sidebar-link-hover-color: #fff;
     --uvl-sidebar-link-active-bg: #3e97ff;
@@ -574,6 +575,10 @@ hr {
     transition: transform .3s ease;
 }
 
+.uvl-sidebar-toggle .uvl-sidebar-toggle-back {
+    opacity: var(--uvl-sidebar-toggle-back-opacity);
+}
+
 .uvl-sidebar-menu {
     flex: 1 1 auto;
     overflow-x: hidden;
@@ -589,7 +594,10 @@ hr {
     list-style: none;
 }
 
+/* Each entry, and each heading, a hair in from the left, as uvlhub.io's
+   menu indents them. */
 .uvl-sidebar .sidebar-item {
+    margin-left: .115rem;
     padding: .15rem 0;
 }
 
@@ -675,8 +683,10 @@ hr {
 
 .uvl-sidebar .sidebar-header {
     display: block;
-    margin: 0;
-    padding: calc(1.25rem + .65rem) 1rem .65rem;
+    margin: 0 0 0 .115rem;
+    /* uvlhub.io's heading sits in an entry of its own: its .15rem and a
+       taller line below the words. */
+    padding: calc(1.25rem + .65rem) 1rem .875rem;
     background: transparent;
     color: var(--uvl-sidebar-heading-color);
     font-size: .95rem;
