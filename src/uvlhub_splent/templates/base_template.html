@@ -182,7 +182,11 @@
                     page already shows in a box of its own is not shown twice. -#}
                 {% set page_content %}{% block content %}{% endblock %}{% endset %}
 
-                {% if page_title %}
+                {#- The page's title as its heading, unless the page draws its
+                    own: the catalog's pages do (the login form, the panel's
+                    screens), the ones written for uvlhub (explore, the
+                    datasets) leave it to the shell. -#}
+                {% if page_title and '<h1' not in page_content %}
                 <h1 class="h3 mb-3">{{ page_title }}</h1>
                 {% endif %}
 
