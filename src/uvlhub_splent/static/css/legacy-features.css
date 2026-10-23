@@ -126,3 +126,185 @@
 .fs-7 { font-size: .95rem !important; }
 .fs-8 { font-size: .85rem !important; }
 .fs-9 { font-size: .75rem !important; }
+
+/* ── Spacing steps 6 to 10 (dataset, explore, hubfile, statistics)
+   Bootstrap's scale stops at 5. The templates ported from uvlhub.io write
+   the steps above it in uvlhub.io's scale, a quarter rem apart from 1.5rem
+   (p-6, g-6, mb-10...), and AdminKit's build gives 6 and 7 a scale of its
+   own (4.5rem and 6rem), which split the words of statistics' counters.
+   These are uvlhub.io's steps, also from lg (px-lg-10). Steps 1 to 5 stay
+   Bootstrap's. Each goes once those features write Bootstrap's steps. ── */
+
+.m-6 { margin: 1.5rem !important; }
+.mt-6 { margin-top: 1.5rem !important; }
+.me-6 { margin-right: 1.5rem !important; }
+.mb-6 { margin-bottom: 1.5rem !important; }
+.ms-6 { margin-left: 1.5rem !important; }
+.mx-6 { margin-right: 1.5rem !important; margin-left: 1.5rem !important; }
+.my-6 { margin-top: 1.5rem !important; margin-bottom: 1.5rem !important; }
+.p-6 { padding: 1.5rem !important; }
+.pt-6 { padding-top: 1.5rem !important; }
+.pe-6 { padding-right: 1.5rem !important; }
+.pb-6 { padding-bottom: 1.5rem !important; }
+.ps-6 { padding-left: 1.5rem !important; }
+.px-6 { padding-right: 1.5rem !important; padding-left: 1.5rem !important; }
+.py-6 { padding-top: 1.5rem !important; padding-bottom: 1.5rem !important; }
+.gap-6 { gap: 1.5rem !important; }
+.g-6, .gx-6 { --bs-gutter-x: 1.5rem; }
+.g-6, .gy-6 { --bs-gutter-y: 1.5rem; }
+.m-7 { margin: 1.75rem !important; }
+.mt-7 { margin-top: 1.75rem !important; }
+.me-7 { margin-right: 1.75rem !important; }
+.mb-7 { margin-bottom: 1.75rem !important; }
+.ms-7 { margin-left: 1.75rem !important; }
+.mx-7 { margin-right: 1.75rem !important; margin-left: 1.75rem !important; }
+.my-7 { margin-top: 1.75rem !important; margin-bottom: 1.75rem !important; }
+.p-7 { padding: 1.75rem !important; }
+.pt-7 { padding-top: 1.75rem !important; }
+.pe-7 { padding-right: 1.75rem !important; }
+.pb-7 { padding-bottom: 1.75rem !important; }
+.ps-7 { padding-left: 1.75rem !important; }
+.px-7 { padding-right: 1.75rem !important; padding-left: 1.75rem !important; }
+.py-7 { padding-top: 1.75rem !important; padding-bottom: 1.75rem !important; }
+.gap-7 { gap: 1.75rem !important; }
+.g-7, .gx-7 { --bs-gutter-x: 1.75rem; }
+.g-7, .gy-7 { --bs-gutter-y: 1.75rem; }
+.m-8 { margin: 2rem !important; }
+.mt-8 { margin-top: 2rem !important; }
+.me-8 { margin-right: 2rem !important; }
+.mb-8 { margin-bottom: 2rem !important; }
+.ms-8 { margin-left: 2rem !important; }
+.mx-8 { margin-right: 2rem !important; margin-left: 2rem !important; }
+.my-8 { margin-top: 2rem !important; margin-bottom: 2rem !important; }
+.p-8 { padding: 2rem !important; }
+.pt-8 { padding-top: 2rem !important; }
+.pe-8 { padding-right: 2rem !important; }
+.pb-8 { padding-bottom: 2rem !important; }
+.ps-8 { padding-left: 2rem !important; }
+.px-8 { padding-right: 2rem !important; padding-left: 2rem !important; }
+.py-8 { padding-top: 2rem !important; padding-bottom: 2rem !important; }
+.gap-8 { gap: 2rem !important; }
+.g-8, .gx-8 { --bs-gutter-x: 2rem; }
+.g-8, .gy-8 { --bs-gutter-y: 2rem; }
+.m-9 { margin: 2.25rem !important; }
+.mt-9 { margin-top: 2.25rem !important; }
+.me-9 { margin-right: 2.25rem !important; }
+.mb-9 { margin-bottom: 2.25rem !important; }
+.ms-9 { margin-left: 2.25rem !important; }
+.mx-9 { margin-right: 2.25rem !important; margin-left: 2.25rem !important; }
+.my-9 { margin-top: 2.25rem !important; margin-bottom: 2.25rem !important; }
+.p-9 { padding: 2.25rem !important; }
+.pt-9 { padding-top: 2.25rem !important; }
+.pe-9 { padding-right: 2.25rem !important; }
+.pb-9 { padding-bottom: 2.25rem !important; }
+.ps-9 { padding-left: 2.25rem !important; }
+.px-9 { padding-right: 2.25rem !important; padding-left: 2.25rem !important; }
+.py-9 { padding-top: 2.25rem !important; padding-bottom: 2.25rem !important; }
+.gap-9 { gap: 2.25rem !important; }
+.g-9, .gx-9 { --bs-gutter-x: 2.25rem; }
+.g-9, .gy-9 { --bs-gutter-y: 2.25rem; }
+.m-10 { margin: 2.5rem !important; }
+.mt-10 { margin-top: 2.5rem !important; }
+.me-10 { margin-right: 2.5rem !important; }
+.mb-10 { margin-bottom: 2.5rem !important; }
+.ms-10 { margin-left: 2.5rem !important; }
+.mx-10 { margin-right: 2.5rem !important; margin-left: 2.5rem !important; }
+.my-10 { margin-top: 2.5rem !important; margin-bottom: 2.5rem !important; }
+.p-10 { padding: 2.5rem !important; }
+.pt-10 { padding-top: 2.5rem !important; }
+.pe-10 { padding-right: 2.5rem !important; }
+.pb-10 { padding-bottom: 2.5rem !important; }
+.ps-10 { padding-left: 2.5rem !important; }
+.px-10 { padding-right: 2.5rem !important; padding-left: 2.5rem !important; }
+.py-10 { padding-top: 2.5rem !important; padding-bottom: 2.5rem !important; }
+.gap-10 { gap: 2.5rem !important; }
+.g-10, .gx-10 { --bs-gutter-x: 2.5rem; }
+.g-10, .gy-10 { --bs-gutter-y: 2.5rem; }
+
+@media (min-width: 992px) {
+    .m-lg-6 { margin: 1.5rem !important; }
+    .mt-lg-6 { margin-top: 1.5rem !important; }
+    .me-lg-6 { margin-right: 1.5rem !important; }
+    .mb-lg-6 { margin-bottom: 1.5rem !important; }
+    .ms-lg-6 { margin-left: 1.5rem !important; }
+    .mx-lg-6 { margin-right: 1.5rem !important; margin-left: 1.5rem !important; }
+    .my-lg-6 { margin-top: 1.5rem !important; margin-bottom: 1.5rem !important; }
+    .p-lg-6 { padding: 1.5rem !important; }
+    .pt-lg-6 { padding-top: 1.5rem !important; }
+    .pe-lg-6 { padding-right: 1.5rem !important; }
+    .pb-lg-6 { padding-bottom: 1.5rem !important; }
+    .ps-lg-6 { padding-left: 1.5rem !important; }
+    .px-lg-6 { padding-right: 1.5rem !important; padding-left: 1.5rem !important; }
+    .py-lg-6 { padding-top: 1.5rem !important; padding-bottom: 1.5rem !important; }
+    .gap-lg-6 { gap: 1.5rem !important; }
+    .g-lg-6, .gx-lg-6 { --bs-gutter-x: 1.5rem; }
+    .g-lg-6, .gy-lg-6 { --bs-gutter-y: 1.5rem; }
+    .m-lg-7 { margin: 1.75rem !important; }
+    .mt-lg-7 { margin-top: 1.75rem !important; }
+    .me-lg-7 { margin-right: 1.75rem !important; }
+    .mb-lg-7 { margin-bottom: 1.75rem !important; }
+    .ms-lg-7 { margin-left: 1.75rem !important; }
+    .mx-lg-7 { margin-right: 1.75rem !important; margin-left: 1.75rem !important; }
+    .my-lg-7 { margin-top: 1.75rem !important; margin-bottom: 1.75rem !important; }
+    .p-lg-7 { padding: 1.75rem !important; }
+    .pt-lg-7 { padding-top: 1.75rem !important; }
+    .pe-lg-7 { padding-right: 1.75rem !important; }
+    .pb-lg-7 { padding-bottom: 1.75rem !important; }
+    .ps-lg-7 { padding-left: 1.75rem !important; }
+    .px-lg-7 { padding-right: 1.75rem !important; padding-left: 1.75rem !important; }
+    .py-lg-7 { padding-top: 1.75rem !important; padding-bottom: 1.75rem !important; }
+    .gap-lg-7 { gap: 1.75rem !important; }
+    .g-lg-7, .gx-lg-7 { --bs-gutter-x: 1.75rem; }
+    .g-lg-7, .gy-lg-7 { --bs-gutter-y: 1.75rem; }
+    .m-lg-8 { margin: 2rem !important; }
+    .mt-lg-8 { margin-top: 2rem !important; }
+    .me-lg-8 { margin-right: 2rem !important; }
+    .mb-lg-8 { margin-bottom: 2rem !important; }
+    .ms-lg-8 { margin-left: 2rem !important; }
+    .mx-lg-8 { margin-right: 2rem !important; margin-left: 2rem !important; }
+    .my-lg-8 { margin-top: 2rem !important; margin-bottom: 2rem !important; }
+    .p-lg-8 { padding: 2rem !important; }
+    .pt-lg-8 { padding-top: 2rem !important; }
+    .pe-lg-8 { padding-right: 2rem !important; }
+    .pb-lg-8 { padding-bottom: 2rem !important; }
+    .ps-lg-8 { padding-left: 2rem !important; }
+    .px-lg-8 { padding-right: 2rem !important; padding-left: 2rem !important; }
+    .py-lg-8 { padding-top: 2rem !important; padding-bottom: 2rem !important; }
+    .gap-lg-8 { gap: 2rem !important; }
+    .g-lg-8, .gx-lg-8 { --bs-gutter-x: 2rem; }
+    .g-lg-8, .gy-lg-8 { --bs-gutter-y: 2rem; }
+    .m-lg-9 { margin: 2.25rem !important; }
+    .mt-lg-9 { margin-top: 2.25rem !important; }
+    .me-lg-9 { margin-right: 2.25rem !important; }
+    .mb-lg-9 { margin-bottom: 2.25rem !important; }
+    .ms-lg-9 { margin-left: 2.25rem !important; }
+    .mx-lg-9 { margin-right: 2.25rem !important; margin-left: 2.25rem !important; }
+    .my-lg-9 { margin-top: 2.25rem !important; margin-bottom: 2.25rem !important; }
+    .p-lg-9 { padding: 2.25rem !important; }
+    .pt-lg-9 { padding-top: 2.25rem !important; }
+    .pe-lg-9 { padding-right: 2.25rem !important; }
+    .pb-lg-9 { padding-bottom: 2.25rem !important; }
+    .ps-lg-9 { padding-left: 2.25rem !important; }
+    .px-lg-9 { padding-right: 2.25rem !important; padding-left: 2.25rem !important; }
+    .py-lg-9 { padding-top: 2.25rem !important; padding-bottom: 2.25rem !important; }
+    .gap-lg-9 { gap: 2.25rem !important; }
+    .g-lg-9, .gx-lg-9 { --bs-gutter-x: 2.25rem; }
+    .g-lg-9, .gy-lg-9 { --bs-gutter-y: 2.25rem; }
+    .m-lg-10 { margin: 2.5rem !important; }
+    .mt-lg-10 { margin-top: 2.5rem !important; }
+    .me-lg-10 { margin-right: 2.5rem !important; }
+    .mb-lg-10 { margin-bottom: 2.5rem !important; }
+    .ms-lg-10 { margin-left: 2.5rem !important; }
+    .mx-lg-10 { margin-right: 2.5rem !important; margin-left: 2.5rem !important; }
+    .my-lg-10 { margin-top: 2.5rem !important; margin-bottom: 2.5rem !important; }
+    .p-lg-10 { padding: 2.5rem !important; }
+    .pt-lg-10 { padding-top: 2.5rem !important; }
+    .pe-lg-10 { padding-right: 2.5rem !important; }
+    .pb-lg-10 { padding-bottom: 2.5rem !important; }
+    .ps-lg-10 { padding-left: 2.5rem !important; }
+    .px-lg-10 { padding-right: 2.5rem !important; padding-left: 2.5rem !important; }
+    .py-lg-10 { padding-top: 2.5rem !important; padding-bottom: 2.5rem !important; }
+    .gap-lg-10 { gap: 2.5rem !important; }
+    .g-lg-10, .gx-lg-10 { --bs-gutter-x: 2.5rem; }
+    .g-lg-10, .gy-lg-10 { --bs-gutter-y: 2.5rem; }
+}
