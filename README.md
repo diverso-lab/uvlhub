@@ -91,6 +91,76 @@ docker exec uvlhub_splent_web bash -lc 'cd /workspace/uvlhub_splent && python -m
 
 Its docstring says how to run it against working copies of the features.
 
+## Deploy to production
+
+`splent product:build` (the CI runs it) merges `docker/.env.prod.example` with
+what every pinned feature declares into `deploy/.env.example`, and
+`splent product:deploy` turns it into `deploy/.env` on the server, generating
+the database and service passwords and asking for what only the operator
+knows. `docker/.env.prod.example` explains each value; this is the picture.
+
+```
+browser --443--> TLS terminator on the host --127.0.0.1:92--> nginx (splent_feature_nginx) --> uvlhub_splent_web_deploy:5000
+```
+
+The nginx feature listens on HTTP only, so HTTPS comes from a terminator on
+the host (nginx, Caddy, Traefik). Point it at nginx, `NGINX_HTTP_HOST_PORT`
+(92 with this product's port offset), not at the web port 5012: the Host
+check, the rate limit on the account forms, the long timeouts of the Zenodo
+routes and the redacted access log are nginx's. The terminator has to
+
+- keep the Host it received (Caddy does by default; nginx needs
+  `proxy_set_header Host $host`);
+- set `X-Forwarded-For` and `X-Forwarded-Proto`;
+- wait as long as nginx does on the publishing routes, 600 s, or simply on
+  everything (nginx's own default is 60 s).
+
+`product:deploy` asks for:
+
+| Variable | What to give |
+|---|---|
+| `SERVER_NAME` | The public host, `www.uvlhub.io`. Links built outside a request use it. |
+| `OAUTH_REDIRECT_BASE_URL` | `https://www.uvlhub.io`, the base of the ORCID and GitHub callbacks. |
+| `NGINX_SERVER_NAME` | Every name nginx answers to, `www.uvlhub.io uvlhub.io`. Any other Host is refused. |
+| `MAIL_HOST`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM` | The SMTP account (STARTTLS on 587). The deploy offers a random `MAIL_PASSWORD`: type the real one. |
+| `ZENODO_ACCESS_TOKEN` | A Zenodo token with `deposit:write` and `deposit:actions`. |
+
+and generates `SECRET_KEY`, the MariaDB passwords, `REDIS_PASSWORD` (redis
+runs with a password in production) and `ELASTICSEARCH_PASSWORD` (the node
+runs with security on, and the app signs in as `elastic`).
+
+Two values follow from the topology:
+
+- `NGINX_TRUSTED_PROXY_CIDRS=172.16.0.0/12` with `NGINX_BIND_HOST=127.0.0.1`.
+  nginx believes the terminator, which arrives from the docker network's
+  gateway (the `peer=` field of nginx's access log shows it), and nobody else
+  can reach the port.
+- `SPLENT_TRUSTED_PROXIES=1`. nginx is the only hop the app talks to, and it
+  forwards one `X-Forwarded-For` (the client), one `X-Forwarded-Proto` and
+  one `X-Forwarded-Host`. The 2 that the CLI suggests for "the nginx feature
+  behind a TLS front" makes the app look for two values in each and ignore
+  the one it finds: `http://` links, which GitHub refuses as a callback,
+  cookies without `Secure` and no HSTS.
+
+Publishing to Zenodo still runs inside the request, so nginx gives the
+publishing routes and the ZIP downloads `NGINX_LONG_REQUEST_TIMEOUT=600s` and
+gunicorn gets `GUNICORN_TIMEOUT=630`, a little more, so nginx gives up first
+and the worker still records the DOI.
+
+Left to the operator on purpose:
+
+- `ZENODO_ALLOW_PRODUCTION=true` goes into `deploy/.env` of the one
+  deployment that publishes the hub's real records, never into a file every
+  build reads, since its DOIs are permanent.
+- `ORCID_CLIENT_*` and `GITHUB_CLIENT_*`: empty turns that sign-in off.
+
+The proxy settings above take effect with the release of
+`splent_feature_nginx` after 1.3.0, the version pinned today. 1.3.0 has no
+`default_server`, no rate limit and no long timeout, publishes on every
+interface whatever `NGINX_BIND_HOST` says, and appends to `X-Forwarded-For`,
+so with `SPLENT_TRUSTED_PROXIES=1` the app gets the right scheme and host
+but the docker gateway as every client's address.
+
 ## When something looks wrong
 
 ```bash
