@@ -13,11 +13,12 @@
     entries for is drawn from it, and one it has none for from the slot the
     features filled before the registry existed. Never both, or a feature
     that registers its entries and keeps its hook for a minor would show
-    each entry twice. The slot of each section:
+    each entry twice; but for the administration, which takes both without
+    the slot's entries the registry already has. The slot of each section:
 
         site                       layout.sidebar.top
         anonymous                  layout.anonymous_sidebar
-        main, admin                layout.authenticated_sidebar
+        admin                      layout.authenticated_sidebar
         account                    layout.sidebar.authenticated.items
         the user menu              layout.navbar.authenticated
         the user menu, visitors    layout.navbar.anonymous
@@ -169,33 +170,40 @@
 
                 {% else %}
 
-                    {#- The administration, from the slot while no main or admin
-                        entry is in the registry. The product takes every
-                        developer and datasets entry out of that slot into the
-                        registry (create_app), so what is left in it is the
-                        administration's, and it gets the registry's heading
-                        and place: after Datasets, before Developer. It is for
+                    {#- The administration: the registry's admin section, and
+                        the entries features still draw in their slot. The
+                        product takes every developer and datasets entry out
+                        of that slot into the registry (create_app), so what
+                        is left in it is the administration's. While the
+                        features move to the registry some draw an entry in
+                        both for a minor, and others only in the slot, so the
+                        slot's entries come after the registry's, without the
+                        ones the registry already has (slot_beyond_menus, in
+                        create_app). They get the registry's heading and place:
+                        after Datasets, before Developer. It is for
                         administrators and staff (decision D-admin): some
                         features still draw their entry there for any account
                         (the dev tools' links, media 0.9), and within it each
                         entry keeps its own gate. -#}
                     {% set admin_slot = '' %}
-                    {% if current_user.role is defined and current_user.role in ('admin', 'staff')
-                          and not (registered | select('in', ['main', 'admin']) | list) %}
-                        {% set admin_slot = slot("layout.authenticated_sidebar") | trim %}
+                    {% if current_user.role is defined and current_user.role in ('admin', 'staff') %}
+                        {% set admin_slot = slot_beyond_menus("layout.authenticated_sidebar", sections) | trim %}
                     {% endif %}
-                    {% set drawn = namespace(admin=not admin_slot) %}
+                    {% set drawn = namespace(admin='admin' in registered) %}
 
                     {% for section in sections if section.key not in ('site', 'anonymous', 'account') %}
                         {% if section.key == 'developer' and not drawn.admin %}
-                            <li class="sidebar-header"><span>{{ _('Administration') }}</span></li>
-                            {{ admin_slot }}
+                            {% if admin_slot %}
+                                <li class="sidebar-header"><span>{{ _('Administration') }}</span></li>
+                                {{ admin_slot }}
+                            {% endif %}
                             {% set drawn.admin = true %}
                         {% endif %}
                         {{ sidebar_section(section) }}
+                        {% if section.key == 'admin' %}{{ admin_slot }}{% endif %}
                     {% endfor %}
 
-                    {% if not drawn.admin %}
+                    {% if not drawn.admin and admin_slot %}
                         <li class="sidebar-header"><span>{{ _('Administration') }}</span></li>
                         {{ admin_slot }}
                     {% endif %}

@@ -1,3 +1,4 @@
+import re
 import sys
 
 from flask import render_template
@@ -5,6 +6,7 @@ from flask_babel import lazy_gettext as _l
 from splent_framework.app_factory import create_splent_app
 from splent_framework.assets.asset_registry import register_asset
 from splent_framework.configuration.configuration import get_app_version
+from splent_framework.hooks import template_hooks
 from splent_framework.hooks.template_hooks import (
     register_template_hook,
     remove_template_hook,
@@ -181,6 +183,40 @@ def _place(slot, func, order):
     register_template_hook(slot, func, order=order)
 
 
+_HREF = re.compile(r'href="([^"]*)"')
+
+
+def _field(obj, name):
+    """An attribute of a menu entry or section, or its key when it is a dict."""
+    return obj.get(name) if isinstance(obj, dict) else getattr(obj, name, None)
+
+
+def slot_beyond_menus(slot, sections):
+    """What the hooks in ``slot`` draw, but for the entries already in the
+    menu registry's ``sections``.
+
+    A feature that registers its entry keeps its hook for a minor, and
+    others have only the hook, so the administration is drawn from both
+    (base_template.html): an entry whose every address the registry shows
+    is left out. The markup is the hooks' own.
+    """
+    from markupsafe import Markup
+
+    shown = {
+        _field(entry, "url")
+        for section in sections
+        for entry in (_field(section, "entries") or ())
+    } - {None, ""}
+    drawn = []
+    for hook in template_hooks.get_template_hooks(slot):
+        html = hook() or ""
+        addresses = set(_HREF.findall(html))
+        if addresses and addresses <= shown:
+            continue
+        drawn.append(html)
+    return Markup("\n".join(drawn))
+
+
 def account_sidebar_heading():
     return render_template("hooks/account_sidebar_heading.html")
 
@@ -315,6 +351,10 @@ def create_app(config_name=None):
         app.register_blueprint(aliases_bp)
 
     _skin_the_public_shell()
+
+    @app.context_processor
+    def inject_slot_beyond_menus():
+        return {"slot_beyond_menus": slot_beyond_menus}
 
     # The sidebar footer links the release, as in uvlhub. The prod image
     # writes .version from VERSION_TAG; in dev there is none and it hides.

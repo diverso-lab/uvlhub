@@ -411,7 +411,12 @@ def test_an_admin_section_in_the_registry_leaves_the_developer_section(
     every_section = app.jinja_env.globals["menu_sections"]
 
     def sections():
-        return every_section() + registered
+        # This one in place of the admin entries the features register.
+        return [
+            section
+            for section in every_section()
+            if section["key"] != "admin"
+        ] + registered
 
     monkeypatch.setitem(app.jinja_env.globals, "menu_sections", sections)
     sidebar = _sidebar(_open(browsers, "admin", SHELL_PAGE))
@@ -422,6 +427,11 @@ def test_an_admin_section_in_the_registry_leaves_the_developer_section(
         p for p in paths if p.startswith(("/apidocs", "/developer"))
     ]
     assert "/admin/users" in paths
+    # The entries the features still draw only in the slot stay, after the
+    # registry's, and auth's Users, which the slot draws too, shows once.
+    assert sidebar.headings.count("Administration") == 1
+    assert paths.index("/admin/users") < paths.index("/admin/settings")
+    assert paths.count("/admin/users") == 1
 
 
 @pytest.mark.parametrize("page", PAGES)
