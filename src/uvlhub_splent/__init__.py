@@ -8,6 +8,8 @@ from splent_framework.hooks.template_hooks import (
     remove_template_hook,
 )
 
+from uvlhub_splent.aliases import aliases_bp
+
 # Admin entries the SPLENT features add to the signed-in sidebar. uvlhub's
 # sidebar has no admin section (Datasets, Developer and Account only), so the
 # product drops them; their pages stay reachable under /admin.
@@ -132,6 +134,10 @@ def create_app(config_name=None):
     app = create_splent_app(__name__, config_name)
     _remove_admin_sidebar_links()
     _arrange_menus()
+
+    # /api/me of uvlhub 2.12, until legacy_urls (CO-2) answers it.
+    if "profile.my_profile" in app.view_functions:
+        app.register_blueprint(aliases_bp)
 
     # The sidebar footer links the release, as in uvlhub. The prod image
     # writes .version from VERSION_TAG; in dev there is none and it hides.
