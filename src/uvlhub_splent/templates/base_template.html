@@ -174,11 +174,12 @@
         </nav>
 
         {# The release this site runs, linked to its notes. The prod image
-           writes .version from VERSION_TAG; without one it hides. #}
+           writes .version from VERSION_TAG; without one it hides. uvlhub's
+           tags carry the v (v2.12.1), whether .version does or not. #}
         {% if APP_VERSION is defined and APP_VERSION not in ('unknown', '') %}
         {% set release = APP_VERSION if APP_VERSION.startswith('v') else 'v' ~ APP_VERSION %}
         <div class="uvl-sidebar-footer">
-            <a href="https://github.com/diverso-lab/uvlhub/releases/tag/{{ APP_VERSION }}" target="_blank" rel="noopener"
+            <a href="https://github.com/diverso-lab/uvlhub/releases/tag/{{ release }}" target="_blank" rel="noopener"
                class="uvl-sidebar-version" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ _('View source code in GitHub') }}"
                aria-label="{{ release }}">
                 {{ chrome_icon('file-text') }}
