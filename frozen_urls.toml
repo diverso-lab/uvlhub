@@ -26,11 +26,21 @@
 #              owed on how it answers, when there is some
 #   note       anything else
 #
+# An entry a client calls from its own site also has
+#
+#   cors_origin      that site. It gets its own origin back, with
+#                    credentials, on the request and on the preflight, and
+#                    any other site gets no CORS at all
+#   signed_out_keys  the keys of the 401 a caller with neither a session
+#                    nor a token gets, which the client reads to send them
+#                    to sign in
+#
 # A header is an entry with kind = "header" instead of a rule: header names
 # it and config the setting that makes the product read it.
 #
-# When a feature release starts or stops serving a rule, the test fails
-# until the entry's status says so.
+# When a feature release starts or stops serving a rule, or a served one
+# stops answering as cors_origin and signed_out_keys say, the test fails
+# until the entry says so. Those two are checked once the entry is served.
 
 # ── 1. /doi/<doi> and /doi/<doi>/ ─────────────────────────────────────────
 
@@ -353,7 +363,18 @@ status = "served"
 endpoint = "dataset.api_upload_dataset"
 served_by = "dataset"
 plan = "UV-11"
-note = "The CORS that opens it to FLAMAPY_IDE_ORIGINS with credentials is dataset's up to 0.1.1 and featuremodel's from 0.1.1 on (with dataset 0.1.2)"
+cors_origin = "https://ide.flamapy.org"
+signed_out_keys = ["authenticated", "message", "login_url", "signup_url", "orcid_url"]
+note = """The CORS that opens it to FLAMAPY_IDE_ORIGINS with credentials is \
+dataset's up to 0.1.1 and featuremodel's from 0.1.1 on. Pin dataset 0.1.2 and \
+featuremodel 0.1.1 in one commit, the one that marks /api/v1/auth/status \
+served: dataset 0.1.2 with featuremodel 0.1.0 leaves the upload with no CORS, \
+and cors_origin fails. The message of the signed-out 401 changes in dataset \
+0.1.2, keys unchanged: 2.12 said "You need to sign in before saving a model \
+from flamapyIDE to UVLHub." and 3.0 says "You need to sign in before \
+uploading to uvlhub.", since dataset is not the UVL layer. \
+/api/v1/auth/status keeps the 2.12 wording. The contract owner accepts the \
+change or asks for the old text back"""
 
 [[url]]
 rows = [9, 10]
@@ -584,6 +605,8 @@ clients = ["flamapyIDE (ide.flamapy.org)"]
 target = "Served by the UVL layer, uvl or a bridge (UV-11)"
 status = "alias-pending"
 plan = "CO-1, UV-11"
+cors_origin = "https://ide.flamapy.org"
+signed_out_keys = ["authenticated", "message", "login_url", "signup_url", "orcid_url"]
 note = "featuremodel serves it from 0.1.1 on (endpoint featuremodel.auth_status), with dataset 0.1.2. Pinning those two releases turns this entry into served"
 
 # ── 13. /api/me ───────────────────────────────────────────────────────────
