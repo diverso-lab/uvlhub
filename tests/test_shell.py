@@ -375,6 +375,20 @@ def test_the_header_offers_the_three_modes(browsers, who):
     assert html.index("data-bs-theme") < html.index("css/app.css")
 
 
+@pytest.mark.parametrize("who", BROWSERS)
+def test_an_address_that_leads_nowhere_answers_uvlhubs_page(browsers, who):
+    """uvlhub.io's "Oops!" card (404.html), although theme replaces the
+    product's 404 handler as it starts; theme's errors/404.html is not
+    shadowed."""
+    response = browsers[who].get("/this-page-does-not-exist")
+    html = response.get_data(as_text=True)
+
+    assert response.status_code == 404
+    assert 'class="card uvl-error-card"' in html
+    assert "Oops!" in html and "Return home" in html
+    assert not (TEMPLATES / "errors" / "404.html").exists()
+
+
 def test_the_dark_mode_is_a_set_of_tokens():
     """The dark mode is the skin's own tokens redefined, so another hub
     reskins both modes where it reskins the light one."""

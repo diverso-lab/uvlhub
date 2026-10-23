@@ -1,0 +1,10 @@
+{#- The page for an address this site has nothing at: uvlhub.io's "Oops!"
+    card, with the code where uvlhub.io draws its illustration. errors.py
+    answers with it, so theme's errors/404.html stays theme's. -#}
+{% extends "errors/_error_page.html" %}
+
+{% block title %}{{ _('Page not found') }}{% endblock %}
+{% block heading %}{{ _('Oops!') }}{% endblock %}
+{% block text %}{{ _("We can't find that page.") }}{% endblock %}
+{% block code %}404{% endblock %}
+{% block action %}{{ _('Return home') }}{% endblock %}

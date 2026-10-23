@@ -2248,14 +2248,14 @@ hr {
     padding: 0;
 }
 
-/* ── Pages: errors (400.html, 401.html) ───────────────────────────────── */
+/* ── Pages: errors (400, 401, 404 and 500.html) ───────────────────────── */
 
 .uvl-error-page {
     display: flex;
     align-items: center;
     justify-content: center;
     min-height: 100vh;
-    padding: 2rem var(--uvl-content-gutter);
+    padding: 2.5rem;
     background:
         radial-gradient(60rem 30rem at 15% 10%, rgba(255, 255, 255, .7), transparent 60%),
         radial-gradient(50rem 25rem at 85% 60%, rgba(255, 255, 255, .5), transparent 60%),
@@ -2265,35 +2265,45 @@ hr {
 .uvl-error-card {
     width: 100%;
     max-width: 650px;
+    padding: 1.25rem 0;
 }
 
 .uvl-error-card .card-body {
-    padding: 4rem 3rem;
+    padding: 3.75rem var(--uvl-card-padding-x);
     text-align: center;
+}
+
+@media (min-width: 768px) {
+    .uvl-error-card .card-body {
+        padding-top: 5rem;
+        padding-bottom: 5rem;
+    }
 }
 
 .uvl-error-title {
     margin-bottom: 1rem;
     color: var(--uvl-gray-900);
-    font-size: 2.5rem;
+    font-size: min(2.5rem, calc(1.375rem + 1.5vw));
     font-weight: var(--uvl-fw-bold);
 }
 
 .uvl-error-text {
-    margin-bottom: 2.5rem;
+    margin-bottom: 1.75rem;
     color: var(--uvl-gray-500);
-    font-size: 1.15rem;
+    font-size: 1.075rem;
     font-weight: var(--uvl-fw-medium);
 }
 
+/* The code, in the square uvlhub.io gives its illustration. */
 .uvl-error-code {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: .5rem;
-    margin-bottom: 3rem;
+    height: min(300px, 70vw);
+    margin-bottom: .75rem;
     color: var(--uvl-gray-200);
-    font-size: 8rem;
+    font-size: min(9rem, 30vw);
     font-weight: var(--uvl-fw-bold);
     line-height: 1;
     letter-spacing: -.02em;
