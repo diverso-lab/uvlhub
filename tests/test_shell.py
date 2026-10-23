@@ -363,6 +363,29 @@ def test_a_page_draws_nothing_of_metronic(
     assert KT_ID.findall(html) == []
 
 
+@pytest.mark.parametrize("who", BROWSERS)
+def test_the_header_offers_the_three_modes(browsers, who):
+    """uvlhub.io's Mode menu: Light, Dark and System, and the mode is set
+    before the stylesheets, so a dark page does not flash light first."""
+    html = _open(browsers, who, "/")
+    menu = html[html.index('class="dropdown-menu dropdown-menu-end uvl-mode-menu"') :]
+    menu = menu[: menu.index("</div>")]
+
+    assert re.findall(r'data-uvl-theme="(\w+)"', menu) == ["light", "dark", "system"]
+    assert html.index("data-bs-theme") < html.index("css/app.css")
+
+
+def test_the_dark_mode_is_a_set_of_tokens():
+    """The dark mode is the skin's own tokens redefined, so another hub
+    reskins both modes where it reskins the light one."""
+    skin = (STATIC / "css" / "uvlhub.css").read_text(encoding="utf-8")
+    dark = skin[skin.index(':root[data-bs-theme="dark"] {') :]
+    dark = dark[: dark.index("}")]
+
+    declared = re.findall(r"^\s*(--[\w-]+):", dark, flags=re.M)
+    assert declared and all(name.startswith("--uvl-") for name in declared)
+
+
 def test_the_logo_is_as_high_as_the_appearance_panel_says(app, browsers):
     from splent_framework.services.service_locator import service_proxy
 

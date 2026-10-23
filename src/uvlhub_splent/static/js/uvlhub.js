@@ -15,6 +15,10 @@
  *   a drawer over the page, closed by its overlay, Escape or a link, and so
  *   is the header's menu (the search), from the right. While a drawer is
  *   open the rest of the page is inert, so the keyboard stays in it.
+ * - The mode. The Mode menu of the header sets Light, Dark or System;
+ *   data-bs-theme on <html> carries the one drawn (System follows the
+ *   device, also when it changes), and localStorage keeps the choice for
+ *   the next page, read by the script at the top of the page.
  * - Which hand moves the focus. A browser marks every focused text field
  *   :focus-visible, mouse or keyboard; <html data-uvl-input> says which, so
  *   the skin rings a field only when the keyboard reached it.
@@ -36,6 +40,8 @@
     const DRAWER_OPEN = 'uvl-drawer-open';
     const HEADER_DRAWER_OPEN = 'uvl-header-drawer-open';
     const STORE_KEY = 'uvl-sidebar-minimized';
+    const THEME_KEY = 'uvl-theme';
+    const PREFERS_DARK = window.matchMedia('(prefers-color-scheme: dark)');
 
     // ── The chrome's icons ──────────────────────────────────────────────
 
@@ -171,6 +177,40 @@
         });
     }
 
+    // ── The mode ────────────────────────────────────────────────────────
+
+    function themeMode() {
+        const items = document.querySelectorAll('[data-uvl-theme]');
+        let chosen = 'light';
+        try {
+            chosen = window.localStorage.getItem(THEME_KEY) || 'light';
+        } catch (error) {
+            // Storage blocked: light, as the page was drawn.
+        }
+        const apply = () => {
+            const dark = chosen === 'dark' || (chosen === 'system' && PREFERS_DARK.matches);
+            document.documentElement.setAttribute('data-bs-theme', dark ? 'dark' : 'light');
+            items.forEach((item) => {
+                const on = item.dataset.uvlTheme === chosen;
+                item.classList.toggle('active', on);
+                item.setAttribute('aria-pressed', String(on));
+            });
+        };
+        items.forEach((item) => item.addEventListener('click', () => {
+            chosen = item.dataset.uvlTheme;
+            try {
+                window.localStorage.setItem(THEME_KEY, chosen);
+            } catch (error) {
+                // The choice lasts for this page.
+            }
+            apply();
+        }));
+        PREFERS_DARK.addEventListener('change', () => {
+            if (chosen === 'system') apply();
+        });
+        apply();
+    }
+
     // ── Which hand moves the focus ──────────────────────────────────────
 
     function inputModality() {
@@ -229,6 +269,7 @@
     unknownFeatherIcons();
     sidebar();
     drawers();
+    themeMode();
     inputModality();
     headerMenus();
 

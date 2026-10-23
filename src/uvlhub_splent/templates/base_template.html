@@ -49,6 +49,11 @@
     <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='favicon-192.png') }}">
     <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
 
+    {# The reader's mode (Light, Dark or System, the header's Mode menu),
+       applied before the page is drawn so it does not flash light first.
+       Light unless the reader chose another, as on uvlhub.io. #}
+    <script nonce="{{ csp_nonce() }}">try{var m=localStorage.getItem('uvl-theme');if(m==='system'){m=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}document.documentElement.setAttribute('data-bs-theme',m==='dark'?'dark':'light')}catch(e){}</script>
+
     <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
     {# The Bootstrap components AdminKit's build leaves out (dialogs, alerts, tooltips...). #}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-components.css') }}">
@@ -209,6 +214,24 @@
                     {% for lc in site.locales %}<a class="nav-link d-inline-block {{ 'active' if lc == site.locale else '' }}" href="{{ url_for('theme.set_language', code=lc) }}">{{ lc | upper }}</a>{% endfor %}
                 </li>
                 {% endif %}
+
+                {#- The mode: the sun or the moon, as the page is drawn, and a menu
+                    to choose (uvlhub.js keeps the choice). -#}
+                <li class="nav-item dropdown uvl-mode">
+                    <button type="button" class="uvl-header-btn" data-bs-toggle="dropdown" data-uvl-hover-dropdown aria-expanded="false"
+                            aria-label="{{ _('Mode') }}">
+                        {{ chrome_icon('sun', header=true, class_='uvl-mode-light-icon') }}
+                        {{ chrome_icon('moon', header=true, class_='uvl-mode-dark-icon') }}
+                        <span class="d-none d-md-inline">{{ _('Mode') }}</span>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end uvl-mode-menu">
+                        {% for value, label, icon in [('light', _('Light'), 'sun'), ('dark', _('Dark'), 'moon'), ('system', _('System'), 'monitor')] %}
+                        <button type="button" class="dropdown-item" data-uvl-theme="{{ value }}" aria-pressed="false">
+                            {{ chrome_icon(icon) }}<span>{{ label }}</span>
+                        </button>
+                        {% endfor %}
+                    </div>
+                </li>
 
                 <li class="nav-item">
                     <button type="button" class="uvl-header-btn" data-bs-toggle="modal" data-bs-target="#citationModal" aria-label="{{ _('Cite us!') }}">

@@ -223,6 +223,8 @@
     --uvl-check-size: 1.75rem;
     --uvl-doi-label-bg: #18181b;
     --uvl-doi-value-bg: linear-gradient(90deg, #2176bd 0%, #2980b9 100%);
+    --uvl-dropdown-bg: var(--uvl-surface);
+    --uvl-card-border-color: var(--uvl-border-color);
 }
 
 @media (max-width: 991.98px) {
@@ -233,6 +235,83 @@
         --uvl-header-icon-size: var(--uvl-header-icon-size-mobile);
         --uvl-header-control-size: var(--uvl-header-control-size-mobile);
     }
+}
+
+/* The dark mode, chosen from the header's Mode menu (uvlhub.js writes
+   data-bs-theme on <html>, as Bootstrap 5.3 does; 5.2 has no modes of its
+   own). uvlhub.io's dark values: the greys turn round, the surfaces darken
+   and the colours take their dark shades. Everything the skin draws reads
+   these tokens, so this block is the whole of it. */
+:root[data-bs-theme="dark"] {
+    color-scheme: dark;
+
+    --uvl-gray-100: #1b1c22;
+    --uvl-gray-200: #26272f;
+    --uvl-gray-300: #363843;
+    --uvl-gray-400: #464852;
+    --uvl-gray-500: #636674;
+    --uvl-gray-600: #808290;
+    --uvl-gray-700: #9a9cae;
+    --uvl-gray-800: #b5b7c8;
+    --uvl-gray-900: #f5f5f5;
+
+    --uvl-body-color-rgb: 245, 245, 245;
+    --uvl-body-bg: #0f1014;
+    --uvl-body-bg-rgb: 15, 16, 20;
+    --uvl-surface: #15171c;
+    --uvl-card-border-color: #1e2027;
+    --uvl-dropdown-bg: #1c1d22;
+
+    --uvl-primary: #006ae6;
+    --uvl-primary-rgb: 0, 106, 230;
+    --uvl-primary-active: #107eff;
+    --uvl-primary-light: #172331;
+    --uvl-success: #00a261;
+    --uvl-success-rgb: 0, 162, 97;
+    --uvl-success-active: #01bf73;
+    --uvl-success-light: #1f212a;
+    --uvl-info: #883fff;
+    --uvl-info-rgb: 136, 63, 255;
+    --uvl-info-active: #9e63ff;
+    --uvl-info-light: #272134;
+    --uvl-warning: #c59a00;
+    --uvl-warning-rgb: 197, 154, 0;
+    --uvl-warning-active: #d9aa00;
+    --uvl-warning-light: #242320;
+    --uvl-danger: #e42855;
+    --uvl-danger-rgb: 228, 40, 85;
+    --uvl-danger-active: #ff3767;
+    --uvl-danger-light: #302024;
+    --uvl-dark: #272a34;
+    --uvl-dark-rgb: 39, 42, 52;
+    --uvl-dark-active: #2d2f39;
+    --uvl-secondary: #363843;
+    --uvl-secondary-active: #464852;
+    --uvl-secondary-text: #fff;
+    --uvl-light-rgb: 27, 28, 34;
+    --uvl-light-active: #1f212a;
+    --uvl-success-text: var(--uvl-success-active);
+    --uvl-warning-text: var(--uvl-warning-active);
+
+    --uvl-shadow-card: none;
+    --uvl-shadow-header: none;
+    --uvl-shadow-dropdown: 0 0 30px rgba(0, 0, 0, .3);
+    --uvl-shadow-tooltip: 0 0 30px rgba(0, 0, 0, .15);
+    --uvl-header-bg: #15171c;
+    --uvl-footer-bg: #15171c;
+    --uvl-sidebar-bg: #15171c;
+    --uvl-sidebar-logo-border: 1px dashed #26272f;
+    --uvl-sidebar-toggle-bg: #1b1c22;
+    --uvl-doi-label-bg: #26272f;
+}
+
+/* What Bootstrap 5.2 and AdminKit write in light colours outright. */
+[data-bs-theme="dark"] .bg-white {
+    background-color: var(--uvl-surface) !important;
+}
+
+[data-bs-theme="dark"] .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
 }
 
 /* ── Bootstrap's variables, fed from the tokens ───────────────────────── */
@@ -1001,6 +1080,43 @@ hr {
     z-index: 107;
 }
 
+/* The mode: the sun in the light mode, the moon in the dark one, and its
+   menu of three, the chosen one marked. */
+.uvl-header-btn .uvl-mode-dark-icon,
+[data-bs-theme="dark"] .uvl-header-btn .uvl-mode-light-icon {
+    display: none;
+}
+
+[data-bs-theme="dark"] .uvl-header-btn .uvl-mode-dark-icon {
+    display: inline-block;
+}
+
+.uvl-mode-menu {
+    --bs-dropdown-min-width: 150px;
+    width: 150px;
+}
+
+.uvl-mode-menu .dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    padding: .5rem .75rem;
+    color: var(--uvl-gray-700);
+}
+
+.uvl-mode-menu .dropdown-item .uvl-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    color: var(--uvl-gray-500);
+}
+
+.uvl-mode-menu .dropdown-item:hover,
+.uvl-mode-menu .dropdown-item.active,
+.uvl-mode-menu .dropdown-item:hover .uvl-icon,
+.uvl-mode-menu .dropdown-item.active .uvl-icon {
+    color: var(--uvl-primary);
+}
+
 /* The account. */
 .uvl-avatar {
     display: inline-flex;
@@ -1198,7 +1314,7 @@ hr {
     --bs-card-spacer-x: var(--uvl-card-padding-x);
     --bs-card-title-spacer-y: .5rem;
     --bs-card-border-width: 1px;
-    --bs-card-border-color: var(--uvl-border-color);
+    --bs-card-border-color: var(--uvl-card-border-color);
     --bs-card-border-radius: var(--uvl-radius-lg);
     --bs-card-inner-border-radius: calc(var(--uvl-radius-lg) - 1px);
     --bs-card-cap-padding-y: .5rem;
@@ -1734,7 +1850,7 @@ hr {
     --bs-dropdown-padding-y: 1rem;
     --bs-dropdown-font-size: 1rem;
     --bs-dropdown-color: var(--uvl-gray-900);
-    --bs-dropdown-bg: var(--uvl-surface);
+    --bs-dropdown-bg: var(--uvl-dropdown-bg);
     --bs-dropdown-border-width: 0;
     --bs-dropdown-border-radius: var(--uvl-radius);
     --bs-dropdown-inner-border-radius: var(--uvl-radius);
@@ -1871,7 +1987,7 @@ hr {
     --bs-nav-tabs-border-color: var(--uvl-border-color);
     --bs-nav-tabs-border-radius: var(--uvl-radius);
     --bs-nav-tabs-link-hover-border-color: var(--uvl-border-color) var(--uvl-border-color) var(--uvl-border-color);
-    --bs-nav-tabs-link-active-color: #000;
+    --bs-nav-tabs-link-active-color: var(--uvl-gray-900);
     --bs-nav-tabs-link-active-bg: var(--uvl-surface);
     --bs-nav-tabs-link-active-border-color: var(--uvl-border-color) var(--uvl-border-color) var(--uvl-surface);
     --bs-nav-link-color: var(--uvl-primary);
@@ -1941,6 +2057,7 @@ hr {
 
 .list-group {
     --bs-list-group-color: var(--uvl-body-color);
+    --bs-list-group-bg: var(--uvl-surface);
     --bs-list-group-border-color: var(--uvl-border-color);
     --bs-list-group-border-radius: var(--uvl-radius);
     --bs-list-group-action-hover-color: var(--uvl-primary);
@@ -2037,6 +2154,7 @@ hr {
 }
 
 .popover {
+    --bs-popover-bg: var(--uvl-surface);
     --bs-popover-border-width: 0;
     --bs-popover-border-radius: var(--uvl-radius);
     --bs-popover-box-shadow: var(--uvl-shadow-dropdown);
