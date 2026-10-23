@@ -6,8 +6,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="description" content="{{ _('This page could not be shown.') }}">
-    <link rel="preconnect" href="https://fonts.gstatic.com">
-    <link rel="shortcut icon" href="{{ url_for("static", filename="img/icons/icon-250x250.png") }}"/>
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32.png') }}">
     {# No canonical, and no indexing. An error page is not a page:
        the one that used to be here pointed at splent.io, telling
        search engines that every 404 of every product built with
@@ -17,7 +16,7 @@
 	<title>Unauthorized | {{ SPLENT_APP }}</title>
 
 	<link rel="stylesheet" href="{{ url_for("static", filename="css/app.css") }}">
-	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="{{ url_for("static", filename="css/uvlhub.css") }}">
 </head>
 
 <body>
