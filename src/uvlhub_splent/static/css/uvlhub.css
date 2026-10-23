@@ -1,247 +1,1905 @@
-/* uvlhub's skin over AdminKit 3.3.0 (css/app.css).
+/* uvlhub's skin over AdminKit 3.3.0 (css/app.css, Bootstrap 5.2).
  *
- * The blue of uvlhub.io instead of AdminKit's, the system's fonts instead of
- * Inter (which would come from Google), and a light sidebar, because the
- * logo (media/logos/default.svg) is written in dark grey. Then the few rules
- * of uvlhub's own pages.
+ * It makes the product look like uvlhub.io: Inter, uvlhub's colours, a dark
+ * sidebar that folds to a rail, a white header, cards with a hairline and
+ * soft shadow, flat buttons. The rules and the markup are the product's
+ * own; the values were measured on uvlhub.io and are written once, as the
+ * --uvl-* tokens below. Another hub reskins the product by rewriting that
+ * :root block.
+ *
+ * The skin styles Bootstrap's generic components (card, btn, badge, form,
+ * table, dropdown, modal, nav, breadcrumb, tooltip...) and the shell's frame
+ * (base_template.html), so the features, which draw plain Bootstrap, take
+ * uvlhub's look without knowing it. Nothing here names a feature.
+ *
+ * Sections: fonts · tokens · Bootstrap's variables · base · shell (sidebar,
+ * header, toolbar, content, footer, rail, drawer) · components · pages.
  */
 
-/* ── Brand ─────────────────────────────────────────────────────────────── */
+/* ── Fonts ─────────────────────────────────────────────────────────────────
+   Inter 4.1 (rsms/inter, SIL Open Font License 1.1, fonts/LICENSE.txt),
+   served by the product: the four weights uvlhub.io draws. */
+
+@font-face {
+    font-family: "Inter";
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url("../fonts/Inter-Regular.woff2") format("woff2");
+}
+
+@font-face {
+    font-family: "Inter";
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url("../fonts/Inter-Medium.woff2") format("woff2");
+}
+
+@font-face {
+    font-family: "Inter";
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: url("../fonts/Inter-SemiBold.woff2") format("woff2");
+}
+
+@font-face {
+    font-family: "Inter";
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url("../fonts/Inter-Bold.woff2") format("woff2");
+}
+
+/* ── Tokens ────────────────────────────────────────────────────────────── */
 
 :root {
-    --uvlhub-blue: #287fb9;
-    --uvlhub-blue-soft: rgba(40, 127, 185, 0.1);
-    --uvlhub-border: #e5e9f0;
+    /* Type. The root is 13px, 12px under 992px; everything in rem follows. */
+    --uvl-root-font-size: 13px;
+    --uvl-root-font-size-mobile: 12px;
+    --uvl-font-sans: "Inter", Helvetica, sans-serif;
+    --uvl-font-mono: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    --uvl-body-font-size: 1rem;
+    --uvl-body-line-height: 1.5;
+    --uvl-fw-normal: 400;
+    --uvl-fw-medium: 500;
+    --uvl-fw-semibold: 600;
+    --uvl-fw-bold: 700;
+    --uvl-heading-weight: 600;
+    --uvl-heading-line-height: 1.2;
 
-    /* Bootstrap 5.2 reads these for links and the *-primary utilities. */
-    --bs-primary: #287fb9;
-    --bs-primary-rgb: 40, 127, 185;
-    --bs-link-color: #287fb9;
-    --bs-link-hover-color: #206694;
-    --bs-font-sans-serif: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    /* Greys. */
+    --uvl-gray-100: #f9f9f9;
+    --uvl-gray-200: #f1f1f4;
+    --uvl-gray-300: #dbdfe9;
+    --uvl-gray-400: #c4cada;
+    --uvl-gray-500: #99a1b7;
+    --uvl-gray-600: #78829d;
+    --uvl-gray-700: #4b5675;
+    --uvl-gray-800: #252f4a;
+    --uvl-gray-900: #071437;
+
+    /* Surfaces and text. */
+    --uvl-body-color: var(--uvl-gray-900);
+    --uvl-body-color-rgb: 7, 20, 55;
+    --uvl-body-bg: var(--uvl-gray-100);
+    --uvl-body-bg-rgb: 249, 249, 249;
+    --uvl-surface: #fff;
+    --uvl-heading-color: var(--uvl-gray-900);
+    --uvl-text-muted: var(--uvl-gray-500);
+    --uvl-border-color: var(--uvl-gray-200);
+
+    /* Two blues: the buttons' and the links'. */
+    --uvl-primary: #1b84ff;
+    --uvl-primary-rgb: 27, 132, 255;
+    --uvl-primary-active: #056ee9;
+    --uvl-primary-light: #e9f3ff;
+    --uvl-link: #287fb9;
+    --uvl-link-rgb: 40, 127, 185;
+
+    /* The other colours: base, active, light. */
+    --uvl-success: #17c653;
+    --uvl-success-rgb: 23, 198, 83;
+    --uvl-success-active: #04b440;
+    --uvl-success-light: #dfffea;
+    --uvl-info: #7239ea;
+    --uvl-info-rgb: 114, 57, 234;
+    --uvl-info-active: #5014d0;
+    --uvl-info-light: #f8f5ff;
+    --uvl-warning: #f6c000;
+    --uvl-warning-rgb: 246, 192, 0;
+    --uvl-warning-active: #dead00;
+    --uvl-warning-light: #fff8dd;
+    --uvl-danger: #f8285a;
+    --uvl-danger-rgb: 248, 40, 90;
+    --uvl-danger-active: #d81a48;
+    --uvl-danger-light: #ffeef3;
+    --uvl-dark: #1e2129;
+    --uvl-dark-rgb: 30, 33, 41;
+    --uvl-dark-active: #111318;
+    --uvl-secondary: var(--uvl-gray-200);
+    --uvl-secondary-active: var(--uvl-gray-400);
+    --uvl-secondary-text: var(--uvl-gray-800);
+    --uvl-light: var(--uvl-gray-100);
+    --uvl-light-rgb: 249, 249, 249;
+    --uvl-light-active: var(--uvl-gray-200);
+
+    /* Shapes. */
+    --uvl-radius-sm: .425rem;
+    --uvl-radius: .475rem;
+    --uvl-radius-lg: .625rem;
+    --uvl-shadow-card: 0 3px 4px 0 rgba(0, 0, 0, .03);
+    --uvl-shadow-sm: 0 .1rem 1rem .25rem rgba(0, 0, 0, .05);
+    --uvl-shadow-header: 0 10px 30px 0 rgba(82, 63, 105, .05);
+    --uvl-shadow-dropdown: 0 0 50px 0 rgba(82, 63, 105, .15);
+    --uvl-shadow-modal: 0 .5rem 1rem rgba(0, 0, 0, .1);
+    --uvl-shadow-tooltip: 0 0 30px 0 rgba(0, 0, 0, .15);
+    --uvl-focus-ring: 0 0 0 .2rem rgba(var(--uvl-primary-rgb), .25);
+    --uvl-transition: .15s ease;
+
+    /* The sidebar. */
+    --uvl-sidebar-width: 265px;
+    --uvl-sidebar-width-minimized: 75px;
+    --uvl-sidebar-drawer-width: 225px;
+    --uvl-sidebar-bg: #202b46;
+    --uvl-sidebar-logo-border: 1px dashed #33446c;
+    --uvl-sidebar-logo-img-height: 40px;
+    --uvl-sidebar-toggle-bg: #323c55;
+    --uvl-sidebar-toggle-color: var(--uvl-gray-400);
+    --uvl-sidebar-toggle-active-color: #3e97ff;
+    --uvl-sidebar-link-color: #8d98af;
+    --uvl-sidebar-link-hover-color: #fff;
+    --uvl-sidebar-link-active-bg: #3e97ff;
+    --uvl-sidebar-link-active-color: #fff;
+    --uvl-sidebar-icon-color: #c5c5d8;
+    --uvl-sidebar-icon-size: 1.5rem;
+    --uvl-sidebar-heading-color: #646477;
+    --uvl-sidebar-version-bg: rgba(63, 66, 84, .35);
+    --uvl-sidebar-version-color: #b5b5c3;
+    --uvl-sidebar-drawer-shadow: 0 1px 9px -3px rgba(0, 0, 0, .05);
+    --uvl-drawer-overlay: rgba(0, 0, 0, .2);
+    --uvl-icon-duotone-opacity: .3;
+
+    /* The header, the title band, the content and the footer. */
+    --uvl-header-height: 70px;
+    --uvl-header-height-mobile: 60px;
+    --uvl-header-bg: #fff;
+    --uvl-header-icon-color: var(--uvl-gray-500);
+    --uvl-header-icon-size: 1.75rem;
+    --uvl-header-btn-color: var(--uvl-gray-900);
+    --uvl-content-gutter: 30px;
+    --uvl-content-gutter-mobile: 20px;
+    --uvl-toolbar-padding-y: 1.5rem;
+    --uvl-toolbar-padding-y-mobile: .75rem;
+    --uvl-page-title-size: 1.35rem;
+    --uvl-footer-height: 60px;
+    --uvl-footer-bg: #fff;
+    --uvl-footer-link-color: var(--uvl-gray-600);
+
+    /* Components. */
+    --uvl-card-padding-y: 2rem;
+    --uvl-card-padding-x: 2.25rem;
+    --uvl-card-header-height: 70px;
+    --uvl-card-gap: 1.25rem;
+    --uvl-card-title-size: 1.275rem;
+    --uvl-btn-padding-y: calc(.775rem + 1px);
+    --uvl-btn-padding-x: calc(1.5rem + 1px);
+    --uvl-btn-font-size: 1.1rem;
+    --uvl-btn-sm-padding-y: calc(.55rem + 1px);
+    --uvl-btn-sm-padding-x: calc(1rem + 1px);
+    --uvl-btn-sm-font-size: .95rem;
+    --uvl-btn-lg-padding-y: calc(.825rem + 1px);
+    --uvl-btn-lg-padding-x: calc(1.75rem + 1px);
+    --uvl-btn-lg-font-size: 1.15rem;
+    --uvl-input-padding-y: .775rem;
+    --uvl-input-padding-x: 1rem;
+    --uvl-input-font-size: 1.1rem;
+    --uvl-input-color: var(--uvl-gray-700);
+    --uvl-input-border-color: var(--uvl-gray-300);
+    --uvl-input-focus-border-color: var(--uvl-gray-400);
+    --uvl-check-size: 1.75rem;
+    --uvl-doi-label-bg: #18181b;
+    --uvl-doi-value-bg: linear-gradient(90deg, #2176bd 0%, #2980b9 100%);
 }
 
-/* Components that name AdminKit's blue directly instead of the variables. */
+@media (max-width: 991.98px) {
+    :root {
+        --uvl-content-gutter: var(--uvl-content-gutter-mobile);
+        --uvl-toolbar-padding-y: var(--uvl-toolbar-padding-y-mobile);
+        --uvl-header-height: var(--uvl-header-height-mobile);
+    }
+}
+
+/* ── Bootstrap's variables, fed from the tokens ───────────────────────── */
+
+:root {
+    --bs-font-sans-serif: var(--uvl-font-sans);
+    --bs-font-monospace: var(--uvl-font-mono);
+    --bs-body-font-family: var(--uvl-font-sans);
+    --bs-body-font-size: var(--uvl-body-font-size);
+    --bs-body-font-weight: var(--uvl-fw-normal);
+    --bs-body-line-height: var(--uvl-body-line-height);
+    --bs-body-color: var(--uvl-body-color);
+    --bs-body-color-rgb: var(--uvl-body-color-rgb);
+    --bs-body-bg: var(--uvl-body-bg);
+    --bs-body-bg-rgb: var(--uvl-body-bg-rgb);
+
+    --bs-primary: var(--uvl-primary);
+    --bs-primary-rgb: var(--uvl-primary-rgb);
+    --bs-success: var(--uvl-success);
+    --bs-success-rgb: var(--uvl-success-rgb);
+    --bs-info: var(--uvl-info);
+    --bs-info-rgb: var(--uvl-info-rgb);
+    --bs-warning: var(--uvl-warning);
+    --bs-warning-rgb: var(--uvl-warning-rgb);
+    --bs-danger: var(--uvl-danger);
+    --bs-danger-rgb: var(--uvl-danger-rgb);
+    --bs-light: var(--uvl-light);
+    --bs-light-rgb: var(--uvl-light-rgb);
+    --bs-dark: var(--uvl-dark);
+    --bs-dark-rgb: var(--uvl-dark-rgb);
+
+    --bs-gray-100: var(--uvl-gray-100);
+    --bs-gray-200: var(--uvl-gray-200);
+    --bs-gray-300: var(--uvl-gray-300);
+    --bs-gray-400: var(--uvl-gray-400);
+    --bs-gray-500: var(--uvl-gray-500);
+    --bs-gray-600: var(--uvl-gray-600);
+    --bs-gray-700: var(--uvl-gray-700);
+    --bs-gray-800: var(--uvl-gray-800);
+    --bs-gray-900: var(--uvl-gray-900);
+
+    --bs-link-color: var(--uvl-link);
+    --bs-link-hover-color: var(--uvl-link);
+    --bs-border-color: var(--uvl-border-color);
+    --bs-border-color-translucent: var(--uvl-border-color);
+    --bs-border-radius: var(--uvl-radius);
+    --bs-border-radius-sm: var(--uvl-radius-sm);
+    --bs-border-radius-lg: var(--uvl-radius-lg);
+    --bs-box-shadow-sm: var(--uvl-shadow-sm);
+}
+
+/* ── Base ──────────────────────────────────────────────────────────────── */
+
+html {
+    font-size: var(--uvl-root-font-size);
+}
+
+@media (max-width: 991.98px) {
+    html {
+        font-size: var(--uvl-root-font-size-mobile);
+    }
+}
+
+body {
+    background-color: var(--uvl-body-bg);
+    color: var(--uvl-body-color);
+    font-family: var(--uvl-font-sans);
+    font-size: var(--uvl-body-font-size);
+    line-height: var(--uvl-body-line-height);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+    color: var(--uvl-link);
+    text-decoration: none;
+}
+
+a:hover {
+    color: var(--uvl-link);
+}
+
+h1, h2, h3, h4, h5, h6,
+.h1, .h2, .h3, .h4, .h5, .h6 {
+    color: var(--uvl-heading-color);
+    font-weight: var(--uvl-heading-weight);
+    line-height: var(--uvl-heading-line-height);
+}
+
+h1, .h1 { font-size: 1.75rem; }
+h2, .h2 { font-size: 1.5rem; }
+h3, .h3 { font-size: 1.35rem; }
+h4, .h4 { font-size: 1.25rem; }
+h5, .h5 { font-size: 1.15rem; }
+h6, .h6 { font-size: 1.075rem; }
+
+/* uvlhub.io's size scale, which the features ported from it use. */
+.fs-1 { font-size: 1.75rem !important; }
+.fs-2 { font-size: 1.5rem !important; }
+.fs-3 { font-size: 1.35rem !important; }
+.fs-4 { font-size: 1.25rem !important; }
+.fs-5 { font-size: 1.15rem !important; }
+.fs-6 { font-size: 1.075rem !important; }
+.fs-7 { font-size: .95rem !important; }
+.fs-8 { font-size: .85rem !important; }
+.fs-9 { font-size: .75rem !important; }
+
+/* The large sizes grow with the screen below 1200px, as uvlhub.io's do. */
+@media (max-width: 1199.98px) {
+    h1, .h1 { font-size: calc(1.3rem + .6vw); }
+    h2, .h2 { font-size: calc(1.275rem + .3vw); }
+    h3, .h3 { font-size: calc(1.26rem + .12vw); }
+    .fs-1 { font-size: calc(1.3rem + .6vw) !important; }
+    .fs-2 { font-size: calc(1.275rem + .3vw) !important; }
+    .fs-3 { font-size: calc(1.26rem + .12vw) !important; }
+}
+
+/* Its weights are a step lighter than Bootstrap's: the features that came
+   from it write fw-semibold for its 500 and fw-bold for its 600. */
+.fw-normal { font-weight: var(--uvl-fw-normal) !important; }
+.fw-semibold { font-weight: var(--uvl-fw-medium) !important; }
+.fw-bold { font-weight: var(--uvl-fw-semibold) !important; }
+.fw-bolder { font-weight: var(--uvl-fw-bold) !important; }
+
+b, strong { font-weight: var(--uvl-fw-semibold); }
+
+.text-muted { color: var(--uvl-text-muted) !important; }
+.text-dark { color: var(--uvl-gray-900) !important; }
+.text-body { color: var(--uvl-body-color) !important; }
+.text-primary { color: var(--uvl-primary) !important; }
+.link-primary { color: var(--uvl-primary) !important; }
+.link-primary:hover, .link-primary:focus { color: var(--uvl-primary-active) !important; }
+.text-bg-primary { background-color: var(--uvl-primary) !important; color: #fff !important; }
+
+.lead { font-size: 1.15rem; font-weight: var(--uvl-fw-normal); }
+
+code, kbd, pre, samp { font-family: var(--uvl-font-mono); }
+code { color: var(--uvl-info); }
+
+hr {
+    border-color: var(--uvl-border-color);
+    opacity: 1;
+}
+
+.border, .border-top, .border-end, .border-bottom, .border-start {
+    border-color: var(--uvl-border-color) !important;
+}
+
+.shadow-sm { box-shadow: var(--uvl-shadow-sm) !important; }
+
+/* A focus ring of its own, for the keyboard only (uvlhub.io draws none). */
+:focus-visible {
+    outline: 2px solid rgba(var(--uvl-primary-rgb), .5);
+    outline-offset: 2px;
+}
+
+/* ── Shell: the frame ──────────────────────────────────────────────────── */
+
+.uvl-app {
+    display: flex;
+    min-height: 100vh;
+}
+
+.uvl-main {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 100vh;
+    margin-left: var(--uvl-sidebar-width);
+    transition: margin-left .3s ease;
+}
+
+/* ── Shell: the sidebar ────────────────────────────────────────────────── */
+
+.uvl-sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 105;
+    display: flex;
+    flex-direction: column;
+    width: var(--uvl-sidebar-width);
+    background-color: var(--uvl-sidebar-bg);
+    overflow: hidden;
+    transition: width .3s ease, transform .3s ease, box-shadow .3s ease;
+}
+
+.uvl-sidebar-brand {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: space-between;
+    height: var(--uvl-header-height);
+    padding: 0 1.5rem;
+    border-bottom: var(--uvl-sidebar-logo-border);
+}
+
+.uvl-sidebar-logo,
+.uvl-sidebar-logo:hover {
+    display: flex;
+    align-items: center;
+    padding: 0;
+    color: #fff;
+}
+
+.uvl-sidebar-logo img {
+    height: var(--uvl-sidebar-logo-img-height);
+    width: auto;
+    max-width: 100%;
+}
+
+.uvl-sidebar-toggle {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--uvl-radius-sm);
+    background-color: var(--uvl-sidebar-toggle-bg);
+    color: var(--uvl-sidebar-toggle-color);
+    cursor: pointer;
+    transition: color var(--uvl-transition);
+}
+
+.uvl-sidebar-toggle:hover {
+    color: var(--uvl-sidebar-toggle-active-color);
+}
+
+.uvl-sidebar-toggle .uvl-icon {
+    width: 1.15rem;
+    height: 1.15rem;
+    transition: transform .3s ease;
+}
+
+.uvl-sidebar-menu {
+    flex: 1 1 auto;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding: 1.25rem .75rem;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, .12) transparent;
+}
+
+.uvl-sidebar .sidebar-nav {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.uvl-sidebar .sidebar-item {
+    padding: .15rem 0;
+}
+
+.uvl-sidebar .sidebar-link,
+.uvl-sidebar a.sidebar-link {
+    display: flex;
+    align-items: center;
+    padding: .65rem 1rem;
+    border: 0;
+    border-radius: var(--uvl-radius);
+    background: transparent;
+    color: var(--uvl-sidebar-link-color);
+    font-size: 1rem;
+    font-weight: var(--uvl-fw-medium);
+    line-height: 1.5;
+    white-space: nowrap;
+    text-decoration: none;
+    transition: color var(--uvl-transition), background-color var(--uvl-transition);
+}
+
+/* The icon in a box of its own, whether the registry's (Phosphor) or a
+   slot's (feather, drawn by app.js). */
+.uvl-sidebar .sidebar-link > .uvl-icon,
+.uvl-sidebar .sidebar-link > svg,
+.uvl-sidebar .sidebar-link > i {
+    flex: 0 0 auto;
+    width: var(--uvl-sidebar-icon-size);
+    height: var(--uvl-sidebar-icon-size);
+    margin: 0 calc(.5rem + (2rem - var(--uvl-sidebar-icon-size))) 0 0;
+    color: var(--uvl-sidebar-icon-color);
+    transition: color var(--uvl-transition);
+}
+
+.uvl-sidebar .sidebar-link > svg.feather {
+    stroke-width: 1.75;
+}
+
+.uvl-sidebar .sidebar-link > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: opacity .3s ease;
+}
+
+.uvl-sidebar .sidebar-link .sidebar-badge {
+    position: static;
+    margin-left: auto;
+    background-color: var(--uvl-sidebar-link-active-bg);
+    color: #fff;
+}
+
+.uvl-sidebar .sidebar-link:hover,
+.uvl-sidebar .sidebar-link:focus-visible,
+.uvl-sidebar .sidebar-link:hover > .uvl-icon,
+.uvl-sidebar .sidebar-link:hover > svg {
+    background: transparent;
+    color: var(--uvl-sidebar-link-hover-color);
+}
+
+.uvl-sidebar .sidebar-item.active > .sidebar-link,
+.uvl-sidebar .sidebar-item.active > .sidebar-link:hover,
+.uvl-sidebar .sidebar-link.active {
+    background: var(--uvl-sidebar-link-active-bg);
+    color: var(--uvl-sidebar-link-active-color);
+}
+
+.uvl-sidebar .sidebar-item.active > .sidebar-link > .uvl-icon,
+.uvl-sidebar .sidebar-item.active > .sidebar-link > svg,
+.uvl-sidebar .sidebar-link.active > .uvl-icon,
+.uvl-sidebar .sidebar-link.active > svg {
+    color: var(--uvl-sidebar-link-active-color);
+}
+
+.uvl-sidebar .sidebar-header {
+    display: block;
+    margin: 0;
+    padding: calc(1.25rem + .65rem) 1rem .65rem;
+    background: transparent;
+    color: var(--uvl-sidebar-heading-color);
+    font-size: .95rem;
+    font-weight: var(--uvl-fw-semibold);
+    line-height: 1.5;
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: opacity .3s ease;
+}
+
+.uvl-sidebar-footer {
+    flex: 0 0 auto;
+    padding: .5rem 1.5rem 1.5rem;
+}
+
+.uvl-sidebar-version {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 40px;
+    padding: 0 1rem;
+    border-radius: var(--uvl-radius);
+    background-color: var(--uvl-sidebar-version-bg);
+    color: var(--uvl-sidebar-version-color);
+    font-size: 1.1rem;
+    font-weight: var(--uvl-fw-medium);
+    white-space: nowrap;
+    overflow: hidden;
+    transition: color var(--uvl-transition);
+}
+
+.uvl-sidebar-version:hover,
+.uvl-sidebar-version:focus-visible {
+    color: #fff;
+}
+
+/* The document icon stands in for the release on the rail only. */
+.uvl-sidebar-version .uvl-icon {
+    display: none;
+    flex: 0 0 auto;
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+/* ── Shell: the rail (a folded sidebar, from 992px) ───────────────────── */
+
+@media (min-width: 992px) {
+    .uvl-sidebar-minimized .uvl-main {
+        margin-left: var(--uvl-sidebar-width-minimized);
+    }
+
+    .uvl-sidebar-minimized .uvl-sidebar-toggle {
+        color: var(--uvl-sidebar-toggle-active-color);
+    }
+
+    .uvl-sidebar-minimized .uvl-sidebar-toggle .uvl-icon {
+        transform: rotate(180deg);
+    }
+
+    .uvl-sidebar-minimized .uvl-sidebar:not(:hover),
+    .uvl-sidebar-minimized .uvl-sidebar.uvl-sidebar-resting {
+        width: var(--uvl-sidebar-width-minimized);
+    }
+
+    .uvl-sidebar-minimized .uvl-sidebar:not(:hover) .uvl-sidebar-brand,
+    .uvl-sidebar-minimized .uvl-sidebar.uvl-sidebar-resting .uvl-sidebar-brand {
+        justify-content: center;
+        padding: 0;
+    }
+
+    .uvl-sidebar-minimized .uvl-sidebar:not(:hover) .uvl-sidebar-logo,
+    .uvl-sidebar-minimized .uvl-sidebar.uvl-sidebar-resting .uvl-sidebar-logo {
+        display: none;
+    }
+
+    .uvl-sidebar-minimized .uvl-sidebar:not(:hover) .sidebar-link > span,
+    .uvl-sidebar-minimized .uvl-sidebar.uvl-sidebar-resting .sidebar-link > span,
+    .uvl-sidebar-minimized .uvl-sidebar:not(:hover) .sidebar-header,
+    .uvl-sidebar-minimized .uvl-sidebar.uvl-sidebar-resting .sidebar-header {
+        opacity: 0;
+    }
+
+    .uvl-sidebar-minimized .uvl-sidebar:not(:hover) .uvl-sidebar-footer,
+    .uvl-sidebar-minimized .uvl-sidebar.uvl-sidebar-resting .uvl-sidebar-footer {
+        padding-right: .75rem;
+        padding-left: .75rem;
+    }
+
+    .uvl-sidebar-minimized .uvl-sidebar:not(:hover) .uvl-sidebar-version,
+    .uvl-sidebar-minimized .uvl-sidebar.uvl-sidebar-resting .uvl-sidebar-version {
+        width: 36px;
+        padding: 0;
+        margin: 0 auto;
+    }
+
+    .uvl-sidebar-minimized .uvl-sidebar:not(:hover) .uvl-sidebar-version .uvl-icon,
+    .uvl-sidebar-minimized .uvl-sidebar.uvl-sidebar-resting .uvl-sidebar-version .uvl-icon {
+        display: block;
+    }
+
+    .uvl-sidebar-minimized .uvl-sidebar:not(:hover) .uvl-sidebar-version-label,
+    .uvl-sidebar-minimized .uvl-sidebar.uvl-sidebar-resting .uvl-sidebar-version-label {
+        display: none;
+    }
+
+    /* Unfolded by the pointer, over the page and without pushing it. */
+    .uvl-sidebar-minimized .uvl-sidebar:hover:not(.uvl-sidebar-resting) {
+        box-shadow: 0 0 30px rgba(0, 0, 0, .25);
+    }
+
+    .uvl-drawer-toggle,
+    .uvl-header-logo,
+    .uvl-drawer-overlay {
+        display: none !important;
+    }
+}
+
+/* ── Shell: the drawer (a phone's sidebar, under 992px) ──────────────── */
+
+@media (max-width: 991.98px) {
+    .uvl-main {
+        margin-left: 0;
+    }
+
+    .uvl-sidebar {
+        z-index: 106;
+        width: var(--uvl-sidebar-drawer-width);
+        transform: translateX(-100%);
+        visibility: hidden;
+        transition: transform .3s ease, visibility 0s linear .3s;
+    }
+
+    .uvl-drawer-open .uvl-sidebar {
+        transform: none;
+        visibility: visible;
+        box-shadow: var(--uvl-sidebar-drawer-shadow);
+        transition: transform .3s ease;
+    }
+
+    /* No logo row and no release in the drawer, as on uvlhub.io. */
+    .uvl-sidebar-brand,
+    .uvl-sidebar-footer {
+        display: none;
+    }
+
+    .uvl-sidebar-menu {
+        padding-top: 1rem;
+    }
+
+    .uvl-drawer-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 105;
+        background-color: var(--uvl-drawer-overlay);
+    }
+
+    .uvl-drawer-open {
+        overflow: hidden;
+    }
+}
+
+/* ── Shell: the header ─────────────────────────────────────────────────── */
+
+.uvl-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: .5rem;
+    /* A minimum: a slot that draws something taller grows the header
+       instead of spilling over the page. */
+    min-height: var(--uvl-header-height);
+    padding: 0 var(--uvl-content-gutter);
+    background-color: var(--uvl-header-bg);
+    box-shadow: var(--uvl-shadow-header);
+}
+
+@media (max-width: 991.98px) {
+    .uvl-header {
+        position: relative;
+        gap: .25rem;
+        padding-left: calc(var(--uvl-content-gutter) - 9px);
+    }
+}
+
+.uvl-header-logo {
+    display: flex;
+    align-items: center;
+    margin-right: .25rem;
+}
+
+.uvl-header-menu {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+}
+
+.uvl-header-actions {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin: 0 0 0 auto;
+    padding: 0;
+    list-style: none;
+}
+
+.uvl-header-actions > .nav-item {
+    display: flex;
+    align-items: center;
+}
+
+.uvl-header-slot {
+    gap: .5rem;
+}
+
+/* An icon-only button: the search, the menu, the login, the account. */
+.uvl-header-icon,
+.uvl-header .nav-icon,
+.uvl-user-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--uvl-radius);
+    background: transparent;
+    color: var(--uvl-header-icon-color);
+    line-height: 1;
+    cursor: pointer;
+    transition: color var(--uvl-transition), background-color var(--uvl-transition);
+}
+
+.uvl-header-icon .uvl-icon,
+.uvl-header-icon svg,
+.uvl-header .nav-icon .uvl-icon,
+.uvl-header .nav-icon svg {
+    width: var(--uvl-header-icon-size);
+    height: var(--uvl-header-icon-size);
+}
+
+.uvl-header-icon:hover,
+.uvl-header-icon.active,
+.uvl-header .nav-icon:hover,
+.uvl-header .nav-icon[aria-expanded="true"],
+.uvl-user-toggle:hover,
+.uvl-user-toggle[aria-expanded="true"] {
+    background-color: var(--uvl-gray-100);
+    color: var(--uvl-primary);
+}
+
+.uvl-header .nav-icon::after,
+.uvl-header-actions .dropdown-toggle::after {
+    display: none !important;
+}
+
+/* A button with a label (Cite us!), and the links features put among the
+   buttons (Download all, Log in), drawn the same. */
+.uvl-header-btn,
+.uvl-header-actions .nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    height: auto;
+    padding: .5rem 1rem;
+    border: 0;
+    border-radius: var(--uvl-radius);
+    background: transparent;
+    color: var(--uvl-header-btn-color);
+    font-size: 1.1rem;
+    font-weight: var(--uvl-fw-semibold);
+    line-height: 1.5;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: color var(--uvl-transition), background-color var(--uvl-transition);
+}
+
+.uvl-header-btn .uvl-icon,
+.uvl-header-btn svg,
+.uvl-header-actions .nav-link .uvl-icon,
+.uvl-header-actions .nav-link svg {
+    flex: 0 0 auto;
+    width: var(--uvl-header-icon-size);
+    height: var(--uvl-header-icon-size);
+    color: var(--uvl-header-icon-color);
+    transition: color var(--uvl-transition);
+}
+
+.uvl-header-btn:hover,
+.uvl-header-actions .nav-link:hover,
+.uvl-header-actions .nav-link:focus-visible {
+    color: var(--uvl-primary);
+}
+
+.uvl-header-btn:hover .uvl-icon,
+.uvl-header-btn:hover svg,
+.uvl-header-actions .nav-link:hover .uvl-icon,
+.uvl-header-actions .nav-link:hover svg {
+    color: var(--uvl-primary);
+}
+
+/* A menu among the buttons (Download all) is a soft pill, as on uvlhub.io. */
+.uvl-header-slot .dropdown > .nav-link,
+.uvl-header-slot .dropdown > .btn {
+    background-color: var(--uvl-gray-100);
+    color: var(--uvl-gray-800);
+}
+
+.uvl-header-slot .dropdown > .nav-link:hover,
+.uvl-header-slot .dropdown > .nav-link[aria-expanded="true"],
+.uvl-header-slot .dropdown > .btn:hover {
+    background-color: var(--uvl-gray-200);
+    color: var(--uvl-gray-800);
+}
+
+.uvl-header-actions .topbar-lang .nav-link {
+    padding: .5rem .5rem;
+    color: var(--uvl-gray-600);
+}
+
+.uvl-header-actions .topbar-lang .nav-link.active {
+    color: var(--uvl-primary);
+}
+
+/* The menus open under the header. */
+.uvl-header .dropdown-menu {
+    z-index: 107;
+}
+
+/* The account. */
+.uvl-avatar {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background-color: var(--uvl-primary-light);
+    color: var(--uvl-primary);
+    font-size: 1.075rem;
+    font-weight: var(--uvl-fw-semibold);
+    line-height: 1.5;
+}
+
+.uvl-avatar-lg {
+    margin-right: 1.25rem;
+    font-size: 1.35rem;
+}
+
+.uvl-user-menu {
+    --bs-dropdown-min-width: 275px;
+    width: 275px;
+    padding: .75rem 0;
+}
+
+.uvl-user-menu .dropdown-divider {
+    margin: .75rem 0;
+}
+
+.uvl-user-identity {
+    padding: .75rem 1.5rem;
+}
+
+.uvl-user-name {
+    color: var(--uvl-gray-900);
+    font-size: 1.15rem;
+    font-weight: var(--uvl-fw-semibold);
+}
+
+.uvl-user-email {
+    color: var(--uvl-text-muted);
+    font-size: .95rem;
+    font-weight: var(--uvl-fw-medium);
+}
+
+.uvl-user-menu .dropdown-item {
+    margin: 0 .75rem;
+    width: auto;
+    padding: .65rem 1.25rem;
+    color: var(--uvl-gray-800);
+    font-size: 1.075rem;
+}
+
+/* Profile's identity block (layout.navbar.user) in uvlhub's sizes: its
+   avatar, the name and the address under it. */
+.uvl-user-identity .fw-bold {
+    font-size: 1.15rem;
+    font-weight: var(--uvl-fw-semibold) !important;
+}
+
+.uvl-user-identity .small {
+    font-size: .95rem;
+    font-weight: var(--uvl-fw-medium);
+}
+
+.uvl-user-identity .avatar {
+    width: auto;
+    height: auto;
+    margin: 0 1.25rem 0 0;
+    background-color: var(--uvl-primary-light) !important;
+    color: var(--uvl-primary) !important;
+    font-size: 1.35rem;
+}
+
+.uvl-user-identity .px-3 {
+    padding-right: 0 !important;
+    padding-left: 0 !important;
+}
+
+/* ── Shell: the title band and the content ────────────────────────────── */
+
+.uvl-toolbar {
+    padding: var(--uvl-toolbar-padding-y) var(--uvl-content-gutter);
+}
+
+.uvl-page-title {
+    margin: 0;
+    color: var(--uvl-heading-color);
+    font-size: var(--uvl-page-title-size);
+    font-weight: var(--uvl-heading-weight);
+    line-height: 1.2;
+}
+
+@media (max-width: 1199.98px) {
+    .uvl-page-title {
+        font-size: calc(1.26rem + .12vw);
+    }
+}
+
+.uvl-content {
+    flex: 1 0 auto;
+    width: 100%;
+    padding: 0 var(--uvl-content-gutter) var(--uvl-content-gutter);
+}
+
+/* A page that draws its own heading starts it where the band's would be. */
+.uvl-content-untitled {
+    padding-top: var(--uvl-toolbar-padding-y);
+}
+
+/* ── Shell: the footer ─────────────────────────────────────────────────── */
+
+.uvl-footer {
+    display: flex;
+    flex: 0 0 auto;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: .25rem 1rem;
+    min-height: var(--uvl-footer-height);
+    padding: .75rem var(--uvl-content-gutter);
+    background-color: var(--uvl-footer-bg);
+    color: var(--uvl-body-color);
+    font-size: 1rem;
+}
+
+.uvl-footer p,
+.uvl-footer ul {
+    margin: 0;
+}
+
+.uvl-footer-year {
+    margin-right: .25rem;
+    color: var(--uvl-text-muted);
+    font-weight: var(--uvl-fw-medium);
+}
+
+.uvl-footer .list-inline-item a,
+.uvl-footer-link {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    color: var(--uvl-footer-link-color);
+    font-weight: var(--uvl-fw-medium);
+}
+
+.uvl-footer .list-inline-item a:hover,
+.uvl-footer-link:hover {
+    color: var(--uvl-primary);
+}
+
+.uvl-footer-link .uvl-icon,
+.uvl-footer-link svg {
+    width: 1.5rem;
+    height: 1.5rem;
+    color: var(--uvl-gray-500);
+}
+
+/* On a phone the link comes first, centred, as on uvlhub.io. */
+@media (max-width: 767.98px) {
+    .uvl-footer {
+        flex-direction: column-reverse;
+        align-items: flex-start;
+        padding-top: .75rem;
+        padding-bottom: .75rem;
+    }
+
+    .uvl-footer-links {
+        align-self: center;
+    }
+}
+
+/* The chrome's Phosphor icons take the colour of their text. */
+.uvl-icon {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    fill: currentColor;
+    vertical-align: -.125em;
+}
+
+/* ── Components: cards ─────────────────────────────────────────────────── */
+
+.card {
+    --bs-card-spacer-y: var(--uvl-card-padding-y);
+    --bs-card-spacer-x: var(--uvl-card-padding-x);
+    --bs-card-title-spacer-y: .5rem;
+    --bs-card-border-width: 1px;
+    --bs-card-border-color: var(--uvl-border-color);
+    --bs-card-border-radius: var(--uvl-radius-lg);
+    --bs-card-inner-border-radius: calc(var(--uvl-radius-lg) - 1px);
+    --bs-card-cap-padding-y: .5rem;
+    --bs-card-cap-padding-x: var(--uvl-card-padding-x);
+    --bs-card-cap-bg: transparent;
+    --bs-card-bg: var(--uvl-surface);
+    --bs-card-color: var(--uvl-body-color);
+    margin-bottom: 0;
+    box-shadow: var(--uvl-shadow-card);
+}
+
+/* Cards carry no margin of their own, as in Bootstrap and on uvlhub.io (a
+   list that lays them out with a gap gets just the gap). Cards stacked in
+   the flow of a column or of the page are kept apart. */
+.uvl-content > .card + .card,
+.col > .card + .card,
+[class*="col-"] > .card + .card {
+    margin-top: var(--uvl-card-gap);
+}
+
+.card-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    min-height: var(--uvl-card-header-height);
+}
+
+.card-title,
+.card-header .card-title,
+.card-header > h1, .card-header > h2, .card-header > h3,
+.card-header > h4, .card-header > h5, .card-header > h6 {
+    margin-bottom: 0;
+    color: var(--uvl-heading-color);
+    font-size: var(--uvl-card-title-size);
+    font-weight: var(--uvl-fw-medium);
+    line-height: 1.2;
+}
+
+.card-body > .card-title {
+    margin-bottom: var(--bs-card-title-spacer-y);
+}
+
+.card-subtitle {
+    color: var(--uvl-text-muted);
+}
+
+.card-footer {
+    padding: 1.5rem var(--uvl-card-padding-x);
+    background-color: transparent;
+}
+
+@media (max-width: 991.98px) {
+    .card {
+        --bs-card-spacer-y: var(--uvl-card-padding-y);
+        --bs-card-spacer-x: var(--uvl-card-padding-x);
+    }
+}
+
+/* ── Components: buttons ───────────────────────────────────────────────── */
+
+.btn {
+    --bs-btn-padding-x: var(--uvl-btn-padding-x);
+    --bs-btn-padding-y: var(--uvl-btn-padding-y);
+    --bs-btn-font-family: var(--uvl-font-sans);
+    --bs-btn-font-size: var(--uvl-btn-font-size);
+    --bs-btn-font-weight: var(--uvl-fw-medium);
+    --bs-btn-line-height: 1.5;
+    --bs-btn-border-width: 0;
+    --bs-btn-border-radius: var(--uvl-radius);
+    --bs-btn-box-shadow: none;
+    --bs-btn-focus-box-shadow: var(--uvl-focus-ring);
+    --bs-btn-color: var(--uvl-gray-900);
+    --bs-btn-hover-color: var(--uvl-gray-900);
+    --bs-btn-active-color: var(--uvl-gray-900);
+    --bs-btn-hover-bg: transparent;
+    --bs-btn-active-bg: transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    transition: color var(--uvl-transition), background-color var(--uvl-transition), border-color var(--uvl-transition), box-shadow var(--uvl-transition);
+}
+
+.btn:hover {
+    background-color: var(--bs-btn-hover-bg);
+    color: var(--bs-btn-hover-color);
+}
+
+.btn:focus {
+    box-shadow: none;
+}
+
+.btn:focus-visible {
+    box-shadow: var(--bs-btn-focus-box-shadow);
+    outline: 0;
+}
+
+/* A block button keeps the width its parent gives it. */
+.btn.w-100,
+.d-grid > .btn {
+    display: flex;
+}
+
+.btn-sm,
+.btn-group-sm > .btn {
+    --bs-btn-padding-y: var(--uvl-btn-sm-padding-y);
+    --bs-btn-padding-x: var(--uvl-btn-sm-padding-x);
+    --bs-btn-font-size: var(--uvl-btn-sm-font-size);
+    --bs-btn-border-radius: var(--uvl-radius-sm);
+}
+
+.btn-lg,
+.btn-group-lg > .btn {
+    --bs-btn-padding-y: var(--uvl-btn-lg-padding-y);
+    --bs-btn-padding-x: var(--uvl-btn-lg-padding-x);
+    --bs-btn-font-size: var(--uvl-btn-lg-font-size);
+    --bs-btn-border-radius: var(--uvl-radius-lg);
+}
+
+.btn .feather {
+    width: 1.25em;
+    height: 1.25em;
+}
+
 .btn-primary {
-    --bs-btn-bg: #287fb9;
-    --bs-btn-border-color: #287fb9;
-    --bs-btn-hover-bg: #226c9d;
-    --bs-btn-hover-border-color: #206694;
-    --bs-btn-focus-shadow-rgb: 72, 146, 196;
-    --bs-btn-active-bg: #206694;
-    --bs-btn-active-border-color: #1e5f8b;
-    --bs-btn-disabled-bg: #287fb9;
-    --bs-btn-disabled-border-color: #287fb9;
+    --bs-btn-color: #fff;
+    --bs-btn-bg: var(--uvl-primary);
+    --bs-btn-border-color: var(--uvl-primary);
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: var(--uvl-primary-active);
+    --bs-btn-hover-border-color: var(--uvl-primary-active);
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: var(--uvl-primary-active);
+    --bs-btn-active-border-color: var(--uvl-primary-active);
+    --bs-btn-disabled-color: #fff;
+    --bs-btn-disabled-bg: var(--uvl-primary);
+    --bs-btn-disabled-border-color: var(--uvl-primary);
 }
 
-.btn-outline-primary {
-    --bs-btn-color: #287fb9;
-    --bs-btn-border-color: #287fb9;
-    --bs-btn-hover-bg: #287fb9;
-    --bs-btn-hover-border-color: #287fb9;
-    --bs-btn-focus-shadow-rgb: 40, 127, 185;
-    --bs-btn-active-bg: #287fb9;
-    --bs-btn-active-border-color: #287fb9;
-    --bs-btn-disabled-color: #287fb9;
-    --bs-btn-disabled-border-color: #287fb9;
+.btn-secondary {
+    --bs-btn-color: var(--uvl-secondary-text);
+    --bs-btn-bg: var(--uvl-secondary);
+    --bs-btn-border-color: var(--uvl-secondary);
+    --bs-btn-hover-color: var(--uvl-secondary-text);
+    --bs-btn-hover-bg: var(--uvl-secondary-active);
+    --bs-btn-hover-border-color: var(--uvl-secondary-active);
+    --bs-btn-active-color: var(--uvl-secondary-text);
+    --bs-btn-active-bg: var(--uvl-secondary-active);
+    --bs-btn-active-border-color: var(--uvl-secondary-active);
+    --bs-btn-disabled-color: var(--uvl-secondary-text);
+    --bs-btn-disabled-bg: var(--uvl-secondary);
+    --bs-btn-disabled-border-color: var(--uvl-secondary);
 }
 
-.dropdown-menu {
-    --bs-dropdown-link-active-bg: #287fb9;
+.btn-light {
+    --bs-btn-color: var(--uvl-gray-800);
+    --bs-btn-bg: var(--uvl-light);
+    --bs-btn-border-color: var(--uvl-light);
+    --bs-btn-hover-color: var(--uvl-gray-800);
+    --bs-btn-hover-bg: var(--uvl-light-active);
+    --bs-btn-hover-border-color: var(--uvl-light-active);
+    --bs-btn-active-color: var(--uvl-gray-800);
+    --bs-btn-active-bg: var(--uvl-light-active);
+    --bs-btn-active-border-color: var(--uvl-light-active);
+    --bs-btn-disabled-color: var(--uvl-gray-800);
+    --bs-btn-disabled-bg: var(--uvl-light);
+    --bs-btn-disabled-border-color: var(--uvl-light);
 }
 
-.nav-pills {
-    --bs-nav-pills-link-active-bg: #287fb9;
+.btn-light.text-muted:hover {
+    color: var(--uvl-primary) !important;
 }
 
-.list-group {
-    --bs-list-group-active-bg: #287fb9;
-    --bs-list-group-active-border-color: #287fb9;
+.btn-dark {
+    --bs-btn-color: #fff;
+    --bs-btn-bg: var(--uvl-dark);
+    --bs-btn-border-color: var(--uvl-dark);
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: var(--uvl-dark-active);
+    --bs-btn-hover-border-color: var(--uvl-dark-active);
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: var(--uvl-dark-active);
+    --bs-btn-active-border-color: var(--uvl-dark-active);
 }
 
-.pagination {
-    --bs-pagination-focus-box-shadow: 0 0 0 0.25rem rgba(40, 127, 185, 0.25);
-    --bs-pagination-active-bg: #287fb9;
-    --bs-pagination-active-border-color: #287fb9;
+.btn-success,
+.btn-info,
+.btn-warning,
+.btn-danger {
+    --bs-btn-color: #fff;
+    --bs-btn-hover-color: #fff;
+    --bs-btn-active-color: #fff;
+    --bs-btn-disabled-color: #fff;
 }
 
-.progress {
-    --bs-progress-bar-bg: #287fb9;
+.btn-success { --bs-btn-bg: var(--uvl-success); --bs-btn-border-color: var(--uvl-success); --bs-btn-hover-bg: var(--uvl-success-active); --bs-btn-hover-border-color: var(--uvl-success-active); --bs-btn-active-bg: var(--uvl-success-active); --bs-btn-active-border-color: var(--uvl-success-active); --bs-btn-disabled-bg: var(--uvl-success); --bs-btn-disabled-border-color: var(--uvl-success); }
+.btn-info { --bs-btn-bg: var(--uvl-info); --bs-btn-border-color: var(--uvl-info); --bs-btn-hover-bg: var(--uvl-info-active); --bs-btn-hover-border-color: var(--uvl-info-active); --bs-btn-active-bg: var(--uvl-info-active); --bs-btn-active-border-color: var(--uvl-info-active); --bs-btn-disabled-bg: var(--uvl-info); --bs-btn-disabled-border-color: var(--uvl-info); }
+.btn-warning { --bs-btn-bg: var(--uvl-warning); --bs-btn-border-color: var(--uvl-warning); --bs-btn-hover-bg: var(--uvl-warning-active); --bs-btn-hover-border-color: var(--uvl-warning-active); --bs-btn-active-bg: var(--uvl-warning-active); --bs-btn-active-border-color: var(--uvl-warning-active); --bs-btn-disabled-bg: var(--uvl-warning); --bs-btn-disabled-border-color: var(--uvl-warning); }
+.btn-danger { --bs-btn-bg: var(--uvl-danger); --bs-btn-border-color: var(--uvl-danger); --bs-btn-hover-bg: var(--uvl-danger-active); --bs-btn-hover-border-color: var(--uvl-danger-active); --bs-btn-active-bg: var(--uvl-danger-active); --bs-btn-active-border-color: var(--uvl-danger-active); --bs-btn-disabled-bg: var(--uvl-danger); --bs-btn-disabled-border-color: var(--uvl-danger); }
+
+/* Outline buttons carry no visible border on uvlhub.io: a dark label on
+   nothing, filled on hover. */
+.btn[class*="btn-outline-"] {
+    --bs-btn-color: var(--uvl-gray-900);
+    --bs-btn-bg: transparent;
+    --bs-btn-border-color: transparent;
+    --bs-btn-hover-color: var(--uvl-gray-900);
+    --bs-btn-hover-bg: var(--uvl-gray-200);
+    --bs-btn-hover-border-color: transparent;
+    --bs-btn-active-color: var(--uvl-gray-900);
+    --bs-btn-active-bg: var(--uvl-gray-200);
+    --bs-btn-active-border-color: transparent;
+    --bs-btn-disabled-color: var(--uvl-gray-500);
+    --bs-btn-disabled-border-color: transparent;
 }
 
-/* Bootstrap's alerts (css/bootstrap-components.css) in AdminKit's colours,
-   with Bootstrap's recipe: the text 40% darker, the background 80% lighter,
-   the border 70% lighter. Secondary, danger, light and dark are the same in
-   both. */
-.alert-primary {
-    --bs-alert-color: #184c6f;
-    --bs-alert-bg: #d4e5f1;
-    --bs-alert-border-color: #bed9ea;
+.btn.btn-outline-primary {
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: var(--uvl-primary);
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: var(--uvl-primary-active);
 }
 
-.alert-primary .alert-link {
-    color: #133d59;
+.btn.btn-outline-danger {
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: var(--uvl-danger);
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: var(--uvl-danger-active);
 }
 
-.alert-success {
-    --bs-alert-color: #117054;
-    --bs-alert-bg: #d2f1e8;
-    --bs-alert-border-color: #bbebdc;
+/* An outline button that is the label of a radio or checkbox (btn-check)
+   is one of a set of options: a dashed box, tinted when chosen. */
+.btn-check + .btn[class*="btn-outline-"] {
+    --bs-btn-border-width: 1px;
+    --bs-btn-border-color: var(--uvl-gray-300);
+    --bs-btn-hover-color: var(--uvl-gray-900);
+    --bs-btn-hover-bg: var(--uvl-primary-light);
+    --bs-btn-hover-border-color: var(--uvl-primary);
+    --bs-btn-active-color: var(--uvl-gray-900);
+    --bs-btn-active-bg: var(--uvl-primary-light);
+    --bs-btn-active-border-color: var(--uvl-primary);
+    border-style: dashed;
 }
 
-.alert-success .alert-link {
-    color: #0e5a43;
+.btn-check:focus-visible + .btn {
+    box-shadow: var(--uvl-focus-ring);
 }
 
-.alert-info {
-    --bs-alert-color: #0e616e;
-    --bs-alert-bg: #d1ecf1;
-    --bs-alert-border-color: #b9e3ea;
+.btn-link {
+    --bs-btn-color: var(--uvl-link);
+    --bs-btn-hover-color: var(--uvl-link);
+    --bs-btn-active-color: var(--uvl-link);
+    --bs-btn-padding-x: 0;
+    --bs-btn-padding-y: 0;
+    text-decoration: none;
 }
 
-.alert-info .alert-link {
-    color: #0b4e58;
+/* uvlhub's soft primary button (Copy, the Download of a format menu). */
+.uvl-btn-soft-primary {
+    --bs-btn-color: var(--uvl-primary);
+    --bs-btn-bg: var(--uvl-primary-light);
+    --bs-btn-border-color: var(--uvl-primary-light);
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: var(--uvl-primary);
+    --bs-btn-hover-border-color: var(--uvl-primary);
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: var(--uvl-primary-active);
+    --bs-btn-active-border-color: var(--uvl-primary-active);
 }
 
-.alert-warning {
-    --bs-alert-color: #976f1a;
-    --bs-alert-bg: #fef1d5;
-    --bs-alert-border-color: #feeac0;
+.btn-close {
+    width: .75rem;
+    height: .75rem;
+    padding: .5rem;
+    border-radius: var(--uvl-radius-sm);
+    opacity: .5;
 }
 
-.alert-warning .alert-link {
-    color: #795915;
+.btn-close:hover {
+    opacity: .9;
 }
 
-.text-bg-primary {
-    background-color: #287fb9 !important;
+.btn-close:focus {
+    box-shadow: none;
 }
 
-.link-primary {
-    color: #287fb9 !important;
+.btn-close:focus-visible {
+    box-shadow: var(--uvl-focus-ring);
 }
 
-.link-primary:hover,
-.link-primary:focus {
-    color: #206694 !important;
+/* ── Components: badges ────────────────────────────────────────────────── */
+
+.badge {
+    --bs-badge-padding-x: .5rem;
+    --bs-badge-padding-y: .325rem;
+    --bs-badge-font-size: .85rem;
+    --bs-badge-font-weight: var(--uvl-fw-semibold);
+    --bs-badge-border-radius: var(--uvl-radius-sm);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.badge.bg-secondary,
+.badge.text-bg-secondary {
+    background-color: var(--uvl-secondary) !important;
+    color: var(--uvl-gray-900) !important;
+}
+
+.badge.bg-light,
+.badge.text-bg-light {
+    background-color: var(--uvl-light) !important;
+    color: var(--uvl-gray-800);
+}
+
+.badge.bg-primary,
+.badge.text-bg-primary {
+    background-color: var(--uvl-primary) !important;
+}
+
+/* Soft badges in plain Bootstrap (bg-success bg-opacity-10 text-success),
+   in uvlhub's light tints. */
+.badge.bg-opacity-10.bg-success { background-color: var(--uvl-success-light) !important; }
+.badge.bg-opacity-10.bg-warning { background-color: var(--uvl-warning-light) !important; }
+.badge.bg-opacity-10.bg-danger { background-color: var(--uvl-danger-light) !important; }
+.badge.bg-opacity-10.bg-info { background-color: var(--uvl-info-light) !important; }
+.badge.bg-opacity-10.bg-primary { background-color: var(--uvl-primary-light) !important; }
+
+/* ── Components: forms ─────────────────────────────────────────────────── */
+
+.form-label,
+.col-form-label {
+    margin-bottom: .5rem;
+    color: var(--uvl-gray-900);
+    font-size: 1rem;
+    font-weight: var(--uvl-fw-medium);
+}
+
+.form-control,
+.form-select {
+    padding: var(--uvl-input-padding-y) var(--uvl-input-padding-x);
+    border: 1px solid var(--uvl-input-border-color);
+    border-radius: var(--uvl-radius);
+    background-color: var(--uvl-surface);
+    color: var(--uvl-input-color);
+    font-size: var(--uvl-input-font-size);
+    font-weight: var(--uvl-fw-medium);
+    line-height: 1.5;
+    box-shadow: none;
+    transition: color var(--uvl-transition), background-color var(--uvl-transition), border-color var(--uvl-transition);
+}
+
+.form-control::placeholder {
+    color: var(--uvl-gray-500);
+    font-weight: var(--uvl-fw-medium);
 }
 
 .form-control:focus,
 .form-select:focus {
-    border-color: #94bfdc;
-    box-shadow: 0 0 0 0.2rem rgba(40, 127, 185, 0.25);
+    border-color: var(--uvl-input-focus-border-color);
+    background-color: var(--uvl-surface);
+    color: var(--uvl-input-color);
+    box-shadow: none;
+    outline: 0;
 }
 
-.form-check-input:focus {
-    border-color: #94bfdc;
-    box-shadow: 0 0 0 0.2rem rgba(40, 127, 185, 0.25);
+.form-control:focus-visible,
+.form-select:focus-visible {
+    outline: 0;
+}
+
+.form-control:disabled,
+.form-control[readonly],
+.form-select:disabled {
+    background-color: var(--uvl-gray-100);
+    color: var(--uvl-gray-600);
+}
+
+.form-select {
+    padding-right: calc(var(--uvl-input-padding-x) * 3);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%2378829D' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3E%3C/svg%3E");
+    background-position: right var(--uvl-input-padding-x) center;
+    background-size: 16px 12px;
+}
+
+.form-control-sm,
+.form-select-sm {
+    padding: .55rem .75rem;
+    border-radius: var(--uvl-radius-sm);
+    font-size: .95rem;
+}
+
+.form-control-lg,
+.form-select-lg {
+    padding: .825rem 1.5rem;
+    border-radius: var(--uvl-radius-lg);
+    font-size: 1.15rem;
+}
+
+.input-group-text {
+    border: 1px solid var(--uvl-input-border-color);
+    border-radius: var(--uvl-radius);
+    background-color: var(--uvl-gray-100);
+    color: var(--uvl-gray-700);
+    font-size: var(--uvl-input-font-size);
+    font-weight: var(--uvl-fw-medium);
+}
+
+.form-check {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0 .75rem;
+    min-height: var(--uvl-check-size);
+    padding-left: 0;
+}
+
+.form-check .form-check-input {
+    float: none;
+    margin: 0;
+}
+
+.form-check > .form-text,
+.form-check > .invalid-feedback,
+.form-check > .valid-feedback {
+    flex-basis: 100%;
+}
+
+.form-check-inline {
+    display: inline-flex;
+    margin-right: 1.25rem;
+}
+
+.form-check-input {
+    width: var(--uvl-check-size);
+    height: var(--uvl-check-size);
+    flex: 0 0 auto;
+    border: 1px solid var(--uvl-input-border-color);
+    background-color: var(--uvl-surface);
+    background-size: 60% 60%;
+    cursor: pointer;
+}
+
+.form-check-input[type="checkbox"] {
+    border-radius: .45em;
 }
 
 .form-check-input:checked,
-.form-check-input[type=checkbox]:indeterminate {
-    background-color: #287fb9;
-    border-color: #287fb9;
+.form-check-input[type="checkbox"]:indeterminate {
+    border-color: var(--uvl-primary);
+    background-color: var(--uvl-primary);
 }
 
-.nav-icon:hover,
-.nav-icon.active {
-    color: #287fb9;
+.form-check-input:focus {
+    border-color: var(--uvl-input-focus-border-color);
+    box-shadow: none;
 }
 
-.sidebar-toggle:hover .hamburger,
-.sidebar-toggle:hover .hamburger:before,
-.sidebar-toggle:hover .hamburger:after {
-    background: #287fb9;
+.form-check-input:focus-visible {
+    box-shadow: var(--uvl-focus-ring);
 }
 
-/* The toggle is a button, so it is reachable from the keyboard. */
-.sidebar-toggle {
-    background: transparent;
+.form-switch {
+    padding-left: 0;
+}
+
+.form-switch .form-check-input {
+    width: calc(var(--uvl-check-size) * 1.75);
+    margin-left: 0;
+    border-radius: 3.25rem;
+    background-size: contain;
+}
+
+.form-check-label {
+    color: var(--uvl-gray-500);
+    cursor: pointer;
+}
+
+.form-text {
+    margin-top: .5rem;
+    color: var(--uvl-text-muted);
+    font-size: .95rem;
+}
+
+.invalid-feedback {
+    color: var(--uvl-danger);
+}
+
+.is-invalid,
+.was-validated .form-control:invalid {
+    border-color: var(--uvl-danger) !important;
+}
+
+/* ── Components: dropdowns ─────────────────────────────────────────────── */
+
+.dropdown-menu {
+    --bs-dropdown-padding-x: 0;
+    --bs-dropdown-padding-y: 1rem;
+    --bs-dropdown-font-size: 1rem;
+    --bs-dropdown-color: var(--uvl-gray-900);
+    --bs-dropdown-bg: var(--uvl-surface);
+    --bs-dropdown-border-width: 0;
+    --bs-dropdown-border-radius: var(--uvl-radius);
+    --bs-dropdown-inner-border-radius: var(--uvl-radius);
+    --bs-dropdown-box-shadow: var(--uvl-shadow-dropdown);
+    --bs-dropdown-divider-bg: var(--uvl-border-color);
+    --bs-dropdown-divider-margin-y: .75rem;
+    --bs-dropdown-link-color: var(--uvl-gray-900);
+    --bs-dropdown-link-hover-color: var(--uvl-primary);
+    --bs-dropdown-link-hover-bg: var(--uvl-gray-100);
+    --bs-dropdown-link-active-color: var(--uvl-primary);
+    --bs-dropdown-link-active-bg: var(--uvl-gray-100);
+    --bs-dropdown-item-padding-x: 1.25rem;
+    --bs-dropdown-item-padding-y: .65rem;
+    --bs-dropdown-header-color: var(--uvl-text-muted);
+    --bs-dropdown-header-padding-x: 1.25rem;
+    --bs-dropdown-header-padding-y: .5rem;
     border: 0;
-    padding: 0;
-    align-items: center;
+    box-shadow: var(--bs-dropdown-box-shadow);
 }
 
-/* ── Light sidebar ─────────────────────────────────────────────────────── */
-
-.wrapper,
-.sidebar,
-.sidebar-content {
-    background: #fff;
+/* AdminKit slides its menus in with a transform that stays when the
+   animation ends, which undoes where Popper put them: a fade instead. */
+.dropdown .dropdown-menu.show {
+    animation-name: uvl-dropdown-in;
 }
 
-.sidebar {
-    border-right: 1px solid var(--uvlhub-border);
+@keyframes uvl-dropdown-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
-.sidebar-brand {
-    padding: 1rem 1.5rem;
+.dropdown-item {
+    border-radius: var(--uvl-radius);
+    font-weight: var(--uvl-fw-medium);
+    transition: color var(--uvl-transition), background-color var(--uvl-transition);
 }
 
-.sidebar-brand img {
-    max-width: 100%;
-    width: auto;
+.dropdown-menu > .dropdown-item,
+.dropdown-menu > li > .dropdown-item {
+    width: calc(100% - 1.5rem);
+    margin: 0 .75rem;
 }
 
-.sidebar-header {
-    color: #6c757d;
-    font-weight: 600;
+.dropdown-item:hover,
+.dropdown-item:focus {
+    background-color: var(--bs-dropdown-link-hover-bg);
+    color: var(--bs-dropdown-link-hover-color);
+}
+
+.dropdown-item.active,
+.dropdown-item:active {
+    background-color: var(--bs-dropdown-link-active-bg);
+    color: var(--bs-dropdown-link-active-color);
+}
+
+.dropdown-header {
+    font-size: .95rem;
+    font-weight: var(--uvl-fw-semibold);
     text-transform: uppercase;
 }
 
-.sidebar-link,
-a.sidebar-link {
-    background: transparent;
-    color: #495057;
+.dropdown-divider {
+    border-top-color: var(--uvl-border-color);
+    opacity: 1;
 }
 
-.sidebar-link i,
-.sidebar-link svg,
-a.sidebar-link i,
-a.sidebar-link svg {
-    color: #6c757d;
+/* The boxes of a menu that is a little form (the format menu) read as its
+   entries, not as the muted labels of a form. */
+.dropdown-menu .form-check {
+    padding-top: .25rem;
+    padding-bottom: .25rem;
 }
 
-.sidebar-link:hover {
-    background: #f5f7fb;
+.dropdown-menu .form-check-label {
+    color: var(--uvl-gray-900);
+    font-weight: var(--uvl-fw-semibold);
 }
 
-.sidebar-link:hover,
-.sidebar-link:hover i,
-.sidebar-link:hover svg {
-    color: var(--uvlhub-blue);
+/* ── Components: dialogs ───────────────────────────────────────────────── */
+
+.modal {
+    --bs-modal-padding: 1.75rem;
+    --bs-modal-margin: 1.75rem;
+    --bs-modal-bg: var(--uvl-surface);
+    --bs-modal-color: var(--uvl-body-color);
+    --bs-modal-border-width: 0;
+    --bs-modal-border-radius: var(--uvl-radius);
+    --bs-modal-inner-border-radius: var(--uvl-radius);
+    --bs-modal-box-shadow: var(--uvl-shadow-modal);
+    --bs-modal-header-padding: 1.75rem;
+    --bs-modal-header-border-color: var(--uvl-border-color);
+    --bs-modal-header-border-width: 1px;
+    --bs-modal-footer-border-color: var(--uvl-border-color);
+    --bs-modal-footer-border-width: 1px;
+    --bs-modal-title-line-height: 1.5;
 }
 
-.sidebar-item.active > .sidebar-link,
-.sidebar-item.active .sidebar-link:hover {
-    background: linear-gradient(90deg, var(--uvlhub-blue-soft), rgba(40, 127, 185, 0.06) 50%, transparent);
-    border-left-color: var(--uvlhub-blue);
-    color: var(--uvlhub-blue);
+.modal-content {
+    box-shadow: var(--bs-modal-box-shadow);
 }
 
-.sidebar-item.active > .sidebar-link i,
-.sidebar-item.active > .sidebar-link svg,
-.sidebar-item.active .sidebar-link:hover i,
-.sidebar-item.active .sidebar-link:hover svg {
-    color: var(--uvlhub-blue);
+.modal-header .btn-close {
+    width: 2.7rem;
+    height: 2.7rem;
+    padding: 0;
+    background-size: .85rem;
 }
 
-/* The release this site runs, at the foot of the sidebar. */
-.sidebar-version {
-    padding: 1rem 1.5rem 1.5rem;
+.modal-title {
+    color: var(--uvl-heading-color);
+    font-size: 1.15rem;
+    font-weight: var(--uvl-fw-semibold);
 }
 
-.navbar-logo {
-    margin-right: 1rem;
+.modal-backdrop {
+    --bs-backdrop-bg: #000;
+    --bs-backdrop-opacity: .4;
 }
 
-/* ── Citation dialog ───────────────────────────────────────────────────── */
+.modal-footer {
+    padding: 1.5rem 1.75rem;
+}
+
+/* ── Components: tabs, pills, breadcrumbs, pagination ─────────────────── */
+
+.nav-tabs {
+    --bs-nav-tabs-border-color: var(--uvl-border-color);
+    --bs-nav-tabs-border-radius: var(--uvl-radius);
+    --bs-nav-tabs-link-hover-border-color: var(--uvl-border-color) var(--uvl-border-color) var(--uvl-border-color);
+    --bs-nav-tabs-link-active-color: #000;
+    --bs-nav-tabs-link-active-bg: var(--uvl-surface);
+    --bs-nav-tabs-link-active-border-color: var(--uvl-border-color) var(--uvl-border-color) var(--uvl-surface);
+    --bs-nav-link-color: var(--uvl-primary);
+    --bs-nav-link-hover-color: var(--uvl-primary-active);
+    --bs-nav-link-padding-x: 1rem;
+    --bs-nav-link-padding-y: .5rem;
+    --bs-nav-link-font-size: 1rem;
+}
+
+.nav-pills {
+    --bs-nav-pills-border-radius: var(--uvl-radius);
+    --bs-nav-pills-link-active-color: #fff;
+    --bs-nav-pills-link-active-bg: var(--uvl-primary);
+    --bs-nav-link-color: var(--uvl-gray-700);
+    --bs-nav-link-hover-color: var(--uvl-primary);
+}
+
+.breadcrumb {
+    --bs-breadcrumb-margin-bottom: 1.25rem;
+    --bs-breadcrumb-font-size: 1.075rem;
+    --bs-breadcrumb-divider-color: var(--uvl-gray-600);
+    --bs-breadcrumb-item-padding-x: .5rem;
+    --bs-breadcrumb-item-active-color: var(--uvl-text-muted);
+    color: var(--uvl-text-muted);
+    font-weight: var(--uvl-fw-medium);
+}
+
+.breadcrumb-item a {
+    color: var(--uvl-link);
+}
+
+.pagination {
+    --bs-pagination-padding-x: .5rem;
+    --bs-pagination-padding-y: .375rem;
+    --bs-pagination-font-size: 1.075rem;
+    --bs-pagination-color: var(--uvl-gray-700);
+    --bs-pagination-bg: transparent;
+    --bs-pagination-border-width: 0;
+    --bs-pagination-border-radius: var(--uvl-radius);
+    --bs-pagination-hover-color: var(--uvl-primary);
+    --bs-pagination-hover-bg: var(--uvl-gray-100);
+    --bs-pagination-focus-color: var(--uvl-primary);
+    --bs-pagination-focus-bg: var(--uvl-gray-100);
+    --bs-pagination-focus-box-shadow: var(--uvl-focus-ring);
+    --bs-pagination-active-color: #fff;
+    --bs-pagination-active-bg: var(--uvl-primary);
+    --bs-pagination-active-border-color: var(--uvl-primary);
+    --bs-pagination-disabled-color: var(--uvl-gray-400);
+    --bs-pagination-disabled-bg: transparent;
+    gap: .25rem;
+}
+
+.page-link {
+    min-width: 2.5rem;
+    border-radius: var(--uvl-radius) !important;
+    text-align: center;
+}
+
+.list-group {
+    --bs-list-group-color: var(--uvl-body-color);
+    --bs-list-group-border-color: var(--uvl-border-color);
+    --bs-list-group-border-radius: var(--uvl-radius);
+    --bs-list-group-action-hover-color: var(--uvl-primary);
+    --bs-list-group-action-hover-bg: var(--uvl-gray-100);
+    --bs-list-group-active-color: #fff;
+    --bs-list-group-active-bg: var(--uvl-primary);
+    --bs-list-group-active-border-color: var(--uvl-primary);
+}
+
+.progress {
+    --bs-progress-bg: var(--uvl-gray-200);
+    --bs-progress-bar-bg: var(--uvl-primary);
+    --bs-progress-border-radius: var(--uvl-radius);
+}
+
+/* ── Components: tables ────────────────────────────────────────────────── */
+
+.table {
+    --bs-table-color: var(--uvl-body-color);
+    --bs-table-bg: transparent;
+    --bs-table-border-color: var(--uvl-border-color);
+    --bs-table-striped-bg: var(--uvl-gray-100);
+    --bs-table-hover-bg: var(--uvl-gray-100);
+    --bs-table-active-bg: var(--uvl-gray-100);
+    border-color: var(--uvl-border-color);
+}
+
+.table > :not(caption) > * > * {
+    padding: .75rem;
+    border-bottom-width: 0;
+}
+
+.table > thead > tr > th,
+.table > thead > tr > td {
+    color: var(--uvl-text-muted);
+    font-size: .95rem;
+    font-weight: var(--uvl-fw-semibold);
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.table > thead > tr,
+.table > tbody > tr {
+    border-bottom: 1px dashed var(--uvl-border-color);
+}
+
+.table > tbody > tr:last-child {
+    border-bottom: 0;
+}
+
+.table > :not(:first-child) {
+    border-top: 0;
+}
+
+.table-bordered > :not(caption) > * > * {
+    border-width: 1px;
+}
+
+/* ── Components: alerts and tooltips ───────────────────────────────────── */
+
+.alert {
+    --bs-alert-border-radius: var(--uvl-radius);
+    --bs-alert-padding-x: 1.25rem;
+    --bs-alert-padding-y: 1rem;
+    border: 1px dashed;
+}
+
+.alert-primary { --bs-alert-color: var(--uvl-primary); --bs-alert-bg: var(--uvl-primary-light); --bs-alert-border-color: var(--uvl-primary); }
+.alert-success { --bs-alert-color: var(--uvl-success-active); --bs-alert-bg: var(--uvl-success-light); --bs-alert-border-color: var(--uvl-success); }
+.alert-info { --bs-alert-color: var(--uvl-info); --bs-alert-bg: var(--uvl-info-light); --bs-alert-border-color: var(--uvl-info); }
+.alert-warning { --bs-alert-color: #9a7700; --bs-alert-bg: var(--uvl-warning-light); --bs-alert-border-color: var(--uvl-warning); }
+.alert-danger { --bs-alert-color: var(--uvl-danger-active); --bs-alert-bg: var(--uvl-danger-light); --bs-alert-border-color: var(--uvl-danger); }
+.alert-secondary,
+.alert-light { --bs-alert-color: var(--uvl-gray-800); --bs-alert-bg: var(--uvl-gray-100); --bs-alert-border-color: var(--uvl-gray-300); }
+.alert-dark { --bs-alert-color: #fff; --bs-alert-bg: var(--uvl-dark); --bs-alert-border-color: var(--uvl-dark); }
+
+.alert .alert-link {
+    color: inherit;
+    font-weight: var(--uvl-fw-semibold);
+}
+
+.tooltip {
+    --bs-tooltip-bg: var(--uvl-surface);
+    --bs-tooltip-color: var(--uvl-gray-800);
+    --bs-tooltip-font-size: 1rem;
+    --bs-tooltip-padding-x: 1rem;
+    --bs-tooltip-padding-y: .75rem;
+    --bs-tooltip-border-radius: var(--uvl-radius);
+    --bs-tooltip-opacity: 1;
+}
+
+.tooltip-inner {
+    box-shadow: var(--uvl-shadow-tooltip);
+}
+
+.popover {
+    --bs-popover-border-width: 0;
+    --bs-popover-border-radius: var(--uvl-radius);
+    --bs-popover-box-shadow: var(--uvl-shadow-dropdown);
+    --bs-popover-header-bg: var(--uvl-surface);
+    --bs-popover-header-color: var(--uvl-heading-color);
+    --bs-popover-body-color: var(--uvl-body-color);
+    box-shadow: var(--bs-popover-box-shadow);
+}
+
+/* ── The DOI pill (dataset, explore) ──────────────────────────────────── */
+
+.doi-pill-label { background: var(--uvl-doi-label-bg); }
+.doi-pill-value { background: var(--uvl-doi-value-bg); }
+
+/* ── Pages: the home page (public/index.html) ─────────────────────────── */
+
+.uvl-home-card p {
+    color: var(--uvl-gray-600);
+    font-size: 1.075rem;
+}
+
+.uvl-home-start h2 {
+    font-size: 2rem;
+}
+
+/* ── Pages: the citation dialog (cites.html) ──────────────────────────── */
 
 .citation {
+    margin-bottom: 0;
+    padding: .75rem;
+    border-radius: var(--uvl-radius);
+    background-color: var(--uvl-gray-100);
+    color: var(--uvl-gray-900);
+    font-family: var(--uvl-font-mono);
+    font-size: 1rem;
+    line-height: 1.5;
     white-space: pre-wrap;
 }
 
-/* ── Team page ─────────────────────────────────────────────────────────── */
+.citation-label {
+    margin: 0;
+    color: var(--uvl-heading-color);
+    font-size: 1.15rem;
+    font-weight: var(--uvl-fw-semibold);
+}
+
+/* ── Pages: the team page (team/list.html) ────────────────────────────── */
 
 .team-logo-frame {
     display: inline-flex;
@@ -250,7 +1908,7 @@ a.sidebar-link svg {
     width: 100%;
     min-height: 120px;
     padding: 1rem;
-    border-radius: 0.75rem;
+    border-radius: .75rem;
 }
 
 .logo-img {
@@ -263,4 +1921,61 @@ a.sidebar-link svg {
 /* The card around it already has its padding. */
 .custom-card-body {
     padding: 0;
+}
+
+/* ── Pages: errors (errors/404.html, 400.html, 401.html) ──────────────── */
+
+.uvl-error-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 2rem var(--uvl-content-gutter);
+    background:
+        radial-gradient(60rem 30rem at 15% 10%, rgba(255, 255, 255, .7), transparent 60%),
+        radial-gradient(50rem 25rem at 85% 60%, rgba(255, 255, 255, .5), transparent 60%),
+        linear-gradient(160deg, var(--uvl-gray-300), var(--uvl-gray-400));
+}
+
+.uvl-error-card {
+    width: 100%;
+    max-width: 650px;
+}
+
+.uvl-error-card .card-body {
+    padding: 4rem 3rem;
+    text-align: center;
+}
+
+.uvl-error-title {
+    margin-bottom: 1rem;
+    color: var(--uvl-gray-900);
+    font-size: 2.5rem;
+    font-weight: var(--uvl-fw-bold);
+}
+
+.uvl-error-text {
+    margin-bottom: 2.5rem;
+    color: var(--uvl-gray-500);
+    font-size: 1.15rem;
+    font-weight: var(--uvl-fw-medium);
+}
+
+.uvl-error-code {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    margin-bottom: 3rem;
+    color: var(--uvl-gray-200);
+    font-size: 8rem;
+    font-weight: var(--uvl-fw-bold);
+    line-height: 1;
+    letter-spacing: -.02em;
+}
+
+.uvl-error-code img {
+    width: 6.5rem;
+    height: 6.5rem;
+    filter: grayscale(1) opacity(.35);
 }
