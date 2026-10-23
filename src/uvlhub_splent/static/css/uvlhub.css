@@ -2162,6 +2162,9 @@ hr {
     border-bottom-width: 0;
 }
 
+/* A table's head in small muted capitals, as uvlhub.io draws its lists.
+   A head in one of Bootstrap's colours (table-light, table-dark) is a band
+   of plain words instead, as uvlhub.io's profile draws its datasets. */
 .table > thead > tr > th,
 .table > thead > tr > td {
     color: var(--uvl-text-muted);
@@ -2169,6 +2172,20 @@ hr {
     font-weight: var(--uvl-fw-semibold);
     text-transform: uppercase;
     white-space: nowrap;
+}
+
+.table > thead:is(.table-light, .table-dark) > tr > :is(th, td),
+.table > thead > tr:is(.table-light, .table-dark) > :is(th, td) {
+    color: var(--bs-table-color);
+    font-size: inherit;
+    font-weight: inherit;
+    text-transform: none;
+}
+
+.table-light {
+    --bs-table-color: var(--uvl-body-color);
+    --bs-table-bg: var(--uvl-gray-100);
+    --bs-table-border-color: var(--uvl-border-color);
 }
 
 .table > thead > tr,
