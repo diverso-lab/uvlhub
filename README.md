@@ -119,15 +119,19 @@ routes and the redacted access log are nginx's. The terminator has to
 
 | Variable | What to give |
 |---|---|
-| `SERVER_NAME` | The public host, `www.uvlhub.io`. Links built outside a request use it. |
+| `SERVER_NAME` | The public host, `www.uvlhub.io`. Every absolute link names it, and the app refuses any other Host (400, no page). |
 | `OAUTH_REDIRECT_BASE_URL` | `https://www.uvlhub.io`, the base of the ORCID and GitHub callbacks. |
-| `NGINX_SERVER_NAME` | Every name nginx answers to, `www.uvlhub.io uvlhub.io`. Any other Host is refused. |
+| `NGINX_SERVER_NAME` | The name nginx serves the site by, `www.uvlhub.io`. Any other Host is refused. |
 | `MAIL_HOST`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM` | The SMTP account (STARTTLS on 587). The deploy offers a random `MAIL_PASSWORD`: type the real one. |
 | `ZENODO_ACCESS_TOKEN` | A Zenodo token with `deposit:write` and `deposit:actions`. |
 
 and generates `SECRET_KEY`, the MariaDB passwords, `REDIS_PASSWORD` (redis
 runs with a password in production) and `ELASTICSEARCH_PASSWORD` (the node
 runs with security on, and the app signs in as `elastic`).
+
+and, optionally, `NGINX_REDIRECT_SERVER_NAMES=uvlhub.io`: the bare domain
+gets a 301 to `https://www.uvlhub.io` with its path, so old links keep
+working and the app never sees another name.
 
 Two values follow from the topology:
 
@@ -154,12 +158,39 @@ Left to the operator on purpose:
   build reads, since its DOIs are permanent.
 - `ORCID_CLIENT_*` and `GITHUB_CLIENT_*`: empty turns that sign-in off.
 
-The proxy settings above take effect with the release of
-`splent_feature_nginx` after 1.3.0, the version pinned today. 1.3.0 has no
-`default_server`, no rate limit and no long timeout, publishes on every
-interface whatever `NGINX_BIND_HOST` says, and appends to `X-Forwarded-For`,
-so with `SPLENT_TRUSTED_PROXIES=1` the app gets the right scheme and host
-but the docker gateway as every client's address.
+`NGINX_REDIRECT_SERVER_NAMES`, the pinned `X-Forwarded-Host` and nginx's
+healthcheck take effect with the release of `splent_feature_nginx` after
+1.4.0, the version pinned today, and autodeploy's digest, migration step
+and `/readyz` wait with its release after 0.2.0.
+
+### One host
+
+uvlhub answers by `SERVER_NAME` alone. nginx closes the connection of any
+Host that is not `NGINX_SERVER_NAME`, redirects `NGINX_REDIRECT_SERVER_NAMES`
+to it, and forwards the Host it matched, never one a client sent in
+`X-Forwarded-Host`. The app checks again (`TRUSTED_HOSTS`, which defaults to
+`SERVER_NAME` and `localhost`, the name the deploy's probe uses inside the
+container) and builds every absolute link, mails and callbacks included,
+with `SERVER_NAME`. `tests/test_deploy.py` sends a forged Host and checks
+the links.
+
+### Files, deploys and backups
+
+- Dataset files live under `PROTECTED_UPLOADS_DIR`, on the named volume
+  `uvlhub_splent_web_deploy_protected_uploads`. The compose file gives the
+  app the very path the volume is mounted at, so the two cannot disagree.
+  The public uploads and the database are on named volumes too.
+- The web service is healthy when `/readyz` answers 200: the database and
+  the session store answer.
+- `splent_feature_autodeploy` deploys every release in its own container,
+  the only one with the Docker socket. It runs the release by its digest,
+  backs up, migrates once in a one-off container, waits for `/readyz`, and
+  rolls back when the release is not ready, restoring the database when the
+  migration failed or changed the schema. Its README has the details.
+- Elasticsearch is derived from the database and the files and is not
+  backed up: after a restore, `splent feature:explore reindex` rebuilds it.
+- Off-host, encrypted backups come with `splent_feature_backup`, once the
+  product selects it.
 
 ## When something looks wrong
 

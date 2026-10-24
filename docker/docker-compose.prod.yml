@@ -1,10 +1,22 @@
 services:
 
   uvlhub_splent_web_deploy:
+    # The local build's name, which product:build turns into
+    # ${SPLENT_IMAGE:-<the release's image>} in the deploy bundle. The
+    # autodeploy agent then runs each release by its digest, never :latest.
     image: uvlhub_splent:latest
     container_name: uvlhub_splent_web_deploy
     env_file:
       - ./.env.deploy
+    environment:
+      # The storage roots, at the targets of their named volumes below. Set
+      # here, from the same expression as each mount's target, the app and
+      # the volume cannot disagree: an empty or deleted line in .env.deploy
+      # moves both, never one, so no file is ever written to the container's
+      # own layer and lost with it. Dataset files live under
+      # PROTECTED_UPLOADS_DIR.
+      PROTECTED_UPLOADS_DIR: ${PROTECTED_UPLOADS_DIR:-/workspace/uvlhub_splent/protected_uploads}
+      ARCHIVE_DIR: ${ARCHIVE_DIR:-/workspace/uvlhub_splent/archive}
     ports:
       # Host interface for the published web port, taken from
       # SPLENT_WEB_BIND_HOST in .env.deploy (marked user-tunable there, so
@@ -22,6 +34,17 @@ services:
     depends_on:
       uvlhub_splent_db_deploy:
         condition: service_healthy
+    healthcheck:
+      # Ready, not just alive: the framework's /readyz answers 200 when the
+      # database and the session store answer, before any of the app's code
+      # runs and whatever the Host. The autodeploy agent asks it too before
+      # it keeps a release. A cold start waits for the database and migrates
+      # before gunicorn binds, hence the start period.
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://127.0.0.1:5000/readyz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 180s
     networks:
       - splent_network
     command: [ "bash", "-c", "bash /workspace/uvlhub_splent/entrypoints/entrypoint.prod.sh" ]
