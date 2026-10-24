@@ -317,6 +317,52 @@ def test_the_team_is_teams_page_under_the_trail(app, browsers, monkeypatch):
     assert not (TEMPLATES / "team" / "list.html").exists()
 
 
+@pytest.fixture
+def a_member(app):
+    """A member of an organisation, with an address, as /team lists them."""
+    from splent_io.splent_feature_team.models import Role, TeamMember
+
+    with app.app_context():
+        role = Role(name="University of Seville, Spain", slug="us", order=1)
+        member = TeamMember(
+            name="David Romero-Organvidez",
+            slug="david-romero-organvidez",
+            position="PhD Student / Project leader",
+            email="drorganvidez@us.es",
+        )
+        member.roles = [role]
+        db.session.add_all([role, member])
+        db.session.commit()
+        ids = (TeamMember, member.id), (Role, role.id)
+    yield
+    with app.app_context():
+        for model, key in ids:
+            db.session.delete(db.session.get(model, key))
+        db.session.commit()
+
+
+def test_a_member_card_writes_the_address_as_uvlhub_ios(
+    app, browsers, a_member, monkeypatch
+):
+    """uvlhub.io writes a member's address on the card, where team links
+    it as the word "Email": team's TEAM_CARD_EMAIL_ADDRESS, set in
+    [tool.splent.config]."""
+    on = _declared("TEAM_CARD_EMAIL_ADDRESS")
+    page = app.jinja_env.loader.get_source(app.jinja_env, "team/list.html")[0]
+    if "TEAM_CARD_EMAIL_ADDRESS" not in page:
+        pytest.xfail("the team pinned links a member's address as the word Email")
+    monkeypatch.setitem(app.config, "TEAM_CARD_EMAIL_ADDRESS", on)
+
+    html = _open(browsers, "anonymous", "/team")
+
+    assert on is True
+    assert (
+        '<a class="member-card__email" href="mailto:drorganvidez@us.es">'
+        "drorganvidez@us.es</a>"
+    ) in html
+    assert ">Email</a>" not in html
+
+
 @pytest.mark.parametrize("who", BROWSERS)
 def test_the_sidebar_is_uvlhubs(browsers, who):
     sidebar = _sidebar(_open(browsers, who, SHELL_PAGE))
