@@ -7,8 +7,8 @@ through: that is what the next run's E0 reads as migration.completed.
 
 ``ready_for_cutover`` is True only for a run with nothing pending: no stage
 skipped, no open conflict, no check failed, no first pass. It is never
-True in this version, since E2, E6 and E9 do not exist yet and E5 is a
-first pass. The report is signed with the operator's name and the sha256
+True in this version, since E6 and E9 do not exist yet and E5 is a first
+pass. The report is signed with the operator's name and the sha256
 of its own content; a real signature (GPG, the operator's key) is the
 runbook's.
 """
@@ -24,13 +24,11 @@ import sqlalchemy as sa
 from uvlhub_splent.migration_v2 import MIGRATOR_VERSION, NOT_YET
 from uvlhub_splent.migration_v2.content import DEFERRED
 from uvlhub_splent.migration_v2.db import insert_batches
-from uvlhub_splent.migration_v2.ledger import to_json
+from uvlhub_splent.migration_v2.ledger import DECIDED, to_json
 
 # What the stages this version does not have would need (MIG-01, MIG-06,
 # MIG-07, MIG-11), for the report to say.
 LATER = {
-    "E2": "profiling P-00 to P-28, with P-00 against uvlhub_v2_ref (a clean "
-    "flask db upgrade of v2.12) and the decisions' fingerprints checked",
     "E6": "usage_daily (DM-5), legacy_url with aliases and tombstones (CO-2, "
     "DM-4) and the outbox holding the notices until RB-2 ends (§5.7, ID-9): "
     "none of those tables exists in the pinned features",
@@ -70,6 +68,23 @@ def build(ctx, stopped=None) -> dict:
                 Counter(c["kind"] for c in open_conflicts).items()
             )
         },
+        "decided": {
+            kind: count
+            for kind, count in sorted(
+                Counter(
+                    c["kind"] for c in ledger.conflicts if c["status"] == DECIDED
+                ).items()
+            )
+        },
+        "decisions": {
+            "holding": sorted(d["id"] for d in ledger.decisions.values()),
+            "unused": sorted(
+                d["id"]
+                for d in ledger.decisions.values()
+                if d["id"] not in ledger.used_decisions
+            ),
+        },
+        "profile": ctx.facts.get("profile", {}),
         "takeover_candidates": Counter(t["kind"] for t in ledger.takeovers),
         "tombstones": len(ledger.tombstones),
         "notes": dict(sorted(ledger.notes.items())),

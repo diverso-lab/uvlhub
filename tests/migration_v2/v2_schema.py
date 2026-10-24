@@ -1,19 +1,23 @@
 """The schema of uvlhub.io 2.12, from the monolith's own migrations.
 
 R0 starts from "a v2.12 database created with the monolith's migrations up
-to the head deployed" (§9.1). The monolith is not part of this repository,
-so its DDL is kept next to the tests (v2_12_schema.sql), made by running its
-Alembic chain here; test_v2_schema.py runs the chain again when the
-monolith is in the workspace (_reference/uvlhub_monolith) and fails when the
-two differ. After R1, the production DDL replaces it (mariadb-dump
---no-data).
+to the head deployed" (§9.1), and E2 compares the dump with the same
+schema (P-00). The monolith is not part of this repository, so its DDL is
+kept in the migrator's package (uvlhub_splent.migration_v2.v2_12_schema),
+made by running its Alembic chain here; test_v2_schema.py runs the chain
+again when the monolith is in the workspace (_reference/uvlhub_monolith)
+and fails when the two differ. After R1, the production DDL (mariadb-dump
+--no-data) is what the tests start from.
 
 The chain runs without the monolith's env.py, which needs its app: every
 revision up to the head is imported from its file, in order, and its
 upgrade() run on a connection through Alembic's operations. The monolith's
 folder is only read: nothing is compiled into it.
 
-    python tests/migration_v2/v2_schema.py <host> <root password> > tests/migration_v2/v2_12_schema.sql
+    python tests/migration_v2/v2_schema.py <host> <root password>
+
+writes the DDL it makes into v2_12_schema.py, in the place of the one
+there.
 """
 
 from __future__ import annotations
@@ -25,14 +29,16 @@ from pathlib import Path
 
 import sqlalchemy as sa
 
+from uvlhub_splent.migration_v2 import v2_12_schema
+
 WORKSPACE = Path(__file__).resolve().parents[3]
 MONOLITH_VERSIONS = (
     WORKSPACE / "_reference" / "uvlhub_monolith" / "migrations" / "versions"
 )
-VENDORED = Path(__file__).with_name("v2_12_schema.sql")
+VENDORED = Path(v2_12_schema.__file__)
 # The release; the hotfix's f7a8b9c0d1e2 only rewrites descriptions, and
 # imports bleach, which the product does not have.
-HEAD = "e5f6a7b8c9d0"
+HEAD = v2_12_schema.HEAD
 
 _REVISION = re.compile(r"^revision\s*=\s*['\"]([^'\"]+)['\"]", re.M)
 _DOWN = re.compile(r"^down_revision\s*=\s*(.+)$", re.M)
@@ -110,12 +116,19 @@ def ddl(connection) -> str:
     for table, _kind in sorted(tables):
         create = connection.exec_driver_sql(f"SHOW CREATE TABLE `{table}`").one()[1]
         statements.append(re.sub(r" AUTO_INCREMENT=\d+", "", create) + ";")
-    header = (
-        f"-- uvlhub.io 2.12 at {HEAD}, made by tests/migration_v2/v2_schema.py from\n"
-        "-- _reference/uvlhub_monolith/migrations/versions. Do not edit by hand.\n"
+    return (
         "SET FOREIGN_KEY_CHECKS = 0;\n\n"
+        + "\n\n".join(statements)
+        + "\n\nSET FOREIGN_KEY_CHECKS = 1;\n"
     )
-    return header + "\n\n".join(statements) + "\n\nSET FOREIGN_KEY_CHECKS = 1;\n"
+
+
+def write_module(text: str, module: Path = VENDORED) -> None:
+    """Put ``text`` in the place of the DDL v2_12_schema.py holds."""
+    source = module.read_text(encoding="utf-8")
+    start = source.index('DDL = """\\\n') + len('DDL = """\\\n')
+    end = source.index('"""', start)
+    module.write_text(source[:start] + text + source[end:], encoding="utf-8")
 
 
 def build_ddl(
@@ -146,4 +159,4 @@ def build_ddl(
 
 
 if __name__ == "__main__":
-    sys.stdout.write(build_ddl(sys.argv[1], sys.argv[2]))
+    write_module(build_ddl(sys.argv[1], sys.argv[2]))

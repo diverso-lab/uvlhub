@@ -30,7 +30,7 @@ def test_the_module_runs_as_a_command():
         assert command in result.stdout
 
 
-def test_grants_make_an_account_for_the_four_schemas_only():
+def test_grants_make_an_account_for_the_five_schemas_only():
     result = CliRunner().invoke(main, ["grants"])
     assert result.exit_code == 0
     lines = result.output.strip().splitlines()
@@ -41,6 +41,7 @@ def test_grants_make_an_account_for_the_four_schemas_only():
         for schema in (
             "uvlhub3",
             "uvlhub_v2_src",
+            "uvlhub_v2_ref",
             "uvlhub_migration",
             "uvlhub_migration_inputs",
         )

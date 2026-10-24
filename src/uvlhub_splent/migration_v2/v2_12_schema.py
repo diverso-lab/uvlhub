@@ -1,5 +1,23 @@
--- uvlhub.io 2.12 at e5f6a7b8c9d0, made by tests/migration_v2/v2_schema.py from
--- _reference/uvlhub_monolith/migrations/versions. Do not edit by hand.
+"""The schema of uvlhub.io 2.12 at its release, as the monolith's own
+Alembic chain makes it on MariaDB 11.4 (§9.1, R0).
+
+E2 creates uvlhub_v2_ref from it, the clean v2.12 that P-00 compares the
+restored dump with (§9.2); the hotfix D1's revision (f7a8b9c0d1e2) rewrites
+descriptions and changes no table, so one schema stands for both heads. The
+tests build their dirty v2.12 on it. After R1, the production DDL
+(mariadb-dump --no-data) is what the tests start from, and this stays the
+reference.
+
+Made by tests/migration_v2/v2_schema.py from
+_reference/uvlhub_monolith/migrations/versions, which test_v2_schema.py runs
+again to compare: do not edit by hand. A module, not a .sql file: the
+production image's build context leaves *.sql out, and the package ships
+its modules whatever it ships of its data.
+"""
+
+HEAD = "e5f6a7b8c9d0"
+
+DDL = """\
 SET FOREIGN_KEY_CHECKS = 0;
 
 CREATE TABLE `alembic_version` (
@@ -364,3 +382,12 @@ CREATE TABLE `zenodo` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 SET FOREIGN_KEY_CHECKS = 1;
+"""
+
+
+def statements(ddl: str = DDL):
+    """The DDL's statements, one at a time, without their comments."""
+    for statement in ddl.split(";\n"):
+        lines = [line for line in statement.splitlines() if not line.startswith("--")]
+        if "".join(lines).strip():
+            yield "\n".join(lines)

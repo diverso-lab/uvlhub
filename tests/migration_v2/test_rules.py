@@ -327,3 +327,17 @@ def test_a_lineage_root_is_found_and_a_cycle_ends_the_walk():
 )
 def test_only_zenodo_production_dois_are_zenodo(doi, zenodo):
     assert rules.doi_is_zenodo(doi) is zenodo
+
+
+@pytest.mark.parametrize(
+    "doi, deposition, its",
+    [
+        ("10.5281/zenodo.1011", 1011, True),
+        (" 10.5281/zenodo.1011", 1011, True),
+        ("10.5281/zenodo.1011", 1012, False),
+        ("10.5281/zenodo.1011", None, False),
+        ("10.5072/zenodo.55", 55, False),
+    ],
+)
+def test_a_doi_is_its_depositions_only_as_zenodo_mints_it(doi, deposition, its):
+    assert rules.doi_is_of_deposition(doi, deposition) is its

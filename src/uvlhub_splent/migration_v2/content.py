@@ -27,7 +27,7 @@ What it applies already:
   self-votes go (DM-8, C-06); pending transfers are cancelled at T0 (D13 b).
 
 What it finds and leaves open, as conflicts: DOIs that are not Zenodo's
-production (C-30), DOIs or metadata shared by two datasets (C-10, P-03),
+production or not their deposition's (C-30), DOIs or metadata shared by two datasets (C-10, P-03),
 lineages with a missing origin, branches or gaps (C-05), two rows on one
 path (C-11), checksums of no known algorithm (C-25), and a file whose
 feature model is in another, published dataset (C-07).
@@ -167,7 +167,7 @@ def check_lineages(ctx, datasets, chosen) -> dict[int, int | None]:
                 "lineage_origin_not_loaded",
                 "datasets",
                 dataset["id"],
-                [dataset, by_id.get(origin) or {"id": origin}],
+                [dataset] + ([by_id[origin]] if origin in by_id else []),
                 detail=f"its origin {origin} is not loaded; it loads as an original",
             )
             origin = None
@@ -238,7 +238,7 @@ def build_metadata(ctx, metas, datasets_of_meta, chosen, authors_of):
                 "metadata_shared",
                 "ds_meta_data",
                 meta["id"],
-                [meta, *datasets],
+                {"ds_meta_data": [meta], "datasets": datasets},
                 detail=f"datasets {', '.join(str(d['id']) for d in datasets)} share it",
             )
         doi = _doi(meta)
@@ -251,6 +251,14 @@ def build_metadata(ctx, metas, datasets_of_meta, chosen, authors_of):
                     doi,
                     [meta],
                     detail="not a DOI of Zenodo's production (10.5281)",
+                )
+            elif not rules.doi_is_of_deposition(doi, meta["deposition_id"]):
+                ledger.conflict(
+                    "doi_not_its_deposition",
+                    "ds_meta_data",
+                    doi,
+                    [meta],
+                    detail=f"deposition {meta['deposition_id']} mints another DOI",
                 )
         publisher = meta["api_publisher_user_id"]
         if publisher is not None and publisher not in loaded_users:
@@ -404,7 +412,7 @@ def content(ctx) -> None:
                 "file_two_datasets",
                 "hubfiles",
                 hubfile["id"],
-                [hubfile, fm],
+                {"hubfiles": [hubfile], "feature_model": [fm]},
                 detail=f"feature model {fm_id} is in dataset {fm['dataset_id']}, its file in {hubfile['dataset_id']}",
             )
         else:

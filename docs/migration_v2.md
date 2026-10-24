@@ -6,11 +6,11 @@ in the workspace. A dump of v2.12 is restored in a schema of its own, an
 empty `uvlhub3` is brought to the head of the pinned features by their own
 `splent db:upgrade`, and the migrator fills it with SQLAlchemy Core, never
 the ORM. Every run starts over: it drops and creates `uvlhub3`,
-`uvlhub_v2_src` and the outputs in `uvlhub_migration`, and keeps the inputs
-of `uvlhub_migration_inputs`.
+`uvlhub_v2_src`, `uvlhub_v2_ref` and the outputs in `uvlhub_migration`, and
+keeps the inputs of `uvlhub_migration_inputs`.
 
 This is a **first pass**. E5 (content) loads what the pinned features can
-hold and lists what it leaves for the final pass; E2, E6 and E9 do not exist
+hold and lists what it leaves for the final pass; E6 and E9 do not exist
 yet. Its report says `"ready_for_cutover": false` for as long as that is so.
 
 ## Stages
@@ -19,7 +19,7 @@ yet. Its report says `"ready_for_cutover": false` for as long as that is so.
 |---|---|---|
 | E0 preflight | The safeguards of §3.4 (below), the parameters, the versions of the installed features against the contract | done |
 | E1 source | The dump restored as root with `sql_log_bin=0` and `event_scheduler=OFF`; its sha256, its Alembic head (P-19) and the AUTO_INCREMENT counters written down; triggers, routines, events and views listed and dropped (P-28) | done |
-| E2 profiling | P-00 to P-28, decisions and their fingerprints | not yet |
+| E2 profiling | P-00 against `uvlhub_v2_ref`, P-01 to P-28 with the rule of each, the decisions held to their rows | done |
 | E3 schema | `CREATE DATABASE uvlhub3` with the contract's collation, `splent db:upgrade` in a process of its own, then V-12, V-14 and the whole contract | done |
 | E4 identity | `user`, `user_profile`, `external_identity` (the `orcid` and `github` tables folded in) and `api_token` | done |
 | E5 content | Datasets, metadata, authors, feature models, files, metrics, votes and transfers | first pass |
@@ -44,7 +44,7 @@ web and the worker of 3.0 not created yet. Root restores the dump; every
 other step uses a `migrator` account made for the cutover:
 
 ```bash
-python -m uvlhub_splent.migration_v2 grants        # the SQL for root to create it
+python -m uvlhub_splent.migration_v2 grants        # the SQL for root to create it (five schemas)
 ```
 
 ```bash
@@ -81,6 +81,51 @@ The parameters of the plan have their environment variables:
 `MIGRATION_ID_MARGIN`, `MIGRATION_DB_HOST`, `MIGRATION_STORE_ROOT`,
 `MIGRATION_OPERATOR`. `--help` lists the D12 lives, DM-3's age of a ghost
 draft and `--stages`.
+
+## E2: profiling and decisions
+
+E2 makes `uvlhub_v2_ref` from `migration_v2/v2_12_schema.py`, the DDL the
+monolith's Alembic chain gives at the release (`tests/migration_v2/v2_schema.py`
+makes it, and `test_v2_schema.py` runs the chain again to compare; the
+hotfix's revision changes no table), and compares it with the restored
+dump both ways (P-00): tables with their engine and collation, columns with
+their type, nullability, default and collation, and indexes and foreign
+keys by what they hold, since their names are MariaDB's. Each difference is
+a `schema_drift` conflict (C-26): no rule of the migrator reads a schema the
+chain does not make.
+
+Then P-01 to P-28 of §9.2 run on the source, with P-21, P-23 and P-26 in
+Python and P-27 generated from the contract (`profile.PROBES`). Each names
+the rule of §8 that handles what it finds and the stage that applies it;
+`uvlhub_migration.profile` keeps what each found (a sample of the rows) and
+the report its count. Two have no rule, and what they find stops E2,
+rehearsal or not: P-17b, a publication type the target's ENUM does not
+have, and P-27b, a NULL the target refuses where the contract has no
+`on_null` (a production schema can let in what the chain does not).
+
+**Deciding a conflict.** Every conflict in `uvlhub_migration.conflict`
+names the source rows it is about (`source_rows`, a JSON list of
+`table:id`) and their sha256 (`fingerprint`). Once it is reviewed, whoever
+decides copies them into `uvlhub_migration_inputs.decision`:
+
+```sql
+INSERT INTO uvlhub_migration_inputs.decision
+  (kind, ref, source_rows, fingerprint, resolution, note, author, decided_at)
+SELECT kind, ref, source_rows, fingerprint, 'accept', 'Why, in a line', 'Name', UTC_TIMESTAMP()
+FROM uvlhub_migration.conflict WHERE id = <id>;
+```
+
+The only resolution is `accept`: the migrator's own handling of the
+conflict stands (`ledger.CONFLICTS` says what it is for each kind), and the
+conflict is closed. E2 reads the rows of every decision again, and stops,
+rehearsal or not, when they changed or went, when the kind is one no stage
+raises, when the resolution is not `accept`, or when two decisions name one
+conflict. A decision on a drift is held to the drift P-00 finds that run.
+The ones that hold close their conflict (`status = 'decided'`, with the
+decision's id) when the stage that finds it raises it again; one whose
+conflict comes back on other rows stops that stage. The report lists the
+decisions that hold and the ones no conflict used. Decisions count only in
+a run that has E2.
 
 ## The data contract
 

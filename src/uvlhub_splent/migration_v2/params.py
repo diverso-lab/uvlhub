@@ -82,6 +82,8 @@ class Params:
     # DM-3: a draft with no file, no DOI and no deposition, older than this.
     ghost_draft_days: int = 30
     source_schema: str = "uvlhub_v2_src"
+    # The clean v2.12 that E2 makes to compare the source with (P-00).
+    reference_schema: str = "uvlhub_v2_ref"
     target_schema: str = "uvlhub3"
     work_schema: str = "uvlhub_migration"
     inputs_schema: str = "uvlhub_migration_inputs"

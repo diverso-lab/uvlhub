@@ -257,7 +257,8 @@ def grants(user, account_host):
     """Print the SQL that creates the migrator account, for root to run.
 
     The account is made for the cutover and dropped when it ends (§3.4):
-    everything on uvlhub3, the source and the work schemas, nothing else.
+    everything on uvlhub3, the source, the clean v2.12 E2 compares it with
+    and the work schemas, nothing else.
     """
     params = Params(server=Server(host=""), t0=parse_t0("1970-01-01"), expected_head="")
     password = secrets.token_urlsafe(24)
@@ -271,6 +272,7 @@ def grant_statements(params: Params, user: str, host: str, password: str) -> lis
     for schema in (
         params.target_schema,
         params.source_schema,
+        params.reference_schema,
         params.work_schema,
         params.inputs_schema,
     ):

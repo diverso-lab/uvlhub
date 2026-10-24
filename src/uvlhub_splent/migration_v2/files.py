@@ -31,7 +31,7 @@ from pathlib import Path
 import sqlalchemy as sa
 from splent_io.splent_feature_hubfile.storage import DATASETS, TEMPORARY, TRASH, UPLOADS
 
-from uvlhub_splent.migration_v2.db import insert_batches, qualified
+from uvlhub_splent.migration_v2.db import insert_batches, qualified, reflect
 from uvlhub_splent.migration_v2.ledger import stop_on_conflicts
 from uvlhub_splent.migration_v2.params import Refused
 from uvlhub_splent.migration_v2.schema import child_env, run_child
@@ -97,6 +97,21 @@ def classify(path: str) -> str:
     if len(parts) > 2 and parts[0].startswith("user_") and parts[2] in DERIVED_FOLDERS:
         return "derived"
     return "orphan"
+
+
+def source_rows(ctx, ids) -> dict[int, dict]:
+    """The rows of v2.12's hubfiles with ``ids``, whole: what a conflict
+    about a file is about."""
+    if not ids:
+        return {}
+    with ctx.engine.connect() as connection:
+        table = reflect(connection, ctx.params.source_schema, only=["hubfiles"])[
+            "hubfiles"
+        ]
+        found = connection.execute(
+            sa.select(table).where(table.c.id.in_(ids)).order_by(table.c.id)
+        ).mappings()
+        return {row["id"]: dict(row) for row in found}
 
 
 def files(ctx) -> None:
@@ -172,6 +187,14 @@ def files(ctx) -> None:
 
     unsound, without_digest, not_linked = [], [], []
     stored_bytes = expected_bytes = 0
+    source = source_rows(
+        ctx,
+        [
+            row.id
+            for row in rows
+            if row.storage_status != OK and row.dataset_id in ctx.published
+        ],
+    )
     for row in rows:
         if row.storage_status == OK:
             if not row.content_sha256:
@@ -187,7 +210,7 @@ def files(ctx) -> None:
                 f"file_{row.storage_status or MISSING}",
                 "hubfiles",
                 row.id,
-                [dict(row._mapping)],
+                [source[row.id]],
                 detail=f"a file of published dataset {row.dataset_id}: recover it from Zenodo (§6.2 step 5)",
             )
     ctx.checks.append(

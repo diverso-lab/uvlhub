@@ -284,6 +284,15 @@ def doi_is_zenodo(doi) -> bool:
     return bool(doi) and doi.strip().startswith("10.5281/")
 
 
+def doi_is_of_deposition(doi, deposition_id) -> bool:
+    """C-30: the DOI Zenodo mints for the deposition, 10.5281/zenodo.<id>.
+    Any other is someone else's record, or a deposition_id of the sandbox
+    that names one in production (P-25)."""
+    return deposition_id is not None and (doi or "").strip() == (
+        f"10.5281/zenodo.{deposition_id}"
+    )
+
+
 def artifact_type(name: str) -> str:
     """hubfile0002's reading of a row that predates the column."""
     return "uvl" if (name or "").lower().endswith(".uvl") else "file"

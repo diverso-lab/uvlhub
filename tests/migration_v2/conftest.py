@@ -181,17 +181,18 @@ def make_params(server):
 
 @pytest.fixture
 def isolated(make_params, root_engine):
-    """Params whose four schemas are the test's own, dropped afterwards."""
+    """Params whose five schemas are the test's own, dropped afterwards."""
     made = []
 
     def make(tag: str, **overrides) -> Params:
         names = {
             kind: f"{ISOLATED}_{tag}_{kind}"
-            for kind in ("src", "uvlhub3", "work", "inputs")
+            for kind in ("src", "ref", "uvlhub3", "work", "inputs")
         }
         made.extend(names.values())
         return make_params(
             source_schema=names["src"],
+            reference_schema=names["ref"],
             target_schema=names["uvlhub3"],
             work_schema=names["work"],
             inputs_schema=names["inputs"],

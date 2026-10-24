@@ -105,11 +105,42 @@ def hold_clashing_accounts(ctx, connection, users) -> None:
             f"email_clash_{how}",
             "user",
             ref,
-            [{"id": i, "email": by_id[i]["email"]} for i in ids],
+            [by_id[i] for i in ids],
             detail=f"accounts {', '.join(map(str, ids))} share one address in 3.0",
         )
         for user_id in ids:
             ledger.drop("user", user_id, HELD, f"email_clash_{how}")
+
+
+# What a reset link of v2.12 is (P-26): not such a link, a link for no
+# account, one mailed to the account's very address, or one mailed to
+# another spelling of it, which opened the account all the same.
+NOT_A_LINK, NO_ACCOUNT, OWN, ANOTHER_SPELLING = (
+    "not_a_link",
+    "no_account",
+    "own",
+    "another_spelling",
+)
+
+
+def classify_reset_token(connection, user_table: str, token: str):
+    """(what it is, the address typed, when it was issued, the account it
+    opened) of a reset link of v2.12, read without its key (P-26)."""
+    typed, issued = rules.decode_reset_token(token)
+    if typed is None:
+        return NOT_A_LINK, None, None, None
+    # As v2.12 found the account: lowered, under the source's collation.
+    account = connection.execute(
+        sa.text(
+            f"SELECT id, email FROM {user_table} WHERE email = :typed ORDER BY id LIMIT 1"
+        ),
+        {"typed": typed.strip().lower()},
+    ).first()
+    if account is None:
+        return NO_ACCOUNT, typed, issued, None
+    if rules.reset_matches_account(typed, account.email):
+        return OWN, typed, issued, account
+    return ANOTHER_SPELLING, typed, issued, account
 
 
 def read_reset_tokens(ctx, connection, tokens):
@@ -117,27 +148,22 @@ def read_reset_tokens(ctx, connection, tokens):
     proofs, followed, takeovers = defaultdict(list), set(), set()
     user = qualified(ctx.params.source_schema, "user")
     for token in tokens:
-        typed, issued = rules.decode_reset_token(token["token"])
-        if typed is None:
+        kind, typed, issued, account = classify_reset_token(
+            connection, user, token["token"]
+        )
+        if kind == NOT_A_LINK:
             ctx.ledger.note("reset_token: not a reset link of v2.12")
             continue
-        # As v2.12 found the account: lowered, under the source's collation.
-        account = connection.execute(
-            sa.text(
-                f"SELECT id, email FROM {user} WHERE email = :typed ORDER BY id LIMIT 1"
-            ),
-            {"typed": typed.strip().lower()},
-        ).first()
-        if account is None:
+        if kind == NO_ACCOUNT:
             ctx.ledger.note("reset_token: for no account")
             continue
         if token["used_at"] is not None:
             followed.add(account.id)
-        if rules.reset_matches_account(typed, account.email):
+        if kind == OWN:
             if token["used_at"] is not None:
                 proofs[account.id].append((rules.LEGACY_RESET, token["used_at"]))
             continue
-        kind = "probable" if token["used_at"] is not None else "attempt"
+        probable = "probable" if token["used_at"] is not None else "attempt"
         ctx.ledger.takeovers.append(
             {
                 "reset_token_id": token["id"],
@@ -146,10 +172,10 @@ def read_reset_tokens(ctx, connection, tokens):
                 "account_email": account.email,
                 "issued_at": issued,
                 "used_at": token["used_at"],
-                "kind": kind,
+                "kind": probable,
             }
         )
-        if kind == "probable":
+        if probable == "probable":
             takeovers.add(account.id)
     return proofs, followed, takeovers
 
@@ -286,6 +312,7 @@ def build_identities(
     pairs = defaultdict(list)
     for identity in base:
         pairs[(identity["user_id"], identity["provider"])].append(identity)
+    source_of = {identity["id"]: identity for identity in identities}
     held = set()
     for (user_id, provider), group in sorted(pairs.items()):
         if len(group) > 1:
@@ -293,7 +320,7 @@ def build_identities(
                 "identity_second_link",
                 "external_identity",
                 f"{user_id}:{provider}",
-                group,
+                [source_of[identity["id"]] for identity in group],
                 detail=f"user {user_id} links {len(group)} {provider} accounts",
             )
             for identity in group:

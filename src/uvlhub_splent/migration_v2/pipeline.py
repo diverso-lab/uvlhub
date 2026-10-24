@@ -26,6 +26,7 @@ from uvlhub_splent.migration_v2.ledger import (
 )
 from uvlhub_splent.migration_v2.params import Params, Refused
 from uvlhub_splent.migration_v2.preflight import preflight, release_lock
+from uvlhub_splent.migration_v2.profile import profile
 from uvlhub_splent.migration_v2.report import finish
 from uvlhub_splent.migration_v2.restore import restore
 from uvlhub_splent.migration_v2.schema import build_schema
@@ -108,6 +109,7 @@ def _open_run(ctx) -> None:
 
 STAGE_FUNCTIONS = {
     "E1": restore,
+    "E2": profile,
     "E3": build_schema,
     "E4": identity,
     "E5": content,

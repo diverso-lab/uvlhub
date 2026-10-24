@@ -60,10 +60,10 @@ import sqlalchemy as sa
 from itsdangerous import TimestampSigner, URLSafeTimedSerializer
 from werkzeug.security import generate_password_hash
 
+from uvlhub_splent.migration_v2 import v2_12_schema
 from uvlhub_splent.migration_v2.rules import orcid_check_digit
 
 T0 = datetime(2026, 11, 20)
-DDL = Path(__file__).with_name("v2_12_schema.sql")
 SECRET_KEY = "the SECRET_KEY of a synthetic uvlhub 2.12"
 RESET_SALT = "email-confirm"
 
@@ -754,10 +754,8 @@ def build(connection, schema: str, head: str = "e5f6a7b8c9d0") -> None:
     connection.exec_driver_sql(f"DROP DATABASE IF EXISTS `{schema}`")
     connection.exec_driver_sql(f"CREATE DATABASE `{schema}`")
     connection.exec_driver_sql(f"USE `{schema}`")
-    for statement in DDL.read_text(encoding="utf-8").split(";\n"):
-        lines = [line for line in statement.splitlines() if not line.startswith("--")]
-        if "".join(lines).strip():
-            connection.exec_driver_sql("\n".join(lines))
+    for statement in v2_12_schema.statements():
+        connection.exec_driver_sql(statement)
     metadata = sa.MetaData()
     metadata.reflect(bind=connection, schema=schema)
     tables = {table.name: table for table in metadata.tables.values()}

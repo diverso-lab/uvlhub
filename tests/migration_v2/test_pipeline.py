@@ -66,8 +66,18 @@ def conflicts(migrated):
 
 def test_the_rehearsal_runs_every_stage_this_pass_has(migrated):
     report = migrated.report
-    assert report["stages_run"] == ["E0", "E1", "E3", "E4", "E5", "E7", "E8", "E10"]
-    assert set(report["stages_not_yet"]) == {"E2", "E6", "E9"}
+    assert report["stages_run"] == [
+        "E0",
+        "E1",
+        "E2",
+        "E3",
+        "E4",
+        "E5",
+        "E7",
+        "E8",
+        "E10",
+    ]
+    assert set(report["stages_not_yet"]) == {"E6", "E9"}
     assert report["stopped"] is None
     assert report["e5_first_pass"]["first_pass"] is True
     assert report["ready_for_cutover"] is False
@@ -353,6 +363,8 @@ def test_e5_orphan_metadata_becomes_a_tombstone_or_goes(migrated):
 def test_e5_leaves_the_content_faults_open_as_conflicts(migrated):
     found = conflicts(migrated)
     assert ("doi_not_zenodo", "10.5072/zenodo.55") in found
+    # Dataset 10 carries the DOI of dataset 9's deposition (C-30).
+    assert ("doi_not_its_deposition", "10.5281/zenodo.1011") in found
     assert ("doi_repeated", "10.5281/zenodo.1011") in found
     assert ("lineage_branch", "1") in found
     assert ("duplicate_path", "13:/dup.uvl") in found

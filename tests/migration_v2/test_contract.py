@@ -154,9 +154,7 @@ def test_the_report_lists_what_dm15_still_asks(migrated, contract):
     # auth 1.26.0 and identities 0.5.0 compare the identifiers exactly;
     # what is left is dataset 0.8.0's pid, at the database's collation, and
     # what no pinned feature has a column for yet.
-    assert pending[0] == (
-        "datasets.pid: utf8mb4_unicode_ci, DM-15 asks utf8mb4_bin"
-    )
+    assert pending[0] == ("datasets.pid: utf8mb4_unicode_ci, DM-15 asks utf8mb4_bin")
     assert all(line.endswith("no such column yet") for line in pending[1:])
     assert any("concept_pid" in line for line in pending)
 

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import pytest
 
+from uvlhub_splent.migration_v2 import v2_12_schema
+
 from . import v2_schema
 
 
@@ -26,6 +28,6 @@ def test_the_vendored_ddl_is_the_monolith_chains(server):
             "the monolith is not in this workspace (_reference/uvlhub_monolith)"
         )
     built = v2_schema.build_ddl(server.host, server.root_password, schema="iso_v2ref")
-    assert built == v2_schema.VENDORED.read_text(encoding="utf-8")
+    assert built == v2_12_schema.DDL
     # Read only: nothing was compiled into the monolith's folder.
     assert not (v2_schema.MONOLITH_VERSIONS / "__pycache__").exists()
