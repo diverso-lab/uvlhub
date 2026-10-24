@@ -10,6 +10,7 @@ import json
 import subprocess
 import sys
 
+import pytest
 from click.testing import CliRunner
 
 from uvlhub_splent.migration_v2.cli import REFUSED, main
@@ -108,3 +109,55 @@ def test_the_features_processes_reach_the_migrators_server(monkeypatch):
         "RUN_DB_SEED": "false",
         "HUBFILE_STORAGE_ROOT": "/store",
     }
+
+
+# ── splent product:migrate-v2 ────────────────────────────────────────────
+
+
+@pytest.fixture
+def app_with_a_pool(tmp_path):
+    """An app whose engine keeps a pooled connection, as the app the CLI
+    builds for a product command may."""
+    from flask import Flask
+    from splent_framework.db import db
+
+    app = Flask("migrate-v2")
+    app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{tmp_path / 'app.db'}"
+    db.init_app(app)
+    with app.app_context():
+        with db.engine.connect() as connection:
+            connection.exec_driver_sql("SELECT 1")
+        assert db.engine.pool.checkedin() == 1
+        yield db
+
+
+def test_the_product_command_is_the_migrators(app_with_a_pool):
+    from uvlhub_splent.commands import cli_commands, migrate_v2
+
+    assert cli_commands == [migrate_v2]
+    assert set(migrate_v2.commands) == {"run", "preflight", "grants", "contract"}
+
+
+def test_the_product_command_lets_the_apps_connections_go_before_e0(
+    app_with_a_pool, monkeypatch
+):
+    from uvlhub_splent.commands import migrate_v2
+
+    monkeypatch.setenv("RUN_DB_SEED", "false")
+    result = CliRunner().invoke(
+        migrate_v2, ["preflight", *RUN, "--expected-head", "001"]
+    )
+    assert result.exit_code == REFUSED
+    assert app_with_a_pool.engine.pool.checkedin() == 0
+
+
+def test_the_product_command_refuses_while_the_app_holds_a_connection(
+    app_with_a_pool,
+):
+    from uvlhub_splent.commands import migrate_v2
+
+    with app_with_a_pool.engine.connect():
+        result = CliRunner().invoke(migrate_v2, ["grants"])
+    assert result.exit_code == 1
+    assert "the app holds 1 connection(s)" in result.output
+    assert "MIGRATION_DB_PASSWORD" not in result.output

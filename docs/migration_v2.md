@@ -70,6 +70,12 @@ python -m uvlhub_splent.migration_v2 run --db-host <db> \
   and lists them. The cutover stops at the first stage that leaves one.
 - Exit code 3 is a refusal; the report says which stage and why.
 
+Inside the CLI, `splent product:migrate-v2 <command>` gives the same
+commands (`src/uvlhub_splent/commands.py`). The CLI builds the product's
+app for it, so before anything runs the command closes the connections the
+app's engines keep, and refuses while one is still in use: E0 would count
+it as somebody else's. The cutover keeps `python -m`, which builds no app.
+
 The parameters of the plan have their environment variables:
 `MIGRATION_T0`, `MIGRATION_EXPECTED_HEAD`, `MIGRATION_ADMIN_EMAILS`,
 `MIGRATION_ID_MARGIN`, `MIGRATION_DB_HOST`, `MIGRATION_STORE_ROOT`,
