@@ -37,10 +37,6 @@ features = [
     "splent-io/splent_feature_captcha@v0.2.0",
     "splent-io/splent_feature_admin@v1.9.0",
     "splent-io/splent_feature_signup@v0.4.1",
-    "splent-io/splent_feature_rating@v0.3.0",
-    "splent-io/splent_feature_explore@v0.3.0",
-    "splent-io/splent_feature_statistics@v0.3.0",
-    "splent-io/splent_feature_zenodo@v0.2.1",
     "splent-io/splent_feature_nginx@v1.5.0",
     "splent-io/splent_feature_theme@v0.15.0",
     "splent-io/splent_feature_public@v1.12.0",
@@ -48,18 +44,21 @@ features = [
     "splent-io/splent_feature_media@v0.11.1",
     "splent-io/splent_feature_reset@v2.2.0",
     "splent-io/splent_feature_confirmemail@v2.2.0",
-    "splent-io/splent_feature_hubfile@v0.5.0",
-    "splent-io/splent_feature_featuremodel@v0.4.0",
-    "splent-io/splent_feature_flamapy@v0.3.0",
-    "splent-io/splent_feature_factlabel@v0.4.0",
     "splent-io/splent_feature_auth@v1.25.0",
     "splent-io/splent_feature_mail@v1.5.0",
     "splent-io/splent_feature_apikeys@v0.8.0",
-    "splent-io/splent_feature_dataset@v0.5.0",
     "splent-io/splent_feature_identities@v0.4.1",
     "splent-io/splent_feature_orcid@v0.4.1",
     "splent-io/splent_feature_github@v0.4.1",
     "splent-io/splent_feature_autodeploy@v0.4.0",
+    "splent-io/splent_feature_hubfile@v0.6.0",
+    "splent-io/splent_feature_dataset@v0.6.0",
+    "splent-io/splent_feature_explore@v0.4.0",
+    "splent-io/splent_feature_factlabel@v0.5.0",
+    "splent-io/splent_feature_rating@v0.4.0",
+    "splent-io/splent_feature_zenodo@v0.3.0",
+    "splent-io/splent_feature_uvl@v0.1.0",
+    "splent-io/splent_feature_statistics@v0.4.0",
 ]
 features_dev = ["splent-io/splent_feature_mailhog@v1.2.0", "splent-io/splent_feature_phpmyadmin@v1.1.0"]
 features_prod = []
@@ -113,6 +112,9 @@ DATASET_PUBLISHER_NAME = "uvlhub"
 DATASET_CATALOG_URL = "https://www.uvlhub.io"
 # The ball drawn in the middle of the PNG and JPG QR codes.
 DATASET_QR_LOGO = "media/logos/uvlhub_ball.png"
+# uvlhub.io lists first the datasets with the most feature models
+# (01 §5.5): those that hold the most items, uvl's UVL models.
+DATASET_HOME_ORDER = "items"
 # /team lists every organisation behind uvlhub, with its logo, description
 # and website, whether or not it lists people yet.
 TEAM_SHOW_EMPTY_ROLES = true

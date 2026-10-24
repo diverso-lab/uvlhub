@@ -182,9 +182,11 @@ def test_it_refuses_parameters_it_cannot_keep_its_word_with(params):
 
 def test_it_refuses_features_the_contract_was_not_written_for(params):
     contract = contract_module.load()
+    # A version no release will have, whatever the product pins.
     features = dict(
-        contract.features, splent_feature_dataset={"version": "0.6.0", "head": "x"}
+        contract.features, splent_feature_dataset={"version": "9.9.9", "head": "x"}
     )
+    installed = contract_module.installed_version("splent_feature_dataset")
     assert run_e0(params, replace(contract, features=features)) == [
-        "splent_feature_dataset is 0.5.0, the contract was written for 0.6.0"
+        f"splent_feature_dataset is {installed}, the contract was written for 9.9.9"
     ]

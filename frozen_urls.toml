@@ -289,8 +289,8 @@ v212 = "mono/app/features/flamapy/routes.py:25"
 clients = ["web interface"]
 target = "301 alias"
 status = "served"
-endpoint = "flamapy.to_glencoe"
-served_by = "flamapy"
+endpoint = "uvl.to_glencoe"
+served_by = "uvl"
 
 [[url]]
 rows = [8]
@@ -300,8 +300,8 @@ v212 = "mono/app/features/flamapy/routes.py:30"
 clients = ["web interface"]
 target = "301 alias"
 status = "served"
-endpoint = "flamapy.to_cnf"
-served_by = "flamapy"
+endpoint = "uvl.to_cnf"
+served_by = "uvl"
 
 [[url]]
 rows = [8]
@@ -311,8 +311,8 @@ v212 = "mono/app/features/flamapy/routes.py:35"
 clients = ["web interface"]
 target = "301 alias"
 status = "served"
-endpoint = "flamapy.to_splot"
-served_by = "flamapy"
+endpoint = "uvl.to_splot"
+served_by = "uvl"
 
 [[url]]
 rows = [8]
@@ -333,8 +333,8 @@ v212 = "mono/app/features/hubfile/routes.py:542"
 clients = ["web interface"]
 target = "301 alias"
 status = "served"
-endpoint = "hubfile.to_latex_content"
-served_by = "hubfile"
+endpoint = "uvl.to_latex_content"
+served_by = "uvl"
 
 [[url]]
 rows = [8]
@@ -344,8 +344,8 @@ v212 = "mono/app/features/hubfile/routes.py:557"
 clients = ["web interface"]
 target = "301 alias"
 status = "served"
-endpoint = "hubfile.to_latex_zip"
-served_by = "hubfile"
+endpoint = "uvl.to_latex_zip"
+served_by = "uvl"
 
 # ── 9 and 10. REST API v1: /api/v1/datasets* and /api/v1/files* ──────────
 # The 19 rules of mono/app/features/dataset/routes.py:1000-2451. In 3.0
@@ -366,13 +366,12 @@ plan = "UV-11"
 cors_origin = "https://ide.flamapy.org"
 signed_out_keys = ["authenticated", "message", "login_url", "signup_url", "orcid_url"]
 note = """The CORS that opens it to FLAMAPY_IDE_ORIGINS with credentials is \
-dataset's up to 0.1.1 and featuremodel's from 0.1.1 on. Pin dataset 0.1.2 and \
-featuremodel 0.1.1 in one commit, the one that marks /api/v1/auth/status \
-served: dataset 0.1.2 with featuremodel 0.1.0 leaves the upload with no CORS, \
-and cors_origin fails. The message of the signed-out 401 changes in dataset \
-0.1.2, keys unchanged: 2.12 said "You need to sign in before saving a model \
-from flamapyIDE to UVLHub." and 3.0 says "You need to sign in before \
-uploading to uvlhub.", since dataset is not the UVL layer. \
+dataset's up to 0.1.1, featuremodel's from 0.1.1 to 0.4.0, and uvl's from \
+0.1.0 on, the UVL layer: pin uvl in the commit that drops featuremodel, or \
+the upload has no CORS and cors_origin fails. The message of the signed-out \
+401 changed in dataset 0.1.2, keys unchanged: 2.12 said "You need to sign in \
+before saving a model from flamapyIDE to UVLHub." and 3.0 says "You need to \
+sign in before uploading to uvlhub.", since dataset is not the UVL layer. \
 /api/v1/auth/status keeps the 2.12 wording. The contract owner accepts the \
 change or asks for the old text back"""
 
@@ -604,12 +603,12 @@ v212 = "mono/app/features/auth/routes.py:71"
 clients = ["flamapyIDE (ide.flamapy.org)"]
 target = "Served by the UVL layer, uvl or a bridge (UV-11)"
 status = "served"
-endpoint = "featuremodel.auth_status"
-served_by = "featuremodel"
+endpoint = "uvl.auth_status"
+served_by = "uvl"
 plan = "CO-1, UV-11"
 cors_origin = "https://ide.flamapy.org"
 signed_out_keys = ["authenticated", "message", "login_url", "signup_url", "orcid_url"]
-note = "featuremodel serves it since 0.2.0 (the UVL layer, until uvl takes it over in UV-11), with the CORS of FLAMAPY_IDE_ORIGINS that left dataset in 0.2.0"
+note = "uvl serves it since 0.1.0, the UVL layer, which took it over from featuremodel 0.2.0-0.4.0 (UV-11), with the CORS of FLAMAPY_IDE_ORIGINS that left dataset in 0.2.0. Same contract as 2.12"
 
 # ── 13. /api/me ───────────────────────────────────────────────────────────
 

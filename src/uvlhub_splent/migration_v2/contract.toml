@@ -42,21 +42,21 @@ splent_feature_academic_profile = { version = "0.1.0", head = "pu0002" }
 splent_feature_apikeys = { version = "0.8.0", head = "apikeys0002_lifecycle" }
 splent_feature_auth = { version = "1.25.0", head = "auth0007_service_account" }
 splent_feature_confirmemail = { version = "2.2.0", head = "126da35a357f" }
-splent_feature_dataset = { version = "0.5.0", head = "dataset0004_orphan_metadata" }
-splent_feature_factlabel = { version = "0.4.0", head = "d934ec20c841" }
-splent_feature_featuremodel = { version = "0.4.0", head = "846acdf9eed2" }
+splent_feature_dataset = { version = "0.6.0", head = "dataset0004_orphan_metadata" }
+splent_feature_factlabel = { version = "0.5.0", head = "d934ec20c841" }
 splent_feature_github = { version = "0.4.1", head = "github0002_into_ext_identity" }
-splent_feature_hubfile = { version = "0.5.0", head = "hubfile0003_upload_sessions" }
+splent_feature_hubfile = { version = "0.6.0", head = "hubfile0003_upload_sessions" }
 splent_feature_identities = { version = "0.4.1", head = "identities0002_one_per_provider" }
 splent_feature_mail = { version = "1.5.0", head = "mail0001_outbox" }
 splent_feature_media = { version = "0.11.1", head = "media0005_thumbnail" }
 splent_feature_orcid = { version = "0.4.1", head = "orcid0002_into_external_identity" }
 splent_feature_profile = { version = "1.7.1", head = "29f0c82ca134" }
-splent_feature_rating = { version = "0.3.0", head = "3e72750db961" }
+splent_feature_rating = { version = "0.4.0", head = "3e72750db961" }
 splent_feature_reset = { version = "2.2.0", head = "1c2ed70161dd" }
 splent_feature_settings = { version = "0.5.0", head = "settings0001" }
-splent_feature_statistics = { version = "0.3.0", head = "d46494928bf8" }
+splent_feature_statistics = { version = "0.4.0", head = "d46494928bf8" }
 splent_feature_team = { version = "0.9.0", head = "tm0004_role_details" }
+splent_feature_uvl = { version = "0.1.0", head = "846acdf9eed2" }
 
 # The heads of v2.12 the dump may be at (MIGRATION_EXPECTED_HEAD): the
 # release, or the hotfix D1, whose revision only rewrites descriptions.
@@ -207,8 +207,8 @@ orcid = { type = "varchar(19)", nullable = true, collation = "utf8mb4_unicode_ci
 ds_meta_data_id = { type = "int(11)", nullable = true, source = "author.ds_meta_data_id" }
 
 [tables.feature_model]
-# featuremodel today; the uvl feature keeps the table as it is.
-owner = "splent_feature_featuremodel"
+# uvl's, which took it over from featuremodel as it was (846acdf9eed2).
+owner = "splent_feature_uvl"
 role = "load"
 
 [tables.feature_model.columns]
