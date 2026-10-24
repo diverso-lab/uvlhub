@@ -31,7 +31,7 @@
 # below.
 
 [contract]
-version = 2
+version = 3
 plan = "_reference/analisis_uvlhub/06-plan-migracion-uvlhubio.md, revision 2"
 
 [database]
@@ -184,21 +184,21 @@ owner = "splent_feature_dataset"
 role = "load"
 
 [tables.datasets.columns]
-id = { type = "int(11)", nullable = false, source = "datasets.id" }
-user_id = { type = "int(11)", nullable = false, source = "datasets.user_id" }
-ds_meta_data_id = { type = "int(11)", nullable = false, source = "datasets.ds_meta_data_id" }
-created_at = { type = "datetime", nullable = false, source = "datasets.created_at" }
-feature_model_count = { type = "int(11)", nullable = false, rule = "the feature models loaded for the dataset" }
-dataset_version = { type = "int(11)", nullable = false, source = "datasets.dataset_version" }
+id = { type = "int(11)", nullable = false, source = "datasets.id", rule = "kept; a tombstone takes a new one above the source's counter (DM-4)" }
+user_id = { type = "int(11)", nullable = false, source = "datasets.user_id", rule = "a tombstone's is the first account of MIGRATION_ADMIN_EMAILS (DM-4, DM-13)" }
+ds_meta_data_id = { type = "int(11)", nullable = false, source = "datasets.ds_meta_data_id", rule = "a tombstone's is the metadata left without a dataset" }
+created_at = { type = "datetime", nullable = false, source = "datasets.created_at", rule = "a tombstone's is its record's in zenodo_snapshot, else T0, with a conflict (DM-4)" }
+feature_model_count = { type = "int(11)", nullable = false, rule = "the feature models loaded for the dataset; 0 for a tombstone" }
+dataset_version = { type = "int(11)", nullable = false, source = "datasets.dataset_version", rule = "1 for a tombstone" }
 dataset_origin_id = { type = "int(11)", nullable = true, source = "datasets.dataset_origin_id", rule = "NULL when the origin is not loaded, with a conflict (C-05)" }
-updated_at = { type = "datetime", nullable = false, rule = "datasets.created_at (dataset0002)" }
-status = { type = "varchar(20)", nullable = false, collation = "utf8mb4_unicode_ci", rule = "dataset's state_from_metadata (4.3)" }
+updated_at = { type = "datetime", nullable = false, rule = "datasets.created_at (dataset0002), or the tombstone's" }
+status = { type = "varchar(20)", nullable = false, collation = "utf8mb4_unicode_ci", rule = "dataset's state_from_metadata (4.3); withdrawn for a tombstone (DM-4)" }
 visibility = { type = "varchar(32)", nullable = false, collation = "utf8mb4_unicode_ci", rule = "dataset's state_from_metadata (4.3)" }
 publisher_record_id = { type = "varchar(255)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "ds_meta_data.deposition_id as text" }
-published_at = { type = "datetime", nullable = true, rule = "datasets.created_at when published (first pass; Zenodo's date in the final E5)" }
-withdrawn_at = { type = "datetime", nullable = true, rule = "NULL" }
-withdrawal_reason = { type = "varchar(32)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "NULL" }
-withdrawal_note = { type = "varchar(500)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "NULL" }
+published_at = { type = "datetime", nullable = true, rule = "datasets.created_at when published (first pass; Zenodo's date in the final E5); a tombstone's record's publication_date" }
+withdrawn_at = { type = "datetime", nullable = true, rule = "NULL: v2.12 kept no date of a deletion" }
+withdrawal_reason = { type = "varchar(32)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "other for a tombstone (DM-4), NULL otherwise" }
+withdrawal_note = { type = "varchar(500)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "content.TOMBSTONE_NOTE for a tombstone, NULL otherwise" }
 withdrawn_by_id = { type = "int(11)", nullable = true, rule = "NULL" }
 provider = { type = "varchar(32)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "zenodo when ds_meta_data has a DOI or a deposition_id, NULL otherwise (dataset0005)" }
 pid = { type = "varchar(255)", nullable = true, collation = "utf8mb4_unicode_ci", dm15 = "utf8mb4_bin", rule = "ds_meta_data.dataset_doi, which stays there too, NULL without one (dataset0005)" }
@@ -231,7 +231,7 @@ role = "load"
 
 [tables.hubfiles.columns]
 id = { type = "int(11)", nullable = false, source = "hubfiles.id" }
-name = { type = "varchar(120)", nullable = false, collation = "utf8mb4_unicode_ci", source = "hubfiles.name" }
+name = { type = "varchar(120)", nullable = false, collation = "utf8mb4_unicode_ci", source = "hubfiles.name", rule = "~<id> before the extension of every file but the first on a path, written by E8 (DM-10, C-11)" }
 directory_path = { type = "varchar(255)", nullable = false, collation = "utf8mb4_unicode_ci", source = "hubfiles.directory_path" }
 checksum = { type = "varchar(120)", nullable = false, collation = "utf8mb4_unicode_ci", source = "hubfiles.checksum" }
 size = { type = "int(11)", nullable = false, source = "hubfiles.size" }

@@ -31,6 +31,7 @@ import pytest
 import sqlalchemy as sa
 
 from uvlhub_splent.migration_v2.cli import grant_statements
+from uvlhub_splent.migration_v2.ledger import ensure_inputs
 from uvlhub_splent.migration_v2.params import Params, Server
 
 from . import synthetic
@@ -347,6 +348,12 @@ def migrated(make_params, synthetic_dump, store, seedless, root_engine):
         report=report_path,
         allow_open_conflicts=True,
     )
+    with root_engine.connect() as connection:
+        inputs = ensure_inputs(connection, params.inputs_schema)
+        connection.execute(
+            inputs["zenodo_snapshot"].insert(), synthetic.zenodo_snapshot()
+        )
+        connection.commit()
     with ListenerSpy() as spy:
         report = run(params)
     return Migrated(report=report, params=params, fired=spy.fired, engine=root_engine)

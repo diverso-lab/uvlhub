@@ -60,8 +60,12 @@ CONFLICTS = {
     "doi_not_its_deposition": "C-30: it loads with its DOI",
     "doi_repeated": "C-10: the datasets load, each with it",
     "file_two_datasets": "C-07: the feature model follows its file's dataset",
-    "duplicate_path": "C-11: the rows load as they are",
+    "duplicate_path": "C-11: the name with ~<id> DM-10 gives is another "
+    "file's, so the rows keep one path",
     "checksum_unknown": "C-25: the file loads, unverified",
+    "tombstone_undated": "C-03 (DM-4): the tombstone is dated T0",
+    "tombstone_without_owner": "C-03 (DM-4): no tombstone is made; the DOI "
+    "is in uvlhub_migration.tombstone only, and answers 404",
     # E8
     "file_mismatch": "§6.2: a file of a published dataset loads in mismatch",
     "file_missing": "§6.2: a published dataset loads without its file",
@@ -161,8 +165,22 @@ def _outputs(schema: str) -> sa.MetaData:
         metadata,
         sa.Column("doi", sa.String(120), primary_key=True),
         sa.Column("ds_meta_data_id", sa.Integer, nullable=False),
+        # The withdrawn dataset whose landing answers its DOI (DM-4), NULL
+        # when none is made.
+        sa.Column("dataset_id", sa.Integer),
         # The metadata as they were, for the citation the tombstone shows.
         sa.Column("snapshot", sa.Text, nullable=False),
+    )
+    sa.Table(
+        "file_alias",
+        metadata,
+        # DM-10: a file renamed for a path of its own, and the name its
+        # /hubfiles/raw/<id>/<name> URL had.
+        sa.Column("hubfile_id", sa.Integer, primary_key=True),
+        sa.Column("dataset_id", sa.Integer, nullable=False),
+        sa.Column("directory_path", sa.String(255), nullable=False),
+        sa.Column("old_name", sa.String(120), nullable=False),
+        sa.Column("new_name", sa.String(120), nullable=False),
     )
     sa.Table(
         "takeover_candidate",

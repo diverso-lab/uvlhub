@@ -15,7 +15,11 @@ EXDEV across mounts, even within one file system (R-27). E8 then:
    sha256 of the content;
 3. writes file_manifest from what the rows say, plus every file of the
    mirror no row accounts for (orphan, temp, derived);
-4. checks V-08: every file of a published dataset is ok and has its
+4. writes the names DM-10 gives a second file on one path (E5's
+   plan_renames): storage-migrate found each file by its v2.12 name, and a
+   key names no file, so the rename moves nothing. file_alias keeps the
+   old names, and the check unique-paths holds every path to one file;
+5. checks V-08: every file of a published dataset is ok and has its
    content_sha256, and the bytes in the store are the rows' sizes. A
    published file missing or in mismatch is recovered from Zenodo (§6.2
    step 5, zenodo_files), which this pass does not do: it is a conflict,
@@ -99,6 +103,36 @@ def classify(path: str) -> str:
     return "orphan"
 
 
+def rename_duplicates(ctx, connection) -> None:
+    """DM-10: the names E5 planned, and file_alias with the old ones."""
+    hubfiles = qualified(ctx.params.target_schema, "hubfiles")
+    if connection.in_transaction():
+        connection.commit()
+    with connection.begin():
+        for rename in ctx.renames:
+            connection.execute(
+                sa.text(
+                    f"UPDATE {hubfiles} SET name = :new_name "
+                    "WHERE id = :hubfile_id AND BINARY name = BINARY :old_name"
+                ),
+                rename,
+            )
+    insert_batches(connection, ctx.outputs["file_alias"], ctx.renames, key="hubfile_id")
+
+
+def shared_paths(connection, schema) -> list[str]:
+    """The paths of uvlhub3 more than one file of a dataset has, compared
+    byte for byte, as hubfile resolves a file by its relative_path."""
+    rows = connection.execute(
+        sa.text(
+            "SELECT dataset_id, directory_path, name, COUNT(*) AS n "
+            f"FROM {qualified(schema, 'hubfiles')} "
+            "GROUP BY dataset_id, BINARY directory_path, BINARY name HAVING n > 1"
+        )
+    ).all()
+    return [f"{r.dataset_id}:{r.directory_path}/{r.name} ({r.n})" for r in rows]
+
+
 def source_rows(ctx, ids) -> dict[int, dict]:
     """The rows of v2.12's hubfiles with ``ids``, whole: what a conflict
     about a file is about."""
@@ -179,6 +213,9 @@ def files(ctx) -> None:
         with connection.begin():
             connection.execute(table.delete())
         insert_batches(connection, table, numbered)
+        rename_duplicates(ctx, connection)
+        shared = shared_paths(connection, target)
+    ctx.checks.append(Check("unique-paths", not shared, detail=shared or None))
 
     by_status = {}
     for entry in manifest:
@@ -231,3 +268,5 @@ def files(ctx) -> None:
     stop_on_conflicts(ctx, "E8")
     if without_digest or stored_bytes != expected_bytes:
         raise Refused("E8", [f"V-08 failed: {ctx.checks[-1].detail}"])
+    if shared and not ctx.params.allow_open_conflicts:
+        raise Refused("E8", [f"unique-paths failed: {', '.join(shared)}"])

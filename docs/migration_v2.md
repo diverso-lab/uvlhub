@@ -22,10 +22,10 @@ yet. Its report says `"ready_for_cutover": false` for as long as that is so.
 | E2 profiling | P-00 against `uvlhub_v2_ref`, P-01 to P-28 with the rule of each, the decisions held to their rows | done |
 | E3 schema | `CREATE DATABASE uvlhub3` with the contract's collation, `splent db:upgrade` in a process of its own, then V-12, V-14 and the whole contract | done |
 | E4 identity | `user`, `user_profile`, `external_identity` (the `orcid` and `github` tables folded in) and `api_token` | done |
-| E5 content | Datasets, metadata, authors, feature models, files, metrics, votes and transfers | first pass |
+| E5 content | Datasets, metadata, authors, feature models, files, metrics, votes and transfers; the tombstones of DM-4 and the names of DM-10 | first pass |
 | E6 legacy | Usage aggregates, `legacy_url`, held notices | not yet |
 | E7 post-load | Counters with their margin, every foreign key, the tables that must stay empty, V-01 to V-15 | done |
-| E8 files | hubfile's `storage-migrate --source <store>/.legacy_mirror --link`, then `file_manifest` and V-08 | done |
+| E8 files | hubfile's `storage-migrate --source <store>/.legacy_mirror --link`, then `file_manifest`, DM-10's names with `file_alias`, unique-paths and V-08 | done |
 | E9 derived | Reindex, FactLabel, formats | not yet |
 | E10 report | The report (JSON), the run's row in `uvlhub_migration.run` | done |
 
@@ -210,4 +210,30 @@ database and skips the rest, saying how to run them.
   `published_at` = `created_at`, no `status = 'legacy'` on metrics, no
   reason on cancelled offers, no column yet for `public_id`,
   `lineage_root_id`, author position or user).
-- **Ghost drafts** follow DM-3's recommendation (30 days, `--ghost-draft-days`).
+- **Ghost drafts** (DM-3): a draft with no file, no DOI and no deposition,
+  older than 30 days (`--ghost-draft-days`), is dropped as `ghost_draft`.
+- **Self-votes** (DM-8) are dropped as `self_vote`, after a vote moves to
+  the root of its lineage, so a vote on a version of one's own goes too.
+- **DOIs without a dataset** (DM-4, C-03): v2.12 deleted the dataset and
+  left its metadata, DOI included. Each becomes a withdrawn dataset, with
+  its metadata and authors, so dataset's landing answers its DOI with the
+  tombstone, 410 with the citation (`landing_response`, DL-2), where it
+  answered 404; `test_a_tombstones_doi_answers_410_with_its_citation` asks
+  the product's app. The reason is `other`, the note says it was deleted
+  before uvlhub 3.0, `withdrawn_at` is NULL (v2.12 kept no date) and the
+  dates come from Zenodo's record in `zenodo_snapshot` (validated by its
+  sha256 and its DOI). Without one it is dated T0 and raises
+  `tombstone_undated`, since its citation would give T0's year. The owner
+  went with the dataset: the first account of `MIGRATION_ADMIN_EMAILS`
+  holds it (DM-13), and without one loaded no tombstone is made
+  (`tombstone_without_owner`). Its id is new, above the source's counter;
+  `uvlhub_migration.tombstone` and `id_map` say which.
+- **Two files on one path** (DM-10, C-11): the first by id keeps its name,
+  the one v2.12 served at `/doi/<doi>/files/raw/<path>`, and every other
+  gets `~<id>` before its extension. E8 writes the names after
+  `storage-migrate`, which finds a file by its v2.12 name, and
+  `uvlhub_migration.file_alias` keeps the old one: `/hubfiles/raw/<id>/<old
+  name>` answers 400 ("Filename mismatch") in hubfile 0.7.0 until hubfile
+  reads it (an alias table, and a 308 to the new name).
+- **C-30** also covers a DOI that is not the one Zenodo mints for its
+  deposition (`10.5281/zenodo.<deposition_id>`), which P-25b finds.

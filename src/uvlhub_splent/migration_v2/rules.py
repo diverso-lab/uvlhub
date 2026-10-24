@@ -15,6 +15,7 @@ conflict.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import zlib
@@ -291,6 +292,50 @@ def doi_is_of_deposition(doi, deposition_id) -> bool:
     return deposition_id is not None and (doi or "").strip() == (
         f"10.5281/zenodo.{deposition_id}"
     )
+
+
+def suffixed_name(name: str, hubfile_id: int, limit: int) -> str:
+    """DM-10 (C-11): ``name`` with ~<id> before its extension, so a second
+    file on one path gets a path of its own and keeps its type; the stem is
+    cut short when the whole would not fit in ``limit`` characters."""
+    stem, dot, extension = name.rpartition(".")
+    if not dot or not stem:
+        stem, extension = name, ""
+    suffix = f"~{hubfile_id}" + (f".{extension}" if extension else "")
+    return stem[: max(limit - len(suffix), 1)] + suffix
+
+
+def zenodo_dates(snapshot, doi):
+    """(created, published) of a dataset's record in zenodo_snapshot, as
+    naive UTC, or None when there is no record or it does not validate: its
+    sha256 is not the snapshot's, or its DOI is not ``doi`` (§4.3, compared
+    without case or surrounding spaces). ``snapshot`` is the row of
+    uvlhub_migration_inputs.zenodo_snapshot, or None."""
+    if snapshot is None:
+        return None
+    text = snapshot["record"] or ""
+    if hashlib.sha256(text.encode("utf-8")).hexdigest() != snapshot["sha256"]:
+        return None
+    try:
+        record = json.loads(text)
+    except ValueError:
+        return None
+    if not isinstance(record, dict) or (record.get("doi") or "").strip().lower() != (
+        (doi or "").strip().lower()
+    ):
+        return None
+    created = published = None
+    try:
+        if record.get("created"):
+            created = naive_utc(datetime.fromisoformat(record["created"]))
+        day = (record.get("metadata") or {}).get("publication_date")
+        if day:
+            published = datetime.fromisoformat(day)
+    except (TypeError, ValueError):
+        return None
+    if created is None and published is None:
+        return None
+    return created or published, published or created
 
 
 def artifact_type(name: str) -> str:

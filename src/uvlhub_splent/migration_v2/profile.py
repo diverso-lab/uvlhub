@@ -377,14 +377,15 @@ PROBES = (
     Probe(
         "P-01",
         "metadata without a dataset",
-        "C-03 (E5): a tombstone with a DOI (DM-4), dropped without one",
+        "C-03, DM-4 (E5): with a DOI, a withdrawn dataset whose DOI answers "
+        "its tombstone; without one, dropped",
         "SELECT m.id, m.dataset_doi FROM {s}.ds_meta_data m "
         "LEFT JOIN {s}.datasets d ON d.ds_meta_data_id = m.id WHERE d.id IS NULL",
     ),
     Probe(
         "P-02",
         "authors of no dataset",
-        "C-04 (E5): dropped",
+        "C-04 (E5): dropped, but a tombstone's, which its citation names",
         "SELECT a.id, a.ds_meta_data_id FROM {s}.author a "
         "LEFT JOIN {s}.datasets d ON d.ds_meta_data_id = a.ds_meta_data_id WHERE d.id IS NULL",
     ),
@@ -447,10 +448,10 @@ PROBES = (
     ),
     Probe(
         "P-07",
-        "paths of more than one file",
-        "C-11 (E5): a conflict, duplicate_path",
+        "paths of more than one file, byte for byte",
+        "C-11, DM-10 (E5, E8): ~<id> in the name of every file but the first",
         "SELECT dataset_id, directory_path, name, COUNT(*) AS n FROM {s}.hubfiles "
-        "GROUP BY dataset_id, directory_path, name HAVING n > 1",
+        "GROUP BY dataset_id, BINARY directory_path, BINARY name HAVING n > 1",
     ),
     Probe(
         "P-08",

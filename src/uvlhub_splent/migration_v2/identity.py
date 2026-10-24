@@ -219,10 +219,16 @@ def build_users(ctx, users, proofs, followed, takeovers, identity_dates) -> list
                 "must_reset_password": taken_over,
             }
         )
+    by_canonical = {row["email_canonical"]: row["id"] for row in rows}
+    ctx.admins = [
+        by_canonical[canonical_email(email)]
+        for email in params.admin_emails
+        if canonical_email(email) in by_canonical
+    ]
     ctx.facts["admins_missing"] = sorted(
         email
         for email in params.admin_emails
-        if canonical_email(email) not in {row["email_canonical"] for row in rows}
+        if canonical_email(email) not in by_canonical
     )
     return rows
 

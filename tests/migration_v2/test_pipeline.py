@@ -9,8 +9,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+import subprocess
+import sys
 from dataclasses import replace
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 import pytest
 import sqlalchemy as sa
@@ -19,6 +21,7 @@ from uvlhub_splent.migration_v2 import contract as contract_module
 from uvlhub_splent.migration_v2.verify import empty_tables, foreign_key_orphans
 from uvlhub_splent.migration_v2.params import Refused
 from uvlhub_splent.migration_v2.pipeline import run
+from uvlhub_splent.migration_v2.schema import child_env
 
 from . import synthetic
 
@@ -294,7 +297,8 @@ def test_e4_converts_the_keys_as_d12_says(migrated):
 
 def test_e5_loads_the_datasets_with_the_state_their_metadata_implies(migrated):
     datasets = by_id(target(migrated, "datasets"))
-    assert sorted(datasets) == [1, 2, 3, 4, 5, 7, 8, 9, 10, 13, 14]
+    # 30 and 31: the tombstones of 290 and 292 (DM-4).
+    assert sorted(datasets) == [1, 2, 3, 4, 5, 7, 8, 9, 10, 13, 14, 30, 31]
     assert dropped(migrated, "datasets") == {
         6: "ghost_draft",
         11: "held_by_conflict",
@@ -339,25 +343,90 @@ def test_e5_keeps_an_anonymous_datasets_authors_apart(migrated):
         {"name": "Hidden Two", "affiliation": None, "orcid": None},
     ]
     authors = by_id(target(migrated, "author"))
-    assert sorted(authors) == [1, 2, 3]
+    # 7 is of a tombstone's metadata, whose citation names it.
+    assert sorted(authors) == [1, 2, 3, 7]
     assert authors[1]["orcid"] == synthetic.ALICE_ORCID and authors[2]["orcid"] is None
-    assert dropped(migrated, "author") == {6: "orphan", 7: "tombstone", 8: "seed"}
+    assert dropped(migrated, "author") == {6: "orphan", 8: "seed"}
     mapped = work(migrated, "id_map", "entity = 'author'")
-    assert {m["source_id"] for m in mapped} == {4, 5}
+    assert {m["source_id"] for m in mapped} == {4, 5, 9}
 
 
 def test_e5_orphan_metadata_becomes_a_tombstone_or_goes(migrated):
-    assert [(t["doi"], t["ds_meta_data_id"]) for t in work(migrated, "tombstone")] == [
-        (synthetic.ORPHAN_DOI, 290)
-    ]
+    """DM-4: the metadata v2.12 left with a DOI when it deleted their
+    dataset become withdrawn datasets, which dataset's landing answers with
+    its tombstone; the one without a DOI goes."""
+    assert [
+        (t["doi"], t["ds_meta_data_id"], t["dataset_id"])
+        for t in sorted(work(migrated, "tombstone"), key=lambda t: t["doi"])
+    ] == [(synthetic.ORPHAN_DOI, 290, 30), (synthetic.UNDATED_DOI, 292, 31)]
     reasons = dropped(migrated, "ds_meta_data")
-    assert (
-        reasons[290] == "tombstone"
-        and reasons[291] == "orphan"
-        and reasons[212] == "seed"
-    )
+    assert reasons[291] == "orphan" and reasons[212] == "seed"
+    assert 290 not in reasons and 292 not in reasons
+    datasets = by_id(target(migrated, "datasets"))
+    for dataset_id, meta_id, doi in (
+        (30, 290, synthetic.ORPHAN_DOI),
+        (31, 292, synthetic.UNDATED_DOI),
+    ):
+        tombstone = datasets[dataset_id]
+        assert tombstone["status"] == "withdrawn"
+        assert tombstone["withdrawal_reason"] == "other"
+        assert tombstone["withdrawal_note"].startswith("Deleted from uvlhub.io")
+        assert tombstone["withdrawn_at"] is None
+        assert (tombstone["ds_meta_data_id"], tombstone["pid"]) == (meta_id, doi)
+        assert (tombstone["provider"], tombstone["pid_scheme"]) == ("zenodo", "doi")
+        # Held by the administrator DM-13 names.
+        assert tombstone["user_id"] == 1
+    # The Zenodo snapshot dates 290's; nothing dates 292's, which is T0.
+    assert datasets[30]["created_at"] == datetime(2025, 3, 1, 10, 0)
+    assert datasets[30]["published_at"] == datetime(2025, 3, 2)
+    assert (datasets[31]["created_at"], datasets[31]["published_at"]) == (T0, None)
+    assert datasets[31]["visibility"] == "anonymous"
+    hidden = by_id(target(migrated, "ds_meta_data"))[292]["private_authors"]
+    assert json.loads(hidden) == [
+        {"name": "Hidden Author", "affiliation": None, "orcid": None}
+    ]
+    found = conflicts(migrated)
+    assert ("tombstone_undated", synthetic.UNDATED_DOI) in found
+    assert ("tombstone_undated", synthetic.ORPHAN_DOI) not in found
+    mapped = work(migrated, "id_map", "entity = 'tombstone'")
+    assert {(m["source_id"], m["target_id"]) for m in mapped} == {(290, 30), (292, 31)}
     publisher = by_id(target(migrated, "ds_meta_data"))[204]["api_publisher_user_id"]
     assert publisher is None
+
+
+LANDING = """
+import json, sys
+from splent_framework.utils.app_loader import get_create_app_in_testing_mode
+
+app = get_create_app_in_testing_mode()
+with app.test_client() as client:
+    response = client.get(sys.argv[1], headers={"Accept": "application/json"})
+    print(json.dumps({"status": response.status_code, "body": response.get_json(silent=True)}))
+"""
+
+
+def test_a_tombstones_doi_answers_410_with_its_citation(migrated):
+    """What DM-4 is for, asked of dataset's own landing: the product's app,
+    in a process of its own, on the rehearsal's uvlhub3."""
+    env = child_env(
+        migrated.params, HUBFILE_STORAGE_ROOT=str(migrated.params.store_root)
+    )
+    result = subprocess.run(
+        [sys.executable, "-c", LANDING, f"/doi/{synthetic.ORPHAN_DOI}/"],
+        env=env,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    answer = json.loads(result.stdout.strip().splitlines()[-1])
+    assert answer["status"] == 410
+    body = answer["body"]
+    assert body["error"] == "withdrawn" and body["doi"] == synthetic.ORPHAN_DOI
+    assert body["reason"] == "other"
+    assert body["citation"].startswith(
+        "Of a deleted dataset (2025). Deleted, with a DOI."
+    )
+    assert body["citation"].endswith(f"https://doi.org/{synthetic.ORPHAN_DOI}")
 
 
 def test_e5_leaves_the_content_faults_open_as_conflicts(migrated):
@@ -367,7 +436,6 @@ def test_e5_leaves_the_content_faults_open_as_conflicts(migrated):
     assert ("doi_not_its_deposition", "10.5281/zenodo.1011") in found
     assert ("doi_repeated", "10.5281/zenodo.1011") in found
     assert ("lineage_branch", "1") in found
-    assert ("duplicate_path", "13:/dup.uvl") in found
     assert ("checksum_unknown", "15") in found
 
 
@@ -466,6 +534,28 @@ def test_e8_links_every_file_to_its_key_and_says_what_it_found(migrated):
         assert path.stat().st_nlink >= 2  # a hard link to the mirror, not a copy
         assert row["content_sha256"] == hashlib.sha256(path.read_bytes()).hexdigest()
     assert not (store / "user_1").exists()
+
+
+def test_dm10_gives_a_second_file_on_one_path_a_name_of_its_own(migrated):
+    """C-11: 13 and 14 are dataset 13's dup.uvl. 13, the one v2.12 served,
+    keeps the name; 14 is renamed once E8 has linked it by its old one, and
+    file_alias keeps that for the alias of its /hubfiles/raw URL."""
+    files = by_id(target(migrated, "hubfiles"))
+    assert (files[13]["name"], files[14]["name"]) == ("dup.uvl", "dup~14.uvl")
+    assert files[14]["storage_status"] == "ok"
+    assert files[14]["storage_key"] == "datasets/13/src/14"
+    assert work(migrated, "file_alias") == [
+        {
+            "hubfile_id": 14,
+            "dataset_id": 13,
+            "directory_path": "",
+            "old_name": "dup.uvl",
+            "new_name": "dup~14.uvl",
+        }
+    ]
+    assert not any(c[0] == "duplicate_path" for c in conflicts(migrated))
+    checks = {c["name"]: c for c in migrated.report["checks"]}
+    assert checks["unique-paths"]["ok"]
 
 
 def test_e8_writes_the_manifest_with_what_no_row_names(migrated):

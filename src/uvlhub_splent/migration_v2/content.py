@@ -2,12 +2,11 @@
 
 FIRST PASS. It loads ds_metrics, ds_meta_data, datasets, author,
 feature_model, hubfiles, hubfile_metrics, dataset_rating and
-dataset_transfer_request into the tables of dataset 0.5.0, hubfile 0.5.0,
-featuremodel 0.4.0 (the uvl feature keeps the table), factlabel 0.4.0 and
-rating 0.3.0, ids kept, with the rules the pinned features apply to rows
-that predate them. What the final E5 still has to do is in DEFERRED, and
-the report repeats it: a run that went through this pass is never ready
-for the cutover.
+dataset_transfer_request into the tables of dataset, hubfile, uvl (which
+keeps featuremodel's table), factlabel and rating, ids kept, with the rules
+the pinned features apply to rows that predate them. What the final E5
+still has to do is in DEFERRED, and the report repeats it: a run that went
+through this pass is never ready for the cutover.
 
 What it applies already:
 
@@ -17,20 +16,26 @@ What it applies already:
   the scheme doi, and a dataset with a DOI or a deposition is zenodo's;
 - the authors of an anonymous dataset in private_authors, as dataset0003
   moves them (DS-3); an author's ORCID normalised, NULL when invalid (C-15);
-- the seed's datasets (P-25), ghost drafts (DM-3), orphan metadata (P-01:
-  a tombstone when it has a DOI, dropped otherwise) and orphan authors
-  (P-02) are not loaded, each with its reason;
+- metadata whose dataset went and left its DOI (P-01) becomes a withdrawn
+  dataset, so the DOI answers dataset's tombstone, 410 with the citation,
+  and not a 404 (DM-4, build_tombstones);
+- the seed's datasets (P-25), ghost drafts (DM-3), metadata without a DOI
+  nor a dataset (P-01) and authors of no metadata (P-02) are not loaded,
+  each with its reason;
 - a feature model follows its file's dataset (C-07); checksum_algo and
   artifact_type as hubfile0002 reads them (P-24); feature_model_count is
-  counted again (C-12);
+  counted again (C-12); a second file on one path gets ~<id> in its name,
+  which E8 writes once the files are linked (DM-10, plan_renames);
 - votes move to the root of their lineage, the latest of a user's wins and
-  self-votes go (DM-8, C-06); pending transfers are cancelled at T0 (D13 b).
+  self-votes go (DM-8, C-06); pending transfers are cancelled at T0 (D13 b),
+  their notices held by E6.
 
 What it finds and leaves open, as conflicts: DOIs that are not Zenodo's
-production or not their deposition's (C-30), DOIs or metadata shared by two datasets (C-10, P-03),
-lineages with a missing origin, branches or gaps (C-05), two rows on one
-path (C-11), checksums of no known algorithm (C-25), and a file whose
-feature model is in another, published dataset (C-07).
+production or not their deposition's (C-30), DOIs or metadata shared by two
+datasets (C-10, P-03), lineages with a missing origin, branches or gaps
+(C-05), checksums of no known algorithm (C-25), a file whose feature model
+is in another, published dataset (C-07), and a tombstone no Zenodo record
+dates or nobody can hold (DM-4).
 """
 
 from __future__ import annotations
@@ -43,6 +48,7 @@ from splent_io.splent_feature_dataset.models import (
     DOI_SCHEME,
     LEGACY_PROVIDER,
     DatasetStatus,
+    WithdrawalReason,
     state_from_metadata,
 )
 from splent_io.splent_feature_hubfile.storage import checksum_algorithm
@@ -67,14 +73,15 @@ DEFERRED = (
     "§4.3: published_at is created_at, and a deposition without a DOI is "
     "failed; Zenodo's date and its published records (A15-04) wait for the "
     "snapshot",
-    "C-10, C-11, C-30: found and left open, for the decisions (DM-10)",
+    "C-10, C-30: found and left open, for the decisions",
     "C-16, C-23: publication_doi and tags are copied as they are (DS-1 and "
     "dataset_tag do not exist in the pinned features)",
     "CO-5, D14, DL-5, DL-6: public_id, concept_pid, lineage_root_id, "
     "author.position and author.user_id have no column yet",
     "§7.3: hubfile_metrics is copied without status = 'legacy', which "
     "factlabel has no column for",
-    "§5.7: the offers it cancels carry no reason (no column); the report lists them",
+    "§5.7: the offers it cancels carry no reason (no column); the report "
+    "lists them, and E6 holds their notices",
 )
 
 SOURCE_TABLES = (
@@ -88,12 +95,7 @@ SOURCE_TABLES = (
     "hubfile_factlabel",
     "dataset_rating",
     "dataset_transfer_request",
-    "doi_mapping",
     "statistics",
-    "ds_view_record",
-    "ds_download_record",
-    "hubfile_view_record",
-    "hubfile_download_record",
 )
 TARGET_TABLES = (
     "ds_metrics",
@@ -106,17 +108,20 @@ TARGET_TABLES = (
     "dataset_rating",
     "dataset_transfer_request",
 )
-# What E6 and E9 fill or rebuild, counted here so the report says it.
+# What E9 rebuilds or nothing keeps, counted here so the report says it.
 LATER = {
     "hubfile_factlabel": "E9: recomputed (DM-6)",
-    "doi_mapping": "E6: aliases in legacy_url (C-20)",
     "statistics": "dropped (DC-7): its counters are in the report",
-    "ds_view_record": "E6: daily aggregates (DM-5)",
-    "ds_download_record": "E6: daily aggregates (DM-5)",
-    "hubfile_view_record": "E6: daily aggregates (DM-5)",
-    "hubfile_download_record": "E6: daily aggregates (DM-5)",
 }
 PUBLISHED = (DatasetStatus.PUBLISHED.value, DatasetStatus.SYNC_PENDING.value)
+# DM-4: what the tombstone of a dataset deleted in v2.12 says. "other" is
+# none of the reasons the law decides (451) or that mark abuse, which
+# curation reads to stop trusting an account.
+TOMBSTONE_REASON = WithdrawalReason.OTHER.value
+TOMBSTONE_NOTE = (
+    "Deleted from uvlhub.io before it moved to uvlhub 3.0. Its DOI stays, and "
+    "so does its record at Zenodo."
+)
 
 
 def _doi(meta) -> str | None:
@@ -204,9 +209,9 @@ def check_lineages(ctx, datasets, chosen) -> dict[int, int | None]:
     return origins
 
 
-def build_metadata(ctx, metas, datasets_of_meta, chosen, authors_of):
-    """ds_meta_data rows of the loaded datasets; orphans to tombstones or
-    dropped (P-01); DOIs checked (C-10, C-30)."""
+def build_metadata(ctx, metas, datasets_of_meta, chosen, tombstones, authors_of):
+    """ds_meta_data rows of the loaded datasets and of the tombstones;
+    metadata of neither dropped (P-01); DOIs checked (C-10, C-30)."""
     ledger = ctx.ledger
     loaded_users = ctx.loaded["user"]
     rows = []
@@ -214,20 +219,11 @@ def build_metadata(ctx, metas, datasets_of_meta, chosen, authors_of):
     for meta in metas.values():
         datasets = datasets_of_meta[meta["id"]]
         loading = [d for d in datasets if d["id"] in chosen]
-        if not datasets:
-            if _doi(meta) is not None:
-                ledger.tombstones.append(
-                    {
-                        "doi": _doi(meta),
-                        "ds_meta_data_id": meta["id"],
-                        "snapshot": to_json(meta),
-                    }
-                )
-                ledger.drop("ds_meta_data", meta["id"], "tombstone", _doi(meta))
-            else:
+        if not datasets and meta["id"] not in tombstones:
+            if not ledger.is_dropped("ds_meta_data", meta["id"]):
                 ledger.drop("ds_meta_data", meta["id"], "orphan")
             continue
-        if not loading:
+        if datasets and not loading:
             reason = ledger.reason("datasets", datasets[0]["id"], "dataset_not_loaded")
             ledger.drop(
                 "ds_meta_data", meta["id"], reason, f"dataset {datasets[0]['id']}"
@@ -307,6 +303,132 @@ def build_metadata(ctx, metas, datasets_of_meta, chosen, authors_of):
     return rows
 
 
+def build_tombstones(ctx, metas, datasets_of_meta, datasets, snapshots):
+    """DM-4 (C-03, P-01): a withdrawn dataset for each metadata whose
+    dataset v2.12 deleted and left its DOI behind, so the DOI answers
+    dataset's tombstone (landing_response), 410 with the citation its
+    metadata and authors make, instead of a 404. Answers the rows by
+    metadata id; every one is in uvlhub_migration.tombstone too.
+
+    v2.12 kept no date of them: Zenodo's record in zenodo_snapshot gives
+    created_at and published_at, which the citation's year is; without it,
+    T0, and a conflict. Its owner is gone with it: the administrator
+    MIGRATION_ADMIN_EMAILS names first holds it (DM-13), and without one
+    loaded nothing is made, and that is a conflict too. Its id is a new one
+    above the source's counter of datasets, as no dataset of v2.12 has it.
+    """
+    params, ledger = ctx.params, ctx.ledger
+    owner = ctx.admins[0] if ctx.admins else None
+    counter = ctx.source_counters.get("datasets")
+    next_id = max(counter or 1, max((d["id"] for d in datasets), default=0) + 1)
+    rows = {}
+    for meta in metas.values():
+        doi = _doi(meta)
+        if datasets_of_meta[meta["id"]] or doi is None:
+            continue
+        tombstone = {
+            "doi": doi,
+            "ds_meta_data_id": meta["id"],
+            "dataset_id": None,
+            "snapshot": to_json(meta),
+        }
+        ledger.tombstones.append(tombstone)
+        if owner is None:
+            ledger.conflict(
+                "tombstone_without_owner",
+                "ds_meta_data",
+                doi,
+                [meta],
+                detail="no account of MIGRATION_ADMIN_EMAILS loads to hold it",
+            )
+            ledger.drop("ds_meta_data", meta["id"], "tombstone", doi)
+            continue
+        dates = rules.zenodo_dates(snapshots.get(meta["deposition_id"]), doi)
+        if dates is None:
+            ledger.conflict(
+                "tombstone_undated",
+                "ds_meta_data",
+                doi,
+                [meta],
+                detail="no record of zenodo_snapshot dates it: it is dated T0, "
+                "and its citation gives T0's year",
+            )
+            created, published = params.t0, None
+        else:
+            created, published = dates
+        _status, visibility = state_from_metadata(
+            doi, True, meta["deposition_id"], meta["dataset_anonymous"]
+        )
+        rows[meta["id"]] = {
+            "id": next_id,
+            "user_id": owner,
+            "ds_meta_data_id": meta["id"],
+            "created_at": created,
+            "feature_model_count": 0,
+            "dataset_version": 1,
+            "dataset_origin_id": None,
+            "updated_at": created,
+            "status": DatasetStatus.WITHDRAWN.value,
+            "visibility": visibility.value,
+            "publisher_record_id": (
+                None if meta["deposition_id"] is None else str(meta["deposition_id"])
+            ),
+            "published_at": published,
+            "withdrawn_at": None,
+            "withdrawal_reason": TOMBSTONE_REASON,
+            "withdrawal_note": TOMBSTONE_NOTE,
+            "withdrawn_by_id": None,
+            "provider": LEGACY_PROVIDER,
+            "pid": doi,
+            "pid_scheme": DOI_SCHEME,
+            "publication_error": None,
+        }
+        tombstone["dataset_id"] = next_id
+        ledger.map("tombstone", meta["id"], "datasets", next_id)
+        next_id += 1
+    return rows
+
+
+def plan_renames(ctx, paths) -> list[dict]:
+    """DM-10 (C-11, P-07): on a path more than one file of a dataset has,
+    the first by id keeps its name, the one v2.12 served at
+    /doi/<doi>/files/raw/<path>, and every other gets ~<id> before its
+    extension. E8 writes the names once storage-migrate has linked the
+    files, which it finds by their v2.12 names; uvlhub_migration.file_alias
+    and E6's legacy_url keep the old name of each, for the alias of
+    /hubfiles/raw/<id>/<name>. A new name that is another file's is a
+    conflict, and that row keeps its name."""
+    column = ctx.contract.tables["hubfiles"].columns["name"]
+    limit = int(column.type.split("(")[1].rstrip(")"))
+    renames = []
+    for (dataset_id, folder, name), group in sorted(
+        paths.items(), key=lambda item: str(item[0])
+    ):
+        if len(group) < 2:
+            continue
+        for hubfile in sorted(group, key=lambda h: h["id"])[1:]:
+            new_name = rules.suffixed_name(name, hubfile["id"], limit)
+            if (dataset_id, folder, new_name) in paths:
+                ctx.ledger.conflict(
+                    "duplicate_path",
+                    "hubfiles",
+                    f"{dataset_id}:{folder}/{name}",
+                    group,
+                    detail=f"{new_name} is another file's (DM-10)",
+                )
+                continue
+            renames.append(
+                {
+                    "hubfile_id": hubfile["id"],
+                    "dataset_id": dataset_id,
+                    "directory_path": folder,
+                    "old_name": name,
+                    "new_name": new_name,
+                }
+            )
+    return renames
+
+
 def build_authors(ctx, authors, loaded_metas, anonymous_metas) -> list[dict]:
     ledger = ctx.ledger
     rows = []
@@ -350,6 +472,12 @@ def content(ctx) -> None:
             name: all_rows(connection, src[name], order=_order(name))
             for name in SOURCE_TABLES
         }
+        snapshots = {
+            row["deposition_id"]: row
+            for row in all_rows(
+                connection, ctx.inputs["zenodo_snapshot"], order="deposition_id"
+            )
+        }
         connection.rollback()
 
     metas = {meta["id"]: meta for meta in source["ds_meta_data"]}
@@ -365,7 +493,12 @@ def content(ctx) -> None:
 
     chosen = choose_datasets(ctx, source["datasets"], metas, files_of)
     origins = check_lineages(ctx, source["datasets"], chosen)
-    meta_rows = build_metadata(ctx, metas, datasets_of_meta, chosen, authors_of)
+    tombstones = build_tombstones(
+        ctx, metas, datasets_of_meta, source["datasets"], snapshots
+    )
+    meta_rows = build_metadata(
+        ctx, metas, datasets_of_meta, chosen, tombstones, authors_of
+    )
     loaded_metas = {row["id"] for row in meta_rows}
     anonymous_metas = {row["id"] for row in meta_rows if row["dataset_anonymous"] == 1}
     author_rows = build_authors(ctx, source["author"], loaded_metas, anonymous_metas)
@@ -464,17 +597,7 @@ def content(ctx) -> None:
                 "artifact_type": rules.artifact_type(hubfile["name"]),
             }
         )
-    for (dataset_id, folder, name), group in sorted(
-        paths.items(), key=lambda item: str(item[0])
-    ):
-        if len(group) > 1:
-            ledger.conflict(
-                "duplicate_path",
-                "hubfiles",
-                f"{dataset_id}:{folder}/{name}",
-                group,
-                detail=f"hubfiles {', '.join(str(h['id']) for h in group)} (DM-10)",
-            )
+    ctx.renames = plan_renames(ctx, paths)
     loaded_files = {row["id"] for row in hubfile_rows}
     metric_columns = set(tgt["hubfile_metrics"].c.keys())
     hubfile_metric_rows = []
@@ -528,6 +651,7 @@ def content(ctx) -> None:
                 "publication_error": None,
             }
         )
+    dataset_rows += tombstones.values()
 
     rating_rows = build_ratings(ctx, source["dataset_rating"], chosen, origins)
     transfer_rows = build_transfers(ctx, source["dataset_transfer_request"], chosen)
@@ -546,7 +670,7 @@ def content(ctx) -> None:
         insert_batches(connection, tgt["dataset_transfer_request"], transfer_rows)
 
     ctx.loaded.update(
-        datasets=set(chosen),
+        datasets=set(chosen) | {row["id"] for row in tombstones.values()},
         ds_meta_data=loaded_metas,
         author={row["id"] for row in author_rows},
         feature_model=set(fm_rows),
@@ -566,11 +690,16 @@ def content(ctx) -> None:
         "datasets",
         len(source["datasets"]),
         len(dataset_rows),
-        {"feature_model_count_recounted": miscounted},
+        {"feature_model_count_recounted": miscounted, "tombstones": len(tombstones)},
     )
     ledger.count("author", len(source["author"]), len(author_rows))
     ledger.count("feature_model", len(source["feature_model"]), len(fm_rows))
-    ledger.count("hubfiles", len(source["hubfiles"]), len(hubfile_rows))
+    ledger.count(
+        "hubfiles",
+        len(source["hubfiles"]),
+        len(hubfile_rows),
+        {"renamed": [r["hubfile_id"] for r in ctx.renames]},
+    )
     ledger.count(
         "hubfile_metrics", len(source["hubfile_metrics"]), len(hubfile_metric_rows)
     )

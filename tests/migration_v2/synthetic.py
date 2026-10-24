@@ -44,8 +44,9 @@ Who is who, so a test can say what it expects:
                  algorithm (C-25) and a feature model of dataset 5's file (C-07)
              14  version 2 of 1 as well: a branch (C-05)
 
-and metadata without a dataset (one with a DOI, one without), an author of
-no metadata, votes to move, to merge and to drop, transfers, the usage
+and metadata without a dataset: two with a DOI (290, which the Zenodo
+snapshot dates, and 292, anonymous, which nothing dates) and one without
+(291); an author of no metadata, votes to move, to merge and to drop, transfers, the usage
 records E6 will aggregate, a trigger and a view (P-28), and counters ahead
 of the rows, as when the last row was deleted (§4.1).
 """
@@ -53,6 +54,7 @@ of the rows, as when the last row was deleted (§4.1).
 from __future__ import annotations
 
 import hashlib
+import json
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -389,6 +391,7 @@ DATASETS = {
 }
 CONCEPT_DOI = "10.5281/zenodo.1000"
 ORPHAN_DOI = "10.5281/zenodo.2001"
+UNDATED_DOI = "10.5281/zenodo.2003"
 
 # Files: id -> (dataset, feature model, directory, name, kind), where kind
 # says what the mirror holds: "sha256" or "md5" (it matches), "mismatch"
@@ -503,6 +506,21 @@ def content_rows():
             "api_publisher_user_id": None,
         },
         {
+            "id": 292,
+            "deposition_id": 2003,
+            "title": "Deleted, anonymous",
+            "description": "",
+            "publication_type": "OTHER",
+            "publication_doi": None,
+            "dataset_doi": UNDATED_DOI,
+            "dataset_concept_doi": None,
+            "tags": None,
+            "ds_metrics_id": None,
+            "dataset_anonymous": 1,
+            "metadata_synced": 1,
+            "api_publisher_user_id": None,
+        },
+        {
             "id": 291,
             "deposition_id": None,
             "title": "Deleted draft",
@@ -582,6 +600,13 @@ def content_rows():
             "affiliation": None,
             "orcid": None,
             "ds_meta_data_id": 290,
+        },
+        {
+            "id": 9,
+            "name": "Hidden Author",
+            "affiliation": None,
+            "orcid": None,
+            "ds_meta_data_id": 292,
         },
         {
             "id": 8,
@@ -742,6 +767,28 @@ def usage_rows():
         ],
         "hubfile_factlabel": [{"hubfile_id": 1, "factlabel_json": "{}"}],
     }
+
+
+# What the enrichment of §4.3 fetched from Zenodo (MIG-06), as
+# uvlhub_migration_inputs.zenodo_snapshot keeps it: the record of the
+# deleted dataset 290, which dates its tombstone.
+ORPHAN_RECORD = {
+    "id": 2001,
+    "doi": ORPHAN_DOI,
+    "created": "2025-03-01T10:00:00.000000+00:00",
+    "metadata": {"publication_date": "2025-03-02", "title": "Deleted, with a DOI"},
+}
+
+
+def zenodo_snapshot():
+    record = json.dumps(ORPHAN_RECORD, sort_keys=True)
+    return [
+        {
+            "deposition_id": ORPHAN_RECORD["id"],
+            "record": record,
+            "sha256": sha256(record.encode("utf-8")),
+        }
+    ]
 
 
 # The counters a dump carries, ahead of the rows (§4.1).

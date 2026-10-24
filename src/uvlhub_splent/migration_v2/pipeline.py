@@ -53,6 +53,10 @@ class Context:
         self.loaded: dict[str, set] = {}
         self.published: set = set()
         self.takeover_users: set = set()
+        # The accounts loaded as admin, in the order MIGRATION_ADMIN_EMAILS
+        # names them (E4), and the names DM-10 gives (E5, written by E8).
+        self.admins: list[int] = []
+        self.renames: list[dict] = []
         self.source_counters: dict = {}
         self.stages_done: list[str] = []
         self.outputs = None
