@@ -1,0 +1,36 @@
+# Example snippet, inert until renamed.
+#
+# Serves protected uploads through X-Accel-Redirect, so Flask decides who
+# may download a file and nginx transports the bytes. Rename this file to
+# something ending in .conf and restart the container to enable it, since
+# only *.conf files are included by the server block.
+#
+# Three things have to line up before it works.
+#
+#   1. The app sets PROTECTED_FILES_ACCEL_PREFIX to the same prefix used
+#      below, for example PROTECTED_FILES_ACCEL_PREFIX=/_protected. The
+#      framework then answers with X-Accel-Redirect instead of streaming
+#      the file itself (see splent_framework send_protected_file).
+#   2. This container can read the protected directory. Mount the same
+#      volume the web service uses for PROTECTED_UPLOADS_DIR into the
+#      nginx service, read only, at the alias path below.
+#   3. The location stays internal. Without the internal directive the
+#      whole protected directory is reachable from the outside and the
+#      access checks in the app are bypassed, which is the failure this
+#      example exists to prevent.
+#
+# location /_protected/ {
+#     internal;
+#     alias /protected_uploads/;
+#
+#     # add_header is not inherited once a location declares its own, so
+#     # the server level hardening headers are repeated here.
+#     add_header X-Content-Type-Options nosniff always;
+#     add_header X-Frame-Options SAMEORIGIN always;
+#     add_header Referrer-Policy strict-origin-when-cross-origin always;
+#
+#     # Content-Type and Content-Disposition come from the app response,
+#     # so nginx must not guess a type of its own.
+#     types { }
+#     default_type "";
+# }

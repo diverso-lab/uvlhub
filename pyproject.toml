@@ -163,6 +163,14 @@ order = { team = 30 }
 # tests/migration_v2/run_with_throwaway_db.sh starts and names.
 env = ["MIGRATION_V2_TEST_*"]
 
+# What the production image installs besides the features. splent
+# product:build keeps splent_framework and splent_cli at the versions this
+# product is built with; a bare version means exactly that version.
+[tool.splent.runtime]
+splent_framework = "1.24.0"
+splent_cli = "1.42.0"
+gunicorn = ">=23,<24"
+
 [tool.setuptools.package-dir]
 "" = "src"
 

@@ -1,0 +1,154 @@
+// OpenHubs: a generic repository core with pluggable artifact types. uvlhub is one product of the line.
+// Version 3 is still a transition model: it holds the packages that exist today, so every product of the line
+// validates now, and it moves towards the target model as the core becomes generic.
+//   - uvl is the UVL artifact type, one package since featuremodel and flamapy merged into it (H4).
+//   - publicacion only offers zenodo until local_publication exists.
+//   - dataset => apikeys, explore => rating and statistics => uvl | factlabel | rating
+//     are couplings of today's code, not of the line. Each one goes away with the release that removes it.
+// The children of the concrete parents (profile, identities, captcha) import their parent. Their constraints
+// repeat what the tree says because the load order and the import check read the constraints alone.
+// A node with a param attribute and no package stands for a value of a feature's parameter (uvl = true in its
+// [tool.splent.config_schema]); the CLI selects it from the product's value before solving, which needs
+// splent_cli 1.40.0 or later. captcha_on_* are the forms of CAPTCHA_PROTECTED_FORMS this line has; contact,
+// comment and careers have no feature here. home_* are the choices of DATASET_HOME_ORDER (dataset 0.6.0).
+features
+	openhubs_spl
+		mandatory
+			plataforma
+				mandatory
+					theme {org 'splent-io', package 'splent_feature_theme'}
+					settings {org 'splent-io', package 'splent_feature_settings'}
+					public {org 'splent-io', package 'splent_feature_public'}
+					session
+						alternative
+							session_filesystem {org 'splent-io', package 'splent_feature_session_filesystem'}
+							session_redis {org 'splent-io', package 'splent_feature_session_redis'}
+				optional
+					admin {org 'splent-io', package 'splent_feature_admin'}
+					mail {org 'splent-io', package 'splent_feature_mail'}
+					redis {org 'splent-io', package 'splent_feature_redis'}
+					nginx {org 'splent-io', package 'splent_feature_nginx'}
+					elasticsearch {org 'splent-io', package 'splent_feature_elasticsearch'}
+					autodeploy {org 'splent-io', package 'splent_feature_autodeploy'}
+					mailhog {org 'splent-io', package 'splent_feature_mailhog'}
+					phpmyadmin {org 'splent-io', package 'splent_feature_phpmyadmin'}
+			identidad
+				mandatory
+					auth {org 'splent-io', package 'splent_feature_auth'}
+				optional
+					profile {org 'splent-io', package 'splent_feature_profile'}
+						optional
+							academic_profile {org 'splent-io', package 'splent_feature_academic_profile'}
+					signup {org 'splent-io', package 'splent_feature_signup'}
+					reset {org 'splent-io', package 'splent_feature_reset'}
+					confirmemail {org 'splent-io', package 'splent_feature_confirmemail'}
+					identities {org 'splent-io', package 'splent_feature_identities'}
+						or
+							orcid {org 'splent-io', package 'splent_feature_orcid'}
+							github {org 'splent-io', package 'splent_feature_github'}
+					captcha {org 'splent-io', package 'splent_feature_captcha'}
+						alternative
+							recaptcha {org 'splent-io', package 'splent_feature_recaptcha'}
+							cloudflare {org 'splent-io', package 'splent_feature_cloudflare'}
+							captcha_image {org 'splent-io', package 'splent_feature_captcha_image'}
+						or
+							captcha_on_signup {param 'CAPTCHA_PROTECTED_FORMS', value 'signup'}
+							captcha_on_login {param 'CAPTCHA_PROTECTED_FORMS', value 'login'}
+							captcha_on_reset {param 'CAPTCHA_PROTECTED_FORMS', value 'reset'}
+					apikeys {org 'splent-io', package 'splent_feature_apikeys'}
+			repositorio
+				mandatory
+					dataset {org 'splent-io', package 'splent_feature_dataset'}
+						mandatory
+							dataset_home_order {param 'DATASET_HOME_ORDER'}
+								alternative
+									home_newest {value 'newest'}
+									home_most_items {value 'items'}
+									home_most_rated {value 'rating'}
+					hubfile {org 'splent-io', package 'splent_feature_hubfile'}
+					tipo_artefacto
+						or
+							uvl {org 'splent-io', package 'splent_feature_uvl'}
+								optional
+									factlabel {org 'splent-io', package 'splent_feature_factlabel'}
+									generator {org 'splent-io', package 'splent_feature_generator'}
+				optional
+					publicacion
+						or
+							zenodo {org 'splent-io', package 'splent_feature_zenodo'}
+					apidocs {org 'splent-io', package 'splent_feature_apidocs'}
+					rating {org 'splent-io', package 'splent_feature_rating'}
+					explore {org 'splent-io', package 'splent_feature_explore'}
+					search {org 'splent-io', package 'splent_feature_search'}
+					statistics {org 'splent-io', package 'splent_feature_statistics'}
+		optional
+			sitio
+				optional
+					team {org 'splent-io', package 'splent_feature_team'}
+					media {org 'splent-io', package 'splent_feature_media'}
+					legal {org 'splent-io', package 'splent_feature_legal'}
+					about {org 'splent-io', package 'splent_feature_about'}
+
+constraints
+	theme => settings
+	session_redis => redis
+	admin => auth
+	autodeploy => admin
+	autodeploy => auth
+	// mailhog overrides the SMTP settings mail injects, so it loads after mail.
+	mailhog => mail
+	profile => auth
+	academic_profile => profile
+	signup => auth
+	reset => auth
+	reset => mail
+	confirmemail => auth
+	confirmemail => mail
+	identities => auth
+	identities => profile
+	orcid => auth
+	orcid => identities
+	orcid => profile
+	github => auth
+	github => identities
+	github => profile
+	recaptcha => captcha
+	recaptcha => settings
+	cloudflare => captcha
+	cloudflare => settings
+	captcha_image => captcha
+	// A protected form is one the product has.
+	captcha_on_signup => signup
+	captcha_on_reset => reset
+	apikeys => auth
+	dataset => auth
+	// dataset carries the REST API until dataset_api splits it out.
+	dataset => apikeys
+	// The best rated first is rating's order of the home page.
+	home_most_rated => rating
+	hubfile => auth
+	hubfile => dataset
+	// uvl extends hubfile's Hubfile and asks dataset who may read a model
+	// (its access policy), so it loads after both.
+	uvl => auth
+	uvl => dataset
+	uvl => hubfile
+	factlabel => hubfile
+	zenodo => auth
+	zenodo => dataset
+	rating => auth
+	rating => dataset
+	explore => dataset
+	explore => hubfile
+	explore => elasticsearch
+	// explore takes its facets from a registry, which uvl and factlabel fill; it still reads the votes,
+	// and statistics the UVL layer's and factlabel's figures, until they take them from slots (H8).
+	explore => rating
+	search => elasticsearch
+	statistics => dataset
+	statistics => hubfile
+	statistics => factlabel
+	statistics => uvl
+	statistics => rating
+	media => auth
+	team => media
