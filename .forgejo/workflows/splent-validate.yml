@@ -210,6 +210,18 @@ jobs:
           if [ -f "$lock" ]; then export PIP_CONSTRAINT="$PWD/$lock"; fi
           splent feature:pip-install
 
+      # uvlhub's own step, not the template's. The line's model orders the
+      # features, and so their migrations, their seeders and the app's
+      # hooks, as in development and in the image, which ships docker/spl.
+      # This job never had it: the features loaded in pyproject.toml order,
+      # hubfile's tables were created before dataset's, which they name,
+      # and the migrations below failed. spl:fetch runs with no product
+      # selected and takes the DOI pyproject.toml pins.
+      - name: Fetch the line's model
+        env:
+          SPLENT_APP: ""
+        run: splent spl:fetch openhubs_spl
+
       # Every migration the features ship, applied in order to an empty
       # database, as the first start of a deployment applies them. The
       # tests build their tables from the models, so a migration that
