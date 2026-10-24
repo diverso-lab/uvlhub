@@ -81,15 +81,82 @@ When it finishes the app is served at <http://localhost:5012>, and
 `frozen_urls.toml` lists every public address uvlhub.io 2.12 hands out that
 this product keeps answering, and `tests/test_frozen_urls.py` checks it
 against the app the product builds: the rules it serves, and the CORS and
-the sign-in answer flamapyIDE relies on. No `splent` command runs it yet
-(`product:test` runs the features' tests only) and neither does the CI, so
-run it in the web container whenever the pins change and before a release:
+the sign-in answer flamapyIDE relies on. `splent product:test` runs it with
+the product's other tests, after the features', and so does the CI. To run
+the product's tests alone, under the lock every test run shares:
 
 ```bash
-docker exec uvlhub_splent_web bash -lc 'cd /workspace/uvlhub_splent && python -m pytest tests -q -p no:cacheprovider'
+docker exec -u splent splent_cli_container bash -lc 'cd /workspace && flock /tmp/splent-test.lock splent product:test --own-tests'
 ```
 
 Its docstring says how to run it against working copies of the features.
+
+## Continuous integration
+
+Every push to `main` and every pull request runs
+`.forgejo/workflows/splent-validate.yml` on the forge. `splent
+product:sync-template --ci` wrote it, with one step of uvlhub's own in the
+test job, "Fetch the line's model": without the model that job loaded the
+features in `pyproject.toml` order, and the migrations of an empty
+database failed. That edit means the commands that change the pins no
+longer rewrite the file. `splent product:drift -v` shows what the
+template has changed since; apply it with `product:sync-template --ci`
+and put the step back, until the CLI's template fetches the model itself.
+
+- **validate** resolves the pinned releases in a clean clone (anonymously,
+  so every pinned feature has to be public) and runs `product:validate`:
+  the selection against the `openhubs_spl` model, the features' contracts,
+  imports, refiners and parameters. Then `product:build --no-image`, and it
+  fails when what the build writes differs from what is committed:
+  `deploy/`, `splent.contracts.json`, `docker/spl/` and
+  `docker/requirements.lock`. Last, `check:vendor`: no Keenthemes code in
+  the product or in any feature it pins, for production or development.
+- **lint** runs Ruff 0.11.8, the CLI's, on `src/uvlhub_splent`.
+- **test**, once validate passes, stands in for the web container: MariaDB
+  11.4, Redis, Elasticsearch and MailHog as services, the framework and the
+  CLI at `[tool.splent.runtime]`, every migration applied to an empty
+  database, and `splent product:test`: the unit, integration and
+  functional tests of every feature at its pinned release with the
+  product's refiners, then the product's own under `tests/`.
+
+The product's own tests are the public contract (`test_frozen_urls.py`),
+production as uvlhub deploys it (`test_deploy.py`: one host, files on
+volumes, the probes, the Docker socket), the boot in production
+(`test_production.py`), the seed of a development database
+(`test_seeders.py`) and the application shell (`test_shell.py`).
+
+`splent-upgrade.yml` opens a pull request with newer feature releases
+every Monday. Nothing deploys from the CI: a release is
+`splent product:release`, by hand, and none is made until D9 and D3 are
+decided.
+
+### When validate says the deploy artifacts differ
+
+They are generated, never edited. After a change to the pins, to
+`docker/docker-compose.prod.yml` or to an env example, run the build and
+commit what it changes:
+
+```bash
+splent product:build --no-image
+git add deploy splent.contracts.json docker/spl docker/requirements.lock pyproject.toml
+```
+
+### What the CI does not run
+
+The definition of done asks for more than the CI checks today (DoD-2.3):
+
+- **CSRF.** The tests run with `WTF_CSRF_ENABLED = False`, the framework's
+  `TestingConfig`: the forms are posted without their token, so the
+  integration on MariaDB with CSRF on is not covered.
+- **End to end.** No browser runs: the features' `e2e` and `load` levels
+  are left out of `product:test`, and there is no Playwright and no
+  accessibility check (axe).
+- **The migrator.** `tests/migration_v2` needs a MariaDB of its own and is
+  skipped (`bash tests/migration_v2/run_with_throwaway_db.sh` runs it).
+- **The image.** The production image is not built, scanned or started,
+  and no dependency audit (pip-audit, npm audit) or secret scan runs.
+- **The front end.** No JavaScript, CSS or template lint, no compiled
+  assets, and Ruff does not read `tests/`.
 
 ## Deploy to production
 
@@ -141,10 +208,9 @@ Two values follow from the topology:
   can reach the port.
 - `SPLENT_TRUSTED_PROXIES=1`. nginx is the only hop the app talks to, and it
   forwards one `X-Forwarded-For` (the client), one `X-Forwarded-Proto` and
-  one `X-Forwarded-Host`. The 2 that the CLI suggests for "the nginx feature
-  behind a TLS front" makes the app look for two values in each and ignore
-  the one it finds: `http://` links, which GitHub refuses as a callback,
-  cookies without `Secure` and no HSTS.
+  one `X-Forwarded-Host`. 2 would make the app look for two values in each
+  and ignore the one it finds: `http://` links, which GitHub refuses as a
+  callback, cookies without `Secure` and no HSTS.
 
 Publishing to Zenodo still runs inside the request, so nginx gives the
 publishing routes and the ZIP downloads `NGINX_LONG_REQUEST_TIMEOUT=600s` and
