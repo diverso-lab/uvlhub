@@ -2,7 +2,9 @@
 // Version 3 is still a transition model: it holds the packages that exist today, so every product of the line
 // validates now, and it moves towards the target model as the core becomes generic.
 //   - uvl is the UVL artifact type, one package since featuremodel and flamapy merged into it (H4).
-//   - publicacion only offers zenodo until local_publication exists.
+//   - publicacion is mandatory and an or-group of the publication providers (dataset's DepositionProvider, H6):
+//     zenodo deposits on Zenodo with a DOI, local_publication publishes on the hub with an identifier of its own.
+//     A product installs one or both, and each dataset is published through one of them.
 //   - dataset => apikeys, explore => rating and statistics => uvl | factlabel | rating
 //     are couplings of today's code, not of the line. Each one goes away with the release that removes it.
 // The children of the concrete parents (profile, identities, captcha) import their parent. Their constraints
@@ -30,6 +32,7 @@ features
 					nginx {org 'splent-io', package 'splent_feature_nginx'}
 					elasticsearch {org 'splent-io', package 'splent_feature_elasticsearch'}
 					autodeploy {org 'splent-io', package 'splent_feature_autodeploy'}
+					backup {org 'splent-io', package 'splent_feature_backup'}
 					mailhog {org 'splent-io', package 'splent_feature_mailhog'}
 					phpmyadmin {org 'splent-io', package 'splent_feature_phpmyadmin'}
 			identidad
@@ -66,6 +69,10 @@ features
 									home_most_items {value 'items'}
 									home_most_rated {value 'rating'}
 					hubfile {org 'splent-io', package 'splent_feature_hubfile'}
+					publicacion
+						or
+							zenodo {org 'splent-io', package 'splent_feature_zenodo'}
+							local_publication {org 'splent-io', package 'splent_feature_local_publication'}
 					tipo_artefacto
 						or
 							uvl {org 'splent-io', package 'splent_feature_uvl'}
@@ -73,9 +80,6 @@ features
 									factlabel {org 'splent-io', package 'splent_feature_factlabel'}
 									generator {org 'splent-io', package 'splent_feature_generator'}
 				optional
-					publicacion
-						or
-							zenodo {org 'splent-io', package 'splent_feature_zenodo'}
 					apidocs {org 'splent-io', package 'splent_feature_apidocs'}
 					rating {org 'splent-io', package 'splent_feature_rating'}
 					explore {org 'splent-io', package 'splent_feature_explore'}
@@ -134,8 +138,10 @@ constraints
 	uvl => dataset
 	uvl => hubfile
 	factlabel => hubfile
+	// The providers implement dataset's DepositionProvider (dataset 0.7.0), so they load after it.
 	zenodo => auth
 	zenodo => dataset
+	local_publication => dataset
 	rating => auth
 	rating => dataset
 	explore => dataset
