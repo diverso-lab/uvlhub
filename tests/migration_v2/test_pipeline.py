@@ -597,3 +597,22 @@ def test_a_second_run_is_refused_then_forced_and_gives_the_same_database(
     b2.write_text("-- B2, taken just now\n")
     run(replace(migrated.params, force=True, b2=b2))
     assert _digest(migrated, tables) == before
+
+
+def test_e8_empties_only_what_hubfile_keeps(tmp_path):
+    from uvlhub_splent.migration_v2.files import empty_store
+
+    mirror = tmp_path / ".legacy_mirror"
+    (mirror / "user_1").mkdir(parents=True)
+    (tmp_path / "datasets" / "1" / "src").mkdir(parents=True)
+    (tmp_path / "trash").mkdir()
+    empty_store(tmp_path, mirror)
+    assert sorted(p.name for p in tmp_path.iterdir()) == [".legacy_mirror"]
+    assert (mirror / "user_1").is_dir()
+
+    (tmp_path / "datasets").mkdir()
+    (tmp_path / "user_1").mkdir()
+    with pytest.raises(Refused) as refusal:
+        empty_store(tmp_path, mirror)
+    assert "holds user_1" in refusal.value.reasons[0]
+    assert (tmp_path / "datasets").is_dir()

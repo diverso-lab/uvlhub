@@ -29,6 +29,7 @@ import shutil
 from pathlib import Path
 
 import sqlalchemy as sa
+from splent_io.splent_feature_hubfile.storage import DATASETS, TEMPORARY, TRASH, UPLOADS
 
 from uvlhub_splent.migration_v2.db import insert_batches, qualified
 from uvlhub_splent.migration_v2.ledger import stop_on_conflicts
@@ -53,13 +54,32 @@ def legacy_path(row) -> str:
     return "/".join(parts)
 
 
+# What hubfile keeps at the top of its store. Emptying the store removes
+# these and nothing else.
+STORE_FOLDERS = (DATASETS, UPLOADS, TEMPORARY, TRASH)
+
+
 def empty_store(store: Path, mirror: Path) -> None:
-    for entry in store.iterdir():
-        if entry == mirror:
-            continue
+    """Remove what hubfile keeps in ``store``, the mirror aside (principle 3:
+    every run links again). Anything else there means ``store`` is not
+    hubfile's store (v2.12's uploads/, a volume's root), and nothing is
+    removed."""
+    stray = sorted(
+        entry.name
+        for entry in store.iterdir()
+        if entry != mirror and entry.name not in STORE_FOLDERS
+    )
+    if stray:
+        raise Refused(
+            "E8",
+            f"{store} holds {', '.join(stray)}, which hubfile's store does not: "
+            "it is not the store, and nothing was removed",
+        )
+    for name in STORE_FOLDERS:
+        entry = store / name
         if entry.is_dir() and not entry.is_symlink():
             shutil.rmtree(entry)
-        else:
+        elif entry.exists() or entry.is_symlink():
             entry.unlink()
 
 
