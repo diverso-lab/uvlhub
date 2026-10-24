@@ -1,30 +1,32 @@
 services:
 
   uvlhub_splent_web_deploy:
-    # The local build's name, which product:build turns into
-    # ${SPLENT_IMAGE:-<the release's image>} in the deploy bundle. The
-    # autodeploy agent then runs each release by its digest, never :latest.
-    image: uvlhub_splent:latest
+    # The image product:build made on this host, unless SPLENT_IMAGE in
+    # deploy/.env names one a release published to a registry (for example
+    # the stable channel, which the autodeploy feature follows). The deploy
+    # bundle product:build writes defaults to the published image.
+    image: ${SPLENT_IMAGE:-uvlhub_splent:latest}
     container_name: uvlhub_splent_web_deploy
+    # Back up after a host reboot, a docker daemon restart or an OOM kill.
+    # Only an explicit `docker stop` (or product:deploy --down) keeps it down.
+    restart: unless-stopped
     env_file:
-      - ./.env.deploy
+      - ../deploy/.env
     environment:
       # The storage roots, at the targets of their named volumes below. Set
       # here, from the same expression as each mount's target, the app and
-      # the volume cannot disagree: an empty or deleted line in .env.deploy
+      # the volume cannot disagree: an empty or deleted line in deploy/.env
       # moves both, never one, so no file is ever written to the container's
       # own layer and lost with it. Dataset files live under
       # PROTECTED_UPLOADS_DIR.
       PROTECTED_UPLOADS_DIR: ${PROTECTED_UPLOADS_DIR:-/workspace/uvlhub_splent/protected_uploads}
       ARCHIVE_DIR: ${ARCHIVE_DIR:-/workspace/uvlhub_splent/archive}
     ports:
-      # Host interface for the published web port, taken from
-      # SPLENT_WEB_BIND_HOST in .env.deploy (marked user-tunable there, so
-      # product:deploy keeps whatever you set). It falls back to 0.0.0.0, all
-      # interfaces, when the variable is absent, which matches the historical
-      # behaviour. 127.0.0.1 is the right value when a proxy on the host
-      # terminates TLS and forwards traffic to loopback.
-      - "${SPLENT_WEB_BIND_HOST:-0.0.0.0}:5012:5000"
+      # Host interface and port for the web app, from SPLENT_WEB_BIND_HOST
+      # and SPLENT_WEB_PORT in deploy/.env. Every interface by default;
+      # 127.0.0.1 is the right value when a proxy on the host terminates TLS
+      # and forwards traffic to loopback.
+      - "${SPLENT_WEB_BIND_HOST:-0.0.0.0}:${SPLENT_WEB_PORT:-5012}:5000"
     volumes:
       # Uploaded and generated files live inside the container and are lost
       # on every redeploy unless they are kept on named volumes.
@@ -34,35 +36,35 @@ services:
     depends_on:
       uvlhub_splent_db_deploy:
         condition: service_healthy
+    networks:
+      - splent_network
+    command: [ "bash", "-c", "bash /workspace/uvlhub_splent/entrypoints/entrypoint.prod.sh" ]
+    # Python is in every production image, so the probe needs no extra
+    # package. Ready, not just alive: the framework's /readyz answers 200
+    # when the database and the services the product declares answer,
+    # before any of the app's code runs and whatever the Host. An app
+    # without it is asked at "/", where any answer below 500 will do.
+    # product:build writes the same probe (WEB_HEALTH_PROBE). The start
+    # period covers a cold start, which runs every migration first.
     healthcheck:
-      # Ready, not just alive: the framework's /readyz answers 200 when the
-      # database and the session store answer, before any of the app's code
-      # runs and whatever the Host. The autodeploy agent asks it too before
-      # it keeps a release. A cold start waits for the database and migrates
-      # before gunicorn binds, hence the start period.
-      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://127.0.0.1:5000/readyz"]
+      test: ["CMD", "python3", "-c", "import http.client as h\ndef status(path):\n    c = h.HTTPConnection('127.0.0.1', 5000, timeout=4)\n    c.request('GET', path)\n    return c.getresponse().status\nready = status('/readyz')\nok = ready == 200 if ready in (200, 503) else status('/') < 500\nraise SystemExit(not ok)\n"]
       interval: 30s
       timeout: 5s
       retries: 3
       start_period: 180s
-    networks:
-      - splent_network
-    command: [ "bash", "-c", "bash /workspace/uvlhub_splent/entrypoints/entrypoint.prod.sh" ]
 
   uvlhub_splent_db_deploy:
     image: mariadb:11.4
     container_name: uvlhub_splent_db_deploy
+    restart: unless-stopped
     env_file:
-      - ./.env.deploy
+      - ../deploy/.env
     command: --default-authentication-plugin=mysql_native_password
     ports:
-      # Host interface for the published database port, taken from
-      # SPLENT_DB_BIND_HOST in .env.deploy (marked user-tunable there). It
-      # falls back to 0.0.0.0 when the variable is absent, matching the
-      # historical behaviour. 127.0.0.1 keeps the database reachable from the
-      # host itself only. The compose network already connects the web
-      # container to it, so the published port is for host-side tooling.
-      - "${SPLENT_DB_BIND_HOST:-0.0.0.0}:33072:3306"
+      # The web container reaches the database over the project network, so
+      # this port only serves tooling on the host itself, and it is published
+      # on loopback unless SPLENT_DB_BIND_HOST in deploy/.env says otherwise.
+      - "${SPLENT_DB_BIND_HOST:-127.0.0.1}:${SPLENT_DB_PORT:-33072}:3306"
     volumes:
       - uvlhub_splent_db_deploy_data:/var/lib/mysql
     healthcheck:

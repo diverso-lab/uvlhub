@@ -14,9 +14,11 @@ with the product's other tests:
         'cd /workspace && flock /tmp/splent-test.lock splent product:test --own-tests'
 """
 
+import http.client
 import re
 import tomllib
 from pathlib import Path
+from types import SimpleNamespace
 from urllib.parse import urlsplit
 
 import pytest
@@ -183,9 +185,30 @@ def test_the_database_is_on_a_named_volume():
 # ── Deploys ──────────────────────────────────────────────────────────────
 
 
-def test_the_web_service_is_ready_when_readyz_says_so():
-    healthcheck = _services(COMPOSE)[WEB]["healthcheck"]
-    assert "http://127.0.0.1:5000/readyz" in healthcheck["test"]
+@pytest.mark.parametrize("readyz, healthy", [(200, True), (503, False)])
+def test_the_web_service_is_ready_when_readyz_says_so(monkeypatch, readyz, healthy):
+    """The probe runs in the container's Python, as product:build writes it:
+    healthy when /readyz answers 200, not when it answers 503 because the
+    database or the session store does not."""
+    test = _services(COMPOSE)[WEB]["healthcheck"]["test"]
+    assert test[:3] == ["CMD", "python3", "-c"]
+    asked = []
+
+    class Connection:
+        def __init__(self, host, port, timeout):
+            self.address = (host, port)
+
+        def request(self, method, path):
+            asked.append((*self.address, path))
+
+        def getresponse(self):
+            return SimpleNamespace(status=readyz)
+
+    monkeypatch.setattr(http.client, "HTTPConnection", Connection)
+    with pytest.raises(SystemExit) as probe:
+        exec(test[3], {})
+    assert asked == [("127.0.0.1", 5000, "/readyz")]
+    assert (not probe.value.code) is healthy
 
 
 def test_every_long_lived_service_has_a_healthcheck():
