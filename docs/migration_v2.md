@@ -133,7 +133,7 @@ database and skips the rest, saying how to run them.
 
 - **DM-15, the identifiers:** `user.email`, `email_canonical`,
   `external_identity.provider` and `provider_id` are `utf8mb4_bin` (auth
-  1.26.0, identities 0.5.0). `datasets.pid` (dataset 0.7.0) is at the
+  1.26.0, identities 0.5.0). `datasets.pid` (dataset 0.8.0) is at the
   database's collation, where DM-15 asks `utf8mb4_bin`, and `concept_pid`
   and `dataset_tag.name` have no column yet; the report lists them. With
   the address compared exactly, C-13's clashes are the ones auth's

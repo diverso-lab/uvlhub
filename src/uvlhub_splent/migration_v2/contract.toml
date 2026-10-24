@@ -26,7 +26,7 @@
 # auth (1.26.0: email, email_canonical) and identities (0.5.0: provider,
 # provider_id) compare exactly. `dm15` names the collation DM-15 asks for
 # where a pinned feature does not give it yet (datasets.pid, which dataset
-# 0.7.0 leaves at the database's): V-14 checks `collation`, what the schema
+# 0.8.0 leaves at the database's): V-14 checks `collation`, what the schema
 # is, and the report lists every `dm15` still pending, with [dm15] missing
 # below.
 
@@ -46,7 +46,8 @@ splent_feature_academic_profile = { version = "0.1.0", head = "pu0002" }
 splent_feature_apikeys = { version = "0.9.0", head = "apikeys0002_lifecycle" }
 splent_feature_auth = { version = "1.26.0", head = "auth0009_email_collation" }
 splent_feature_confirmemail = { version = "2.2.0", head = "126da35a357f" }
-splent_feature_dataset = { version = "0.7.0", head = "dataset0006_idempotency_keys" }
+splent_feature_curation = { version = "0.1.0", head = "curation0001_requests" }
+splent_feature_dataset = { version = "0.8.0", head = "dataset0006_idempotency_keys" }
 splent_feature_factlabel = { version = "0.5.0", head = "d934ec20c841" }
 splent_feature_github = { version = "0.4.1", head = "github0002_into_ext_identity" }
 splent_feature_hubfile = { version = "0.7.0", head = "hubfile0003_upload_sessions" }
@@ -368,6 +369,10 @@ role = "empty"
 
 [tables.confirmemail]
 owner = "splent_feature_confirmemail"
+role = "empty"
+
+[tables.curation_request]
+owner = "splent_feature_curation"
 role = "empty"
 
 [tables.dataset_idempotency_key]
