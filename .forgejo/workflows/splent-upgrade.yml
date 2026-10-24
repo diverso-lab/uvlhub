@@ -1,4 +1,8 @@
-# Written by splent (product:create, product:sync-template --ci).
+# splent-generated sha256 ff5bd1c3cace4078028ff03dabc185d7fd46f841a632e621e5efb3d7eed5e8aa
+# Written by splent (product:create, product:sync-template --ci). While
+# it stays as written, which the line above records, the commands that
+# change the product's features rewrite it. Once edited it is left
+# alone, and product:sync-template --ci shows and applies the difference.
 #
 # On a schedule the pinned features are compared with what the forge and PyPI
 # serve. When pip finds newer releases that install together, keep every
