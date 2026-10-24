@@ -25,9 +25,10 @@
 # where the column says otherwise: utf8mb4_bin for the identifiers, which
 # auth (1.26.0: email, email_canonical) and identities (0.5.0: provider,
 # provider_id) compare exactly. `dm15` names the collation DM-15 asks for
-# where a pinned feature does not give it yet (no column today): V-14 checks
-# `collation`, what the schema is, and the report lists every `dm15` still
-# pending, with [dm15] missing below.
+# where a pinned feature does not give it yet (datasets.pid, which dataset
+# 0.7.0 leaves at the database's): V-14 checks `collation`, what the schema
+# is, and the report lists every `dm15` still pending, with [dm15] missing
+# below.
 
 [contract]
 version = 2
@@ -45,10 +46,10 @@ splent_feature_academic_profile = { version = "0.1.0", head = "pu0002" }
 splent_feature_apikeys = { version = "0.9.0", head = "apikeys0002_lifecycle" }
 splent_feature_auth = { version = "1.26.0", head = "auth0009_email_collation" }
 splent_feature_confirmemail = { version = "2.2.0", head = "126da35a357f" }
-splent_feature_dataset = { version = "0.6.0", head = "dataset0004_orphan_metadata" }
+splent_feature_dataset = { version = "0.7.0", head = "dataset0006_idempotency_keys" }
 splent_feature_factlabel = { version = "0.5.0", head = "d934ec20c841" }
 splent_feature_github = { version = "0.4.1", head = "github0002_into_ext_identity" }
-splent_feature_hubfile = { version = "0.6.0", head = "hubfile0003_upload_sessions" }
+splent_feature_hubfile = { version = "0.7.0", head = "hubfile0003_upload_sessions" }
 splent_feature_identities = { version = "0.5.0", head = "identities0003_exact_ids" }
 splent_feature_mail = { version = "1.5.0", head = "mail0001_outbox" }
 splent_feature_media = { version = "0.11.1", head = "media0005_thumbnail" }
@@ -78,7 +79,6 @@ write_dataset = "write_dataset"
 # that does not exist. The report lists them with the `dm15` columns.
 [dm15]
 missing = [
-    "datasets.pid (DL-12, D14: dataset_doi stays in ds_meta_data)",
     "datasets.concept_pid (dataset_concept_doi stays in ds_meta_data)",
     "dataset_tag.name (C-23: tags stay a string in ds_meta_data.tags)",
 ]
@@ -198,6 +198,10 @@ withdrawn_at = { type = "datetime", nullable = true, rule = "NULL" }
 withdrawal_reason = { type = "varchar(32)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "NULL" }
 withdrawal_note = { type = "varchar(500)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "NULL" }
 withdrawn_by_id = { type = "int(11)", nullable = true, rule = "NULL" }
+provider = { type = "varchar(32)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "zenodo when ds_meta_data has a DOI or a deposition_id, NULL otherwise (dataset0005)" }
+pid = { type = "varchar(255)", nullable = true, collation = "utf8mb4_unicode_ci", dm15 = "utf8mb4_bin", rule = "ds_meta_data.dataset_doi, which stays there too, NULL without one (dataset0005)" }
+pid_scheme = { type = "varchar(16)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "doi with a pid, NULL otherwise (dataset0005)" }
+publication_error = { type = "longtext", nullable = true, collation = "utf8mb4_bin", rule = "NULL" }
 
 [tables.author]
 owner = "splent_feature_dataset"
@@ -364,6 +368,10 @@ role = "empty"
 
 [tables.confirmemail]
 owner = "splent_feature_confirmemail"
+role = "empty"
+
+[tables.dataset_idempotency_key]
+owner = "splent_feature_dataset"
 role = "empty"
 
 [tables.doi_mapping]

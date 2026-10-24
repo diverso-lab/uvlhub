@@ -373,7 +373,12 @@ the upload has no CORS and cors_origin fails. The message of the signed-out \
 before saving a model from flamapyIDE to UVLHub." and 3.0 says "You need to \
 sign in before uploading to uvlhub.", since dataset is not the UVL layer. \
 /api/v1/auth/status keeps the 2.12 wording. The contract owner accepts the \
-change or asks for the old text back"""
+change or asks for the old text back. Since dataset 0.7.0 the upload \
+takes an optional Idempotency-Key (PB-2): the same key and call get the \
+first answer back for a day, with Idempotent-Replayed: true. Its 409 (the \
+key still being processed) and 422 (the key sent with another call) are \
+answered only when the header is sent, so a client of 2.12, which sends \
+none, sees no new status"""
 
 [[url]]
 rows = [9, 10]
@@ -386,7 +391,19 @@ status = "served"
 endpoint = "dataset.api_publish_dataset"
 served_by = "dataset"
 plan = "PB-2"
-note = "The 423 is answered by nginx during the cutover (06 §9.3), not by the app"
+note = """The 423 is answered by nginx during the cutover (06 §9.3), not by \
+the app, and "never a 5xx or a 202" now holds for it alone. Since dataset \
+0.7.0 (PB-2, D5 option a, which the contract owner accepted, with the \
+change from 2.12's 200 with a null DOI to an error status) the call \
+waits at most DATASET_PUBLISH_WAIT seconds (540 in production) and answers \
+200 only with the identifier minted; past the wait a 503 \
+publication_pending with status_url, which a client must not read as \
+nothing minted. 202 only to a request with Prefer: respond-async; 409 for \
+a publication under way, or an Idempotency-Key still being processed; 429 \
+for an account with too many publications under way \
+(DATASET_PUBLISH_MAX_IN_FLIGHT, no limit in production); 422 when the \
+provider refuses the metadata, or the Idempotency-Key came with another \
+call. The 200 adds pid, pid_scheme, provider and landing_url"""
 
 [[url]]
 rows = [9, 10]
@@ -399,7 +416,13 @@ status = "served"
 endpoint = "dataset.api_new_dataset_version"
 served_by = "dataset"
 plan = "PB-2"
-note = "The 423 is answered by nginx during the cutover (06 §9.3), not by the app"
+note = """The 423 is answered by nginx during the cutover (06 §9.3), not by \
+the app, and "never a 5xx or a 202" now holds for it alone. Since dataset \
+0.7.0 a new version answers as the publish does (PB-2, D5 option a): 200 \
+with the identifier after a wait of at most DATASET_PUBLISH_WAIT seconds, \
+503 publication_pending past it, 202 only with Prefer: respond-async, \
+409, 422 and 429 as there, and the optional Idempotency-Key. The 200 adds \
+pid, pid_scheme, provider and landing_url"""
 
 [[url]]
 rows = [9]
@@ -521,6 +544,7 @@ target = "Additive changes only"
 status = "served"
 endpoint = "dataset.api_dataset_detail"
 served_by = "dataset"
+note = "dataset 0.7.0 adds the keys status, provider, pid, pid_scheme and landing_url (PB-2); every key of 2.12 stays"
 
 [[url]]
 rows = [9]

@@ -174,8 +174,9 @@ def v01_accounted(ctx, connection) -> Check:
 
 def v02_dois(ctx, connection) -> Check:
     """V-02: every DOI of the source is a dataset of 3.0, a tombstone, or
-    dropped with its metadata. 3.0 keeps the DOI in ds_meta_data (no pid
-    yet, D14), so that is where it is looked for, byte for byte."""
+    dropped with its metadata. 3.0 keeps the DOI in ds_meta_data, which the
+    /doi landings and API v1 read, as well as in datasets.pid (dataset0005),
+    so it is looked for in ds_meta_data, byte for byte."""
     p = ctx.params
     lost = connection.execute(
         sa.text(

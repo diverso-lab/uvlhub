@@ -48,17 +48,17 @@ features = [
     "splent-io/splent_feature_orcid@v0.4.1",
     "splent-io/splent_feature_github@v0.4.1",
     "splent-io/splent_feature_autodeploy@v0.4.0",
-    "splent-io/splent_feature_hubfile@v0.6.0",
-    "splent-io/splent_feature_dataset@v0.6.0",
     "splent-io/splent_feature_explore@v0.4.0",
     "splent-io/splent_feature_factlabel@v0.5.0",
     "splent-io/splent_feature_rating@v0.4.0",
-    "splent-io/splent_feature_zenodo@v0.3.0",
     "splent-io/splent_feature_uvl@v0.1.0",
     "splent-io/splent_feature_statistics@v0.4.0",
     "splent-io/splent_feature_auth@v1.26.0",
     "splent-io/splent_feature_identities@v0.5.0",
     "splent-io/splent_feature_apikeys@v0.9.0",
+    "splent-io/splent_feature_hubfile@v0.7.0",
+    "splent-io/splent_feature_dataset@v0.7.0",
+    "splent-io/splent_feature_zenodo@v0.4.0",
 ]
 features_dev = ["splent-io/splent_feature_mailhog@v1.2.0", "splent-io/splent_feature_phpmyadmin@v1.1.0"]
 features_prod = []
@@ -126,6 +126,13 @@ DATASET_QR_LOGO = "media/logos/uvlhub_ball.png"
 # uvlhub.io lists first the datasets with the most feature models
 # (01 §5.5): those that hold the most items, uvl's UVL models.
 DATASET_HOME_ORDER = "items"
+# uvlhub.io 2.12 deposited the whole folder of a dataset, its UVL models and
+# what uvl derives from them (Glencoe, DIMACS, SPLOT), so the records keep
+# carrying both.
+DATASET_DEPOSIT_CONTENT = "sources_and_derived"
+# uvlhub.io 2.12 gave every deposit the keyword uvlhub after the dataset's
+# own tags, so the hub's records are found together on Zenodo.
+ZENODO_KEYWORDS = ["uvlhub"]
 # /team lists every organisation behind uvlhub, with its logo, description
 # and website, whether or not it lists people yet.
 TEAM_SHOW_EMPTY_ROLES = true

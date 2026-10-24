@@ -133,8 +133,9 @@ database and skips the rest, saying how to run them.
 
 - **DM-15, the identifiers:** `user.email`, `email_canonical`,
   `external_identity.provider` and `provider_id` are `utf8mb4_bin` (auth
-  1.26.0, identities 0.5.0). What DM-15 still asks has no column yet:
-  `pid`, `concept_pid` and `dataset_tag.name`; the report lists them. With
+  1.26.0, identities 0.5.0). `datasets.pid` (dataset 0.7.0) is at the
+  database's collation, where DM-15 asks `utf8mb4_bin`, and `concept_pid`
+  and `dataset_tag.name` have no column yet; the report lists them. With
   the address compared exactly, C-13's clashes are the ones auth's
   canonical form finds (two addresses v2.12 told apart, one once NFKC,
   casefold and a stripped space are applied), and a provider is written
@@ -162,6 +163,6 @@ database and skips the rest, saying how to run them.
 - **E5 first pass**: `content.DEFERRED` lists what it leaves (descriptions
   copied as they are, lineages loaded as they are with their faults listed,
   `published_at` = `created_at`, no `status = 'legacy'` on metrics, no
-  reason on cancelled offers, no column yet for `public_id`, `pid`,
+  reason on cancelled offers, no column yet for `public_id`,
   `lineage_root_id`, author position or user).
 - **Ghost drafts** follow DM-3's recommendation (30 days, `--ghost-draft-days`).

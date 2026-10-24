@@ -214,10 +214,14 @@ Two values follow from the topology:
   and ignore the one it finds: `http://` links, which GitHub refuses as a
   callback, cookies without `Secure` and no HSTS.
 
-Publishing to Zenodo still runs inside the request, so nginx gives the
-publishing routes and the ZIP downloads `NGINX_LONG_REQUEST_TIMEOUT=600s` and
-gunicorn gets `GUNICORN_TIMEOUT=630`, a little more, so nginx gives up first
-and the worker still records the DOI.
+A publication runs in the background, and the request that starts it waits
+for the DOI at most `DATASET_PUBLISH_WAIT=540` seconds; past it API v1
+answers 503 `publication_pending` with where to follow it, and the web 202
+(dataset's D5, option a). nginx gives the publishing routes and the ZIP
+downloads `NGINX_LONG_REQUEST_TIMEOUT=600s`, more than the wait, and
+gunicorn gets `GUNICORN_TIMEOUT=630`, a little more again.
+`DATASET_PUBLISH_MAX_IN_FLIGHT=0` puts no limit on the publications of one
+account under way at once, since the marketplace publishes from one.
 
 Left to the operator on purpose:
 
@@ -259,6 +263,35 @@ the links.
   backed up: after a restore, `splent feature:explore reindex` rebuilds it.
 - Off-host, encrypted backups come with `splent_feature_backup`, once the
   product selects it.
+
+### Scheduled jobs
+
+Nothing in the stack runs on a schedule, so the host's crontab runs the
+periodic commands of the features in the web container, as the user the
+app runs as:
+
+```
+*/15 * * * * docker exec -u splent uvlhub_splent_web_deploy splent feature:dataset publication-reconcile
+*/15 * * * * docker exec -u splent uvlhub_splent_web_deploy splent feature:mail retry
+20 4 * * *   docker exec -u splent uvlhub_splent_web_deploy splent feature:mail purge
+0 * * * *    docker exec -u splent uvlhub_splent_web_deploy splent feature:hubfile uploads-cleanup
+40 3 * * *   docker exec -u splent uvlhub_splent_web_deploy splent feature:apikeys notify-expiring
+50 3 * * 0   docker exec -u splent uvlhub_splent_web_deploy splent feature:apikeys purge
+```
+
+- `publication-reconcile` settles what the publications left behind: it
+  keeps the DOI of a publication Zenodo minted while the hub was not
+  listening (a worker restarted half way), with its concept DOI, deletes
+  the draft of one that stopped before, sends the metadata changes that
+  waited (`sync_pending`), and lists what it could not settle, exiting
+  with 1 then. `--dry-run` only asks Zenodo.
+- `mail retry` sends again what lost its retries, `mail purge` drops what
+  is older than `MAIL_OUTBOX_KEEP_DAYS`.
+- `uploads-cleanup` removes the uploads that expired with their files.
+- `notify-expiring` mails the owners of the tokens about to expire, and
+  `apikeys purge` deletes the ones revoked or expired long ago.
+
+The others exit with 0 when there is nothing to do.
 
 ## Migrating uvlhub.io 2.12
 

@@ -152,9 +152,13 @@ def test_the_report_lists_what_dm15_still_asks(migrated, contract):
     pending = migrated.report["dm15_pending"]
     assert pending == contract.dm15_pending()
     # auth 1.26.0 and identities 0.5.0 compare the identifiers exactly;
-    # what is left is what no pinned feature has a column for yet.
-    assert all(line.endswith("no such column yet") for line in pending)
-    assert any("pid" in line for line in pending)
+    # what is left is dataset 0.7.0's pid, at the database's collation, and
+    # what no pinned feature has a column for yet.
+    assert pending[0] == (
+        "datasets.pid: utf8mb4_unicode_ci, DM-15 asks utf8mb4_bin"
+    )
+    assert all(line.endswith("no such column yet") for line in pending[1:])
+    assert any("concept_pid" in line for line in pending)
 
 
 def test_a_drift_is_named(contract):
@@ -173,7 +177,7 @@ def test_a_drift_is_named(contract):
     columns["user"]["email"]["collation"] = "utf8mb4_unicode_ci"
     columns["user"]["role"]["nullable"] = True
     columns["hubfiles"]["name"]["type"] = "varchar(255)"
-    columns["datasets"]["pid"] = {
+    columns["datasets"]["concept_pid"] = {
         "type": "varchar(255)",
         "nullable": True,
         "collation": "utf8mb4_bin",
@@ -186,7 +190,7 @@ def test_a_drift_is_named(contract):
     assert found == [
         "dataset_tag: a table the contract does not know",
         "api_token.prefix: missing",
-        "datasets.pid: a column the contract does not know",
+        "datasets.concept_pid: a column the contract does not know",
         "hubfiles.name: varchar(255), the contract says varchar(120)",
         "user.email: collation utf8mb4_unicode_ci, the contract says utf8mb4_bin",
         "user.role: NULL, the contract says NOT NULL",
@@ -196,11 +200,11 @@ def test_a_drift_is_named(contract):
 def test_heads_and_versions_are_held_to_the_contract(contract):
     applied = {name: entry["head"] for name, entry in contract.features.items()}
     assert contract_module.head_differences(contract, applied) == []
-    applied["splent_feature_dataset"] = "dataset0005_something"
+    applied["splent_feature_dataset"] = "dataset0007_something"
     # A feature of a later milestone (citation, H9), which no contract knows yet.
     applied["splent_feature_citation"] = "citation0001"
     assert contract_module.head_differences(contract, applied) == [
-        "splent_feature_dataset at dataset0005_something, the contract expects dataset0004_orphan_metadata",
+        "splent_feature_dataset at dataset0007_something, the contract expects dataset0006_idempotency_keys",
         "splent_feature_citation migrated, a feature the contract does not know",
     ]
     older = replace(

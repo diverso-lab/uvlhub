@@ -302,6 +302,16 @@ def test_e5_loads_the_datasets_with_the_state_their_metadata_implies(migrated):
         and datasets[5]["published_at"] is None
     )
     assert datasets[4]["publisher_record_id"] == "1007"
+    # The identifier as dataset0005 makes it neutral: a DOI is the pid, and
+    # a DOI or a deposition is zenodo's.
+    identifier = {
+        i: (d["provider"], d["pid"], d["pid_scheme"]) for i, d in datasets.items()
+    }
+    assert identifier[1] == ("zenodo", "10.5281/zenodo.1001", "doi")
+    assert identifier[3] == ("zenodo", "10.5281/zenodo.1005", "doi")
+    assert identifier[4] == ("zenodo", None, None)
+    assert identifier[5] == (None, None, None)
+    assert all(d["publication_error"] is None for d in datasets.values())
     assert datasets[2]["dataset_origin_id"] == 1 and datasets[2]["dataset_version"] == 2
     assert {
         i: d["feature_model_count"] for i, d in datasets.items() if i in (1, 5, 13)

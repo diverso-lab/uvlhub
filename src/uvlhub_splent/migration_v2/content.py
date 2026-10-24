@@ -13,6 +13,8 @@ What it applies already:
 
 - status and visibility by dataset's own state_from_metadata (DL-1);
   published_at is created_at, as dataset0002 sets it;
+- the identifier as dataset0005 makes it neutral: a DOI is the pid, with
+  the scheme doi, and a dataset with a DOI or a deposition is zenodo's;
 - the authors of an anonymous dataset in private_authors, as dataset0003
   moves them (DS-3); an author's ORCID normalised, NULL when invalid (C-15);
 - the seed's datasets (P-25), ghost drafts (DM-3), orphan metadata (P-01:
@@ -37,7 +39,12 @@ import json
 from collections import defaultdict
 from datetime import timedelta
 
-from splent_io.splent_feature_dataset.models import DatasetStatus, state_from_metadata
+from splent_io.splent_feature_dataset.models import (
+    DOI_SCHEME,
+    LEGACY_PROVIDER,
+    DatasetStatus,
+    state_from_metadata,
+)
 from splent_io.splent_feature_hubfile.storage import checksum_algorithm
 
 from uvlhub_splent.migration_v2 import rules
@@ -63,7 +70,7 @@ DEFERRED = (
     "C-10, C-11, C-30: found and left open, for the decisions (DM-10)",
     "C-16, C-23: publication_doi and tags are copied as they are (DS-1 and "
     "dataset_tag do not exist in the pinned features)",
-    "CO-5, D14, DL-5, DL-6: public_id, pid, concept_pid, lineage_root_id, "
+    "CO-5, D14, DL-5, DL-6: public_id, concept_pid, lineage_root_id, "
     "author.position and author.user_id have no column yet",
     "§7.3: hubfile_metrics is copied without status = 'legacy', which "
     "factlabel has no column for",
@@ -479,6 +486,7 @@ def content(ctx) -> None:
     for dataset in chosen.values():
         meta = metas[dataset["ds_meta_data_id"]]
         status, visibility = status_of[dataset["id"]]
+        doi = _doi(meta)
         miscounted += dataset["feature_model_count"] != counted[dataset["id"]]
         dataset_rows.append(
             {
@@ -502,6 +510,14 @@ def content(ctx) -> None:
                 "withdrawal_reason": None,
                 "withdrawal_note": None,
                 "withdrawn_by_id": None,
+                "provider": (
+                    LEGACY_PROVIDER
+                    if doi or meta["deposition_id"] is not None
+                    else None
+                ),
+                "pid": doi,
+                "pid_scheme": DOI_SCHEME if doi else None,
+                "publication_error": None,
             }
         )
 

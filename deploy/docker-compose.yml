@@ -11,10 +11,10 @@ x-required:
   MAIL_FROM: ${MAIL_FROM:?MAIL_FROM is required, set it in .env}
   AUTODEPLOY_SECRET: ${AUTODEPLOY_SECRET:?AUTODEPLOY_SECRET is required, set it in
     .env}
-  ZENODO_ACCESS_TOKEN: ${ZENODO_ACCESS_TOKEN:?ZENODO_ACCESS_TOKEN is required, set
-    it in .env}
   OAUTH_REDIRECT_BASE_URL: ${OAUTH_REDIRECT_BASE_URL:?OAUTH_REDIRECT_BASE_URL is required,
     set it in .env}
+  ZENODO_ACCESS_TOKEN: ${ZENODO_ACCESS_TOKEN:?ZENODO_ACCESS_TOKEN is required, set
+    it in .env}
   SECRET_KEY: ${SECRET_KEY:?SECRET_KEY is required, set it in .env}
   MARIADB_PASSWORD: ${MARIADB_PASSWORD:?MARIADB_PASSWORD is required, set it in .env}
   MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:?MARIADB_ROOT_PASSWORD is required,
