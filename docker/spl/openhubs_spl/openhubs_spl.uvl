@@ -15,6 +15,8 @@
 // comment and careers have no feature here. home_* are the choices of DATASET_HOME_ORDER (dataset 0.6.0).
 // publish_* are the choices of DATASET_PUBLISH_POLICY (dataset 0.8.0, PB-8): curated sends what an account the
 // hub does not trust publishes to review, so it needs a reviewer, curation (GV-2, an optional feature by D10).
+// errors_* are the choices of OBSERVABILITY_BACKEND and alerts_* those of OBSERVABILITY_ALERT_CHANNELS
+// (observability 0.1.0): where a product's errors go and who its alerts reach (D20).
 features
 	openhubs_spl
 		mandatory
@@ -35,6 +37,22 @@ features
 					elasticsearch {org 'splent-io', package 'splent_feature_elasticsearch'}
 					autodeploy {org 'splent-io', package 'splent_feature_autodeploy'}
 					backup {org 'splent-io', package 'splent_feature_backup'}
+					observability {org 'splent-io', package 'splent_feature_observability'}
+						mandatory
+							observability_backend {param 'OBSERVABILITY_BACKEND'}
+								alternative
+									errors_glitchtip {value 'glitchtip'}
+									errors_sentry {value 'sentry'}
+									errors_email {value 'email'}
+									errors_none {value 'none'}
+						optional
+							observability_alerts {param 'OBSERVABILITY_ALERT_CHANNELS'}
+								or
+									alerts_email {value 'email'}
+									alerts_matrix {value 'matrix'}
+									alerts_telegram {value 'telegram'}
+					audit {org 'splent-io', package 'splent_feature_audit'}
+					analytics {org 'splent-io', package 'splent_feature_analytics'}
 					mailhog {org 'splent-io', package 'splent_feature_mailhog'}
 					phpmyadmin {org 'splent-io', package 'splent_feature_phpmyadmin'}
 			identidad
@@ -109,6 +127,11 @@ constraints
 	autodeploy => auth
 	// mailhog overrides the SMTP settings mail injects, so it loads after mail.
 	mailhog => mail
+	// The email backend and the email channel of observability send through mail's MailService.
+	errors_email => mail
+	alerts_email => mail
+	// audit's screen is for administrators, and the account events it keeps are auth's.
+	audit => auth
 	profile => auth
 	academic_profile => profile
 	signup => auth

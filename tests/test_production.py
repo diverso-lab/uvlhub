@@ -78,6 +78,13 @@ def production(app, tmp_path_factory):
         "PROTECTED_UPLOADS_DIR": str(store / "protected_uploads"),
         "UPLOADS_DIR": str(store / "uploads"),
         "ARCHIVE_DIR": str(store / "archive"),
+        # What a deployment gives observability, which production refuses to
+        # start without. They point at a closed local port, so nothing leaves.
+        "OBSERVABILITY_DSN": "http://public@127.0.0.1:9/1",
+        "OBSERVABILITY_EMAIL_TO": '["alerts@example.org"]',
+        "OBSERVABILITY_MATRIX_HOMESERVER": "http://127.0.0.1:9",
+        "OBSERVABILITY_MATRIX_ROOM_ID": "!room:example.org",
+        "OBSERVABILITY_MATRIX_TOKEN": "not-a-token",
     }
     env.pop("TRUSTED_HOSTS", None)
     env.pop("SPLENT_COOKIE_SECURE", None)

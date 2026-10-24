@@ -1755,6 +1755,263 @@
           "help": "Whether the reviewers are mailed when something new waits for them."
         }
       }
+    },
+    "splent_feature_observability": {
+      "entry": "splent_io/splent_feature_observability@v0.1.0",
+      "extensible": {
+        "services": [
+          "ObservabilityService"
+        ],
+        "templates": [],
+        "models": [],
+        "hooks": [],
+        "routes": true
+      },
+      "config_schema": {
+        "OBSERVABILITY_BACKEND": {
+          "type": "enum",
+          "bind": "derivation",
+          "default": "none",
+          "help": "Where the errors go.",
+          "choices": [
+            "glitchtip",
+            "sentry",
+            "email",
+            "none"
+          ],
+          "uvl": true
+        },
+        "OBSERVABILITY_DSN": {
+          "type": "secret",
+          "bind": "deploy",
+          "help": "The DSN of the GlitchTip or Sentry project."
+        },
+        "OBSERVABILITY_ENVIRONMENT": {
+          "type": "str",
+          "bind": "deploy",
+          "default": "",
+          "pattern": "[A-Za-z0-9_.-]{1,64}",
+          "help": "The environment the reports are filed under. Empty: the app's profile."
+        },
+        "OBSERVABILITY_RELEASE": {
+          "type": "str",
+          "bind": "deploy",
+          "default": "",
+          "pattern": "[^\\s/]{1,200}",
+          "help": "The release the reports are filed under. Empty: <product>@<version>."
+        },
+        "OBSERVABILITY_SAMPLE_RATE": {
+          "type": "float",
+          "bind": "deploy",
+          "default": 1.0,
+          "min": 0,
+          "max": 1,
+          "help": "The share of errors sent."
+        },
+        "OBSERVABILITY_TRACES_SAMPLE_RATE": {
+          "type": "float",
+          "bind": "deploy",
+          "default": 0.0,
+          "min": 0,
+          "max": 1,
+          "help": "The share of requests traced."
+        },
+        "OBSERVABILITY_ALERT_CHANNELS": {
+          "type": "list",
+          "bind": "derivation",
+          "default": [],
+          "help": "Who is told when something breaks.",
+          "choices": [
+            "email",
+            "matrix",
+            "telegram"
+          ],
+          "uvl": true
+        },
+        "OBSERVABILITY_ALERT_ON": {
+          "type": "list",
+          "bind": "derivation",
+          "default": [
+            "errors",
+            "readiness",
+            "degraded"
+          ],
+          "help": "What is alerted on.",
+          "choices": [
+            "errors",
+            "readiness",
+            "degraded"
+          ]
+        },
+        "OBSERVABILITY_ALERT_DEDUP_MINUTES": {
+          "type": "int",
+          "bind": "deploy",
+          "default": 60,
+          "min": 1,
+          "max": 10080,
+          "help": "Minutes the same alert is not sent again."
+        },
+        "OBSERVABILITY_READINESS_GRACE_SECONDS": {
+          "type": "int",
+          "bind": "deploy",
+          "default": 60,
+          "min": 0,
+          "max": 3600,
+          "help": "Seconds a readiness check fails before it is alerted on."
+        },
+        "OBSERVABILITY_EMAIL_TO": {
+          "type": "list",
+          "bind": "deploy",
+          "default": [],
+          "pattern": "[^@\\s]+@[^@\\s]+",
+          "help": "The addresses of the email backend and channel."
+        },
+        "OBSERVABILITY_MATRIX_HOMESERVER": {
+          "type": "url",
+          "bind": "deploy",
+          "default": "",
+          "help": "The Matrix homeserver, https://matrix.example.org."
+        },
+        "OBSERVABILITY_MATRIX_ROOM_ID": {
+          "type": "secret",
+          "bind": "deploy",
+          "help": "The room the alerts go to, !id:server."
+        },
+        "OBSERVABILITY_MATRIX_TOKEN": {
+          "type": "secret",
+          "bind": "deploy",
+          "help": "The access token of the account that posts the alerts."
+        },
+        "OBSERVABILITY_TELEGRAM_BOT_TOKEN": {
+          "type": "secret",
+          "bind": "deploy",
+          "help": "The token of the bot that posts the alerts."
+        },
+        "OBSERVABILITY_TELEGRAM_CHAT_ID": {
+          "type": "secret",
+          "bind": "deploy",
+          "help": "The chat the alerts go to."
+        },
+        "OBSERVABILITY_HTTP_TIMEOUT": {
+          "type": "int",
+          "bind": "deploy",
+          "default": 5,
+          "min": 1,
+          "max": 60,
+          "help": "Seconds a Matrix or Telegram request may take."
+        },
+        "OBSERVABILITY_STATE_DIR": {
+          "type": "str",
+          "bind": "deploy",
+          "default": "",
+          "help": "Where the processes agree on what was alerted. Empty: the temporary directory."
+        }
+      }
+    },
+    "splent_feature_audit": {
+      "entry": "splent_io/splent_feature_audit@v0.1.0",
+      "extensible": {
+        "services": [
+          "AuditService"
+        ],
+        "templates": [
+          "audit/admin/events.html"
+        ],
+        "models": [
+          "AuditEvent"
+        ],
+        "hooks": [],
+        "routes": true
+      },
+      "config_schema": {
+        "AUDIT_RETENTION_DAYS": {
+          "type": "int",
+          "bind": "derivation",
+          "default": 90,
+          "min": 1,
+          "max": 3650,
+          "help": "Days an event is kept."
+        },
+        "AUDIT_PSEUDONYMIZE_AFTER_DAYS": {
+          "type": "int",
+          "bind": "derivation",
+          "default": 0,
+          "min": 0,
+          "max": 3650,
+          "help": "Days after which an event's address is blurred. 0: never before it is deleted."
+        },
+        "AUDIT_SIGN_INS": {
+          "type": "bool",
+          "bind": "derivation",
+          "default": true,
+          "help": "Whether every sign-in and sign-out is an event."
+        }
+      }
+    },
+    "splent_feature_analytics": {
+      "entry": "splent_io/splent_feature_analytics@v0.1.0",
+      "extensible": {
+        "services": [],
+        "templates": [],
+        "models": [],
+        "hooks": [
+          "layout.scripts"
+        ],
+        "routes": true
+      },
+      "config_schema": {
+        "ANALYTICS_PROVIDER": {
+          "type": "enum",
+          "bind": "derivation",
+          "default": "plausible",
+          "help": "Who counts the visits.",
+          "choices": [
+            "plausible",
+            "matomo"
+          ]
+        },
+        "ANALYTICS_SCRIPT_URL": {
+          "type": "url",
+          "bind": "deploy",
+          "default": "",
+          "help": "The provider's script. Empty loads nothing."
+        },
+        "ANALYTICS_SITE_ID": {
+          "type": "str",
+          "bind": "deploy",
+          "default": "",
+          "pattern": "[A-Za-z0-9.:_-]{1,253}",
+          "help": "The site's domain in Plausible, or its id in Matomo."
+        },
+        "ANALYTICS_EXCLUDED_PATHS": {
+          "type": "list",
+          "bind": "derivation",
+          "default": [
+            "/admin",
+            "/account",
+            "/login",
+            "/logout",
+            "/signup",
+            "/reset",
+            "/confirmemail",
+            "/confirm_email_change",
+            "/confirm_user",
+            "/developer",
+            "/api",
+            "/orcid",
+            "/github",
+            "/legal/accept"
+          ],
+          "pattern": "/.*",
+          "help": "The paths, and everything under them, never counted."
+        },
+        "ANALYTICS_SIGNED_IN": {
+          "type": "bool",
+          "bind": "derivation",
+          "default": false,
+          "help": "Whether the pages of a signed-in account are counted."
+        }
+      }
     }
   }
 }

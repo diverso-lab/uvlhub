@@ -288,6 +288,7 @@ app runs as:
 0 * * * *    docker exec -u splent uvlhub_splent_web_deploy splent feature:hubfile uploads-cleanup
 40 3 * * *   docker exec -u splent uvlhub_splent_web_deploy splent feature:apikeys notify-expiring
 50 3 * * 0   docker exec -u splent uvlhub_splent_web_deploy splent feature:apikeys purge
+30 4 * * *   docker exec -u splent uvlhub_splent_web_deploy splent feature:audit purge
 ```
 
 - `backup run` takes the daily backup and prunes those older than
@@ -304,6 +305,8 @@ app runs as:
 - `uploads-cleanup` removes the uploads that expired with their files.
 - `notify-expiring` mails the owners of the tokens about to expire, and
   `apikeys purge` deletes the ones revoked or expired long ago.
+- `audit purge` deletes the audit events older than
+  `AUDIT_RETENTION_DAYS` (90, D19).
 
 The others exit with 0 when there is nothing to do.
 

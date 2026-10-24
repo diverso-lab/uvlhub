@@ -61,6 +61,9 @@ features = [
     "splent-io/splent_feature_backup@v0.1.0",
     "splent-io/splent_feature_dataset@v0.8.0",
     "splent-io/splent_feature_curation@v0.1.0",
+    "splent-io/splent_feature_observability@v0.1.0",
+    "splent-io/splent_feature_audit@v0.1.0",
+    "splent-io/splent_feature_analytics@v0.1.0",
 ]
 features_dev = ["splent-io/splent_feature_mailhog@v1.2.0", "splent-io/splent_feature_phpmyadmin@v1.1.0"]
 features_prod = []
@@ -82,10 +85,10 @@ registries = ["forge"]
 # clone of this repository can resolve the model from UVLHub alone.
 [tool.splent.spl_model]
 mirror = "uvlhub.io"
-doi = "10.5281/zenodo.23628801"
+doi = "10.5281/zenodo.23628893"
 # Same line, every version. Used to report that a newer model exists.
 concept_doi = ""
-version = "6"
+version = "7"
 file = "openhubs_spl.uvl"
 
 [tool.splent.config]
@@ -135,6 +138,14 @@ DATASET_HOME_ORDER = "items"
 # the end of RB-2.
 DATASET_PUBLISH_POLICY = "curated"
 CURATION_TRUSTED_ACCOUNTS = "carried_over"
+# D20: errors go to a self-hosted GlitchTip, and alerts by mail and to a
+# Matrix room. The DSN, the recipients and the Matrix room and token are the
+# deployment's (.env.prod); without them production refuses to start.
+OBSERVABILITY_BACKEND = "glitchtip"
+OBSERVABILITY_ALERT_CHANNELS = ["email", "matrix"]
+# D11: visits counted by Plausible, without cookies. The script and the site
+# are the deployment's; with no script nothing is loaded.
+ANALYTICS_PROVIDER = "plausible"
 # uvlhub.io 2.12 deposited the whole folder of a dataset, its UVL models and
 # what uvl derives from them (Glencoe, DIMACS, SPLOT), so the records keep
 # carrying both.
@@ -211,7 +222,7 @@ env = ["MIGRATION_V2_TEST_*"]
 # product:build keeps splent_framework and splent_cli at the versions this
 # product is built with; a bare version means exactly that version.
 [tool.splent.runtime]
-splent_framework = "1.24.0"
+splent_framework = "1.25.0"
 splent_cli = "1.42.0"
 gunicorn = ">=23,<24"
 
