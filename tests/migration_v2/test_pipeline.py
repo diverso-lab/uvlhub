@@ -9,12 +9,15 @@ from __future__ import annotations
 
 import hashlib
 import json
+from dataclasses import replace
 from datetime import timedelta
 
 import pytest
 import sqlalchemy as sa
 
+from uvlhub_splent.migration_v2 import contract as contract_module
 from uvlhub_splent.migration_v2 import rules
+from uvlhub_splent.migration_v2.verify import empty_tables, foreign_key_orphans
 from uvlhub_splent.migration_v2.params import Refused
 from uvlhub_splent.migration_v2.pipeline import run
 
@@ -453,6 +456,104 @@ def test_e8_writes_the_manifest_with_what_no_row_names(migrated):
 # ── The cutover's run, and a second one ──────────────────────────────────
 
 
+def test_e3_refuses_a_schema_that_is_not_the_contracts(
+    isolated, synthetic_dump, seedless
+):
+    """V-12 and V-14 on a real uvlhub3: a contract that expects another head
+    and another collation than the pinned features give stops E3."""
+    contract = contract_module.load()
+    user = contract.tables["user"]
+    email = replace(user.columns["email"], collation="utf8mb4_bin")
+    tables = dict(
+        contract.tables, user=replace(user, columns=dict(user.columns, email=email))
+    )
+    features = dict(
+        contract.features,
+        splent_feature_rating={
+            **contract.features["splent_feature_rating"],
+            "head": "rating0002",
+        },
+    )
+    drifted = replace(contract, tables=tables, features=features)
+    params = isolated("drift", dump=synthetic_dump, stages=("E0", "E1", "E3"))
+    with pytest.raises(Refused) as refusal:
+        run(params, drifted)
+    assert refusal.value.stage == "E3"
+    assert refusal.value.reasons == [
+        "V-12 splent_feature_rating at 3e72750db961, the contract expects rating0002",
+        "V-14 user.email: utf8mb4_unicode_ci, the contract says utf8mb4_bin",
+        "user.email: collation utf8mb4_unicode_ci, the contract says utf8mb4_bin",
+    ]
+
+
+def test_e7_finds_what_the_load_let_in_with_the_checks_off(migrated):
+    """V-04 and the empty tables, on rows written the way a batch is, with
+    the foreign keys off, and taken back."""
+    schema = migrated.params.target_schema
+    with migrated.engine.connect() as connection:
+        connection.exec_driver_sql("SET FOREIGN_KEY_CHECKS = 0")
+        connection.execute(
+            sa.text(
+                f"INSERT INTO `{schema}`.user_profile (id, user_id, name, surname) "
+                "VALUES (9999, 9999, 'No', 'Account')"
+            )
+        )
+        connection.execute(
+            sa.text(
+                f"INSERT INTO `{schema}`.auth_token (user_id, purpose, token_hash, created_at, expires_at) "
+                "VALUES (1, 'reset', 'x', '2026-01-01', '2026-01-02')"
+            )
+        )
+        orphans = foreign_key_orphans(connection, schema)
+        filled = empty_tables(connection, schema, contract_module.load())
+        connection.rollback()
+        connection.exec_driver_sql("SET FOREIGN_KEY_CHECKS = 1")
+    assert orphans == {"user_profile.user_id -> user": 1}
+    assert filled == {"auth_token": 1}
+
+
+def test_e8_refuses_without_the_mirror(isolated, synthetic_dump, seedless, tmp_path):
+    params = isolated(
+        "nomirror",
+        dump=synthetic_dump,
+        store_root=tmp_path,
+        allow_open_conflicts=True,
+        stages=("E0", "E1", "E3", "E4", "E5", "E8"),
+    )
+    with pytest.raises(Refused) as refusal:
+        run(params)
+    assert refusal.value.stage == "E8"
+    assert refusal.value.reasons == [
+        f"no mirror of v2.12's uploads/ at {tmp_path / '.legacy_mirror'}"
+    ]
+
+
+def test_the_listener_spy_hears_the_orm():
+    """The control of test_no_orm_listener_fires_during_the_load: the same
+    spy, around an ORM write, hears it."""
+    from sqlalchemy.orm import DeclarativeBase, Session
+
+    from .conftest import ListenerSpy
+
+    class Base(DeclarativeBase):
+        pass
+
+    class Thing(Base):
+        __tablename__ = "thing"
+        id = sa.Column(sa.Integer, primary_key=True)
+
+    engine = sa.create_engine("sqlite://")
+    Base.metadata.create_all(engine)
+    with ListenerSpy() as spy, Session(engine) as session:
+        session.add(Thing(id=1))
+        session.commit()
+    assert {
+        "Session.before_flush",
+        "Session.after_commit",
+        "Mapper.before_insert",
+    } <= set(spy.fired)
+
+
 def test_strict_the_cutover_stops_at_an_open_conflict(
     isolated, synthetic_dump, seedless
 ):
@@ -485,8 +586,6 @@ def test_a_second_run_is_refused_then_forced_and_gives_the_same_database(
     """Principles 2 and 3, and E0: the run that completed stands for a 3.0
     that may have opened, so a second one needs --force and a fresh B2; then
     it starts over and writes the very same rows."""
-    from uvlhub_splent.migration_v2 import contract as contract_module
-
     tables = [t.name for t in contract_module.load().by_role(contract_module.LOAD)]
     before = _digest(migrated, tables)
     with pytest.raises(Refused) as refusal:
@@ -496,7 +595,5 @@ def test_a_second_run_is_refused_then_forced_and_gives_the_same_database(
 
     b2 = tmp_path / "b2.sql"
     b2.write_text("-- B2, taken just now\n")
-    from dataclasses import replace
-
     run(replace(migrated.params, force=True, b2=b2))
     assert _digest(migrated, tables) == before
