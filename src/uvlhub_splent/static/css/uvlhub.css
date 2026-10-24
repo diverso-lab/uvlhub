@@ -2312,6 +2312,25 @@ hr {
     padding: 2rem;
 }
 
+/* What follows the top datasets (dataset's dataset.home.actions slot)
+   comes a card's gap after the last one, as the cards follow each other. */
+.uvl-content .datasets-home-list {
+    margin-bottom: var(--uvl-card-gap);
+}
+
+/* explore's "Explore more datasets" in that slot: uvlhub.io's magnifier,
+   20px whatever the root, so 24px of feather's box, close to the words.
+   The box makes the button as tall as uvlhub.io's, 46px (45px on a phone),
+   and the gap as wide, 221px in all. */
+.uvl-content .datasets-home-explore {
+    gap: .3rem;
+}
+
+.uvl-content .datasets-home-explore svg {
+    width: 24px;
+    height: 24px;
+}
+
 /* ── Pages: the citation dialog (cites.html) ──────────────────────────── */
 
 .citation {
