@@ -92,6 +92,9 @@ AUTH_PASSWORD_CONFIRM = true
 AUTH_REQUIRE_VERIFIED_EMAIL = true
 # The sidebar logo already leads home, so the sidebar has no Home entry.
 PUBLIC_SIDEBAR_HOME_LINK = false
+# uvlhub.io heads its home with what it lists first, not with the site's
+# name and tagline, in the band and in the browser tab.
+PUBLIC_HOME_TITLE = "Top datasets with the most feature models"
 # Off: the hint would tell anyone typing an address that the account exists
 # and which provider (ORCID, GitHub) it signs in with.
 EXTERNAL_LOGIN_PASSWORD_HINT = false

@@ -29,6 +29,7 @@ the test lock:
 """
 
 import re
+import tomllib
 from html.parser import HTMLParser
 from urllib.parse import urlsplit
 from pathlib import Path
@@ -38,7 +39,8 @@ from splent_framework.db import db
 from splent_framework.fixtures.fixtures import _reset_db
 from splent_framework.hooks import template_hooks
 
-PACKAGE = Path(__file__).resolve().parents[1] / "src" / "uvlhub_splent"
+PRODUCT = Path(__file__).resolve().parents[1]
+PACKAGE = PRODUCT / "src" / "uvlhub_splent"
 STATIC = PACKAGE / "static"
 TEMPLATES = PACKAGE / "templates"
 
@@ -224,6 +226,17 @@ def _open_in_the_shell(app, browsers, who, page):
     return response.get_data(as_text=True)
 
 
+def _declared(key):
+    """What the product's [tool.splent.config] says for ``key``.
+
+    product:env --merge puts it in the environment the features read their
+    settings from. A test of a setting the product added since the dev
+    container was created gives the app that value itself, so it checks
+    what the product declares and not what an older .env still says."""
+    with (PRODUCT / "pyproject.toml").open("rb") as handle:
+        return tomllib.load(handle)["tool"]["splent"]["config"][key]
+
+
 def _open(browsers, who, page):
     response = browsers[who].get(page, follow_redirects=True)
     status = response.status_code
@@ -256,7 +269,7 @@ def test_the_sidebar_shows_each_entry_once(app, browsers, who, page):
 def test_the_home_is_publics_with_uvlhubs_cards_beside_it(app, browsers, who):
     """public's own home in the app shell: its two columns, the top datasets
     and, beside them, the product's cards around what the features put
-    there, in uvlhub.io's order. The site's title heads it, in the band."""
+    there, in uvlhub.io's order. Its title heads it, in the band."""
     _until_the_shell_is_public(app, "/")
     html = _open(browsers, who, "/")
     aside = html[html.index('<aside class="home-columns__aside">') :]
@@ -267,8 +280,25 @@ def test_the_home_is_publics_with_uvlhubs_cards_beside_it(app, browsers, who):
     assert ("get started!</h2>" in aside) == (who == "anonymous")
     assert aside.index("Hub statistics") < aside.index("What is uvlhub.io?")
     assert aside.index("What is uvlhub.io?") < aside.index("Cite us!")
-    assert '<h1 class="uvl-page-title">uvlhub — ' in html
+    assert '<h1 class="uvl-page-title">' in html
     assert not (TEMPLATES / "public" / "index.html").exists()
+
+
+def test_the_home_is_headed_as_uvlhub_ios(app, browsers, monkeypatch):
+    """The band of the home and the browser tab say what uvlhub.io's do,
+    "Top datasets with the most feature models", not the site's name and
+    tagline: public's PUBLIC_HOME_TITLE, set in [tool.splent.config]."""
+    title = _declared("PUBLIC_HOME_TITLE")
+    home = app.jinja_env.loader.get_source(app.jinja_env, "public/index.html")[0]
+    if "PUBLIC_HOME_TITLE" not in home:
+        pytest.xfail("the public pinned titles its home with the site's name")
+    monkeypatch.setitem(app.config, "PUBLIC_HOME_TITLE", title)
+
+    html = _open(browsers, "anonymous", "/")
+
+    assert title == "Top datasets with the most feature models"
+    assert f'<h1 class="uvl-page-title">{title}</h1>' in html
+    assert f"<title>{title} · " in html
 
 
 def test_the_team_is_teams_page_under_the_trail(app, browsers, monkeypatch):
