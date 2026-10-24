@@ -10,8 +10,8 @@
  *   not drawn, and its code moves under the text. What it says is theme's
  *   Appearance panel's (the product seeds uvlhub's words, seeders.py), and
  *   the colours and the font are theme's tokens, which the product sets to
- *   uvlhub's (THEME_TOKENS, config.py). The create_app registers this file
- *   for the public shell.
+ *   uvlhub's (THEME_TOKENS, in [tool.splent.config] of pyproject.toml).
+ *   The create_app registers this file for the public shell.
  * - the product's 400, 401 and 500 pages (_error_page.html), which ask
  *   for nothing but this file: an error page must render whatever failed.
  *   They have no theme tokens, so every colour falls back to uvlhub's.

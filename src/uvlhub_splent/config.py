@@ -26,29 +26,6 @@ class UvlhubConfig:
     # framework setting no feature reads, so it is the product's to set here.
     SPLENT_SHELL_PUBLIC = "uvlhub_public.html"
 
-    # uvlhub.io's palette and Inter for theme's public shell, which in uvlhub
-    # draws the page of an address that leads nowhere (errors/404.html). No
-    # font_url: Inter comes from the product (css/uvlhub-error.css), never
-    # from Google. theme 0.13 reads its tokens from here only; the release
-    # after it also reads THEME_TOKENS from [tool.splent.config], where this
-    # can move once that release is pinned.
-    THEME_TOKENS = {
-        "primary": "#1b84ff",
-        "primary_contrast": "#ffffff",
-        "accent": "#287fb9",
-        "bg": "#ffffff",
-        "surface": "#f9f9f9",
-        "text": "#071437",
-        "heading": "#071437",
-        "muted": "#99a1b7",
-        "border": "#f1f1f4",
-        "radius": ".475rem",
-        "font_body": '"Inter", Helvetica, sans-serif',
-        "font_heading": '"Inter", Helvetica, sans-serif',
-        "font_display": '"Inter", Helvetica, sans-serif',
-        "font_url": "",
-    }
-
 
 class DevelopmentConfig(UvlhubConfig, BaseDev):
     # Add product-specific dev settings here.

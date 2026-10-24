@@ -582,18 +582,48 @@ def uvlhub_appearance(app):
         service_proxy("SettingsService").set_many({key: "" for key in APPEARANCE})
 
 
+def _uvlhub_tokens():
+    """The THEME_TOKENS the product declares, read as theme reads them."""
+    from splent_io.splent_feature_theme.config import parse_tokens
+
+    return parse_tokens(_declared("THEME_TOKENS"))
+
+
+@pytest.fixture
+def uvlhub_tokens(app, monkeypatch):
+    """theme's tokens as the product declares them, which the dev
+    container's environment predates (see _declared)."""
+    monkeypatch.setitem(app.config, "THEME_TOKENS", _uvlhub_tokens())
+
+
+def test_the_tokens_are_uvlhubs_and_ask_google_for_nothing():
+    """THEME_TOKENS in [tool.splent.config] is what theme takes, a JSON
+    object of its own tokens, or the app would not boot. Its palette is
+    uvlhub.io's, and Inter comes from the product, not from Google, the
+    font_url theme's own tokens give."""
+    tokens = _uvlhub_tokens()
+
+    assert tokens["primary"] == "#1b84ff"
+    assert tokens["text"] == "#071437"
+    assert tokens["font_body"].startswith("Inter,")
+    assert tokens["font_url"] == ""
+
+
 @pytest.mark.parametrize("who", BROWSERS)
 def test_an_address_that_leads_nowhere_answers_uvlhubs_card(
-    browsers, uvlhub_appearance, who
+    browsers, uvlhub_appearance, uvlhub_tokens, who
 ):
     """theme's page, which the product neither shadows nor answers for:
-    saying what uvlhub's seeder puts in the Appearance panel, dressed as
-    uvlhub.io's card by the product's stylesheet, and asking no other site
-    for anything (theme's own tokens would load Inter from Google)."""
+    saying what uvlhub's seeder puts in the Appearance panel, in uvlhub's
+    tokens, dressed as uvlhub.io's card by the product's stylesheet, and
+    asking no other site for anything (theme's own tokens would load Inter
+    from Google)."""
     response = browsers[who].get("/this-page-does-not-exist")
     html = response.get_data(as_text=True)
 
     assert response.status_code == 404
+    assert "--brand-primary: #1b84ff;" in html
+    assert "--brand-font-body: Inter, Helvetica, sans-serif;" in html
     assert 'class="cms-public"' in html and 'class="error-page"' in html
     assert '<h1 class="error-page__title">Oops!</h1>' in html
     assert "We can&#39;t find that page." in html
