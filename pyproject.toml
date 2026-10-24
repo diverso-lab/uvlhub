@@ -134,6 +134,10 @@ DATASET_DEPOSIT_CONTENT = "sources_and_derived"
 # uvlhub.io 2.12 gave every deposit the keyword uvlhub after the dataset's
 # own tags, so the hub's records are found together on Zenodo.
 ZENODO_KEYWORDS = ["uvlhub"]
+# uvlhub.io 2.12 took UVL models of up to 20 MB, where uvl takes 10 MB by
+# default. hubfile's upload zone says so, and an upload request may carry
+# as much, since both follow the limit of each file type.
+UVL_MAX_SIZE = "20M"
 # What a backup archives with the database: every storage root, the targets
 # of the named volumes of docker/docker-compose.prod.yml (the protected
 # uploads, where hubfile keeps the dataset files, the public uploads and the
