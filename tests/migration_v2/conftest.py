@@ -13,9 +13,8 @@ major version as the product's (mariadb:11.4, docker/docker-compose.*.yml):
   end of the session.
 
 Without either, the tests that need it are skipped and say how to run
-them. The features' processes the migrator starts connect to 3306 on the
-server's name, so the server is reached through a Docker network, never a
-published port.
+them. The tests run in the web container, where the features are, so the
+server is reached by its name on that container's Docker network.
 """
 
 from __future__ import annotations

@@ -64,8 +64,8 @@ python -m uvlhub_splent.migration_v2 run --db-host <db> \
   mount, so each file is hard linked to its key (§6.2, R-27).
 - The processes it starts (`splent db:upgrade`, `splent feature:hubfile
   storage-migrate`) build the app, so in the production image they need
-  what its ProductionConfig needs, `SECRET_KEY` first. They connect to the
-  server on 3306, the only port the framework builds addresses with.
+  what its ProductionConfig needs, `SECRET_KEY` first. They get the
+  server, its port (`MARIADB_PORT`), the migrator account and `uvlhub3`.
 - A rehearsal adds `--allow-open-conflicts`: it goes on past the conflicts
   and lists them. The cutover stops at the first stage that leaves one.
 - Exit code 3 is a refusal; the report says which stage and why.
@@ -85,8 +85,8 @@ where it comes from (`source`, `rule`, and `on_null` where v2.12 admits a
 NULL the target refuses, C-27). The tables it does not fill are listed
 too, so a feature that adds one is an unknown that stops E3.
 
-`python -m uvlhub_splent.migration_v2 contract` prints a summary, with the
-collations DM-15 asks for that the pinned features do not give yet, and
+`python -m uvlhub_splent.migration_v2 contract` prints a summary, with what
+DM-15 asks for that the pinned features do not give yet, and
 `contract --check <host>` compares a live `uvlhub3`.
 
 When a pin changes a feature with migrations, `tests/migration_v2/test_contract.py`
@@ -102,24 +102,38 @@ anomaly the migrator has a rule for (`synthetic.py` says who is who), dumps
 it as B1 is dumped, and runs the stages on it.
 
 They never use the development database or the shared test one. From the
-CLI container:
+CLI container,
 
 ```bash
-bash uvlhub_splent/tests/migration_v2/run_with_throwaway_db.sh -q
+flock /tmp/splent-test.lock bash uvlhub_splent/tests/migration_v2/run_with_throwaway_db.sh
 ```
 
-starts a MariaDB 11.4 of their own on the web container's network, runs the
-tests in the web container as the workspace's owner, and removes it.
-`splent product:test --own-tests` runs the ones that need no database and
-skips the rest, saying how to run them.
+starts a MariaDB 11.4 of their own on the web container's network, names it
+in `MIGRATION_V2_TEST_DB_HOST` and `MIGRATION_V2_TEST_DB_ROOT_PASSWORD`,
+runs `splent product:test --own-tests`, which hands those to the tests
+(`[tool.splent.test] env` in pyproject.toml), and removes the server
+however the run ends. The lock is the shared test database's, which the
+product's other tests use. With pytest arguments it runs the migrator's
+tests alone, without the lock:
+
+```bash
+bash uvlhub_splent/tests/migration_v2/run_with_throwaway_db.sh -q -k preflight
+```
+
+A plain `splent product:test --own-tests` runs the ones that need no
+database and skips the rest, saying how to run them.
 
 ## Where this pass departs from the plan
 
-- **DM-15 is not met by the pins.** `user.email` and
-  `external_identity.provider_id` are `utf8mb4_unicode_ci` (auth's
-  `email_canonical` is `utf8mb4_bin`, and unique); `pid`, `concept_pid`
-  and `dataset_tag` do not exist. V-14 checks the collations the schema
-  has; the report lists what DM-15 still asks.
+- **DM-15, the identifiers:** `user.email`, `email_canonical`,
+  `external_identity.provider` and `provider_id` are `utf8mb4_bin` (auth
+  1.26.0, identities 0.5.0). What DM-15 still asks has no column yet:
+  `pid`, `concept_pid` and `dataset_tag.name`; the report lists them. With
+  the address compared exactly, C-13's clashes are the ones auth's
+  canonical form finds (two addresses v2.12 told apart, one once NFKC,
+  casefold and a stripped space are applied), and a provider is written
+  exactly `orcid` or `github` ("GitHub " is github; any other is a
+  conflict).
 - **Scopes.** dataset registers uvlhub's `read_dataset` and
   `write_dataset`, so a key keeps them (`[scopes]` in the contract); AP-4's
   `datasets:*` vocabulary does not exist.
@@ -129,9 +143,11 @@ skips the rest, saying how to run them.
 - **Every account gets `session_version = 2`**: auth honours v2.12's bare
   remember-me id only at version 1, so no cookie of v2.12 opens a session,
   whatever DM-1 decides.
-- **A probable takeover (C-28) must reset**: auth has no such flag, so its
-  password is `UNUSABLE_PASSWORD` (no hash matches it) and
-  `has_usable_password` is false.
+- **A probable takeover (C-28) must reset**, with auth's
+  `must_reset_password`: its hash is copied as it is and opens nothing,
+  since signing in with it only mails the owner a reset link, so whoever
+  followed the v2.12 link is shut out. `has_usable_password` follows
+  §5.2's rule, as for every account.
 - **The head is checked in E1**, where the dump is, not in E0.
 - **Derived formats** in the mirror are linked by `storage-migrate` with
   their file; 3.0 makes them again (UV-4) all the same.

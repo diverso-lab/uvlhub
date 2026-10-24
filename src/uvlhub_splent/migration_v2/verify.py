@@ -282,18 +282,16 @@ def v10_votes(ctx, connection) -> Check:
 
 
 def v11_copied(ctx, connection) -> Check:
-    """V-11: the columns copied as they are, compared exactly, NULL-safe.
-    The takeover candidates' passwords are not copied on purpose (C-28)."""
+    """V-11: the columns copied as they are, compared exactly, NULL-safe."""
     p = ctx.params
-    skip = sorted(ctx.takeover_users) or [0]
     users = connection.execute(
         sa.text(
             f"SELECT s.id FROM {qualified(p.source_schema, 'user')} s "
             f"JOIN {qualified(p.target_schema, 'user')} t USING (id) "
-            "WHERE NOT (BINARY s.email <=> BINARY t.email AND s.created_at <=> t.created_at "
-            "AND (BINARY s.password <=> BINARY t.password OR s.id IN :skip))"
-        ).bindparams(sa.bindparam("skip", expanding=True)),
-        {"skip": skip},
+            "WHERE NOT (BINARY s.email <=> BINARY t.email "
+            "AND BINARY s.password <=> BINARY t.password "
+            "AND s.created_at <=> t.created_at)"
+        )
     ).scalars()
     files = connection.execute(
         sa.text(
@@ -312,31 +310,35 @@ def v11_copied(ctx, connection) -> Check:
 
 
 def v15_accounts(ctx, connection) -> Check:
-    """V-15: no seed account loaded, and every probable takeover unconfirmed
-    with a password nobody knows."""
+    """V-15: no seed account loaded; every probable takeover that loads is
+    unconfirmed and must reset its password, and no other account must."""
     p = ctx.params
+    user = qualified(p.target_schema, "user")
     seeds = list(
         connection.execute(
-            sa.text(
-                f"SELECT id FROM {qualified(p.target_schema, 'user')} WHERE email LIKE :seed"
-            ),
+            sa.text(f"SELECT id FROM {user} WHERE email LIKE :seed"),
             {"seed": "%" + rules.SEED_EMAIL_SUFFIX},
         ).scalars()
     )
     takeovers = sorted(ctx.takeover_users) or [0]
-    open_ = list(
+    flagged = dict(
         connection.execute(
             sa.text(
-                f"SELECT id FROM {qualified(p.target_schema, 'user')} WHERE id IN :ids "
-                "AND (email_verified_at IS NOT NULL OR has_usable_password OR BINARY password <> BINARY :unusable)"
+                f"SELECT id, email_verified_at IS NULL AND must_reset_password "
+                f"FROM {user} WHERE id IN :ids OR must_reset_password"
             ).bindparams(sa.bindparam("ids", expanding=True)),
-            {"ids": takeovers, "unusable": rules.UNUSABLE_PASSWORD},
-        ).scalars()
+            {"ids": takeovers},
+        ).all()
     )
+    open_ = sorted(i for i in takeovers if i in flagged and not flagged[i])
+    stray = sorted(set(flagged) - set(takeovers))
+    ok = not seeds and not open_ and not stray
     return Check(
         "V-15",
-        not seeds and not open_,
-        detail={"seeds": seeds, "takeovers": open_} if seeds or open_ else None,
+        ok,
+        detail=None
+        if ok
+        else {"seeds": seeds, "takeovers": open_, "must_reset": stray},
     )
 
 

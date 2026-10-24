@@ -3,22 +3,22 @@ tests call directly.
 
 The domain rules belong to the pinned features and are imported from them
 (principle 4): auth's canonical_email, dataset's state_from_metadata,
-hubfile's checksum_algorithm. Two live in ORM services, and the migrator
-writes with Core, so they are reproduced here, each next to the service it
-mirrors, and tests/migration_v2/test_rules.py checks that both answer the
-same: legacy_proof (AuthenticationService.record_legacy_proof) and
-carried_token (ApiTokenService.import_token). The fold of the orcid and
-github tables mirrors those features' own migrations (orcid0002,
-github0002), which refuse what the migrator records as a conflict.
+hubfile's checksum_algorithm, apikeys' imported_token_fields (the row
+ApiTokenService.import_token stores, without a session). One lives in an
+ORM service only, and the migrator writes with Core, so it is reproduced
+here, and tests/migration_v2/test_rules.py checks that both answer the
+same: legacy_proof (AuthenticationService.record_legacy_proof). The fold
+of the orcid and github tables mirrors those features' own migrations
+(orcid0002, github0002), which refuse what the migrator records as a
+conflict.
 """
 
 from __future__ import annotations
 
-import hashlib
 import json
 import re
 import zlib
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 from itsdangerous.encoding import base64_decode
 from itsdangerous.exc import BadData
@@ -28,13 +28,6 @@ from itsdangerous.exc import BadData
 # The seed of v2.12 (mono/app/features/auth/seeders.py) and anything that
 # looks like it (P-25): never loaded, and reviewed.
 SEED_EMAIL_SUFFIX = "@example.com"
-
-# What a takeover candidate whose reset link was followed gets instead of
-# its password (C-28): not a hash, so no password matches it (auth's
-# check_password answers False to what it cannot read), and the owner sets
-# a new one through a reset link. A constant, so a run gives the same
-# database every time (principle 2).
-UNUSABLE_PASSWORD = "!legacy-v2-reset-required"
 
 # §5.2: an account opened by ORCID or GitHub was given a random password
 # within moments of its identity.
@@ -251,54 +244,12 @@ def translate_scopes(scopes: str, vocabulary: dict[str, str]):
     return kept, gone
 
 
-def carried_token(
-    key_row,
-    scopes: list[str],
-    *,
-    t0: datetime,
-    ttl_days: int,
-    never_used_grace_days: int,
-    unused_days: int,
-    prefix_length: int,
-    reasons: dict[str, str],
-) -> dict:
-    """The api_token row of a v2.12 key, as ApiTokenService.import_token
-    stores it (§5.5): the sha256 and the first ``prefix_length`` characters,
-    created at created_at, else last_used_at, else T0; expiring ``ttl_days``
-    after T0; and revoked at T0, with its reason, when it has no scope,
-    when it was never used and is older than ``never_used_grace_days``, or
-    when it was last used more than ``unused_days`` before T0.
-
-    ``reasons`` names the revocation reasons (apikeys' REVOKED_IMPORT_*), by
-    no_scopes, never_used and unused.
-    """
-    key = key_row["key"]
-    created_at = key_row["created_at"] or key_row["last_used_at"] or t0
-    last_used_at = key_row["last_used_at"]
-    reason = None
-    if not scopes:
-        reason = reasons["no_scopes"]
-    elif last_used_at is None and created_at < t0 - timedelta(
-        days=never_used_grace_days
-    ):
-        reason = reasons["never_used"]
-    elif last_used_at is not None and last_used_at < t0 - timedelta(days=unused_days):
-        reason = reasons["unused"]
-    stamp = key_row["created_at"]
-    return {
-        "id": key_row["id"],
-        "user_id": key_row["user_id"],
-        "name": "uvlhub 2 key" + (f" ({stamp:%Y-%m-%d})" if stamp else ""),
-        "token_hash": hashlib.sha256(key.encode("utf-8")).hexdigest(),
-        "prefix": key[:prefix_length],
-        "scopes": ",".join(scopes),
-        "created_at": created_at,
-        "expires_at": t0 + timedelta(days=ttl_days),
-        "revoked_at": t0 if reason else None,
-        "last_used_at": last_used_at,
-        "revoked_reason": reason,
-        "expiry_notice_days": None,
-    }
+def naive_utc(value):
+    """A date as the DATETIME columns hold it: UTC without its zone. What is
+    not an aware date is given back as it is."""
+    if isinstance(value, datetime) and value.tzinfo is not None:
+        return value.astimezone(timezone.utc).replace(tzinfo=None)
+    return value
 
 
 # ── Datasets (§4.1, §4.3) ────────────────────────────────────────────────

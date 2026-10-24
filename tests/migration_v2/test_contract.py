@@ -151,7 +151,9 @@ def test_every_null_the_target_refuses_has_a_rule(migrated, contract):
 def test_the_report_lists_what_dm15_still_asks(migrated, contract):
     pending = migrated.report["dm15_pending"]
     assert pending == contract.dm15_pending()
-    assert any(line.startswith("user.email:") for line in pending)
+    # auth 1.26.0 and identities 0.5.0 compare the identifiers exactly;
+    # what is left is what no pinned feature has a column for yet.
+    assert all(line.endswith("no such column yet") for line in pending)
     assert any("pid" in line for line in pending)
 
 
@@ -168,7 +170,7 @@ def test_a_drift_is_named(contract):
         for name, table in contract.tables.items()
     }
     assert contract_module.differences(contract, columns) == []
-    columns["user"]["email"]["collation"] = "utf8mb4_bin"
+    columns["user"]["email"]["collation"] = "utf8mb4_unicode_ci"
     columns["user"]["role"]["nullable"] = True
     columns["hubfiles"]["name"]["type"] = "varchar(255)"
     columns["datasets"]["pid"] = {
@@ -186,7 +188,7 @@ def test_a_drift_is_named(contract):
         "api_token.prefix: missing",
         "datasets.pid: a column the contract does not know",
         "hubfiles.name: varchar(255), the contract says varchar(120)",
-        "user.email: collation utf8mb4_bin, the contract says utf8mb4_unicode_ci",
+        "user.email: collation utf8mb4_unicode_ci, the contract says utf8mb4_bin",
         "user.role: NULL, the contract says NOT NULL",
     ]
 

@@ -7,14 +7,24 @@ the account over. Two things found in the source confirm one at once
 (legacy_reset), or a GitHub identity with exactly that address
 (legacy_github). Never for a takeover candidate (P-26, C-28): an account
 whose reset link went to another spelling of its address and was followed
-loads unconfirmed, with a password nobody knows, so its owner resets it.
+loads unconfirmed and with must_reset_password (auth 1.26.0). Its password
+is copied as it is, and opens nothing: signing in with it only mails the
+owner a reset link, so whoever set it by that link is shut out.
 
 What is not loaded, and why:
 
 - the accounts of the development seed (P-25): dropped, for review;
-- accounts whose addresses would clash in 3.0 (C-13), by auth's canonical
-  form or by the collation of user.email in uvlhub3: held, as conflicts,
-  for a decision with security; with them, whatever is theirs.
+- accounts whose addresses would clash in 3.0 (C-13): held, as conflicts,
+  for a decision with security; with them, whatever is theirs. user.email
+  is utf8mb4_bin since auth 1.26.0, so its unique key refuses only the very
+  same text, and the clashes are the ones auth's canonical form finds
+  (email_canonical's unique key): addresses v2.12's collation told apart
+  that NFKC and casefold, or a stripped space, make one.
+
+An identity's provider is written exactly, orcid or github: external_identity
+compares it under utf8mb4_bin since identities 0.5.0, so "GitHub " would be
+another provider there, where v2.12's collation took it for github. Any
+other provider is a conflict.
 
 Every account gets session_version 2. v2.12's remember-me cookie names the
 bare id, which auth honours only at version 1 (auth's user_for_session),
@@ -27,12 +37,7 @@ from __future__ import annotations
 from collections import defaultdict
 
 import sqlalchemy as sa
-from splent_io.splent_feature_apikeys.models import (
-    PREFIX_LENGTH,
-    REVOKED_IMPORT_NEVER_USED,
-    REVOKED_IMPORT_NO_SCOPES,
-    REVOKED_IMPORT_UNUSED,
-)
+from splent_io.splent_feature_apikeys.services import imported_token_fields
 from splent_io.splent_feature_auth.models import ORIGIN_LEGACY, canonical_email
 
 from uvlhub_splent.migration_v2 import rules
@@ -48,6 +53,8 @@ from uvlhub_splent.migration_v2.ledger import HELD, ORPHAN, SEED, stop_on_confli
 # The scopes of a v2.12 key that write (the plan's FIND_IN_SET('write_dataset')).
 WRITING_SCOPES = ("write_dataset",)
 SESSION_VERSION = 2
+# The providers of v2.12's external_identity, as identities names them.
+PROVIDERS = ("orcid", "github")
 SOURCE_TABLES = (
     "user",
     "user_profile",
@@ -62,7 +69,11 @@ TARGET_TABLES = ("user", "user_profile", "external_identity", "api_token")
 
 def collation_clashes(connection, schema: str, collation: str) -> list[list[int]]:
     """Groups of accounts whose addresses are one under ``collation``, the
-    one user.email has in uvlhub3, whose UNIQUE would refuse all but one."""
+    one user.email has in uvlhub3, whose UNIQUE would refuse all but one.
+
+    Under utf8mb4_bin, what the contract says today, that is the very same
+    text, which v2.12's own unique key never let in: it finds nothing, and
+    stays as the guard of a contract that goes back to another collation."""
     rows = connection.execute(
         sa.text(
             f"SELECT GROUP_CONCAT(id ORDER BY id) FROM {qualified(schema, 'user')} "
@@ -74,7 +85,8 @@ def collation_clashes(connection, schema: str, collation: str) -> list[list[int]
 
 
 def hold_clashing_accounts(ctx, connection, users) -> None:
-    """C-13 (P-21): by auth's canonical form and by the target collation."""
+    """C-13 (P-21): by auth's canonical form, which email_canonical's unique
+    key compares, and by the collation of user.email in uvlhub3."""
     ledger = ctx.ledger
     groups = defaultdict(list)
     for user in users:
@@ -158,7 +170,7 @@ def build_users(ctx, users, proofs, followed, takeovers, identity_dates) -> list
                 "email": user["email"],
                 "email_canonical": canonical,
                 "pending_email": None,
-                "password": rules.UNUSABLE_PASSWORD if taken_over else user["password"],
+                "password": user["password"],
                 "created_at": user["created_at"],
                 "role": "admin"
                 if canonical is not None and canonical in admins
@@ -170,16 +182,15 @@ def build_users(ctx, users, proofs, followed, takeovers, identity_dates) -> list
                 "password_changed_at": None,
                 "session_version": SESSION_VERSION,
                 "account_origin": ORIGIN_LEGACY,
-                "has_usable_password": (
-                    False
-                    if taken_over
-                    else rules.has_usable_password(
-                        user["created_at"],
-                        identity_dates[user["id"]],
-                        user["id"] in followed,
-                    )
+                "has_usable_password": rules.has_usable_password(
+                    user["created_at"],
+                    identity_dates[user["id"]],
+                    user["id"] in followed,
                 ),
                 "is_service_account": False,
+                # C-28: whoever followed the link may know the password,
+                # so it opens nothing until the owner resets it.
+                "must_reset_password": taken_over,
             }
         )
     ctx.facts["admins_missing"] = sorted(
@@ -240,9 +251,22 @@ def build_identities(
                 ledger.owner_reason(identity["user_id"]),
             )
             continue
-        provider_id = _normalized_provider_id(
-            identity["provider"], identity["provider_id"]
-        )
+        provider = (identity["provider"] or "").strip().lower()
+        if provider not in PROVIDERS:
+            ledger.conflict(
+                "identity_unknown_provider",
+                "external_identity",
+                identity["id"],
+                [identity],
+                detail=f"{identity['provider']!r} is no provider of uvlhub",
+            )
+            ledger.drop(
+                "external_identity", identity["id"], HELD, "identity_unknown_provider"
+            )
+            continue
+        if provider != identity["provider"]:
+            ledger.note("external_identity: provider written exactly")
+        provider_id = _normalized_provider_id(provider, identity["provider_id"])
         if provider_id is None:
             ledger.conflict(
                 "identity_invalid_id",
@@ -255,7 +279,7 @@ def build_identities(
                 "external_identity", identity["id"], HELD, "identity_invalid_id"
             )
             continue
-        base.append(dict(identity, provider_id=provider_id))
+        base.append(dict(identity, provider=provider, provider_id=provider_id))
 
     # P-11: an account that links two of one provider breaks
     # UNIQUE(user_id, provider); which link stays is a decision.
@@ -372,12 +396,9 @@ def build_identities(
 
 
 def build_tokens(ctx, keys, loaded_users) -> list[dict]:
+    """§5.5, D12: each key as apikeys' imported_token_fields gives its row,
+    the very fields ApiTokenService.import_token stores, without a session."""
     params, ledger = ctx.params, ctx.ledger
-    reasons = {
-        "no_scopes": REVOKED_IMPORT_NO_SCOPES,
-        "never_used": REVOKED_IMPORT_NEVER_USED,
-        "unused": REVOKED_IMPORT_UNUSED,
-    }
     rows = []
     for key in keys:
         if key["user_id"] not in loaded_users:
@@ -387,18 +408,25 @@ def build_tokens(ctx, keys, loaded_users) -> list[dict]:
         for name in gone:
             ledger.note(f"api_keys: scope {name} has no equivalent")
         writes = any(scope in WRITING_SCOPES for scope in scopes)
-        rows.append(
-            rules.carried_token(
-                key,
-                scopes,
-                t0=params.t0,
-                ttl_days=params.ttl_write_days if writes else params.ttl_read_days,
-                never_used_grace_days=params.never_used_grace_days,
-                unused_days=params.unused_days,
-                prefix_length=PREFIX_LENGTH,
-                reasons=reasons,
-            )
+        stamp = key["created_at"]
+        fields = imported_token_fields(
+            key["user_id"],
+            key["key"],
+            name="uvlhub 2 key" + (f" ({stamp:%Y-%m-%d})" if stamp else ""),
+            scopes=scopes,
+            now=params.t0,
+            created_at=key["created_at"],
+            last_used_at=key["last_used_at"],
+            ttl_days=params.ttl_write_days if writes else params.ttl_read_days,
+            token_id=key["id"],
+            never_used_grace_days=params.never_used_grace_days,
+            unused_days=params.unused_days,
         )
+        # Aware UTC, as the model keeps them; the DATETIME columns hold the
+        # same moment without its zone.
+        row = {name: rules.naive_utc(value) for name, value in fields.items()}
+        row["expiry_notice_days"] = None
+        rows.append(row)
     return rows
 
 

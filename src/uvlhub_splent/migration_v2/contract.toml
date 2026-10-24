@@ -22,12 +22,15 @@
 # `owner` is the feature whose migrations create the table.
 #
 # Collations (DM-15): the database's default for every text column, but
-# where the column says otherwise. `dm15` names the collation DM-15 asks for
-# where the pinned feature does not give it yet: V-14 checks `collation`,
-# what the schema is, and the report lists every `dm15` still pending.
+# where the column says otherwise: utf8mb4_bin for the identifiers, which
+# auth (1.26.0: email, email_canonical) and identities (0.5.0: provider,
+# provider_id) compare exactly. `dm15` names the collation DM-15 asks for
+# where a pinned feature does not give it yet (no column today): V-14 checks
+# `collation`, what the schema is, and the report lists every `dm15` still
+# pending, with [dm15] missing below.
 
 [contract]
-version = 1
+version = 2
 plan = "_reference/analisis_uvlhub/06-plan-migracion-uvlhubio.md, revision 2"
 
 [database]
@@ -39,14 +42,14 @@ collation = "utf8mb4_unicode_ci"
 # migrations of the product, so V-12 compares the whole of splent_migrations.
 [features]
 splent_feature_academic_profile = { version = "0.1.0", head = "pu0002" }
-splent_feature_apikeys = { version = "0.8.0", head = "apikeys0002_lifecycle" }
-splent_feature_auth = { version = "1.25.0", head = "auth0007_service_account" }
+splent_feature_apikeys = { version = "0.9.0", head = "apikeys0002_lifecycle" }
+splent_feature_auth = { version = "1.26.0", head = "auth0009_email_collation" }
 splent_feature_confirmemail = { version = "2.2.0", head = "126da35a357f" }
 splent_feature_dataset = { version = "0.6.0", head = "dataset0004_orphan_metadata" }
 splent_feature_factlabel = { version = "0.5.0", head = "d934ec20c841" }
 splent_feature_github = { version = "0.4.1", head = "github0002_into_ext_identity" }
 splent_feature_hubfile = { version = "0.6.0", head = "hubfile0003_upload_sessions" }
-splent_feature_identities = { version = "0.4.1", head = "identities0002_one_per_provider" }
+splent_feature_identities = { version = "0.5.0", head = "identities0003_exact_ids" }
 splent_feature_mail = { version = "1.5.0", head = "mail0001_outbox" }
 splent_feature_media = { version = "0.11.1", head = "media0005_thumbnail" }
 splent_feature_orcid = { version = "0.4.1", head = "orcid0002_into_external_identity" }
@@ -86,8 +89,8 @@ role = "load"
 
 [tables.user.columns]
 id = { type = "int(11)", nullable = false, source = "user.id" }
-email = { type = "varchar(256)", nullable = true, collation = "utf8mb4_unicode_ci", dm15 = "utf8mb4_bin", source = "user.email" }
-password = { type = "varchar(256)", nullable = false, collation = "utf8mb4_unicode_ci", source = "user.password", rule = "copied as it is; a takeover candidate whose link was followed gets UNUSABLE_PASSWORD instead (C-28)" }
+email = { type = "varchar(256)", nullable = true, collation = "utf8mb4_bin", source = "user.email" }
+password = { type = "varchar(256)", nullable = false, collation = "utf8mb4_unicode_ci", source = "user.password" }
 created_at = { type = "datetime", nullable = false, source = "user.created_at" }
 role = { type = "varchar(32)", nullable = false, collation = "utf8mb4_unicode_ci", rule = "admin for MIGRATION_ADMIN_EMAILS, user otherwise (5.3)" }
 email_canonical = { type = "varchar(256)", nullable = true, collation = "utf8mb4_bin", rule = "auth's canonical_email(user.email)" }
@@ -99,8 +102,9 @@ password_changed_at = { type = "datetime", nullable = true, rule = "NULL" }
 session_version = { type = "int(11)", nullable = false, rule = "2, which ends every remember-me cookie of v2.12 (5.4)" }
 account_origin = { type = "varchar(32)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "legacy_v2" }
 email_verified_via = { type = "varchar(32)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "legacy_reset or legacy_github, NULL without a proof" }
-has_usable_password = { type = "tinyint(1)", nullable = false, rule = "5.2 heuristic; false for a takeover candidate" }
+has_usable_password = { type = "tinyint(1)", nullable = false, rule = "5.2 heuristic" }
 is_service_account = { type = "tinyint(1)", nullable = false, rule = "false" }
+must_reset_password = { type = "tinyint(1)", nullable = false, rule = "1 for a probable takeover (C-28), whose password then opens nothing but mails its owner a reset link; 0 otherwise" }
 
 [tables.user_profile]
 owner = "splent_feature_profile"
@@ -120,8 +124,8 @@ role = "load"
 [tables.external_identity.columns]
 id = { type = "int(11)", nullable = false, source = "external_identity.id", rule = "kept; a row folded in from orcid or github takes a new one above the source counter" }
 user_id = { type = "int(11)", nullable = false, source = "external_identity.user_id" }
-provider = { type = "varchar(50)", nullable = false, collation = "utf8mb4_unicode_ci", source = "external_identity.provider" }
-provider_id = { type = "varchar(256)", nullable = false, collation = "utf8mb4_unicode_ci", dm15 = "utf8mb4_bin", source = "external_identity.provider_id", rule = "orcid.orcid_id normalised, or github.github_id as text, for a folded row (5.6)" }
+provider = { type = "varchar(50)", nullable = false, collation = "utf8mb4_bin", source = "external_identity.provider", rule = "orcid or github exactly, the case and spaces of v2.12 aside; any other provider is a conflict" }
+provider_id = { type = "varchar(256)", nullable = false, collation = "utf8mb4_bin", source = "external_identity.provider_id", rule = "orcid.orcid_id normalised, or github.github_id as text, for a folded row (5.6)" }
 provider_username = { type = "varchar(256)", nullable = true, collation = "utf8mb4_unicode_ci", source = "external_identity.provider_username", rule = "the iD, or github.github_login, when it had none (orcid0002, github0002)" }
 created_at = { type = "datetime", nullable = false, source = "external_identity.created_at", rule = "the earlier of the two dates of a folded row" }
 provider_email_verified = { type = "varchar(256)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "external_identity.email of a github row when it is the account's address (identities0002)" }

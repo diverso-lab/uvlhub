@@ -4,8 +4,8 @@ The database is created with the contract's character set and collation
 (DM-15), then ``splent db:upgrade`` brings every feature to its head, in a
 process of its own: the features' migrations need the app, and the app has
 no place in the migrator's process, which writes with Core only. That
-process gets the migrator account and uvlhub3 as its only database, and
-RUN_DB_SEED=false; it runs db:upgrade and nothing else, so the seed never
+process gets the server and its port, the migrator account and uvlhub3 as
+its only database, and RUN_DB_SEED=false; it runs db:upgrade and nothing else, so the seed never
 does (auth0002_role finds no account to give a role to).
 
 Then the schema is held to the contract: V-12, the heads splent_migrations
@@ -44,6 +44,8 @@ def child_env(params, **extra) -> dict:
     env = dict(os.environ)
     env.update(
         MARIADB_HOSTNAME=params.server.host,
+        # splent_framework 1.24.0 builds the address with it; 3306 before.
+        MARIADB_PORT=str(params.server.port),
         MARIADB_DATABASE=params.target_schema,
         # A test app the command might build points at uvlhub3 as well,
         # never at the shared test database.

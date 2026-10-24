@@ -29,12 +29,14 @@ the load (tests/migration_v2 fails if one does); dates in UTC; a strict
 sql_mode; foreign keys off only while a batch loads, then checked one by
 one (V-04); batches of 1000 rows by id, a transaction each; the UNIQUE
 constraints of the features from E3 on; BINARY when text is compared
-across schemas. Where a feature's rule lives in an ORM service
-(``AuthenticationService.record_legacy_proof``,
-``ApiTokenService.import_token``), it is reproduced in Core here and the
-tests check that both give the same answer; where it is a command that
-needs the app (``splent db:upgrade``, ``splent feature:hubfile
-storage-migrate``) it runs in a process of its own, as a separate step.
+across schemas. A feature's rule is called where the feature offers it
+as a plain function (apikeys' ``imported_token_fields``, the row
+``ApiTokenService.import_token`` stores); where it lives in an ORM service
+only (``AuthenticationService.record_legacy_proof``), it is reproduced in
+Core here and the tests check that both give the same answer; where it is
+a command that needs the app (``splent db:upgrade``, ``splent
+feature:hubfile storage-migrate``) it runs in a process of its own, as a
+separate step.
 
 Run it with ``python -m uvlhub_splent.migration_v2 --help``. The data
 contract it writes to is ``contract.toml``.

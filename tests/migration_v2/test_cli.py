@@ -69,3 +69,42 @@ def test_an_unknown_stage_is_a_usage_error():
     )
     assert result.exit_code == 2
     assert "no such stage: E42" in result.output
+
+
+def test_the_features_processes_reach_the_migrators_server(monkeypatch):
+    """E3 and E8 run the features' commands with the server, the port
+    (MARIADB_PORT, splent_framework 1.24.0), the account and uvlhub3 of the
+    run, and never a seed, whatever the product's .env says."""
+    from uvlhub_splent.migration_v2.params import Params, Server, parse_t0
+    from uvlhub_splent.migration_v2.schema import child_env
+
+    monkeypatch.setenv("MARIADB_HOSTNAME", "uvlhub_splent_db")
+    monkeypatch.setenv("RUN_DB_SEED", "true")
+    params = Params(
+        server=Server(host="cutover-db", port=3407, user="migrator", password="pw"),
+        t0=parse_t0("2026-11-20T00:00:00"),
+        expected_head="e5f6a7b8c9d0",
+    )
+    env = child_env(params, HUBFILE_STORAGE_ROOT="/store")
+    assert {
+        key: env[key]
+        for key in (
+            "MARIADB_HOSTNAME",
+            "MARIADB_PORT",
+            "MARIADB_DATABASE",
+            "MARIADB_TEST_DATABASE",
+            "MARIADB_USER",
+            "MARIADB_PASSWORD",
+            "RUN_DB_SEED",
+            "HUBFILE_STORAGE_ROOT",
+        )
+    } == {
+        "MARIADB_HOSTNAME": "cutover-db",
+        "MARIADB_PORT": "3407",
+        "MARIADB_DATABASE": "uvlhub3",
+        "MARIADB_TEST_DATABASE": "uvlhub3",
+        "MARIADB_USER": "migrator",
+        "MARIADB_PASSWORD": "pw",
+        "RUN_DB_SEED": "false",
+        "HUBFILE_STORAGE_ROOT": "/store",
+    }

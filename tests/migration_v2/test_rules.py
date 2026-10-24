@@ -15,7 +15,6 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
-from flask import Flask
 from itsdangerous import URLSafeTimedSerializer
 
 from uvlhub_splent.migration_v2 import rules
@@ -179,83 +178,16 @@ def test_an_account_opened_through_a_provider_has_no_usable_password(
     assert rules.has_usable_password(created, dates, reset_followed) is usable
 
 
-# ── API keys: import_token (D12) ─────────────────────────────────────────
+# ── API keys (D12) ───────────────────────────────────────────────────────
 
 
-KEYS = [
-    # (scopes, created_at, last_used_at)
-    (["read_dataset"], T0 - timedelta(days=100), T0 - timedelta(days=2)),
-    (
-        ["read_dataset", "write_dataset"],
-        T0 - timedelta(days=90),
-        T0 - timedelta(days=1),
-    ),
-    ([], T0 - timedelta(days=80), T0 - timedelta(days=3)),
-    (["read_dataset"], T0 - timedelta(days=60), None),
-    (["read_dataset"], T0 - timedelta(days=5), None),
-    (["write_dataset"], T0 - timedelta(days=500), T0 - timedelta(days=400)),
-    (["read_dataset"], None, T0 - timedelta(days=10)),
-    (["read_dataset"], None, None),
-]
+def test_an_aware_date_is_written_as_naive_utc():
+    from datetime import timezone as tz
 
-
-@pytest.mark.parametrize("scopes, created_at, last_used_at", KEYS)
-def test_carried_token_is_what_import_token_stores(scopes, created_at, last_used_at):
-    from splent_io.splent_feature_apikeys.models import (
-        PREFIX_LENGTH,
-        REVOKED_IMPORT_NEVER_USED,
-        REVOKED_IMPORT_NO_SCOPES,
-        REVOKED_IMPORT_UNUSED,
-    )
-    from splent_io.splent_feature_apikeys.services import ApiTokenService
-
-    key = synthetic.api_key(f"{scopes}{created_at}{last_used_at}")
-    ttl = 90 if "write_dataset" in scopes else 365
-    mine = rules.carried_token(
-        {
-            "id": 7,
-            "user_id": 3,
-            "key": key,
-            "created_at": created_at,
-            "last_used_at": last_used_at,
-        },
-        scopes,
-        t0=T0,
-        ttl_days=ttl,
-        never_used_grace_days=30,
-        unused_days=365,
-        prefix_length=PREFIX_LENGTH,
-        reasons={
-            "no_scopes": REVOKED_IMPORT_NO_SCOPES,
-            "never_used": REVOKED_IMPORT_NEVER_USED,
-            "unused": REVOKED_IMPORT_UNUSED,
-        },
-    )
-    app = Flask(__name__)
-    app.config.update(APIKEYS_DEFAULT_TTL_DAYS=90, APIKEYS_MAX_TTL_DAYS=365)
-    with app.app_context():
-        service = ApiTokenService()
-        service.repository = SimpleNamespace(create=lambda commit, **fields: fields)
-        theirs = service.import_token(
-            3,
-            key,
-            name=mine["name"],
-            scopes=scopes,
-            created_at=created_at,
-            last_used_at=last_used_at,
-            ttl_days=ttl,
-            token_id=7,
-            now=T0,
-            never_used_grace_days=30,
-            unused_days=365,
-            commit=False,
-        )
-    # import_token keeps UTC on its dates; the columns hold it naive.
-    theirs = {
-        k: v.replace(tzinfo=None) if isinstance(v, datetime) else v
-        for k, v in theirs.items()
-    }
-    assert {k: v for k, v in mine.items() if k != "expiry_notice_days"} == theirs
+    aware = datetime(2026, 11, 20, 1, 0, tzinfo=tz(timedelta(hours=1)))
+    assert rules.naive_utc(aware) == datetime(2026, 11, 20, 0, 0)
+    assert rules.naive_utc(datetime(2026, 11, 20)) == datetime(2026, 11, 20)
+    assert rules.naive_utc(None) is None and rules.naive_utc("x") == "x"
 
 
 def test_scopes_go_through_the_contract():

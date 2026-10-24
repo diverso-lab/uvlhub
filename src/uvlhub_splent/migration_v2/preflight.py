@@ -16,8 +16,8 @@ is run once 3.0 has opened. It refuses:
 - when it cannot take GET_LOCK('uvlhub_migration', 0): another run is on.
 
 It also refuses parameters it cannot keep its word with: an unknown head,
-a port the features' processes cannot reach, features of other versions
-than the contract was written for.
+a token life apikeys does not give, features of other versions than the
+contract was written for.
 """
 
 from __future__ import annotations
@@ -28,6 +28,7 @@ import time
 from pathlib import Path
 
 import sqlalchemy as sa
+from splent_io.splent_feature_apikeys.services import MAX_TTL_DAYS
 
 from uvlhub_splent.migration_v2 import contract as contract_module
 from uvlhub_splent.migration_v2.db import qualified, schema_exists, table_exists
@@ -36,8 +37,6 @@ from uvlhub_splent.migration_v2.params import Refused
 LOCK_NAME = "uvlhub_migration"
 # A B2 older than this does not let --force through (§3.4).
 B2_MAX_AGE_SECONDS = 15 * 60
-# The longest life an imported token may get (apikeys' MAX_TTL_DAYS).
-MAX_TOKEN_DAYS = 365
 # Server threads that are no client: they hold no session of their own.
 _INTERNAL_COMMANDS = ("Daemon", "Slave_IO", "Slave_SQL", "Binlog Dump")
 
@@ -178,15 +177,10 @@ def preflight(ctx) -> None:
         reasons.append(
             "RUN_DB_SEED is not false: nothing the migrator starts may seed uvlhub3"
         )
-    if params.server.port != 3306:
-        reasons.append(
-            f"port {params.server.port}: the features' processes connect to "
-            "MARIADB_HOSTNAME on 3306 only"
-        )
     for days in (params.ttl_write_days, params.ttl_read_days):
-        if not 1 <= days <= MAX_TOKEN_DAYS:
+        if not 1 <= days <= MAX_TTL_DAYS:
             reasons.append(
-                f"a token life of {days} days: apikeys gives 1 to {MAX_TOKEN_DAYS}"
+                f"a token life of {days} days: apikeys gives 1 to {MAX_TTL_DAYS}"
             )
     reasons += contract_module.version_differences(contract)
     # What the parameters say is settled before the server is asked anything.

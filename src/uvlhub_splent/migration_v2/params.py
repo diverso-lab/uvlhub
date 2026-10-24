@@ -36,10 +36,8 @@ class Server:
     restores the dump (sql_log_bin=0 and the DEFINERs need it) and reads
     every connection of the server for E0.
 
-    ``port`` is the migrator's own. The processes that run the features'
-    commands build their database address from MARIADB_HOSTNAME and
-    always connect to 3306 (splent_framework's _build_db_uri), so E0
-    refuses another port until the framework takes one.
+    ``port`` is the server's, for the migrator and for the processes that
+    run the features' commands, which take it as MARIADB_PORT.
     """
 
     host: str

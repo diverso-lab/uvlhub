@@ -15,12 +15,19 @@ Who is who, so a test can say what it expects:
               7         switched off (active = 0)
               8         GitHub without an address, opened through it
               9         no profile
-             10, 11     addresses one under utf8mb4_unicode_ci (C-13); 11 owns
-                        a dataset
+             10, 11     addresses one under utf8mb4_unicode_ci, apart under the
+                        utf8mb4_bin user.email has: both load
              12 carol   an ORCID iD here, another in external_identity
              13 dave    two GitHub identities (P-11)
              14 erin    a GitHub row only, and an ORCID row with carol's iD
              15 frank   an ORCID row whose iD is not valid
+             16, 17     one address but for a leading space, which v2.12's
+                        unique key let in and the canonical form does not
+                        (C-13), the only such pair its collation allows; 17
+                        owns a dataset and a GitHub identity
+
+    identities also with a provider written "GitHub " (it is github) and
+    one that is no provider of uvlhub (gitlab)
 
     datasets  1  published, two files, one in a sub folder with " " and "#"
               2  version 2 of 1, its file's checksum an md5 (C-24)
@@ -31,7 +38,7 @@ Who is who, so a test can say what it expects:
               7  anonymous, with authors (DS-3)
               8  a sandbox DOI (C-30)
               9, 10  one DOI (C-10); 9 with NULL publication type and anonymity
-             11  owned by a held account
+             11  owned by a held account (17)
              12  the seed's
              13  a draft with two rows on one path (C-11), a checksum of no
                  algorithm (C-25) and a feature model of dataset 5's file (C-07)
@@ -137,6 +144,8 @@ def users():
         (13, "dave@uvlhub.test", ago(120)),
         (14, "erin@uvlhub.test", ago(110)),
         (15, "frank@uvlhub.test", ago(100)),
+        (16, "shared@uvlhub.test", ago(90)),
+        (17, " shared@uvlhub.test", ago(80)),
     ]
     return [
         {
@@ -166,6 +175,8 @@ def profiles():
         13: ("Dave", "Lister", None),
         14: ("Erin", "Brockovich", None),
         15: ("Frank", "Castle", None),
+        16: ("Sha", "Red", None),
+        17: ("Sha", "Red Too", None),
     }
     # The profile id is the user id plus 100, so a test never mixes them.
     return [
@@ -232,12 +243,30 @@ def external_identities():
         },
         {
             "id": 7,
-            "user_id": 11,
+            "user_id": 17,
             "provider": "github",
             "provider_id": "1005",
             "email": None,
-            "created_at": ago(149),
-            "provider_username": "clash",
+            "created_at": ago(79),
+            "provider_username": "shared",
+        },
+        {
+            "id": 8,
+            "user_id": 9,
+            "provider": "GitHub ",
+            "provider_id": "3001",
+            "email": None,
+            "created_at": ago(150),
+            "provider_username": "noprofile",
+        },
+        {
+            "id": 9,
+            "user_id": 4,
+            "provider": "gitlab",
+            "provider_id": "mar-gl",
+            "email": "mar@uvlhub.test",
+            "created_at": ago(60),
+            "provider_username": "mar",
         },
     ]
 
@@ -353,7 +382,7 @@ DATASETS = {
     8: (12, ago(125), "10.5072/zenodo.55", 55, 1, 0, "OTHER", None, 1, None),
     9: (12, ago(120), "10.5281/zenodo.1011", 1011, 1, None, None, None, 1, None),
     10: (14, ago(119), "10.5281/zenodo.1011", 1012, 1, 0, "OTHER", None, 1, None),
-    11: (11, ago(100), "10.5281/zenodo.1013", 1013, 1, 0, "OTHER", None, 1, None),
+    11: (17, ago(100), "10.5281/zenodo.1013", 1013, 1, 0, "OTHER", None, 1, None),
     12: (5, ago(590), "10.1234/dataset1", 1, 1, 0, "DATA_MANAGEMENT_PLAN", None, 1, 3),
     13: (1, ago(3), None, None, 1, 0, None, None, 1, None),
     14: (1, ago(190), "10.5281/zenodo.1015", 1015, 1, 0, "JOURNAL_ARTICLE", 1, 2, None),

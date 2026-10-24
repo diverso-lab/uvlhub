@@ -171,10 +171,6 @@ def test_it_refuses_parameters_it_cannot_keep_its_word_with(params):
     assert run_e0(replace(params, expected_head="001")) == [
         "MIGRATION_EXPECTED_HEAD '001' is not a head of v2.12 (e5f6a7b8c9d0, f7a8b9c0d1e2)"
     ]
-    port = replace(params, server=replace(params.server, port=3307))
-    assert run_e0(port) == [
-        "port 3307: the features' processes connect to MARIADB_HOSTNAME on 3306 only"
-    ]
     assert run_e0(replace(params, ttl_read_days=400)) == [
         "a token life of 400 days: apikeys gives 1 to 365"
     ]

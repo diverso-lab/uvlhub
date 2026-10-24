@@ -23,7 +23,7 @@ core = [
 ]
 
 [tool.splent]
-cli_version = "1.41.0"
+cli_version = "1.42.0"
 features = [
     "splent-io/splent_feature_academic_profile@v0.1.0",
     "splent-io/splent_feature_generator@v0.1.0",
@@ -44,10 +44,7 @@ features = [
     "splent-io/splent_feature_media@v0.11.1",
     "splent-io/splent_feature_reset@v2.2.0",
     "splent-io/splent_feature_confirmemail@v2.2.0",
-    "splent-io/splent_feature_auth@v1.25.0",
     "splent-io/splent_feature_mail@v1.5.0",
-    "splent-io/splent_feature_apikeys@v0.8.0",
-    "splent-io/splent_feature_identities@v0.4.1",
     "splent-io/splent_feature_orcid@v0.4.1",
     "splent-io/splent_feature_github@v0.4.1",
     "splent-io/splent_feature_autodeploy@v0.4.0",
@@ -59,6 +56,9 @@ features = [
     "splent-io/splent_feature_zenodo@v0.3.0",
     "splent-io/splent_feature_uvl@v0.1.0",
     "splent-io/splent_feature_statistics@v0.4.0",
+    "splent-io/splent_feature_auth@v1.26.0",
+    "splent-io/splent_feature_identities@v0.5.0",
+    "splent-io/splent_feature_apikeys@v0.9.0",
 ]
 features_dev = ["splent-io/splent_feature_mailhog@v1.2.0", "splent-io/splent_feature_phpmyadmin@v1.1.0"]
 features_prod = []
@@ -156,6 +156,12 @@ hooks = [
 [tool.splent.layout.menu]
 # uvlhub.io lists Team third, after Explore and the Dashboard.
 order = { team = 30 }
+
+[tool.splent.test]
+# What product:test hands the product's own tests from the caller's
+# environment: the throwaway MariaDB of the migrator's tests, which
+# tests/migration_v2/run_with_throwaway_db.sh starts and names.
+env = ["MIGRATION_V2_TEST_*"]
 
 [tool.setuptools.package-dir]
 "" = "src"

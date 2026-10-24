@@ -16,7 +16,6 @@ import pytest
 import sqlalchemy as sa
 
 from uvlhub_splent.migration_v2 import contract as contract_module
-from uvlhub_splent.migration_v2 import rules
 from uvlhub_splent.migration_v2.verify import empty_tables, foreign_key_orphans
 from uvlhub_splent.migration_v2.params import Refused
 from uvlhub_splent.migration_v2.pipeline import run
@@ -109,10 +108,9 @@ def test_e1_restores_the_dump_and_drops_what_should_not_be_there(migrated):
     )
     assert left == []
     assert facts["source_counters"]["user"] == synthetic.COUNTERS["user"]
-    assert (
-        len(rows(migrated, f"SELECT id FROM `{migrated.params.source_schema}`.`user`"))
-        == 15
-    )
+    assert len(
+        rows(migrated, f"SELECT id FROM `{migrated.params.source_schema}`.`user`")
+    ) == len(synthetic.users())
 
 
 def test_e1_refuses_a_dump_at_another_head(isolated, synthetic_dump, seedless):
@@ -132,14 +130,17 @@ def test_e1_refuses_a_dump_at_another_head(isolated, synthetic_dump, seedless):
 
 def test_e4_loads_the_accounts_but_the_seed_and_the_clashes(migrated):
     users = by_id(target(migrated, "user"))
-    assert sorted(users) == [1, 2, 3, 4, 7, 8, 9, 12, 13, 14, 15]
+    # 10 and 11 only differ in an emoji, which utf8mb4_unicode_ci took for
+    # one and user.email's utf8mb4_bin does not; 16 and 17 in a space.
+    assert sorted(users) == [1, 2, 3, 4, 7, 8, 9, 10, 11, 12, 13, 14, 15]
     assert dropped(migrated, "user") == {
         5: "seed",
         6: "seed",
-        10: "held_by_conflict",
-        11: "held_by_conflict",
+        16: "held_by_conflict",
+        17: "held_by_conflict",
     }
-    assert ("email_clash_collation", "10,11") in conflicts(migrated)
+    clashes = {c for c in conflicts(migrated) if c[0].startswith("email_clash")}
+    assert clashes == {("email_clash_canonical", "shared@uvlhub.test")}
     source = by_id(synthetic.users())
     for user in users.values():
         assert user["account_origin"] == "legacy_v2"
@@ -169,10 +170,14 @@ def test_e4_confirms_an_address_only_with_a_positive_proof(migrated):
 
 
 def test_e4_a_probable_takeover_loads_unconfirmed_and_must_reset(migrated):
-    jose = by_id(target(migrated, "user"))[3]
+    """C-28 with auth's must_reset_password: the hash is copied, and opens
+    nothing but a reset link mailed to the owner."""
+    users = by_id(target(migrated, "user"))
+    jose = users[3]
     assert jose["email_verified_at"] is None
-    assert jose["password"] == rules.UNUSABLE_PASSWORD
-    assert jose["has_usable_password"] == 0
+    assert jose["must_reset_password"] == 1
+    assert jose["password"] == by_id(synthetic.users())[3]["password"]
+    assert {i for i, u in users.items() if u["must_reset_password"]} == {3}
     candidates = {c["user_id"]: c for c in work(migrated, "takeover_candidate")}
     assert (
         candidates[3]["kind"] == "probable"
@@ -187,7 +192,7 @@ def test_e4_a_probable_takeover_loads_unconfirmed_and_must_reset(migrated):
 def test_e4_an_account_opened_by_a_provider_has_no_usable_password(migrated):
     users = by_id(target(migrated, "user"))
     usable = {i for i, u in users.items() if u["has_usable_password"]}
-    assert usable == {1, 4, 7, 9, 12, 13, 14, 15}
+    assert usable == {1, 3, 4, 7, 9, 10, 11, 12, 13, 14, 15}
 
 
 def test_e4_profiles_are_stripped_and_follow_their_account(migrated):
@@ -199,8 +204,8 @@ def test_e4_profiles_are_stripped_and_follow_their_account(migrated):
     assert dropped(migrated, "user_profile") == {
         105: "seed",
         106: "seed",
-        110: "held_by_conflict",
-        111: "held_by_conflict",
+        116: "held_by_conflict",
+        117: "held_by_conflict",
     }
 
 
@@ -223,7 +228,10 @@ def test_e4_folds_orcid_and_github_into_external_identity(migrated):
         5: "held_by_conflict",
         6: "held_by_conflict",
         7: "held_by_conflict",
+        9: "held_by_conflict",
     }
+    # "GitHub " is github, written exactly; gitlab is no provider of uvlhub.
+    assert identities[8]["provider"] == "github"
     assert dropped(migrated, "orcid") == {
         2: "held_by_conflict",
         3: "held_by_conflict",
@@ -236,6 +244,7 @@ def test_e4_folds_orcid_and_github_into_external_identity(migrated):
         ("identity_other_account", "3"),
         ("identity_invalid_id", "5"),
         ("identity_second_link", "13:github"),
+        ("identity_unknown_provider", "9"),
     } <= found
     pairs = rows(
         migrated,
@@ -444,7 +453,7 @@ def test_e8_writes_the_manifest_with_what_no_row_names(migrated):
         "temp/1/half.uvl": "temp",
         "user_1/dataset_1/glencoe/model one.json": "derived",
         "user_1/dataset_99/uvl/lost.uvl": "orphan",
-        "user_11/dataset_11/uvl/held.uvl": "orphan",
+        "user_17/dataset_11/uvl/held.uvl": "orphan",
         "user_5/dataset_12/uvl/file1.uvl": "orphan",
     }
     rows_ = {m["hubfile_id"]: m for m in manifest if m["hubfile_id"]}
@@ -463,7 +472,8 @@ def test_e3_refuses_a_schema_that_is_not_the_contracts(
     and another collation than the pinned features give stops E3."""
     contract = contract_module.load()
     user = contract.tables["user"]
-    email = replace(user.columns["email"], collation="utf8mb4_bin")
+    # As if auth went back to the table's collation for the address.
+    email = replace(user.columns["email"], collation="utf8mb4_unicode_ci")
     tables = dict(
         contract.tables, user=replace(user, columns=dict(user.columns, email=email))
     )
@@ -481,8 +491,8 @@ def test_e3_refuses_a_schema_that_is_not_the_contracts(
     assert refusal.value.stage == "E3"
     assert refusal.value.reasons == [
         "V-12 splent_feature_rating at 3e72750db961, the contract expects rating0002",
-        "V-14 user.email: utf8mb4_unicode_ci, the contract says utf8mb4_bin",
-        "user.email: collation utf8mb4_unicode_ci, the contract says utf8mb4_bin",
+        "V-14 user.email: utf8mb4_bin, the contract says utf8mb4_unicode_ci",
+        "user.email: collation utf8mb4_bin, the contract says utf8mb4_unicode_ci",
     ]
 
 
@@ -563,7 +573,7 @@ def test_strict_the_cutover_stops_at_an_open_conflict(
     with pytest.raises(Refused) as refusal:
         run(params)
     assert refusal.value.stage == "E4"
-    assert "1 open conflict(s) of kind email_clash_collation" in refusal.value.reasons
+    assert "1 open conflict(s) of kind email_clash_canonical" in refusal.value.reasons
     assert refusal.value.report["stopped"]["stage"] == "E4"
 
 
