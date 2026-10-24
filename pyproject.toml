@@ -69,8 +69,8 @@ spl = "openhubs_spl"
 # taken back, so a release tags the forge and pushes the image to the forge's
 # container registry, whose stable tag is what autodeploy follows. The forge
 # registry of splent-io is public. No Docker Hub mirror, where uvlhub.io's
-# images with Metronic were published, until D9 is decided; and no release at
-# all before D9 and the private staging of D3 say so.
+# images with the commercial theme were published, until D9 is decided; and
+# no release at all before D9 and the private staging of D3 say so.
 [tool.splent.release]
 channels = ["forge", "docker"]
 registries = ["forge"]

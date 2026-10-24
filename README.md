@@ -109,8 +109,10 @@ and put the step back, until the CLI's template fetches the model itself.
   imports, refiners and parameters. Then `product:build --no-image`, and it
   fails when what the build writes differs from what is committed:
   `deploy/`, `splent.contracts.json`, `docker/spl/` and
-  `docker/requirements.lock`. Last, `check:vendor`: no Keenthemes code in
-  the product or in any feature it pins, for production or development.
+  `docker/requirements.lock`. Last, `check:vendor`: none of the commercial
+  theme the monolith was drawn with, in the product or in any feature it
+  pins, for production or development. It searches by content, prose
+  included, so not even this readme names the theme.
 - **lint** runs Ruff 0.11.8, the CLI's, on `src/uvlhub_splent`.
 - **test**, once validate passes, stands in for the web container: MariaDB
   11.4, Redis, Elasticsearch and MailHog as services, the framework and the
