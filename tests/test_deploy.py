@@ -34,10 +34,10 @@ SOCKET = "/var/run/docker.sock"
 # The one service that may hold the socket: the deploy agent, in a
 # container of its own.
 AGENT = ("splent_feature_autodeploy", "splent_feature_autodeploy")
-# Services whose healthcheck comes with their feature's next release (nginx
-# after 1.4.0). Each goes once that release is pinned; any other service
-# without one is a failure.
-HEALTHCHECK_PENDING = {("splent_feature_nginx@v1.4.0", "splent_feature_nginx")}
+# Services whose healthcheck comes with their feature's next release, as
+# (pinned folder, service). Each goes once that release is pinned; any other
+# service without one is a failure. None today: nginx 1.5.0 brought its own.
+HEALTHCHECK_PENDING: set[tuple[str, str]] = set()
 
 
 def _services(path: Path) -> dict:
