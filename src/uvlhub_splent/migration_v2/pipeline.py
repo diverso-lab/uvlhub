@@ -146,6 +146,12 @@ def run(params: Params, contract=None) -> dict:
         stopped = Refused(stage, f"{type(error).__name__}: {error}")
     try:
         report = finish(ctx, stopped)
+    except Exception:
+        # A crash that left the server unreachable cannot be written down
+        # either; the crash is what the operator needs to see.
+        if crash is None:
+            raise
+        report = None
     finally:
         ctx.close()
     if crash is not None:
