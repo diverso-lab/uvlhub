@@ -64,6 +64,17 @@ features_dev = ["splent-io/splent_feature_mailhog@v1.2.0", "splent-io/splent_fea
 features_prod = []
 spl = "openhubs_spl"
 
+# How a release publishes this product. A web product has no use for a PyPI
+# package, and left undeclared a release would upload one that cannot be
+# taken back, so a release tags the forge and pushes the image to the forge's
+# container registry, whose stable tag is what autodeploy follows. The forge
+# registry of splent-io is public. No Docker Hub mirror, where uvlhub.io's
+# images with Metronic were published, until D9 is decided; and no release at
+# all before D9 and the private staging of D3 say so.
+[tool.splent.release]
+channels = ["forge", "docker"]
+registries = ["forge"]
+
 # Where the SPL model itself comes from. The name above is not enough
 # to download anything, so the DOI travels with the product and any
 # clone of this repository can resolve the model from UVLHub alone.
