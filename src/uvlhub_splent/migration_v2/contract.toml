@@ -44,6 +44,7 @@ collation = "utf8mb4_unicode_ci"
 [features]
 splent_feature_academic_profile = { version = "0.1.0", head = "pu0002" }
 splent_feature_apikeys = { version = "0.9.0", head = "apikeys0002_lifecycle" }
+splent_feature_audit = { version = "0.1.0", head = "audit0001_events" }
 splent_feature_auth = { version = "1.26.0", head = "auth0009_email_collation" }
 splent_feature_confirmemail = { version = "2.2.0", head = "126da35a357f" }
 splent_feature_curation = { version = "0.1.0", head = "curation0001_requests" }
@@ -359,6 +360,10 @@ last_migration = { type = "varchar(255)", nullable = true, collation = "utf8mb4_
 # Left empty. The usage records and doi_mapping wait for E6 (usage_daily,
 # legacy_url), hubfile_factlabel and statistics for E9 (recomputed, DM-6,
 # DC-7); the rest is what 3.0 makes once it runs.
+[tables.audit_event]
+owner = "splent_feature_audit"
+role = "empty"
+
 [tables.auth_throttle_failure]
 owner = "splent_feature_auth"
 role = "empty"
