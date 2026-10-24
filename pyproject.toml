@@ -57,9 +57,10 @@ features = [
     "splent-io/splent_feature_identities@v0.5.0",
     "splent-io/splent_feature_apikeys@v0.9.0",
     "splent-io/splent_feature_hubfile@v0.7.0",
-    "splent-io/splent_feature_dataset@v0.7.0",
     "splent-io/splent_feature_zenodo@v0.4.0",
     "splent-io/splent_feature_backup@v0.1.0",
+    "splent-io/splent_feature_dataset@v0.8.0",
+    "splent-io/splent_feature_curation@v0.1.0",
 ]
 features_dev = ["splent-io/splent_feature_mailhog@v1.2.0", "splent-io/splent_feature_phpmyadmin@v1.1.0"]
 features_prod = []
@@ -81,10 +82,10 @@ registries = ["forge"]
 # clone of this repository can resolve the model from UVLHub alone.
 [tool.splent.spl_model]
 mirror = "uvlhub.io"
-doi = "10.5281/zenodo.23626373"
+doi = "10.5281/zenodo.23628801"
 # Same line, every version. Used to report that a newer model exists.
 concept_doi = ""
-version = "5"
+version = "6"
 file = "openhubs_spl.uvl"
 
 [tool.splent.config]
@@ -127,6 +128,13 @@ DATASET_QR_LOGO = "media/logos/uvlhub_ball.png"
 # uvlhub.io lists first the datasets with the most feature models
 # (01 §5.5): those that hold the most items, uvl's UVL models.
 DATASET_HOME_ORDER = "items"
+# D4: an account a curator does not trust waits for review before its
+# dataset gets a DOI; one with a published dataset (carried over from 2.12
+# with one, or published here since) publishes with its address confirmed.
+# At the cutover the deployment's .env sets DATASET_PUBLISH_PAUSED=true until
+# the end of RB-2.
+DATASET_PUBLISH_POLICY = "curated"
+CURATION_TRUSTED_ACCOUNTS = "carried_over"
 # uvlhub.io 2.12 deposited the whole folder of a dataset, its UVL models and
 # what uvl derives from them (Glencoe, DIMACS, SPLOT), so the records keep
 # carrying both.

@@ -1434,131 +1434,6 @@
         }
       }
     },
-    "splent_feature_dataset": {
-      "entry": "splent_io/splent_feature_dataset@v0.7.0",
-      "extensible": {
-        "services": [
-          "AuthorService",
-          "DOIMappingService",
-          "DSDownloadRecordService",
-          "DSMetaDataService",
-          "DSViewRecordService",
-          "DataSetService",
-          "DatasetAccessPolicy"
-        ],
-        "templates": [
-          "dataset/create_and_edit_dataset.html",
-          "dataset/list_datasets.html",
-          "dataset/profile_summary.html",
-          "dataset/tombstone.html",
-          "dataset/view_dataset.html",
-          "hooks/dataset_layout_scripts.html",
-          "hooks/home_datasets.html",
-          "hooks/navbar_download_all.html"
-        ],
-        "models": [
-          "Author",
-          "DOIMapping",
-          "DSDownloadRecord",
-          "DSMetaData",
-          "DSMetrics",
-          "DSViewRecord",
-          "DataSet",
-          "DatasetTransferRequest",
-          "IdempotencyKey"
-        ],
-        "hooks": [
-          "dataset.form.scripts",
-          "dataset.form.upload",
-          "dataset.home.actions",
-          "dataset.view.meta",
-          "dataset.view.scripts",
-          "dataset.view.workbench",
-          "home.section",
-          "layout.head.css",
-          "layout.navbar.items",
-          "layout.scripts"
-        ],
-        "routes": true
-      },
-      "config_schema": {
-        "DATASET_PUBLISHER_NAME": {
-          "type": "str",
-          "bind": "derivation",
-          "default": "",
-          "help": "Who publishes the datasets, in their metadata, mails and messages. Empty uses SITE_NAME."
-        },
-        "DATASET_CATALOG_URL": {
-          "type": "url",
-          "bind": "derivation",
-          "default": "",
-          "help": "Address of the catalog the metadata names. Empty uses the site's own."
-        },
-        "DATASET_QR_LOGO": {
-          "type": "str",
-          "bind": "derivation",
-          "default": "",
-          "pattern": "[^/.][^:]*\\.(png|jpe?g|gif|webp)",
-          "help": "PNG, JPG, GIF or WebP image in the product's static folder drawn in the middle of the PNG and JPG QR codes. Empty draws none."
-        },
-        "DATASET_LICENSE": {
-          "type": "enum",
-          "bind": "derivation",
-          "default": "CC-BY-4.0",
-          "help": "License every dataset is published under, as an SPDX identifier.",
-          "choices": [
-            "CC-BY-4.0",
-            "CC-BY-SA-4.0",
-            "CC0-1.0"
-          ]
-        },
-        "DATASET_HOME_ORDER": {
-          "type": "enum",
-          "bind": "derivation",
-          "default": "newest",
-          "help": "Datasets the home page puts first: the newest, those with the most items, or the best rated (rating).",
-          "choices": [
-            "newest",
-            "items",
-            "rating"
-          ],
-          "uvl": true
-        },
-        "DATASET_PUBLICATION_PROVIDER": {
-          "type": "str",
-          "bind": "derivation",
-          "default": "",
-          "pattern": "[a-z][a-z0-9_]{0,31}",
-          "help": "Provider a publication goes through when the request names none (zenodo, local_publication). Empty: the only one installed."
-        },
-        "DATASET_PUBLISH_WAIT": {
-          "type": "int",
-          "bind": "deploy",
-          "default": 100,
-          "min": 0,
-          "max": 3600,
-          "help": "Seconds a request that publishes waits for the record before it answers that it is still under way (D5). Under the worker's and the proxy's timeouts."
-        },
-        "DATASET_PUBLISH_MAX_IN_FLIGHT": {
-          "type": "int",
-          "bind": "deploy",
-          "default": 3,
-          "min": 0,
-          "max": 100,
-          "help": "Publications of one account under way at once (429 past it). 0 for no limit."
-        },
-        "DATASET_DEPOSIT_CONTENT": {
-          "type": "enum",
-          "bind": "derivation",
-          "default": "sources",
-          "help": "What a deposit carries: the dataset's files, or also what is derived from them (PB-7).",
-          "choices": [
-            "sources",
-            "sources_and_derived"
-          ]
-        }
-      }
-    },
     "splent_feature_zenodo": {
       "entry": "splent_io/splent_feature_zenodo@v0.4.0",
       "extensible": {
@@ -1675,6 +1550,209 @@
           "default": [],
           "pattern": "[A-Za-z_][A-Za-z0-9_]*\\.[A-Za-z_][A-Za-z0-9_]*(:[A-Za-z_][A-Za-z0-9_]*)?",
           "help": "The rows that name a file: <Model>.<path>[:<size>]."
+        }
+      }
+    },
+    "splent_feature_dataset": {
+      "entry": "splent_io/splent_feature_dataset@v0.8.0",
+      "extensible": {
+        "services": [
+          "AuthorService",
+          "DOIMappingService",
+          "DSDownloadRecordService",
+          "DSMetaDataService",
+          "DSViewRecordService",
+          "DataSetService",
+          "DatasetAccessPolicy"
+        ],
+        "templates": [
+          "dataset/create_and_edit_dataset.html",
+          "dataset/list_datasets.html",
+          "dataset/profile_summary.html",
+          "dataset/tombstone.html",
+          "dataset/view_dataset.html",
+          "hooks/dataset_layout_scripts.html",
+          "hooks/home_datasets.html",
+          "hooks/navbar_download_all.html"
+        ],
+        "models": [
+          "Author",
+          "DOIMapping",
+          "DSDownloadRecord",
+          "DSMetaData",
+          "DSMetrics",
+          "DSViewRecord",
+          "DataSet",
+          "DatasetTransferRequest",
+          "IdempotencyKey"
+        ],
+        "hooks": [
+          "dataset.form.scripts",
+          "dataset.form.upload",
+          "dataset.home.actions",
+          "dataset.view.actions",
+          "dataset.view.meta",
+          "dataset.view.scripts",
+          "dataset.view.workbench",
+          "home.section",
+          "layout.head.css",
+          "layout.navbar.items",
+          "layout.scripts"
+        ],
+        "routes": true
+      },
+      "config_schema": {
+        "DATASET_PUBLISHER_NAME": {
+          "type": "str",
+          "bind": "derivation",
+          "default": "",
+          "help": "Who publishes the datasets, in their metadata, mails and messages. Empty uses SITE_NAME."
+        },
+        "DATASET_CATALOG_URL": {
+          "type": "url",
+          "bind": "derivation",
+          "default": "",
+          "help": "Address of the catalog the metadata names. Empty uses the site's own."
+        },
+        "DATASET_QR_LOGO": {
+          "type": "str",
+          "bind": "derivation",
+          "default": "",
+          "pattern": "[^/.][^:]*\\.(png|jpe?g|gif|webp)",
+          "help": "PNG, JPG, GIF or WebP image in the product's static folder drawn in the middle of the PNG and JPG QR codes. Empty draws none."
+        },
+        "DATASET_LICENSE": {
+          "type": "enum",
+          "bind": "derivation",
+          "default": "CC-BY-4.0",
+          "help": "License every dataset is published under, as an SPDX identifier.",
+          "choices": [
+            "CC-BY-4.0",
+            "CC-BY-SA-4.0",
+            "CC0-1.0"
+          ]
+        },
+        "DATASET_HOME_ORDER": {
+          "type": "enum",
+          "bind": "derivation",
+          "default": "newest",
+          "help": "Datasets the home page puts first: the newest, those with the most items, or the best rated (rating).",
+          "choices": [
+            "newest",
+            "items",
+            "rating"
+          ],
+          "uvl": true
+        },
+        "DATASET_PUBLICATION_PROVIDER": {
+          "type": "str",
+          "bind": "derivation",
+          "default": "",
+          "pattern": "[a-z][a-z0-9_]{0,31}",
+          "help": "Provider a publication goes through when the request names none (zenodo, local_publication). Empty: the only one installed."
+        },
+        "DATASET_PUBLISH_WAIT": {
+          "type": "int",
+          "bind": "deploy",
+          "default": 100,
+          "min": 0,
+          "max": 3600,
+          "help": "Seconds a request that publishes waits for the record before it answers that it is still under way (D5). Under the worker's and the proxy's timeouts."
+        },
+        "DATASET_PUBLISH_MAX_IN_FLIGHT": {
+          "type": "int",
+          "bind": "deploy",
+          "default": 3,
+          "min": 0,
+          "max": 100,
+          "help": "Publications of one account under way at once (429 past it). 0 for no limit."
+        },
+        "DATASET_DEPOSIT_CONTENT": {
+          "type": "enum",
+          "bind": "derivation",
+          "default": "sources",
+          "help": "What a deposit carries: the dataset's files, or also what is derived from them (PB-7).",
+          "choices": [
+            "sources",
+            "sources_and_derived"
+          ]
+        },
+        "DATASET_PUBLISH_POLICY": {
+          "type": "enum",
+          "bind": "derivation",
+          "default": "open",
+          "help": "Who publishes (PB-8): any owner, an owner with a confirmed address, or that and a reviewer's approval for the accounts it does not trust (curated needs curation).",
+          "choices": [
+            "open",
+            "verified",
+            "curated"
+          ],
+          "uvl": true
+        },
+        "DATASET_PUBLISH_PAUSED": {
+          "type": "bool",
+          "bind": "deploy",
+          "default": false,
+          "help": "Hold every publication (a cutover): the web sends it to review, API v1 answers 423 publication_paused."
+        },
+        "DATASET_PUBLISH_PAUSED_RETRY_AFTER": {
+          "type": "int",
+          "bind": "deploy",
+          "default": 3600,
+          "min": 1,
+          "max": 604800,
+          "help": "Seconds the Retry-After of a paused publication says."
+        }
+      }
+    },
+    "splent_feature_curation": {
+      "entry": "splent_io/splent_feature_curation@v0.1.0",
+      "extensible": {
+        "services": [
+          "CurationService"
+        ],
+        "templates": [
+          "curation/admin/queue.html",
+          "curation/admin/request.html",
+          "hooks/withdrawal_request.html"
+        ],
+        "models": [
+          "CurationRequest"
+        ],
+        "hooks": [
+          "dataset.view.actions"
+        ],
+        "routes": true
+      },
+      "config_schema": {
+        "CURATION_TRUSTED_ACCOUNTS": {
+          "type": "enum",
+          "bind": "derivation",
+          "default": "published",
+          "help": "Which accounts publish without review on a curated hub: none, those with a published dataset, or those carried over from an older site with one (D4).",
+          "choices": [
+            "none",
+            "published",
+            "carried_over"
+          ]
+        },
+        "CURATION_REVIEWER_ROLES": {
+          "type": "list",
+          "bind": "derivation",
+          "default": [
+            "admin"
+          ],
+          "help": "Roles of the accounts that review publications and withdrawals.",
+          "choices": [
+            "admin",
+            "staff"
+          ]
+        },
+        "CURATION_NOTIFY_REVIEWERS": {
+          "type": "bool",
+          "bind": "derivation",
+          "default": true,
+          "help": "Whether the reviewers are mailed when something new waits for them."
         }
       }
     }

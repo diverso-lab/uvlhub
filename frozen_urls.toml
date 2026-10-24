@@ -391,8 +391,13 @@ status = "served"
 endpoint = "dataset.api_publish_dataset"
 served_by = "dataset"
 plan = "PB-2"
-note = """The 423 is answered by nginx during the cutover (06 §9.3), not by \
-the app, and "never a 5xx or a 202" now holds for it alone. Since dataset \
+note = """During the cutover nginx answers the 423 while v2.12 still runs \
+behind it (06 §9.3), and "never a 5xx or a 202" now holds for that 423 \
+alone. Since dataset 0.8.0 the app answers a 423 too: publication_paused \
+with Retry-After while DATASET_PUBLISH_PAUSED holds publication, and under \
+the curated policy (D4) publication_under_review (the draft moves to \
+submitted, with status_url), email_unconfirmed or \
+publication_review_unavailable. Since dataset \
 0.7.0 (PB-2, D5 option a, which the contract owner accepted, with the \
 change from 2.12's 200 with a null DOI to an error status) the call \
 waits at most DATASET_PUBLISH_WAIT seconds (540 in production) and answers \
@@ -416,8 +421,13 @@ status = "served"
 endpoint = "dataset.api_new_dataset_version"
 served_by = "dataset"
 plan = "PB-2"
-note = """The 423 is answered by nginx during the cutover (06 §9.3), not by \
-the app, and "never a 5xx or a 202" now holds for it alone. Since dataset \
+note = """During the cutover nginx answers the 423 while v2.12 still runs \
+behind it (06 §9.3), and "never a 5xx or a 202" now holds for that 423 \
+alone. Since dataset 0.8.0 the app answers a 423 too: publication_paused \
+with Retry-After while DATASET_PUBLISH_PAUSED holds publication, and under \
+the curated policy (D4) publication_under_review (the draft moves to \
+submitted, with status_url), email_unconfirmed or \
+publication_review_unavailable. Since dataset \
 0.7.0 a new version answers as the publish does (PB-2, D5 option a): 200 \
 with the identifier after a wait of at most DATASET_PUBLISH_WAIT seconds, \
 503 publication_pending past it, 202 only with Prefer: respond-async, \

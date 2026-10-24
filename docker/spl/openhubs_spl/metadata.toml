@@ -4,7 +4,7 @@ description = ""
 
 [spl.uvl]
 mirror = "uvlhub.io"
-doi = "10.5281/zenodo.23626373"
+doi = "10.5281/zenodo.23628801"
 concept_doi = ""
-version = "5"
+version = "6"
 file = "openhubs_spl.uvl"

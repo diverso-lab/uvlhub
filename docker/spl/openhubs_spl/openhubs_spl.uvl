@@ -13,6 +13,8 @@
 // [tool.splent.config_schema]); the CLI selects it from the product's value before solving, which needs
 // splent_cli 1.40.0 or later. captcha_on_* are the forms of CAPTCHA_PROTECTED_FORMS this line has; contact,
 // comment and careers have no feature here. home_* are the choices of DATASET_HOME_ORDER (dataset 0.6.0).
+// publish_* are the choices of DATASET_PUBLISH_POLICY (dataset 0.8.0, PB-8): curated sends what an account the
+// hub does not trust publishes to review, so it needs a reviewer, curation (GV-2, an optional feature by D10).
 features
 	openhubs_spl
 		mandatory
@@ -68,6 +70,11 @@ features
 									home_newest {value 'newest'}
 									home_most_items {value 'items'}
 									home_most_rated {value 'rating'}
+							dataset_publish_policy {param 'DATASET_PUBLISH_POLICY'}
+								alternative
+									publish_open {value 'open'}
+									publish_verified {value 'verified'}
+									publish_curated {value 'curated'}
 					hubfile {org 'splent-io', package 'splent_feature_hubfile'}
 					publicacion
 						or
@@ -80,6 +87,7 @@ features
 									factlabel {org 'splent-io', package 'splent_feature_factlabel'}
 									generator {org 'splent-io', package 'splent_feature_generator'}
 				optional
+					curation {org 'splent-io', package 'splent_feature_curation'}
 					apidocs {org 'splent-io', package 'splent_feature_apidocs'}
 					rating {org 'splent-io', package 'splent_feature_rating'}
 					explore {org 'splent-io', package 'splent_feature_explore'}
@@ -130,6 +138,9 @@ constraints
 	dataset => apikeys
 	// The best rated first is rating's order of the home page.
 	home_most_rated => rating
+	// A curated hub reviews what the accounts it does not trust publish: curation is its reviewer
+	// (dataset's PublicationReviewer), and dataset refuses to start curated without it.
+	publish_curated => curation
 	hubfile => auth
 	hubfile => dataset
 	// uvl extends hubfile's Hubfile and asks dataset who may read a model
@@ -142,6 +153,9 @@ constraints
 	zenodo => auth
 	zenodo => dataset
 	local_publication => dataset
+	// curation reviews dataset's publications and withdraws through its services, so it loads after it.
+	curation => auth
+	curation => dataset
 	rating => auth
 	rating => dataset
 	explore => dataset
