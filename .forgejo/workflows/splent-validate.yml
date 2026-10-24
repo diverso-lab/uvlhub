@@ -1,4 +1,4 @@
-# splent-generated sha256 79d6b5a1d74652d87b349a5473b491dd41110acdaa55ffe77d1dfea221717edc
+# splent-generated sha256 72434b3550a5c27f3a2ee80c807bee9a8a843d9a434412dc03eb5d71c5ef32f9
 # Written by splent (product:create, product:sync-template --ci). While
 # it stays as written, which the line above records, the commands that
 # change the product's features rewrite it. Once edited it is left
@@ -24,6 +24,15 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+
+# Without this the forge cancels a run of the workflow when the next push
+# to the same branch starts one, so a push to main stopped the previous
+# commit's test job halfway and that commit was never tested. Runs on main
+# queue in order, each to the end. A pull request's newer push still
+# cancels the run it makes pointless.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   validate:
@@ -134,7 +143,7 @@ jobs:
           --health-cmd "healthcheck.sh --connect --innodb_initialized"
           --health-interval 5s --health-timeout 5s --health-retries 30
       splent_feature_elasticsearch:
-        image: docker.elastic.co/elasticsearch/elasticsearch:8.18.4
+        image: elasticsearch:8.18.4
         env:
           discovery.type: single-node
           xpack.security.enabled: "false"
@@ -210,13 +219,12 @@ jobs:
           if [ -f "$lock" ]; then export PIP_CONSTRAINT="$PWD/$lock"; fi
           splent feature:pip-install
 
-      # uvlhub's own step, not the template's. The line's model orders the
-      # features, and so their migrations, their seeders and the app's
-      # hooks, as in development and in the image, which ships docker/spl.
-      # This job never had it: the features loaded in pyproject.toml order,
-      # hubfile's tables were created before dataset's, which they name,
-      # and the migrations below failed. spl:fetch runs with no product
-      # selected and takes the DOI pyproject.toml pins.
+      # The line's model orders the features, and so their migrations, their
+      # seeders and the app's hooks, as in development and in the image,
+      # which ships docker/spl. Without it the features load in
+      # pyproject.toml order, and a migration that names a table of a
+      # feature loaded later fails. spl:fetch runs with no product selected
+      # and takes the DOI pyproject.toml pins.
       - name: Fetch the line's model
         env:
           SPLENT_APP: ""
