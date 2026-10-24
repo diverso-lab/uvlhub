@@ -27,14 +27,10 @@ cli_version = "1.35.0"
 features = [
     "splent-io/splent_feature_mail@v1.4.4",
     "splent-io/splent_feature_academic_profile@v0.1.0",
-    "splent-io/splent_feature_dataset@v0.2.0",
-    "splent-io/splent_feature_featuremodel@v0.2.0",
     "splent-io/splent_feature_flamapy@v0.1.1",
     "splent-io/splent_feature_factlabel@v0.2.0",
-    "splent-io/splent_feature_hubfile@v0.2.0",
     "splent-io/splent_feature_rating@v0.2.0",
     "splent-io/splent_feature_explore@v0.2.0",
-    "splent-io/splent_feature_statistics@v0.2.0",
     "splent-io/splent_feature_generator@v0.1.0",
     "splent-io/splent_feature_theme@v0.14.0",
     "splent-io/splent_feature_settings@v0.5.0",
@@ -60,6 +56,10 @@ features = [
     "splent-io/splent_feature_apikeys@v0.4.1",
     "splent-io/splent_feature_public@v1.11.0",
     "splent-io/splent_feature_team@v0.8.0",
+    "splent-io/splent_feature_dataset@v0.3.0",
+    "splent-io/splent_feature_hubfile@v0.3.0",
+    "splent-io/splent_feature_statistics@v0.2.1",
+    "splent-io/splent_feature_featuremodel@v0.2.1",
 ]
 features_dev = ["splent-io/splent_feature_mailhog@v1.2.0", "splent-io/splent_feature_phpmyadmin@v1.1.0"]
 features_prod = []
