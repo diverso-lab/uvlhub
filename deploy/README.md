@@ -22,10 +22,13 @@ and names the one that is missing.
 - `AUTODEPLOY_SECRET`
 - `OAUTH_REDIRECT_BASE_URL`
 - `ZENODO_ACCESS_TOKEN`
+- `BACKUP_DESTINATION`
+- `BACKUP_AGE_RECIPIENTS`
 - `SECRET_KEY`
 - `MARIADB_PASSWORD`
 - `MARIADB_ROOT_PASSWORD`
 - `SERVER_NAME`
+- `BACKUP_HOST_DIR`
 
 A long random string is right for any of them that is a secret, for
 example the output of `openssl rand -hex 32`. Choose the database

@@ -1,5 +1,6 @@
-"""Production as uvlhub runs it: one host, files on volumes, and the deploy
-agent alone holding the Docker socket (PL-8, PL-4, PL-2).
+"""Production as uvlhub runs it: one host, files on volumes and backed up
+off the host, and the deploy agent alone holding the Docker socket (PL-8,
+PL-4, PL-2).
 
 The host checks build the production settings from an environment like
 deploy/.env and apply them to the test app, then ask it what a request with
@@ -140,14 +141,25 @@ def test_absolute_links_name_the_public_host(production_host):
 # ── Files on volumes ─────────────────────────────────────────────────────
 
 
+# source:target[:mode], where the source may be an interpolation whose
+# message holds colons of its own (${VAR:?...}).
+MOUNT = re.compile(r"^(\$\{[^}]*\}|[^:]*):(.+?)(?::(?:ro|rw))?$")
+# ${VAR:-default}, as the storage roots are written.
+DEFAULTED = re.compile(r"^\$\{[A-Z_]+:-([^}]*)\}$")
+
+
 def _mounts(service: dict) -> dict[str, str]:
     """Each mount target of ``service`` and its source."""
     found = {}
     for volume in service.get("volumes") or []:
-        source, _sep, rest = volume.partition(":")
-        target = rest.rsplit(":", 1)[0] if rest.endswith((":ro", ":rw")) else rest
+        source, target = MOUNT.match(volume).groups()
         found[target] = source
     return found
+
+
+def _config() -> dict:
+    pyproject = tomllib.loads((PRODUCT / "pyproject.toml").read_text())
+    return pyproject["tool"]["splent"]["config"]
 
 
 @pytest.mark.parametrize(
@@ -180,6 +192,36 @@ def test_the_database_is_on_a_named_volume():
     compose = yaml.safe_load(COMPOSE.read_text(encoding="utf-8"))
     mounts = _mounts(compose["services"]["uvlhub_splent_db_deploy"])
     assert mounts["/var/lib/mysql"] in compose["volumes"]
+
+
+# ── Backups ──────────────────────────────────────────────────────────────
+
+
+def test_every_storage_root_is_backed_up():
+    """BACKUP_PATHS are the targets of the web service's named volumes, as
+    they are by default: a root left out would come back empty from a
+    restore, and a path that is no volume is the container's own layer."""
+    compose = yaml.safe_load(COMPOSE.read_text(encoding="utf-8"))
+    roots = set()
+    for target, source in _mounts(compose["services"][WEB]).items():
+        if source in (compose.get("volumes") or {}):
+            defaulted = DEFAULTED.match(target)
+            roots.add(defaulted.group(1) if defaulted else target)
+    assert sorted(_config()["BACKUP_PATHS"]) == sorted(roots)
+
+
+def test_the_backups_go_to_a_disk_mounted_from_elsewhere():
+    """A directory destination is another machine's disk, which the host
+    mounts and compose binds at /backups (splent_feature_backup's README).
+    Never a named volume: it would be on the disk it backs up. compose
+    refuses to start until the operator names it."""
+    compose = yaml.safe_load(COMPOSE.read_text(encoding="utf-8"))
+    source = _mounts(compose["services"][WEB])["/backups"]
+    assert source.startswith("${BACKUP_HOST_DIR:?")
+    assert source not in (compose.get("volumes") or {})
+    example = (PRODUCT / "docker" / ".env.prod.example").read_text(encoding="utf-8")
+    for key in ("BACKUP_HOST_DIR", "BACKUP_DESTINATION", "BACKUP_AGE_RECIPIENTS"):
+        assert re.search(rf"^{key}=<SET>$", example, re.M), key
 
 
 # ── Deploys ──────────────────────────────────────────────────────────────

@@ -15,11 +15,16 @@ x-required:
     set it in .env}
   ZENODO_ACCESS_TOKEN: ${ZENODO_ACCESS_TOKEN:?ZENODO_ACCESS_TOKEN is required, set
     it in .env}
+  BACKUP_DESTINATION: ${BACKUP_DESTINATION:?BACKUP_DESTINATION is required, set it
+    in .env}
+  BACKUP_AGE_RECIPIENTS: ${BACKUP_AGE_RECIPIENTS:?BACKUP_AGE_RECIPIENTS is required,
+    set it in .env}
   SECRET_KEY: ${SECRET_KEY:?SECRET_KEY is required, set it in .env}
   MARIADB_PASSWORD: ${MARIADB_PASSWORD:?MARIADB_PASSWORD is required, set it in .env}
   MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:?MARIADB_ROOT_PASSWORD is required,
     set it in .env}
   SERVER_NAME: ${SERVER_NAME:?SERVER_NAME is required, set it in .env}
+  BACKUP_HOST_DIR: ${BACKUP_HOST_DIR:?BACKUP_HOST_DIR is required, set it in .env}
 services:
   uvlhub_splent_web_deploy:
     image: ${SPLENT_IMAGE:-uvlhub_splent:0.0.1}
@@ -36,6 +41,7 @@ services:
     - uvlhub_splent_web_deploy_uploads:/workspace/uvlhub_splent/src/uvlhub_splent/static/uploads
     - uvlhub_splent_web_deploy_protected_uploads:${PROTECTED_UPLOADS_DIR:-/workspace/uvlhub_splent/protected_uploads}
     - uvlhub_splent_web_deploy_archive:${ARCHIVE_DIR:-/workspace/uvlhub_splent/archive}
+    - ${BACKUP_HOST_DIR:?mount the off-host backup disk and name it in BACKUP_HOST_DIR}:/backups
     depends_on:
       uvlhub_splent_db_deploy:
         condition: service_healthy

@@ -193,6 +193,8 @@ routes and the redacted access log are nginx's. The terminator has to
 | `NGINX_SERVER_NAME` | The name nginx serves the site by, `www.uvlhub.io`. Any other Host is refused. |
 | `MAIL_HOST`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM` | The SMTP account (STARTTLS on 587). The deploy offers a random `MAIL_PASSWORD`: type the real one. |
 | `ZENODO_ACCESS_TOKEN` | A Zenodo token with `deposit:write` and `deposit:actions`. |
+| `BACKUP_HOST_DIR`, `BACKUP_DESTINATION` | Where the backups go, which D19 has not decided yet: the directory of the host where another machine's disk is mounted, with `BACKUP_DESTINATION=/backups`, or an `s3://bucket/prefix` (then the mount goes from the compose file). |
+| `BACKUP_AGE_RECIPIENTS` | The `age1...` public keys the backups are encrypted to, made with `age-keygen` off the server. |
 
 and generates `SECRET_KEY`, the MariaDB passwords, `REDIS_PASSWORD` (redis
 runs with a password in production) and `ELASTICSEARCH_PASSWORD` (the node
@@ -261,8 +263,16 @@ the links.
   migration failed or changed the schema. Its README has the details.
 - Elasticsearch is derived from the database and the files and is not
   backed up: after a restore, `splent feature:explore reindex` rebuilds it.
-- Off-host, encrypted backups come with `splent_feature_backup`, once the
-  product selects it.
+- `splent_feature_backup` dumps the database and archives every storage
+  root (`BACKUP_PATHS`: the protected and public uploads and the archive,
+  the targets of those volumes), encrypted with age to
+  `BACKUP_AGE_RECIPIENTS`, to `BACKUP_DESTINATION`, off the host. The
+  server holds the public keys only. `feature:backup verify` checks that
+  every file a `Hubfile` row names is on disk with its size, and
+  `feature:backup restore latest --identity-file -` is the restore drill,
+  the private key coming from your machine on standard input; its README
+  has the real restore. `tests/test_deploy.py` checks that every storage
+  root is backed up.
 
 ### Scheduled jobs
 
@@ -271,6 +281,7 @@ periodic commands of the features in the web container, as the user the
 app runs as:
 
 ```
+15 3 * * *   docker exec -u splent uvlhub_splent_web_deploy splent feature:backup run --tag daily
 */15 * * * * docker exec -u splent uvlhub_splent_web_deploy splent feature:dataset publication-reconcile
 */15 * * * * docker exec -u splent uvlhub_splent_web_deploy splent feature:mail retry
 20 4 * * *   docker exec -u splent uvlhub_splent_web_deploy splent feature:mail purge
@@ -279,6 +290,9 @@ app runs as:
 50 3 * * 0   docker exec -u splent uvlhub_splent_web_deploy splent feature:apikeys purge
 ```
 
+- `backup run` takes the daily backup and prunes those older than
+  `BACKUP_RETENTION_DAYS` (30), keeping the newest `BACKUP_KEEP_MIN` (7),
+  and exits with 1 when it could not back up.
 - `publication-reconcile` settles what the publications left behind: it
   keeps the DOI of a publication Zenodo minted while the hub was not
   listening (a worker restarted half way), with its concept DOI, deletes

@@ -33,6 +33,11 @@ services:
       - uvlhub_splent_web_deploy_uploads:/workspace/uvlhub_splent/src/uvlhub_splent/static/uploads
       - uvlhub_splent_web_deploy_protected_uploads:${PROTECTED_UPLOADS_DIR:-/workspace/uvlhub_splent/protected_uploads}
       - uvlhub_splent_web_deploy_archive:${ARCHIVE_DIR:-/workspace/uvlhub_splent/archive}
+      # Where splent_feature_backup sends the backups, BACKUP_DESTINATION
+      # =/backups: a disk of another machine, mounted on the host at
+      # BACKUP_HOST_DIR. A bind mount, never a named volume, which would be
+      # on the very disk it backs up.
+      - ${BACKUP_HOST_DIR:?mount the off-host backup disk and name it in BACKUP_HOST_DIR}:/backups
     depends_on:
       uvlhub_splent_db_deploy:
         condition: service_healthy

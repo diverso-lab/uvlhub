@@ -1595,6 +1595,88 @@
           ]
         }
       }
+    },
+    "splent_feature_backup": {
+      "entry": "splent_io/splent_feature_backup@v0.1.0",
+      "extensible": {
+        "services": [
+          "BackupService"
+        ],
+        "templates": [],
+        "models": [],
+        "hooks": [],
+        "routes": true
+      },
+      "config_schema": {
+        "BACKUP_DESTINATION": {
+          "type": "str",
+          "bind": "deploy",
+          "help": "A directory mounted from another machine, or s3://bucket/prefix."
+        },
+        "BACKUP_AGE_RECIPIENTS": {
+          "type": "list",
+          "bind": "deploy",
+          "pattern": "age1[0-9a-z]+",
+          "help": "The age public keys every backup is encrypted to."
+        },
+        "BACKUP_AGE_IDENTITY": {
+          "type": "secret",
+          "bind": "deploy",
+          "help": "An age private key, for a restore only."
+        },
+        "BACKUP_PATHS": {
+          "type": "list",
+          "bind": "deploy",
+          "default": [],
+          "help": "The directories archived with the database. Empty means the protected uploads directory."
+        },
+        "BACKUP_RETENTION_DAYS": {
+          "type": "int",
+          "bind": "deploy",
+          "default": 30,
+          "min": 1,
+          "help": "Days a backup is kept."
+        },
+        "BACKUP_KEEP_MIN": {
+          "type": "int",
+          "bind": "deploy",
+          "default": 7,
+          "min": 1,
+          "help": "Backups kept whatever their age."
+        },
+        "BACKUP_STAGING_DIR": {
+          "type": "str",
+          "bind": "deploy",
+          "default": "",
+          "help": "Where a backup is put together. Empty means the system's temporary directory."
+        },
+        "BACKUP_S3_ENDPOINT": {
+          "type": "str",
+          "bind": "deploy",
+          "default": "",
+          "help": "The S3-compatible endpoint, https://... Empty means AWS."
+        },
+        "BACKUP_S3_REGION": {
+          "type": "str",
+          "bind": "deploy",
+          "default": ""
+        },
+        "BACKUP_S3_ACCESS_KEY_ID": {
+          "type": "secret",
+          "bind": "deploy"
+        },
+        "BACKUP_S3_SECRET_ACCESS_KEY": {
+          "type": "secret",
+          "bind": "deploy"
+        },
+        "BACKUP_VERIFY_FILES": {
+          "type": "list",
+          "bind": "derivation",
+          "default": [],
+          "pattern": "[A-Za-z_][A-Za-z0-9_]*\\.[A-Za-z_][A-Za-z0-9_]*(:[A-Za-z_][A-Za-z0-9_]*)?",
+          "help": "The rows that name a file: <Model>.<path>[:<size>]."
+        }
+      }
     }
   }
 }
