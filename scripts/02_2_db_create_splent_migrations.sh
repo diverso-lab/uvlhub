@@ -5,8 +5,8 @@
 # applied migration revision per feature.
 #
 # Columns:
-#   feature        — feature name as declared in pyproject.toml (PRIMARY KEY)
-#   last_migration — last Alembic revision applied for that feature
+#   feature         the feature name as declared in pyproject.toml (PRIMARY KEY)
+#   last_migration  the last Alembic revision applied for that feature
 #
 # This script is idempotent: running it multiple times is safe.
 
