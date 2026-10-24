@@ -56,10 +56,10 @@ features = [
     "splent-io/splent_feature_media@v0.11.1",
     "splent-io/splent_feature_reset@v2.2.0",
     "splent-io/splent_feature_confirmemail@v2.2.0",
-    "splent-io/splent_feature_apikeys@v0.6.0",
     "splent-io/splent_feature_identities@v0.4.0",
     "splent-io/splent_feature_orcid@v0.4.0",
     "splent-io/splent_feature_github@v0.4.0",
+    "splent-io/splent_feature_apikeys@v0.7.0",
 ]
 features_dev = ["splent-io/splent_feature_mailhog@v1.2.0", "splent-io/splent_feature_phpmyadmin@v1.1.0"]
 features_prod = []
