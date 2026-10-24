@@ -66,6 +66,10 @@ CONFLICTS = {
     "tombstone_undated": "C-03 (DM-4): the tombstone is dated T0",
     "tombstone_without_owner": "C-03 (DM-4): no tombstone is made; the DOI "
     "is in uvlhub_migration.tombstone only, and answers 404",
+    # E6
+    "doi_mapping_cycle": "C-20: the mappings of the cycle load nowhere",
+    "doi_mapping_dangling": "C-20: the mapping loads nowhere, so its old DOI "
+    "answers 404",
     # E8
     "file_mismatch": "§6.2: a file of a published dataset loads in mismatch",
     "file_missing": "§6.2: a published dataset loads without its file",
@@ -181,6 +185,43 @@ def _outputs(schema: str) -> sa.MetaData:
         sa.Column("directory_path", sa.String(255), nullable=False),
         sa.Column("old_name", sa.String(120), nullable=False),
         sa.Column("new_name", sa.String(120), nullable=False),
+    )
+    sa.Table(
+        "usage_daily",
+        metadata,
+        # DM-5: v2.12's records by dataset or file, kind and day (E6).
+        sa.Column("target_type", sa.String(16), primary_key=True),
+        sa.Column("target_id", sa.Integer, primary_key=True),
+        sa.Column("kind", sa.String(16), primary_key=True),
+        sa.Column("day", sa.Date, primary_key=True),
+        sa.Column("visitors", sa.Integer, nullable=False),
+        sa.Column("records", sa.Integer, nullable=False),
+        sa.Column("source", sa.String(16), nullable=False),
+    )
+    sa.Table(
+        "legacy_url",
+        metadata,
+        # CO-2: a path of v2.12 (decoded, as a route reads it) and where it
+        # answers now, for the feature legacy_urls to import (E6).
+        sa.Column("id", sa.Integer, primary_key=True),
+        sa.Column("kind", sa.String(16), nullable=False),
+        sa.Column("path", sa.String(1024), nullable=False),
+        sa.Column("target", sa.String(1024), nullable=False),
+        sa.Column("status", sa.Integer, nullable=False),
+        sa.Column("ref", sa.String(64), nullable=False),
+    )
+    sa.Table(
+        "held_notice",
+        metadata,
+        # §5.5, §5.7: a mail of the move that waits for the end of RB-2 (E6).
+        sa.Column("id", sa.Integer, primary_key=True),
+        sa.Column("kind", sa.String(32), nullable=False),
+        sa.Column("ref", sa.String(64), nullable=False),
+        sa.Column("user_id", sa.Integer, nullable=False),
+        sa.Column("recipient", sa.String(320), nullable=False),
+        sa.Column("subject", sa.String(998), nullable=False),
+        sa.Column("body_text", sa.Text, nullable=False),
+        sa.Column("hold_until", sa.String(32), nullable=False),
     )
     sa.Table(
         "takeover_candidate",

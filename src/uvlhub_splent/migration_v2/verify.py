@@ -34,6 +34,7 @@ KEPT_IDS = {
     "hubfiles": "hubfiles",
     "dataset_rating": "dataset_rating",
     "dataset_transfer_request": "dataset_transfer_request",
+    "doi_mapping": "doi_mapping",
 }
 # V-01: the source tables whose every row is accounted for, the target
 # table it loads into, and the other entities a row may be mapped to.
@@ -50,6 +51,7 @@ ACCOUNTED = {
     "hubfiles": "hubfiles",
     "dataset_rating": "dataset_rating",
     "dataset_transfer_request": "dataset_transfer_request",
+    "doi_mapping": "doi_mapping",
     "orcid": None,
     "github": None,
 }

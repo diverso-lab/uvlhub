@@ -591,7 +591,8 @@ PROBES = (
     Probe(
         "P-18b",
         "DOI mappings",
-        "C-20 (E6): aliases",
+        "C-20 (E6): each chain followed to its end, into doi_mapping and "
+        "legacy_url; a cycle or a dead end is a conflict",
         "SELECT * FROM {s}.doi_mapping",
     ),
     Probe(

@@ -17,7 +17,7 @@ Stages (§3.4), and what this first pass does of each:
     E3  schema        uvlhub3 at head, V-12, V-14, the contract      done
     E4  identity      accounts, profiles, identities, tokens         done
     E5  content       datasets and everything hanging off them       FIRST PASS
-    E6  legacy        usage aggregates, legacy_url, held mails       not yet
+    E6  legacy        usage aggregates, legacy_url, held notices     done
     E7  post-load     counters, foreign keys, counts, V-*           done
     E8  files         hubfile's storage-migrate, file_manifest       done
     E9  derived       reindex, FactLabel, formats                    not yet
@@ -50,4 +50,4 @@ MIGRATOR_VERSION = "0.1.0"
 # Every stage, in order. The ones this pass leaves for later are skipped by
 # the pipeline and named in the report.
 STAGES = ("E0", "E1", "E2", "E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10")
-NOT_YET = ("E6", "E9")
+NOT_YET = ("E9",)

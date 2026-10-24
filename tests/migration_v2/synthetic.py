@@ -46,9 +46,10 @@ Who is who, so a test can say what it expects:
 
 and metadata without a dataset: two with a DOI (290, which the Zenodo
 snapshot dates, and 292, anonymous, which nothing dates) and one without
-(291); an author of no metadata, votes to move, to merge and to drop, transfers, the usage
-records E6 will aggregate, a trigger and a view (P-28), and counters ahead
-of the rows, as when the last row was deleted (§4.1).
+(291); an author of no metadata, votes to move, to merge and to drop,
+transfers, the usage records E6 aggregates (and the ones it may not), DOI
+mappings with a chain, a cycle and a dead end, a trigger and a view (P-28),
+and counters ahead of the rows, as when the last row was deleted (§4.1).
 """
 
 from __future__ import annotations
@@ -719,6 +720,43 @@ def usage_rows():
                 "view_date": ago(2),
                 "view_cookie": "c2",
             },
+            # Its owner's own visit, a draft's, the seed's, and two more on
+            # the day of 1: one by the same browser, one by bob.
+            {
+                "id": 3,
+                "user_id": 1,
+                "dataset_id": 1,
+                "view_date": ago(2),
+                "view_cookie": "c5",
+            },
+            {
+                "id": 4,
+                "user_id": None,
+                "dataset_id": 5,
+                "view_date": ago(2),
+                "view_cookie": "c6",
+            },
+            {
+                "id": 5,
+                "user_id": None,
+                "dataset_id": 12,
+                "view_date": ago(2),
+                "view_cookie": "c7",
+            },
+            {
+                "id": 6,
+                "user_id": None,
+                "dataset_id": 1,
+                "view_date": ago(3, hours=-2),
+                "view_cookie": "c1",
+            },
+            {
+                "id": 7,
+                "user_id": 2,
+                "dataset_id": 1,
+                "view_date": ago(3, hours=-5),
+                "view_cookie": "c9",
+            },
         ],
         "ds_download_record": [
             {
@@ -758,12 +796,18 @@ def usage_rows():
                 "feature_models_counter": 17,
             },
         ],
+        # A mapping, one that leads to it, a cycle, one that leads nowhere,
+        # and one the first hides (v2.12 found the first).
         "doi_mapping": [
-            {
-                "id": 1,
-                "dataset_doi_old": "10.5281/zenodo.999",
-                "dataset_doi_new": "10.5281/zenodo.1001",
-            },
+            {"id": i, "dataset_doi_old": old, "dataset_doi_new": new}
+            for i, old, new in (
+                (1, "10.5281/zenodo.999", "10.5281/zenodo.1001"),
+                (2, "10.5281/zenodo.998", "10.5281/zenodo.999"),
+                (3, "10.5281/zenodo.3001", "10.5281/zenodo.3002"),
+                (4, "10.5281/zenodo.3002", "10.5281/zenodo.3001"),
+                (5, "10.5281/zenodo.997", "10.5281/zenodo.4040"),
+                (6, "10.5281/zenodo.999", "10.5281/zenodo.1003"),
+            )
         ],
         "hubfile_factlabel": [{"hubfile_id": 1, "factlabel_json": "{}"}],
     }

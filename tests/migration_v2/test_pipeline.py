@@ -76,11 +76,12 @@ def test_the_rehearsal_runs_every_stage_this_pass_has(migrated):
         "E3",
         "E4",
         "E5",
+        "E6",
         "E7",
         "E8",
         "E10",
     ]
-    assert set(report["stages_not_yet"]) == {"E6", "E9"}
+    assert set(report["stages_not_yet"]) == {"E9"}
     assert report["stopped"] is None
     assert report["e5_first_pass"]["first_pass"] is True
     assert report["ready_for_cutover"] is False

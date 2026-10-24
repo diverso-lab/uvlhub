@@ -18,6 +18,7 @@ from uvlhub_splent.migration_v2.content import content
 from uvlhub_splent.migration_v2.db import make_engine
 from uvlhub_splent.migration_v2.files import files
 from uvlhub_splent.migration_v2.identity import identity
+from uvlhub_splent.migration_v2.legacy import legacy
 from uvlhub_splent.migration_v2.ledger import (
     Ledger,
     create_outputs,
@@ -117,6 +118,7 @@ STAGE_FUNCTIONS = {
     "E3": build_schema,
     "E4": identity,
     "E5": content,
+    "E6": legacy,
     "E7": post_load,
     "E8": files,
 }

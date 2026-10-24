@@ -337,6 +337,17 @@ message = { type = "varchar(500)", nullable = true, collation = "utf8mb4_unicode
 created_at = { type = "datetime", nullable = false, source = "dataset_transfer_request.created_at" }
 resolved_at = { type = "datetime", nullable = true, rule = "T0 for an offer it cancels, as it was otherwise" }
 
+[tables.doi_mapping]
+# dataset's /doi routes still redirect by it; E6 loads v2.12's (C-20), and
+# writes the same aliases to uvlhub_migration.legacy_url for legacy_urls.
+owner = "splent_feature_dataset"
+role = "load"
+
+[tables.doi_mapping.columns]
+id = { type = "int(11)", nullable = false, source = "doi_mapping.id" }
+dataset_doi_old = { type = "varchar(120)", nullable = true, collation = "utf8mb4_unicode_ci", source = "doi_mapping.dataset_doi_old" }
+dataset_doi_new = { type = "varchar(120)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "the end of its chain, a DOI a dataset of 3.0 has; a cycle or a dead end loads nowhere (C-20)" }
+
 [tables.mail_outbox]
 # E0 reads it: a mail sent means 3.0 has opened.
 owner = "splent_feature_mail"
@@ -357,9 +368,9 @@ role = "read"
 feature = { type = "varchar(255)", nullable = false, collation = "utf8mb4_unicode_ci" }
 last_migration = { type = "varchar(255)", nullable = true, collation = "utf8mb4_unicode_ci" }
 
-# Left empty. The usage records and doi_mapping wait for E6 (usage_daily,
-# legacy_url), hubfile_factlabel and statistics for E9 (recomputed, DM-6,
-# DC-7); the rest is what 3.0 makes once it runs.
+# Left empty. The usage records are aggregated by E6 into
+# uvlhub_migration.usage_daily (DM-5), hubfile_factlabel and statistics wait
+# for E9 (recomputed, DM-6, DC-7); the rest is what 3.0 makes once it runs.
 [tables.audit_event]
 owner = "splent_feature_audit"
 role = "empty"
@@ -381,10 +392,6 @@ owner = "splent_feature_curation"
 role = "empty"
 
 [tables.dataset_idempotency_key]
-owner = "splent_feature_dataset"
-role = "empty"
-
-[tables.doi_mapping]
 owner = "splent_feature_dataset"
 role = "empty"
 

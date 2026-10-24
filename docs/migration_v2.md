@@ -10,8 +10,7 @@ the ORM. Every run starts over: it drops and creates `uvlhub3`,
 keeps the inputs of `uvlhub_migration_inputs`.
 
 This is a **first pass**. E5 (content) loads what the pinned features can
-hold and lists what it leaves for the final pass; E6 and E9 do not exist
-yet. Its report says `"ready_for_cutover": false` for as long as that is so.
+hold and lists what it leaves for the final pass; E9 does not exist yet. Its report says `"ready_for_cutover": false` for as long as that is so.
 
 ## Stages
 
@@ -23,7 +22,7 @@ yet. Its report says `"ready_for_cutover": false` for as long as that is so.
 | E3 schema | `CREATE DATABASE uvlhub3` with the contract's collation, `splent db:upgrade` in a process of its own, then V-12, V-14 and the whole contract | done |
 | E4 identity | `user`, `user_profile`, `external_identity` (the `orcid` and `github` tables folded in) and `api_token` | done |
 | E5 content | Datasets, metadata, authors, feature models, files, metrics, votes and transfers; the tombstones of DM-4 and the names of DM-10 | first pass |
-| E6 legacy | Usage aggregates, `legacy_url`, held notices | not yet |
+| E6 legacy | `usage_daily` (DM-5), `doi_mapping` and `legacy_url` (CO-2, C-20), `held_notice` (D13 b, §5.5) | done |
 | E7 post-load | Counters with their margin, every foreign key, the tables that must stay empty, V-01 to V-15 | done |
 | E8 files | hubfile's `storage-migrate --source <store>/.legacy_mirror --link`, then `file_manifest`, DM-10's names with `file_alias`, unique-paths and V-08 | done |
 | E9 derived | Reindex, FactLabel, formats | not yet |
@@ -126,6 +125,41 @@ decision's id) when the stage that finds it raises it again; one whose
 conflict comes back on other rows stops that stage. The report lists the
 decisions that hold and the ones no conflict used. Decisions count only in
 a run that has E2.
+
+## E6: what no feature has a place for yet
+
+The pinned features have no table for these, so E6 writes them to
+`uvlhub_migration`, for the features that will import them:
+
+- **`usage_daily`** (DM-5, §7.2): v2.12's four record tables by dataset or
+  file, kind and day, with `visitors` (an account, else the browser's
+  cookie, else each record) and `records`. A record of its owner, of a
+  dataset that is not published, of a dataset not loaded, without its
+  target or without its date is not counted, and `counts` says how many of
+  each; the raw records do not pass. statistics 0.4.0 has only its six
+  counters, which it rebuilds from 3.0's own records, so it needs a table
+  for these (`usage_daily`, `source = 'legacy_v2'`) and to show it next to
+  its own. The report's `dm5` gives v2.12's counters, the aggregates and
+  the public note that says why the figures went down.
+- **`doi_mapping` and `legacy_url`** (CO-2, C-20): dataset 0.8.0 still
+  redirects `/doi/<old>` by its own `doi_mapping` (302), so E6 loads v2.12's
+  there, each chain followed to its end, a DOI a dataset of 3.0 has, in one
+  hop. A cycle (`doi_mapping_cycle`), or a chain that ends at a DOI no
+  dataset has or runs into a cycle (`doi_mapping_dangling`), is a conflict
+  and loads nowhere; a second mapping of one DOI, which v2.12's lookup never
+  reached, is dropped as `shadowed`. `legacy_url` keeps every path that
+  answers somewhere else now, decoded as a route reads it, with a 308: those
+  mappings, and `/hubfiles/raw/<id>/<old name>` of every file DM-10
+  renamed. It is what the future legacy_urls feature imports.
+- **`held_notice`** (D13 b, §5.5): the mails of the move that wait for the
+  end of RB-2, since a rollback would make them false: one to each party of
+  every offer E5 cancelled, and one to every account with keys carried
+  over, saying until when each works or why it was carried over revoked.
+  English and Spanish (MIG-09), no link with a token. mail 1.5.0's outbox
+  knows `queued`, `sending`, `sent` and `failed`, and its sweep sends every
+  queued row, so nothing can wait there: mail needs a held state (or a
+  `not_before`) and a command that releases a tag of them, and then E6
+  queues them there.
 
 ## The data contract
 
