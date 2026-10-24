@@ -40,8 +40,6 @@ features = [
     "splent-io/splent_feature_settings@v0.5.0",
     "splent-io/splent_feature_media@v0.10.0",
     "splent-io/splent_feature_signup@v0.4.0",
-    "splent-io/splent_feature_team@v0.7.0",
-    "splent-io/splent_feature_public@v1.10.0",
     "splent-io/splent_feature_apidocs@v0.2.0",
     "splent-io/splent_feature_autodeploy@v0.2.0",
     "splent-io/splent_feature_zenodo@v0.2.0",
@@ -60,6 +58,8 @@ features = [
     "splent-io/splent_feature_orcid@v0.2.1",
     "splent-io/splent_feature_github@v0.2.1",
     "splent-io/splent_feature_apikeys@v0.4.1",
+    "splent-io/splent_feature_public@v1.11.0",
+    "splent-io/splent_feature_team@v0.8.0",
 ]
 features_dev = ["splent-io/splent_feature_mailhog@v1.2.0", "splent-io/splent_feature_phpmyadmin@v1.1.0"]
 features_prod = []
