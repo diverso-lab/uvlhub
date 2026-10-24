@@ -69,10 +69,10 @@ spl = "openhubs_spl"
 # clone of this repository can resolve the model from UVLHub alone.
 [tool.splent.spl_model]
 mirror = "uvlhub.io"
-doi = "10.5281/zenodo.23604003"
+doi = "10.5281/zenodo.23614354"
 # Same line, every version. Used to report that a newer model exists.
 concept_doi = ""
-version = "3"
+version = "4"
 file = "openhubs_spl.uvl"
 
 [tool.splent.config]
