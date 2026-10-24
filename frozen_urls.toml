@@ -55,7 +55,7 @@ status = "served"
 endpoint = "dataset.subdomain_index"
 served_by = "dataset"
 plan = "CT-4"
-note = "Both forms answer 200, with no canonical one yet. A concept DOI (row 2) matches this rule but answers 404 until CT-4 adds the 302; superseded DOIs already answer 302 through DOIMapping"
+note = "Both forms answer 200, with no canonical one yet. A withdrawn dataset answers 410 with the citation (451 for a legal reason) since dataset 0.4.0 (DL-2). A concept DOI (row 2) matches this rule but answers 404 until CT-4 adds the 302; superseded DOIs already answer 302 through DOIMapping"
 
 [[url]]
 rows = [1]
