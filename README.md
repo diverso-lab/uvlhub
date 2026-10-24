@@ -192,6 +192,21 @@ the links.
 - Off-host, encrypted backups come with `splent_feature_backup`, once the
   product selects it.
 
+## Migrating uvlhub.io 2.12
+
+`python -m uvlhub_splent.migration_v2` is the migrator of the cutover: it
+restores a dump of v2.12, builds an empty `uvlhub3` with the pinned
+features' migrations and fills it, held to a versioned data contract
+(`src/uvlhub_splent/migration_v2/contract.toml`). It is a first pass, and
+its tests run on a MariaDB of their own:
+
+```bash
+bash uvlhub_splent/tests/migration_v2/run_with_throwaway_db.sh -q
+```
+
+[docs/migration_v2.md](docs/migration_v2.md) has the stages, how to run
+it, the contract and where it departs from the plan.
+
 ## When something looks wrong
 
 ```bash
