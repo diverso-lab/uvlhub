@@ -1,18 +1,21 @@
 """E6, legacy: the history of use, the URLs that change, and the notices
 held until RB-2 ends (§2.1, §5.5, §5.7, §7.2).
 
-None of the pinned features has a place for these yet, so E6 writes them
-to the outputs, for the features that will import them:
-
 - usage_daily (DM-5): v2.12's view and download records, by dataset or
   file, kind and day, counting distinct visitors: an account, a browser's
   cookie when nobody signed in, each record when it has neither. A
   record's owner, a dataset not published and a record without its target
   or its date are not counted, and counts says how many of each. The raw
-  records do not pass (A12-09), and statistics has no table for the
-  aggregates (DC-8). The report's dm5 puts the counters v2.12 showed and
-  the aggregates side by side, with the public note that says why the
-  figures went down (A10-05, A10-06).
+  records do not pass (A12-09). E6 aggregates them in the outputs and
+  loads them into statistics' usage_daily, source legacy_v2, which the
+  dashboard shows next to 3.0's own (DC-8), with the public note that says
+  why the figures went down in usage_note, until the day before T0. The
+  report's dm5 puts the counters v2.12 showed and the aggregates side by
+  side, with the same note (A10-05, A10-06).
+
+None of the pinned features has a place for these yet, so E6 writes them
+to the outputs, for the features that will import them:
+
 - legacy_url (CO-2): every URL that answers somewhere else now, for the
   feature legacy_urls to import: v2.12's doi_mapping, each chain followed
   to the DOI a dataset of 3.0 has, as a 308 (C-20), and the
@@ -31,6 +34,7 @@ to the outputs, for the features that will import them:
 from __future__ import annotations
 
 from collections import defaultdict
+from datetime import timedelta
 
 import sqlalchemy as sa
 
@@ -185,6 +189,37 @@ def dm5(ctx, connection) -> dict:
         f"records give {views} daily visitors and {downloads} daily downloaders."
     )
     return {"v2_12_counters": counters, "aggregated": dict(totals), "note": note}
+
+
+def load_usage(ctx, connection, note: str) -> int:
+    """statistics' usage_daily from E6's aggregates, and its usage_note,
+    the note of DM-5 until the day before T0. How many days went in."""
+    params = ctx.params
+    target = params.target_schema
+    if connection.in_transaction():
+        connection.commit()
+    with connection.begin():
+        days = connection.execute(
+            sa.text(
+                f"INSERT INTO {qualified(target, 'usage_daily')} "
+                "(target_type, target_id, kind, day, source, visitors, records) "
+                "SELECT target_type, target_id, kind, day, source, visitors, records "
+                f"FROM {qualified(params.work_schema, 'usage_daily')} "
+                "ORDER BY target_type, target_id, kind, day"
+            )
+        ).rowcount
+        connection.execute(
+            sa.text(
+                f"INSERT INTO {qualified(target, 'usage_note')} (source, note, until) "
+                "VALUES (:source, :note, :until)"
+            ),
+            {
+                "source": LEGACY_SOURCE,
+                "note": note,
+                "until": (params.t0 - timedelta(days=1)).date(),
+            },
+        )
+    return days
 
 
 # ── Legacy URLs (CO-2, C-20) ─────────────────────────────────────────────
@@ -467,8 +502,10 @@ def legacy(ctx) -> None:
         loads, urls = legacy_urls(ctx, connection, tgt)
         notices = held_notices(ctx, connection)
         ctx.facts["dm5"] = dm5(ctx, connection)
+        loaded_days = load_usage(ctx, connection, ctx.facts["dm5"]["note"])
         connection.rollback()
     ctx.loaded["doi_mapping"] = {row["id"] for row in loads}
+    ctx.ledger.count("usage_daily", sum(days.values()), loaded_days)
     ctx.facts["legacy"] = {
         "usage_daily": days,
         "doi_mapping": len(loads),

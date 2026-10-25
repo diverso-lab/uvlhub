@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 import pytest
 import sqlalchemy as sa
@@ -51,6 +51,15 @@ def test_e6_aggregates_the_use_of_what_is_published_by_day(migrated):
         ("hubfile", 1, "download", date(2026, 11, 19), 1, 1),
     ]
     assert {r["source"] for r in work(migrated, "usage_daily")} == {"legacy_v2"}
+    # statistics 0.5.0 keeps them in its usage_daily, next to 3.0's own.
+    loaded = rows(
+        migrated,
+        "SELECT target_type, target_id, kind, day, visitors, records, source FROM "
+        f"`{migrated.params.target_schema}`.usage_daily "
+        "ORDER BY target_type, target_id, kind, day",
+    )
+    assert [tuple(r.values())[:6] for r in loaded] == usage
+    assert {r["source"] for r in loaded} == {"legacy_v2"}
     counts = {c["entity"]: c for c in work(migrated, "counts")}
     views = counts["ds_view_record"]
     assert (views["source"], views["target"]) == (7, 4)
@@ -73,6 +82,16 @@ def test_e6_sets_what_v2_12_showed_next_to_what_its_records_give(migrated):
     assert dm5["aggregated"]["dataset_views"] == {"visitors": 3, "records": 4}
     assert "showed 10 views and 3 downloads of datasets" in dm5["note"]
     assert "its records give 3 daily visitors" in dm5["note"]
+    # The same note, for statistics' dashboard, until the day before T0.
+    (note,) = rows(
+        migrated,
+        f"SELECT * FROM `{migrated.params.target_schema}`.usage_note",
+    )
+    assert note == {
+        "source": "legacy_v2",
+        "note": dm5["note"],
+        "until": (migrated.params.t0 - timedelta(days=1)).date(),
+    }
 
 
 def test_e6_follows_the_doi_mappings_and_keeps_the_legacy_urls(migrated):

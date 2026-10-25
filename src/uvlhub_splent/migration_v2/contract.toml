@@ -48,10 +48,11 @@ splent_feature_academic_profile = { version = "0.1.0", head = "pu0002" }
 splent_feature_apikeys = { version = "0.9.0", head = "apikeys0002_lifecycle" }
 splent_feature_audit = { version = "0.1.0", head = "audit0001_events" }
 splent_feature_auth = { version = "1.26.0", head = "auth0009_email_collation" }
+splent_feature_citation = { version = "0.1.0", head = "citation0001_references" }
 splent_feature_confirmemail = { version = "2.2.0", head = "126da35a357f" }
 splent_feature_curation = { version = "0.1.0", head = "curation0001_requests" }
 splent_feature_dataset = { version = "0.9.0", head = "dataset0008_orcid_checks" }
-splent_feature_factlabel = { version = "0.5.0", head = "d934ec20c841" }
+splent_feature_factlabel = { version = "0.6.0", head = "d934ec20c841" }
 splent_feature_github = { version = "0.4.1", head = "github0002_into_ext_identity" }
 splent_feature_hubfile = { version = "0.8.0", head = "hubfile0003_upload_sessions" }
 splent_feature_identities = { version = "0.5.0", head = "identities0003_exact_ids" }
@@ -59,12 +60,12 @@ splent_feature_mail = { version = "1.5.0", head = "mail0001_outbox" }
 splent_feature_media = { version = "0.11.1", head = "media0005_thumbnail" }
 splent_feature_orcid = { version = "0.4.1", head = "orcid0002_into_external_identity" }
 splent_feature_profile = { version = "1.7.1", head = "29f0c82ca134" }
-splent_feature_rating = { version = "0.4.0", head = "3e72750db961" }
+splent_feature_rating = { version = "0.5.0", head = "3e72750db961" }
 splent_feature_reset = { version = "2.2.0", head = "1c2ed70161dd" }
 splent_feature_settings = { version = "0.5.0", head = "settings0001" }
-splent_feature_statistics = { version = "0.4.0", head = "d46494928bf8" }
+splent_feature_statistics = { version = "0.5.0", head = "statistics0002_usage" }
 splent_feature_team = { version = "0.9.0", head = "tm0004_role_details" }
-splent_feature_uvl = { version = "0.1.0", head = "846acdf9eed2" }
+splent_feature_uvl = { version = "0.2.0", head = "846acdf9eed2" }
 
 # The heads of v2.12 the dump may be at (MIGRATION_EXPECTED_HEAD): the
 # release, or the hotfix D1, whose revision only rewrites descriptions.
@@ -358,6 +359,32 @@ id = { type = "int(11)", nullable = false, source = "doi_mapping.id" }
 dataset_doi_old = { type = "varchar(120)", nullable = true, collation = "utf8mb4_unicode_ci", source = "doi_mapping.dataset_doi_old" }
 dataset_doi_new = { type = "varchar(120)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "the end of its chain, a DOI a dataset of 3.0 has; a cycle or a dead end loads nowhere (C-20)" }
 
+[tables.usage_daily]
+# DM-5: v2.12's records by dataset or file, kind and day, as E6 aggregates
+# them in uvlhub_migration.usage_daily, which statistics shows next to its
+# own (source live).
+owner = "splent_feature_statistics"
+role = "load"
+
+[tables.usage_daily.columns]
+target_type = { type = "varchar(16)", nullable = false, collation = "utf8mb4_unicode_ci", rule = "dataset or hubfile, the table the record counted (ds_* or hubfile_*_record)" }
+target_id = { type = "int(11)", nullable = false, rule = "the record's dataset_id or file_id" }
+kind = { type = "varchar(16)", nullable = false, collation = "utf8mb4_unicode_ci", rule = "view or download, the table the record is in" }
+day = { type = "date", nullable = false, rule = "DATE of the record's view_date or download_date" }
+source = { type = "varchar(16)", nullable = false, collation = "utf8mb4_unicode_ci", rule = "legacy_v2" }
+visitors = { type = "int(11)", nullable = false, rule = "distinct accounts, else cookies, else records, that day (DM-5)" }
+records = { type = "int(11)", nullable = false, rule = "the records of that day: not the owner's, of a published dataset loaded, with a target and a date" }
+
+[tables.usage_note]
+# DM-5: the public note that says why the figures went down.
+owner = "splent_feature_statistics"
+role = "load"
+
+[tables.usage_note.columns]
+source = { type = "varchar(16)", nullable = false, collation = "utf8mb4_unicode_ci", rule = "legacy_v2" }
+note = { type = "text", nullable = false, collation = "utf8mb4_unicode_ci", rule = "the report's dm5 note" }
+until = { type = "date", nullable = true, rule = "the day before T0, the last the legacy figures count" }
+
 [tables.mail_outbox]
 # E0 reads it: a mail sent means 3.0 has opened.
 owner = "splent_feature_mail"
@@ -378,9 +405,9 @@ role = "read"
 feature = { type = "varchar(255)", nullable = false, collation = "utf8mb4_unicode_ci" }
 last_migration = { type = "varchar(255)", nullable = true, collation = "utf8mb4_unicode_ci" }
 
-# Left empty. The usage records are aggregated by E6 into
-# uvlhub_migration.usage_daily (DM-5), and statistics is DC-7's: its
-# counters are in the report; the rest is what 3.0 makes once it runs.
+# Left empty: what 3.0 makes once it runs. The usage records of v2.12 are
+# aggregated by E6 into usage_daily above (DM-5), and v2.12's counters are
+# in the report (DC-7).
 [tables.audit_event]
 owner = "splent_feature_audit"
 role = "empty"
@@ -451,8 +478,20 @@ role = "empty"
 owner = "splent_feature_hubfile"
 role = "empty"
 
-[tables.statistics]
+[tables.usage_event]
+# The visits of 3.0, a visitor a day, which E6's aggregates do not come
+# from.
 owner = "splent_feature_statistics"
+role = "empty"
+
+[tables.usage_salt]
+owner = "splent_feature_statistics"
+role = "empty"
+
+[tables.citation_reference]
+# The hub's "Cite us", which citation loads from the product's
+# citation_references.toml as 3.0 runs.
+owner = "splent_feature_citation"
 role = "empty"
 
 [tables.team_member]

@@ -25,7 +25,7 @@ or any blocking check fails).
 | E3 schema | `CREATE DATABASE uvlhub3` with the contract's collation, `splent db:upgrade` in a process of its own, then V-12, V-14 and the whole contract | done |
 | E4 identity | `user`, `user_profile`, `external_identity` (the `orcid` and `github` tables folded in) and `api_token` | done |
 | E5 content | Datasets, metadata, authors, feature models, files, metrics, votes and transfers; the tombstones of DM-4 and the names of DM-10 | first pass |
-| E6 legacy | `usage_daily` (DM-5), `doi_mapping` and `legacy_url` (CO-2, C-20), `held_notice` (D13 b, §5.5) | done |
+| E6 legacy | `usage_daily` and `usage_note` (DM-5), `doi_mapping` and `legacy_url` (CO-2, C-20), `held_notice` (D13 b, §5.5) | done |
 | E7 post-load | Counters with their margin, every foreign key, the tables that must stay empty, V-01 to V-16 | done |
 | E8 files | hubfile's `storage-migrate --source <store>/.legacy_mirror --link`, then `file_manifest`, DM-10's names with `file_alias`, unique-paths and V-08 | done |
 | E9 derived | FactLabel and metrics, formats, reindex, by the features' commands | done |
@@ -141,11 +141,13 @@ The pinned features have no table for these, so E6 writes them to
   cookie, else each record) and `records`. A record of its owner, of a
   dataset that is not published, of a dataset not loaded, without its
   target or without its date is not counted, and `counts` says how many of
-  each; the raw records do not pass. statistics 0.4.0 has only its six
-  counters, which it rebuilds from 3.0's own records, so it needs a table
-  for these (`usage_daily`, `source = 'legacy_v2'`) and to show it next to
-  its own. The report's `dm5` gives v2.12's counters, the aggregates and
-  the public note that says why the figures went down.
+  each; the raw records do not pass. E6 aggregates them in
+  `uvlhub_migration.usage_daily` and loads them into statistics 0.5.0's
+  `usage_daily` with `source = 'legacy_v2'`, which its dashboard shows next
+  to 3.0's own (`live`), and the public note that says why the figures went
+  down into `usage_note` (`legacy_v2`, `until` the day before T0).
+  `usage_event` and `usage_salt`, 3.0's own visits, stay empty. The
+  report's `dm5` gives v2.12's counters, the aggregates and the note.
 - **`doi_mapping` and `legacy_url`** (CO-2, C-20): dataset 0.9.0 still
   redirects `/doi/<old>` by its own `doi_mapping` (302), so E6 loads v2.12's
   there, each chain followed to its end, a DOI a dataset of 3.0 has, in one

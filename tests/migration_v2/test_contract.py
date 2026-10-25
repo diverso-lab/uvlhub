@@ -199,11 +199,11 @@ def test_heads_and_versions_are_held_to_the_contract(contract):
     applied = {name: entry["head"] for name, entry in contract.features.items()}
     assert contract_module.head_differences(contract, applied) == []
     applied["splent_feature_dataset"] = "dataset0009_something"
-    # A feature of a later milestone (citation, H9), which no contract knows yet.
-    applied["splent_feature_citation"] = "citation0001"
+    # A feature of a later milestone (dataset_api), which no contract knows yet.
+    applied["splent_feature_dataset_api"] = "dataset_api0001"
     assert contract_module.head_differences(contract, applied) == [
         "splent_feature_dataset at dataset0009_something, the contract expects dataset0008_orcid_checks",
-        "splent_feature_citation migrated, a feature the contract does not know",
+        "splent_feature_dataset_api migrated, a feature the contract does not know",
     ]
     older = replace(
         contract,
