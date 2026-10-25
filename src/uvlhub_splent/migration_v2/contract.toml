@@ -25,7 +25,7 @@
 #
 # Collations (DM-15): the database's default for every text column, but
 # where the column says otherwise: utf8mb4_bin for the identifiers, which
-# auth (1.26.0: email, email_canonical) and identities (0.5.0: provider,
+# auth (1.27.0: email, email_canonical) and identities (0.5.0: provider,
 # provider_id) compare exactly. `dm15` names the collation DM-15 asks for
 # where a pinned feature does not give it yet (datasets.pid, which dataset
 # 0.10.0 leaves at the database's): V-14 checks `collation`, what the schema
@@ -47,9 +47,9 @@ collation = "utf8mb4_unicode_ci"
 splent_feature_academic_profile = { version = "0.1.0", head = "pu0002" }
 splent_feature_apikeys = { version = "0.9.0", head = "apikeys0002_lifecycle" }
 splent_feature_audit = { version = "0.1.0", head = "audit0001_events" }
-splent_feature_auth = { version = "1.26.0", head = "auth0009_email_collation" }
+splent_feature_auth = { version = "1.27.0", head = "auth0009_email_collation" }
 splent_feature_citation = { version = "0.1.0", head = "citation0001_references" }
-splent_feature_confirmemail = { version = "2.2.0", head = "126da35a357f" }
+splent_feature_confirmemail = { version = "2.3.0", head = "confirmemail0002_drop_scaffold" }
 splent_feature_curation = { version = "0.1.0", head = "curation0001_requests" }
 splent_feature_dataset = { version = "0.10.0", head = "dataset0009_public_ids" }
 splent_feature_factlabel = { version = "0.6.0", head = "d934ec20c841" }
@@ -58,15 +58,15 @@ splent_feature_hubfile = { version = "0.9.0", head = "hubfile0004_aliases" }
 splent_feature_identities = { version = "0.5.0", head = "identities0003_exact_ids" }
 splent_feature_legacy_urls = { version = "0.1.0", head = "legacy_urls0001_urls" }
 splent_feature_mail = { version = "1.6.0", head = "mail0002_held" }
-splent_feature_media = { version = "0.11.1", head = "media0005_thumbnail" }
+splent_feature_media = { version = "0.11.2", head = "media0005_thumbnail" }
 splent_feature_orcid = { version = "0.4.1", head = "orcid0002_into_external_identity" }
-splent_feature_profile = { version = "1.7.1", head = "29f0c82ca134" }
+splent_feature_profile = { version = "1.8.0", head = "29f0c82ca134" }
 splent_feature_rating = { version = "0.5.0", head = "3e72750db961" }
-splent_feature_reset = { version = "2.2.0", head = "1c2ed70161dd" }
-splent_feature_settings = { version = "0.5.0", head = "settings0001" }
+splent_feature_reset = { version = "2.3.0", head = "1c2ed70161dd" }
+splent_feature_settings = { version = "0.5.1", head = "settings0001" }
 splent_feature_statistics = { version = "0.5.0", head = "statistics0002_usage" }
-splent_feature_team = { version = "0.9.0", head = "tm0004_role_details" }
-splent_feature_uvl = { version = "0.2.0", head = "846acdf9eed2" }
+splent_feature_team = { version = "0.9.1", head = "tm0004_role_details" }
+splent_feature_uvl = { version = "0.2.1", head = "846acdf9eed2" }
 
 # The heads of v2.12 the dump may be at (MIGRATION_EXPECTED_HEAD): the
 # release, or the hotfix D1, whose revision only rewrites descriptions.
@@ -461,10 +461,6 @@ role = "empty"
 
 [tables.auth_token]
 owner = "splent_feature_auth"
-role = "empty"
-
-[tables.confirmemail]
-owner = "splent_feature_confirmemail"
 role = "empty"
 
 [tables.curation_request]

@@ -151,7 +151,7 @@ def test_every_null_the_target_refuses_has_a_rule(migrated, contract):
 def test_the_report_lists_what_dm15_still_asks(migrated, contract):
     pending = migrated.report["dm15_pending"]
     assert pending == contract.dm15_pending()
-    # auth 1.26.0, identities 0.5.0 and dataset 0.10.0's concept_pid compare
+    # auth 1.27.0, identities 0.5.0 and dataset 0.10.0's concept_pid compare
     # the identifiers exactly; what is left is dataset's pid, at the
     # database's collation, and the tags, which have no column yet.
     assert pending == [

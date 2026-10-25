@@ -61,7 +61,17 @@ python -m uvlhub_splent.migration_v2 run --db-host <db> \
     --report /b1/report.json --operator "Name"
 ```
 
-- Passwords come from the environment only, never from the command line.
+- Passwords come from the environment only, never from the command line,
+  and so does `MIGRATION_PUBLIC_ID_KEY`, the key of the datasets' public
+  ids (§4.2; `SECRET_KEY` when it is not set, E0 refuses without either).
+  It is a secret of the cutover: the same key for every rehearsal and the
+  cutover gives every dataset the same public id each time, and whoever
+  has it can work a dataset's public id out of its sequential id. Keep it
+  with B1, never in the repository.
+- `MAIL_FROM` is 3.0's sender, as its `.env.prod` says: the notices E6
+  holds in mail's outbox go from it (E0 refuses without an address there).
+  Once RB-2 is over, `splent feature:mail release --tag rb2` in the web
+  container of 3.0 sends them; `--hold-tag` names another batch.
 - `--expected-head` is `f7a8b9c0d1e2` once the hotfix D1 is deployed.
 - `--store-root` is hubfile's store, and `<store>/.legacy_mirror` the
   `rsync -a --delete` (never `--inplace`) of v2.12's `uploads/`, on the same
@@ -217,8 +227,9 @@ it and then in the web and the worker of 3.0:
 
 V-16 (E7) checks that nothing carried over is signed: no column loaded
 comes from one v2.12 signed with its key (`reset_token.token`; its
-confirmation links and sessions were never stored), auth's `auth_token`,
-confirmemail's and reset's tables are empty, and no text value of a table
+confirmation links and sessions were never stored), auth's `auth_token`
+(which confirmemail's links use since its 2.0) and reset's `reset_token`
+are empty, and no text value of a table
 the migrator loads is something itsdangerous signed, with any key
 (`rules.is_signed`). Links of v2.12 mailed before the cutover open nothing:
 they lead to the page of an expired link (ID-15).
@@ -227,10 +238,10 @@ Deriving a key per purpose from `SECRET_KEY` (PL-9) is the framework's:
 from splent_framework 1.26.0, `SPLENT_DERIVED_KEYS = true` makes each
 purpose (sessions, CSRF, one-time tokens, signed URLs) sign with a key of
 its own derived from `SECRET_KEY` with HKDF-SHA256, and `SECRET_KEY` itself
-signs nothing. 3.0 turns it on from its first start, in the product's
-`[tool.splent.config]` or the deployment's `.env`: there is nothing signed
-before the cutover to keep, since the key rotates anyway. The migrator
-signs nothing either way.
+signs nothing. uvlhub turns it on from its first start
+(`SPLENT_DERIVED_KEYS = true` in the product's `[tool.splent.config]`):
+there is nothing signed before the cutover to keep, since the key rotates
+anyway. The migrator signs nothing either way.
 
 ## The data contract
 
@@ -284,9 +295,10 @@ database and skips the rest, saying how to run them.
 
 - **DM-15, the identifiers:** `user.email`, `email_canonical`,
   `external_identity.provider` and `provider_id` are `utf8mb4_bin` (auth
-  1.26.0, identities 0.5.0). `datasets.pid` (dataset 0.9.0) is at the
-  database's collation, where DM-15 asks `utf8mb4_bin`, and `concept_pid`
-  and `dataset_tag.name` have no column yet; the report lists them. With
+  1.27.0, identities 0.5.0), and so is `datasets.concept_pid` (dataset
+  0.10.0). `datasets.pid` is at the database's collation, where DM-15 asks
+  `utf8mb4_bin`, and `dataset_tag.name` has no column yet; the report lists
+  them. With
   the address compared exactly, C-13's clashes are the ones auth's
   canonical form finds (two addresses v2.12 told apart, one once NFKC,
   casefold and a stripped space are applied), and a provider is written

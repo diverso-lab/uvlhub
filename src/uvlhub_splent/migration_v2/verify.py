@@ -371,9 +371,11 @@ def v15_accounts(ctx, connection) -> Check:
 
 # DM-1: the columns of v2.12 that hold a value signed with its SECRET_KEY
 # (mono/app/features/reset/services.py; confirmation links and sessions were
-# never stored), and the tables of 3.0 that keep a token of their own.
+# never stored), and the tables of 3.0 that keep a token of their own: the
+# confirmation links are auth's auth_token since confirmemail 2.0, whose own
+# empty table confirmemail 2.3.0 drops.
 SIGNED_SOURCES = ("reset_token.token",)
-TOKEN_TABLES = ("auth_token", "confirmemail", "reset_token")
+TOKEN_TABLES = ("auth_token", "reset_token")
 # What a value itsdangerous signed looks like, before rules.is_signed reads it.
 _SIGNED_SHAPE = "^[.]?[A-Za-z0-9_=-]+[.][A-Za-z0-9_=-]+[.][A-Za-z0-9_=-]+$"
 
