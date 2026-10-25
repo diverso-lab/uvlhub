@@ -151,7 +151,7 @@
       }
     },
     "splent_feature_nginx": {
-      "entry": "splent_io/splent_feature_nginx@v1.5.0",
+      "entry": "splent_io/splent_feature_nginx@v1.6.0",
       "extensible": {
         "services": [],
         "templates": [],
@@ -160,6 +160,15 @@
           "layout.authenticated_sidebar"
         ],
         "routes": true
+      },
+      "config_schema": {
+        "SPLENT_TRUSTED_PROXIES": {
+          "type": "int",
+          "bind": "deploy",
+          "default": 1,
+          "min": 0,
+          "help": "The proxies the app trusts for X-Forwarded-*: 1, nginx, whether nginx is the edge or sits behind a TLS terminator."
+        }
       }
     },
     "splent_feature_theme": {
