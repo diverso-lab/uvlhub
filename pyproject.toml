@@ -233,3 +233,9 @@ gunicorn = ">=23,<24"
 where = [
     "src",
 ]
+
+# The migrator reads its data contract at run time: without this a wheel,
+# which the production image installs, ships the modules and not the
+# contract, and the migrator stops at contract.load().
+[tool.setuptools.package-data]
+"uvlhub_splent.migration_v2" = ["contract.toml"]
