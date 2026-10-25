@@ -9,8 +9,11 @@ the ORM. Every run starts over: it drops and creates `uvlhub3`,
 `uvlhub_v2_src`, `uvlhub_v2_ref` and the outputs in `uvlhub_migration`, and
 keeps the inputs of `uvlhub_migration_inputs`.
 
-This is a **first pass**. E5 (content) loads what the pinned features can
-hold and lists what it leaves for the final pass. Its report says `"ready_for_cutover": false` for as long as that is so.
+Every stage of the plan runs. E5 (content) is still a **first pass**: it
+loads what the pinned features can hold and lists what it leaves for the
+final pass, and the report says `"ready_for_cutover": false` for as long as
+that is so (and while DM-1's rotation is not checked, any conflict is open
+or any blocking check fails).
 
 ## Stages
 
@@ -23,14 +26,14 @@ hold and lists what it leaves for the final pass. Its report says `"ready_for_cu
 | E4 identity | `user`, `user_profile`, `external_identity` (the `orcid` and `github` tables folded in) and `api_token` | done |
 | E5 content | Datasets, metadata, authors, feature models, files, metrics, votes and transfers; the tombstones of DM-4 and the names of DM-10 | first pass |
 | E6 legacy | `usage_daily` (DM-5), `doi_mapping` and `legacy_url` (CO-2, C-20), `held_notice` (D13 b, §5.5) | done |
-| E7 post-load | Counters with their margin, every foreign key, the tables that must stay empty, V-01 to V-15 | done |
+| E7 post-load | Counters with their margin, every foreign key, the tables that must stay empty, V-01 to V-16 | done |
 | E8 files | hubfile's `storage-migrate --source <store>/.legacy_mirror --link`, then `file_manifest`, DM-10's names with `file_alias`, unique-paths and V-08 | done |
 | E9 derived | FactLabel and metrics, formats, reindex, by the features' commands | done |
 | E10 report | The report (JSON), the run's row in `uvlhub_migration.run` | done |
 
 E0 refuses to go on when `uvlhub3` shows signs of use (a run that completed,
-which stands for the plan's `migration.completed` until 3.0 has an audit
-table; a row created after T0; a mail sent; an account that signed in; a
+which stands for the plan's `migration.completed`, as the migrator writes
+no audit event; a row created after T0; a mail sent; an account that signed in; a
 row in a table the migration leaves empty), unless `--force` comes with a
 B2 taken in the last 15 minutes; when anyone but the migrator and root is
 connected; when `RUN_DB_SEED` is not `false`; and when
@@ -236,10 +239,11 @@ tables now are, and the migrator writes them (same commit).
 ## Tests
 
 `tests/migration_v2` builds a dirty v2.12 from the monolith's own Alembic
-chain (`v2_12_schema.sql`, which `test_v2_schema.py` checks against the
-chain when `_reference/uvlhub_monolith` is in the workspace) plus a row per
-anomaly the migrator has a rule for (`synthetic.py` says who is who), dumps
-it as B1 is dumped, and runs the stages on it.
+chain (`migration_v2/v2_12_schema.py`, which `test_v2_schema.py` checks
+against the chain when `_reference/uvlhub_monolith` is in the workspace)
+plus a row per anomaly the migrator has a rule for (`synthetic.py` says who
+is who), dumps it as B1 is dumped, puts a Zenodo record in
+`zenodo_snapshot`, and runs the stages on it.
 
 They never use the development database or the shared test one. From the
 CLI container,
@@ -279,8 +283,9 @@ database and skips the rest, saying how to run them.
   `write_dataset`, so a key keeps them (`[scopes]` in the contract); AP-4's
   `datasets:*` vocabulary does not exist.
 - **migration.completed** is the completed row of `uvlhub_migration.run`:
-  3.0 has no audit table (GV-4). E0 also reads logins, sent mails and rows
-  in the tables the migration leaves empty.
+  audit 0.1.0 brings `audit_event`, which the migrator leaves empty and
+  does not write the event to yet (GV-4). E0 also reads logins, sent mails
+  and rows in the tables the migration leaves empty.
 - **Every account gets `session_version = 2`**: auth honours v2.12's bare
   remember-me id only at version 1, so no cookie of v2.12 opens a session,
   with the old key or the new one.
