@@ -36,8 +36,6 @@ features = [
     "splent-io/splent_feature_nginx@v1.6.0",
     "splent-io/splent_feature_theme@v0.16.0",
     "splent-io/splent_feature_public@v1.12.0",
-    # The shell every hub of the line shares (H12), from its working copy
-    # until its first release.
     "splent-io/splent_feature_hub_shell@v0.1.1",
     "splent-io/splent_feature_orcid@v0.4.1",
     "splent-io/splent_feature_github@v0.4.1",
@@ -76,136 +74,60 @@ features_dev = ["splent-io/splent_feature_mailhog@v1.2.0", "splent-io/splent_fea
 features_prod = []
 spl = "openhubs_spl"
 
-# How a release publishes this product. A web product has no use for a PyPI
-# package, and left undeclared a release would upload one that cannot be
-# taken back, so a release tags the forge and pushes the image to the forge's
-# container registry, whose stable tag is what autodeploy follows. The forge
-# registry of splent-io is public. No Docker Hub mirror, where uvlhub.io's
-# images with the commercial theme were published, until D9 is decided; and
-# no release at all before D9 and the private staging of D3 say so.
 [tool.splent.release]
 channels = ["forge", "docker"]
 registries = ["forge"]
 
-# Where the SPL model itself comes from. The name above is not enough
-# to download anything, so the DOI travels with the product and any
-# clone of this repository can resolve the model from UVLHub alone.
 [tool.splent.spl_model]
 mirror = "uvlhub.io"
 doi = "10.5281/zenodo.23649960"
-# Same line, every version. Used to report that a newer model exists.
 concept_doi = ""
 version = "10"
 file = "openhubs_spl.uvl"
 
 [tool.splent.config]
 SITE_NAME = "uvlhub"
-# Also the meta description of every page, as uvlhub.io's.
 SITE_TAGLINE = "Repository of feature models in UVL format integrated with Zenodo and FlamaPy"
-# The logo with white letters, for hub_shell's dark sidebar, and the ball
-# of a phone's header.
 SITE_LOGO = "media/logos/default-dark.svg"
 HUB_SHELL_LOGO_COMPACT = "media/logos/uvlhub_ball.png"
-# hub_shell's footer, as uvlhub.io's: the year, the universities behind
-# uvlhub, and the repository, whose release notes the sidebar's version opens.
 HUB_SHELL_FOOTER_YEAR = "2025"
 HUB_SHELL_FOOTER_CREDITS = "University of Seville · University of Malaga · University of Ulm"
 HUB_SHELL_REPOSITORY_URL = "https://github.com/diverso-lab/uvlhub"
-# The monolith accepted 20 MB; media alone would raise the whole app to 100 MB.
 MEDIA_MAX_UPLOAD_SIZE = "20M"
-# Media is only the internal library for team photos and logos.
 MEDIA_PUBLIC_GALLERY = false
-# Accounts loaded from uvlhub.io start as plain users; staff are promoted by hand.
 AUTH_MIGRATION_LEGACY_ROLE = "user"
-# Sign-up and reset ask for the new password twice, as uvlhub did.
 AUTH_PASSWORD_CONFIRM = true
-# Decision D2: every address is verified before the account opens, with
-# confirmemail; an account from ORCID with a typed address waits as well.
 AUTH_REQUIRE_VERIFIED_EMAIL = true
-# The sidebar logo already leads home, so the sidebar has no Home entry.
 PUBLIC_SIDEBAR_HOME_LINK = false
-# uvlhub.io heads its home with what it lists first, not with the site's
-# name and tagline, in the band and in the browser tab.
 PUBLIC_HOME_TITLE = "Top datasets with the most feature models"
-# Off: the hint would tell anyone typing an address that the account exists
-# and which provider (ORCID, GitHub) it signs in with.
 EXTERNAL_LOGIN_PASSWORD_HINT = false
-# Tokens carry the dataset scopes only, the ones dataset registers.
 APIKEYS_SCOPES = ["read_dataset", "write_dataset"]
-# A token issued without a choice can read datasets but not upload them.
 APIKEYS_DEFAULT_SCOPES = ["read_dataset"]
-# uvlhub's API clients send the token in X-API-Key as well as Bearer.
 APIKEYS_HEADER_ALIASES = ["X-API-Key"]
-# Only the sign-up asks for the captcha, as on uvlhub.io; the login and the
-# request for a reset link do not.
 CAPTCHA_PROTECTED_FORMS = ["signup"]
-# The publisher named in every dataset's FAIR metadata, mails and API messages.
 DATASET_PUBLISHER_NAME = "uvlhub"
-# The catalog those metadata point to, the public site and not this host.
 DATASET_CATALOG_URL = "https://www.uvlhub.io"
-# The ball drawn in the middle of the PNG and JPG QR codes.
 DATASET_QR_LOGO = "media/logos/uvlhub_ball.png"
-# uvlhub.io lists first the datasets with the most feature models
-# (01 §5.5): those that hold the most items, uvl's UVL models.
 DATASET_HOME_ORDER = "items"
-# D4: an account a curator does not trust waits for review before its
-# dataset gets a DOI; one with a published dataset (carried over from 2.12
-# with one, or published here since) publishes with its address confirmed.
-# At the cutover the deployment's .env sets DATASET_PUBLISH_PAUSED=true until
-# the end of RB-2.
 DATASET_PUBLISH_POLICY = "curated"
 CURATION_TRUSTED_ACCOUNTS = "carried_over"
-# D20: errors go to a self-hosted GlitchTip, and alerts by mail and to a
-# Matrix room. The DSN, the recipients and the Matrix room and token are the
-# deployment's (.env.prod); without them production refuses to start.
 OBSERVABILITY_BACKEND = "glitchtip"
 OBSERVABILITY_ALERT_CHANNELS = ["email", "matrix"]
-# D11: visits counted by Plausible, without cookies. The script and the site
-# are the deployment's; with no script nothing is loaded.
 ANALYTICS_PROVIDER = "plausible"
-# PL-9 / DM-1: sessions, CSRF, one-time tokens and signed URLs each sign
-# with a key derived from SECRET_KEY (framework 1.26), so one leaked signer
-# opens nothing else.
 SPLENT_DERIVED_KEYS = true
-# How to cite uvlhub (CT-2): the two articles of uvlhub.io's "Cite us!", as
-# data citation loads and writes in every format.
 CITATION_REFERENCES_FILE = "citation_references.toml"
-# uvlhub.io 2.12 deposited the whole folder of a dataset, its UVL models and
-# what uvl derives from them (Glencoe, DIMACS, SPLOT), so the records keep
-# carrying both.
 DATASET_DEPOSIT_CONTENT = "sources_and_derived"
-# uvlhub.io 2.12 gave every deposit the keyword uvlhub after the dataset's
-# own tags, so the hub's records are found together on Zenodo.
 ZENODO_KEYWORDS = ["uvlhub"]
-# uvlhub.io 2.12 took UVL models of up to 20 MB, where uvl takes 10 MB by
-# default. hubfile's upload zone says so, and an upload request may carry
-# as much, since both follow the limit of each file type.
 UVL_MAX_SIZE = "20M"
-# What a backup archives with the database: every storage root, the targets
-# of the named volumes of docker/docker-compose.prod.yml (the protected
-# uploads, where hubfile keeps the dataset files, the public uploads and the
-# archive). A deployment that moves PROTECTED_UPLOADS_DIR or ARCHIVE_DIR
-# sets BACKUP_PATHS in its .env as well.
 BACKUP_PATHS = [
     "/workspace/uvlhub_splent/protected_uploads",
     "/workspace/uvlhub_splent/src/uvlhub_splent/static/uploads",
     "/workspace/uvlhub_splent/archive",
 ]
-# The rows that name a file, which backup's verify and its restore drill
-# look for on disk: every file of a dataset, with the size its row says.
 BACKUP_VERIFY_FILES = ["Hubfile.get_full_path:size"]
-# /team lists every organisation behind uvlhub, with its logo, description
-# and website, whether or not it lists people yet.
 TEAM_SHOW_EMPTY_ROLES = true
-# A member's card writes the address itself, as uvlhub.io's, not "Email".
 TEAM_CARD_EMAIL_ADDRESS = true
-# uvlhub.io shows the trail on every page below the home: Home / Team.
 SITE_BREADCRUMBS = "all"
-# uvlhub.io's palette and Inter for theme's public shell, which in uvlhub
-# draws the page of an address that leads nowhere (errors/404.html). No
-# font_url: Inter comes from the product (css/uvlhub-error.css), never from
-# Google. A JSON object, as theme reads it; each line ends in a backslash,
-# so TOML joins them into the one line the environment carries.
 THEME_TOKENS = """{\
 "primary": "#1b84ff", "primary_contrast": "#ffffff", "accent": "#287fb9", \
 "bg": "#ffffff", "surface": "#f9f9f9", "text": "#071437", \
@@ -216,26 +138,15 @@ THEME_TOKENS = """{\
 "font_display": "Inter, Helvetica, sans-serif", \
 "font_url": ""}"""
 
-# What the features drawn in a response may add to its Content-Security-
-# Policy (SD-01, framework 1.28.0). The table turns the per-response policy on,
-# report-only: generator runs Pyodide's WebAssembly and fetches web-llm's
-# weights from Hugging Face and the model libraries from GitHub.
 [tool.splent.csp]
 generator = ["script-src 'wasm-unsafe-eval'", "connect-src https://huggingface.co https://*.huggingface.co https://*.hf.co https://raw.githubusercontent.com"]
 
 [tool.splent.layout.menu]
-# uvlhub.io lists Team third, after Explore and the Dashboard.
 order = { team = 30 }
 
 [tool.splent.test]
-# What product:test hands the product's own tests from the caller's
-# environment: the throwaway MariaDB of the migrator's tests, which
-# tests/migration_v2/run_with_throwaway_db.sh starts and names.
 env = ["MIGRATION_V2_TEST_*"]
 
-# What the production image installs besides the features. splent
-# product:build keeps splent_framework and splent_cli at the versions this
-# product is built with; a bare version means exactly that version.
 [tool.splent.runtime]
 splent_framework = "1.29.0"
 splent_cli = "1.49.0"
@@ -249,9 +160,6 @@ where = [
     "src",
 ]
 
-# The migrator reads its data contract at run time: without this a wheel,
-# which the production image installs, ships the modules and not the
-# contract, and the migrator stops at contract.load().
 [tool.setuptools.package-data]
 "uvlhub_splent" = ["citation_references.toml"]
 "uvlhub_splent.migration_v2" = ["contract.toml"]
