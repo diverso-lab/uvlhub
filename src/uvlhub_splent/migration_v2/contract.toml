@@ -50,8 +50,9 @@ splent_feature_audit = { version = "0.1.0", head = "audit0001_events" }
 splent_feature_auth = { version = "1.27.0", head = "auth0009_email_collation" }
 splent_feature_citation = { version = "0.2.0", head = "citation0001_references" }
 splent_feature_confirmemail = { version = "2.3.0", head = "confirmemail0002_drop_scaffold" }
-splent_feature_curation = { version = "0.1.0", head = "curation0001_requests" }
-splent_feature_dataset = { version = "0.13.0", head = "dataset0010_description_format" }
+splent_feature_curation = { version = "0.1.1", head = "curation0001_requests" }
+splent_feature_dataset = { version = "0.14.1", head = "dataset0011_transfers_moved" }
+splent_feature_dataset_transfer = { version = "0.1.0", head = "dataset_transfer0002_offer_rules" }
 splent_feature_factlabel = { version = "0.7.0", head = "d934ec20c841" }
 splent_feature_github = { version = "0.4.1", head = "github0002_into_ext_identity" }
 splent_feature_hubfile = { version = "0.12.0", head = "hubfile0004_aliases" }
@@ -338,20 +339,25 @@ created_at = { type = "datetime", nullable = false, source = "dataset_rating.cre
 updated_at = { type = "datetime", nullable = false, source = "dataset_rating.updated_at" }
 
 [tables.dataset_transfer_request]
-# Plan §5.7 asks for the reason "migration" on what it cancels, a column
-# the table does not have: the report lists those offers.
-owner = "splent_feature_dataset"
+# dataset_transfer owns the offers since dataset 0.14.0 (DL-17); E5 cancels
+# the pending ones with the reason "migration" (plan §5.7, D13 b).
+owner = "splent_feature_dataset_transfer"
 role = "load"
 
 [tables.dataset_transfer_request.columns]
 id = { type = "int(11)", nullable = false, source = "dataset_transfer_request.id" }
 dataset_id = { type = "int(11)", nullable = false, source = "dataset_transfer_request.dataset_id" }
 from_user_id = { type = "int(11)", nullable = false, source = "dataset_transfer_request.from_user_id" }
-to_user_id = { type = "int(11)", nullable = false, source = "dataset_transfer_request.to_user_id" }
+to_user_id = { type = "int(11)", nullable = true, source = "dataset_transfer_request.to_user_id" }
+to_address = { type = "varchar(256)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "NULL: an offer of 2.12 names its account by to_user_id" }
+to_named_id = { type = "int(11)", nullable = true, rule = "NULL" }
 status = { type = "enum('PENDING','ACCEPTED','DECLINED','CANCELLED')", nullable = false, collation = "utf8mb4_unicode_ci", rule = "CANCELLED for a PENDING offer, as it was otherwise (D13 b)" }
 message = { type = "varchar(500)", nullable = true, collation = "utf8mb4_unicode_ci", source = "dataset_transfer_request.message" }
 created_at = { type = "datetime", nullable = false, source = "dataset_transfer_request.created_at" }
 resolved_at = { type = "datetime", nullable = true, rule = "T0 for an offer it cancels, as it was otherwise" }
+expires_at = { type = "datetime", nullable = true, rule = "NULL: no offer of 2.12 lapses, and none stays pending (D13 b)" }
+cancel_reason = { type = "varchar(16)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "migration for an offer E5 cancels (D13 b), NULL otherwise" }
+pending_key = { type = "varchar(64)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "NULL: no offer is pending after E5" }
 
 [tables.doi_mapping]
 # dataset's /doi routes still redirect by it; E6 loads v2.12's (C-20), and

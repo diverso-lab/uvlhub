@@ -2,25 +2,8 @@
   "schema": 1,
   "product": "uvlhub_splent",
   "shell": {
-    "source": "src/uvlhub_splent/static/js/app.js",
-    "provides": {
-      "bootstrap": {
-        "kind": "lib",
-        "global": "bootstrap",
-        "version": "5.2.0",
-        "from": "src/uvlhub_splent/static/js/app.js"
-      },
-      "bootstrap-css": {
-        "kind": "css",
-        "version": "5.2.0",
-        "from": "src/uvlhub_splent/static/css/app.css"
-      },
-      "icons": {
-        "kind": "icons",
-        "set": "feather",
-        "from": "src/uvlhub_splent/static/js/app.js"
-      }
-    }
+    "source": "package.json",
+    "provides": {}
   },
   "features": {
     "splent_feature_apidocs": {
@@ -64,7 +47,7 @@
       "peers": {
         "bootstrap": {
           "range": "^5.2.0",
-          "provider": "uvlhub_splent",
+          "provider": "hub_shell",
           "version": "5.2.0"
         }
       },
@@ -72,6 +55,28 @@
         "bootstrap-css": "^5.2.0",
         "icons": "feather"
       },
+      "consumes": {}
+    },
+    "splent_feature_hub_shell": {
+      "namespace": "splent_io",
+      "distribution": "splent_feature_hub_shell",
+      "version": "0.1.1",
+      "entries": [
+        "hub_shell",
+        "hub_shell_error"
+      ],
+      "manifest_sha256": "9d89bbc5df1b786984874f776b943e7d855c759d2c61bd39cb48dbed5fe0bc07",
+      "bundled": {
+        "@adminkit/core": "3.3.0 MIT",
+        "@phosphor-icons/core": "2.1.1 MIT",
+        "@popperjs/core": "2.11.8 MIT",
+        "bootstrap": "5.2.0 MIT",
+        "feather-icons": "4.29.0 MIT",
+        "inter-ui": "4.1.1 OFL-1.1",
+        "webpack": "5.112.2 MIT"
+      },
+      "peers": {},
+      "shell": {},
       "consumes": {}
     },
     "splent_feature_hubfile": {
@@ -128,7 +133,7 @@
       "peers": {
         "bootstrap": {
           "range": "^5.2.0",
-          "provider": "uvlhub_splent",
+          "provider": "hub_shell",
           "version": "5.2.0"
         }
       },

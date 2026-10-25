@@ -360,8 +360,8 @@ v212 = "mono/app/features/dataset/routes.py:1000"
 clients = ["marketplace", "scripts", "flamapyIDE (with the session)"]
 target = "Additive changes only. The IDE's session upload goes through uvl or a bridge (UV-11)"
 status = "served"
-endpoint = "dataset.api_upload_dataset"
-served_by = "dataset"
+endpoint = "dataset_api.api_upload_dataset"
+served_by = "dataset_api"
 plan = "UV-11"
 cors_origin = "https://ide.flamapy.org"
 signed_out_keys = ["authenticated", "message", "login_url", "signup_url", "orcid_url"]
@@ -388,8 +388,8 @@ v212 = "mono/app/features/dataset/routes.py:1148"
 clients = ["marketplace (irreversible call)"]
 target = "Additive changes only. 423 with Retry-After and {\"error\":\"publication_paused\"} during the cutover window and the retention, never a 5xx or a 202"
 status = "served"
-endpoint = "dataset.api_publish_dataset"
-served_by = "dataset"
+endpoint = "dataset_api.api_publish_dataset"
+served_by = "dataset_api"
 plan = "PB-2"
 note = """During the cutover nginx answers the 423 while v2.12 still runs \
 behind it (06 §9.3), and "never a 5xx or a 202" now holds for that 423 \
@@ -418,8 +418,8 @@ v212 = "mono/app/features/dataset/routes.py:1240"
 clients = ["marketplace (irreversible call)"]
 target = "Additive changes only. 423 with Retry-After and {\"error\":\"publication_paused\"} during the cutover window and the retention, never a 5xx or a 202"
 status = "served"
-endpoint = "dataset.api_new_dataset_version"
-served_by = "dataset"
+endpoint = "dataset_api.api_new_dataset_version"
+served_by = "dataset_api"
 plan = "PB-2"
 note = """During the cutover nginx answers the 423 while v2.12 still runs \
 behind it (06 §9.3), and "never a 5xx or a 202" now holds for that 423 \
@@ -442,8 +442,9 @@ v212 = "mono/app/features/dataset/routes.py:1407"
 clients = ["marketplace", "scripts"]
 target = "Additive changes only"
 status = "served"
-endpoint = "dataset.api_transfer_dataset_ownership"
-served_by = "dataset"
+endpoint = "dataset_api.api_transfer_dataset_ownership"
+served_by = "dataset_api"
+note = "DL-17 (dataset_transfer serves the offers): an unknown or inactive target answers 202; to_user_id is null for the sender of an offer by address until it is answered; 429 transfer_limit past the offers of a day"
 
 [[url]]
 rows = [9]
@@ -453,8 +454,9 @@ v212 = "mono/app/features/dataset/routes.py:1526"
 clients = ["marketplace", "scripts"]
 target = "Additive changes only"
 status = "served"
-endpoint = "dataset.api_list_dataset_transfers"
-served_by = "dataset"
+endpoint = "dataset_api.api_list_dataset_transfers"
+served_by = "dataset_api"
+note = "DL-17 (dataset_transfer serves the offers): an unknown or inactive target answers 202; to_user_id is null for the sender of an offer by address until it is answered; 429 transfer_limit past the offers of a day"
 
 [[url]]
 rows = [9]
@@ -464,8 +466,9 @@ v212 = "mono/app/features/dataset/routes.py:1597"
 clients = ["marketplace", "scripts"]
 target = "Additive changes only"
 status = "served"
-endpoint = "dataset.api_accept_dataset_transfer"
-served_by = "dataset"
+endpoint = "dataset_api.api_accept_dataset_transfer"
+served_by = "dataset_api"
+note = "DL-17 (dataset_transfer serves the offers): an unknown or inactive target answers 202; to_user_id is null for the sender of an offer by address until it is answered; 429 transfer_limit past the offers of a day"
 
 [[url]]
 rows = [9]
@@ -475,8 +478,9 @@ v212 = "mono/app/features/dataset/routes.py:1680"
 clients = ["marketplace", "scripts"]
 target = "Additive changes only"
 status = "served"
-endpoint = "dataset.api_decline_dataset_transfer"
-served_by = "dataset"
+endpoint = "dataset_api.api_decline_dataset_transfer"
+served_by = "dataset_api"
+note = "DL-17 (dataset_transfer serves the offers): an unknown or inactive target answers 202; to_user_id is null for the sender of an offer by address until it is answered; 429 transfer_limit past the offers of a day"
 
 [[url]]
 rows = [9]
@@ -486,8 +490,9 @@ v212 = "mono/app/features/dataset/routes.py:1729"
 clients = ["marketplace", "scripts"]
 target = "Additive changes only"
 status = "served"
-endpoint = "dataset.api_cancel_dataset_transfer"
-served_by = "dataset"
+endpoint = "dataset_api.api_cancel_dataset_transfer"
+served_by = "dataset_api"
+note = "DL-17 (dataset_transfer serves the offers): an unknown or inactive target answers 202; to_user_id is null for the sender of an offer by address until it is answered; 429 transfer_limit past the offers of a day"
 
 [[url]]
 rows = [9]
@@ -497,8 +502,8 @@ v212 = "mono/app/features/dataset/routes.py:1806"
 clients = ["marketplace", "scripts"]
 target = "Additive changes only"
 status = "served"
-endpoint = "dataset.api_delete_dataset"
-served_by = "dataset"
+endpoint = "dataset_api.api_delete_dataset"
+served_by = "dataset_api"
 
 [[url]]
 rows = [9]
@@ -508,8 +513,8 @@ v212 = "mono/app/features/dataset/routes.py:1862"
 clients = ["marketplace", "scripts", "flamapyIDE"]
 target = "Additive changes only"
 status = "served"
-endpoint = "dataset.api_dataset_by_doi"
-served_by = "dataset"
+endpoint = "dataset_api.api_dataset_by_doi"
+served_by = "dataset_api"
 
 [[url]]
 rows = [9]
@@ -519,8 +524,8 @@ v212 = "mono/app/features/dataset/routes.py:1957"
 clients = ["marketplace", "scripts"]
 target = "Additive changes only"
 status = "served"
-endpoint = "dataset.api_dataset_versions"
-served_by = "dataset"
+endpoint = "dataset_api.api_dataset_versions"
+served_by = "dataset_api"
 
 [[url]]
 rows = [9]
@@ -530,8 +535,8 @@ v212 = "mono/app/features/dataset/routes.py:2041"
 clients = ["marketplace", "CLI spl:outdated"]
 target = "Additive changes only"
 status = "served"
-endpoint = "dataset.api_dataset_lineage_by_concept_doi"
-served_by = "dataset"
+endpoint = "dataset_api.api_dataset_lineage_by_concept_doi"
+served_by = "dataset_api"
 
 [[url]]
 rows = [9]
@@ -541,8 +546,8 @@ v212 = "mono/app/features/dataset/routes.py:2107"
 clients = ["marketplace", "scripts"]
 target = "Additive changes only"
 status = "served"
-endpoint = "dataset.api_list_datasets"
-served_by = "dataset"
+endpoint = "dataset_api.api_list_datasets"
+served_by = "dataset_api"
 
 [[url]]
 rows = [9]
@@ -552,8 +557,8 @@ v212 = "mono/app/features/dataset/routes.py:2146"
 clients = ["marketplace", "scripts"]
 target = "Additive changes only"
 status = "served"
-endpoint = "dataset.api_dataset_detail"
-served_by = "dataset"
+endpoint = "dataset_api.api_dataset_detail"
+served_by = "dataset_api"
 note = "dataset 0.7.0 adds the keys status, provider, pid, pid_scheme and landing_url (PB-2); every key of 2.12 stays"
 
 [[url]]
@@ -564,8 +569,8 @@ v212 = "mono/app/features/dataset/routes.py:2193"
 clients = ["marketplace", "scripts"]
 target = "Additive changes only"
 status = "served"
-endpoint = "dataset.api_dataset_summary"
-served_by = "dataset"
+endpoint = "dataset_api.api_dataset_summary"
+served_by = "dataset_api"
 
 [[url]]
 rows = [9]
@@ -575,8 +580,8 @@ v212 = "mono/app/features/dataset/routes.py:2269"
 clients = ["marketplace", "scripts", "flamapyIDE"]
 target = "Additive changes only"
 status = "served"
-endpoint = "dataset.api_list_files"
-served_by = "dataset"
+endpoint = "dataset_api.api_list_files"
+served_by = "dataset_api"
 
 [[url]]
 rows = [9]
@@ -586,8 +591,8 @@ v212 = "mono/app/features/dataset/routes.py:2354"
 clients = ["marketplace", "scripts", "flamapyIDE"]
 target = "Additive changes only"
 status = "served"
-endpoint = "dataset.api_file_detail"
-served_by = "dataset"
+endpoint = "dataset_api.api_file_detail"
+served_by = "dataset_api"
 
 [[url]]
 rows = [9]
@@ -597,8 +602,8 @@ v212 = "mono/app/features/dataset/routes.py:2404"
 clients = ["marketplace", "scripts", "flamapyIDE"]
 target = "Additive changes only"
 status = "served"
-endpoint = "dataset.api_file_raw"
-served_by = "dataset"
+endpoint = "dataset_api.api_file_raw"
+served_by = "dataset_api"
 
 [[url]]
 rows = [9]
@@ -608,8 +613,8 @@ v212 = "mono/app/features/dataset/routes.py:2451"
 clients = ["marketplace", "scripts"]
 target = "Additive changes only"
 status = "served"
-endpoint = "dataset.api_file_metadata"
-served_by = "dataset"
+endpoint = "dataset_api.api_file_metadata"
+served_by = "dataset_api"
 plan = "AP-8"
 note = "AP-8 removes it because it always fails, which this frozen row contradicts. The decision belongs to whoever owns the contract"
 

@@ -95,8 +95,6 @@ DEFERRED = (
     "dataset_tag do not exist in the pinned features)",
     "§7.3: hubfile_metrics is copied without status = 'legacy', which "
     "factlabel has no column for",
-    "§5.7: the offers it cancels carry no reason (no column); the report "
-    "lists them, and E6 holds their notices",
 )
 
 SOURCE_TABLES = (
@@ -879,10 +877,11 @@ def build_transfers(ctx, transfers, chosen) -> list[dict]:
                 ledger.owner_reason(missing[0]),
             )
             continue
-        row = dict(transfer)
+        row = dict(transfer, cancel_reason=None)
         if row["status"] == "PENDING":
             row["status"] = "CANCELLED"
             row["resolved_at"] = params.t0
+            row["cancel_reason"] = "migration"
             cancelled.append(row["id"])
         rows.append(row)
     ctx.facts["transfers_cancelled"] = cancelled

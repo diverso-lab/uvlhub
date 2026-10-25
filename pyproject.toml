@@ -23,7 +23,7 @@ core = [
 ]
 
 [tool.splent]
-cli_version = "1.47.0"
+cli_version = "1.48.1"
 features = [
     "splent-io/splent_feature_academic_profile@v0.1.0",
     "splent-io/splent_feature_elasticsearch@v0.2.0",
@@ -38,7 +38,7 @@ features = [
     "splent-io/splent_feature_public@v1.12.0",
     # The shell every hub of the line shares (H12), from its working copy
     # until its first release.
-    "splent-io/splent_feature_hub_shell",
+    "splent-io/splent_feature_hub_shell@v0.1.1",
     "splent-io/splent_feature_orcid@v0.4.1",
     "splent-io/splent_feature_github@v0.4.1",
     "splent-io/splent_feature_autodeploy@v0.4.0",
@@ -46,7 +46,7 @@ features = [
     "splent-io/splent_feature_apikeys@v0.10.0",
     "splent-io/splent_feature_zenodo@v0.5.0",
     "splent-io/splent_feature_backup@v0.1.0",
-    "splent-io/splent_feature_curation@v0.1.0",
+    "splent-io/splent_feature_curation@v0.1.1",
     "splent-io/splent_feature_observability@v0.1.0",
     "splent-io/splent_feature_audit@v0.1.0",
     "splent-io/splent_feature_analytics@v0.1.0",
@@ -65,10 +65,12 @@ features = [
     "splent-io/splent_feature_reset@v2.3.0",
     "splent-io/splent_feature_mail@v1.6.0",
     "splent-io/splent_feature_hubfile@v0.12.0",
-    "splent-io/splent_feature_dataset@v0.13.0",
+    "splent-io/splent_feature_dataset@v0.14.1",
     "splent-io/splent_feature_generator@v0.2.0",
     "splent-io/splent_feature_apidocs@v0.4.0",
     "splent-io/splent_feature_legacy_urls@v0.1.0",
+    "splent-io/splent_feature_dataset_api@v0.4.0",
+    "splent-io/splent_feature_dataset_transfer@v0.1.0",
 ]
 features_dev = ["splent-io/splent_feature_mailhog@v1.2.0", "splent-io/splent_feature_phpmyadmin@v1.1.0"]
 features_prod = []
@@ -228,8 +230,8 @@ env = ["MIGRATION_V2_TEST_*"]
 # product:build keeps splent_framework and splent_cli at the versions this
 # product is built with; a bare version means exactly that version.
 [tool.splent.runtime]
-splent_framework = "1.27.0"
-splent_cli = "1.47.0"
+splent_framework = "1.28.0"
+splent_cli = "1.48.1"
 gunicorn = ">=23,<24"
 
 [tool.setuptools.package-dir]

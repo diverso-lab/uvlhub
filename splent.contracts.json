@@ -279,6 +279,71 @@
         }
       }
     },
+    "splent_feature_hub_shell": {
+      "entry": "splent_io/splent_feature_hub_shell@v0.1.1",
+      "extensible": {
+        "services": [],
+        "templates": [
+          "400.html",
+          "401.html",
+          "403.html",
+          "500.html",
+          "base_template.html",
+          "hub_shell/app.html",
+          "hub_shell/errors/400.html",
+          "hub_shell/errors/401.html",
+          "hub_shell/errors/500.html",
+          "hub_shell/public.html"
+        ],
+        "models": [],
+        "hooks": [
+          "layout.anonymous_sidebar",
+          "layout.authenticated_sidebar",
+          "layout.footer",
+          "layout.head.css",
+          "layout.header.menu",
+          "layout.navbar.anonymous",
+          "layout.navbar.authenticated",
+          "layout.navbar.items",
+          "layout.navbar.user",
+          "layout.scripts",
+          "layout.sidebar.authenticated.items",
+          "layout.sidebar.top"
+        ],
+        "routes": true
+      },
+      "config_schema": {
+        "HUB_SHELL_LOGO_COMPACT": {
+          "type": "str",
+          "bind": "derivation",
+          "default": "",
+          "label": "Compact logo",
+          "help": "The small logo of a phone's header, a path inside the product's static folder, like media/logos/icon.png. Empty draws the site's name."
+        },
+        "HUB_SHELL_FOOTER_YEAR": {
+          "type": "str",
+          "bind": "derivation",
+          "default": "",
+          "pattern": "[0-9]{4}(-[0-9]{4})?",
+          "label": "Copyright year",
+          "help": "The year of the footer's copyright, or a span of years, as in 2025 or 2019-2025. Empty draws none."
+        },
+        "HUB_SHELL_FOOTER_CREDITS": {
+          "type": "text",
+          "bind": "derivation",
+          "default": "",
+          "label": "Footer credits",
+          "help": "Who the footer credits, after the year: the organisations behind the hub. Per language as es:...|en:... if it differs."
+        },
+        "HUB_SHELL_REPOSITORY_URL": {
+          "type": "url",
+          "bind": "derivation",
+          "default": "",
+          "label": "Source repository",
+          "help": "The repository of the hub's source code. The footer links it, and the sidebar links the release the site runs to its notes there (GitHub, GitLab, or a Forgejo or Gitea). Empty links neither."
+        }
+      }
+    },
     "splent_feature_orcid": {
       "entry": "splent_io/splent_feature_orcid@v0.4.1",
       "refinement": {
@@ -758,7 +823,7 @@
       }
     },
     "splent_feature_curation": {
-      "entry": "splent_io/splent_feature_curation@v0.1.0",
+      "entry": "splent_io/splent_feature_curation@v0.1.1",
       "extensible": {
         "services": [
           "CurationService"
@@ -2001,7 +2066,7 @@
       }
     },
     "splent_feature_dataset": {
-      "entry": "splent_io/splent_feature_dataset@v0.13.0",
+      "entry": "splent_io/splent_feature_dataset@v0.14.1",
       "extensible": {
         "services": [
           "AuthorService",
@@ -2012,8 +2077,7 @@
           "DataSetService",
           "DatasetAccessPolicy",
           "DatasetCommands",
-          "LineageService",
-          "TransferService"
+          "LineageService"
         ],
         "templates": [
           "dataset/authorship_claim.html",
@@ -2034,7 +2098,6 @@
           "DSMetrics",
           "DSViewRecord",
           "DataSet",
-          "DatasetTransferRequest",
           "IdempotencyKey",
           "OrcidCheck"
         ],
@@ -2319,6 +2382,55 @@
         ],
         "hooks": [],
         "routes": true
+      }
+    },
+    "splent_feature_dataset_api": {
+      "entry": "splent_io/splent_feature_dataset_api@v0.4.0",
+      "extensible": {
+        "services": [],
+        "templates": [],
+        "models": [],
+        "hooks": [],
+        "routes": true
+      }
+    },
+    "splent_feature_dataset_transfer": {
+      "entry": "splent_io/splent_feature_dataset_transfer@v0.1.0",
+      "extensible": {
+        "services": [
+          "TransferService"
+        ],
+        "templates": [
+          "dataset_transfer/inbox.html",
+          "dataset_transfer/offer.html",
+          "dataset_transfer/offer_page.html",
+          "hooks/transfer_action.html"
+        ],
+        "models": [
+          "DatasetTransferRequest"
+        ],
+        "hooks": [
+          "dataset.view.actions"
+        ],
+        "routes": true
+      },
+      "config_schema": {
+        "DATASET_TRANSFER_EXPIRY_DAYS": {
+          "type": "int",
+          "bind": "derivation",
+          "default": 14,
+          "min": 1,
+          "max": 365,
+          "help": "Days an offer of a dataset waits for its answer before it lapses (DL-17)."
+        },
+        "DATASET_TRANSFER_MAX_OFFERS_PER_DAY": {
+          "type": "int",
+          "bind": "derivation",
+          "default": 10,
+          "min": 0,
+          "max": 1000,
+          "help": "Offers an account makes in a day, whether or not they reach an account (429 past it). 0 for no limit."
+        }
       }
     }
   }
