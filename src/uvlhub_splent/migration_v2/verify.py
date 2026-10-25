@@ -134,9 +134,12 @@ def foreign_key_orphans(connection, schema) -> dict[str, int]:
 
 
 def empty_tables(connection, schema, contract) -> dict[str, int]:
-    """The tables the contract says the migration leaves empty, that are not."""
+    """The tables the contract says the migration leaves empty, that are
+    not: those it leaves to 3.0 and those E9 fills, which it has not yet."""
     found = {}
-    for table in contract.by_role(contract_module.EMPTY):
+    for table in contract.by_role(contract_module.EMPTY) + contract.by_role(
+        contract_module.DERIVED
+    ):
         rows = connection.execute(
             sa.text(f"SELECT COUNT(*) FROM {qualified(schema, table.name)}")
         ).scalar()

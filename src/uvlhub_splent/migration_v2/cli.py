@@ -24,7 +24,7 @@ from pathlib import Path
 
 import click
 
-from uvlhub_splent.migration_v2 import STAGES
+from uvlhub_splent.migration_v2 import DERIVED, STAGES
 from uvlhub_splent.migration_v2 import contract as contract_module
 from uvlhub_splent.migration_v2.params import (
     Params,
@@ -146,6 +146,13 @@ def _run_options(command):
         click.option("--unused-days", type=int, default=365, show_default=True),
         click.option("--ghost-draft-days", type=int, default=30, show_default=True),
         click.option(
+            "--derived",
+            default="factlabel,formats,reindex",
+            show_default=True,
+            help="What E9 makes again (DM-6), comma separated; the rest is left "
+            "for after the opening.",
+        ),
+        click.option(
             "--stages",
             default=",".join(STAGES),
             show_default=True,
@@ -172,6 +179,14 @@ def _params(options: dict) -> Params:
         raise click.BadParameter(
             f"no such stage: {', '.join(unknown)}", param_hint="--stages"
         )
+    derived = tuple(
+        d.strip().lower() for d in options["derived"].split(",") if d.strip()
+    )
+    unknown = [d for d in derived if d not in DERIVED]
+    if unknown:
+        raise click.BadParameter(
+            f"no such derived data: {', '.join(unknown)}", param_hint="--derived"
+        )
     return Params(
         server=server,
         t0=parse_t0(options["t0"]),
@@ -190,6 +205,7 @@ def _params(options: dict) -> Params:
         never_used_grace_days=options["never_used_grace_days"],
         unused_days=options["unused_days"],
         ghost_draft_days=options["ghost_draft_days"],
+        derived=derived,
         stages=stages,
     )
 
@@ -303,6 +319,7 @@ def contract_command(check_host, db_port, db_user, schema):
                     contract_module.LOAD,
                     contract_module.READ,
                     contract_module.EMPTY,
+                    contract_module.DERIVED,
                 )
             },
             "dm15_pending": contract.dm15_pending(),

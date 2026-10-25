@@ -7,7 +7,7 @@ through: that is what the next run's E0 reads as migration.completed.
 
 ``ready_for_cutover`` is True only for a run with nothing pending: no stage
 skipped, no open conflict, no check failed, no first pass. It is never
-True in this version, since E9 does not exist yet and E5 is a first pass. The report is signed with the operator's name and the sha256
+True in this version, since E5 is a first pass. The report is signed with the operator's name and the sha256
 of its own content; a real signature (GPG, the operator's key) is the
 runbook's.
 """
@@ -27,10 +27,7 @@ from uvlhub_splent.migration_v2.ledger import DECIDED, to_json
 
 # What the stages this version does not have would need (MIG-01, MIG-06,
 # MIG-07, MIG-11), for the report to say.
-LATER = {
-    "E9": "reindex (DC-4), FactLabel, metrics and formats queued (DM-6) once "
-    "3.0 runs, and the URL corpus for the replay (MIG-07)",
-}
+LATER: dict[str, str] = {}
 
 
 def build(ctx, stopped=None) -> dict:
@@ -82,6 +79,7 @@ def build(ctx, stopped=None) -> dict:
         },
         "profile": ctx.facts.get("profile", {}),
         "legacy": ctx.facts.get("legacy", {}),
+        "alerts": ctx.alerts,
         "dm5": ctx.facts.get("dm5"),
         "takeover_candidates": Counter(t["kind"] for t in ledger.takeovers),
         "tombstones": len(ledger.tombstones),

@@ -10,7 +10,7 @@ the ORM. Every run starts over: it drops and creates `uvlhub3`,
 keeps the inputs of `uvlhub_migration_inputs`.
 
 This is a **first pass**. E5 (content) loads what the pinned features can
-hold and lists what it leaves for the final pass; E9 does not exist yet. Its report says `"ready_for_cutover": false` for as long as that is so.
+hold and lists what it leaves for the final pass. Its report says `"ready_for_cutover": false` for as long as that is so.
 
 ## Stages
 
@@ -25,7 +25,7 @@ hold and lists what it leaves for the final pass; E9 does not exist yet. Its rep
 | E6 legacy | `usage_daily` (DM-5), `doi_mapping` and `legacy_url` (CO-2, C-20), `held_notice` (D13 b, §5.5) | done |
 | E7 post-load | Counters with their margin, every foreign key, the tables that must stay empty, V-01 to V-15 | done |
 | E8 files | hubfile's `storage-migrate --source <store>/.legacy_mirror --link`, then `file_manifest`, DM-10's names with `file_alias`, unique-paths and V-08 | done |
-| E9 derived | Reindex, FactLabel, formats | not yet |
+| E9 derived | FactLabel and metrics, formats, reindex, by the features' commands | done |
 | E10 report | The report (JSON), the run's row in `uvlhub_migration.run` | done |
 
 E0 refuses to go on when `uvlhub3` shows signs of use (a run that completed,
@@ -160,6 +160,29 @@ The pinned features have no table for these, so E6 writes them to
   queued row, so nothing can wait there: mail needs a held state (or a
   `not_before`) and a command that releases a tag of them, and then E6
   queues them there.
+
+## E9: derived data
+
+Nothing derived is migrated (§7). Once the files are in the store, E9 runs
+the features' own commands, each in a process of its own as E3 and E8 do,
+with the store as `HUBFILE_STORAGE_ROOT`:
+
+- `factlabel`: `splent feature:factlabel generate`, every FactLabel, then
+  `metrics-backfill --force`, each file's metrics made from it in the place
+  of v2.12's that E5 copied (a file whose FactLabel fails keeps those);
+- `formats`: `splent feature:uvl generate`, Glencoe, DIMACS and SPLOT;
+- `reindex`: `splent feature:explore reset`, the index made again.
+
+E9 never stops the run: a command that fails is a check that does not
+block (`E9-<name>`) and an alert in the report, and is run again once 3.0
+is up (explore answers with its SQL fallback meanwhile). `--derived`
+chooses what runs, so the cutover can leave FactLabel and formats for
+after the opening, as the plan's day does (§9.3, 4:05). The rehearsal of
+the tests runs factlabel's and uvl's commands, and the reindex with
+`ELASTICSEARCH_ENABLED=false`, since the development's node is shared.
+`hubfile_factlabel` has the role `derived` in the contract: E7 checks it is
+empty, before E9; `hubfile_metrics` is loaded and then made again, so a
+second run gives other `extracted_at` there.
 
 ## The data contract
 

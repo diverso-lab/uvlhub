@@ -19,6 +19,8 @@
 #   read   the migrator reads the columns listed (a subset), and writes nothing.
 #   empty  the migrator writes nothing, and E7 checks that nothing else did
 #          either (a seed, a listener). Its columns are the feature's business.
+#   derived the migrator writes nothing; E9 has the features' commands fill
+#          it, and E7, before them, checks that nothing did yet.
 # `owner` is the feature whose migrations create the table.
 #
 # Collations (DM-15): the database's default for every text column, but
@@ -244,7 +246,9 @@ artifact_type = { type = "varchar(32)", nullable = true, collation = "utf8mb4_un
 feature_model_id = { type = "int(11)", nullable = true, source = "hubfiles.feature_model_id", rule = "NULL when that feature model is not loaded" }
 
 [tables.hubfile_metrics]
-# Copied by name, every column. Plan §7.3 asks for status = 'legacy', a
+# Copied by name, every column, and made again in E9 by factlabel's
+# metrics-backfill --force from each FactLabel it computes; a file whose
+# FactLabel fails keeps v2.12's. Plan §7.3 asks for status = 'legacy', a
 # column factlabel does not have yet.
 owner = "splent_feature_factlabel"
 role = "load"
@@ -369,8 +373,8 @@ feature = { type = "varchar(255)", nullable = false, collation = "utf8mb4_unicod
 last_migration = { type = "varchar(255)", nullable = true, collation = "utf8mb4_unicode_ci" }
 
 # Left empty. The usage records are aggregated by E6 into
-# uvlhub_migration.usage_daily (DM-5), hubfile_factlabel and statistics wait
-# for E9 (recomputed, DM-6, DC-7); the rest is what 3.0 makes once it runs.
+# uvlhub_migration.usage_daily (DM-5), and statistics is DC-7's: its
+# counters are in the report; the rest is what 3.0 makes once it runs.
 [tables.audit_event]
 owner = "splent_feature_audit"
 role = "empty"
@@ -412,8 +416,9 @@ owner = "splent_feature_hubfile"
 role = "empty"
 
 [tables.hubfile_factlabel]
+# factlabel generate fills it in E9 (DM-6).
 owner = "splent_feature_factlabel"
-role = "empty"
+role = "derived"
 
 [tables.media_item]
 owner = "splent_feature_media"

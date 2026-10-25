@@ -18,7 +18,7 @@ import sqlalchemy as sa
 
 CONTRACT_FILE = Path(__file__).with_name("contract.toml")
 
-LOAD, READ, EMPTY = "load", "read", "empty"
+LOAD, READ, EMPTY, DERIVED = "load", "read", "empty", "derived"
 
 # Tables a schema at head has that no feature's model declares: Alembic's
 # own, one per feature.

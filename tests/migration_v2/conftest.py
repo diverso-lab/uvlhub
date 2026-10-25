@@ -347,6 +347,13 @@ def migrated(make_params, synthetic_dump, store, seedless, root_engine):
         store_root=store,
         report=report_path,
         allow_open_conflicts=True,
+        # The development's search node is shared: E9's reset is no test's
+        # to make there, so it runs without one, and fails as it would.
+        reindex_command=(
+            "env",
+            "ELASTICSEARCH_ENABLED=false",
+            *Params.reindex_command,
+        ),
     )
     with root_engine.connect() as connection:
         inputs = ensure_inputs(connection, params.inputs_schema)

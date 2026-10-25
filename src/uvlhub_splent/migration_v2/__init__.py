@@ -20,7 +20,7 @@ Stages (§3.4), and what this first pass does of each:
     E6  legacy        usage aggregates, legacy_url, held notices     done
     E7  post-load     counters, foreign keys, counts, V-*           done
     E8  files         hubfile's storage-migrate, file_manifest       done
-    E9  derived       reindex, FactLabel, formats                    not yet
+    E9  derived       FactLabel, formats, reindex, by the features   done
     E10 report        what was loaded, dropped and left open         done
 
 The rules it follows (§3.4): SQLAlchemy Core on connections of its own,
@@ -50,4 +50,6 @@ MIGRATOR_VERSION = "0.1.0"
 # Every stage, in order. The ones this pass leaves for later are skipped by
 # the pipeline and named in the report.
 STAGES = ("E0", "E1", "E2", "E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10")
-NOT_YET = ("E9",)
+NOT_YET = ()
+# What E9 makes again, in the order it runs: the index reads the others.
+DERIVED = ("factlabel", "formats", "reindex")

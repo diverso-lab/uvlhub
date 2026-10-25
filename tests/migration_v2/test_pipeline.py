@@ -19,6 +19,7 @@ import sqlalchemy as sa
 
 from uvlhub_splent.migration_v2 import contract as contract_module
 from uvlhub_splent.migration_v2.verify import empty_tables, foreign_key_orphans
+from uvlhub_splent.migration_v2.derived import REWRITTEN
 from uvlhub_splent.migration_v2.params import Refused
 from uvlhub_splent.migration_v2.pipeline import run
 from uvlhub_splent.migration_v2.schema import child_env
@@ -79,9 +80,10 @@ def test_the_rehearsal_runs_every_stage_this_pass_has(migrated):
         "E6",
         "E7",
         "E8",
+        "E9",
         "E10",
     ]
-    assert set(report["stages_not_yet"]) == {"E9"}
+    assert report["stages_not_yet"] == {}
     assert report["stopped"] is None
     assert report["e5_first_pass"]["first_pass"] is True
     assert report["ready_for_cutover"] is False
@@ -448,9 +450,10 @@ def test_e5_files_and_feature_models(migrated):
     assert {f["artifact_type"] for f in files.values()} == {"uvl"}
     models = by_id(target(migrated, "feature_model"))
     assert models[66]["dataset_id"] == 5  # its file's dataset (C-07)
-    metrics = target(migrated, "hubfile_metrics", order="hubfile_id")
-    assert [(m["hubfile_id"], m["features"]) for m in metrics] == [(1, 2)]
-    assert target(migrated, "hubfile_factlabel", order="hubfile_id") == []
+    # E5 copies v2.12's metrics of the files it loads (E9 makes them again).
+    copied = {c["entity"]: c for c in work(migrated, "counts")}["hubfile_metrics"]
+    assert (copied["source"], copied["target"]) == (2, 1)
+    assert dropped(migrated, "hubfile_metrics") == {12: "hubfile_not_loaded"}
 
 
 def test_e5_moves_votes_to_the_root_and_drops_self_votes(migrated):
@@ -495,8 +498,9 @@ def test_e7_checks_pass_but_the_ones_this_pass_cannot_meet(migrated):
     failing = {name for name, c in checks.items() if not c["ok"]}
     # V-08: dataset 3 is published and its file is in mismatch (recovery
     # from Zenodo is not in this pass); V-09: the branch of dataset 1 waits
-    # for the repair by concept DOI.
-    assert failing == {"V-08", "V-09"}
+    # for the repair by concept DOI; E9-reindex: the rehearsal has no search
+    # node (test_derived).
+    assert failing == {"V-08", "V-09", "E9-reindex"}
     assert not checks["V-09"]["blocking"]
     for name in (
         "V-01",
@@ -632,6 +636,8 @@ def test_e7_finds_what_the_load_let_in_with_the_checks_off(migrated):
         connection.rollback()
         connection.exec_driver_sql("SET FOREIGN_KEY_CHECKS = 1")
     assert orphans == {"user_profile.user_id -> user": 1}
+    # E9 has filled hubfile_factlabel since E7 found it empty.
+    filled.pop("hubfile_factlabel")
     assert filled == {"auth_token": 1}
 
 
@@ -709,7 +715,11 @@ def test_a_second_run_is_refused_then_forced_and_gives_the_same_database(
     """Principles 2 and 3, and E0: the run that completed stands for a 3.0
     that may have opened, so a second one needs --force and a fresh B2; then
     it starts over and writes the very same rows."""
-    tables = [t.name for t in contract_module.load().by_role(contract_module.LOAD)]
+    tables = [
+        t.name
+        for t in contract_module.load().by_role(contract_module.LOAD)
+        if t.name not in REWRITTEN
+    ]
     before = _digest(migrated, tables)
     with pytest.raises(Refused) as refusal:
         run(migrated.params)

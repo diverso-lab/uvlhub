@@ -15,6 +15,7 @@ import sqlalchemy as sa
 from uvlhub_splent.migration_v2 import MIGRATOR_VERSION, NOT_YET
 from uvlhub_splent.migration_v2 import contract as contract_module
 from uvlhub_splent.migration_v2.content import content
+from uvlhub_splent.migration_v2.derived import derived
 from uvlhub_splent.migration_v2.db import make_engine
 from uvlhub_splent.migration_v2.files import files
 from uvlhub_splent.migration_v2.identity import identity
@@ -51,6 +52,8 @@ class Context:
         self.ledger = Ledger()
         self.facts: dict = {}
         self.checks: list = []
+        # What the report raises that stops nothing (E9).
+        self.alerts: list[str] = []
         self.loaded: dict[str, set] = {}
         self.published: set = set()
         self.takeover_users: set = set()
@@ -121,6 +124,7 @@ STAGE_FUNCTIONS = {
     "E6": legacy,
     "E7": post_load,
     "E8": files,
+    "E9": derived,
 }
 
 

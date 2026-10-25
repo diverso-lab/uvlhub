@@ -73,6 +73,14 @@ def test_an_unknown_stage_is_a_usage_error():
     assert "no such stage: E42" in result.output
 
 
+def test_unknown_derived_data_is_a_usage_error():
+    result = CliRunner().invoke(
+        main, ["run", *RUN, "--expected-head", "e5f6a7b8c9d0", "--derived", "index"]
+    )
+    assert result.exit_code == 2
+    assert "no such derived data: index" in result.output
+
+
 def test_the_features_processes_reach_the_migrators_server(monkeypatch):
     """E3 and E8 run the features' commands with the server, the port
     (MARIADB_PORT, splent_framework 1.24.0), the account and uvlhub3 of the

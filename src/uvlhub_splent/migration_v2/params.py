@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
-from uvlhub_splent.migration_v2 import NOT_YET, STAGES
+from uvlhub_splent.migration_v2 import DERIVED, NOT_YET, STAGES
 
 
 class Refused(Exception):
@@ -87,9 +87,17 @@ class Params:
     target_schema: str = "uvlhub3"
     work_schema: str = "uvlhub_migration"
     inputs_schema: str = "uvlhub_migration_inputs"
-    # The features' commands, run in a process of their own (E3, E8).
+    # The features' commands, run in a process of their own (E3, E8, E9).
     upgrade_command: tuple[str, ...] = ("splent", "db:upgrade")
     files_command: tuple[str, ...] = ("splent", "feature:hubfile", "storage-migrate")
+    # E9 (DM-6): what it makes again, and the features' commands for it.
+    derived: tuple[str, ...] = DERIVED
+    factlabel_commands: tuple[tuple[str, ...], ...] = (
+        ("splent", "feature:factlabel", "generate"),
+        ("splent", "feature:factlabel", "metrics-backfill", "--force"),
+    )
+    formats_command: tuple[str, ...] = ("splent", "feature:uvl", "generate")
+    reindex_command: tuple[str, ...] = ("splent", "feature:explore", "reset")
     stages: tuple[str, ...] = tuple(s for s in STAGES if s not in NOT_YET)
 
     @property
