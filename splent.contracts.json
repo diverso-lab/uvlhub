@@ -1058,9 +1058,10 @@
       }
     },
     "splent_feature_explore": {
-      "entry": "splent_io/splent_feature_explore@v0.5.0",
+      "entry": "splent_io/splent_feature_explore@v0.6.0",
       "extensible": {
         "services": [
+          "SearchService",
           "UvlhubSearchService"
         ],
         "templates": [
@@ -1133,7 +1134,7 @@
       }
     },
     "splent_feature_citation": {
-      "entry": "splent_io/splent_feature_citation@v0.1.0",
+      "entry": "splent_io/splent_feature_citation@v0.1.1",
       "extensible": {
         "services": [
           "CitationService"
@@ -1335,7 +1336,7 @@
       }
     },
     "splent_feature_uvl": {
-      "entry": "splent_io/splent_feature_uvl@v0.2.1",
+      "entry": "splent_io/splent_feature_uvl@v0.3.0",
       "refinement": {
         "refines": "splent_feature_hubfile",
         "extends": {
@@ -1371,6 +1372,7 @@
           "hubfile.workbench.export_items",
           "hubfile.workbench.file_urls",
           "hubfile.workbench.file_view",
+          "hubfile.workbench.panel",
           "hubfile.workbench.scripts"
         ],
         "routes": true
@@ -1808,7 +1810,7 @@
       }
     },
     "splent_feature_hubfile": {
-      "entry": "splent_io/splent_feature_hubfile@v0.9.0",
+      "entry": "splent_io/splent_feature_hubfile@v0.10.0",
       "extensible": {
         "services": [
           "HubfileDownloadRecordService",
@@ -1895,6 +1897,12 @@
           "bind": "derivation",
           "default": 20971520,
           "help": "Largest file of the generic type, as 20M, 1G or a number of bytes. 0 means no limit."
+        },
+        "HUBFILE_UNPACK_ARCHIVES": {
+          "type": "bool",
+          "bind": "derivation",
+          "default": true,
+          "help": "Whether an uploaded ZIP is unpacked into its files. False keeps it as a file of the type that takes it."
         },
         "HUBFILE_ZIP_MAX_SIZE": {
           "type": "size",

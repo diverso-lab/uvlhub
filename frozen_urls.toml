@@ -107,7 +107,7 @@ v212 = "mono/app/features/hubfile/routes.py:387"
 clients = ["web interface"]
 target = "Permanent alias"
 status = "served"
-endpoint = "hubfile.view_uvl_with_doi"
+endpoint = "hubfile.view_file_by_doi"
 served_by = "hubfile"
 
 [[url]]
@@ -164,7 +164,7 @@ v212 = "mono/app/features/hubfile/routes.py:426"
 clients = ["flamapyIDE", "FactLabel"]
 target = "The same, with CORS *"
 status = "served"
-endpoint = "hubfile.raw_uvl"
+endpoint = "hubfile.raw_file"
 served_by = "hubfile"
 note = "hubfile answers it with CORS * (its init_feature)"
 
