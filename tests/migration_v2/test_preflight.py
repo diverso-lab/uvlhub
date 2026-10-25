@@ -6,6 +6,7 @@ the rehearsal the other tests read.
 
 from __future__ import annotations
 
+import hashlib
 import os
 import time
 from dataclasses import replace
@@ -186,3 +187,43 @@ def test_it_refuses_features_the_contract_was_not_written_for(params):
     assert run_e0(params, replace(contract, features=features)) == [
         f"splent_feature_dataset is {installed}, the contract was written for 9.9.9"
     ]
+
+
+# ── DM-1 ─────────────────────────────────────────────────────────────────
+
+
+@pytest.mark.parametrize(
+    "secret_key, v2_key, refused, checked",
+    [
+        ("a new key of 3.0, long enough to sign", None, None, False),
+        ("a new key of 3.0, long enough to sign", "the key of v2.12", None, True),
+        ("the key of v2.12", "the key of v2.12", "is v2.12's", False),
+        (None, "the key of v2.12", "SECRET_KEY is not", False),
+    ],
+)
+def test_e0_refuses_the_secret_key_of_v2_12(
+    monkeypatch, secret_key, v2_key, refused, checked
+):
+    """DM-1: E0 holds SECRET_KEY to the sha256 of v2.12's, never the key."""
+    from types import SimpleNamespace
+
+    from uvlhub_splent.migration_v2.preflight import secret_key_rotated
+
+    for name, value in (
+        ("SECRET_KEY", secret_key),
+        (
+            "MIGRATION_V2_SECRET_KEY_SHA256",
+            v2_key and hashlib.sha256(v2_key.encode()).hexdigest().upper(),
+        ),
+    ):
+        if value is None:
+            monkeypatch.delenv(name, raising=False)
+        else:
+            monkeypatch.setenv(name, value)
+    ctx = SimpleNamespace(facts={})
+    reasons = secret_key_rotated(ctx)
+    if refused is None:
+        assert reasons == []
+    else:
+        assert len(reasons) == 1 and refused in reasons[0]
+    assert ctx.facts["dm1"] == {"rotation_checked": checked}

@@ -341,3 +341,21 @@ def test_only_zenodo_production_dois_are_zenodo(doi, zenodo):
 )
 def test_a_doi_is_its_depositions_only_as_zenodo_mints_it(doi, deposition, its):
     assert rules.doi_is_of_deposition(doi, deposition) is its
+
+
+@pytest.mark.parametrize(
+    "value, signed",
+    [
+        (synthetic.reset_link("alice@uvlhub.test"), True),
+        # Long enough for itsdangerous to compress it.
+        (synthetic.reset_link("a" * 80 + "@uvlhub.test"), True),
+        ("J.R.R", False),
+        ("10.5281/zenodo.1001", False),
+        ("alice@uvlhub.test", False),
+        ("a.b.c", False),
+        ("uvlhub 2 key (2026-01-01)", False),
+        (None, False),
+    ],
+)
+def test_dm1_knows_a_signed_value_without_its_key(value, signed):
+    assert rules.is_signed(value) is signed

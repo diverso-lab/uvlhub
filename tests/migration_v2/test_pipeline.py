@@ -513,9 +513,13 @@ def test_e7_checks_pass_but_the_ones_this_pass_cannot_meet(migrated):
         "V-10",
         "V-11",
         "V-15",
+        "V-16",
         "empty-tables",
     ):
         assert checks[name]["ok"], name
+    # Nothing in the tests says what v2.12's key was (DM-1).
+    assert migrated.report["dm1"] == {"rotation_checked": False}
+    assert migrated.report["ready_for_cutover"] is False
 
 
 # ── E8: files ────────────────────────────────────────────────────────────
@@ -639,6 +643,34 @@ def test_e7_finds_what_the_load_let_in_with_the_checks_off(migrated):
     # E9 has filled hubfile_factlabel since E7 found it empty.
     filled.pop("hubfile_factlabel")
     assert filled == {"auth_token": 1}
+
+
+def test_v16_finds_a_signed_value_carried_over(migrated):
+    """DM-1: a reset link of v2.12 copied into any text column that loads
+    is something the rotated key would leave behind; V-16 names it."""
+    from types import SimpleNamespace
+
+    from uvlhub_splent.migration_v2.verify import v16_nothing_signed
+
+    ctx = SimpleNamespace(contract=contract_module.load(), params=migrated.params)
+    link = synthetic.reset_link("alice@uvlhub.test")
+    schema = migrated.params.target_schema
+    with migrated.engine.connect() as connection:
+        assert v16_nothing_signed(ctx, connection).ok
+        connection.execute(
+            sa.text(
+                f"UPDATE `{schema}`.user_profile SET affiliation = :link WHERE id = 101"
+            ),
+            {"link": link},
+        )
+        check = v16_nothing_signed(ctx, connection)
+        connection.rollback()
+    assert not check.ok and check.blocking
+    assert check.detail == {
+        "copied_from_signed": [],
+        "tokens": {},
+        "signed_values": {"user_profile.affiliation": 1},
+    }
 
 
 def test_e8_refuses_without_the_mirror(isolated, synthetic_dump, seedless, tmp_path):

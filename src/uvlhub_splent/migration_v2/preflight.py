@@ -17,7 +17,7 @@ is run once 3.0 has opened. It refuses:
 
 It also refuses parameters it cannot keep its word with: an unknown head,
 a token life apikeys does not give, features of other versions than the
-contract was written for.
+contract was written for, and a SECRET_KEY that is v2.12's (DM-1).
 """
 
 from __future__ import annotations
@@ -162,6 +162,32 @@ def fresh_b2(path: Path | None) -> tuple[bool, str]:
     return True, digest.hexdigest()
 
 
+def secret_key_rotated(ctx) -> list[str]:
+    """DM-1: 3.0 starts with a SECRET_KEY of its own, never v2.12's.
+
+    The migrator reads no key, and the processes it starts get SECRET_KEY
+    from the environment, the one the web and the worker of 3.0 will have.
+    MIGRATION_V2_SECRET_KEY_SHA256, the sha256 of v2.12's (so v2.12's key
+    is never in the cutover's environment), lets E0 check it is another;
+    without it, the report says the rotation was not checked, and the run
+    is not ready for the cutover."""
+    old = (os.environ.get("MIGRATION_V2_SECRET_KEY_SHA256") or "").strip().lower()
+    new = os.environ.get("SECRET_KEY") or ""
+    reasons = []
+    if old and not new:
+        reasons.append(
+            "MIGRATION_V2_SECRET_KEY_SHA256 is set and SECRET_KEY is not: the "
+            "features' processes need 3.0's own key (DM-1)"
+        )
+    elif old and hashlib.sha256(new.encode("utf-8")).hexdigest() == old:
+        reasons.append(
+            "SECRET_KEY is v2.12's (MIGRATION_V2_SECRET_KEY_SHA256): DM-1 "
+            "rotates it at the cutover"
+        )
+    ctx.facts["dm1"] = {"rotation_checked": bool(old and new) and not reasons}
+    return reasons
+
+
 def preflight(ctx) -> None:
     """Run E0. Takes the lock, which ctx keeps, and raises Refused with
     every reason found."""
@@ -183,6 +209,7 @@ def preflight(ctx) -> None:
                 f"a token life of {days} days: apikeys gives 1 to {MAX_TTL_DAYS}"
             )
     reasons += contract_module.version_differences(contract)
+    reasons += secret_key_rotated(ctx)
     # What the parameters say is settled before the server is asked anything.
     if reasons:
         raise Refused("E0", reasons)

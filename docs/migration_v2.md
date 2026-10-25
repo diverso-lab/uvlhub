@@ -48,6 +48,7 @@ python -m uvlhub_splent.migration_v2 grants        # the SQL for root to create 
 
 ```bash
 export MIGRATION_DB_PASSWORD=...  MIGRATION_DB_ROOT_PASSWORD=...  RUN_DB_SEED=false
+export SECRET_KEY=<3.0's new key>  MIGRATION_V2_SECRET_KEY_SHA256=<sha256 of v2.12's>
 python -m uvlhub_splent.migration_v2 preflight --db-host <db> --t0 2026-11-20T00:00:00 --expected-head e5f6a7b8c9d0
 python -m uvlhub_splent.migration_v2 run --db-host <db> \
     --t0 2026-11-20T00:00:00 --expected-head e5f6a7b8c9d0 \
@@ -62,9 +63,10 @@ python -m uvlhub_splent.migration_v2 run --db-host <db> \
   `rsync -a --delete` (never `--inplace`) of v2.12's `uploads/`, on the same
   mount, so each file is hard linked to its key (§6.2, R-27).
 - The processes it starts (`splent db:upgrade`, `splent feature:hubfile
-  storage-migrate`) build the app, so in the production image they need
-  what its ProductionConfig needs, `SECRET_KEY` first. They get the
-  server, its port (`MARIADB_PORT`), the migrator account and `uvlhub3`.
+  storage-migrate` and E9's commands) build the app, so in the production
+  image they need what its ProductionConfig needs, `SECRET_KEY` first
+  (DM-1, below). They get the server, its port (`MARIADB_PORT`), the
+  migrator account and `uvlhub3`.
 - A rehearsal adds `--allow-open-conflicts`: it goes on past the conflicts
   and lists them. The cutover stops at the first stage that leaves one.
 - Exit code 3 is a refusal; the report says which stage and why.
@@ -184,6 +186,36 @@ the tests runs factlabel's and uvl's commands, and the reindex with
 empty, before E9; `hubfile_metrics` is loaded and then made again, so a
 second run gives other `extracted_at` there.
 
+## DM-1: SECRET_KEY is rotated
+
+3.0 starts with a key of its own. The migrator reads none: P-26 reads
+v2.12's reset links without one (their payload is not encrypted), and it
+writes nothing signed. What the operator sets, in the container that runs
+it and then in the web and the worker of 3.0:
+
+- `SECRET_KEY`: a new one, at least 32 characters
+  (`python -c "import secrets; print(secrets.token_urlsafe(64))"`), never
+  v2.12's nor the framework's development key, which ProductionConfig
+  refuses. Everything 3.0 signs comes from it: sessions, CSRF, its
+  remember-me cookie. `CONFIRM_EMAIL_SALT` stops mattering.
+- `MIGRATION_V2_SECRET_KEY_SHA256`: the sha256 of v2.12's key, taken from
+  its `.env` (`printf %s "$OLD_SECRET_KEY" | sha256sum | cut -d' ' -f1`),
+  so v2.12's key is never in the cutover's environment. E0 refuses when
+  `SECRET_KEY` is that key, or when the hash is set and `SECRET_KEY` is
+  not; without the hash the report says `"dm1": {"rotation_checked":
+  false}`, and the run is not ready for the cutover.
+
+V-16 (E7) checks that nothing carried over is signed: no column loaded
+comes from one v2.12 signed with its key (`reset_token.token`; its
+confirmation links and sessions were never stored), auth's `auth_token`,
+confirmemail's and reset's tables are empty, and no text value of a table
+the migrator loads is something itsdangerous signed, with any key
+(`rules.is_signed`). Links of v2.12 mailed before the cutover open nothing:
+they lead to the page of an expired link (ID-15).
+
+Deriving a key per purpose from `SECRET_KEY` (PL-9) is the framework's:
+1.25.0 signs everything with `SECRET_KEY` itself.
+
 ## The data contract
 
 `src/uvlhub_splent/migration_v2/contract.toml` (MIG-03) holds the heads of
@@ -251,7 +283,7 @@ database and skips the rest, saying how to run them.
   in the tables the migration leaves empty.
 - **Every account gets `session_version = 2`**: auth honours v2.12's bare
   remember-me id only at version 1, so no cookie of v2.12 opens a session,
-  whatever DM-1 decides.
+  with the old key or the new one.
 - **A probable takeover (C-28) must reset**, with auth's
   `must_reset_password`: its hash is copied as it is and opens nothing,
   since signing in with it only mails the owner a reset link, so whoever

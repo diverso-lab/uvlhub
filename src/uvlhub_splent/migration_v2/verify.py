@@ -348,6 +348,62 @@ def v15_accounts(ctx, connection) -> Check:
     )
 
 
+# DM-1: the columns of v2.12 that hold a value signed with its SECRET_KEY
+# (mono/app/features/reset/services.py; confirmation links and sessions were
+# never stored), and the tables of 3.0 that keep a token of their own.
+SIGNED_SOURCES = ("reset_token.token",)
+TOKEN_TABLES = ("auth_token", "confirmemail", "reset_token")
+# What a value itsdangerous signed looks like, before rules.is_signed reads it.
+_SIGNED_SHAPE = "^[.]?[A-Za-z0-9_=-]+[.][A-Za-z0-9_=-]+[.][A-Za-z0-9_=-]+$"
+
+
+def v16_nothing_signed(ctx, connection) -> Check:
+    """V-16 (DM-1): nothing carried over is signed, so the rotated
+    SECRET_KEY leaves nothing of v2.12 that a key opened. No column loaded
+    comes from one v2.12 signed, the tables that keep tokens are empty, and
+    no text value loaded is a value itsdangerous signed, with any key."""
+    contract, schema = ctx.contract, ctx.params.target_schema
+    copied = [
+        f"{table.name}.{column.name}"
+        for table in contract.by_role(contract_module.LOAD)
+        for column in table.columns.values()
+        if column.source in SIGNED_SOURCES
+    ]
+    tokens = {
+        table: connection.execute(
+            sa.text(f"SELECT COUNT(*) FROM {qualified(schema, table)}")
+        ).scalar()
+        for table in TOKEN_TABLES
+    }
+    signed = {}
+    for table in contract.by_role(contract_module.LOAD):
+        for column in table.columns.values():
+            if not column.collation:
+                continue
+            values = connection.execute(
+                sa.text(
+                    f"SELECT DISTINCT {quote(column.name)} FROM {qualified(schema, table.name)} "
+                    f"WHERE {quote(column.name)} REGEXP :shape"
+                ),
+                {"shape": _SIGNED_SHAPE},
+            ).scalars()
+            found = sum(1 for value in values if rules.is_signed(value))
+            if found:
+                signed[f"{table.name}.{column.name}"] = found
+    ok = not copied and not any(tokens.values()) and not signed
+    return Check(
+        "V-16",
+        ok,
+        detail=None
+        if ok
+        else {
+            "copied_from_signed": copied,
+            "tokens": {t: n for t, n in tokens.items() if n},
+            "signed_values": signed,
+        },
+    )
+
+
 def post_load(ctx) -> None:
     params = ctx.params
     checks = []
@@ -371,6 +427,7 @@ def post_load(ctx) -> None:
             v10_votes(ctx, connection),
             v11_copied(ctx, connection),
             v15_accounts(ctx, connection),
+            v16_nothing_signed(ctx, connection),
         ]
         connection.rollback()
     ctx.checks.extend(checks)

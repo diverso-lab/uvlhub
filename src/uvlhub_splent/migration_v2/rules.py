@@ -42,14 +42,13 @@ def is_seed_email(email) -> bool:
     return bool(email) and email.strip().lower().endswith(SEED_EMAIL_SUFFIX)
 
 
-def decode_reset_token(token: str):
-    """(address, issued at) a reset link of v2.12 carries, read without its
-    key (P-26), or (None, None) for one that is not such a link.
+def _signed(token):
+    """(payload, issued at) of a value itsdangerous' URLSafeTimedSerializer
+    signed, read without its key, or None for anything else.
 
-    The link is itsdangerous' URLSafeTimedSerializer: the payload, the time
-    and the signature, joined by dots. The payload is base64url JSON,
-    zlib-compressed when it starts with a dot; the time is a big-endian
-    integer of seconds, in base64url too.
+    Such a value is the payload, the time and the signature, joined by
+    dots. The payload is base64url JSON, zlib-compressed when it starts with
+    a dot; the time is a big-endian integer of seconds, in base64url too.
     """
     try:
         value, stamp, _signature = token.rsplit(".", 2)
@@ -60,11 +59,34 @@ def decode_reset_token(token: str):
         payload = json.loads(data)
         seconds = int.from_bytes(base64_decode(stamp), "big")
         issued = datetime.fromtimestamp(seconds, timezone.utc).replace(tzinfo=None)
-    except (BadData, ValueError, TypeError, zlib.error, OverflowError, OSError):
-        return None, None
-    if not isinstance(payload, str):
-        return None, None
+    except (
+        AttributeError,
+        BadData,
+        ValueError,
+        TypeError,
+        zlib.error,
+        OverflowError,
+        OSError,
+    ):
+        return None
     return payload, issued
+
+
+def decode_reset_token(token: str):
+    """(address, issued at) a reset link of v2.12 carries, read without its
+    key (P-26), or (None, None) for one that is not such a link: v2.12
+    signed the address the reset form was given."""
+    found = _signed(token)
+    if found is None or not isinstance(found[0], str):
+        return None, None
+    return found
+
+
+def is_signed(value) -> bool:
+    """DM-1: whether ``value`` is something itsdangerous signed with a key,
+    v2.12's or any other: a reset link, a confirmation link, a session. The
+    rotated SECRET_KEY opens none of them, so none is carried over."""
+    return isinstance(value, str) and _signed(value) is not None
 
 
 def reset_matches_account(typed: str, account_email: str) -> bool:

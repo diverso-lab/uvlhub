@@ -6,10 +6,11 @@ success. The run's row gets completed_at only when every stage went
 through: that is what the next run's E0 reads as migration.completed.
 
 ``ready_for_cutover`` is True only for a run with nothing pending: no stage
-skipped, no open conflict, no check failed, no first pass. It is never
-True in this version, since E5 is a first pass. The report is signed with the operator's name and the sha256
-of its own content; a real signature (GPG, the operator's key) is the
-runbook's.
+skipped, no open conflict, no check failed, no first pass, and SECRET_KEY
+checked to be another than v2.12's (DM-1, E0). It is never True in this
+version, since E5 is a first pass. The report is signed with the
+operator's name and the sha256 of its own content; a real signature (GPG,
+the operator's key) is the runbook's.
 """
 
 from __future__ import annotations
@@ -87,12 +88,14 @@ def build(ctx, stopped=None) -> dict:
         "checks": [check.as_row() for check in ctx.checks],
         "dm15_pending": ctx.contract.dm15_pending(),
     }
+    report["dm1"] = ctx.facts.get("dm1", {"rotation_checked": False})
     report["ready_for_cutover"] = bool(
         stopped is None
         and not NOT_YET
         and not open_conflicts
         and not failed
         and not report["e5_first_pass"]["first_pass"]
+        and report["dm1"]["rotation_checked"]
     )
     body = to_json(report)
     report["signature"] = {
