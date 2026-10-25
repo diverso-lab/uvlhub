@@ -23,7 +23,7 @@ core = [
 ]
 
 [tool.splent]
-cli_version = "1.42.0"
+cli_version = "1.45.0"
 features = [
     "splent-io/splent_feature_academic_profile@v0.1.0",
     "splent-io/splent_feature_elasticsearch@v0.2.0",
@@ -41,7 +41,7 @@ features = [
     "splent-io/splent_feature_autodeploy@v0.4.0",
     "splent-io/splent_feature_identities@v0.5.0",
     "splent-io/splent_feature_apikeys@v0.10.0",
-    "splent-io/splent_feature_zenodo@v0.4.0",
+    "splent-io/splent_feature_zenodo@v0.5.0",
     "splent-io/splent_feature_backup@v0.1.0",
     "splent-io/splent_feature_curation@v0.1.0",
     "splent-io/splent_feature_observability@v0.1.0",
@@ -231,8 +231,8 @@ env = ["MIGRATION_V2_TEST_*"]
 # product:build keeps splent_framework and splent_cli at the versions this
 # product is built with; a bare version means exactly that version.
 [tool.splent.runtime]
-splent_framework = "1.26.0"
-splent_cli = "1.44.0"
+splent_framework = "1.27.0"
+splent_cli = "1.45.0"
 gunicorn = ">=23,<24"
 
 [tool.setuptools.package-dir]

@@ -593,9 +593,10 @@
       }
     },
     "splent_feature_zenodo": {
-      "entry": "splent_io/splent_feature_zenodo@v0.4.0",
+      "entry": "splent_io/splent_feature_zenodo@v0.5.0",
       "extensible": {
         "services": [
+          "ZenodoProvider",
           "ZenodoService"
         ],
         "templates": [],
@@ -604,6 +605,51 @@
         "routes": true
       },
       "config_schema": {
+        "ZENODO_ACCESS_TOKEN": {
+          "type": "secret",
+          "bind": "deploy",
+          "help": "A personal access token with the deposit:write and deposit:actions scopes."
+        },
+        "ZENODO_API_URL": {
+          "type": "str",
+          "bind": "deploy",
+          "default": "",
+          "help": "The deposition API. Empty: zenodo.org in production, the sandbox anywhere else."
+        },
+        "ZENODO_ALLOW_PRODUCTION": {
+          "type": "bool",
+          "bind": "deploy",
+          "default": false,
+          "help": "Whether calls to zenodo.org are allowed, in production too."
+        },
+        "ZENODO_CONNECT_TIMEOUT": {
+          "type": "float",
+          "bind": "deploy",
+          "default": 5.0,
+          "min": 0.1,
+          "help": "Seconds to wait for Zenodo to accept a connection."
+        },
+        "ZENODO_READ_TIMEOUT": {
+          "type": "float",
+          "bind": "deploy",
+          "default": 30.0,
+          "min": 0.1,
+          "help": "Seconds to wait for Zenodo's answer to any call but the upload."
+        },
+        "ZENODO_UPLOAD_TIMEOUT": {
+          "type": "float",
+          "bind": "deploy",
+          "default": 90.0,
+          "min": 0.1,
+          "help": "Seconds to wait for Zenodo's answer once the ZIP is sent."
+        },
+        "ZENODO_MAX_RETRIES": {
+          "type": "int",
+          "bind": "deploy",
+          "default": 2,
+          "min": 0,
+          "help": "Times a read, an update or a delete is sent again after a failed connection or a 429, 502, 503 or 504."
+        },
         "ZENODO_KEYWORDS": {
           "type": "list",
           "bind": "derivation",
