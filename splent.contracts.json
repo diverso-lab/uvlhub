@@ -1178,7 +1178,7 @@
       }
     },
     "splent_feature_explore": {
-      "entry": "splent_io/splent_feature_explore@v0.8.0",
+      "entry": "splent_io/splent_feature_explore@v0.9.0",
       "extensible": {
         "services": [
           "SearchService",
@@ -2075,7 +2075,7 @@
       }
     },
     "splent_feature_dataset": {
-      "entry": "splent_io/splent_feature_dataset@v0.14.1",
+      "entry": "splent_io/splent_feature_dataset@v0.15.0",
       "extensible": {
         "services": [
           "AuthorService",

@@ -19,6 +19,59 @@
       "shell": {},
       "consumes": {}
     },
+    "splent_feature_dataset": {
+      "namespace": "splent_io",
+      "distribution": "splent_feature_dataset",
+      "version": "0.15.0",
+      "entries": [
+        "dataset",
+        "landing",
+        "my_datasets"
+      ],
+      "manifest_sha256": "0a19772f5976f1e2ff8a113338ecbb33f678f8b940ff12b74325aeda9d31e442",
+      "bundled": {
+        "@yaireo/tagify": "4.38.0 MIT",
+        "mustache": "4.2.0 MIT",
+        "sortablejs": "1.15.6 MIT",
+        "webpack": "5.112.2 MIT"
+      },
+      "peers": {
+        "bootstrap": {
+          "range": "^5.2.0",
+          "provider": "hub_shell",
+          "version": "5.2.0"
+        }
+      },
+      "shell": {
+        "bootstrap-css": "^5.2.0"
+      },
+      "consumes": {}
+    },
+    "splent_feature_explore": {
+      "namespace": "splent_io",
+      "distribution": "splent_feature_explore",
+      "version": "0.9.0",
+      "entries": [
+        "explore"
+      ],
+      "manifest_sha256": "20f402541e971acba326df806fb769cf0b16562acea2f87bc252d62ee67da7e7",
+      "bundled": {
+        "mustache": "4.2.0 MIT",
+        "webpack": "5.112.2 MIT"
+      },
+      "peers": {
+        "bootstrap": {
+          "range": "^5.2.0",
+          "provider": "hub_shell",
+          "version": "5.2.0"
+        }
+      },
+      "shell": {
+        "bootstrap-css": "^5.2.0",
+        "icons": "feather"
+      },
+      "consumes": {}
+    },
     "splent_feature_factlabel": {
       "namespace": "splent_io",
       "distribution": "splent_feature_factlabel",
@@ -235,8 +288,6 @@
   },
   "legacy": [
     "splent_feature_auth",
-    "splent_feature_dataset",
-    "splent_feature_explore",
     "splent_feature_profile",
     "splent_feature_reset",
     "splent_feature_settings",

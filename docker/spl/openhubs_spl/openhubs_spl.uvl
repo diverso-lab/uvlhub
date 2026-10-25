@@ -5,10 +5,17 @@
 //   - publicacion is mandatory and an or-group of the publication providers (dataset's DepositionProvider, H6):
 //     zenodo deposits on Zenodo with a DOI, local_publication publishes on the hub with an identifier of its own.
 //     A product installs one or both, and each dataset is published through one of them.
-//   - dataset => apikeys is a coupling of today's code, not of the line. It goes away with dataset_api (H7).
+//   - dataset_api (H7) is the REST API of the datasets, out of dataset: dataset_api => apikeys, and dataset no
+//     longer requires apikeys. A hub without an API leaves both out. dataset 0.11.0 still serves the API itself
+//     in a product with apikeys and without dataset_api, for one minor.
 //   - explore and statistics name no artifact type and no rating (H8): uvl, factlabel and rating fill their
 //     registries of facets, orders and dashboard slots when the product has them, so neither requires them.
+//   - explore searches the database when the product has no elasticsearch (explore 0.7.0), so a light hub runs
+//     no search node and explore no longer requires it. search, the catalog's, still does.
 //   - citation (H9) cites and describes dataset's records: optional, and nothing requires it.
+//   - hub_shell (H12) is the shell every hub shares, extracted from the products' own layouts: the application and
+//     public layouts, the sidebar from the menu registry, the header, the footer and the error pages, on theme's
+//     site object and tokens. It is mandatory: a hub is drawn in it, and a product names its brand in parameters.
 // The children of the concrete parents (profile, identities, captcha) import their parent. Their constraints
 // repeat what the tree says because the load order and the import check read the constraints alone.
 // A node with a param attribute and no package stands for a value of a feature's parameter (uvl = true in its
@@ -21,6 +28,15 @@
 // (observability 0.1.0): where a product's errors go and who its alerts reach (D20).
 // legacy_urls keeps the addresses a hub used to answer answering: a 301 or 308 to where they went, or 410
 // (CO-2, an optional feature by D10).
+// dataset_transfer offers a dataset and its versions to another account (DL-17, an optional feature by D10): an
+// inbox in the account area, a mail with a signed link, one answer whether or not the account exists, offers that
+// lapse and a daily limit. dataset moves the lineage once an offer is accepted, and keeps no offers since 0.14.0,
+// so a hub without dataset_transfer has no transfers; with dataset_api too, API v1 serves their routes.
+// tipo_artefacto is the or-group of the kinds of file a hub takes (H11): uvl, the UVL layer, and generic_files,
+// hubfile's generic file type, which takes the extensions HUBFILE_FILE_EXTENSIONS names (["*"] for any file).
+// generic_files has no package: it stands for that parameter when its list is not empty, so a hub of files of
+// any kind (filehub_splent) selects it from its value and leaves uvl out. A hub may take both; neither is a hub
+// that takes no file at all, which the group refuses.
 features
 	openhubs_spl
 		mandatory
@@ -29,6 +45,7 @@ features
 					theme {org 'splent-io', package 'splent_feature_theme'}
 					settings {org 'splent-io', package 'splent_feature_settings'}
 					public {org 'splent-io', package 'splent_feature_public'}
+					hub_shell {org 'splent-io', package 'splent_feature_hub_shell'}
 					session
 						alternative
 							session_filesystem {org 'splent-io', package 'splent_feature_session_filesystem'}
@@ -108,9 +125,12 @@ features
 								optional
 									factlabel {org 'splent-io', package 'splent_feature_factlabel'}
 									generator {org 'splent-io', package 'splent_feature_generator'}
+							generic_files {param 'HUBFILE_FILE_EXTENSIONS'}
 				optional
 					curation {org 'splent-io', package 'splent_feature_curation'}
 					legacy_urls {org 'splent-io', package 'splent_feature_legacy_urls'}
+					dataset_transfer {org 'splent-io', package 'splent_feature_dataset_transfer'}
+					dataset_api {org 'splent-io', package 'splent_feature_dataset_api'}
 					apidocs {org 'splent-io', package 'splent_feature_apidocs'}
 					rating {org 'splent-io', package 'splent_feature_rating'}
 					explore {org 'splent-io', package 'splent_feature_explore'}
@@ -127,6 +147,9 @@ features
 
 constraints
 	theme => settings
+	// The shell draws theme's site object and tokens, and the account signed in, so it loads after both.
+	hub_shell => theme
+	hub_shell => auth
 	session_redis => redis
 	admin => auth
 	autodeploy => admin
@@ -163,8 +186,10 @@ constraints
 	captcha_on_reset => reset
 	apikeys => auth
 	dataset => auth
-	// dataset carries the REST API until dataset_api splits it out.
-	dataset => apikeys
+	// The REST API of the datasets takes apikeys' tokens, and serves what dataset holds, so it loads after both.
+	dataset_api => apikeys
+	dataset_api => auth
+	dataset_api => dataset
 	// The best rated first is rating's order of the home page.
 	home_most_rated => rating
 	// A curated hub reviews what the accounts it does not trust publish: curation is its reviewer
@@ -189,14 +214,20 @@ constraints
 	curation => dataset
 	// The screen of the old addresses is for administrators.
 	legacy_urls => auth
+	// dataset_transfer offers dataset's lineages and asks dataset to move one once it is accepted, mails the offer
+	// through mail's MailService, and its pages are for signed-in accounts, so it loads after the three.
+	dataset_transfer => dataset
+	dataset_transfer => auth
+	dataset_transfer => mail
 	rating => auth
 	rating => dataset
 	explore => dataset
 	explore => hubfile
-	explore => elasticsearch
 	search => elasticsearch
 	statistics => dataset
 	// citation describes dataset's records and fills the slots of its dataset page, so it loads after it.
 	citation => dataset
+	// Its limit on the costly answers counts in auth's shared throttle (citation 0.2.0, CT-3).
+	citation => auth
 	media => auth
 	team => media
