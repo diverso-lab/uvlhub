@@ -26,29 +26,19 @@ core = [
 cli_version = "1.42.0"
 features = [
     "splent-io/splent_feature_academic_profile@v0.1.0",
-    "splent-io/splent_feature_generator@v0.1.0",
-    "splent-io/splent_feature_settings@v0.5.0",
-    "splent-io/splent_feature_apidocs@v0.2.0",
     "splent-io/splent_feature_elasticsearch@v0.2.0",
     "splent-io/splent_feature_redis@v1.6.0",
     "splent-io/splent_feature_session_redis@v1.2.0",
     "splent-io/splent_feature_captcha_image@v0.2.0",
-    "splent-io/splent_feature_profile@v1.7.1",
     "splent-io/splent_feature_captcha@v0.2.0",
     "splent-io/splent_feature_admin@v1.9.0",
     "splent-io/splent_feature_signup@v0.4.1",
     "splent-io/splent_feature_nginx@v1.5.0",
     "splent-io/splent_feature_theme@v0.15.0",
     "splent-io/splent_feature_public@v1.12.0",
-    "splent-io/splent_feature_team@v0.9.0",
-    "splent-io/splent_feature_media@v0.11.1",
-    "splent-io/splent_feature_reset@v2.2.0",
-    "splent-io/splent_feature_confirmemail@v2.2.0",
-    "splent-io/splent_feature_mail@v1.5.0",
     "splent-io/splent_feature_orcid@v0.4.1",
     "splent-io/splent_feature_github@v0.4.1",
     "splent-io/splent_feature_autodeploy@v0.4.0",
-    "splent-io/splent_feature_auth@v1.26.0",
     "splent-io/splent_feature_identities@v0.5.0",
     "splent-io/splent_feature_apikeys@v0.9.0",
     "splent-io/splent_feature_zenodo@v0.4.0",
@@ -57,14 +47,25 @@ features = [
     "splent-io/splent_feature_observability@v0.1.0",
     "splent-io/splent_feature_audit@v0.1.0",
     "splent-io/splent_feature_analytics@v0.1.0",
-    "splent-io/splent_feature_hubfile@v0.8.0",
-    "splent-io/splent_feature_dataset@v0.9.0",
     "splent-io/splent_feature_rating@v0.5.0",
     "splent-io/splent_feature_explore@v0.5.0",
     "splent-io/splent_feature_factlabel@v0.6.0",
-    "splent-io/splent_feature_uvl@v0.2.0",
     "splent-io/splent_feature_statistics@v0.5.0",
     "splent-io/splent_feature_citation@v0.1.0",
+    "splent-io/splent_feature_settings@v0.5.1",
+    "splent-io/splent_feature_media@v0.11.2",
+    "splent-io/splent_feature_team@v0.9.1",
+    "splent-io/splent_feature_uvl@v0.2.1",
+    "splent-io/splent_feature_auth@v1.27.0",
+    "splent-io/splent_feature_profile@v1.8.0",
+    "splent-io/splent_feature_confirmemail@v2.3.0",
+    "splent-io/splent_feature_reset@v2.3.0",
+    "splent-io/splent_feature_mail@v1.6.0",
+    "splent-io/splent_feature_hubfile@v0.9.0",
+    "splent-io/splent_feature_dataset@v0.10.0",
+    "splent-io/splent_feature_generator@v0.2.0",
+    "splent-io/splent_feature_apidocs@v0.3.0",
+    "splent-io/splent_feature_legacy_urls@v0.1.0",
 ]
 features_dev = ["splent-io/splent_feature_mailhog@v1.2.0", "splent-io/splent_feature_phpmyadmin@v1.1.0"]
 features_prod = []
@@ -86,10 +87,10 @@ registries = ["forge"]
 # clone of this repository can resolve the model from UVLHub alone.
 [tool.splent.spl_model]
 mirror = "uvlhub.io"
-doi = "10.5281/zenodo.23631098"
+doi = "10.5281/zenodo.23639256"
 # Same line, every version. Used to report that a newer model exists.
 concept_doi = ""
-version = "8"
+version = "9"
 file = "openhubs_spl.uvl"
 
 [tool.splent.config]
@@ -147,6 +148,10 @@ OBSERVABILITY_ALERT_CHANNELS = ["email", "matrix"]
 # D11: visits counted by Plausible, without cookies. The script and the site
 # are the deployment's; with no script nothing is loaded.
 ANALYTICS_PROVIDER = "plausible"
+# PL-9 / DM-1: sessions, CSRF, one-time tokens and signed URLs each sign
+# with a key derived from SECRET_KEY (framework 1.26), so one leaked signer
+# opens nothing else.
+SPLENT_DERIVED_KEYS = true
 # How to cite uvlhub (CT-2): the two articles of uvlhub.io's "Cite us!", as
 # data citation loads and writes in every format.
 CITATION_REFERENCES_FILE = "citation_references.toml"
@@ -226,8 +231,8 @@ env = ["MIGRATION_V2_TEST_*"]
 # product:build keeps splent_framework and splent_cli at the versions this
 # product is built with; a bare version means exactly that version.
 [tool.splent.runtime]
-splent_framework = "1.25.0"
-splent_cli = "1.42.0"
+splent_framework = "1.26.0"
+splent_cli = "1.43.0"
 gunicorn = ">=23,<24"
 
 [tool.setuptools.package-dir]

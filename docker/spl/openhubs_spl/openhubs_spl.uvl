@@ -19,6 +19,8 @@
 // hub does not trust publishes to review, so it needs a reviewer, curation (GV-2, an optional feature by D10).
 // errors_* are the choices of OBSERVABILITY_BACKEND and alerts_* those of OBSERVABILITY_ALERT_CHANNELS
 // (observability 0.1.0): where a product's errors go and who its alerts reach (D20).
+// legacy_urls keeps the addresses a hub used to answer answering: a 301 or 308 to where they went, or 410
+// (CO-2, an optional feature by D10).
 features
 	openhubs_spl
 		mandatory
@@ -108,6 +110,7 @@ features
 									generator {org 'splent-io', package 'splent_feature_generator'}
 				optional
 					curation {org 'splent-io', package 'splent_feature_curation'}
+					legacy_urls {org 'splent-io', package 'splent_feature_legacy_urls'}
 					apidocs {org 'splent-io', package 'splent_feature_apidocs'}
 					rating {org 'splent-io', package 'splent_feature_rating'}
 					explore {org 'splent-io', package 'splent_feature_explore'}
@@ -184,6 +187,8 @@ constraints
 	// curation reviews dataset's publications and withdraws through its services, so it loads after it.
 	curation => auth
 	curation => dataset
+	// The screen of the old addresses is for administrators.
+	legacy_urls => auth
 	rating => auth
 	rating => dataset
 	explore => dataset

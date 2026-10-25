@@ -5,10 +5,6 @@ x-required:
   REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD is required, set it in .env}
   NGINX_SERVER_NAME: ${NGINX_SERVER_NAME:?NGINX_SERVER_NAME is required, set it in
     .env}
-  MAIL_HOST: ${MAIL_HOST:?MAIL_HOST is required, set it in .env}
-  MAIL_USERNAME: ${MAIL_USERNAME:?MAIL_USERNAME is required, set it in .env}
-  MAIL_PASSWORD: ${MAIL_PASSWORD:?MAIL_PASSWORD is required, set it in .env}
-  MAIL_FROM: ${MAIL_FROM:?MAIL_FROM is required, set it in .env}
   AUTODEPLOY_SECRET: ${AUTODEPLOY_SECRET:?AUTODEPLOY_SECRET is required, set it in
     .env}
   OAUTH_REDIRECT_BASE_URL: ${OAUTH_REDIRECT_BASE_URL:?OAUTH_REDIRECT_BASE_URL is required,
@@ -29,6 +25,10 @@ x-required:
     is required, set it in .env}
   OBSERVABILITY_MATRIX_TOKEN: ${OBSERVABILITY_MATRIX_TOKEN:?OBSERVABILITY_MATRIX_TOKEN
     is required, set it in .env}
+  MAIL_HOST: ${MAIL_HOST:?MAIL_HOST is required, set it in .env}
+  MAIL_USERNAME: ${MAIL_USERNAME:?MAIL_USERNAME is required, set it in .env}
+  MAIL_PASSWORD: ${MAIL_PASSWORD:?MAIL_PASSWORD is required, set it in .env}
+  MAIL_FROM: ${MAIL_FROM:?MAIL_FROM is required, set it in .env}
   SECRET_KEY: ${SECRET_KEY:?SECRET_KEY is required, set it in .env}
   MARIADB_PASSWORD: ${MARIADB_PASSWORD:?MARIADB_PASSWORD is required, set it in .env}
   MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:?MARIADB_ROOT_PASSWORD is required,
