@@ -1104,7 +1104,7 @@
       }
     },
     "splent_feature_explore": {
-      "entry": "splent_io/splent_feature_explore@v0.7.0",
+      "entry": "splent_io/splent_feature_explore@v0.8.0",
       "extensible": {
         "services": [
           "SearchService",
@@ -1180,7 +1180,7 @@
       }
     },
     "splent_feature_citation": {
-      "entry": "splent_io/splent_feature_citation@v0.1.1",
+      "entry": "splent_io/splent_feature_citation@v0.2.0",
       "extensible": {
         "services": [
           "CitationService"
@@ -1189,6 +1189,7 @@
           "citation/cite_us.html",
           "hooks/citation_dataset_button.html",
           "hooks/citation_dataset_dialog.html",
+          "hooks/citation_dataset_head.html",
           "hooks/citation_home_card.html"
         ],
         "models": [
@@ -1196,6 +1197,7 @@
         ],
         "hooks": [
           "dataset.view.actions",
+          "dataset.view.head",
           "dataset.view.scripts",
           "home.aside"
         ],
@@ -1227,6 +1229,14 @@
           "bind": "derivation",
           "default": true,
           "help": "Whether the home page has the Cite us! card."
+        },
+        "CITATION_COSTLY_PER_MINUTE": {
+          "type": "int",
+          "bind": "deploy",
+          "default": 60,
+          "min": 0,
+          "max": 100000,
+          "help": "The QR codes drawn and the RDF answers one address may have a minute (CT-3). 0 for no limit."
         }
       }
     },
@@ -1991,7 +2001,7 @@
       }
     },
     "splent_feature_dataset": {
-      "entry": "splent_io/splent_feature_dataset@v0.12.0",
+      "entry": "splent_io/splent_feature_dataset@v0.13.0",
       "extensible": {
         "services": [
           "AuthorService",
@@ -2029,10 +2039,12 @@
           "OrcidCheck"
         ],
         "hooks": [
+          "dataset.files.nouns",
           "dataset.form.scripts",
           "dataset.form.upload",
           "dataset.home.actions",
           "dataset.view.actions",
+          "dataset.view.head",
           "dataset.view.meta",
           "dataset.view.scripts",
           "dataset.view.workbench",
@@ -2144,6 +2156,81 @@
           "min": 1,
           "max": 604800,
           "help": "Seconds the Retry-After of a paused publication says."
+        },
+        "DATASET_DESCRIPTION_ALLOWED_TAGS": {
+          "type": "list",
+          "bind": "derivation",
+          "default": [
+            "p",
+            "br",
+            "hr",
+            "h4",
+            "h5",
+            "h6",
+            "blockquote",
+            "pre",
+            "ul",
+            "ol",
+            "li",
+            "table",
+            "thead",
+            "tbody",
+            "tr",
+            "th",
+            "td",
+            "a",
+            "strong",
+            "em",
+            "b",
+            "i",
+            "u",
+            "s",
+            "del",
+            "code"
+          ],
+          "help": "The elements a dataset's description keeps, Markdown or inherited HTML (DS-1). Empty keeps the default.",
+          "choices": [
+            "p",
+            "br",
+            "hr",
+            "h1",
+            "h2",
+            "h3",
+            "h4",
+            "h5",
+            "h6",
+            "blockquote",
+            "pre",
+            "ul",
+            "ol",
+            "li",
+            "dl",
+            "dt",
+            "dd",
+            "table",
+            "thead",
+            "tbody",
+            "tr",
+            "th",
+            "td",
+            "a",
+            "strong",
+            "em",
+            "b",
+            "i",
+            "u",
+            "s",
+            "del",
+            "ins",
+            "sub",
+            "sup",
+            "mark",
+            "small",
+            "abbr",
+            "code",
+            "kbd",
+            "img"
+          ]
         },
         "DATASET_ORCID_CHECK_URL": {
           "type": "url",

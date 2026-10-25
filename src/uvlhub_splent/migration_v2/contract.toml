@@ -48,10 +48,10 @@ splent_feature_academic_profile = { version = "0.1.0", head = "pu0002" }
 splent_feature_apikeys = { version = "0.10.0", head = "apikeys0003_resources" }
 splent_feature_audit = { version = "0.1.0", head = "audit0001_events" }
 splent_feature_auth = { version = "1.27.0", head = "auth0009_email_collation" }
-splent_feature_citation = { version = "0.1.1", head = "citation0001_references" }
+splent_feature_citation = { version = "0.2.0", head = "citation0001_references" }
 splent_feature_confirmemail = { version = "2.3.0", head = "confirmemail0002_drop_scaffold" }
 splent_feature_curation = { version = "0.1.0", head = "curation0001_requests" }
-splent_feature_dataset = { version = "0.12.0", head = "dataset0009_public_ids" }
+splent_feature_dataset = { version = "0.13.0", head = "dataset0010_description_format" }
 splent_feature_factlabel = { version = "0.6.0", head = "d934ec20c841" }
 splent_feature_github = { version = "0.4.1", head = "github0002_into_ext_identity" }
 splent_feature_hubfile = { version = "0.11.0", head = "hubfile0004_aliases" }
@@ -171,7 +171,8 @@ role = "load"
 id = { type = "int(11)", nullable = false, source = "ds_meta_data.id" }
 deposition_id = { type = "int(11)", nullable = true, source = "ds_meta_data.deposition_id" }
 title = { type = "varchar(120)", nullable = false, collation = "utf8mb4_unicode_ci", source = "ds_meta_data.title" }
-description = { type = "text", nullable = false, collation = "utf8mb4_unicode_ci", source = "ds_meta_data.description" }
+description = { type = "text", nullable = false, collation = "utf8mb4_unicode_ci", source = "ds_meta_data.description", rule = "as v2.12 stored it, html_legacy; dataset cleans it with its allowlist whenever it is shown (DS-1)" }
+description_format = { type = "varchar(16)", nullable = false, collation = "utf8mb4_unicode_ci", rule = "html_legacy: every description of v2.12 is TinyMCE's HTML (D21); the column's default, so a load that leaves it out writes the same" }
 publication_type = { type = "enum('ANNOTATION_COLLECTION','BOOK','BOOK_SECTION','CONFERENCE_PAPER','DATA_MANAGEMENT_PLAN','JOURNAL_ARTICLE','PATENT','PREPRINT','PROJECT_DELIVERABLE','PROJECT_MILESTONE','PROPOSAL','REPORT','SOFTWARE_DOCUMENTATION','TAXONOMIC_TREATMENT','TECHNICAL_NOTE','THESIS','WORKING_PAPER','OTHER')", nullable = true, collation = "utf8mb4_unicode_ci", source = "ds_meta_data.publication_type" }
 publication_doi = { type = "varchar(120)", nullable = true, collation = "utf8mb4_unicode_ci", source = "ds_meta_data.publication_doi" }
 dataset_doi = { type = "varchar(120)", nullable = true, collation = "utf8mb4_unicode_ci", source = "ds_meta_data.dataset_doi" }

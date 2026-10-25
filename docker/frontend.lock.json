@@ -1,0 +1,71 @@
+{
+  "schema": 1,
+  "product": "uvlhub_splent",
+  "shell": {
+    "source": "src/uvlhub_splent/static/js/app.js",
+    "provides": {
+      "bootstrap": {
+        "kind": "lib",
+        "global": "bootstrap",
+        "version": "5.2.0",
+        "from": "src/uvlhub_splent/static/js/app.js"
+      },
+      "bootstrap-css": {
+        "kind": "css",
+        "version": "5.2.0",
+        "from": "src/uvlhub_splent/static/css/app.css"
+      },
+      "icons": {
+        "kind": "icons",
+        "set": "feather",
+        "from": "src/uvlhub_splent/static/js/app.js"
+      }
+    }
+  },
+  "features": {
+    "splent_feature_apidocs": {
+      "namespace": "splent_io",
+      "distribution": "splent_feature_apidocs",
+      "version": "0.4.0",
+      "entries": [],
+      "manifest_sha256": "31aa7ab35293dee26b31c9f0391c32af04b41b9448a46807ec034464f3f5db0c",
+      "bundled": {
+        "swagger-ui-dist": "5.17.14 Apache-2.0"
+      },
+      "peers": {},
+      "shell": {},
+      "consumes": {}
+    },
+    "splent_feature_statistics": {
+      "namespace": "splent_io",
+      "distribution": "splent_feature_statistics",
+      "version": "0.6.0",
+      "entries": [
+        "statistics"
+      ],
+      "manifest_sha256": "2b0c5cb8203ac27362425003ba9f53c19d30af7a12c02be1cad638320f011d84",
+      "bundled": {
+        "@kurkle/color": "0.3.4 MIT",
+        "chart.js": "4.5.1 MIT",
+        "webpack": "5.112.2 MIT"
+      },
+      "peers": {},
+      "shell": {},
+      "consumes": {}
+    }
+  },
+  "legacy": [
+    "splent_feature_auth",
+    "splent_feature_dataset",
+    "splent_feature_explore",
+    "splent_feature_factlabel",
+    "splent_feature_generator",
+    "splent_feature_hubfile",
+    "splent_feature_media",
+    "splent_feature_profile",
+    "splent_feature_reset",
+    "splent_feature_settings",
+    "splent_feature_team",
+    "splent_feature_uvl"
+  ]
+}

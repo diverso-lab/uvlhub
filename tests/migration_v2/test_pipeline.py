@@ -500,8 +500,10 @@ def test_a_tombstones_doi_answers_410_with_its_citation(migrated):
     body = answer["body"]
     assert body["error"] == "withdrawn" and body["doi"] == synthetic.ORPHAN_DOI
     assert body["reason"] == "other"
+    # citation 0.2.0 writes the tombstone's citation, with the version and
+    # the publisher between the title and the DOI.
     assert body["citation"].startswith(
-        "Of a deleted dataset (2025). Deleted, with a DOI."
+        "Of a deleted dataset (2025). Deleted, with a DOI"
     )
     assert body["citation"].endswith(f"https://doi.org/{synthetic.ORPHAN_DOI}")
 
