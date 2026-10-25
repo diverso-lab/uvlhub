@@ -28,7 +28,7 @@
 # auth (1.26.0: email, email_canonical) and identities (0.5.0: provider,
 # provider_id) compare exactly. `dm15` names the collation DM-15 asks for
 # where a pinned feature does not give it yet (datasets.pid, which dataset
-# 0.8.0 leaves at the database's): V-14 checks `collation`, what the schema
+# 0.9.0 leaves at the database's): V-14 checks `collation`, what the schema
 # is, and the report lists every `dm15` still pending, with [dm15] missing
 # below.
 
@@ -50,10 +50,10 @@ splent_feature_audit = { version = "0.1.0", head = "audit0001_events" }
 splent_feature_auth = { version = "1.26.0", head = "auth0009_email_collation" }
 splent_feature_confirmemail = { version = "2.2.0", head = "126da35a357f" }
 splent_feature_curation = { version = "0.1.0", head = "curation0001_requests" }
-splent_feature_dataset = { version = "0.8.0", head = "dataset0006_idempotency_keys" }
+splent_feature_dataset = { version = "0.9.0", head = "dataset0008_orcid_checks" }
 splent_feature_factlabel = { version = "0.5.0", head = "d934ec20c841" }
 splent_feature_github = { version = "0.4.1", head = "github0002_into_ext_identity" }
-splent_feature_hubfile = { version = "0.7.0", head = "hubfile0003_upload_sessions" }
+splent_feature_hubfile = { version = "0.8.0", head = "hubfile0003_upload_sessions" }
 splent_feature_identities = { version = "0.5.0", head = "identities0003_exact_ids" }
 splent_feature_mail = { version = "1.5.0", head = "mail0001_outbox" }
 splent_feature_media = { version = "0.11.1", head = "media0005_thumbnail" }
@@ -179,7 +179,9 @@ tags = { type = "varchar(120)", nullable = true, collation = "utf8mb4_unicode_ci
 ds_metrics_id = { type = "int(11)", nullable = true, source = "ds_meta_data.ds_metrics_id" }
 dataset_anonymous = { type = "tinyint(1)", nullable = true, source = "ds_meta_data.dataset_anonymous" }
 metadata_synced = { type = "tinyint(1)", nullable = false, source = "ds_meta_data.metadata_synced" }
-private_authors = { type = "longtext", nullable = true, collation = "utf8mb4_bin", rule = "the authors of an anonymous dataset, as dataset0003 moves them" }
+private_authors = { type = "longtext", nullable = true, collation = "utf8mb4_bin", rule = "the authors of an anonymous dataset, as dataset0003 moves them, each as an author row below (Author.entry)" }
+authors_declared_at = { type = "datetime", nullable = true, rule = "NULL: nobody declared the co-authors in v2.12, and nothing asks it now (D18)" }
+authors_declared_by_id = { type = "int(11)", nullable = true, rule = "NULL (D18)" }
 
 [tables.datasets]
 owner = "splent_feature_dataset"
@@ -216,7 +218,11 @@ id = { type = "int(11)", nullable = false, source = "author.id" }
 name = { type = "varchar(120)", nullable = false, collation = "utf8mb4_unicode_ci", source = "author.name" }
 affiliation = { type = "varchar(120)", nullable = true, collation = "utf8mb4_unicode_ci", source = "author.affiliation" }
 orcid = { type = "varchar(19)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "author.orcid normalised, NULL when it is not a valid iD (C-15)" }
-ds_meta_data_id = { type = "int(11)", nullable = true, source = "author.ds_meta_data_id" }
+ds_meta_data_id = { type = "int(11)", nullable = false, source = "author.ds_meta_data_id", on_null = "not loaded: an author of no metadata is dropped as an orphan (P-02)" }
+position = { type = "int(11)", nullable = false, rule = "its place in its metadata's credit, from 0 in the order of the ids (dataset0007)" }
+given_name = { type = "varchar(120)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "the part after the comma of a name written \"Family, Given\", with exactly one comma (dataset's names_of); NULL otherwise" }
+family_name = { type = "varchar(120)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "the part before that comma; NULL otherwise" }
+user_id = { type = "int(11)", nullable = true, rule = "the account whose orcid row of external_identity has the author's iD, NULL without one" }
 
 [tables.feature_model]
 # uvl's, which took it over from featuremodel as it was (846acdf9eed2).
@@ -396,6 +402,11 @@ owner = "splent_feature_curation"
 role = "empty"
 
 [tables.dataset_idempotency_key]
+owner = "splent_feature_dataset"
+role = "empty"
+
+[tables.dataset_orcid_check]
+# A cache of what orcid.org said of each iD credited, filled as 3.0 runs.
 owner = "splent_feature_dataset"
 role = "empty"
 

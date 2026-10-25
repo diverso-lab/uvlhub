@@ -562,14 +562,16 @@ def content_rows():
         },
         {
             "id": 2,
-            "name": "Bob Builder",
+            # "Family, Given": dataset 0.9.0 keeps the names apart.
+            "name": "Builder, Bob",
             "affiliation": None,
             "orcid": INVALID_ORCID,
             "ds_meta_data_id": 201,
         },
         {
             "id": 3,
-            "name": "Alice Liddell",
+            # Two commas: the names are not split on a guess.
+            "name": "Liddell, Alice, PhD",
             "affiliation": "US",
             "orcid": ALICE_ORCID,
             "ds_meta_data_id": 202,

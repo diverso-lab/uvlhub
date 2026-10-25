@@ -16,6 +16,11 @@ What it applies already:
   the scheme doi, and a dataset with a DOI or a deposition is zenodo's;
 - the authors of an anonymous dataset in private_authors, as dataset0003
   moves them (DS-3); an author's ORCID normalised, NULL when invalid (C-15);
+  each credit as dataset 0.9.0 keeps it (DL-5): its place from 0 in the
+  order of the ids, the names apart only from "Family, Given" (dataset's
+  names_of, as dataset0007 reads them), and the account its iD signed in
+  with (an orcid row of external_identity), none without one; no
+  declaration of the co-authors, which nobody made in v2.12 (D18);
 - metadata whose dataset went and left its DOI (P-01) becomes a withdrawn
   dataset, so the DOI answers dataset's tombstone, 410 with the citation,
   and not a 404 (DM-4, build_tombstones);
@@ -44,6 +49,8 @@ import json
 from collections import defaultdict
 from datetime import timedelta
 
+import sqlalchemy as sa
+from splent_io.splent_feature_dataset.authors import names_of
 from splent_io.splent_feature_dataset.models import (
     DOI_SCHEME,
     LEGACY_PROVIDER,
@@ -58,8 +65,10 @@ from uvlhub_splent.migration_v2.db import (
     all_rows,
     foreign_keys_off,
     insert_batches,
+    qualified,
     reflect,
 )
+from uvlhub_splent.migration_v2.identity import PROVIDERS
 from uvlhub_splent.migration_v2.ledger import stop_on_conflicts, to_json
 
 FIRST_PASS = True
@@ -76,8 +85,7 @@ DEFERRED = (
     "C-10, C-30: found and left open, for the decisions",
     "C-16, C-23: publication_doi and tags are copied as they are (DS-1 and "
     "dataset_tag do not exist in the pinned features)",
-    "CO-5, D14, DL-5, DL-6: public_id, concept_pid, lineage_root_id, "
-    "author.position and author.user_id have no column yet",
+    "CO-5, D14: public_id, concept_pid and lineage_root_id have no column yet",
     "§7.3: hubfile_metrics is copied without status = 'legacy', which "
     "factlabel has no column for",
     "§5.7: the offers it cancels carry no reason (no column); the report "
@@ -114,6 +122,8 @@ LATER = {
     "statistics": "dropped (DC-7): its counters are in the report",
 }
 PUBLISHED = (DatasetStatus.PUBLISHED.value, DatasetStatus.SYNC_PENDING.value)
+# The provider of external_identity whose provider_id is an ORCID iD.
+ORCID_PROVIDER = PROVIDERS[0]
 # DM-4: what the tombstone of a dataset deleted in v2.12 says. "other" is
 # none of the reasons the law decides (451) or that mark abuse, which
 # curation reads to stop trusting an account.
@@ -126,6 +136,35 @@ TOMBSTONE_NOTE = (
 
 def _doi(meta) -> str | None:
     return (meta["dataset_doi"] or "").strip() or None
+
+
+def linked_accounts(connection, schema) -> dict[str, int]:
+    """The account each ORCID iD signed in with, by iD: the orcid rows E4
+    loaded into external_identity, whose provider_id is the iD normalised."""
+    rows = connection.execute(
+        sa.text(
+            f"SELECT provider_id, user_id FROM {qualified(schema, 'external_identity')} "
+            "WHERE provider = :provider"
+        ),
+        {"provider": ORCID_PROVIDER},
+    ).all()
+    return dict(rows)
+
+
+def credit(author, linked) -> dict:
+    """An author of v2.12 as dataset 0.9.0 credits it (Author.entry, DL-5):
+    the names apart only from "Family, Given" with one comma (names_of, as
+    dataset0007 reads them), and the account its iD signed in with, if any."""
+    orcid = rules.normalize_orcid(author["orcid"])
+    given, family = names_of(author["name"] or "")
+    return {
+        "name": author["name"],
+        "given_name": given,
+        "family_name": family,
+        "affiliation": author["affiliation"],
+        "orcid": orcid,
+        "user_id": linked.get(orcid) if orcid else None,
+    }
 
 
 def choose_datasets(ctx, datasets, metas, files_of) -> dict[int, dict]:
@@ -209,7 +248,9 @@ def check_lineages(ctx, datasets, chosen) -> dict[int, int | None]:
     return origins
 
 
-def build_metadata(ctx, metas, datasets_of_meta, chosen, tombstones, authors_of):
+def build_metadata(
+    ctx, metas, datasets_of_meta, chosen, tombstones, authors_of, linked
+):
     """ds_meta_data rows of the loaded datasets and of the tombstones;
     metadata of neither dropped (P-01); DOIs checked (C-10, C-30)."""
     ledger = ctx.ledger
@@ -266,12 +307,7 @@ def build_metadata(ctx, metas, datasets_of_meta, chosen, tombstones, authors_of)
         concealed = None
         if anonymous:
             concealed = [
-                {
-                    "name": author["name"],
-                    "affiliation": author["affiliation"],
-                    "orcid": rules.normalize_orcid(author["orcid"]),
-                }
-                for author in authors_of[meta["id"]]
+                credit(author, linked) for author in authors_of[meta["id"]]
             ] or None
         rows.append(
             {
@@ -289,6 +325,10 @@ def build_metadata(ctx, metas, datasets_of_meta, chosen, tombstones, authors_of)
                 "dataset_anonymous": meta["dataset_anonymous"],
                 "metadata_synced": meta["metadata_synced"],
                 "private_authors": None if concealed is None else json.dumps(concealed),
+                # D18: nobody declared anything in v2.12, and nothing asks
+                # the depositors to now.
+                "authors_declared_at": None,
+                "authors_declared_by_id": None,
             }
         )
     for doi, group in sorted(owners_of_doi.items()):
@@ -429,9 +469,12 @@ def plan_renames(ctx, paths) -> list[dict]:
     return renames
 
 
-def build_authors(ctx, authors, loaded_metas, anonymous_metas) -> list[dict]:
+def build_authors(ctx, authors, loaded_metas, anonymous_metas, linked) -> list[dict]:
+    """The author rows, each at its place in its metadata's credit, from 0
+    in the order of the ids (dataset0007)."""
     ledger = ctx.ledger
     rows = []
+    places = defaultdict(int)
     for author in authors:
         meta_id = author["ds_meta_data_id"]
         if meta_id is None or (
@@ -448,18 +491,20 @@ def build_authors(ctx, authors, loaded_metas, anonymous_metas) -> list[dict]:
         if meta_id in anonymous_metas:
             ledger.map("author", author["id"], "ds_meta_data.private_authors", meta_id)
             continue
-        orcid = rules.normalize_orcid(author["orcid"])
-        if author["orcid"] and orcid is None:
+        row = credit(author, linked)
+        if author["orcid"] and row["orcid"] is None:
             ledger.note("author: ORCID not valid, NULL (C-15)")
+        if row["user_id"] is not None:
+            ledger.note("author: linked to the account its ORCID iD signed in with")
         rows.append(
-            {
-                "id": author["id"],
-                "name": author["name"],
-                "affiliation": author["affiliation"],
-                "orcid": orcid,
-                "ds_meta_data_id": meta_id,
-            }
+            dict(
+                row,
+                id=author["id"],
+                position=places[meta_id],
+                ds_meta_data_id=meta_id,
+            )
         )
+        places[meta_id] += 1
     return rows
 
 
@@ -478,6 +523,7 @@ def content(ctx) -> None:
                 connection, ctx.inputs["zenodo_snapshot"], order="deposition_id"
             )
         }
+        linked = linked_accounts(connection, params.target_schema)
         connection.rollback()
 
     metas = {meta["id"]: meta for meta in source["ds_meta_data"]}
@@ -497,11 +543,13 @@ def content(ctx) -> None:
         ctx, metas, datasets_of_meta, source["datasets"], snapshots
     )
     meta_rows = build_metadata(
-        ctx, metas, datasets_of_meta, chosen, tombstones, authors_of
+        ctx, metas, datasets_of_meta, chosen, tombstones, authors_of, linked
     )
     loaded_metas = {row["id"] for row in meta_rows}
     anonymous_metas = {row["id"] for row in meta_rows if row["dataset_anonymous"] == 1}
-    author_rows = build_authors(ctx, source["author"], loaded_metas, anonymous_metas)
+    author_rows = build_authors(
+        ctx, source["author"], loaded_metas, anonymous_metas, linked
+    )
 
     used_metrics = {
         row["ds_metrics_id"] for row in meta_rows if row["ds_metrics_id"] is not None

@@ -146,7 +146,7 @@ The pinned features have no table for these, so E6 writes them to
   for these (`usage_daily`, `source = 'legacy_v2'`) and to show it next to
   its own. The report's `dm5` gives v2.12's counters, the aggregates and
   the public note that says why the figures went down.
-- **`doi_mapping` and `legacy_url`** (CO-2, C-20): dataset 0.8.0 still
+- **`doi_mapping` and `legacy_url`** (CO-2, C-20): dataset 0.9.0 still
   redirects `/doi/<old>` by its own `doi_mapping` (302), so E6 loads v2.12's
   there, each chain followed to its end, a DOI a dataset of 3.0 has, in one
   hop. A cycle (`doi_mapping_cycle`), or a chain that ends at a DOI no
@@ -271,7 +271,7 @@ database and skips the rest, saying how to run them.
 
 - **DM-15, the identifiers:** `user.email`, `email_canonical`,
   `external_identity.provider` and `provider_id` are `utf8mb4_bin` (auth
-  1.26.0, identities 0.5.0). `datasets.pid` (dataset 0.8.0) is at the
+  1.26.0, identities 0.5.0). `datasets.pid` (dataset 0.9.0) is at the
   database's collation, where DM-15 asks `utf8mb4_bin`, and `concept_pid`
   and `dataset_tag.name` have no column yet; the report lists them. With
   the address compared exactly, C-13's clashes are the ones auth's
@@ -303,7 +303,18 @@ database and skips the rest, saying how to run them.
   copied as they are, lineages loaded as they are with their faults listed,
   `published_at` = `created_at`, no `status = 'legacy'` on metrics, no
   reason on cancelled offers, no column yet for `public_id`,
-  `lineage_root_id`, author position or user).
+  `concept_pid` or `lineage_root_id`).
+- **Authors** (DL-5, dataset 0.9.0): each credit at its place, from 0 in
+  the order of the ids of its metadata, as dataset0007 numbers them; its
+  given and family names only from a name written "Family, Given" with
+  exactly one comma (dataset's `names_of`), NULL for any other, so a name
+  is never split on a guess; and its account, the one whose ORCID identity
+  (an `orcid` row of `external_identity`, E4) has the author's iD, NULL
+  without one. The authors of an anonymous dataset are kept the same way
+  in `private_authors`. The declaration of the co-authors (D18,
+  `authors_declared_at` and `_by_id`) is NULL for everything carried over,
+  and no mail asks for it; `dataset_orcid_check`, orcid.org's answers, is
+  left empty, for 3.0 to fill as iDs are credited.
 - **Ghost drafts** (DM-3): a draft with no file, no DOI and no deposition,
   older than 30 days (`--ghost-draft-days`), is dropped as `ghost_draft`.
 - **Self-votes** (DM-8) are dropped as `self_vote`, after a vote moves to
@@ -327,7 +338,7 @@ database and skips the rest, saying how to run them.
   gets `~<id>` before its extension. E8 writes the names after
   `storage-migrate`, which finds a file by its v2.12 name, and
   `uvlhub_migration.file_alias` keeps the old one: `/hubfiles/raw/<id>/<old
-  name>` answers 400 ("Filename mismatch") in hubfile 0.7.0 until hubfile
+  name>` answers 400 ("Filename mismatch") in hubfile 0.8.0 until hubfile
   reads it (an alias table, and a 308 to the new name).
 - **C-30** also covers a DOI that is not the one Zenodo mints for its
   deposition (`10.5281/zenodo.<deposition_id>`), which P-25b finds.

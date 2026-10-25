@@ -340,10 +340,20 @@ def test_e5_keeps_an_anonymous_datasets_authors_apart(migrated):
     assert json.loads(meta["private_authors"]) == [
         {
             "name": "Carol Danvers",
+            "given_name": None,
+            "family_name": None,
             "affiliation": "Kree",
             "orcid": synthetic.CAROL_ORCID,
+            "user_id": 12,
         },
-        {"name": "Hidden Two", "affiliation": None, "orcid": None},
+        {
+            "name": "Hidden Two",
+            "given_name": None,
+            "family_name": None,
+            "affiliation": None,
+            "orcid": None,
+            "user_id": None,
+        },
     ]
     authors = by_id(target(migrated, "author"))
     # 7 is of a tombstone's metadata, whose citation names it.
@@ -352,6 +362,34 @@ def test_e5_keeps_an_anonymous_datasets_authors_apart(migrated):
     assert dropped(migrated, "author") == {6: "orphan", 8: "seed"}
     mapped = work(migrated, "id_map", "entity = 'author'")
     assert {m["source_id"] for m in mapped} == {4, 5, 9}
+
+
+def test_e5_credits_each_author_as_dataset_0_9_0_does(migrated):
+    """DL-5: the place from 0 in id order, the names apart only from
+    "Family, Given", the account by the iD it signed in with; D18: no
+    declaration, and nothing for orcid.org's cache."""
+    authors = by_id(target(migrated, "author"))
+    assert {
+        i: (
+            a["ds_meta_data_id"],
+            a["position"],
+            a["given_name"],
+            a["family_name"],
+            a["user_id"],
+        )
+        for i, a in authors.items()
+    } == {
+        # Alice's iD, written in lower case, is the one she signed in with.
+        1: (201, 0, None, None, 1),
+        2: (201, 1, "Bob", "Builder", None),
+        # Two commas: not split.
+        3: (202, 0, None, None, 1),
+        7: (290, 0, None, None, None),
+    }
+    metas = target(migrated, "ds_meta_data")
+    assert all(m["authors_declared_at"] is None for m in metas)
+    assert all(m["authors_declared_by_id"] is None for m in metas)
+    assert target(migrated, "dataset_orcid_check", order="orcid") == []
 
 
 def test_e5_orphan_metadata_becomes_a_tombstone_or_goes(migrated):
@@ -386,7 +424,14 @@ def test_e5_orphan_metadata_becomes_a_tombstone_or_goes(migrated):
     assert datasets[31]["visibility"] == "anonymous"
     hidden = by_id(target(migrated, "ds_meta_data"))[292]["private_authors"]
     assert json.loads(hidden) == [
-        {"name": "Hidden Author", "affiliation": None, "orcid": None}
+        {
+            "name": "Hidden Author",
+            "given_name": None,
+            "family_name": None,
+            "affiliation": None,
+            "orcid": None,
+            "user_id": None,
+        }
     ]
     found = conflicts(migrated)
     assert ("tombstone_undated", synthetic.UNDATED_DOI) in found
