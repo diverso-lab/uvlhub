@@ -12,5 +12,8 @@
     },
     "dependencies": {
         "npm-check-updates": "^17.1.14"
+    },
+    "splent": {
+        "provides": {}
     }
 }

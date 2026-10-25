@@ -1,4 +1,4 @@
-"""uvlhub's application shell, base_template.html (SH-1, P1 of stage 1).
+"""uvlhub in hub_shell's application shell (SH-1 in P1 of stage 1, H12).
 
 The pages a visitor, a user and an administrator open first answer, and
 every stylesheet, script and icon they link on this site is there: the
@@ -18,8 +18,11 @@ Metronic in the header and on their pages (explore, dataset), so the check
 of the rendered pages leaves out what they draw, and METRONIC_UNTIL_P2 goes
 once P2 pins them.
 
-The chrome draws its icons from a sprite of its own (Phosphor), and the
-page asks for Inter from the product: both are checked to be there.
+The shell is hub_shell's, the one every hub of the line shares, and the
+product ships no layout and no error page of its own: only its skin, with
+uvlhub.io's exact tones, and its home cards. The chrome draws its icons
+from the shell's sprite (Phosphor), and the page asks for Inter from the
+shell: both are checked to be there.
 
 It starts from an empty test database with two accounts, so run it under
 the test lock:
@@ -55,7 +58,7 @@ PAGES = ["/", "/login", "/signup/", "/explore", "/team", "/datasets/list"]
 # draws in the app shell.
 SHELL_PAGE = "/explore"
 # The pages the features write for the public site, which uvlhub draws in
-# the app shell through SPLENT_SHELL_PUBLIC, and the template of each.
+# the app shell through hub_shell's public layer, and the template of each.
 PUBLIC_PAGES = {"/": "public/index.html", "/team": "team/list.html"}
 
 # Keenthemes' names, as the CLI's check:vendor looks for them in a tree.
@@ -249,7 +252,7 @@ def _open(browsers, who, page):
 def test_a_page_answers_in_the_shell(app, browsers, who, page):
     html = _open_in_the_shell(app, browsers, who, page)
 
-    assert '<aside id="sidebar" class="uvl-sidebar"' in html
+    assert '<aside id="sidebar" class="hub-sidebar"' in html
     # The page's own heading or, when it draws none, its title.
     assert html.count("<h1") == 1
     # The signed-in browsers really are: their sidebar ends with Log out.
@@ -287,7 +290,7 @@ def test_the_home_is_publics_with_uvlhubs_cards_beside_it(app, browsers, who):
     assert ("get started!</h2>" in aside) == (who == "anonymous")
     assert aside.index("Hub statistics") < aside.index("What is uvlhub.io?")
     assert aside.index("What is uvlhub.io?") < aside.index("Cite us!")
-    assert '<h1 class="uvl-page-title">' in html
+    assert '<h1 class="hub-page-title">' in html
     assert not (TEMPLATES / "public" / "index.html").exists()
 
 
@@ -304,7 +307,7 @@ def test_the_home_is_headed_as_uvlhub_ios(app, browsers, monkeypatch):
     html = _open(browsers, "anonymous", "/")
 
     assert title == "Top datasets with the most feature models"
-    assert f'<h1 class="uvl-page-title">{title}</h1>' in html
+    assert f'<h1 class="hub-page-title">{title}</h1>' in html
     assert f"<title>{title} · " in html
 
 
@@ -318,7 +321,7 @@ def test_the_team_is_teams_page_under_the_trail(app, browsers, monkeypatch):
     trail = html[html.index('<ol class="breadcrumb">') :]
     trail = trail[: trail.index("</ol>")]
 
-    assert '<h1 class="uvl-page-title">Team</h1>' in html
+    assert '<h1 class="hub-page-title">Team</h1>' in html
     assert '<a href="/">Home</a>' in trail
     assert '<li class="breadcrumb-item active" aria-current="page">Team</li>' in trail
     assert not (TEMPLATES / "team" / "list.html").exists()
@@ -426,7 +429,7 @@ def test_the_administration_is_offered_to_the_accounts_it_lets_in(browsers, who)
 @pytest.mark.parametrize("who", ACCOUNTS)
 def test_the_account_menu_names_the_account_and_its_entries(browsers, who):
     html = _open(browsers, who, SHELL_PAGE)
-    menu = html[html.index('class="dropdown-menu dropdown-menu-end uvl-user-menu"') :]
+    menu = html[html.index('class="dropdown-menu dropdown-menu-end hub-user-menu"') :]
     menu = menu[: menu.index("</li>")]
 
     assert ACCOUNTS[who][0] in menu
@@ -567,10 +570,10 @@ def test_the_header_offers_the_three_modes(browsers, who):
     """uvlhub.io's Mode menu: Light, Dark and System, and the mode is set
     before the stylesheets, so a dark page does not flash light first."""
     html = _open(browsers, who, SHELL_PAGE)
-    menu = html[html.index('class="dropdown-menu dropdown-menu-end uvl-mode-menu"') :]
+    menu = html[html.index('class="dropdown-menu dropdown-menu-end hub-mode-menu"') :]
     menu = menu[: menu.index("</div>")]
 
-    assert re.findall(r'data-uvl-theme="(\w+)"', menu) == ["light", "dark", "system"]
+    assert re.findall(r'data-hub-theme="(\w+)"', menu) == ["light", "dark", "system"]
     assert html.index("data-bs-theme") < html.index("css/app.css")
 
 
@@ -622,7 +625,7 @@ def test_an_address_that_leads_nowhere_answers_uvlhubs_card(
 ):
     """theme's page, which the product neither shadows nor answers for:
     saying what uvlhub's seeder puts in the Appearance panel, in uvlhub's
-    tokens, dressed as uvlhub.io's card by the product's stylesheet, and
+    tokens, dressed as uvlhub.io's card by hub_shell's stylesheet, and
     asking no other site for anything (theme's own tokens would load Inter
     from Google)."""
     response = browsers[who].get("/this-page-does-not-exist")
@@ -635,7 +638,7 @@ def test_an_address_that_leads_nowhere_answers_uvlhubs_card(
     assert '<h1 class="error-page__title">Oops!</h1>' in html
     assert "We can&#39;t find that page." in html
     assert ">Return home</a>" in html
-    assert "/static/css/uvlhub-error.css" in html
+    assert "/hub_shell/dist/hub_shell_error.css" in html
     assert [name for name in THIRD_PARTY if name in html] == []
     assert not (TEMPLATES / "404.html").exists()
     assert not (PACKAGE / "errors.py").exists()
@@ -643,8 +646,9 @@ def test_an_address_that_leads_nowhere_answers_uvlhubs_card(
 
 @pytest.mark.parametrize("page", ["400.html", "401.html", "500.html"])
 def test_the_errors_no_feature_answers_wear_the_same_card(app, page):
-    """The framework renders the product's own page for these, in the
-    markup of theme's 404, so one stylesheet draws them all."""
+    """The framework renders these by name, hub_shell's pages for a product
+    that ships none, in the markup of theme's 404, so one stylesheet draws
+    them all."""
     from flask import render_template
 
     with app.test_request_context("/"):
@@ -652,19 +656,20 @@ def test_the_errors_no_feature_answers_wear_the_same_card(app, page):
 
     assert 'class="error-page"' in html
     assert '<a class="btn btn-primary" href="/">' in html
-    assert "/static/css/uvlhub-error.css" in html
+    assert "/hub_shell/dist/hub_shell_error.css" in html
     assert "css/app.css" not in html
+    assert not (TEMPLATES / page).exists()
 
 
 def test_the_dark_mode_is_a_set_of_tokens():
-    """The dark mode is the skin's own tokens redefined, so another hub
-    reskins both modes where it reskins the light one."""
+    """uvlhub's dark blue is the shell's tokens redefined in the product's
+    skin, as its light tones are: no rule of its own."""
     skin = (STATIC / "css" / "uvlhub.css").read_text(encoding="utf-8")
     dark = skin[skin.index(':root[data-bs-theme="dark"] {') :]
     dark = dark[: dark.index("}")]
 
     declared = re.findall(r"^\s*(--[\w-]+):", dark, flags=re.M)
-    assert declared and all(name.startswith("--uvl-") for name in declared)
+    assert declared and all(name.startswith("--hub-") for name in declared)
 
 
 def test_the_logo_is_as_high_as_the_appearance_panel_says(app, browsers):
@@ -678,7 +683,7 @@ def test_the_logo_is_as_high_as_the_appearance_panel_says(app, browsers):
         with app.app_context():
             service_proxy("SettingsService").set("site_logo_size", "")
 
-    brand = html[html.index('class="sidebar-brand uvl-sidebar-logo"') :]
+    brand = html[html.index('class="sidebar-brand hub-sidebar-logo"') :]
     assert 'height="56"' in brand[: brand.index("</a>")]
 
 
@@ -697,17 +702,48 @@ def test_the_chrome_icons_are_in_the_sprite(browsers):
         assert {name for where, name in used if where == address} <= symbols
 
 
-def test_the_fonts_are_served_by_the_product(browsers):
+def test_the_fonts_are_served_by_the_shell(browsers):
+    """Inter, from hub_shell's stylesheet, where the toolchain puts it from
+    npm; the product carries no copy of it, nor of the chrome's icons."""
     stylesheet = (
-        browsers["anonymous"].get("/static/css/uvlhub.css").get_data(as_text=True)
+        browsers["anonymous"].get("/hub_shell/dist/hub_shell.css").get_data(as_text=True)
     )
-    fonts = re.findall(r'url\("\.\./fonts/([^"]+\.woff2)"\)', stylesheet)
+    fonts = re.findall(r"url\((assets/Inter-[\w.-]+\.woff2)\)", stylesheet)
 
     assert len(fonts) == 4
     for font in fonts:
-        assert browsers["anonymous"].get(f"/static/fonts/{font}").status_code == 200
-    assert (STATIC / "fonts" / "LICENSE.txt").is_file()
-    assert (STATIC / "vendor" / "phosphor" / "LICENSE.txt").is_file()
+        assert browsers["anonymous"].get(f"/hub_shell/dist/{font}").status_code == 200
+    assert not (STATIC / "fonts").exists()
+    assert not (STATIC / "vendor" / "phosphor").exists()
+
+
+def test_the_shell_is_hub_shells(app):
+    """Both shells are hub_shell's layouts, and the product ships no layout
+    and no copy of Bootstrap or AdminKit: the shell provides them, and the
+    product's package.json provides nothing besides."""
+    import json
+
+    assert app.config["SPLENT_SHELL_APP"] == "hub_shell/app.html"
+    assert app.config["SPLENT_SHELL_PUBLIC"] == "hub_shell/public.html"
+    assert not (TEMPLATES / "base_template.html").exists()
+    for copy in ("css/app.css", "css/bootstrap-components.css", "js/app.js"):
+        assert not (STATIC / copy).exists(), copy
+    package = json.loads((PRODUCT / "package.json").read_text(encoding="utf-8"))
+    assert package["splent"]["provides"] == {}
+
+
+def test_uvlhubs_skin_pins_uvlhub_ios_blues(browsers):
+    """hub_shell mixes the tones of the brand from its primary; uvlhub's
+    skin, after it, writes uvlhub.io's own."""
+    html = _open(browsers, "anonymous", SHELL_PAGE)
+    stylesheets = re.findall(r'<link rel="stylesheet" href="([^"?]+)', html)
+    skin = (STATIC / "css" / "uvlhub.css").read_text(encoding="utf-8")
+
+    assert stylesheets.index("/hub_shell/dist/hub_shell.css") < stylesheets.index(
+        "/static/css/uvlhub.css"
+    )
+    assert "--hub-primary-active: #056ee9;" in skin
+    assert "--hub-sidebar-link-active-bg: #3e97ff;" in skin
 
 
 def test_the_product_templates_carry_nothing_of_metronic():

@@ -1,12 +1,9 @@
-import re
 import sys
 
 from flask import render_template
 from flask_babel import lazy_gettext as _l
 from splent_framework.app_factory import create_splent_app
 from splent_framework.assets.asset_registry import register_asset
-from splent_framework.configuration.configuration import get_app_version
-from splent_framework.hooks import template_hooks
 from splent_framework.hooks.template_hooks import (
     register_template_hook,
     remove_template_hook,
@@ -43,7 +40,7 @@ LAST = 900
 # release would take the Developer section away. Registered, they no longer
 # depend on what the other features have migrated, and the slot keeps the
 # administration's entries only, which the shell heads as the registry
-# does (base_template.html).
+# does (hub_shell's app shell).
 #
 # Each is registered with the key, the endpoint and the icon its feature's
 # next release registers (its working copy does), under the label it shows
@@ -183,40 +180,6 @@ def _place(slot, func, order):
     register_template_hook(slot, func, order=order)
 
 
-_HREF = re.compile(r'href="([^"]*)"')
-
-
-def _field(obj, name):
-    """An attribute of a menu entry or section, or its key when it is a dict."""
-    return obj.get(name) if isinstance(obj, dict) else getattr(obj, name, None)
-
-
-def slot_beyond_menus(slot, sections):
-    """What the hooks in ``slot`` draw, but for the entries already in the
-    menu registry's ``sections``.
-
-    A feature that registers its entry keeps its hook for a minor, and
-    others have only the hook, so the administration is drawn from both
-    (base_template.html): an entry whose every address the registry shows
-    is left out. The markup is the hooks' own.
-    """
-    from markupsafe import Markup
-
-    shown = {
-        _field(entry, "url")
-        for section in sections
-        for entry in (_field(section, "entries") or ())
-    } - {None, ""}
-    drawn = []
-    for hook in template_hooks.get_template_hooks(slot):
-        html = hook() or ""
-        addresses = set(_HREF.findall(html))
-        if addresses and addresses <= shown:
-            continue
-        drawn.append(html)
-    return Markup("\n".join(drawn))
-
-
 def account_sidebar_heading():
     return render_template("hooks/account_sidebar_heading.html")
 
@@ -241,24 +204,13 @@ def _fill_the_home(app):
     In uvlhub.io's order: Let's get started! first, for visitors, then what
     the features put there (statistics' counters), then what uvlhub is and
     citation's "Cite us!" (CITATION_HOME_CARD, from citation_references.toml).
-    public draws the home in two columns once home.aside has
-    something, with a stylesheet of its own for the public shell; the home
-    is drawn in the app shell (SPLENT_SHELL_PUBLIC), so that stylesheet
-    serves the app shell as well.
+    public draws the home in two columns once home.aside has something.
     """
     if "public.index" not in app.view_functions:
         return
     _place("home.aside", home_get_started, FIRST)
     # Just before citation's "Cite us!", which takes LAST (900) itself.
     _place("home.aside", home_about, LAST - 10)
-    register_asset(
-        "css",
-        "public.assets",
-        order=100,
-        shell="app",
-        subfolder="css",
-        filename="home.css",
-    )
 
 
 def _arrange_menus():
@@ -267,7 +219,7 @@ def _arrange_menus():
     The markup is the features' own, but for the Account heading, which the
     product draws from its templates/hooks/. This only decides which entries
     uvlhub shows and in which order, for the sections the shell still draws
-    from the slots (see base_template.html).
+    from the slots (see hub_shell's app shell).
     """
     auth = "splent_io.splent_feature_auth.hooks"
     signup = "splent_io.splent_feature_signup.hooks"
@@ -329,15 +281,12 @@ def _bridge_menus():
             register_user_menu_item(**entry)
 
 
-def _skin_the_public_shell():
-    """uvlhub.io's error card on theme's public shell.
-
-    In uvlhub that shell, public_base.html, only draws theme's 404: the
-    public pages are in the app shell (SPLENT_SHELL_PUBLIC). The product
-    dresses it as uvlhub.io's card with its own stylesheet, the one its 400,
-    401 and 500 pages wear. Registered after the features, as a skin is,
-    so it comes after theirs."""
-    register_asset("css", "static", order=200, filename="css/uvlhub-error.css")
+def _skin_the_app_shell():
+    """uvlhub's skin (css/uvlhub.css) over hub_shell's: uvlhub.io's exact
+    tones of the brand, which the shell mixes from the primary otherwise,
+    and the cards of uvlhub's own home hooks. Registered for the app shell
+    after the features, as a skin is."""
+    register_asset("css", "static", order=200, shell="app", filename="css/uvlhub.css")
 
 
 def create_app(config_name=None):
@@ -351,16 +300,6 @@ def create_app(config_name=None):
     if "profile.my_profile" in app.view_functions:
         app.register_blueprint(aliases_bp)
 
-    _skin_the_public_shell()
-
-    @app.context_processor
-    def inject_slot_beyond_menus():
-        return {"slot_beyond_menus": slot_beyond_menus}
-
-    # The sidebar footer links the release, as in uvlhub. The prod image
-    # writes .version from VERSION_TAG; in dev there is none and it hides.
-    @app.context_processor
-    def inject_app_version():
-        return {"APP_VERSION": get_app_version()}
+    _skin_the_app_shell()
 
     return app

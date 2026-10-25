@@ -36,6 +36,9 @@ features = [
     "splent-io/splent_feature_nginx@v1.5.0",
     "splent-io/splent_feature_theme@v0.15.0",
     "splent-io/splent_feature_public@v1.12.0",
+    # The shell every hub of the line shares (H12), from its working copy
+    # until its first release.
+    "splent-io/splent_feature_hub_shell",
     "splent-io/splent_feature_orcid@v0.4.1",
     "splent-io/splent_feature_github@v0.4.1",
     "splent-io/splent_feature_autodeploy@v0.4.0",
@@ -95,7 +98,17 @@ file = "openhubs_spl.uvl"
 
 [tool.splent.config]
 SITE_NAME = "uvlhub"
-SITE_TAGLINE = "Repository of feature models in UVL format"
+# Also the meta description of every page, as uvlhub.io's.
+SITE_TAGLINE = "Repository of feature models in UVL format integrated with Zenodo and FlamaPy"
+# The logo with white letters, for hub_shell's dark sidebar, and the ball
+# of a phone's header.
+SITE_LOGO = "media/logos/default-dark.svg"
+HUB_SHELL_LOGO_COMPACT = "media/logos/uvlhub_ball.png"
+# hub_shell's footer, as uvlhub.io's: the year, the universities behind
+# uvlhub, and the repository, whose release notes the sidebar's version opens.
+HUB_SHELL_FOOTER_YEAR = "2025"
+HUB_SHELL_FOOTER_CREDITS = "University of Seville · University of Malaga · University of Ulm"
+HUB_SHELL_REPOSITORY_URL = "https://github.com/diverso-lab/uvlhub"
 # The monolith accepted 20 MB; media alone would raise the whole app to 100 MB.
 MEDIA_MAX_UPLOAD_SIZE = "20M"
 # Media is only the internal library for team photos and logos.
@@ -200,22 +213,6 @@ THEME_TOKENS = """{\
 "font_heading": "Inter, Helvetica, sans-serif", \
 "font_display": "Inter, Helvetica, sans-serif", \
 "font_url": ""}"""
-
-[tool.splent.layout]
-base_template = "base_template.html"
-hooks = [
-    "layout.head.css",
-    "layout.sidebar.top",
-    "layout.anonymous_sidebar",
-    "layout.authenticated_sidebar",
-    "layout.sidebar.authenticated.items",
-    "layout.navbar.anonymous",
-    "layout.header.menu",
-    "layout.navbar.items",
-    "layout.navbar.authenticated",
-    "layout.footer",
-    "layout.scripts",
-]
 
 [tool.splent.layout.menu]
 # uvlhub.io lists Team third, after Explore and the Dashboard.

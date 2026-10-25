@@ -23,23 +23,13 @@ from splent_framework.configuration.default_config import (
 logger = logging.getLogger(__name__)
 
 
-class UvlhubConfig:
-    """What every environment of uvlhub shares."""
-
-    # The pages the features write for the public site (public's home,
-    # team's list and profiles) in uvlhub's app shell, with the sidebar, as
-    # uvlhub.io draws them, through the product's public layer over it. A
-    # framework setting no feature reads, so it is the product's to set here.
-    SPLENT_SHELL_PUBLIC = "uvlhub_public.html"
-
-
-class DevelopmentConfig(UvlhubConfig, BaseDev):
+class DevelopmentConfig(BaseDev):
     # Add product-specific dev settings here.
     # Example: EXPLAIN_TEMPLATE_LOADING = True
     pass
 
 
-class TestingConfig(UvlhubConfig, BaseTest):
+class TestingConfig(BaseTest):
     # Add product-specific test settings here.
     # Example: PRESERVE_CONTEXT_ON_EXCEPTION = False
     pass
@@ -74,7 +64,7 @@ def canonical_host(environ=os.environ) -> dict:
     }
 
 
-class ProductionConfig(UvlhubConfig, BaseProd):
+class ProductionConfig(BaseProd):
     def __init__(self):
         super().__init__()
         host = canonical_host()
