@@ -1104,7 +1104,7 @@
       }
     },
     "splent_feature_explore": {
-      "entry": "splent_io/splent_feature_explore@v0.6.0",
+      "entry": "splent_io/splent_feature_explore@v0.7.0",
       "extensible": {
         "services": [
           "SearchService",
@@ -1382,7 +1382,7 @@
       }
     },
     "splent_feature_uvl": {
-      "entry": "splent_io/splent_feature_uvl@v0.3.0",
+      "entry": "splent_io/splent_feature_uvl@v0.4.0",
       "refinement": {
         "refines": "splent_feature_hubfile",
         "extends": {
@@ -1411,6 +1411,7 @@
           "FeatureModel"
         ],
         "hooks": [
+          "dataset.files.nouns",
           "dataset.form.scripts",
           "hubfile.workbench.actions",
           "hubfile.workbench.content",
@@ -1856,7 +1857,7 @@
       }
     },
     "splent_feature_hubfile": {
-      "entry": "splent_io/splent_feature_hubfile@v0.10.0",
+      "entry": "splent_io/splent_feature_hubfile@v0.11.0",
       "extensible": {
         "services": [
           "HubfileDownloadRecordService",
@@ -1887,9 +1888,12 @@
           "dataset.view.scripts",
           "dataset.view.workbench",
           "hubfile.workbench.actions",
+          "hubfile.workbench.content",
           "hubfile.workbench.dialogs",
           "hubfile.workbench.export_items",
           "hubfile.workbench.file_urls",
+          "hubfile.workbench.file_view",
+          "hubfile.workbench.panel",
           "hubfile.workbench.scripts",
           "hubfile.workbench.side_panel",
           "hubfile.workbench.uvl_actions"
@@ -1936,7 +1940,8 @@
           "bind": "derivation",
           "default": [],
           "pattern": "\\*|\\.?[A-Za-z0-9][A-Za-z0-9._-]*",
-          "help": "Extensions of the generic file type, [\"*\"] for any file. Empty takes none."
+          "help": "Extensions of the generic file type, [\"*\"] for any file. Empty takes none.",
+          "uvl": true
         },
         "HUBFILE_FILE_MAX_SIZE": {
           "type": "size",
@@ -1976,11 +1981,17 @@
           "default": 200,
           "min": 1,
           "help": "Most a file of more than 1 MiB may grow from its compressed size."
+        },
+        "HUBFILE_GITHUB_IMPORT": {
+          "type": "bool",
+          "bind": "derivation",
+          "default": true,
+          "help": "Whether the upload zone imports files from GitHub. False leaves out its part of the zone and its routes."
         }
       }
     },
     "splent_feature_dataset": {
-      "entry": "splent_io/splent_feature_dataset@v0.11.0",
+      "entry": "splent_io/splent_feature_dataset@v0.12.0",
       "extensible": {
         "services": [
           "AuthorService",

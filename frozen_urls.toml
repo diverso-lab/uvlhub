@@ -83,7 +83,7 @@ status = "served"
 endpoint = "hubfile.doi_file_raw"
 served_by = "hubfile"
 plan = "HF-7"
-note = "No Link rel=canonical and no CORS yet; hubfile opens only /hubfiles/raw/* to every site"
+note = "Since hubfile 0.11.0, CORS * without credentials for a public file of a published dataset; a PDF or an image goes out as itself, the rest as text/plain, always with nosniff and CSP sandbox. No Link rel='canonical' yet"
 
 [[url]]
 rows = [3]
@@ -166,7 +166,7 @@ target = "The same, with CORS *"
 status = "served"
 endpoint = "hubfile.raw_file"
 served_by = "hubfile"
-note = "hubfile answers it with CORS * (its init_feature)"
+note = "Since hubfile 0.11.0, CORS * without credentials only for a public file of a published dataset, not for a draft's file or an error; nosniff and CSP sandbox, and the content type of row 3"
 
 [[url]]
 rows = [6]
@@ -671,7 +671,7 @@ target = "Frozen"
 status = "served"
 endpoint = "explore.api_search"
 served_by = "explore"
-note = "Since explore 0.5.0 its parameters follow a declared schema (DC-3): every key 2.12 returned is kept, the generator reads them, and the response adds keys; a request outside the schema gets a 400 naming each field. One result per lineage (D15)"
+note = "Since explore 0.5.0 its parameters follow a declared schema (DC-3): every key 2.12 returned is kept, the generator reads them, and the response adds keys; a request outside the schema gets a 400 naming each field. One result per lineage (D15). Since explore 0.7.0 a missing index answers an empty result instead of a 500, and a hub without Elasticsearch answers from its database with the same keys"
 
 [[url]]
 rows = [14]
@@ -684,7 +684,7 @@ status = "served"
 endpoint = "explore.search"
 served_by = "explore"
 plan = "DC-1"
-note = "Served as in 2.12 until DC-1 replaces explore's search with the catalog's. Since explore 0.5.0 it answers {results, total}"
+note = "Served as in 2.12 until DC-1 replaces explore's search with the catalog's. Since explore 0.5.0 it answers {results, total}; since 0.7.0 from the database when the hub has no Elasticsearch"
 
 # ── 15. /developer/api-keys* ──────────────────────────────────────────────
 
