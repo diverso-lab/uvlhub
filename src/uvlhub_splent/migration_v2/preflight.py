@@ -17,7 +17,9 @@ is run once 3.0 has opened. It refuses:
 
 It also refuses parameters it cannot keep its word with: an unknown head,
 a token life apikeys does not give, features of other versions than the
-contract was written for, and a SECRET_KEY that is v2.12's (DM-1).
+contract was written for, a SECRET_KEY that is v2.12's (DM-1), no key for
+the public ids (MIGRATION_PUBLIC_ID_KEY, else SECRET_KEY), no MAIL_FROM for
+the notices it holds, and a hold tag mail does not take.
 """
 
 from __future__ import annotations
@@ -29,6 +31,7 @@ from pathlib import Path
 
 import sqlalchemy as sa
 from splent_io.splent_feature_apikeys.services import MAX_TTL_DAYS
+from splent_io.splent_feature_mail.outbox import HOLD_TAG
 
 from uvlhub_splent.migration_v2 import contract as contract_module
 from uvlhub_splent.migration_v2.db import qualified, schema_exists, table_exists
@@ -210,6 +213,21 @@ def preflight(ctx) -> None:
             )
     reasons += contract_module.version_differences(contract)
     reasons += secret_key_rotated(ctx)
+    if not params.public_id_key:
+        reasons.append(
+            "neither MIGRATION_PUBLIC_ID_KEY nor SECRET_KEY is set: E5 derives the "
+            "public id of every dataset from it (CO-5, §4.2)"
+        )
+    if "@" not in params.mail_from:
+        reasons.append(
+            "MAIL_FROM is not an address: the notices E6 holds in mail's outbox "
+            "go from the one 3.0 sends from"
+        )
+    if not HOLD_TAG.fullmatch(params.hold_tag or ""):
+        reasons.append(
+            f"--hold-tag {params.hold_tag!r} names no batch of mail's: 1 to 64 "
+            "letters, digits, '.', '_' or '-'"
+        )
     # What the parameters say is settled before the server is asked anything.
     if reasons:
         raise Refused("E0", reasons)

@@ -392,6 +392,35 @@ def test_e5_credits_each_author_as_dataset_0_9_0_does(migrated):
     assert target(migrated, "dataset_orcid_check", order="orcid") == []
 
 
+def test_e5_gives_each_dataset_its_public_id_root_and_concept(migrated):
+    """CO-5, §4.2: a ULID of created_at whose random bits come from the
+    key and the id, the same every run; DL-9: the root of the lineage as
+    it loads; CT-4: the concept DOI as concept_pid."""
+    from uvlhub_splent.migration_v2.content import public_id_of
+
+    datasets = by_id(target(migrated, "datasets"))
+    key = migrated.params.public_id_key
+    assert all(
+        d["public_id"] == public_id_of(key, i, d["created_at"])
+        for i, d in datasets.items()
+    )
+    assert len({d["public_id"] for d in datasets.values()}) == len(datasets)
+    assert (
+        public_id_of("another key", 1, datasets[1]["created_at"])
+        != (datasets[1]["public_id"])
+    )
+    # 2 and 14 both claim 1 (C-05): the root is 1 for both.
+    assert {i: datasets[i]["lineage_root_id"] for i in (1, 2, 14, 5, 30)} == {
+        1: 1,
+        2: 1,
+        14: 1,
+        5: 5,
+        30: 30,
+    }
+    assert {i for i, d in datasets.items() if d["concept_pid"]} == {1, 2, 14}
+    assert datasets[1]["concept_pid"] == synthetic.CONCEPT_DOI
+
+
 def test_e5_orphan_metadata_becomes_a_tombstone_or_goes(migrated):
     """DM-4: the metadata v2.12 left with a DOI when it deleted their
     dataset become withdrawn datasets, which dataset's landing answers with
@@ -593,20 +622,16 @@ def test_e8_links_every_file_to_its_key_and_says_what_it_found(migrated):
 def test_dm10_gives_a_second_file_on_one_path_a_name_of_its_own(migrated):
     """C-11: 13 and 14 are dataset 13's dup.uvl. 13, the one v2.12 served,
     keeps the name; 14 is renamed once E8 has linked it by its old one, and
-    file_alias keeps that for the alias of its /hubfiles/raw URL."""
+    hubfile's hubfile_alias keeps that, so its /hubfiles/raw URL answers a
+    308 to the new name."""
     files = by_id(target(migrated, "hubfiles"))
     assert (files[13]["name"], files[14]["name"]) == ("dup.uvl", "dup~14.uvl")
     assert files[14]["storage_status"] == "ok"
     assert files[14]["storage_key"] == "datasets/13/src/14"
-    assert work(migrated, "file_alias") == [
-        {
-            "hubfile_id": 14,
-            "dataset_id": 13,
-            "directory_path": "",
-            "old_name": "dup.uvl",
-            "new_name": "dup~14.uvl",
-        }
-    ]
+    assert [
+        (a["hubfile_id"], a["directory_path"], a["name"], a["created_at"])
+        for a in target(migrated, "hubfile_alias")
+    ] == [(14, "", "dup.uvl", T0)]
     assert not any(c[0] == "duplicate_path" for c in conflicts(migrated))
     checks = {c["name"]: c for c in migrated.report["checks"]}
     assert checks["unique-paths"]["ok"]

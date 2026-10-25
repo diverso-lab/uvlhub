@@ -175,6 +175,18 @@ def test_it_refuses_parameters_it_cannot_keep_its_word_with(params):
     assert run_e0(replace(params, ttl_read_days=400)) == [
         "a token life of 400 days: apikeys gives 1 to 365"
     ]
+    assert run_e0(replace(params, public_id_key="")) == [
+        "neither MIGRATION_PUBLIC_ID_KEY nor SECRET_KEY is set: E5 derives the "
+        "public id of every dataset from it (CO-5, §4.2)"
+    ]
+    assert run_e0(replace(params, mail_from="")) == [
+        "MAIL_FROM is not an address: the notices E6 holds in mail's outbox go "
+        "from the one 3.0 sends from"
+    ]
+    assert run_e0(replace(params, hold_tag="rb 2")) == [
+        "--hold-tag 'rb 2' names no batch of mail's: 1 to 64 letters, digits, "
+        "'.', '_' or '-'"
+    ]
 
 
 def test_it_refuses_features_the_contract_was_not_written_for(params):

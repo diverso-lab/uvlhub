@@ -17,8 +17,10 @@ EXDEV across mounts, even within one file system (R-27). E8 then:
    mirror no row accounts for (orphan, temp, derived);
 4. writes the names DM-10 gives a second file on one path (E5's
    plan_renames): storage-migrate found each file by its v2.12 name, and a
-   key names no file, so the rename moves nothing. file_alias keeps the
-   old names, and the check unique-paths holds every path to one file;
+   key names no file, so the rename moves nothing. hubfile's hubfile_alias
+   keeps the old folder and name of each, so /hubfiles/raw/<id>/<old name>
+   answers a 308 to the new one (hubfile 0.9.0), and the check
+   unique-paths holds every path to one file;
 5. checks V-08: every file of a published dataset is ok and has its
    content_sha256, and the bytes in the store are the rows' sizes. A
    published file missing or in mismatch is recovered from Zenodo (§6.2
@@ -104,8 +106,10 @@ def classify(path: str) -> str:
 
 
 def rename_duplicates(ctx, connection) -> None:
-    """DM-10: the names E5 planned, and file_alias with the old ones."""
-    hubfiles = qualified(ctx.params.target_schema, "hubfiles")
+    """DM-10: the names E5 planned, and hubfile's aliases with the old ones."""
+    target = ctx.params.target_schema
+    hubfiles = qualified(target, "hubfiles")
+    aliases = reflect(connection, target, only=["hubfile_alias"])["hubfile_alias"]
     if connection.in_transaction():
         connection.commit()
     with connection.begin():
@@ -117,7 +121,20 @@ def rename_duplicates(ctx, connection) -> None:
                 ),
                 rename,
             )
-    insert_batches(connection, ctx.outputs["file_alias"], ctx.renames, key="hubfile_id")
+    insert_batches(
+        connection,
+        aliases,
+        [
+            {
+                "hubfile_id": rename["hubfile_id"],
+                "directory_path": rename["directory_path"],
+                "name": rename["old_name"],
+                "created_at": ctx.params.t0,
+            }
+            for rename in ctx.renames
+        ],
+        key="hubfile_id",
+    )
 
 
 def shared_paths(connection, schema) -> list[str]:

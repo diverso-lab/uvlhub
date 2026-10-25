@@ -151,12 +151,14 @@ def test_every_null_the_target_refuses_has_a_rule(migrated, contract):
 def test_the_report_lists_what_dm15_still_asks(migrated, contract):
     pending = migrated.report["dm15_pending"]
     assert pending == contract.dm15_pending()
-    # auth 1.26.0 and identities 0.5.0 compare the identifiers exactly;
-    # what is left is dataset 0.9.0's pid, at the database's collation, and
-    # what no pinned feature has a column for yet.
-    assert pending[0] == ("datasets.pid: utf8mb4_unicode_ci, DM-15 asks utf8mb4_bin")
-    assert all(line.endswith("no such column yet") for line in pending[1:])
-    assert any("concept_pid" in line for line in pending)
+    # auth 1.26.0, identities 0.5.0 and dataset 0.10.0's concept_pid compare
+    # the identifiers exactly; what is left is dataset's pid, at the
+    # database's collation, and the tags, which have no column yet.
+    assert pending == [
+        "datasets.pid: utf8mb4_unicode_ci, DM-15 asks utf8mb4_bin",
+        "dataset_tag.name (C-23: tags stay a string in ds_meta_data.tags): "
+        "no such column yet",
+    ]
 
 
 def test_a_drift_is_named(contract):
@@ -175,7 +177,7 @@ def test_a_drift_is_named(contract):
     columns["user"]["email"]["collation"] = "utf8mb4_unicode_ci"
     columns["user"]["role"]["nullable"] = True
     columns["hubfiles"]["name"]["type"] = "varchar(255)"
-    columns["datasets"]["concept_pid"] = {
+    columns["datasets"]["concept_doi"] = {
         "type": "varchar(255)",
         "nullable": True,
         "collation": "utf8mb4_bin",
@@ -188,7 +190,7 @@ def test_a_drift_is_named(contract):
     assert found == [
         "dataset_tag: a table the contract does not know",
         "api_token.prefix: missing",
-        "datasets.concept_pid: a column the contract does not know",
+        "datasets.concept_doi: a column the contract does not know",
         "hubfiles.name: varchar(255), the contract says varchar(120)",
         "user.email: collation utf8mb4_unicode_ci, the contract says utf8mb4_bin",
         "user.role: NULL, the contract says NOT NULL",
@@ -198,11 +200,11 @@ def test_a_drift_is_named(contract):
 def test_heads_and_versions_are_held_to_the_contract(contract):
     applied = {name: entry["head"] for name, entry in contract.features.items()}
     assert contract_module.head_differences(contract, applied) == []
-    applied["splent_feature_dataset"] = "dataset0009_something"
+    applied["splent_feature_dataset"] = "dataset0010_something"
     # A feature of a later milestone (dataset_api), which no contract knows yet.
     applied["splent_feature_dataset_api"] = "dataset_api0001"
     assert contract_module.head_differences(contract, applied) == [
-        "splent_feature_dataset at dataset0009_something, the contract expects dataset0008_orcid_checks",
+        "splent_feature_dataset at dataset0010_something, the contract expects dataset0009_public_ids",
         "splent_feature_dataset_api migrated, a feature the contract does not know",
     ]
     older = replace(

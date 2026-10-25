@@ -176,17 +176,6 @@ def _outputs(schema: str) -> sa.MetaData:
         sa.Column("snapshot", sa.Text, nullable=False),
     )
     sa.Table(
-        "file_alias",
-        metadata,
-        # DM-10: a file renamed for a path of its own, and the name its
-        # /hubfiles/raw/<id>/<name> URL had.
-        sa.Column("hubfile_id", sa.Integer, primary_key=True),
-        sa.Column("dataset_id", sa.Integer, nullable=False),
-        sa.Column("directory_path", sa.String(255), nullable=False),
-        sa.Column("old_name", sa.String(120), nullable=False),
-        sa.Column("new_name", sa.String(120), nullable=False),
-    )
-    sa.Table(
         "usage_daily",
         metadata,
         # DM-5: v2.12's records by dataset or file, kind and day (E6).
@@ -199,29 +188,15 @@ def _outputs(schema: str) -> sa.MetaData:
         sa.Column("source", sa.String(16), nullable=False),
     )
     sa.Table(
-        "legacy_url",
-        metadata,
-        # CO-2: a path of v2.12 (decoded, as a route reads it) and where it
-        # answers now, for the feature legacy_urls to import (E6).
-        sa.Column("id", sa.Integer, primary_key=True),
-        sa.Column("kind", sa.String(16), nullable=False),
-        sa.Column("path", sa.String(1024), nullable=False),
-        sa.Column("target", sa.String(1024), nullable=False),
-        sa.Column("status", sa.Integer, nullable=False),
-        sa.Column("ref", sa.String(64), nullable=False),
-    )
-    sa.Table(
         "held_notice",
         metadata,
-        # §5.5, §5.7: a mail of the move that waits for the end of RB-2 (E6).
+        # §5.5, §5.7: what each mail E6 holds in mail's outbox until RB-2
+        # ends is about, and to whom, by the id of its outbox row.
         sa.Column("id", sa.Integer, primary_key=True),
+        sa.Column("outbox_id", sa.BigInteger, nullable=False),
         sa.Column("kind", sa.String(32), nullable=False),
         sa.Column("ref", sa.String(64), nullable=False),
         sa.Column("user_id", sa.Integer, nullable=False),
-        sa.Column("recipient", sa.String(320), nullable=False),
-        sa.Column("subject", sa.String(998), nullable=False),
-        sa.Column("body_text", sa.Text, nullable=False),
-        sa.Column("hold_until", sa.String(32), nullable=False),
     )
     sa.Table(
         "takeover_candidate",

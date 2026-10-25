@@ -13,28 +13,33 @@ held until RB-2 ends (§2.1, §5.5, §5.7, §7.2).
   report's dm5 puts the counters v2.12 showed and the aggregates side by
   side, with the same note (A10-05, A10-06).
 
-None of the pinned features has a place for these yet, so E6 writes them
-to the outputs, for the features that will import them:
-
-- legacy_url (CO-2): every URL that answers somewhere else now, for the
-  feature legacy_urls to import: v2.12's doi_mapping, each chain followed
-  to the DOI a dataset of 3.0 has, as a 308 (C-20), and the
-  /hubfiles/raw/<id>/<name> of every file DM-10 renamed. dataset still
-  redirects by its own doi_mapping, so those mappings load there too: a
-  cycle, or a chain that ends at a DOI no dataset has, is a conflict and
-  loads nowhere.
-- held_notice (§5.5, §5.7, D13 b): the notices of the move that wait for
-  the end of RB-2, as a rollback would make them false: to both parties
-  of every offer E5 cancelled, and to every account with a key carried
-  over, saying until when it works or why it was carried over revoked.
-  mail's outbox holds a mail queued or sent, never held, so they are kept
-  here, in English and Spanish (MIG-09), with no link that carries a token.
+- legacy_url (CO-2): every address of v2.12 that answers somewhere else
+  now, through legacy_urls' own import (splent feature:legacy_urls import,
+  in a process of its own, as E8 runs storage-migrate): v2.12's
+  doi_mapping, each chain followed to the DOI a dataset of 3.0 has, as a
+  308 (C-20). dataset still redirects by its own doi_mapping, so those
+  mappings load there too: a cycle, or a chain that ends at a DOI no
+  dataset has, is a conflict and loads nowhere. The /hubfiles/raw/<id>/
+  <name> of a file DM-10 renamed is hubfile's alias (E8), whose 308
+  answers before any 404 would.
+- the notices of the move (§5.5, §5.7, D13 b), which wait for the end of
+  RB-2, as a rollback would make them false: to both parties of every
+  offer E5 cancelled, and to every account with a key carried over, saying
+  until when it works or why it was carried over revoked. They go into
+  mail's outbox held, under the tag --hold-tag (rb2), from MAIL_FROM, in
+  English and Spanish (MIG-09), with no link that carries a token: nothing
+  sends them until splent feature:mail release --tag rb2. held_notice, in
+  the outputs, says what each one is about.
 """
 
 from __future__ import annotations
 
+import json
+import shutil
+import tempfile
 from collections import defaultdict
 from datetime import timedelta
+from pathlib import Path
 
 import sqlalchemy as sa
 
@@ -46,6 +51,7 @@ from uvlhub_splent.migration_v2.db import (
     reflect,
 )
 from uvlhub_splent.migration_v2.ledger import HELD, stop_on_conflicts
+from uvlhub_splent.migration_v2.schema import child_env, run_child
 
 # The records of v2.12 (§7.2): table, what it counts, the kind, and its
 # columns for the target, the moment and the cookie.
@@ -72,8 +78,8 @@ USAGE = (
 LEGACY_SOURCE = "legacy_v2"
 # A permanent redirect that keeps the method (C-20, CO-2).
 PERMANENT = 308
-# Until when the notices wait (§9.3): the end of RB-2, when publication opens.
-HOLD = "end of RB-2"
+# The state of a mail of mail's outbox that waits for its batch's release.
+HELD_MAIL = "held"
 
 TOKEN_REVOKED = {
     "import_no_scopes": (
@@ -325,26 +331,43 @@ def legacy_urls(ctx, connection, tgt):
 
     urls = [
         {
-            "kind": "doi",
             "path": f"/doi/{row['dataset_doi_old']}/",
             "target": f"/doi/{row['dataset_doi_new']}/",
             "status": PERMANENT,
             "ref": f"doi_mapping:{row['id']}",
         }
         for row in loads
-    ] + [
-        {
-            "kind": "hubfile_name",
-            "path": f"/hubfiles/raw/{rename['hubfile_id']}/{rename['old_name']}",
-            "target": f"/hubfiles/raw/{rename['hubfile_id']}/{rename['new_name']}",
-            "status": PERMANENT,
-            "ref": f"hubfiles:{rename['hubfile_id']}",
-        }
-        for rename in ctx.renames
     ]
-    numbered = [dict(url, id=i) for i, url in enumerate(urls, 1)]
-    insert_batches(connection, ctx.outputs["legacy_url"], numbered)
-    return loads, len(urls)
+    imported = import_legacy_urls(ctx, connection, urls)
+    return loads, imported
+
+
+def import_legacy_urls(ctx, connection, urls) -> int:
+    """``urls`` into legacy_urls' table by its import, from a JSON file of
+    their own, every row or none; their dates are T0 (principle 2). How
+    many it holds then."""
+    params = ctx.params
+    if not urls:
+        return 0
+    folder = Path(tempfile.mkdtemp(prefix="migration_v2_legacy_urls_"))
+    try:
+        source = folder / "legacy_urls.json"
+        source.write_text(json.dumps(urls, ensure_ascii=False), encoding="utf-8")
+        output = run_child(
+            "E6", list(params.legacy_urls_command) + [str(source)], child_env(params)
+        )
+    finally:
+        shutil.rmtree(folder, ignore_errors=True)
+    ctx.facts["legacy_urls_import_output"] = output.strip().splitlines()[-5:]
+    table = qualified(params.target_schema, "legacy_url")
+    if connection.in_transaction():
+        connection.commit()
+    with connection.begin():
+        connection.execute(
+            sa.text(f"UPDATE {table} SET created_at = :t0, updated_at = :t0"),
+            {"t0": params.t0},
+        )
+        return connection.execute(sa.text(f"SELECT COUNT(*) FROM {table}")).scalar()
 
 
 # ── Held notices (§5.5, §5.7) ────────────────────────────────────────────
@@ -469,38 +492,62 @@ def _token_notices(ctx, connection):
     return notices
 
 
-def held_notices(ctx, connection) -> int:
+def held_notices(ctx, connection, tgt) -> int:
+    """The notices into mail's outbox, held under the hold tag until RB-2
+    ends, and held_notice with what each one is about."""
+    params = ctx.params
     notices = _transfer_notices(ctx, connection) + _token_notices(ctx, connection)
     connection.rollback()
-    rows = []
+    mails, about = [], []
     for kind, ref, user_id, email, subject, body in notices:
         if not email:
             ctx.ledger.note(f"held_notice: {kind} for an account without an address")
             continue
-        rows.append(
+        outbox_id = len(mails) + 1
+        mails.append(
             {
-                "id": len(rows) + 1,
+                "id": outbox_id,
+                "recipients": email,
+                "sender": params.mail_from,
+                "reply_to": None,
+                "subject": subject,
+                "body_text": body,
+                "body_html": None,
+                # Kept whole: it carries no link, and is sent from its row.
+                "retryable": True,
+                "state": HELD_MAIL,
+                "hold_tag": params.hold_tag,
+                "attempts": 0,
+                "last_error": None,
+                "created_at": params.t0,
+                "last_attempt_at": None,
+                "sent_at": None,
+            }
+        )
+        about.append(
+            {
+                "id": outbox_id,
+                "outbox_id": outbox_id,
                 "kind": kind,
                 "ref": ref,
                 "user_id": user_id,
-                "recipient": email,
-                "subject": subject,
-                "body_text": body,
-                "hold_until": HOLD,
             }
         )
-    insert_batches(connection, ctx.outputs["held_notice"], rows)
-    return len(rows)
+    insert_batches(connection, tgt["mail_outbox"], mails)
+    insert_batches(connection, ctx.outputs["held_notice"], about)
+    return len(mails)
 
 
 def legacy(ctx) -> None:
     params = ctx.params
     with ctx.engine.connect() as connection:
-        tgt = reflect(connection, params.target_schema, only=["doi_mapping"])
+        tgt = reflect(
+            connection, params.target_schema, only=["doi_mapping", "mail_outbox"]
+        )
         connection.rollback()
         days = aggregate_usage(ctx, connection)
         loads, urls = legacy_urls(ctx, connection, tgt)
-        notices = held_notices(ctx, connection)
+        notices = held_notices(ctx, connection, tgt)
         ctx.facts["dm5"] = dm5(ctx, connection)
         loaded_days = load_usage(ctx, connection, ctx.facts["dm5"]["note"])
         connection.rollback()
@@ -511,5 +558,6 @@ def legacy(ctx) -> None:
         "doi_mapping": len(loads),
         "legacy_url": urls,
         "held_notice": notices,
+        "hold_tag": params.hold_tag,
     }
     stop_on_conflicts(ctx, "E6")

@@ -28,7 +28,7 @@
 # auth (1.26.0: email, email_canonical) and identities (0.5.0: provider,
 # provider_id) compare exactly. `dm15` names the collation DM-15 asks for
 # where a pinned feature does not give it yet (datasets.pid, which dataset
-# 0.9.0 leaves at the database's): V-14 checks `collation`, what the schema
+# 0.10.0 leaves at the database's): V-14 checks `collation`, what the schema
 # is, and the report lists every `dm15` still pending, with [dm15] missing
 # below.
 
@@ -51,12 +51,13 @@ splent_feature_auth = { version = "1.26.0", head = "auth0009_email_collation" }
 splent_feature_citation = { version = "0.1.0", head = "citation0001_references" }
 splent_feature_confirmemail = { version = "2.2.0", head = "126da35a357f" }
 splent_feature_curation = { version = "0.1.0", head = "curation0001_requests" }
-splent_feature_dataset = { version = "0.9.0", head = "dataset0008_orcid_checks" }
+splent_feature_dataset = { version = "0.10.0", head = "dataset0009_public_ids" }
 splent_feature_factlabel = { version = "0.6.0", head = "d934ec20c841" }
 splent_feature_github = { version = "0.4.1", head = "github0002_into_ext_identity" }
-splent_feature_hubfile = { version = "0.8.0", head = "hubfile0003_upload_sessions" }
+splent_feature_hubfile = { version = "0.9.0", head = "hubfile0004_aliases" }
 splent_feature_identities = { version = "0.5.0", head = "identities0003_exact_ids" }
-splent_feature_mail = { version = "1.5.0", head = "mail0001_outbox" }
+splent_feature_legacy_urls = { version = "0.1.0", head = "legacy_urls0001_urls" }
+splent_feature_mail = { version = "1.6.0", head = "mail0002_held" }
 splent_feature_media = { version = "0.11.1", head = "media0005_thumbnail" }
 splent_feature_orcid = { version = "0.4.1", head = "orcid0002_into_external_identity" }
 splent_feature_profile = { version = "1.7.1", head = "29f0c82ca134" }
@@ -84,7 +85,6 @@ write_dataset = "write_dataset"
 # that does not exist. The report lists them with the `dm15` columns.
 [dm15]
 missing = [
-    "datasets.concept_pid (dataset_concept_doi stays in ds_meta_data)",
     "dataset_tag.name (C-23: tags stay a string in ds_meta_data.tags)",
 ]
 
@@ -209,6 +209,9 @@ provider = { type = "varchar(32)", nullable = true, collation = "utf8mb4_unicode
 pid = { type = "varchar(255)", nullable = true, collation = "utf8mb4_unicode_ci", dm15 = "utf8mb4_bin", rule = "ds_meta_data.dataset_doi, which stays there too, NULL without one (dataset0005)" }
 pid_scheme = { type = "varchar(16)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "doi with a pid, NULL otherwise (dataset0005)" }
 publication_error = { type = "longtext", nullable = true, collation = "utf8mb4_bin", rule = "NULL" }
+public_id = { type = "varchar(26)", nullable = false, collation = "utf8mb4_unicode_ci", rule = "a ULID of created_at whose random bits are the first 80 of HMAC-SHA256(MIGRATION_PUBLIC_ID_KEY, 'dataset:<id>'), the same every run (CO-5, 4.2)" }
+lineage_root_id = { type = "int(11)", nullable = true, rule = "the first version of its lineage as it loads, its own id for an original or a tombstone (DL-9)" }
+concept_pid = { type = "varchar(255)", nullable = true, collation = "utf8mb4_bin", rule = "ds_meta_data.dataset_concept_doi stripped, NULL without one (dataset0009, CT-4)" }
 
 [tables.author]
 owner = "splent_feature_dataset"
@@ -350,7 +353,7 @@ resolved_at = { type = "datetime", nullable = true, rule = "T0 for an offer it c
 
 [tables.doi_mapping]
 # dataset's /doi routes still redirect by it; E6 loads v2.12's (C-20), and
-# writes the same aliases to uvlhub_migration.legacy_url for legacy_urls.
+# imports the same aliases into legacy_urls' legacy_url.
 owner = "splent_feature_dataset"
 role = "load"
 
@@ -385,16 +388,56 @@ source = { type = "varchar(16)", nullable = false, collation = "utf8mb4_unicode_
 note = { type = "text", nullable = false, collation = "utf8mb4_unicode_ci", rule = "the report's dm5 note" }
 until = { type = "date", nullable = true, rule = "the day before T0, the last the legacy figures count" }
 
+[tables.hubfile_alias]
+# DM-10: the old folder and name of every file E8 renames, whose
+# /hubfiles/raw/<id>/<old name> answers a 308 to the new one.
+owner = "splent_feature_hubfile"
+role = "load"
+
+[tables.hubfile_alias.columns]
+id = { type = "int(11)", nullable = false, rule = "numbered by the table, in the order of the files" }
+hubfile_id = { type = "int(11)", nullable = false, rule = "a file E8 renamed (DM-10, C-11)" }
+directory_path = { type = "varchar(255)", nullable = false, collation = "utf8mb4_bin", source = "hubfiles.directory_path" }
+name = { type = "varchar(120)", nullable = false, collation = "utf8mb4_bin", source = "hubfiles.name", rule = "the name v2.12 gave it, before ~<id>" }
+created_at = { type = "datetime", nullable = false, rule = "T0" }
+
+[tables.legacy_url]
+# CO-2: the addresses of v2.12 that answer somewhere else now, through
+# splent feature:legacy_urls import (E6).
+owner = "splent_feature_legacy_urls"
+role = "load"
+
+[tables.legacy_url.columns]
+id = { type = "int(11)", nullable = false, rule = "numbered by the import" }
+path = { type = "varchar(512)", nullable = false, collation = "utf8mb4_bin", rule = "/doi/<dataset_doi_old>/ of a doi_mapping that loads (C-20)" }
+target = { type = "varchar(1024)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "/doi/<the end of its chain>/" }
+status = { type = "smallint(6)", nullable = false, rule = "308" }
+ref = { type = "varchar(255)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "doi_mapping:<id>" }
+created_at = { type = "datetime", nullable = false, rule = "T0" }
+updated_at = { type = "datetime", nullable = false, rule = "T0" }
+
 [tables.mail_outbox]
-# E0 reads it: a mail sent means 3.0 has opened.
+# D13 b, 5.5: the notices of the move, held until RB-2 ends (E6). E0 reads
+# it too: a mail sent means 3.0 has opened.
 owner = "splent_feature_mail"
-role = "read"
+role = "load"
 
 [tables.mail_outbox.columns]
-id = { type = "bigint(20)", nullable = false }
-state = { type = "varchar(16)", nullable = false, collation = "utf8mb4_unicode_ci" }
-created_at = { type = "datetime", nullable = false }
-sent_at = { type = "datetime", nullable = true }
+id = { type = "bigint(20)", nullable = false, rule = "numbered from 1 in the order of the notices" }
+recipients = { type = "text", nullable = false, collation = "utf8mb4_unicode_ci", source = "user.email", rule = "the address of the account the notice is for", on_null = "no notice: an account without an address gets none, and the ledger notes it" }
+sender = { type = "varchar(320)", nullable = false, collation = "utf8mb4_unicode_ci", rule = "MAIL_FROM" }
+reply_to = { type = "varchar(320)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "NULL" }
+subject = { type = "varchar(998)", nullable = false, collation = "utf8mb4_unicode_ci", rule = "the notice's, legacy.py" }
+body_text = { type = "mediumtext", nullable = false, collation = "utf8mb4_unicode_ci", rule = "the notice, in English and Spanish, with no link (MIG-09)" }
+body_html = { type = "mediumtext", nullable = true, collation = "utf8mb4_unicode_ci", rule = "NULL" }
+retryable = { type = "tinyint(1)", nullable = false, rule = "1: no link, kept whole" }
+state = { type = "varchar(16)", nullable = false, collation = "utf8mb4_unicode_ci", rule = "held" }
+attempts = { type = "int(11)", nullable = false, rule = "0" }
+last_error = { type = "varchar(500)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "NULL" }
+hold_tag = { type = "varchar(64)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "--hold-tag, rb2" }
+created_at = { type = "datetime", nullable = false, rule = "T0" }
+last_attempt_at = { type = "datetime", nullable = true, rule = "NULL" }
+sent_at = { type = "datetime", nullable = true, rule = "NULL" }
 
 [tables.splent_migrations]
 # What db:upgrade applied (V-12).

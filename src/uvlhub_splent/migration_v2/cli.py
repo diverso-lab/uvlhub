@@ -146,6 +146,18 @@ def _run_options(command):
         click.option("--unused-days", type=int, default=365, show_default=True),
         click.option("--ghost-draft-days", type=int, default=30, show_default=True),
         click.option(
+            "--mail-from",
+            envvar="MAIL_FROM",
+            default="",
+            help="The address 3.0 sends from: the notices E6 holds go from it.",
+        ),
+        click.option(
+            "--hold-tag",
+            default="rb2",
+            show_default=True,
+            help="The batch the notices wait in, for splent feature:mail release.",
+        ),
+        click.option(
             "--derived",
             default="factlabel,formats,reindex",
             show_default=True,
@@ -205,6 +217,13 @@ def _params(options: dict) -> Params:
         never_used_grace_days=options["never_used_grace_days"],
         unused_days=options["unused_days"],
         ghost_draft_days=options["ghost_draft_days"],
+        public_id_key=(
+            os.environ.get("MIGRATION_PUBLIC_ID_KEY")
+            or os.environ.get("SECRET_KEY")
+            or ""
+        ),
+        mail_from=options["mail_from"].strip(),
+        hold_tag=options["hold_tag"].strip(),
         derived=derived,
         stages=stages,
     )

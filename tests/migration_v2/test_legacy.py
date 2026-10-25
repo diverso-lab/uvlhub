@@ -119,38 +119,35 @@ def test_e6_follows_the_doi_mappings_and_keeps_the_legacy_urls(migrated):
     found = {(c["kind"], c["ref"]) for c in work(migrated, "conflict")}
     assert ("doi_mapping_cycle", "10.5281/zenodo.3001") in found
     assert ("doi_mapping_dangling", "10.5281/zenodo.997") in found
-    urls = [
-        (u["kind"], u["path"], u["target"], u["status"], u["ref"])
-        for u in work(migrated, "legacy_url", "id")
+    # legacy_urls' own import, dated T0. The renamed file's old raw address
+    # is hubfile's alias (E8), whose 308 answers before any 404 would.
+    urls = rows(
+        migrated,
+        "SELECT path, target, status, ref, created_at, updated_at "
+        f"FROM `{schema}`.legacy_url ORDER BY path",
+    )
+    assert [(u["path"], u["target"], u["status"], u["ref"]) for u in urls] == [
+        ("/doi/10.5281/zenodo.998/", "/doi/10.5281/zenodo.1001/", 308, "doi_mapping:2"),
+        ("/doi/10.5281/zenodo.999/", "/doi/10.5281/zenodo.1001/", 308, "doi_mapping:1"),
     ]
-    assert urls == [
-        (
-            "doi",
-            "/doi/10.5281/zenodo.999/",
-            "/doi/10.5281/zenodo.1001/",
-            308,
-            "doi_mapping:1",
-        ),
-        (
-            "doi",
-            "/doi/10.5281/zenodo.998/",
-            "/doi/10.5281/zenodo.1001/",
-            308,
-            "doi_mapping:2",
-        ),
-        (
-            "hubfile_name",
-            "/hubfiles/raw/14/dup.uvl",
-            "/hubfiles/raw/14/dup~14.uvl",
-            308,
-            "hubfiles:14",
-        ),
-    ]
+    assert {(u["created_at"], u["updated_at"]) for u in urls} == {
+        (synthetic.T0, synthetic.T0)
+    }
+    assert migrated.report["facts"]["legacy"]["legacy_url"] == 2
 
 
 def test_e6_holds_the_notices_of_the_move_until_rb2_ends(migrated):
-    notices = work(migrated, "held_notice", "id")
-    assert [(n["kind"], n["ref"], n["recipient"]) for n in notices] == [
+    """In mail's outbox, held under rb2 until splent feature:mail release
+    sends them, and held_notice says what each one is about."""
+    about = {n["outbox_id"]: n for n in work(migrated, "held_notice", "id")}
+    notices = [
+        dict(mail, **about[mail["id"]])
+        for mail in rows(
+            migrated,
+            f"SELECT * FROM `{migrated.params.target_schema}`.mail_outbox ORDER BY id",
+        )
+    ]
+    assert [(n["kind"], n["ref"], n["recipients"]) for n in notices] == [
         ("transfer_cancelled", "dataset_transfer_request:1", "alice@uvlhub.test"),
         ("transfer_cancelled", "dataset_transfer_request:1", "bob@uvlhub.test"),
         ("api_keys_carried_over", "user:1", "alice@uvlhub.test"),
@@ -158,7 +155,12 @@ def test_e6_holds_the_notices_of_the_move_until_rb2_ends(migrated):
         ("api_keys_carried_over", "user:3", "jose@uvlhub.test"),
         ("api_keys_carried_over", "user:4", "mar@uvlhub.test"),
     ]
-    assert {n["hold_until"] for n in notices} == {"end of RB-2"}
+    assert {
+        (n["state"], n["hold_tag"], n["sender"], n["retryable"], n["attempts"])
+        for n in notices
+    } == {("held", "rb2", "hub@uvlhub.test", 1, 0)}
+    assert {(n["created_at"], n["sent_at"]) for n in notices} == {(synthetic.T0, None)}
+    assert all(n["body_html"] is None for n in notices)
     offer = notices[0]
     assert (
         offer["subject"]

@@ -263,25 +263,46 @@ def v07_identities(ctx, connection) -> Check:
 
 
 def v09_lineages(ctx, connection) -> Check:
+    """V-09: no branch, and no version twice in a lineage (by its root)."""
     p = ctx.params
-    branches = connection.execute(
-        sa.text(
-            f"SELECT dataset_origin_id FROM {qualified(p.target_schema, 'datasets')} "
-            "WHERE dataset_origin_id IS NOT NULL GROUP BY dataset_origin_id HAVING COUNT(*) > 1"
+    datasets = qualified(p.target_schema, "datasets")
+    branches = list(
+        connection.execute(
+            sa.text(
+                f"SELECT dataset_origin_id FROM {datasets} "
+                "WHERE dataset_origin_id IS NOT NULL GROUP BY dataset_origin_id "
+                "HAVING COUNT(*) > 1"
+            )
+        ).scalars()
+    )
+    repeated = [
+        tuple(row)
+        for row in connection.execute(
+            sa.text(
+                f"SELECT lineage_root_id, dataset_version FROM {datasets} "
+                "GROUP BY lineage_root_id, dataset_version HAVING COUNT(*) > 1"
+            )
         )
-    ).scalars()
-    branches = list(branches)
+    ]
     # Advisory in this pass: the repair by concept DOI is the final E5's.
-    return Check("V-09", not branches, blocking=False, detail=branches or None)
+    return Check(
+        "V-09",
+        not branches and not repeated,
+        blocking=False,
+        detail={"branches": branches, "repeated_versions": repeated}
+        if branches or repeated
+        else None,
+    )
 
 
 def v10_votes(ctx, connection) -> Check:
+    """V-10: every vote is on the root of its lineage."""
     p = ctx.params
     off_root = connection.execute(
         sa.text(
             f"SELECT COUNT(*) FROM {qualified(p.target_schema, 'dataset_rating')} r "
             f"JOIN {qualified(p.target_schema, 'datasets')} d ON d.id = r.dataset_id "
-            "WHERE d.dataset_origin_id IS NOT NULL"
+            "WHERE d.id <> d.lineage_root_id"
         )
     ).scalar()
     return Check("V-10", not off_root, detail=off_root or None)

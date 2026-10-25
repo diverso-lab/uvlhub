@@ -166,6 +166,8 @@ def _params(host, migrator_password, root_password, **overrides) -> Params:
         expected_head="e5f6a7b8c9d0",
         admin_emails=("Alice@uvlhub.test",),
         operator="tests/migration_v2",
+        public_id_key="the key of the public ids of the tests",
+        mail_from="hub@uvlhub.test",
     )
     return replace(params, **overrides)
 

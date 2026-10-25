@@ -24,10 +24,10 @@ or any blocking check fails).
 | E2 profiling | P-00 against `uvlhub_v2_ref`, P-01 to P-28 with the rule of each, the decisions held to their rows | done |
 | E3 schema | `CREATE DATABASE uvlhub3` with the contract's collation, `splent db:upgrade` in a process of its own, then V-12, V-14 and the whole contract | done |
 | E4 identity | `user`, `user_profile`, `external_identity` (the `orcid` and `github` tables folded in) and `api_token` | done |
-| E5 content | Datasets, metadata, authors, feature models, files, metrics, votes and transfers; the tombstones of DM-4 and the names of DM-10 | first pass |
-| E6 legacy | `usage_daily` and `usage_note` (DM-5), `doi_mapping` and `legacy_url` (CO-2, C-20), `held_notice` (D13 b, §5.5) | done |
+| E5 content | Datasets with their public id, lineage root and concept (CO-5), metadata, authors, feature models, files, metrics, votes and transfers; the tombstones of DM-4 and the names of DM-10 | first pass |
+| E6 legacy | `usage_daily` and `usage_note` (DM-5), `doi_mapping` and legacy_urls' `legacy_url` by its import (CO-2, C-20), the held notices in mail's outbox (D13 b, §5.5) | done |
 | E7 post-load | Counters with their margin, every foreign key, the tables that must stay empty, V-01 to V-16 | done |
-| E8 files | hubfile's `storage-migrate --source <store>/.legacy_mirror --link`, then `file_manifest`, DM-10's names with `file_alias`, unique-paths and V-08 | done |
+| E8 files | hubfile's `storage-migrate --source <store>/.legacy_mirror --link`, then `file_manifest`, DM-10's names with hubfile's `hubfile_alias`, unique-paths and V-08 | done |
 | E9 derived | FactLabel and metrics, formats, reindex, by the features' commands | done |
 | E10 report | The report (JSON), the run's row in `uvlhub_migration.run` | done |
 
@@ -52,6 +52,7 @@ python -m uvlhub_splent.migration_v2 grants        # the SQL for root to create 
 ```bash
 export MIGRATION_DB_PASSWORD=...  MIGRATION_DB_ROOT_PASSWORD=...  RUN_DB_SEED=false
 export SECRET_KEY=<3.0's new key>  MIGRATION_V2_SECRET_KEY_SHA256=<sha256 of v2.12's>
+export MIGRATION_PUBLIC_ID_KEY=<a key kept for every rehearsal and the cutover>  MAIL_FROM=<3.0's sender>
 python -m uvlhub_splent.migration_v2 preflight --db-host <db> --t0 2026-11-20T00:00:00 --expected-head e5f6a7b8c9d0
 python -m uvlhub_splent.migration_v2 run --db-host <db> \
     --t0 2026-11-20T00:00:00 --expected-head e5f6a7b8c9d0 \
@@ -131,10 +132,7 @@ conflict comes back on other rows stops that stage. The report lists the
 decisions that hold and the ones no conflict used. Decisions count only in
 a run that has E2.
 
-## E6: what no feature has a place for yet
-
-The pinned features have no table for these, so E6 writes them to
-`uvlhub_migration`, for the features that will import them:
+## E6: the use, the old addresses and the notices of the move
 
 - **`usage_daily`** (DM-5, §7.2): v2.12's four record tables by dataset or
   file, kind and day, with `visitors` (an account, else the browser's
@@ -148,25 +146,32 @@ The pinned features have no table for these, so E6 writes them to
   down into `usage_note` (`legacy_v2`, `until` the day before T0).
   `usage_event` and `usage_salt`, 3.0's own visits, stay empty. The
   report's `dm5` gives v2.12's counters, the aggregates and the note.
-- **`doi_mapping` and `legacy_url`** (CO-2, C-20): dataset 0.9.0 still
+- **`doi_mapping` and `legacy_url`** (CO-2, C-20): dataset 0.10.0 still
   redirects `/doi/<old>` by its own `doi_mapping` (302), so E6 loads v2.12's
   there, each chain followed to its end, a DOI a dataset of 3.0 has, in one
   hop. A cycle (`doi_mapping_cycle`), or a chain that ends at a DOI no
   dataset has or runs into a cycle (`doi_mapping_dangling`), is a conflict
   and loads nowhere; a second mapping of one DOI, which v2.12's lookup never
-  reached, is dropped as `shadowed`. `legacy_url` keeps every path that
-  answers somewhere else now, decoded as a route reads it, with a 308: those
-  mappings, and `/hubfiles/raw/<id>/<old name>` of every file DM-10
-  renamed. It is what the future legacy_urls feature imports.
-- **`held_notice`** (D13 b, §5.5): the mails of the move that wait for the
+  reached, is dropped as `shadowed`. The same mappings go to legacy_urls
+  0.1.0, `/doi/<old>/` with a 308 to `/doi/<new>/` and the mapping as its
+  ref, through its own import (`splent feature:legacy_urls import`, a JSON
+  file the migrator writes and removes, in a process of its own as E8 runs
+  `storage-migrate`), every row or none; their dates are set to T0
+  afterwards. legacy_urls answers them only where the hub would answer 404,
+  so dataset's own 302 comes first while it keeps its `doi_mapping`. The
+  `/hubfiles/raw/<id>/<old name>` of a file DM-10 renamed is hubfile's
+  alias (E8), not a row there: hubfile's own 308 answers it first.
+- **The notices of the move** (D13 b, §5.5): the mails that wait for the
   end of RB-2, since a rollback would make them false: one to each party of
   every offer E5 cancelled, and one to every account with keys carried
   over, saying until when each works or why it was carried over revoked.
-  English and Spanish (MIG-09), no link with a token. mail 1.5.0's outbox
-  knows `queued`, `sending`, `sent` and `failed`, and its sweep sends every
-  queued row, so nothing can wait there: mail needs a held state (or a
-  `not_before`) and a command that releases a tag of them, and then E6
-  queues them there.
+  English and Spanish (MIG-09), no link with a token. E6 writes them into
+  mail 1.6.0's outbox with Core, `state = 'held'` under the tag
+  `--hold-tag` (`rb2`), from `MAIL_FROM` (E0 refuses without it), dated T0,
+  kept whole and retryable; nothing sends them, the sweep included, until
+  `splent feature:mail release --tag rb2` once RB-2 is over (§9.3).
+  `uvlhub_migration.held_notice` says what each outbox row is about (its
+  kind, the offer or the account). A rollback drops uvlhub3 with them.
 
 ## E9: derived data
 
@@ -219,7 +224,13 @@ the migrator loads is something itsdangerous signed, with any key
 they lead to the page of an expired link (ID-15).
 
 Deriving a key per purpose from `SECRET_KEY` (PL-9) is the framework's:
-1.25.0 signs everything with `SECRET_KEY` itself.
+from splent_framework 1.26.0, `SPLENT_DERIVED_KEYS = true` makes each
+purpose (sessions, CSRF, one-time tokens, signed URLs) sign with a key of
+its own derived from `SECRET_KEY` with HKDF-SHA256, and `SECRET_KEY` itself
+signs nothing. 3.0 turns it on from its first start, in the product's
+`[tool.splent.config]` or the deployment's `.env`: there is nothing signed
+before the cutover to keep, since the key rotates anyway. The migrator
+signs nothing either way.
 
 ## The data contract
 
@@ -304,8 +315,17 @@ database and skips the rest, saying how to run them.
 - **E5 first pass**: `content.DEFERRED` lists what it leaves (descriptions
   copied as they are, lineages loaded as they are with their faults listed,
   `published_at` = `created_at`, no `status = 'legacy'` on metrics, no
-  reason on cancelled offers, no column yet for `public_id`,
-  `concept_pid` or `lineage_root_id`).
+  reason on cancelled offers).
+- **Public ids** (CO-5, D6, §4.2): every dataset, tombstones included,
+  gets `public_id`, a ULID of its `created_at` whose 80 random bits are
+  the first of HMAC-SHA256(`MIGRATION_PUBLIC_ID_KEY`, `"dataset:<id>"`),
+  falling back to `SECRET_KEY` (E0 refuses without either): every run with
+  the same key gives each dataset the same id, which nobody can work out
+  from its sequential one. Keep the key for the rehearsals and the
+  cutover. `lineage_root_id` is the first version of its lineage as it
+  loads (its own id for an original or a tombstone; a branch of C-05 has
+  the same root), and `concept_pid` the metadata's concept DOI, as
+  dataset0009 fills them.
 - **Authors** (DL-5, dataset 0.9.0): each credit at its place, from 0 in
   the order of the ids of its metadata, as dataset0007 numbers them; its
   given and family names only from a name written "Family, Given" with
@@ -339,8 +359,8 @@ database and skips the rest, saying how to run them.
   the one v2.12 served at `/doi/<doi>/files/raw/<path>`, and every other
   gets `~<id>` before its extension. E8 writes the names after
   `storage-migrate`, which finds a file by its v2.12 name, and
-  `uvlhub_migration.file_alias` keeps the old one: `/hubfiles/raw/<id>/<old
-  name>` answers 400 ("Filename mismatch") in hubfile 0.8.0 until hubfile
-  reads it (an alias table, and a 308 to the new name).
+  hubfile 0.9.0's `hubfile_alias` keeps the old one, so
+  `/hubfiles/raw/<id>/<old name>`, which answered 400 ("Filename
+  mismatch"), answers a 308 to the new name.
 - **C-30** also covers a DOI that is not the one Zenodo mints for its
   deposition (`10.5281/zenodo.<deposition_id>`), which P-25b finds.

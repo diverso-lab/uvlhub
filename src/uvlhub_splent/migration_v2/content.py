@@ -33,7 +33,12 @@ What it applies already:
   which E8 writes once the files are linked (DM-10, plan_renames);
 - votes move to the root of their lineage, the latest of a user's wins and
   self-votes go (DM-8, C-06); pending transfers are cancelled at T0 (D13 b),
-  their notices held by E6.
+  their notices held by E6;
+- each dataset's public id (CO-5, §4.2), a ULID of its created_at whose 80
+  random bits are the first of HMAC-SHA256(MIGRATION_PUBLIC_ID_KEY,
+  "dataset:<id>"), so every run gives each dataset the same one; the root
+  of its lineage as it loads (its own id for an original), and its
+  concept_pid from its metadata's concept DOI, as dataset0009 fills them.
 
 What it finds and leaves open, as conflicts: DOIs that are not Zenodo's
 production or not their deposition's (C-30), DOIs or metadata shared by two
@@ -45,12 +50,15 @@ dates or nobody can hold (DM-4).
 
 from __future__ import annotations
 
+import hashlib
+import hmac
 import json
 from collections import defaultdict
 from datetime import timedelta
 
 import sqlalchemy as sa
 from splent_io.splent_feature_dataset.authors import names_of
+from splent_io.splent_feature_dataset.public_ids import new_public_id
 from splent_io.splent_feature_dataset.models import (
     DOI_SCHEME,
     LEGACY_PROVIDER,
@@ -85,7 +93,6 @@ DEFERRED = (
     "C-10, C-30: found and left open, for the decisions",
     "C-16, C-23: publication_doi and tags are copied as they are (DS-1 and "
     "dataset_tag do not exist in the pinned features)",
-    "CO-5, D14: public_id, concept_pid and lineage_root_id have no column yet",
     "§7.3: hubfile_metrics is copied without status = 'legacy', which "
     "factlabel has no column for",
     "§5.7: the offers it cancels carry no reason (no column); the report "
@@ -246,6 +253,42 @@ def check_lineages(ctx, datasets, chosen) -> dict[int, int | None]:
                     detail=f"version {child['dataset_version']} after {expected - 1}",
                 )
     return origins
+
+
+def public_id_of(key: str, dataset_id: int, created_at) -> str:
+    """§4.2: the public id of dataset ``dataset_id``, the same every run:
+    the time of ``created_at`` and the first 80 bits of
+    HMAC-SHA256(``key``, "dataset:<id>")."""
+    digest = hmac.new(
+        key.encode("utf-8"), f"dataset:{dataset_id}".encode(), hashlib.sha256
+    ).digest()
+    return new_public_id(created_at, randomness=int.from_bytes(digest[:10], "big"))
+
+
+def lineage_roots(origins: dict[int, int | None]) -> dict[int, int]:
+    """The root of each loaded dataset's lineage, by its origins as they
+    load (check_lineages): its own id for an original, and for a row whose
+    origins run in a circle, as dataset0009 does."""
+    roots = {}
+    for dataset_id in origins:
+        seen, node = [dataset_id], origins[dataset_id]
+        while node is not None and node in origins and node not in seen:
+            seen.append(node)
+            node = origins[node]
+        roots[dataset_id] = dataset_id if node in seen else seen[-1]
+    return roots
+
+
+def identify(ctx, dataset_rows, metas, origins) -> None:
+    """CO-5, DL-9, CT-4: each row's public_id, lineage_root_id and
+    concept_pid."""
+    roots = lineage_roots(origins)
+    key = ctx.params.public_id_key
+    for row in dataset_rows:
+        concept = (metas[row["ds_meta_data_id"]]["dataset_concept_doi"] or "").strip()
+        row["public_id"] = public_id_of(key, row["id"], row["created_at"])
+        row["lineage_root_id"] = roots.get(row["id"], row["id"])
+        row["concept_pid"] = concept or None
 
 
 def build_metadata(
@@ -434,10 +477,10 @@ def plan_renames(ctx, paths) -> list[dict]:
     the first by id keeps its name, the one v2.12 served at
     /doi/<doi>/files/raw/<path>, and every other gets ~<id> before its
     extension. E8 writes the names once storage-migrate has linked the
-    files, which it finds by their v2.12 names; uvlhub_migration.file_alias
-    and E6's legacy_url keep the old name of each, for the alias of
-    /hubfiles/raw/<id>/<name>. A new name that is another file's is a
-    conflict, and that row keeps its name."""
+    files, which it finds by their v2.12 names, and hubfile's hubfile_alias
+    keeps the old name of each, whose /hubfiles/raw/<id>/<name> answers a
+    308 to the new one. A new name that is another file's is a conflict,
+    and that row keeps its name."""
     column = ctx.contract.tables["hubfiles"].columns["name"]
     limit = int(column.type.split("(")[1].rstrip(")"))
     renames = []
@@ -700,6 +743,7 @@ def content(ctx) -> None:
             }
         )
     dataset_rows += tombstones.values()
+    identify(ctx, dataset_rows, metas, origins)
 
     rating_rows = build_ratings(ctx, source["dataset_rating"], chosen, origins)
     transfer_rows = build_transfers(ctx, source["dataset_transfer_request"], chosen)

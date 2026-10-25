@@ -81,6 +81,14 @@ class Params:
     unused_days: int = 365
     # DM-3: a draft with no file, no DOI and no deposition, older than this.
     ghost_draft_days: int = 30
+    # §4.2 (CO-5): the key of the public ids E5 gives the datasets,
+    # MIGRATION_PUBLIC_ID_KEY, else SECRET_KEY, from the environment only.
+    public_id_key: str = field(default="", repr=False)
+    # D13 b, §5.5: the address the notices E6 holds in mail's outbox go
+    # from (MAIL_FROM, 3.0's), and the batch they wait in until RB-2 ends:
+    # splent feature:mail release --tag <hold_tag> sends them.
+    mail_from: str = ""
+    hold_tag: str = "rb2"
     source_schema: str = "uvlhub_v2_src"
     # The clean v2.12 that E2 makes to compare the source with (P-00).
     reference_schema: str = "uvlhub_v2_ref"
@@ -90,6 +98,12 @@ class Params:
     # The features' commands, run in a process of their own (E3, E8, E9).
     upgrade_command: tuple[str, ...] = ("splent", "db:upgrade")
     files_command: tuple[str, ...] = ("splent", "feature:hubfile", "storage-migrate")
+    # E6 (CO-2): legacy_urls' import, given a JSON file of the old addresses.
+    legacy_urls_command: tuple[str, ...] = (
+        "splent",
+        "feature:legacy_urls",
+        "import",
+    )
     # E9 (DM-6): what it makes again, and the features' commands for it.
     derived: tuple[str, ...] = DERIVED
     factlabel_commands: tuple[tuple[str, ...], ...] = (
