@@ -438,7 +438,7 @@
       }
     },
     "splent_feature_apikeys": {
-      "entry": "splent_io/splent_feature_apikeys@v0.9.0",
+      "entry": "splent_io/splent_feature_apikeys@v0.10.0",
       "extensible": {
         "services": [
           "ApiTokenService"
@@ -452,7 +452,8 @@
           "hooks/sidebar_tokens.html"
         ],
         "models": [
-          "ApiToken"
+          "ApiToken",
+          "ApiTokenResource"
         ],
         "hooks": [
           "apikeys.sidebar.developer",
@@ -561,6 +562,14 @@
           "default": 8192,
           "min": 1,
           "help": "Largest body accepted on the token endpoints, in bytes."
+        },
+        "APIKEYS_PUBLIC_READS_PER_MINUTE": {
+          "type": "int",
+          "bind": "deploy",
+          "default": 60,
+          "min": 0,
+          "max": 100000,
+          "help": "Calls a client without a token may make each minute from one address to the public routes. 0 asks every caller for a token."
         },
         "APIKEYS_SCOPES": {
           "type": "list",
@@ -1917,7 +1926,7 @@
       }
     },
     "splent_feature_dataset": {
-      "entry": "splent_io/splent_feature_dataset@v0.10.0",
+      "entry": "splent_io/splent_feature_dataset@v0.11.0",
       "extensible": {
         "services": [
           "AuthorService",
