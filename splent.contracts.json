@@ -163,7 +163,7 @@
       }
     },
     "splent_feature_theme": {
-      "entry": "splent_io/splent_feature_theme@v0.15.0",
+      "entry": "splent_io/splent_feature_theme@v0.16.0",
       "extensible": {
         "services": [],
         "templates": [
@@ -2304,7 +2304,7 @@
       }
     },
     "splent_feature_generator": {
-      "entry": "splent_io/splent_feature_generator@v0.2.0",
+      "entry": "splent_io/splent_feature_generator@v0.3.0",
       "extensible": {
         "services": [],
         "templates": [

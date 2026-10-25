@@ -57,6 +57,36 @@
       },
       "consumes": {}
     },
+    "splent_feature_generator": {
+      "namespace": "splent_io",
+      "distribution": "splent_feature_generator",
+      "version": "0.3.0",
+      "entries": [
+        "generator",
+        "llm_page",
+        "ui",
+        "uvl_editor",
+        "wizard",
+        "wizard_spa"
+      ],
+      "manifest_sha256": "91af385676565634f424afc3183fef7fba905cfb90ed7ff1a2afbdab7deaf3e5",
+      "bundled": {
+        "@mlc-ai/web-llm": "0.2.86 Apache-2.0",
+        "codemirror": "5.65.16 MIT",
+        "file-saver": "2.0.5 MIT",
+        "jszip": "3.10.1 (MIT OR GPL-3.0-or-later)",
+        "nouislider": "15.8.1 MIT",
+        "pyodide": "0.27.7 MPL-2.0",
+        "webpack": "5.112.2 MIT"
+      },
+      "peers": {},
+      "shell": {
+        "bootstrap": "^5.2.0",
+        "bootstrap-css": "^5.2.0",
+        "icons": "feather"
+      },
+      "consumes": {}
+    },
     "splent_feature_hub_shell": {
       "namespace": "splent_io",
       "distribution": "splent_feature_hub_shell",
@@ -160,6 +190,22 @@
       "shell": {},
       "consumes": {}
     },
+    "splent_feature_theme": {
+      "namespace": "splent_io",
+      "distribution": "splent_feature_theme",
+      "version": "0.16.0",
+      "entries": [
+        "fonts"
+      ],
+      "manifest_sha256": "57199aa3b89ad9d0aab5f36a739a648cf12d2cdff6ec3cb1445a9313e5ea6a01",
+      "bundled": {
+        "@fontsource-variable/inter": "5.3.0 OFL-1.1",
+        "webpack": "5.112.2 MIT"
+      },
+      "peers": {},
+      "shell": {},
+      "consumes": {}
+    },
     "splent_feature_uvl": {
       "namespace": "splent_io",
       "distribution": "splent_feature_uvl",
@@ -191,7 +237,6 @@
     "splent_feature_auth",
     "splent_feature_dataset",
     "splent_feature_explore",
-    "splent_feature_generator",
     "splent_feature_profile",
     "splent_feature_reset",
     "splent_feature_settings",

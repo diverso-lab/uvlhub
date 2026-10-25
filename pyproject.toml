@@ -23,7 +23,7 @@ core = [
 ]
 
 [tool.splent]
-cli_version = "1.48.1"
+cli_version = "1.48.2"
 features = [
     "splent-io/splent_feature_academic_profile@v0.1.0",
     "splent-io/splent_feature_elasticsearch@v0.2.0",
@@ -34,7 +34,7 @@ features = [
     "splent-io/splent_feature_admin@v1.9.0",
     "splent-io/splent_feature_signup@v0.4.1",
     "splent-io/splent_feature_nginx@v1.5.0",
-    "splent-io/splent_feature_theme@v0.15.0",
+    "splent-io/splent_feature_theme@v0.16.0",
     "splent-io/splent_feature_public@v1.12.0",
     # The shell every hub of the line shares (H12), from its working copy
     # until its first release.
@@ -66,7 +66,7 @@ features = [
     "splent-io/splent_feature_mail@v1.6.0",
     "splent-io/splent_feature_hubfile@v0.12.0",
     "splent-io/splent_feature_dataset@v0.14.1",
-    "splent-io/splent_feature_generator@v0.2.0",
+    "splent-io/splent_feature_generator@v0.3.0",
     "splent-io/splent_feature_apidocs@v0.4.0",
     "splent-io/splent_feature_legacy_urls@v0.1.0",
     "splent-io/splent_feature_dataset_api@v0.4.0",
@@ -216,6 +216,13 @@ THEME_TOKENS = """{\
 "font_display": "Inter, Helvetica, sans-serif", \
 "font_url": ""}"""
 
+# What the features drawn in a response may add to its Content-Security-
+# Policy (SD-01, framework 1.28.0). The table turns the per-response policy on,
+# report-only: generator runs Pyodide's WebAssembly and fetches web-llm's
+# weights from Hugging Face and the model libraries from GitHub.
+[tool.splent.csp]
+generator = ["script-src 'wasm-unsafe-eval'", "connect-src https://huggingface.co https://*.huggingface.co https://*.hf.co https://raw.githubusercontent.com"]
+
 [tool.splent.layout.menu]
 # uvlhub.io lists Team third, after Explore and the Dashboard.
 order = { team = 30 }
@@ -231,7 +238,7 @@ env = ["MIGRATION_V2_TEST_*"]
 # product is built with; a bare version means exactly that version.
 [tool.splent.runtime]
 splent_framework = "1.28.0"
-splent_cli = "1.48.1"
+splent_cli = "1.48.2"
 gunicorn = ">=23,<24"
 
 [tool.setuptools.package-dir]
