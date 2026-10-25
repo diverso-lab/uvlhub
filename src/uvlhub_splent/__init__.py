@@ -235,17 +235,13 @@ def home_about():
     return render_template("hooks/home_about.html")
 
 
-def home_cite():
-    """How to cite uvlhub."""
-    return render_template("hooks/home_cite.html")
-
-
 def _fill_the_home(app):
     """uvlhub's cards beside the top datasets, in public's home.aside slot.
 
     In uvlhub.io's order: Let's get started! first, for visitors, then what
     the features put there (statistics' counters), then what uvlhub is and
-    how to cite it. public draws the home in two columns once home.aside has
+    citation's "Cite us!" (CITATION_HOME_CARD, from citation_references.toml).
+    public draws the home in two columns once home.aside has
     something, with a stylesheet of its own for the public shell; the home
     is drawn in the app shell (SPLENT_SHELL_PUBLIC), so that stylesheet
     serves the app shell as well.
@@ -253,8 +249,8 @@ def _fill_the_home(app):
     if "public.index" not in app.view_functions:
         return
     _place("home.aside", home_get_started, FIRST)
-    _place("home.aside", home_about, LAST)
-    _place("home.aside", home_cite, LAST + 10)
+    # Just before citation's "Cite us!", which takes LAST (900) itself.
+    _place("home.aside", home_about, LAST - 10)
     register_asset(
         "css",
         "public.assets",

@@ -671,6 +671,7 @@ target = "Frozen"
 status = "served"
 endpoint = "explore.api_search"
 served_by = "explore"
+note = "Since explore 0.5.0 its parameters follow a declared schema (DC-3): every key 2.12 returned is kept, the generator reads them, and the response adds keys; a request outside the schema gets a 400 naming each field. One result per lineage (D15)"
 
 [[url]]
 rows = [14]
@@ -683,7 +684,7 @@ status = "served"
 endpoint = "explore.search"
 served_by = "explore"
 plan = "DC-1"
-note = "Served as in 2.12 until DC-1 replaces explore's search with the catalog's"
+note = "Served as in 2.12 until DC-1 replaces explore's search with the catalog's. Since explore 0.5.0 it answers {results, total}"
 
 # ── 15. /developer/api-keys* ──────────────────────────────────────────────
 
@@ -730,6 +731,7 @@ status = "served"
 endpoint = "statistics.export_csv"
 served_by = "statistics"
 plan = "UV-12"
+note = "statistics 0.5.0 serves the first export a feature registers in its slots: factlabel's corpus metrics (factlabel 0.6.0), with schema_version; the file is named corpus-metrics-<date>"
 
 [[url]]
 rows = [16]
@@ -742,6 +744,7 @@ status = "served"
 endpoint = "statistics.export_json"
 served_by = "statistics"
 plan = "UV-12"
+note = "statistics 0.5.0 serves the first export a feature registers in its slots: factlabel's corpus metrics (factlabel 0.6.0), with schema_version; the file is named corpus-metrics-<date>"
 
 # ── 17. Links in mails already sent ───────────────────────────────────────
 

@@ -48,11 +48,6 @@ features = [
     "splent-io/splent_feature_orcid@v0.4.1",
     "splent-io/splent_feature_github@v0.4.1",
     "splent-io/splent_feature_autodeploy@v0.4.0",
-    "splent-io/splent_feature_explore@v0.4.0",
-    "splent-io/splent_feature_factlabel@v0.5.0",
-    "splent-io/splent_feature_rating@v0.4.0",
-    "splent-io/splent_feature_uvl@v0.1.0",
-    "splent-io/splent_feature_statistics@v0.4.0",
     "splent-io/splent_feature_auth@v1.26.0",
     "splent-io/splent_feature_identities@v0.5.0",
     "splent-io/splent_feature_apikeys@v0.9.0",
@@ -64,6 +59,12 @@ features = [
     "splent-io/splent_feature_analytics@v0.1.0",
     "splent-io/splent_feature_hubfile@v0.8.0",
     "splent-io/splent_feature_dataset@v0.9.0",
+    "splent-io/splent_feature_rating@v0.5.0",
+    "splent-io/splent_feature_explore@v0.5.0",
+    "splent-io/splent_feature_factlabel@v0.6.0",
+    "splent-io/splent_feature_uvl@v0.2.0",
+    "splent-io/splent_feature_statistics@v0.5.0",
+    "splent-io/splent_feature_citation@v0.1.0",
 ]
 features_dev = ["splent-io/splent_feature_mailhog@v1.2.0", "splent-io/splent_feature_phpmyadmin@v1.1.0"]
 features_prod = []
@@ -85,10 +86,10 @@ registries = ["forge"]
 # clone of this repository can resolve the model from UVLHub alone.
 [tool.splent.spl_model]
 mirror = "uvlhub.io"
-doi = "10.5281/zenodo.23628893"
+doi = "10.5281/zenodo.23631098"
 # Same line, every version. Used to report that a newer model exists.
 concept_doi = ""
-version = "7"
+version = "8"
 file = "openhubs_spl.uvl"
 
 [tool.splent.config]
@@ -146,6 +147,9 @@ OBSERVABILITY_ALERT_CHANNELS = ["email", "matrix"]
 # D11: visits counted by Plausible, without cookies. The script and the site
 # are the deployment's; with no script nothing is loaded.
 ANALYTICS_PROVIDER = "plausible"
+# How to cite uvlhub (CT-2): the two articles of uvlhub.io's "Cite us!", as
+# data citation loads and writes in every format.
+CITATION_REFERENCES_FILE = "citation_references.toml"
 # uvlhub.io 2.12 deposited the whole folder of a dataset, its UVL models and
 # what uvl derives from them (Glencoe, DIMACS, SPLOT), so the records keep
 # carrying both.
@@ -238,4 +242,5 @@ where = [
 # which the production image installs, ships the modules and not the
 # contract, and the migrator stops at contract.load().
 [tool.setuptools.package-data]
+"uvlhub_splent" = ["citation_references.toml"]
 "uvlhub_splent.migration_v2" = ["contract.toml"]

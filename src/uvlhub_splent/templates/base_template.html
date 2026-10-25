@@ -285,12 +285,16 @@
                     </div>
                 </li>
 
+                {#- "Cite us!" leads to citation's page of the hub's references, on
+                    every page; the home's card opens them in a dialog. -#}
+                {% if has_endpoint('citation.cite_us') %}
                 <li class="nav-item">
-                    <button type="button" class="uvl-header-btn" data-bs-toggle="modal" data-bs-target="#citationModal" aria-label="{{ _('Cite us!') }}">
+                    <a class="uvl-header-btn" href="{{ url_for('citation.cite_us') }}" aria-label="{{ _('Cite us!') }}">
                         {{ chrome_icon('heart', header=true, class_='uvl-icon-sm') }}
                         <span class="d-none d-md-inline">{{ _('Cite us!') }}</span>
-                    </button>
+                    </a>
                 </li>
+                {% endif %}
 
                 {# Header buttons features add after "Cite us!" (Download all...). #}
                 {% set navbar_items = slot("layout.navbar.items") %}
@@ -415,8 +419,6 @@
 
     </div>
 </div>
-
-{% include "cites.html" %}
 
 {# The icon table of the chrome, for the slots' feather icons (uvlhub.js). #}
 <script type="application/json" id="uvl-chrome-icons">{{ chrome_icons_json() }}</script>

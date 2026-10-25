@@ -1,0 +1,45 @@
+# How to cite uvlhub: the two articles uvlhub.io's "Cite us!" names, as data
+# for splent_feature_citation (CITATION_REFERENCES_FILE in pyproject.toml).
+# Its seeder and `splent feature:citation references-load` load them, each
+# updated by its key; /cite-us and the home's "Cite us!" write them in every
+# format.
+
+[[reference]]
+key = "uvlhub"
+label = "UVLHub"
+title = "UVLHub: A feature model data repository using UVL and Open Science principles"
+authors = [
+    "Romero-Organvidez, David",
+    "Galindo, José A.",
+    "Sundermann, Chico",
+    "Horcas, Jose-Miguel",
+    "Benavides, David",
+]
+container = "Journal of Systems and Software"
+pages = "112150"
+year = 2024
+issn = "0164-1212"
+doi = "10.1016/j.jss.2024.112150"
+url = "https://www.sciencedirect.com/science/article/pii/S016412122400195X"
+keywords = ["Feature models", "Software product line", "Variability", "Dataset", "Uvl"]
+
+[[reference]]
+key = "uvl"
+label = "UVL"
+title = "UVL: Feature modelling with the Universal Variability Language"
+authors = [
+    "Benavides, David",
+    "Sundermann, Chico",
+    "Feichtinger, Kevin",
+    "Galindo, José A.",
+    "Rabiser, Rick",
+    "Thüm, Thomas",
+]
+container = "Journal of Systems and Software"
+volume = 225
+pages = "112326"
+year = 2025
+issn = "0164-1212"
+doi = "10.1016/j.jss.2024.112326"
+url = "https://www.sciencedirect.com/science/article/pii/S0164121224003704"
+keywords = ["Feature model", "Software product lines", "Variability"]

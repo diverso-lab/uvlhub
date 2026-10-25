@@ -269,8 +269,15 @@ def test_the_sidebar_shows_each_entry_once(app, browsers, who, page):
 def test_the_home_is_publics_with_uvlhubs_cards_beside_it(app, browsers, who):
     """public's own home in the app shell: its two columns, the top datasets
     and, beside them, the product's cards around what the features put
-    there, in uvlhub.io's order. Its title heads it, in the band."""
+    there, in uvlhub.io's order. Its title heads it, in the band.
+
+    "Cite us!" is citation's, drawn once the hub's references are loaded:
+    the product's citation_references.toml, as its seeder loads it."""
     _until_the_shell_is_public(app, "/")
+    from splent_io.splent_feature_citation import references
+
+    with app.app_context():
+        references.load(references.read_file(references.product_file()))
     html = _open(browsers, who, "/")
     aside = html[html.index('<aside class="home-columns__aside">') :]
 
