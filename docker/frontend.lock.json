@@ -36,6 +36,108 @@
       "shell": {},
       "consumes": {}
     },
+    "splent_feature_factlabel": {
+      "namespace": "splent_io",
+      "distribution": "splent_feature_factlabel",
+      "version": "0.7.0",
+      "entries": [
+        "factlabel"
+      ],
+      "manifest_sha256": "e87317491c8956450d104ae68499f8a08d654889aff7c0947167554c9fe99e30",
+      "bundled": {
+        "@fontsource/libre-franklin": "5.3.0 OFL-1.1",
+        "d3": "7.9.0 ISC",
+        "d3-array": "3.2.4 ISC",
+        "d3-brush": "3.0.0 ISC",
+        "d3-color": "3.1.0 ISC",
+        "d3-dispatch": "3.0.1 ISC",
+        "d3-ease": "3.0.1 BSD-3-Clause",
+        "d3-format": "3.1.2 ISC",
+        "d3-interpolate": "3.0.1 ISC",
+        "d3-scale": "4.0.2 ISC",
+        "d3-selection": "3.0.0 ISC",
+        "d3-timer": "3.0.1 ISC",
+        "d3-transition": "3.0.1 ISC",
+        "d3-zoom": "3.0.0 ISC",
+        "webpack": "5.112.2 MIT"
+      },
+      "peers": {
+        "bootstrap": {
+          "range": "^5.2.0",
+          "provider": "uvlhub_splent",
+          "version": "5.2.0"
+        }
+      },
+      "shell": {
+        "bootstrap-css": "^5.2.0",
+        "icons": "feather"
+      },
+      "consumes": {}
+    },
+    "splent_feature_hubfile": {
+      "namespace": "splent_io",
+      "distribution": "splent_feature_hubfile",
+      "version": "0.12.0",
+      "entries": [
+        "hubfile",
+        "workbench"
+      ],
+      "manifest_sha256": "2596a837a6f4cce85f2719030e663df7f86affdfac986d5c13e5cb6c419f6252",
+      "bundled": {
+        "codemirror": "5.65.16 MIT",
+        "dropzone": "5.9.3 MIT",
+        "webpack": "5.112.2 MIT"
+      },
+      "peers": {},
+      "shell": {
+        "bootstrap": "^5.2.0",
+        "bootstrap-css": "^5.2.0",
+        "icons": "feather"
+      },
+      "consumes": {}
+    },
+    "splent_feature_media": {
+      "namespace": "splent_io",
+      "distribution": "splent_feature_media",
+      "version": "0.12.0",
+      "entries": [
+        "cropper"
+      ],
+      "manifest_sha256": "6c042f1619cd6cfa91c53893cfc5aceb87d7e768dd2bacf80e0eb7a6793833f1",
+      "bundled": {
+        "cropperjs": "1.6.2 MIT",
+        "webpack": "5.112.2 MIT"
+      },
+      "peers": {},
+      "shell": {
+        "bootstrap-css": "^5.2.0"
+      },
+      "consumes": {}
+    },
+    "splent_feature_rating": {
+      "namespace": "splent_io",
+      "distribution": "splent_feature_rating",
+      "version": "0.6.0",
+      "entries": [
+        "rating"
+      ],
+      "manifest_sha256": "0e8fbbed415579d851e0b2d8755f7034064273c8d570f62833596d845e97b635",
+      "bundled": {
+        "webpack": "5.112.2 MIT"
+      },
+      "peers": {
+        "bootstrap": {
+          "range": "^5.2.0",
+          "provider": "uvlhub_splent",
+          "version": "5.2.0"
+        }
+      },
+      "shell": {
+        "bootstrap-css": "^5.2.0",
+        "icons": "feather"
+      },
+      "consumes": {}
+    },
     "splent_feature_statistics": {
       "namespace": "splent_io",
       "distribution": "splent_feature_statistics",
@@ -52,20 +154,42 @@
       "peers": {},
       "shell": {},
       "consumes": {}
+    },
+    "splent_feature_uvl": {
+      "namespace": "splent_io",
+      "distribution": "splent_feature_uvl",
+      "version": "0.5.0",
+      "entries": [
+        "uvl"
+      ],
+      "manifest_sha256": "7e8f49f35c6ffc9c8bdd2c157ba2224e4553280cd878c07b4f31b4c0b80e1f13",
+      "bundled": {
+        "antlr4": "4.13.2 BSD-3-Clause",
+        "uvl-parser": "0.5.0 UNKNOWN",
+        "webpack": "5.112.2 MIT"
+      },
+      "peers": {},
+      "shell": {
+        "bootstrap": "^5.2.0",
+        "bootstrap-css": "^5.2.0",
+        "icons": "feather"
+      },
+      "consumes": {
+        "CodeMirror": {
+          "feature": "hubfile",
+          "range": "^5.65.16"
+        }
+      }
     }
   },
   "legacy": [
     "splent_feature_auth",
     "splent_feature_dataset",
     "splent_feature_explore",
-    "splent_feature_factlabel",
     "splent_feature_generator",
-    "splent_feature_hubfile",
-    "splent_feature_media",
     "splent_feature_profile",
     "splent_feature_reset",
     "splent_feature_settings",
-    "splent_feature_team",
-    "splent_feature_uvl"
+    "splent_feature_team"
   ]
 }

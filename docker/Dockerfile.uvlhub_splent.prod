@@ -28,11 +28,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     mariadb-client \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Node.js 22, only to compile the frontend assets. Copied from the official
-# image rather than installed by a script fetched at build time, and kept out
-# of /usr/local, which the runtime stage copies.
-COPY --from=node:22-trixie-slim /usr/local/bin/node /opt/node/bin/node
-COPY --from=node:22-trixie-slim /usr/local/lib/node_modules/npm /opt/node/lib/node_modules/npm
+# Node.js, only for the product's own frontend, if it has one: a feature
+# never compiles here, it brings its bundle in its wheel. The Node and npm of
+# the SPLENT toolchain, from the same official image pinned by digest, rather
+# than installed by a script fetched at build time, and kept out of
+# /usr/local, which the runtime stage copies.
+COPY --from=node:24.22.1-trixie-slim@sha256:43b9ba1142b8dcf33fa8f922ca1be85714adc444e0586c7cf7726daaeabc1bea /usr/local/bin/node /opt/node/bin/node
+COPY --from=node:24.22.1-trixie-slim@sha256:43b9ba1142b8dcf33fa8f922ca1be85714adc444e0586c7cf7726daaeabc1bea /usr/local/lib/node_modules/npm /opt/node/lib/node_modules/npm
 RUN ln -s ../lib/node_modules/npm/bin/npm-cli.js /opt/node/bin/npm \
     && ln -s ../lib/node_modules/npm/bin/npx-cli.js /opt/node/bin/npx
 ENV PATH=/opt/node/bin:$PATH
@@ -112,14 +114,21 @@ ENV SPLENT_FORGE_SSH_PORT=${SPLENT_FORGE_SSH_PORT}
 ENV SPLENT_FORGE_API=${SPLENT_FORGE_API}
 RUN splent feature:pip-install
 
-# Compile frontend assets (if package.json exists), minified and without
-# source maps. feature:compile exits non-zero when a feature fails to compile,
-# which stops the build instead of shipping an image without its bundles.
-RUN if [ -f uvlhub_splent/package.json ]; then \
-        cd uvlhub_splent && npm install --no-audit --no-fund && \
-        splent feature:compile --prod && \
-        cd /workspace; \
+# The product's own frontend, when its package.json has a build script,
+# installed from its lock exactly as committed.
+RUN cd uvlhub_splent && \
+    if [ -f package.json ] && [ "$(npm pkg get scripts.build)" != "{}" ]; then \
+        test -f package-lock.json || \
+            { echo "package-lock.json is missing: run npm install in the product and commit it"; exit 1; }; \
+        npm ci --ignore-scripts --no-audit --no-fund && npm run build; \
     fi
+
+# Every feature pip installed carries the bundle its release built: each one
+# docker/frontend.lock.json lists (splent product:build writes it) has the
+# manifest the lock names, of the version it names, and the files of its
+# assets/dist match that manifest. One that does not stops the build here,
+# instead of an image that serves another bundle, or none.
+RUN splent feature:compile --verify
 
 # What only the build needed: the frontend toolchain and pip's build tree.
 # The runtime stage copies /workspace, so they would ship otherwise.

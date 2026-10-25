@@ -170,4 +170,15 @@ if [ "$pending" -gt 0 ]; then
     fi
 fi
 
+# pip runs as root here and writes each feature's egg-info into its copy (the
+# working copy at the workspace root or the snapshot in .splent_cache), which
+# the owner's next release then could not rewrite. It goes back to whoever
+# owns the workspace, unless that is root.
+owner="$(stat -c %u:%g /workspace)"
+if [ "$(id -u)" = 0 ] && [ "${owner%%:*}" != 0 ]; then
+    for path in "${install_paths[@]}"; do
+        find -H "$path" -user 0 -exec chown -h "$owner" {} + 2>/dev/null || true
+    done
+fi
+
 echo "    $installed installed, $skipped already up to date."
