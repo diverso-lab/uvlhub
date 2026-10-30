@@ -38,7 +38,10 @@ fi
 # request writing it, and so did bytecode written by a test run and edits to
 # the CLI by anyone. What the app writes (instance, uploads), what builds
 # leave (node_modules, bytecode) and the CLI's checkout do not count.
-EXCLUDE="*/instance/*:*/uploads/*:*/node_modules/*:*.pyc:*.zip:/workspace/splent_cli/*"
+# Bytecode is left out by its folder: "*.pyc" and "*.zip" are patterns the
+# reloader watches, and watchdog 4 and later refuse a pattern both watched
+# and excluded, which killed the reloader's thread at the first change.
+EXCLUDE="*/instance/*:*/uploads/*:*/node_modules/*:*/__pycache__/*:/workspace/splent_cli/*"
 
 "${as_owner[@]}" watchmedo auto-restart \
     --directory=/workspace/uvlhub_splent/src/uvlhub_splent \
