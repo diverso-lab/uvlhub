@@ -8,6 +8,7 @@ with ``python -m``, in an ephemeral container of the 3.0 image (§3.4):
     python -m uvlhub_splent.migration_v2 preflight ...     # E0 alone, touching nothing
     python -m uvlhub_splent.migration_v2 run ...           # E0 to E10
     python -m uvlhub_splent.migration_v2 contract [--check]
+    python -m uvlhub_splent.migration_v2 zenodo-snapshot ...  # MIG-06, Zenodo's records
 
 Passwords come from the environment only (MIGRATION_DB_PASSWORD,
 MIGRATION_DB_ROOT_PASSWORD), never from the command line, which the
@@ -313,6 +314,46 @@ def grant_statements(params: Params, user: str, host: str, password: str) -> lis
     ):
         statements.append(f"GRANT ALL PRIVILEGES ON `{schema}`.* TO {account};")
     return statements
+
+
+@main.command("zenodo-snapshot")
+@_server_options
+@click.option(
+    "--source-schema",
+    default="uvlhub_v2_src",
+    show_default=True,
+    help="Where the source is restored (E1 restores it there).",
+)
+@click.option("--inputs-schema", default="uvlhub_migration_inputs", show_default=True)
+@click.option("--refresh", is_flag=True, help="Fetch again the records kept already.")
+@click.option("--limit", type=int, default=None, help="Fetch at most this many.")
+def zenodo_snapshot(
+    db_host,
+    db_port,
+    db_user,
+    db_root_user,
+    source_schema,
+    inputs_schema,
+    refresh,
+    limit,
+):
+    """MIG-06: keep Zenodo's public record of every deposition of the source
+    in the inputs, for E5 (§4.3). From the host of operation only."""
+    from uvlhub_splent.migration_v2 import zenodo
+    from uvlhub_splent.migration_v2.db import make_engine
+
+    engine = make_engine(
+        db_host, db_port, db_user, os.environ.get("MIGRATION_DB_PASSWORD", "")
+    )
+    outcome = zenodo.snapshot(
+        engine,
+        source_schema,
+        inputs_schema,
+        refresh=refresh,
+        limit=limit,
+        echo=click.echo,
+    )
+    click.echo(json.dumps(zenodo.summary(outcome), indent=2))
 
 
 @main.command("contract")
