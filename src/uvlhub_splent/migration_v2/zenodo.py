@@ -99,7 +99,9 @@ def snapshot(
     """Fetch and keep Zenodo's record of every deposition of the source."""
     outcome = Outcome()
     session = session or requests.Session()
-    with engine.begin() as connection:
+    # ensure_inputs commits on its connection: no transaction of engine.begin()
+    # around it.
+    with engine.connect() as connection:
         tables = ledger.ensure_inputs(connection, inputs_schema)
         wanted = depositions(connection, source_schema)
         kept = {
@@ -108,6 +110,7 @@ def snapshot(
                 sa.select(tables["zenodo_snapshot"].c.deposition_id)
             )
         }
+        connection.rollback()
     table = tables["zenodo_snapshot"]
     todo = [d for d in wanted if refresh or d not in kept]
     outcome.already = len(wanted) - len(todo)

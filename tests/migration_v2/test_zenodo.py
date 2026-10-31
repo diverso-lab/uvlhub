@@ -85,3 +85,61 @@ def test_the_summary_lists_what_did_not_come():
         "missing": {"9": 404},
         "failed": {"3": "down"},
     }
+
+
+class EveryRecord:
+    """Zenodo as the snapshot sees it: one record, and 404 for the rest."""
+
+    def __init__(self, records):
+        self.records = records
+        self.asked = []
+
+    def get(self, url, headers=None, timeout=None):
+        self.asked.append(url)
+        deposition_id = int(url.rsplit("/", 1)[1])
+        text = self.records.get(deposition_id)
+        return FakeResponse(200, text) if text else FakeResponse(404)
+
+
+def test_the_snapshot_keeps_each_record_once(migrated, root_engine):
+    from uvlhub_splent.migration_v2.db import make_engine
+
+    schema = "iso_zenodo_snapshot_inputs"
+    server = migrated.params.server
+    engine = make_engine(server.host, server.port, server.user, server.password)
+    session = EveryRecord({1001: '{"doi": "10.5281/zenodo.1001"}'})
+    try:
+        outcome = zenodo.snapshot(
+            engine,
+            migrated.params.source_schema,
+            schema,
+            session=session,
+            sleep=no_sleep,
+            echo=lambda _line: None,
+        )
+        again = zenodo.snapshot(
+            engine,
+            migrated.params.source_schema,
+            schema,
+            session=EveryRecord({}),
+            sleep=no_sleep,
+            echo=lambda _line: None,
+        )
+        with engine.connect() as connection:
+            kept = (
+                connection.exec_driver_sql(
+                    f"SELECT deposition_id FROM `{schema}`.zenodo_snapshot"
+                )
+                .scalars()
+                .all()
+            )
+    finally:
+        engine.dispose()
+        with root_engine.connect() as connection:
+            connection.exec_driver_sql(f"DROP DATABASE IF EXISTS `{schema}`")
+            connection.commit()
+
+    assert outcome.kept == 1 and kept == [1001]
+    assert 404 in outcome.missing.values()
+    # A record kept is not asked for again; the ones that were not are.
+    assert again.already == 1 and again.kept == 0
