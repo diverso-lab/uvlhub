@@ -9,11 +9,12 @@ the ORM. Every run starts over: it drops and creates `uvlhub3`,
 `uvlhub_v2_src`, `uvlhub_v2_ref` and the outputs in `uvlhub_migration`, and
 keeps the inputs of `uvlhub_migration_inputs`.
 
-Every stage of the plan runs. E5 (content) is still a **first pass**: it
-loads what the pinned features can hold and lists what it leaves for the
-final pass, and the report says `"ready_for_cutover": false` for as long as
-that is so (and while DM-1's rotation is not checked, any conflict is open
-or any blocking check fails).
+Every stage of the plan runs, E5 (content) included as its final pass:
+the report says `"e5_first_pass": {"first_pass": false, "deferred": []}`,
+and `"ready_for_cutover": true` once nothing else is pending: no stage
+stopped, no conflict open, no blocking check failed, and DM-1's rotation
+checked. E9's checks do not count, since what they make is made again once
+3.0 is up.
 
 ## Stages
 
@@ -24,9 +25,9 @@ or any blocking check fails).
 | E2 profiling | P-00 against `uvlhub_v2_ref` (a rule reads a server's default collation), P-01 to P-28 with the rule of each, the decisions held to their rows | done |
 | E3 schema | `CREATE DATABASE uvlhub3` with the contract's collation, `splent db:upgrade` in a process of its own, then V-12, V-14 and the whole contract | done |
 | E4 identity | `user`, `user_profile`, `external_identity` (the `orcid` and `github` tables folded in) and `api_token` | done |
-| E5 content | Datasets with their public id, lineage root and concept (CO-5, the concept DOIs v2.12 left empty from Zenodo's records), metadata, authors, feature models, files, metrics, votes and transfers; the tombstones of DM-4, the names of DM-10 and the curation of RU-06 | first pass |
+| E5 content | Datasets with their public id, lineage root and concept (CO-5, the concept DOIs v2.12 left empty from Zenodo's records), Zenodo's dates and the DOIs it minted that v2.12 lost (§4.3), metadata with their descriptions cleaned again and quarantined (C-01, C-29), authors, feature models, files, metrics marked legacy (§7.3), votes and transfers; the tombstones of DM-4, the names of DM-10, the curation of RU-06 and the lineages their concept DOIs repair (C-05) | done |
 | E6 legacy | `usage_daily` and `usage_note` (DM-5), `doi_mapping` and legacy_urls' `legacy_url` by its import (CO-2, C-20), the held notices in mail's outbox (D13 b, §5.5) | done |
-| E7 post-load | Counters with their margin, every foreign key, the tables that must stay empty, V-01 to V-16 | done |
+| E7 post-load | Counters with their margin, every foreign key, the tables that must stay empty, V-01 to V-16, every one blocking | done |
 | E8 files | hubfile's `storage-migrate --source <store>/.legacy_mirror --link`, the published files recovered from Zenodo (§6.2 step 5), then `file_manifest`, DM-10's names with hubfile's `hubfile_alias`, unique-paths and V-08 | done |
 | E9 derived | FactLabel and metrics, formats, reindex, by the features' commands | done |
 | E10 report | The report (JSON), the run's row in `uvlhub_migration.run` | done |
@@ -72,7 +73,11 @@ python -m uvlhub_splent.migration_v2 run --db-host <db> \
   holds in mail's outbox go from it (E0 refuses without an address there).
   Once RB-2 is over, `splent feature:mail release --tag rb2` in the web
   container of 3.0 sends them; `--hold-tag` names another batch.
-- `--expected-head` is `f7a8b9c0d1e2` once the hotfix D1 is deployed.
+- `--expected-head` is `f7a8b9c0d1e2` once the hotfix D1 is deployed, and
+  then `--b0` (or `MIGRATION_B0`) names B0, the dump of `ds_meta_data` its
+  upgrade notes take before its revision cleans the descriptions in place
+  (C-29). E1 reads the originals from it and drops what it restored; a run
+  without it says, as an alert, that what the hotfix took out is lost.
 - `--store-root` is hubfile's store, and `<store>/.legacy_mirror` the
   `rsync -a --delete` (never `--inplace`) of v2.12's `uploads/`, on the same
   mount, so each file is hard linked to its key (§6.2, R-27).
@@ -117,9 +122,17 @@ python -m uvlhub_splent.migration_v2 zenodo-files --db-host <db> \
 ```
 
 - `zenodo-snapshot` (MIG-06, §4.3) keeps the public record of every
-  deposition in `zenodo_snapshot`. E5 dates the tombstones with it, takes
-  the concept DOIs v2.12 left empty from it, and orders the curated
-  lineages by it. A record is taken only when its DOI is the dataset's.
+  deposition in `zenodo_snapshot`. E5 takes from it the day each dataset
+  was published (`published_at`), the concept DOIs v2.12 left empty, the
+  DOIs Zenodo minted that v2.12 never saved (A15-04), and the dates of the
+  tombstones, and orders the curated lineages by it. A record is taken
+  only when its DOI is the dataset's, or, for a deposition without a DOI,
+  when its id is the deposition's and its title the metadata's. A
+  published dataset whose DOI no record validates is a conflict
+  (`doi_record_missing`), and so is a deposition without a DOI whose
+  record is another's (`deposition_record_mismatch`); a deposition with no
+  record at all (the public API's 404: Zenodo never published it) is
+  `failed`.
 - `zenodo-files` (§6.2 step 5) finds every file of a published dataset that
   the mirror lacks, or holds with other bytes than its row says (the same
   check `storage-migrate` makes), and fetches it from the record its DOI
@@ -215,6 +228,16 @@ it, or members of more than one account). `uvlhub_migration.curated` keeps
 the place each dataset had in v2.12 and the one it was given, and the
 report the lineages before and after (`curation`).
 
+Then the concept DOIs repair the rest (C-05): the datasets of one concept
+DOI, the one v2.12 kept or the one their record gives, are one lineage in
+the order of their `created_at`, each on the one before, with their
+`dataset_version` as it is. Where the versions do not rise with the dates,
+nothing changes and the faults stay conflicts (`lineage_*`), for a
+`[[lineage]]` in the curation: V-09 blocks, so a branch is never accepted
+as it is. The lineages the curation made stay as it made them.
+`curated` has a row for each dataset repaired (`C-05 <concept>`), and the
+report the chains (`lineages_by_concept`).
+
 ## E6: the use, the old addresses and the notices of the move
 
 - **`usage_daily`** (DM-5, §7.2): v2.12's four record tables by dataset or
@@ -264,7 +287,10 @@ with the store as `HUBFILE_STORAGE_ROOT`:
 
 - `factlabel`: `splent feature:factlabel generate`, every FactLabel, then
   `metrics-backfill --force`, each file's metrics made from it in the place
-  of v2.12's that E5 copied (a file whose FactLabel fails keeps those);
+  of v2.12's that E5 copied (a file whose FactLabel fails keeps those,
+  `extractor_version = 'legacy:<v2.12's>'`, the plan's `status = 'legacy'`
+  in factlabel's terms: `metrics-status` counts them as stale and
+  `metrics-backfill` extracts them again once their FactLabel is there);
 - `formats`: `splent feature:uvl generate`, Glencoe, DIMACS and SPLOT;
 - `reindex`: `splent feature:explore reset`, the index made again.
 
@@ -339,7 +365,7 @@ tables now are, and the migrator writes them (same commit).
 chain (`migration_v2/v2_12_schema.py`, which `test_v2_schema.py` checks
 against the chain when `_reference/uvlhub_monolith` is in the workspace)
 plus a row per anomaly the migrator has a rule for (`synthetic.py` says who
-is who), dumps it as B1 is dumped, puts two Zenodo records in
+is who), dumps it as B1 is dumped, puts Zenodo's records in
 `zenodo_snapshot` and a file in `zenodo_files`, and runs the stages on it.
 
 They never use the development database or the shared test one. From the
@@ -364,7 +390,7 @@ bash uvlhub_splent/tests/migration_v2/run_with_throwaway_db.sh -q -k preflight
 A plain `splent product:test --own-tests` runs the ones that need no
 database and skips the rest, saying how to run them.
 
-## Where this pass departs from the plan
+## Where the migrator departs from the plan
 
 - **DM-15, the identifiers:** `user.email`, `email_canonical`,
   `external_identity.provider` and `provider_id` are `utf8mb4_bin` (auth
@@ -409,10 +435,21 @@ database and skips the rest, saying how to run them.
   `replaced` or `row_fixed`). A file Zenodo cannot give stays a
   `file_missing` or `file_mismatch` conflict, with its dataset, DOI, path
   and why, and stops the cutover. V-08 takes `ok` and `recovered`.
-- **E5 first pass**: `content.DEFERRED` lists what it leaves (descriptions
-  copied as they are, lineages loaded as they are with their faults listed,
-  `published_at` = `created_at`, no `status = 'legacy'` on metrics, no
-  reason on cancelled offers).
+- **Descriptions** (C-01, C-29, D21): each is loaded as `html_legacy`,
+  cleaned again by dataset's own sanitiser (`descriptions.clean_html`),
+  from the text v2.12 has now, as §2.1 says, so what uvlhub.io shows stays;
+  V-13 cleans each once more and finds nothing to change. The original of
+  every one that changes goes to `uvlhub_migration.quarantine_description`
+  with what was loaded: B0's after the hotfix D1, the source's before it.
+  The report's `descriptions` gives the two classes of §8 (formatting, and
+  active content, whose metadata ids a curator reads) and how many
+  descriptions use each element (P-22), which says whether uvlhub should
+  let images in (D21).
+- **Publication DOI and tags** (C-16, C-23): `publication_doi` is the DOI
+  bare, as dataset's `publication_doi_of` reads it (`https://doi.org/<doi>`
+  and `doi:<doi>` too), an address trimmed, and anything else as it was;
+  the tags stay a string, as decided, split on commas, each trimmed, the
+  empty and repeated ones gone, joined by `,` as dataset writes them.
 - **Public ids** (CO-5, D6, §4.2): every dataset, tombstones included,
   gets `public_id`, a ULID of its `created_at` whose 80 random bits are
   the first of HMAC-SHA256(`MIGRATION_PUBLIC_ID_KEY`, `"dataset:<id>"`),
@@ -420,8 +457,8 @@ database and skips the rest, saying how to run them.
   the same key gives each dataset the same id, which nobody can work out
   from its sequential one. Keep the key for the rehearsals and the
   cutover. `lineage_root_id` is the first version of its lineage as it
-  loads (its own id for an original or a tombstone; a branch of C-05 has
-  the same root), and `concept_pid` the metadata's concept DOI, as
+  loads (its own id for an original or a tombstone), and `concept_pid` the
+  metadata's concept DOI, as
   dataset0009 fills them. Where v2.12 kept none, the concept DOI of the
   dataset's record in `zenodo_snapshot` fills both `concept_pid` and the
   metadata's `dataset_concept_doi`, which `/doi/<concept>/` reads; one
@@ -442,8 +479,10 @@ database and skips the rest, saying how to run them.
 - **Self-votes** (DM-8) are dropped as `self_vote`, after a vote moves to
   the root of its lineage, so a vote on a version of one's own goes too.
 - **DOIs without a dataset** (DM-4, C-03): v2.12 deleted the dataset and
-  left its metadata, DOI included. Each becomes a withdrawn dataset, with
-  its metadata and authors, so dataset's landing answers its DOI with the
+  left its metadata, DOI included, or the DOI Zenodo minted for its
+  deposition, which v2.12 never saved (A15-04). Each becomes a withdrawn
+  dataset, with its metadata and authors, so dataset's landing answers its
+  DOI with the
   tombstone, 410 with the citation (`landing_response`, DL-2), where it
   answered 404; `test_a_tombstones_doi_answers_410_with_its_citation` asks
   the product's app. The reason is `other`, the note says it was deleted
@@ -463,4 +502,8 @@ database and skips the rest, saying how to run them.
   `/hubfiles/raw/<id>/<old name>`, which answered 400 ("Filename
   mismatch"), answers a 308 to the new name.
 - **C-30** also covers a DOI that is not the one Zenodo mints for its
-  deposition (`10.5281/zenodo.<deposition_id>`), which P-25b finds.
+  deposition (`10.5281/zenodo.<deposition_id>`), which P-25b finds, and one
+  whose record in `zenodo_snapshot` does not validate
+  (`doi_record_missing`). C-30 and C-10 (a DOI of two metadata) stay
+  conflicts by design: the plan resolves them by hand, and the only
+  resolution, `accept`, loads the rows as `ledger.CONFLICTS` says.
