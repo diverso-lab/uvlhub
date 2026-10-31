@@ -20,8 +20,11 @@ from uvlhub_splent.migration_v2.ledger import fingerprint
 from uvlhub_splent.migration_v2.params import Refused
 from uvlhub_splent.migration_v2.pipeline import run
 from uvlhub_splent.migration_v2.profile import (
+    COLLATION_RULE,
     PROBES,
+    Drift,
     build_reference,
+    drift_rule,
     read_sources,
     schema_drift,
 )
@@ -164,6 +167,51 @@ def test_p00_names_every_difference_with_the_clean_v2_12(isolated, root_engine):
             "an index of the clean v2.12 the source does not have",
         ),
     ]
+
+
+def test_p00_reads_a_servers_default_collation_by_a_rule(isolated, root_engine):
+    """C-26: uvlhub.io's tables are utf8mb4_general_ci, where the clean
+    v2.12 made on 11.4 is utf8mb4_uca1400_ai_ci. The same bytes, read in
+    BINARY: a rule reads that drift, and nothing else that comes with it."""
+    params = isolated("p00rule")
+    engine = make_engine(
+        params.server.host, 3306, params.server.user, params.server.password
+    )
+    for schema in (params.reference_schema, params.source_schema):
+        with engine.connect() as connection:
+            build_reference(connection, schema)
+    src = f"`{params.source_schema}`"
+    execute(
+        root_engine,
+        f"ALTER TABLE {src}.author COLLATE utf8mb4_general_ci",
+        f"ALTER TABLE {src}.author MODIFY name VARCHAR(120) "
+        "COLLATE utf8mb4_general_ci NOT NULL",
+        f"ALTER TABLE {src}.author MODIFY affiliation VARCHAR(200) "
+        "COLLATE utf8mb4_general_ci NULL",
+        f"ALTER TABLE {src}.author MODIFY orcid VARCHAR(19) COLLATE utf8mb4_bin NULL",
+    )
+    with engine.connect() as connection:
+        drifts = schema_drift(connection, params.source_schema, params.reference_schema)
+    engine.dispose()
+
+    assert {d.ref: drift_rule(d) for d in drifts} == {
+        "author": COLLATION_RULE,
+        "author.name": COLLATION_RULE,
+        # Its length changed as well, and utf8mb4_bin is no server's default.
+        "author.affiliation": None,
+        "author.orcid": None,
+    }
+
+
+def test_a_drift_on_one_side_only_has_no_rule():
+    row = {"tbl": "author", "engine": "InnoDB", "coll": "utf8mb4_general_ci"}
+    assert (
+        drift_rule(Drift("author", "author", "", ({**row, "side": "source"},))) is None
+    )
+
+
+def test_the_rehearsal_rules_no_drift(migrated):
+    assert migrated.report["facts"]["schema_drift_ruled"] == []
 
 
 # ── Decisions ────────────────────────────────────────────────────────────

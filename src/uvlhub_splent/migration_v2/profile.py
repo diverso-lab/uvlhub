@@ -6,9 +6,10 @@ rule, and the decisions people took held to their rows (§3.4, §9.2).
    tables (engine, collation), their columns (type, nullability, default,
    collation), their indexes and their foreign keys, these two by what
    they hold and not by their names, which MariaDB gave (A10-15). Each
-   difference is a conflict (C-26): no rule of the migrator reads a schema
-   the chain does not make, so only a decision that accepts it lets the
-   cutover go on.
+   difference is a conflict (C-26), but for the ones a rule of the migrator
+   reads (drift_rule: a server's default collation, the same bytes), which
+   the report lists with their rule; for the rest only a decision that
+   accepts it lets the cutover go on.
 2. P-01 to P-28 on uvlhub_v2_src: the queries of §9.2, and the ones it
    leaves to Python (P-21, P-23, P-26). Each names the rule of §8 that
    handles what it finds and the stage that applies it. What a probe with
@@ -219,6 +220,41 @@ def schema_drift(connection, source: str, reference: str) -> list[Drift]:
                     )
                 )
     return found
+
+
+# C-26: the drifts a rule of the migrator reads. A table or a column that
+# differs from the clean v2.12 in its collation alone, between collations of
+# the same character set that a server gives by default (uvlhub.io's
+# MariaDB made its tables utf8mb4_general_ci; 11.4, where the clean v2.12 is
+# made, gives utf8mb4_uca1400_ai_ci), holds the same bytes. The migrator
+# reads them as bytes, compares across schemas in BINARY (§3.4) and gives
+# every column of uvlhub3 the contract's collation (DM-15, V-14); the
+# accounts are compared in Python and in uvlhub3's collation (P-21), and
+# what is compared in the source (DOIs in P-03, cookies in E6) is ASCII,
+# which both fold alike. Nothing it loads depends on that collation.
+DEFAULT_COLLATIONS = frozenset({"utf8mb4_general_ci", "utf8mb4_uca1400_ai_ci"})
+COLLATION_RULE = (
+    "C-26: a server's default collation, the same bytes; the migrator reads "
+    "them in BINARY and uvlhub3 has the contract's (§3.4, DM-15)"
+)
+
+
+def drift_rule(drift: Drift) -> str | None:
+    """The rule that reads ``drift``, or None when none does and it is a
+    conflict."""
+    sides = {row["side"]: row for row in drift.rows}
+    here, there = sides.get("source"), sides.get("reference")
+    if here is None or there is None or len(drift.rows) != 2:
+        return None
+    collations = {here.get("coll"), there.get("coll")}
+    if len(collations) != 2 or not collations <= DEFAULT_COLLATIONS:
+        return None
+    same = set(here) - {"side", "coll"}
+    if same != set(there) - {"side", "coll"}:
+        return None
+    if any(here[key] != there[key] for key in same):
+        return None
+    return COLLATION_RULE
 
 
 def build_reference(connection, schema: str) -> None:
@@ -800,7 +836,12 @@ def profile(ctx) -> None:
         build_reference(connection, params.reference_schema)
     with ctx.engine.connect() as connection:
         drifts = schema_drift(connection, params.source_schema, params.reference_schema)
+        ruled = []
         for drift in drifts:
+            rule = drift_rule(drift)
+            if rule is not None:
+                ruled.append({"ref": drift.ref, "detail": drift.detail, "rule": rule})
+                continue
             ledger.conflict(
                 "schema_drift",
                 drift.table,
@@ -811,7 +852,9 @@ def profile(ctx) -> None:
         found = run_probes(ctx, connection)
         connection.rollback()
 
-    raised = {(c["kind"], c["ref"]) for c in ledger.conflicts}
+    raised = {(c["kind"], c["ref"]) for c in ledger.conflicts} | {
+        ("schema_drift", r["ref"]) for r in ruled
+    }
     for (kind, ref), decision in sorted(ledger.decisions.items()):
         if kind == "schema_drift" and (kind, ref) not in raised:
             problems.append(
@@ -836,6 +879,8 @@ def profile(ctx) -> None:
         insert_batches(connection, table, rows, key="name")
     ctx.facts["profile"] = {row["name"]: row["found"] for row in rows}
     ctx.facts["schema_drift"] = len(drifts)
+    # What P-00 found that a rule reads, with the rule; the rest is open.
+    ctx.facts["schema_drift_ruled"] = ruled
 
     unruled = [
         f"{probe.name} {probe.title}: {len(rows)} found, and no rule of the "
