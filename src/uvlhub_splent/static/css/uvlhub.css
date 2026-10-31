@@ -3,7 +3,9 @@
  * hub_shell draws uvlhub.io's look and takes the brand from theme's tokens
  * (THEME_TOKENS in pyproject.toml): the primary, the accent, the font and
  * the radius. It mixes every other tone of the primary from it; uvlhub.io's
- * are shades of their own, which no mix gives, so they are written here.
+ * pressed and light tones are shades of their own, which no mix gives, so
+ * they are written here. The sidebar's current entry is the shell's, the
+ * primary itself, the same blue as the buttons.
  * Then the cards of uvlhub's own home hooks (templates/hooks/). create_app
  * registers this file for the app shell at order 200, after the features.
  */
@@ -13,9 +15,6 @@
 :root {
     --hub-primary-active: #056ee9;
     --hub-primary-light: #e9f3ff;
-    --hub-sidebar-link-active-bg: #3e97ff;
-    --hub-sidebar-toggle-active-color: #3e97ff;
-    --hub-sidebar-focus-color: #3e97ff;
     --hub-doi-value-bg: linear-gradient(90deg, #2176bd 0%, #2980b9 100%);
 }
 
