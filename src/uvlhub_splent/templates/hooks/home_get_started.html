@@ -8,11 +8,11 @@
         </p>
         <div class="d-grid gap-3">
             <a href="{{ url_for('signup.show_signup_form') }}" class="btn btn-primary btn-lg">
-                <i data-feather="user-plus" aria-hidden="true"></i>
+                {{ icon('user-plus', size=24) }}
                 <span>{{ _('Sign Up') }}</span>
             </a>
             <a href="{{ url_for('auth.login') }}" class="btn btn-outline-primary btn-lg">
-                <i data-feather="log-in" aria-hidden="true"></i>
+                {{ icon('log-in', size=24) }}
                 <span>{{ _("I'm already registered") }}</span>
             </a>
         </div>
