@@ -26,11 +26,10 @@
 # Collations (DM-15): the database's default for every text column, but
 # where the column says otherwise: utf8mb4_bin for the identifiers, which
 # auth (1.27.0: email, email_canonical) and identities (0.5.0: provider,
-# provider_id) compare exactly. `dm15` names the collation DM-15 asks for
-# where a pinned feature does not give it yet (datasets.pid, which dataset
-# 0.10.0 leaves at the database's): V-14 checks `collation`, what the schema
-# is, and the report lists every `dm15` still pending, with [dm15] missing
-# below.
+# provider_id) and dataset (pid, concept_pid) compare exactly. `dm15`
+# names the collation DM-15 asks for where a pinned feature does not give it
+# yet: V-14 checks `collation`, what the schema is, and the report lists
+# every `dm15` still pending, with [dm15] missing below.
 
 [contract]
 version = 3
@@ -209,7 +208,7 @@ withdrawal_reason = { type = "varchar(32)", nullable = true, collation = "utf8mb
 withdrawal_note = { type = "varchar(500)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "content.TOMBSTONE_NOTE for a tombstone, NULL otherwise" }
 withdrawn_by_id = { type = "int(11)", nullable = true, rule = "NULL" }
 provider = { type = "varchar(32)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "zenodo when ds_meta_data has a DOI or a deposition_id, NULL otherwise (dataset0005)" }
-pid = { type = "varchar(255)", nullable = true, collation = "utf8mb4_unicode_ci", dm15 = "utf8mb4_bin", rule = "ds_meta_data.dataset_doi, which stays there too, NULL without one (dataset0005)" }
+pid = { type = "varchar(255)", nullable = true, collation = "utf8mb4_bin", rule = "ds_meta_data.dataset_doi, which stays there too, NULL without one (dataset0005, exact since dataset0012)" }
 pid_scheme = { type = "varchar(16)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "doi with a pid, NULL otherwise (dataset0005)" }
 publication_error = { type = "longtext", nullable = true, collation = "utf8mb4_bin", rule = "NULL" }
 public_id = { type = "varchar(26)", nullable = false, collation = "utf8mb4_unicode_ci", rule = "a ULID of created_at whose random bits are the first 80 of HMAC-SHA256(MIGRATION_PUBLIC_ID_KEY, 'dataset:<id>'), the same every run (CO-5, 4.2)" }
