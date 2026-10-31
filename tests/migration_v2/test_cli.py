@@ -184,3 +184,22 @@ def test_the_product_command_refuses_while_the_app_holds_a_connection(
     assert result.exit_code == 1
     assert "the app holds 1 connection(s)" in result.output
     assert "MIGRATION_DB_PASSWORD" not in result.output
+
+
+def test_a_curation_that_does_not_hold_is_a_usage_error(tmp_path):
+    bad = tmp_path / "curation.toml"
+    bad.write_text("version = 2\n")
+    result = CliRunner().invoke(
+        main,
+        ["run", *RUN, "--expected-head", "e5f6a7b8c9d0", "--curation", str(bad)],
+    )
+    assert result.exit_code == 2
+    assert "version 1 is the one this migrator reads" in result.output
+
+
+def test_the_curation_is_r1s_unless_told_otherwise():
+    from uvlhub_splent.migration_v2 import curation
+    from uvlhub_splent.migration_v2.cli import _curation
+
+    assert _curation(None) == curation.CURATION
+    assert _curation("none") is None

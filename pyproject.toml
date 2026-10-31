@@ -162,4 +162,4 @@ where = [
 
 [tool.setuptools.package-data]
 "uvlhub_splent" = ["citation_references.toml"]
-"uvlhub_splent.migration_v2" = ["contract.toml"]
+"uvlhub_splent.migration_v2" = ["contract.toml", "curation.toml"]

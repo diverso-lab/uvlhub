@@ -68,7 +68,7 @@ from splent_io.splent_feature_dataset.models import (
 )
 from splent_io.splent_feature_hubfile.storage import checksum_algorithm
 
-from uvlhub_splent.migration_v2 import rules
+from uvlhub_splent.migration_v2 import curation, rules
 from uvlhub_splent.migration_v2.db import (
     all_rows,
     foreign_keys_off,
@@ -602,6 +602,8 @@ def content(ctx) -> None:
         authors_of[author["ds_meta_data_id"]].append(author)
 
     chosen = choose_datasets(ctx, source["datasets"], metas, files_of)
+    # RU-06: the lineages the curation makes, before they are checked.
+    chosen, curated = curation.apply(ctx, chosen, metas, snapshots)
     origins = check_lineages(ctx, source["datasets"], chosen)
     tombstones = build_tombstones(
         ctx, metas, datasets_of_meta, source["datasets"], snapshots
@@ -782,6 +784,7 @@ def content(ctx) -> None:
         )
         insert_batches(connection, tgt["dataset_rating"], rating_rows)
         insert_batches(connection, tgt["dataset_transfer_request"], transfer_rows)
+        insert_batches(connection, ctx.outputs["curated"], curated, key="dataset_id")
 
     ctx.loaded.update(
         datasets=set(chosen) | {row["id"] for row in tombstones.values()},

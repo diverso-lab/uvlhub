@@ -81,6 +81,9 @@ class Params:
     unused_days: int = 365
     # DM-3: a draft with no file, no DOI and no deposition, older than this.
     ghost_draft_days: int = 30
+    # RU-06: the curation E5 applies (curation.py), MIGRATION_CURATION;
+    # the command's default is the one R1 decided, curation.toml.
+    curation: Path | None = None
     # §4.2 (CO-5): the key of the public ids E5 gives the datasets,
     # MIGRATION_PUBLIC_ID_KEY, else SECRET_KEY, from the environment only.
     public_id_key: str = field(default="", repr=False)

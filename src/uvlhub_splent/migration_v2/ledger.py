@@ -192,6 +192,18 @@ def _outputs(schema: str) -> sa.MetaData:
         sa.Column("content_sha256", sa.String(64), nullable=False),
     )
     sa.Table(
+        "curated",
+        metadata,
+        # RU-06 (curation.py): the place in a lineage the curation gave a
+        # dataset, and the one it had in v2.12.
+        sa.Column("dataset_id", sa.Integer, primary_key=True, autoincrement=False),
+        sa.Column("lineage", sa.String(120), nullable=False),
+        sa.Column("old_origin_id", sa.Integer),
+        sa.Column("old_version", sa.Integer),
+        sa.Column("origin_id", sa.Integer),
+        sa.Column("version", sa.Integer, nullable=False),
+    )
+    sa.Table(
         "tombstone",
         metadata,
         sa.Column("doi", sa.String(120), primary_key=True),

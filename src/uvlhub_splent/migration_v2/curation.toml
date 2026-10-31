@@ -1,0 +1,100 @@
+# RU-06, decided in rehearsal R1 with the rows in front; E5 applies it
+# (curation.py). A dataset is named by its v2.12 id, a member of a lineage
+# also by its DOI: a rule that does not hold for the source stops the run.
+
+version = 1
+
+# Published duplicates become the versions of one lineage, ordered by when
+# Zenodo published them, each with its own DOI.
+
+[[lineage]]
+name = "openhubs_spl"
+members = [
+  { id = 108, doi = "10.5281/zenodo.23592345" },
+  { id = 109, doi = "10.5281/zenodo.23604003" },
+  { id = 110, doi = "10.5281/zenodo.23614354" },
+  { id = 111, doi = "10.5281/zenodo.23626373" },
+  { id = 112, doi = "10.5281/zenodo.23628801" },
+  { id = 113, doi = "10.5281/zenodo.23628893" },
+  { id = 114, doi = "10.5281/zenodo.23631098" },
+  { id = 115, doi = "10.5281/zenodo.23639256" },
+  { id = 116, doi = "10.5281/zenodo.23649960" },
+]
+
+[[lineage]]
+name = "cms_spl"
+members = [
+  { id = 87, doi = "10.5281/zenodo.21610307" },
+  { id = 94, doi = "10.5281/zenodo.21915219" },
+  { id = 95, doi = "10.5281/zenodo.21916291" },
+  { id = 96, doi = "10.5281/zenodo.21923420" },
+  { id = 97, doi = "10.5281/zenodo.21954373" },
+  { id = 104, doi = "10.5281/zenodo.23301028" },
+]
+
+[[lineage]]
+name = "Sample SPLENT app"
+members = [
+  { id = 74, doi = "10.5281/zenodo.18873372" },
+  { id = 75, doi = "10.5281/zenodo.19219696" },
+  { id = 81, doi = "10.5281/zenodo.20837446" },
+  { id = 82, doi = "10.5281/zenodo.20837624" },
+  { id = 99, doi = "10.5281/zenodo.23076870" },
+]
+
+[[lineage]]
+name = "marketplace_spl"
+members = [
+  { id = 88, doi = "10.5281/zenodo.21610309" },
+  { id = 101, doi = "10.5281/zenodo.23279072" },
+  { id = 102, doi = "10.5281/zenodo.23282644" },
+]
+
+[[lineage]]
+name = "demo_spl"
+members = [
+  { id = 89, doi = "10.5281/zenodo.21644303" },
+  { id = 90, doi = "10.5281/zenodo.21644307" },
+  { id = 91, doi = "10.5281/zenodo.21644340" },
+]
+
+# Drafts are their owners': nothing is hidden or dropped. The report lists
+# the ones that duplicate other datasets, for their owners.
+
+[[draft]]
+datasets = [107]
+of = [108]
+
+[[draft]]
+datasets = [47]
+of = [48, 49]
+
+[[draft]]
+datasets = [65, 66, 67]
+why = "the same files three times"
+
+[[draft]]
+datasets = [83, 84]
+of = [80]
+
+[[draft]]
+datasets = [85, 86]
+why = "the same files twice"
+
+# Left as they are, for someone to decide.
+
+[[review]]
+datasets = [45, 50]
+why = "the same files, published by two accounts"
+
+[[review]]
+datasets = [1, 17]
+why = "one title, other files; the owner decides"
+
+[[review]]
+datasets = [4, 18]
+why = "one title, other files; the owner decides"
+
+[[review]]
+datasets = [12, 15]
+why = "one title, other files; the owner decides"

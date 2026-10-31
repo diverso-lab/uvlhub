@@ -148,6 +148,14 @@ def _run_options(command):
         click.option("--unused-days", type=int, default=365, show_default=True),
         click.option("--ghost-draft-days", type=int, default=30, show_default=True),
         click.option(
+            "--curation",
+            envvar="MIGRATION_CURATION",
+            type=click.Path(path_type=Path, dir_okay=False),
+            default=None,
+            help="RU-06's curation E5 applies; curation.toml by default, "
+            "'none' for none.",
+        ),
+        click.option(
             "--mail-from",
             envvar="MAIL_FROM",
             default="",
@@ -201,6 +209,7 @@ def _params(options: dict) -> Params:
         raise click.BadParameter(
             f"no such derived data: {', '.join(unknown)}", param_hint="--derived"
         )
+    curation = _curation(options["curation"])
     return Params(
         server=server,
         t0=parse_t0(options["t0"]),
@@ -219,6 +228,7 @@ def _params(options: dict) -> Params:
         never_used_grace_days=options["never_used_grace_days"],
         unused_days=options["unused_days"],
         ghost_draft_days=options["ghost_draft_days"],
+        curation=curation,
         public_id_key=(
             os.environ.get("MIGRATION_PUBLIC_ID_KEY")
             or os.environ.get("SECRET_KEY")
@@ -229,6 +239,21 @@ def _params(options: dict) -> Params:
         derived=derived,
         stages=stages,
     )
+
+
+def _curation(value) -> Path | None:
+    """The curation file, read once here so a fault in it stops the command
+    before it connects."""
+    from uvlhub_splent.migration_v2 import curation
+
+    if value is not None and str(value).lower() == "none":
+        return None
+    path = Path(value) if value is not None else curation.CURATION
+    try:
+        curation.load(path)
+    except (OSError, ValueError) as error:
+        raise click.BadParameter(str(error), param_hint="--curation") from error
+    return path
 
 
 def _refused(refusal: Refused) -> None:
