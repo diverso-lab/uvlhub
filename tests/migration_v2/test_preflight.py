@@ -17,7 +17,7 @@ import sqlalchemy as sa
 from uvlhub_splent.migration_v2 import contract as contract_module
 from uvlhub_splent.migration_v2.params import Refused
 from uvlhub_splent.migration_v2.pipeline import Context
-from uvlhub_splent.migration_v2.preflight import LOCK_NAME, preflight
+from uvlhub_splent.migration_v2.preflight import LOCK_NAME, preflight, release_lock
 
 from . import synthetic
 
@@ -45,6 +45,29 @@ def execute(engine, *statements, **params):
 @pytest.fixture
 def params(isolated, seedless):
     return isolated("e0")
+
+
+def test_a_lock_on_a_server_that_went_away_is_given_back_quietly():
+    """R1: the server was killed mid-run, and RELEASE_LOCK's error, raised
+    from the run's last finally, hid the crash the run stopped on."""
+
+    class Dropped:
+        closed = False
+
+        def execute(self, *_args, **_kwargs):
+            raise sa.exc.OperationalError(
+                "SELECT RELEASE_LOCK", {}, Exception("Lost connection")
+            )
+
+        def commit(self):
+            raise AssertionError("nothing to commit on a dropped connection")
+
+        def close(self):
+            self.closed = True
+
+    dropped = Dropped()
+    release_lock(dropped)
+    assert dropped.closed
 
 
 def test_a_clean_server_lets_the_run_go(params):

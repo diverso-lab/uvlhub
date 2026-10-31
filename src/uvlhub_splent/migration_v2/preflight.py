@@ -59,11 +59,16 @@ def acquire_lock(engine):
 
 
 def release_lock(connection) -> None:
+    """Give the lock back. The server frees a named lock with the session
+    that holds it, so a connection that died with the server holds none:
+    its error is not raised, or it would hide the one that stopped the run."""
     if connection is None:
         return
     try:
         connection.execute(sa.text("SELECT RELEASE_LOCK(:name)"), {"name": LOCK_NAME})
         connection.commit()
+    except sa.exc.DBAPIError:
+        pass
     finally:
         connection.close()
 
