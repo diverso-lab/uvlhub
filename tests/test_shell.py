@@ -743,7 +743,9 @@ def test_uvlhubs_skin_pins_uvlhub_ios_blues(browsers):
         "/static/css/uvlhub.css"
     )
     assert "--hub-primary-active: #056ee9;" in skin
-    assert "--hub-sidebar-link-active-bg: #3e97ff;" in skin
+    # The sidebar's current entry is the shell's, the buttons' blue: a
+    # second blue of its own was what uvlhub.io drew.
+    assert "--hub-sidebar-link-active-bg" not in skin
 
 
 def test_the_product_templates_carry_nothing_of_metronic():
