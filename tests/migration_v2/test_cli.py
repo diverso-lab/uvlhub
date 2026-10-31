@@ -144,7 +144,13 @@ def test_the_product_command_is_the_migrators(app_with_a_pool):
     from uvlhub_splent.commands import cli_commands, migrate_v2
 
     assert cli_commands == [migrate_v2]
-    assert set(migrate_v2.commands) == {"run", "preflight", "grants", "contract"}
+    assert set(migrate_v2.commands) == {
+        "run",
+        "preflight",
+        "grants",
+        "contract",
+        "zenodo-snapshot",
+    }
 
 
 def test_the_product_command_lets_the_apps_connections_go_before_e0(
