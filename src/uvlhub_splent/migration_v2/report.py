@@ -29,6 +29,24 @@ from uvlhub_splent.migration_v2.ledger import DECIDED, to_json
 # What the stages this version does not have would need (MIG-01, MIG-06,
 # MIG-07, MIG-11), for the report to say.
 LATER: dict[str, str] = {}
+# The conflicts about accounts, whose ref may be an address or an iD: the
+# report names their rows instead, which uvlhub_migration.conflict pairs
+# with the ref.
+PERSONAL = ("email_", "identity_")
+
+
+def conflict_detail(conflict: dict) -> dict:
+    """A conflict as the report lists it: what it is, about which rows, and
+    what the stage that raised it says, without personal data."""
+    personal = conflict["kind"].startswith(PERSONAL)
+    return {
+        "kind": conflict["kind"],
+        "entity": conflict["entity"],
+        "ref": None if personal else conflict["ref"],
+        "source_rows": json.loads(conflict["source_rows"]),
+        "detail": None if personal else conflict["detail"],
+        "status": conflict["status"],
+    }
 
 
 def build(ctx, stopped=None) -> dict:
@@ -62,6 +80,9 @@ def build(ctx, stopped=None) -> dict:
                 Counter(c["kind"] for c in open_conflicts).items()
             )
         },
+        # Every conflict, open or decided, so the report can be read
+        # without the output schema (which goes with the server).
+        "conflict_detail": [conflict_detail(c) for c in ledger.conflicts],
         "decided": {
             kind: count
             for kind, count in sorted(
