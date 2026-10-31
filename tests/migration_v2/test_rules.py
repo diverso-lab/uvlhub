@@ -9,6 +9,7 @@ what they would write.
 from __future__ import annotations
 
 import importlib.util
+import json
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -359,3 +360,171 @@ def test_a_doi_is_its_depositions_only_as_zenodo_mints_it(doi, deposition, its):
 )
 def test_dm1_knows_a_signed_value_without_its_key(value, signed):
     assert rules.is_signed(value) is signed
+
+
+# ── Content (§4.3, §7.3, §8) ─────────────────────────────────────────────
+
+
+def kept(record) -> dict:
+    """A row of zenodo_snapshot keeping ``record``."""
+    text = json.dumps(record, sort_keys=True)
+    return {"record": text, "sha256": synthetic.sha256(text.encode("utf-8"))}
+
+
+MINTED = {
+    "id": 2005,
+    "doi": "10.5281/zenodo.2005",
+    "status": "published",
+    "metadata": {"title": "Deleted,  minted "},
+}
+
+
+@pytest.mark.parametrize(
+    "snapshot, deposition, title, why",
+    [
+        (kept(MINTED), 2005, "Deleted, minted", None),
+        (None, 2005, "Deleted, minted", None),
+        (kept(MINTED), 2006, "Deleted, minted", "not 2006"),
+        (kept(MINTED), 2005, "Another title", "another title"),
+        (kept(dict(MINTED, status="draft")), 2005, "Deleted, minted", "draft"),
+        (kept(dict(MINTED, doi="")), 2005, "Deleted, minted", "no DOI"),
+        (
+            dict(kept(MINTED), sha256="0" * 64),
+            2005,
+            "Deleted, minted",
+            "sha256",
+        ),
+    ],
+)
+def test_a_deposition_without_a_doi_takes_the_one_its_record_has(
+    snapshot, deposition, title, why
+):
+    """A15-04: Zenodo published it and v2.12 lost the DOI; the record is
+    taken on its id, its state, its DOI and its title, word for word. No
+    record at all is no conflict: Zenodo never published it."""
+    record, reason = rules.minted_record(snapshot, deposition, title)
+    if why is None and snapshot is not None:
+        assert record["doi"] == "10.5281/zenodo.2005" and reason is None
+    elif why is None:
+        assert (record, reason) == (None, None)
+    else:
+        assert record is None and why in reason
+
+
+@pytest.mark.parametrize(
+    "html, tags, active",
+    [
+        ("<p>About <strong>it</strong></p>", {"p", "strong"}, ()),
+        ("<p>x</p><script>alert(1)</script>", {"p", "script"}, ("<script>",)),
+        ('<img src="x" onerror="alert(1)">', {"img"}, ("onerror=",)),
+        ('<a href="jav&#x61;script:alert(1)">x</a>', {"a"}, ("href=javascript:",)),
+        ('<a href=" java\tscript:alert(1)">x</a>', {"a"}, ("href=javascript:",)),
+        ('<a href="https://uvlhub.io/x:y">x</a>', {"a"}, ()),
+        ('<span style="color:red">x</span>', {"span"}, ()),
+        ("", set(), ()),
+        (None, set(), ()),
+    ],
+)
+def test_a_description_s_markup_and_what_in_it_runs(html, tags, active):
+    """C-01: the elements a description uses (P-22's frequency) and the
+    plan's second class, active content, which a curator reads."""
+    found = rules.markup(html)
+    assert found.tags == tags and found.active == active
+
+
+@pytest.mark.parametrize(
+    "value, expected",
+    [
+        ("https://doi.org/10.1145/3646548.3672589", "10.1145/3646548.3672589"),
+        ("http://dx.doi.org/10.1145/x", "10.1145/x"),
+        ("doi: 10.1145/x", "10.1145/x"),
+        (" 10.1145/x ", "10.1145/x"),
+        # Not a DOI (a registrant has four digits or more), and no address.
+        ("10.1/x", "10.1/x"),
+        ("  https://example.org/paper ", "https://example.org/paper"),
+        ("in press", "in press"),
+        ("", ""),
+        ("   ", ""),
+        (None, None),
+    ],
+)
+def test_a_publication_doi_is_bare_as_dataset_keeps_it(value, expected):
+    """C-16, with dataset's own publication_doi_of; what is no DOI and no
+    address stays as it was, for its owner to mend."""
+    assert rules.publication_doi(value) == expected
+
+
+@pytest.mark.parametrize(
+    "value, expected",
+    [
+        ("uvl, models", "uvl,models"),
+        ("uvl, models, uvl, ", "uvl,models"),
+        (" Feature  Models ,UVL,uvl", "Feature Models,UVL,uvl"),
+        (",,", ""),
+        ("", ""),
+        (None, None),
+    ],
+)
+def test_the_tags_are_split_trimmed_and_said_once(value, expected):
+    """C-23, a string still: each tag once, its spelling kept (UVL and uvl
+    are two, as utf8mb4_bin has them), joined as dataset joins them."""
+    assert rules.normal_tags(value) == expected
+
+
+def test_v2_12_s_metrics_are_stale_for_factlabel():
+    """§7.3: status = 'legacy', in factlabel's terms: any version but its
+    EXTRACTOR_VERSION is one metrics-backfill extracts again."""
+    from splent_io.splent_feature_factlabel.metrics_extraction import (
+        EXTRACTOR_VERSION,
+    )
+
+    assert rules.legacy_extractor_version("1", 20) == "legacy:1"
+    assert rules.legacy_extractor_version("1", 20) != EXTRACTOR_VERSION
+    assert rules.legacy_extractor_version("x" * 30, 20) == "legacy:" + "x" * 13
+    assert rules.legacy_extractor_version(None, 20) == "legacy:"
+
+
+def version(dataset_id, day, number, origin=None):
+    return {
+        "id": dataset_id,
+        "created_at": datetime(2026, 1, day),
+        "dataset_version": number,
+        "dataset_origin_id": origin,
+    }
+
+
+def test_a_concept_doi_makes_its_datasets_one_lineage_by_date():
+    """C-05: by created_at, each on the one before, the versions as they
+    are; the first keeps an origin outside the concept."""
+    members = [
+        version(14, 3, 3, origin=1),
+        version(2, 2, 2, origin=1),
+        version(1, 1, 1),
+    ]
+    assert rules.concept_chain(members) == [(1, None), (2, 1), (14, 2)]
+    # A gap stays a gap: dataset_version is never renumbered.
+    assert rules.concept_chain([version(7, 1, 2, origin=5), version(8, 2, 4)]) == [
+        (7, 5),
+        (8, 7),
+    ]
+
+
+def test_a_first_version_standing_on_a_later_one_is_the_root():
+    assert rules.concept_chain([version(1, 1, 1, origin=2), version(2, 2, 2)]) == [
+        (1, None),
+        (2, 1),
+    ]
+
+
+@pytest.mark.parametrize(
+    "members",
+    [
+        # Two versions 2: only renumbering would make a lineage of them.
+        [version(1, 1, 1), version(2, 2, 2, origin=1), version(14, 3, 2, origin=1)],
+        # A version made before the one it follows.
+        [version(1, 2, 1), version(2, 1, 2, origin=1)],
+    ],
+)
+def test_a_lineage_the_dates_and_versions_do_not_agree_on_is_left(members):
+    """Left to a decision, the curation's (RU-06), and to V-09."""
+    assert rules.concept_chain(members) is None
