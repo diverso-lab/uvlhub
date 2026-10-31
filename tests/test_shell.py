@@ -574,7 +574,7 @@ def test_the_header_offers_the_three_modes(browsers, who):
     menu = menu[: menu.index("</div>")]
 
     assert re.findall(r'data-hub-theme="(\w+)"', menu) == ["light", "dark", "system"]
-    assert html.index("data-bs-theme") < html.index("css/app.css")
+    assert html.index("data-bs-theme") < html.index("hub_shell/dist/hub_shell.css")
 
 
 @pytest.fixture
@@ -613,7 +613,7 @@ def test_the_tokens_are_uvlhubs_and_ask_google_for_nothing():
     font_url theme's own tokens give."""
     tokens = _uvlhub_tokens()
 
-    assert tokens["primary"] == "#1b84ff"
+    assert tokens["primary"] == "#0b6fe0"
     assert tokens["text"] == "#071437"
     assert tokens["font_body"].startswith("Inter,")
     assert tokens["font_url"] == ""
@@ -632,7 +632,7 @@ def test_an_address_that_leads_nowhere_answers_uvlhubs_card(
     html = response.get_data(as_text=True)
 
     assert response.status_code == 404
-    assert "--brand-primary: #1b84ff;" in html
+    assert "--brand-primary: #0b6fe0;" in html
     assert "--brand-font-body: Inter, Helvetica, sans-serif;" in html
     assert 'class="cms-public"' in html and 'class="error-page"' in html
     assert '<h1 class="error-page__title">Oops!</h1>' in html
@@ -687,19 +687,14 @@ def test_the_logo_is_as_high_as_the_appearance_panel_says(app, browsers):
     assert 'height="56"' in brand[: brand.index("</a>")]
 
 
-def test_the_chrome_icons_are_in_the_sprite(browsers):
+def test_the_chrome_icons_are_drawn_in_the_page(browsers):
+    """The framework's icon() draws each icon as inline SVG from the set the
+    icons feature brings from npm. No sprite is asked for, so no icon waits
+    for a second request or is missing from it."""
     html = _open(browsers, "user", SHELL_PAGE)
-    used = set(re.findall(r'<use href="([^"#]+)[^"#]*#(ph-[a-z0-9-]+)"', html))
-    sprites = {address for address, _ in used}
 
-    assert used
-    for address in sprites:
-        response = browsers["user"].get(address)
-        assert response.status_code == 200, f"{address} answered {response.status_code}"
-        symbols = set(
-            re.findall(r'<symbol id="(ph-[a-z0-9-]+)"', response.get_data(as_text=True))
-        )
-        assert {name for where, name in used if where == address} <= symbols
+    assert re.findall(r'<svg[^>]+class="splent-icon[^"]*"', html)
+    assert "<use " not in html
 
 
 def test_the_fonts_are_served_by_the_shell(browsers):
