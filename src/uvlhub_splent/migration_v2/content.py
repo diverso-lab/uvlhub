@@ -1,19 +1,33 @@
 """E5, content: datasets and everything hanging off them (§2.1, §4.3, §8).
 
-FIRST PASS. It loads ds_metrics, ds_meta_data, datasets, author,
-feature_model, hubfiles, hubfile_metrics, dataset_rating and
-dataset_transfer_request into the tables of dataset, hubfile, uvl (which
-keeps featuremodel's table), factlabel and rating, ids kept, with the rules
-the pinned features apply to rows that predate them. What the final E5
-still has to do is in DEFERRED, and the report repeats it: a run that went
-through this pass is never ready for the cutover.
+It loads ds_metrics, ds_meta_data, datasets, author, feature_model,
+hubfiles, hubfile_metrics, dataset_rating and dataset_transfer_request into
+the tables of dataset, hubfile, uvl (which keeps featuremodel's table),
+factlabel and rating, ids kept, with the rules the pinned features apply to
+rows that predate them and the ones §4.3 and §8 give the content. Nothing
+is left for a later pass (DEFERRED is empty): what a rule cannot settle is
+a conflict, for a decision.
 
-What it applies already:
+What it applies:
 
-- status and visibility by dataset's own state_from_metadata (DL-1);
-  published_at is created_at, as dataset0002 sets it;
+- status and visibility by dataset's own state_from_metadata (DL-1), with
+  the DOI Zenodo minted for a deposition v2.12 saved none for, when the
+  deposition's record in zenodo_snapshot validates (A15-04, minted_dois);
+  published_at is the day Zenodo published it, its record's
+  publication_date (§4.3), and created_at only while a conflict says that
+  no record validates its DOI;
 - the identifier as dataset0005 makes it neutral: a DOI is the pid, with
   the scheme doi, and a dataset with a DOI or a deposition is zenodo's;
+- each description cleaned again by dataset's own sanitiser, as
+  html_legacy (C-01, D21, DS-1), and the original of every one that
+  changes in uvlhub_migration.quarantine_description, B0's where the
+  hotfix D1 cleaned them in place (C-29, describe);
+- publication_doi bare (C-16), and the tags split, trimmed and without
+  repeats, a string still (C-23);
+- the lineages a concept DOI repairs, in the order of created_at, the
+  versions as they are (C-05, repair_lineages), once the curation is
+  applied;
+- v2.12's metrics marked legacy until factlabel extracts them again (§7.3);
 - the authors of an anonymous dataset in private_authors, as dataset0003
   moves them (DS-3); an author's ORCID normalised, NULL when invalid (C-15);
   each credit as dataset 0.9.0 keeps it (DL-5): its place from 0 in the
@@ -40,12 +54,14 @@ What it applies already:
   of its lineage as it loads (its own id for an original), and its
   concept_pid from its metadata's concept DOI, as dataset0009 fills them.
 
-What it finds and leaves open, as conflicts: DOIs that are not Zenodo's
-production or not their deposition's (C-30), DOIs or metadata shared by two
-datasets (C-10, P-03), lineages with a missing origin, branches or gaps
-(C-05), checksums of no known algorithm (C-25), a file whose feature model
-is in another, published dataset (C-07), and a tombstone no Zenodo record
-dates or nobody can hold (DM-4).
+What it finds and leaves open, as conflicts for a decision, as the plan
+has them: DOIs that are not Zenodo's production, not their deposition's or
+of no record that validates (C-30), a deposition without a DOI whose record
+is another's (C-09), DOIs or metadata shared by two datasets (C-10, P-03,
+"resolución manual"), lineages with a missing origin, branches or gaps that
+no concept DOI repairs (C-05), checksums of no known algorithm (C-25), a
+file whose feature model is in another, published dataset (C-07), and a
+tombstone no Zenodo record dates or nobody can hold (DM-4).
 """
 
 from __future__ import annotations
@@ -53,11 +69,12 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
-from collections import defaultdict
+from collections import Counter, defaultdict
 from datetime import timedelta
 
 import sqlalchemy as sa
 from splent_io.splent_feature_dataset.authors import names_of
+from splent_io.splent_feature_dataset.descriptions import HTML_LEGACY, clean_html
 from splent_io.splent_feature_dataset.public_ids import new_public_id
 from splent_io.splent_feature_dataset.models import (
     DOI_SCHEME,
@@ -79,24 +96,18 @@ from uvlhub_splent.migration_v2.db import (
 from uvlhub_splent.migration_v2.identity import PROVIDERS
 from uvlhub_splent.migration_v2.ledger import stop_on_conflicts, to_json
 
-FIRST_PASS = True
+# The final pass: what the first one left (the descriptions, the lineages by
+# concept DOI, Zenodo's dates and minted DOIs, the publication DOI and the
+# tags, the legacy metrics) is done, and DEFERRED says nothing, so a run
+# with nothing else pending is ready for the cutover (report.py).
+FIRST_PASS = False
 
-DEFERRED = (
-    "C-01, C-29: descriptions are copied as they are, which dataset renders "
-    "through rich_text; re-sanitising them, the originals in "
-    "quarantine_description from B0, waits for DS-1 (description_format)",
-    "C-05: lineages load as they are and their faults are listed; repairing "
-    "them by concept DOI waits for the Zenodo snapshot (MIG-06)",
-    "§4.3: published_at is created_at, and a deposition without a DOI is "
-    "failed; Zenodo's date and its published records (A15-04) wait for the "
-    "final pass (the concept DOIs v2.12 left empty come from the snapshot "
-    "already)",
-    "C-10, C-30: found and left open, for the decisions",
-    "C-16, C-23: publication_doi and tags are copied as they are (DS-1 and "
-    "dataset_tag do not exist in the pinned features)",
-    "§7.3: hubfile_metrics is copied without status = 'legacy', which "
-    "factlabel has no column for",
-)
+DEFERRED: tuple[str, ...] = ()
+
+# The revision of the hotfix D1 that cleaned every description in place,
+# keeping no copy (f7a8b9c0d1e2_sanitize_stored_descriptions): on a source
+# at this head the originals are B0's (C-29).
+HOTFIX_HEAD = "f7a8b9c0d1e2"
 
 SOURCE_TABLES = (
     "ds_metrics",
@@ -203,6 +214,201 @@ def choose_datasets(ctx, datasets, metas, files_of) -> dict[int, dict]:
     return chosen
 
 
+def minted_dois(ctx, metas, datasets_of_meta, chosen, snapshots) -> dict[int, str]:
+    """§4.3, A15-04 (C-09): the DOI Zenodo minted for a deposition v2.12
+    saved none for, by metadata id, where the deposition's record in
+    zenodo_snapshot shows Zenodo published it (rules.minted_record).
+
+    v2.12 lost the DOI when Zenodo answered late or the request broke after
+    the publication (A05-02). With it the dataset is published as any
+    other, and a metadata whose dataset v2.12 deleted becomes a tombstone
+    (DM-4). Only the metadata that load are asked: a dataset that loads, or
+    none at all. A deposition with no record stays failed, the public API's
+    404 for one Zenodo never published; a record that is another's is a
+    conflict, and it stays failed."""
+    minted = {}
+    for meta in metas.values():
+        if _doi(meta) is not None or meta["deposition_id"] is None:
+            continue
+        datasets = datasets_of_meta[meta["id"]]
+        if datasets and not any(d["id"] in chosen for d in datasets):
+            continue
+        record, why = rules.minted_record(
+            snapshots.get(meta["deposition_id"]), meta["deposition_id"], meta["title"]
+        )
+        if record is not None:
+            minted[meta["id"]] = record["doi"].strip()
+        elif why is not None:
+            ctx.ledger.conflict(
+                "deposition_record_mismatch",
+                "ds_meta_data",
+                meta["deposition_id"],
+                [meta],
+                detail=f"{why} (§4.3): it loads as failed",
+            )
+    ctx.facts["dois_minted_by_zenodo"] = {
+        "datasets": sorted(
+            d["id"]
+            for meta_id in minted
+            for d in datasets_of_meta[meta_id]
+            if d["id"] in chosen
+        ),
+        "metadata_without_dataset": sorted(
+            meta_id for meta_id in minted if not datasets_of_meta[meta_id]
+        ),
+    }
+    return minted
+
+
+def _one_chain(members) -> bool:
+    """Whether ``members`` stand on one another already, one line from one
+    first version: then there is nothing to repair, whatever their dates."""
+    inside = {d["id"] for d in members}
+    firsts = [d for d in members if d["dataset_origin_id"] not in inside]
+    claimed = Counter(
+        d["dataset_origin_id"] for d in members if d["dataset_origin_id"] in inside
+    )
+    return len(firsts) == 1 and all(n == 1 for n in claimed.values())
+
+
+def repair_lineages(ctx, chosen, metas, concepts):
+    """C-05 (P-04, P-05, MIG-06): the datasets that load, with the lineages
+    their concept DOIs repair, and the rows of uvlhub_migration.curated that
+    say so.
+
+    Every version of a lineage shares its concept DOI at Zenodo (§4.3), the
+    one v2.12 kept or the one its record gives (zenodo_concepts). The
+    datasets of one concept that are not one line already are made one by
+    rules.concept_chain: by created_at, each on the one before,
+    dataset_version as it is. Where the versions do not rise with the
+    dates, nothing changes, and check_lineages finds what is left. The
+    lineages the curation made (RU-06) are a decision, and stay as it left
+    them."""
+    curated_ids = {
+        member[0]
+        for lineage in (ctx.facts.get("curation") or {}).get("lineages", [])
+        for member in lineage["after"]
+    }
+    groups = defaultdict(list)
+    for dataset in chosen.values():
+        meta_id = dataset["ds_meta_data_id"]
+        concept = (metas[meta_id]["dataset_concept_doi"] or "").strip() or (
+            concepts.get(meta_id)
+        )
+        if concept and dataset["id"] not in curated_ids:
+            groups[concept].append(dataset)
+    repaired, changes, done, left = dict(chosen), [], [], []
+    for concept, members in sorted(groups.items()):
+        if len(members) < 2 or _one_chain(members):
+            continue
+        chain = rules.concept_chain(members)
+        if chain is None:
+            left.append(
+                {
+                    "concept": concept,
+                    "datasets": sorted(d["id"] for d in members),
+                    "why": "its versions do not rise with their created_at",
+                }
+            )
+            continue
+        for dataset_id, origin in chain:
+            dataset = chosen[dataset_id]
+            if dataset["dataset_origin_id"] == origin:
+                continue
+            repaired[dataset_id] = dict(dataset, dataset_origin_id=origin)
+            changes.append(
+                {
+                    "dataset_id": dataset_id,
+                    "lineage": f"C-05 {concept}",
+                    "old_origin_id": dataset["dataset_origin_id"],
+                    "old_version": dataset["dataset_version"],
+                    "origin_id": origin,
+                    "version": dataset["dataset_version"],
+                }
+            )
+        done.append({"concept": concept, "chain": [list(link) for link in chain]})
+    ctx.facts["lineages_by_concept"] = {"repaired": done, "left": left}
+    return repaired, changes
+
+
+def describe(ctx, meta_rows, metas) -> list[dict]:
+    """C-01, C-29 (D21, DS-1, DM-12): every description loaded as
+    html_legacy, cleaned again by dataset's own sanitiser
+    (descriptions.clean_html, its allowlist outside an app the default,
+    which is the one uvlhub sets), as dataset0010 cleaned the rows there
+    were. That is the text v2.12 has now, as the plan's §2.1 says ("se
+    re-sanea desde el texto vigente"): what uvlhub.io shows today stays.
+
+    The original of every description the migration changes goes to
+    uvlhub_migration.quarantine_description with what was loaded (C-01):
+    on a source at the hotfix's head, B0's, since the hotfix cleaned them in
+    place (C-29); without B0 there, what the hotfix took out is lost, which
+    the report says, and the text it left is the original kept. Answers the
+    rows of quarantine_description.
+
+    The report gives the plan's two classes of what changed: formatting,
+    and active content (a script, a handler, a javascript: address), whose
+    cases a curator reads; and how many descriptions use each element
+    (P-22), which tells whether uvlhub should let images in (D21)."""
+    originals = ctx.b0 or {}
+    hotfixed = ctx.params.expected_head == HOTFIX_HEAD
+    quarantine, active, formatting = [], [], []
+    elements = Counter()
+    for row in meta_rows:
+        current = metas[row["id"]]["description"] or ""
+        original = originals.get(row["id"], current)
+        loaded = str(clean_html(current)).strip()
+        row["description"] = loaded
+        row["description_format"] = HTML_LEGACY
+        found = rules.markup(original)
+        elements.update(found.tags)
+        if found.active:
+            active.append(row["id"])
+        if original != loaded:
+            quarantine.append(
+                {
+                    "ds_meta_data_id": row["id"],
+                    "original": original,
+                    "sanitized": loaded,
+                }
+            )
+            if not found.active:
+                formatting.append(row["id"])
+    if ctx.b0 is not None:
+        source = "b0"
+    elif hotfixed:
+        source = "lost"
+        ctx.alerts.append(
+            "C-29: the source is at the hotfix's head and no B0 was given "
+            "(--b0): what the hotfix took out of the descriptions is lost, and "
+            "quarantine_description keeps the text it left"
+        )
+    else:
+        source = "source"
+    ctx.facts["descriptions"] = {
+        "format": HTML_LEGACY,
+        "originals": source,
+        "b0_differs": None
+        if ctx.b0 is None
+        else sorted(
+            row["id"]
+            for row in meta_rows
+            if row["id"] in originals
+            and originals[row["id"]] != (metas[row["id"]]["description"] or "")
+        ),
+        "quarantined": len(quarantine),
+        "formatting": len(formatting),
+        "active_content": sorted(active),
+        "elements": dict(sorted(elements.items())),
+    }
+    if quarantine:
+        ctx.ledger.note(
+            "ds_meta_data: description other than its original, quarantined (C-01)",
+            len(quarantine),
+        )
+    return quarantine
+
+
 def check_lineages(ctx, datasets, chosen) -> dict[int, int | None]:
     """C-05 (P-04): the origin of every loaded dataset, None where it is not
     loaded, and a conflict for every fault of a lineage."""
@@ -293,13 +499,14 @@ def identify(ctx, dataset_rows, metas, origins, concepts) -> None:
         row["concept_pid"] = concept or None
 
 
-def zenodo_concepts(ctx, metas, datasets_of_meta, snapshots) -> dict[int, str]:
-    """§4.3, CT-4: the concept DOI of every metadata with a DOI and none of
-    its own, from its record in zenodo_snapshot when the record validates,
-    by metadata id. A concept DOI v2.12 kept is never changed."""
+def zenodo_concepts(ctx, metas, datasets_of_meta, snapshots, dois) -> dict[int, str]:
+    """§4.3, CT-4: the concept DOI of every metadata with a DOI (``dois``,
+    the minted ones too) and none of its own, from its record in
+    zenodo_snapshot when the record validates, by metadata id. A concept
+    DOI v2.12 kept is never changed."""
     found = {}
     for meta in metas.values():
-        doi = _doi(meta)
+        doi = dois.get(meta["id"])
         if doi is None or (meta["dataset_concept_doi"] or "").strip():
             continue
         concept = rules.zenodo_concept(snapshots.get(meta["deposition_id"]), doi)
@@ -312,10 +519,24 @@ def zenodo_concepts(ctx, metas, datasets_of_meta, snapshots) -> dict[int, str]:
 
 
 def build_metadata(
-    ctx, metas, datasets_of_meta, chosen, tombstones, authors_of, linked, concepts
+    ctx,
+    metas,
+    datasets_of_meta,
+    chosen,
+    tombstones,
+    authors_of,
+    linked,
+    concepts,
+    dois,
+    snapshots,
 ):
     """ds_meta_data rows of the loaded datasets and of the tombstones;
-    metadata of neither dropped (P-01); DOIs checked (C-10, C-30)."""
+    metadata of neither dropped (P-01); DOIs checked (C-10, C-30): a DOI of
+    Zenodo's production, the one it mints for the deposition, whose record
+    in zenodo_snapshot validates (§4.3; a tombstone's record dates it,
+    build_tombstones). ``dois`` holds each one's DOI, the minted ones too
+    (minted_dois), which the row takes. publication_doi bare (C-16), tags
+    without blanks or repeats (C-23)."""
     ledger = ctx.ledger
     loaded_users = ctx.loaded["user"]
     rows = []
@@ -341,7 +562,7 @@ def build_metadata(
                 {"ds_meta_data": [meta], "datasets": datasets},
                 detail=f"datasets {', '.join(str(d['id']) for d in datasets)} share it",
             )
-        doi = _doi(meta)
+        doi = dois.get(meta["id"])
         if doi is not None:
             owners_of_doi[doi].append(meta)
             if not rules.doi_is_zenodo(doi):
@@ -360,6 +581,20 @@ def build_metadata(
                     [meta],
                     detail=f"deposition {meta['deposition_id']} mints another DOI",
                 )
+            elif (
+                loading
+                and rules.zenodo_record(snapshots.get(meta["deposition_id"]), doi)
+                is None
+            ):
+                ledger.conflict(
+                    "doi_record_missing",
+                    "ds_meta_data",
+                    doi,
+                    [meta],
+                    detail="no record of zenodo_snapshot validates it: not "
+                    "fetched (zenodo-snapshot), gone from Zenodo (404, 410) or "
+                    "another DOI's (§4.3)",
+                )
         publisher = meta["api_publisher_user_id"]
         if publisher is not None and publisher not in loaded_users:
             ledger.note(
@@ -372,19 +607,36 @@ def build_metadata(
             concealed = [
                 credit(author, linked) for author in authors_of[meta["id"]]
             ] or None
+        publication_doi = rules.publication_doi(meta["publication_doi"])
+        if publication_doi != meta["publication_doi"]:
+            ledger.note("ds_meta_data: publication_doi normalised (C-16)")
+        elif publication_doi and rules.publication_doi_of(publication_doi) is None:
+            ledger.note(
+                "ds_meta_data: publication_doi neither a DOI nor an address, "
+                "kept as it is (C-16)"
+            )
+        tags = rules.normal_tags(meta["tags"])
+        if tags != meta["tags"]:
+            ledger.note("ds_meta_data: tags split, trimmed and without repeats (C-23)")
         rows.append(
             {
                 "id": meta["id"],
                 "deposition_id": meta["deposition_id"],
                 "title": meta["title"],
+                # describe() cleans it once every row is here (C-01).
                 "description": meta["description"],
+                "description_format": HTML_LEGACY,
                 "publication_type": meta["publication_type"],
-                "publication_doi": meta["publication_doi"],
-                "dataset_doi": meta["dataset_doi"],
+                "publication_doi": publication_doi,
+                # The minted DOI where v2.12 saved none (A15-04), else
+                # v2.12's as it is (V-02 compares it byte for byte).
+                "dataset_doi": meta["dataset_doi"]
+                if _doi(meta) is not None
+                else doi or meta["dataset_doi"],
                 "dataset_concept_doi": meta["dataset_concept_doi"]
                 or concepts.get(meta["id"]),
                 "api_publisher_user_id": publisher,
-                "tags": meta["tags"],
+                "tags": tags,
                 "ds_metrics_id": meta["ds_metrics_id"],
                 "dataset_anonymous": meta["dataset_anonymous"],
                 "metadata_synced": meta["metadata_synced"],
@@ -407,12 +659,14 @@ def build_metadata(
     return rows
 
 
-def build_tombstones(ctx, metas, datasets_of_meta, datasets, snapshots):
+def build_tombstones(ctx, metas, datasets_of_meta, datasets, snapshots, dois):
     """DM-4 (C-03, P-01): a withdrawn dataset for each metadata whose
     dataset v2.12 deleted and left its DOI behind, so the DOI answers
     dataset's tombstone (landing_response), 410 with the citation its
-    metadata and authors make, instead of a 404. Answers the rows by
-    metadata id; every one is in uvlhub_migration.tombstone too.
+    metadata and authors make, instead of a 404. The DOI is ``dois``'s:
+    v2.12's, or the one Zenodo minted when v2.12 saved none (A15-04,
+    minted_dois). Answers the rows by metadata id; every one is in
+    uvlhub_migration.tombstone too.
 
     v2.12 kept no date of them: Zenodo's record in zenodo_snapshot gives
     created_at and published_at, which the citation's year is; without it,
@@ -427,7 +681,7 @@ def build_tombstones(ctx, metas, datasets_of_meta, datasets, snapshots):
     next_id = max(counter or 1, max((d["id"] for d in datasets), default=0) + 1)
     rows = {}
     for meta in metas.values():
-        doi = _doi(meta)
+        doi = dois.get(meta["id"])
         if datasets_of_meta[meta["id"]] or doi is None:
             continue
         tombstone = {
@@ -602,16 +856,33 @@ def content(ctx) -> None:
         authors_of[author["ds_meta_data_id"]].append(author)
 
     chosen = choose_datasets(ctx, source["datasets"], metas, files_of)
-    # RU-06: the lineages the curation makes, before they are checked.
+    # A15-04: the DOIs v2.12 lost, and every metadata's DOI with them.
+    minted = minted_dois(ctx, metas, datasets_of_meta, chosen, snapshots)
+    dois = {
+        meta_id: _doi(meta) or minted.get(meta_id) for meta_id, meta in metas.items()
+    }
+    # RU-06: the lineages the curation makes, then the ones the concept DOIs
+    # repair (C-05), before they are checked.
     chosen, curated = curation.apply(ctx, chosen, metas, snapshots)
+    concepts = zenodo_concepts(ctx, metas, datasets_of_meta, snapshots, dois)
+    chosen, repaired = repair_lineages(ctx, chosen, metas, concepts)
     origins = check_lineages(ctx, source["datasets"], chosen)
     tombstones = build_tombstones(
-        ctx, metas, datasets_of_meta, source["datasets"], snapshots
+        ctx, metas, datasets_of_meta, source["datasets"], snapshots, dois
     )
-    concepts = zenodo_concepts(ctx, metas, datasets_of_meta, snapshots)
     meta_rows = build_metadata(
-        ctx, metas, datasets_of_meta, chosen, tombstones, authors_of, linked, concepts
+        ctx,
+        metas,
+        datasets_of_meta,
+        chosen,
+        tombstones,
+        authors_of,
+        linked,
+        concepts,
+        dois,
+        snapshots,
     )
+    quarantine = describe(ctx, meta_rows, metas)
     loaded_metas = {row["id"] for row in meta_rows}
     anonymous_metas = {row["id"] for row in meta_rows if row["dataset_anonymous"] == 1}
     author_rows = build_authors(
@@ -635,7 +906,7 @@ def content(ctx) -> None:
     for dataset in chosen.values():
         meta = metas[dataset["ds_meta_data_id"]]
         status, visibility = state_from_metadata(
-            _doi(meta),
+            dois[meta["id"]],
             None if meta["metadata_synced"] is None else bool(meta["metadata_synced"]),
             meta["deposition_id"],
             meta["dataset_anonymous"],
@@ -715,25 +986,47 @@ def content(ctx) -> None:
     ctx.renames = plan_renames(ctx, paths)
     loaded_files = {row["id"] for row in hubfile_rows}
     metric_columns = set(tgt["hubfile_metrics"].c.keys())
+    version_limit = tgt["hubfile_metrics"].c.extractor_version.type.length
     hubfile_metric_rows = []
     for metric in source["hubfile_metrics"]:
         if metric["hubfile_id"] in loaded_files:
-            hubfile_metric_rows.append(
-                {k: v for k, v in metric.items() if k in metric_columns}
+            row = {k: v for k, v in metric.items() if k in metric_columns}
+            # §7.3: legacy until factlabel extracts it again (E9, or
+            # metrics-backfill once 3.0 is up).
+            row["extractor_version"] = rules.legacy_extractor_version(
+                metric["extractor_version"], version_limit
             )
+            hubfile_metric_rows.append(row)
         else:
             ledger.drop("hubfile_metrics", metric["hubfile_id"], "hubfile_not_loaded")
+    if hubfile_metric_rows:
+        ledger.note(
+            "hubfile_metrics: v2.12's, legacy until extracted again (§7.3)",
+            len(hubfile_metric_rows),
+        )
 
     counted = defaultdict(int)
     for fm in fm_rows.values():
         counted[fm["dataset_id"]] += 1
     dataset_rows = []
     miscounted = 0
+    zenodo_dated, undated = 0, []
     for dataset in chosen.values():
         meta = metas[dataset["ds_meta_data_id"]]
         status, visibility = status_of[dataset["id"]]
-        doi = _doi(meta)
+        doi = dois[meta["id"]]
         miscounted += dataset["feature_model_count"] != counted[dataset["id"]]
+        published_at = None
+        if status in PUBLISHED:
+            # §4.3: the day Zenodo published it, what its citation's year
+            # is; v2.12's created_at only while doi_record_missing is open.
+            dates = rules.zenodo_dates(snapshots.get(meta["deposition_id"]), doi)
+            if dates is None:
+                published_at = dataset["created_at"]
+                undated.append(dataset["id"])
+            else:
+                published_at = dates[1]
+                zenodo_dated += 1
         dataset_rows.append(
             {
                 "id": dataset["id"],
@@ -751,7 +1044,7 @@ def content(ctx) -> None:
                     if meta["deposition_id"] is None
                     else str(meta["deposition_id"])
                 ),
-                "published_at": dataset["created_at"] if status in PUBLISHED else None,
+                "published_at": published_at,
                 "withdrawn_at": None,
                 "withdrawal_reason": None,
                 "withdrawal_note": None,
@@ -767,6 +1060,7 @@ def content(ctx) -> None:
             }
         )
     dataset_rows += tombstones.values()
+    ctx.facts["published_at"] = {"zenodo": zenodo_dated, "created_at": sorted(undated)}
     identify(ctx, dataset_rows, metas, origins, concepts)
 
     rating_rows = build_ratings(ctx, source["dataset_rating"], chosen, origins)
@@ -784,7 +1078,15 @@ def content(ctx) -> None:
         )
         insert_batches(connection, tgt["dataset_rating"], rating_rows)
         insert_batches(connection, tgt["dataset_transfer_request"], transfer_rows)
-        insert_batches(connection, ctx.outputs["curated"], curated, key="dataset_id")
+        insert_batches(
+            connection, ctx.outputs["curated"], curated + repaired, key="dataset_id"
+        )
+        insert_batches(
+            connection,
+            ctx.outputs["quarantine_description"],
+            quarantine,
+            key="ds_meta_data_id",
+        )
 
     ctx.loaded.update(
         datasets=set(chosen) | {row["id"] for row in tombstones.values()},

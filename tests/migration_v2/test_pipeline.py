@@ -68,7 +68,7 @@ def conflicts(migrated):
 # ── The run ──────────────────────────────────────────────────────────────
 
 
-def test_the_rehearsal_runs_every_stage_this_pass_has(migrated):
+def test_the_rehearsal_runs_every_stage(migrated):
     report = migrated.report
     assert report["stages_run"] == [
         "E0",
@@ -85,7 +85,9 @@ def test_the_rehearsal_runs_every_stage_this_pass_has(migrated):
     ]
     assert report["stages_not_yet"] == {}
     assert report["stopped"] is None
-    assert report["e5_first_pass"]["first_pass"] is True
+    # E5 is its final pass; the rehearsal leaves conflicts open, and DM-1
+    # is not checked (test_e7_checks_pass_and_what_keeps_the_cutover_off).
+    assert report["e5_first_pass"] == {"first_pass": False, "deferred": []}
     assert report["ready_for_cutover"] is False
 
 
@@ -139,6 +141,54 @@ def test_e1_refuses_a_dump_at_another_head(isolated, synthetic_dump, seedless):
     assert refusal.value.reasons == [
         "the dump is at e5f6a7b8c9d0, MIGRATION_EXPECTED_HEAD is f7a8b9c0d1e2 (P-19)"
     ]
+
+
+def test_e1_reads_b0_and_e5_quarantines_the_originals_the_hotfix_rewrote(
+    isolated, hotfix_dumps, root_engine, seedless
+):
+    """C-29: on a source at the hotfix's head the descriptions are what its
+    revision left, and B0 has what it rewrote. E5 cleans v2.12's text again
+    (what uvlhub.io shows stays) and keeps B0's original beside it; E1 drops
+    the schema it restored B0 in."""
+    b1, b0 = hotfix_dumps
+    params = isolated(
+        "b0",
+        dump=b1,
+        b0=b0,
+        b0_schema="iso_b0_b0",
+        expected_head="f7a8b9c0d1e2",
+        allow_open_conflicts=True,
+        stages=("E0", "E1", "E3", "E4", "E5"),
+    )
+    report = run(params)
+    facts = report["facts"]
+    assert facts["b0"]["rows"] == len(synthetic.content_rows()[0])
+    descriptions = facts["descriptions"]
+    assert descriptions["originals"] == "b0"
+    changed = [201, 202, 203, 204, 207, 208, 209, 210, 213, 214]
+    assert descriptions["b0_differs"] == changed
+    assert not any(alert.startswith("C-29") for alert in report["alerts"])
+    with root_engine.connect() as connection:
+        quarantined = {
+            row.ds_meta_data_id: row
+            for row in connection.exec_driver_sql(
+                f"SELECT * FROM `{params.work_schema}`.quarantine_description"
+            )
+        }
+        loaded = dict(
+            connection.exec_driver_sql(
+                f"SELECT id, description FROM `{params.target_schema}`.ds_meta_data"
+            ).all()
+        )
+        left = connection.exec_driver_sql(
+            "SELECT COUNT(*) FROM information_schema.schemata "
+            "WHERE schema_name = 'iso_b0_b0'"
+        ).scalar()
+    assert sorted(quarantined) == changed
+    assert quarantined[201].original == synthetic.description(1)
+    assert quarantined[201].sanitized == loaded[201] == "<p>About dataset 1</p>alert(1)"
+    assert loaded[205] == "<p>About dataset 5</p>" and 205 not in quarantined
+    assert left == 0
 
 
 # ── E4: identity ─────────────────────────────────────────────────────────
@@ -295,13 +345,13 @@ def test_e4_converts_the_keys_as_d12_says(migrated):
     assert tokens[9]["scopes"] == "read_dataset"
 
 
-# ── E5: content (first pass) ─────────────────────────────────────────────
+# ── E5: content ──────────────────────────────────────────────────────────
 
 
 def test_e5_loads_the_datasets_with_the_state_their_metadata_implies(migrated):
     datasets = by_id(target(migrated, "datasets"))
-    # 30 and 31: the tombstones of 290 and 292 (DM-4).
-    assert sorted(datasets) == [1, 2, 3, 4, 5, 7, 8, 9, 10, 13, 14, 30, 31]
+    # 30, 31 and 32: the tombstones of 290, 292 and 293 (DM-4).
+    assert sorted(datasets) == [1, 2, 3, 4, 5, 7, 8, 9, 10, 13, 14, 30, 31, 32]
     assert dropped(migrated, "datasets") == {
         6: "ghost_draft",
         11: "held_by_conflict",
@@ -310,14 +360,21 @@ def test_e5_loads_the_datasets_with_the_state_their_metadata_implies(migrated):
     state = {i: (d["status"], d["visibility"]) for i, d in datasets.items()}
     assert state[1] == ("published", "public")
     assert state[3] == ("sync_pending", "public")
+    # Its deposition's record is somebody else's (C-09).
     assert state[4] == ("failed", "public")
     assert state[5] == ("draft", "public")
     assert state[7] == ("published", "anonymous")
     assert state[9] == ("published", "public")
-    assert (
-        datasets[1]["published_at"] == datasets[1]["created_at"]
-        and datasets[5]["published_at"] is None
-    )
+    # §4.3: the day Zenodo published it, from its record; 7 has none
+    # (doi_record_missing), so its created_at while that is open.
+    assert datasets[1]["published_at"] == datetime(2026, 1, 25)
+    assert datasets[3]["published_at"] == datetime(2025, 6, 1)
+    assert datasets[7]["published_at"] == datasets[7]["created_at"]
+    assert datasets[4]["published_at"] is None and datasets[5]["published_at"] is None
+    assert migrated.report["facts"]["published_at"] == {
+        "zenodo": 5,
+        "created_at": [7, 8, 10],
+    }
     assert datasets[4]["publisher_record_id"] == "1007"
     # The identifier as dataset0005 makes it neutral: a DOI is the pid, and
     # a DOI or a deposition is zenodo's.
@@ -409,7 +466,7 @@ def test_e5_gives_each_dataset_its_public_id_root_and_concept(migrated):
         public_id_of("another key", 1, datasets[1]["created_at"])
         != (datasets[1]["public_id"])
     )
-    # 2 and 14 both claim 1 (C-05): the root is 1 for both.
+    # 14 stood on 1, as 2 does; its concept DOI puts it on 2 (C-05).
     assert {i: datasets[i]["lineage_root_id"] for i in (1, 2, 14, 5, 30)} == {
         1: 1,
         2: 1,
@@ -417,14 +474,21 @@ def test_e5_gives_each_dataset_its_public_id_root_and_concept(migrated):
         5: 5,
         30: 30,
     }
-    assert {i for i, d in datasets.items() if d["concept_pid"]} == {1, 2, 3, 14}
+    assert {i for i, d in datasets.items() if d["concept_pid"]} == {
+        1,
+        2,
+        3,
+        9,
+        14,
+        32,
+    }
     assert datasets[1]["concept_pid"] == synthetic.CONCEPT_DOI
 
 
 def test_e5_takes_the_concept_doi_v2_12_did_not_keep_from_zenodo(migrated):
-    """§4.3, CT-4: dataset 3's record in zenodo_snapshot gives its concept
-    DOI, in concept_pid and in the metadata /doi/<concept> resolves by; a
-    concept DOI v2.12 kept stays as it was."""
+    """§4.3, CT-4: the records of datasets 3 and 9 in zenodo_snapshot give
+    their concept DOIs, in concept_pid and in the metadata /doi/<concept>
+    resolves by; a concept DOI v2.12 kept stays as it was."""
     datasets = by_id(target(migrated, "datasets"))
     metas = by_id(target(migrated, "ds_meta_data"))
     assert datasets[3]["concept_pid"] == synthetic.DATASET_3_CONCEPT
@@ -432,24 +496,32 @@ def test_e5_takes_the_concept_doi_v2_12_did_not_keep_from_zenodo(migrated):
         metas[datasets[3]["ds_meta_data_id"]]["dataset_concept_doi"]
         == synthetic.DATASET_3_CONCEPT
     )
-    assert migrated.report["facts"]["concepts_from_zenodo"] == [3]
+    assert datasets[9]["concept_pid"] == "10.5281/zenodo.1010"
+    assert datasets[1]["concept_pid"] == synthetic.CONCEPT_DOI
+    assert migrated.report["facts"]["concepts_from_zenodo"] == [3, 9]
 
 
 def test_e5_orphan_metadata_becomes_a_tombstone_or_goes(migrated):
     """DM-4: the metadata v2.12 left with a DOI when it deleted their
     dataset become withdrawn datasets, which dataset's landing answers with
-    its tombstone; the one without a DOI goes."""
+    its tombstone, 293 with the DOI Zenodo minted, which v2.12 never saved
+    (A15-04); the one without a DOI goes."""
     assert [
         (t["doi"], t["ds_meta_data_id"], t["dataset_id"])
         for t in sorted(work(migrated, "tombstone"), key=lambda t: t["doi"])
-    ] == [(synthetic.ORPHAN_DOI, 290, 30), (synthetic.UNDATED_DOI, 292, 31)]
+    ] == [
+        (synthetic.ORPHAN_DOI, 290, 30),
+        (synthetic.UNDATED_DOI, 292, 31),
+        (synthetic.MINTED_DOI, 293, 32),
+    ]
     reasons = dropped(migrated, "ds_meta_data")
     assert reasons[291] == "orphan" and reasons[212] == "seed"
-    assert 290 not in reasons and 292 not in reasons
+    assert not {290, 292, 293} & set(reasons)
     datasets = by_id(target(migrated, "datasets"))
     for dataset_id, meta_id, doi in (
         (30, 290, synthetic.ORPHAN_DOI),
         (31, 292, synthetic.UNDATED_DOI),
+        (32, 293, synthetic.MINTED_DOI),
     ):
         tombstone = datasets[dataset_id]
         assert tombstone["status"] == "withdrawn"
@@ -464,6 +536,17 @@ def test_e5_orphan_metadata_becomes_a_tombstone_or_goes(migrated):
     assert datasets[30]["created_at"] == datetime(2025, 3, 1, 10, 0)
     assert datasets[30]["published_at"] == datetime(2025, 3, 2)
     assert (datasets[31]["created_at"], datasets[31]["published_at"]) == (T0, None)
+    assert (datasets[32]["created_at"], datasets[32]["published_at"]) == (
+        datetime(2025, 9, 10, 9, 30),
+        datetime(2025, 9, 10),
+    )
+    assert datasets[32]["concept_pid"] == synthetic.MINTED_CONCEPT
+    metas = by_id(target(migrated, "ds_meta_data"))
+    assert metas[293]["dataset_doi"] == synthetic.MINTED_DOI
+    assert migrated.report["facts"]["dois_minted_by_zenodo"] == {
+        "datasets": [],
+        "metadata_without_dataset": [293],
+    }
     assert datasets[31]["visibility"] == "anonymous"
     hidden = by_id(target(migrated, "ds_meta_data"))[292]["private_authors"]
     assert json.loads(hidden) == [
@@ -480,7 +563,11 @@ def test_e5_orphan_metadata_becomes_a_tombstone_or_goes(migrated):
     assert ("tombstone_undated", synthetic.UNDATED_DOI) in found
     assert ("tombstone_undated", synthetic.ORPHAN_DOI) not in found
     mapped = work(migrated, "id_map", "entity = 'tombstone'")
-    assert {(m["source_id"], m["target_id"]) for m in mapped} == {(290, 30), (292, 31)}
+    assert {(m["source_id"], m["target_id"]) for m in mapped} == {
+        (290, 30),
+        (292, 31),
+        (293, 32),
+    }
     publisher = by_id(target(migrated, "ds_meta_data"))[204]["api_publisher_user_id"]
     assert publisher is None
 
@@ -523,13 +610,97 @@ def test_a_tombstones_doi_answers_410_with_its_citation(migrated):
 
 
 def test_e5_leaves_the_content_faults_open_as_conflicts(migrated):
+    """What the plan resolves by hand (C-09, C-10, C-25, C-30) is open, for
+    a decision; the branch of 1 is not, its concept DOI repaired it."""
     found = conflicts(migrated)
     assert ("doi_not_zenodo", "10.5072/zenodo.55") in found
     # Dataset 10 carries the DOI of dataset 9's deposition (C-30).
     assert ("doi_not_its_deposition", "10.5281/zenodo.1011") in found
     assert ("doi_repeated", "10.5281/zenodo.1011") in found
-    assert ("lineage_branch", "1") in found
+    # Dataset 7's DOI has no record at Zenodo (§4.3).
+    assert ("doi_record_missing", "10.5281/zenodo.1009") in found
+    # Dataset 4's deposition names somebody else's record (C-09).
+    assert ("deposition_record_mismatch", "1007") in found
     assert ("checksum_unknown", "15") in found
+    assert [ref for kind, ref in found if kind == "doi_record_missing"] == [
+        "10.5281/zenodo.1009"
+    ]
+    assert not any(kind.startswith("lineage_") for kind, _ref in found)
+
+
+def test_e5_repairs_a_lineage_by_its_concept_doi(migrated):
+    """C-05: 2 and 14 both stood on 1; all three share a concept DOI, and in
+    the order of their created_at their versions rise (1, 2, 3), so 14
+    stands on 2, its version as it was. uvlhub_migration.curated says so."""
+    datasets = by_id(target(migrated, "datasets"))
+    assert [(i, datasets[i]["dataset_origin_id"]) for i in (1, 2, 14)] == [
+        (1, None),
+        (2, 1),
+        (14, 2),
+    ]
+    assert datasets[14]["dataset_version"] == 3
+    assert work(migrated, "curated") == [
+        {
+            "dataset_id": 14,
+            "lineage": f"C-05 {synthetic.CONCEPT_DOI}",
+            "old_origin_id": 1,
+            "old_version": 3,
+            "origin_id": 2,
+            "version": 3,
+        }
+    ]
+    assert migrated.report["facts"]["lineages_by_concept"] == {
+        "repaired": [
+            {"concept": synthetic.CONCEPT_DOI, "chain": [[1, None], [2, 1], [14, 2]]}
+        ],
+        "left": [],
+    }
+
+
+def test_e5_cleans_every_description_again_and_quarantines_the_originals(migrated):
+    """C-01 (D21): html_legacy, cleaned by dataset's sanitiser; the
+    original of each that changes in quarantine_description, with the
+    plan's two classes in the report. The source is before the hotfix, so
+    the originals are its own (C-29, test_e1_reads_b0_*)."""
+    metas = by_id(target(migrated, "ds_meta_data"))
+    assert {m["description_format"] for m in metas.values()} == {"html_legacy"}
+    assert metas[201]["description"] == "<p>About dataset 1</p>"
+    assert metas[202]["description"] == "<p>About dataset 2, in red</p>"
+    assert metas[205]["description"] == "<p>About dataset 5</p>"
+    quarantined = {
+        q["ds_meta_data_id"]: q for q in work(migrated, "quarantine_description")
+    }
+    loaded_with_script = [201, 203, 204, 207, 208, 209, 210, 213, 214]
+    assert sorted(quarantined) == sorted([202, *loaded_with_script])
+    assert quarantined[201] == {
+        "ds_meta_data_id": 201,
+        "original": synthetic.description(1),
+        "sanitized": "<p>About dataset 1</p>",
+    }
+    facts = migrated.report["facts"]["descriptions"]
+    assert facts["originals"] == "source" and facts["b0_differs"] is None
+    assert facts["active_content"] == loaded_with_script
+    assert (facts["quarantined"], facts["formatting"]) == (10, 1)
+    assert facts["elements"] == {"p": 11, "script": 9, "span": 1}
+
+
+def test_e5_makes_the_publication_doi_bare_and_says_each_tag_once(migrated):
+    """C-16 and C-23 (the tags a string, as decided)."""
+    metas = by_id(target(migrated, "ds_meta_data"))
+    assert metas[201]["publication_doi"] == "10.1000/paper1"
+    assert metas[202]["publication_doi"] == "https://example.org/paper2"
+    assert metas[209]["publication_doi"] == "in press"
+    assert metas[205]["publication_doi"] is None
+    assert metas[201]["tags"] == "uvl,models" and metas[203]["tags"] == "uvl,models"
+    assert metas[290]["tags"] is None
+    notes = migrated.report["notes"]
+    assert notes["ds_meta_data: publication_doi normalised (C-16)"] == 7
+    assert (
+        notes[
+            "ds_meta_data: publication_doi neither a DOI nor an address, kept as it is (C-16)"
+        ]
+        == 1
+    )
 
 
 def test_e5_files_and_feature_models(migrated):
@@ -540,10 +711,17 @@ def test_e5_files_and_feature_models(migrated):
     assert {f["artifact_type"] for f in files.values()} == {"uvl"}
     models = by_id(target(migrated, "feature_model"))
     assert models[66]["dataset_id"] == 5  # its file's dataset (C-07)
-    # E5 copies v2.12's metrics of the files it loads (E9 makes them again).
+    # E5 copies v2.12's metrics of the files it loads, legacy until E9
+    # makes them again (§7.3, test_derived).
     copied = {c["entity"]: c for c in work(migrated, "counts")}["hubfile_metrics"]
     assert (copied["source"], copied["target"]) == (2, 1)
     assert dropped(migrated, "hubfile_metrics") == {12: "hubfile_not_loaded"}
+    assert (
+        migrated.report["notes"][
+            "hubfile_metrics: v2.12's, legacy until extracted again (§7.3)"
+        ]
+        == 1
+    )
 
 
 def test_e5_moves_votes_to_the_root_and_drops_self_votes(migrated):
@@ -583,14 +761,13 @@ def test_e7_gives_every_table_its_counter_with_the_margin(migrated):
         assert given == 10000 and counters[table] >= given
 
 
-def test_e7_checks_pass_but_the_ones_this_pass_cannot_meet(migrated):
+def test_e7_checks_pass_and_what_keeps_the_cutover_off(migrated):
     checks = {c["name"]: c for c in migrated.report["checks"]}
     failing = {name for name, c in checks.items() if not c["ok"]}
     # V-08 holds: dataset 3's file in mismatch comes back from Zenodo (§6.2
-    # step 5); V-09: the branch of dataset 1 waits for the repair by concept
-    # DOI; E9-reindex: the rehearsal has no search node (test_derived).
-    assert failing == {"V-09", "E9-reindex"}
-    assert not checks["V-09"]["blocking"]
+    # step 5); V-09: the concept DOI repaired the branch of dataset 1;
+    # E9-reindex: the rehearsal has no search node (test_derived).
+    assert failing == {"E9-reindex"}
     for name in (
         "V-01",
         "V-02",
@@ -599,13 +776,22 @@ def test_e7_checks_pass_but_the_ones_this_pass_cannot_meet(migrated):
         "V-05",
         "V-06",
         "V-07",
+        "V-09",
         "V-10",
         "V-11",
+        "V-13",
         "V-15",
         "V-16",
         "empty-tables",
     ):
-        assert checks[name]["ok"], name
+        assert checks[name]["ok"] and checks[name]["blocking"], name
+    assert {name for name, c in checks.items() if not c["blocking"]} == {
+        "E9-factlabel",
+        "E9-formats",
+        "E9-reindex",
+    }
+    # What keeps it off: the conflicts left open, and DM-1.
+    assert migrated.report["conflicts"]
     # Nothing in the tests says what v2.12's key was (DM-1).
     assert migrated.report["dm1"] == {"rotation_checked": False}
     assert migrated.report["ready_for_cutover"] is False

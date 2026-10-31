@@ -82,10 +82,12 @@ def test_the_rehearsal_profiles_the_source(migrated):
     profile = migrated.report["profile"]
     assert migrated.report["facts"]["schema_drift"] == 0
     expected = {
-        "P-01": 3,  # metadata 290 and 292, with a DOI, and 291
+        "P-01": 4,  # metadata 290 and 292, with a DOI, 293 with "", and 291
         "P-02": 3,  # author 6, of no metadata, 7 of 290 and 9 of 292
         "P-03": 1,  # 10.5281/zenodo.1011
         "P-04b": 1,  # dataset 1, origin of 2 and 14
+        "P-04c": 1,  # 14, version 3 on 1's 1
+        "P-09": 2,  # 204, and 293 with ""
         "P-07": 1,  # dataset 13's dup.uvl
         "P-12b": 1,  # alice on her own dataset 1
         "P-17b": 0,

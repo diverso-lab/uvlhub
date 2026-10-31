@@ -32,30 +32,40 @@ Who is who, so a test can say what it expects:
     datasets  1  published, two files, one in a sub folder with " " and "#"
               2  version 2 of 1, its file's checksum an md5 (C-24)
               3  sync pending, its file in mismatch with its row
-              4  a deposition without a DOI (failed)
+              4  a deposition without a DOI whose record at Zenodo is
+                 another's (C-09): failed
               5  a draft whose file is missing
               6  a ghost draft (DM-3)
-              7  anonymous, with authors (DS-3)
+              7  anonymous, with authors (DS-3), and no record at Zenodo
+                 (C-30)
               8  a sandbox DOI (C-30)
               9, 10  one DOI (C-10); 9 with NULL publication type and anonymity
              11  owned by a held account (17)
              12  the seed's
              13  a draft with two rows on one path (C-11), a checksum of no
                  algorithm (C-25) and a feature model of dataset 5's file (C-07)
-             14  version 2 of 1 as well: a branch (C-05)
+             14  version 3, made from 1 as 2 was: a branch their concept
+                 DOI repairs (C-05)
 
 and metadata without a dataset: two with a DOI (290, which the Zenodo
-snapshot dates, and 292, anonymous, which nothing dates) and one without
+snapshot dates, and 292, anonymous, which nothing dates), one with a DOI
+v2.12 never saved, which Zenodo minted (293, A15-04), and one without
 (291); an author of no metadata, votes to move, to merge and to drop,
 transfers, the usage records E6 aggregates (and the ones it may not), DOI
 mappings with a chain, a cycle and a dead end, a trigger and a view (P-28),
 and counters ahead of the rows, as when the last row was deleted (§4.1).
+
+Every description has a script (C-01) but 2's, with formatting only, and
+5's, clean; the publication DOIs are doi.org addresses, but 2's (another
+address) and 9's (neither); the tags are written with blanks, 1's with a
+repeat (C-16, C-23). zenodo_snapshot() says which records Zenodo has.
 """
 
 from __future__ import annotations
 
 import hashlib
 import json
+import re
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -388,11 +398,49 @@ DATASETS = {
     11: (17, ago(100), "10.5281/zenodo.1013", 1013, 1, 0, "OTHER", None, 1, None),
     12: (5, ago(590), "10.1234/dataset1", 1, 1, 0, "DATA_MANAGEMENT_PLAN", None, 1, 3),
     13: (1, ago(3), None, None, 1, 0, None, None, 1, None),
-    14: (1, ago(190), "10.5281/zenodo.1015", 1015, 1, 0, "JOURNAL_ARTICLE", 1, 2, None),
+    14: (1, ago(190), "10.5281/zenodo.1015", 1015, 1, 0, "JOURNAL_ARTICLE", 1, 3, None),
 }
 CONCEPT_DOI = "10.5281/zenodo.1000"
 ORPHAN_DOI = "10.5281/zenodo.2001"
 UNDATED_DOI = "10.5281/zenodo.2003"
+# Zenodo minted it for deposition 2005, and v2.12 saved "" (A15-04).
+MINTED_DOI = "10.5281/zenodo.2005"
+
+
+def description(dataset_id: int) -> str:
+    """What v2.12 stored: a script but in 2's (formatting only) and 5's."""
+    if dataset_id == 2:
+        return '<p>About dataset 2, <span style="color:red">in red</span></p>'
+    if dataset_id == 5:
+        return "<p>About dataset 5</p>"
+    return f"<p>About dataset {dataset_id}</p><script>alert({dataset_id})</script>"
+
+
+# The hotfix D1's allowlist (f7a8b9c0d1e2): what bleach.clean(strip=True)
+# leaves of the markup above, the elements it does not name gone, their
+# text kept.
+_HOTFIX_DROPS = re.compile(
+    r"</?(?!(?:p|br|strong|em|b|i|u|ul|ol|li|a)\b)[a-z][^>]*>", re.IGNORECASE
+)
+
+
+def hotfixed(text: str) -> str:
+    return _HOTFIX_DROPS.sub("", text or "").strip()
+
+
+def publication_doi(dataset_id: int):
+    if dataset_id == 2:
+        return "  https://example.org/paper2 "
+    if dataset_id == 9:
+        return "in press"
+    return f"https://doi.org/10.1000/paper{dataset_id}"
+
+
+def tags(dataset_id: int) -> str:
+    if dataset_id == 12:
+        return "tag1, tag2"
+    return "uvl, models, uvl, " if dataset_id == 1 else "uvl, models"
+
 
 # Files: id -> (dataset, feature model, directory, name, kind), where kind
 # says what the mirror holds: "sha256" or "md5" (it matches), "mismatch"
@@ -463,16 +511,14 @@ def content_rows():
                 "id": 200 + dataset_id,
                 "deposition_id": deposition,
                 "title": "Sample dataset 1" if seed else f"Dataset {dataset_id}",
-                "description": f"<p>About dataset {dataset_id}</p><script>alert({dataset_id})</script>",
+                "description": description(dataset_id),
                 "publication_type": kind,
-                "publication_doi": f"https://doi.org/10.1000/paper{dataset_id}"
-                if doi
-                else None,
+                "publication_doi": publication_doi(dataset_id) if doi else None,
                 "dataset_doi": doi,
                 "dataset_concept_doi": CONCEPT_DOI
                 if dataset_id in (1, 2, 14)
                 else None,
-                "tags": "tag1, tag2" if seed else "uvl, models",
+                "tags": tags(dataset_id),
                 "ds_metrics_id": metrics,
                 "dataset_anonymous": anonymous,
                 "metadata_synced": synced,
@@ -518,6 +564,21 @@ def content_rows():
             "tags": None,
             "ds_metrics_id": None,
             "dataset_anonymous": 1,
+            "metadata_synced": 1,
+            "api_publisher_user_id": None,
+        },
+        {
+            "id": 293,
+            "deposition_id": 2005,
+            "title": "Deleted, minted",
+            "description": "",
+            "publication_type": "OTHER",
+            "publication_doi": None,
+            "dataset_doi": "",
+            "dataset_concept_doi": None,
+            "tags": None,
+            "ds_metrics_id": None,
+            "dataset_anonymous": 0,
             "metadata_synced": 1,
             "api_publisher_user_id": None,
         },
@@ -838,9 +899,44 @@ DATASET_3_RECORD = {
 }
 
 
+def _published(deposition_id, day, title, concept=CONCEPT_DOI, **extra):
+    return {
+        "id": deposition_id,
+        "doi": f"10.5281/zenodo.{deposition_id}",
+        "conceptdoi": concept,
+        "status": "published",
+        "created": f"{day}T09:30:00.000000+00:00",
+        "metadata": {"publication_date": day, "title": title},
+        **extra,
+    }
+
+
+# The records of the published datasets, which give the day each was
+# published (§4.3): 1, 2 and 14 of one concept, 9 of its own, which v2.12
+# did not keep; dataset 7 has none (C-30), and 10 shares 9's DOI (C-10).
+PUBLISHED_RECORDS = (
+    _published(1001, "2026-01-25", "Dataset 1"),
+    _published(1003, "2026-05-05", "Dataset 2"),
+    _published(1015, "2026-05-15", "Dataset 14"),
+    _published(1011, "2026-07-24", "Dataset 9", concept="10.5281/zenodo.1010"),
+)
+# Deposition 1007 of dataset 4, which v2.12 saved no DOI for, names a record
+# of somebody else's (C-09); 2005 is the one of metadata 293, whose dataset
+# v2.12 deleted, published with the DOI v2.12 never saved (A15-04).
+OTHERS_RECORD = _published(1007, "2026-02-01", "Somebody else's record")
+MINTED_CONCEPT = "10.5281/zenodo.2004"
+MINTED_RECORD = _published(2005, "2025-09-10", "Deleted, minted", MINTED_CONCEPT)
+
+
 def zenodo_snapshot():
     found = []
-    for record in (ORPHAN_RECORD, DATASET_3_RECORD):
+    for record in (
+        ORPHAN_RECORD,
+        DATASET_3_RECORD,
+        *PUBLISHED_RECORDS,
+        OTHERS_RECORD,
+        MINTED_RECORD,
+    ):
         text = json.dumps(record, sort_keys=True)
         found.append(
             {

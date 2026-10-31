@@ -216,13 +216,8 @@ def root_engine(server):
     engine.dispose()
 
 
-@pytest.fixture(scope="session")
-def synthetic_dump(server, root_engine, tmp_path_factory) -> Path:
-    """The dirty v2.12 dumped as B1's logical copy is (§9.6), then dropped,
-    so only the restored copy remains, as on the day."""
-    with root_engine.connect() as connection:
-        synthetic.build(connection, SYNTHETIC_SCHEMA)
-    dump = tmp_path_factory.mktemp("b1") / "uvlhub_v2_12.sql"
+def _dump(server, tmp_path_factory, schema, dump: Path, *tables) -> Path:
+    """``schema`` (or ``tables`` of it) dumped as B1 is, as root."""
     folder = tmp_path_factory.mktemp("client")
     defaults = folder / "client.cnf"
     defaults.write_text(f"[client]\npassword={server.root_password}\n")
@@ -241,15 +236,61 @@ def synthetic_dump(server, root_engine, tmp_path_factory) -> Path:
                 "--events",
                 "--hex-blob",
                 "--default-character-set=utf8mb4",
-                SYNTHETIC_SCHEMA,
+                schema,
+                *tables,
             ],
             stdout=out,
             check=True,
         )
+    return dump
+
+
+@pytest.fixture(scope="session")
+def synthetic_dump(server, root_engine, tmp_path_factory) -> Path:
+    """The dirty v2.12 dumped as B1's logical copy is (§9.6), then dropped,
+    so only the restored copy remains, as on the day."""
+    with root_engine.connect() as connection:
+        synthetic.build(connection, SYNTHETIC_SCHEMA)
+    dump = _dump(
+        server,
+        tmp_path_factory,
+        SYNTHETIC_SCHEMA,
+        tmp_path_factory.mktemp("b1") / "uvlhub_v2_12.sql",
+    )
     with root_engine.connect() as connection:
         connection.exec_driver_sql(f"DROP DATABASE `{SYNTHETIC_SCHEMA}`")
         connection.commit()
     return dump
+
+
+@pytest.fixture(scope="session")
+def hotfix_dumps(server, root_engine, tmp_path_factory) -> tuple[Path, Path]:
+    """(B1, B0) of the same v2.12 once the hotfix D1 is deployed (C-29):
+    B0 its ds_meta_data as the hotfix's upgrade notes dump it, before its
+    revision f7a8b9c0d1e2 runs; B1 the whole source after it, every
+    description cleaned in place as its bleach leaves it."""
+    schema = f"{SYNTHETIC_SCHEMA}_hotfix"
+    folder = tmp_path_factory.mktemp("hotfix")
+    with root_engine.connect() as connection:
+        synthetic.build(connection, schema, head="f7a8b9c0d1e2")
+    b0 = _dump(server, tmp_path_factory, schema, folder / "b0.sql", "ds_meta_data")
+    with root_engine.connect() as connection:
+        rows = connection.exec_driver_sql(
+            f"SELECT id, description FROM `{schema}`.ds_meta_data"
+        ).all()
+        for meta_id, description in rows:
+            connection.execute(
+                sa.text(
+                    f"UPDATE `{schema}`.ds_meta_data SET description = :d WHERE id = :i"
+                ),
+                {"d": synthetic.hotfixed(description), "i": meta_id},
+            )
+        connection.commit()
+    b1 = _dump(server, tmp_path_factory, schema, folder / "b1.sql")
+    with root_engine.connect() as connection:
+        connection.exec_driver_sql(f"DROP DATABASE `{schema}`")
+        connection.commit()
+    return b1, b0
 
 
 @pytest.fixture(scope="session")

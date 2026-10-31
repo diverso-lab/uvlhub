@@ -9,14 +9,14 @@ creates ``uvlhub3``, ``uvlhub_v2_src`` and the outputs in
 ``uvlhub_migration``, and keeps the versioned inputs of
 ``uvlhub_migration_inputs``.
 
-Stages (§3.4), and what this first pass does of each:
+Stages (§3.4):
 
     E0  preflight     the safeguards, the parameters, the pins      done
     E1  source        the dump restored as root, P-19, P-28          done
     E2  profiling     P-00 to P-28 against a clean v2.12, decisions  done
     E3  schema        uvlhub3 at head, V-12, V-14, the contract      done
     E4  identity      accounts, profiles, identities, tokens         done
-    E5  content       datasets and everything hanging off them       FIRST PASS
+    E5  content       datasets and everything hanging off them       done
     E6  legacy        usage aggregates, legacy_url, held notices     done
     E7  post-load     counters, foreign keys, counts, V-*           done
     E8  files         hubfile's storage-migrate, file_manifest       done
@@ -45,10 +45,10 @@ contract it writes to is ``contract.toml``.
 """
 
 # Recorded in every run and report, with the contract's version.
-MIGRATOR_VERSION = "0.1.0"
+MIGRATOR_VERSION = "0.2.0"
 
-# Every stage, in order. The ones this pass leaves for later are skipped by
-# the pipeline and named in the report.
+# Every stage, in order. A stage named in NOT_YET would be skipped by the
+# pipeline and named in the report; none is.
 STAGES = ("E0", "E1", "E2", "E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10")
 NOT_YET = ()
 # What E9 makes again, in the order it runs: the index reads the others.

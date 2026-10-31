@@ -430,7 +430,7 @@ PROBES = (
         "DOIs of more than one metadata",
         "C-10 (E5): a conflict, doi_repeated",
         "SELECT dataset_doi, COUNT(*) AS n FROM {s}.ds_meta_data "
-        "WHERE dataset_doi IS NOT NULL GROUP BY dataset_doi HAVING n > 1",
+        "WHERE TRIM(dataset_doi) <> '' GROUP BY dataset_doi HAVING n > 1",
     ),
     Probe(
         "P-03b",
@@ -442,21 +442,21 @@ PROBES = (
     Probe(
         "P-04",
         "versions without an origin",
-        "C-05 (E5): a conflict, lineage_no_origin",
+        "C-05 (E5): repaired by its concept DOI, else a conflict, lineage_no_origin",
         "SELECT id, dataset_version FROM {s}.datasets "
         "WHERE dataset_version > 1 AND dataset_origin_id IS NULL",
     ),
     Probe(
         "P-04b",
         "origins of more than one version",
-        "C-05 (E5): a conflict, lineage_branch",
+        "C-05 (E5): repaired by their concept DOI, else a conflict, lineage_branch",
         "SELECT dataset_origin_id, COUNT(*) AS n FROM {s}.datasets "
         "WHERE dataset_origin_id IS NOT NULL GROUP BY dataset_origin_id HAVING n > 1",
     ),
     Probe(
         "P-04c",
         "versions that do not follow their origin's",
-        "C-05 (E5): a conflict, lineage_gap",
+        "C-05 (E5): repaired by its concept DOI, else a conflict, lineage_gap",
         "SELECT c.id, c.dataset_version, p.dataset_version AS origin_version "
         "FROM {s}.datasets c JOIN {s}.datasets p ON p.id = c.dataset_origin_id "
         "WHERE c.dataset_version <> p.dataset_version + 1",
@@ -464,8 +464,9 @@ PROBES = (
     Probe(
         "P-05",
         "lineages with more than one concept DOI",
-        "C-05 (E5): loaded as they are; the repair by concept DOI waits for "
-        "the Zenodo snapshot (content.DEFERRED)",
+        "C-05 (E5): each concept DOI's datasets one lineage where their "
+        "versions rise with their dates (content.repair_lineages); the "
+        "lineages of the curation (RU-06) as it made them",
         "WITH RECURSIVE lin AS ("
         " SELECT id, id AS root FROM {s}.datasets WHERE dataset_origin_id IS NULL"
         " UNION ALL"
@@ -497,21 +498,24 @@ PROBES = (
         "SELECT d.id, d.created_at FROM {s}.datasets d "
         "JOIN {s}.ds_meta_data m ON m.id = d.ds_meta_data_id "
         "LEFT JOIN {s}.hubfiles h ON h.dataset_id = d.id "
-        "WHERE h.id IS NULL AND m.dataset_doi IS NULL AND m.deposition_id IS NULL",
+        "WHERE h.id IS NULL AND COALESCE(TRIM(m.dataset_doi), '') = '' "
+        "AND m.deposition_id IS NULL",
     ),
     Probe(
         "P-09",
         "depositions without a DOI",
-        "C-09 (E5): failed, until the Zenodo snapshot says otherwise",
+        "C-09, A15-04 (E5): published with the DOI Zenodo minted when its "
+        "record in zenodo_snapshot validates (a tombstone without its "
+        "dataset); failed without one; a conflict when it is another's",
         "SELECT id, deposition_id FROM {s}.ds_meta_data "
-        "WHERE deposition_id IS NOT NULL AND dataset_doi IS NULL",
+        "WHERE deposition_id IS NOT NULL AND COALESCE(TRIM(dataset_doi), '') = ''",
     ),
     Probe(
         "P-09b",
         "DOIs whose metadata Zenodo does not have yet",
         "C-09 (E5): sync_pending, held as DM-9 says",
         "SELECT id, dataset_doi FROM {s}.ds_meta_data "
-        "WHERE dataset_doi IS NOT NULL AND metadata_synced = 0",
+        "WHERE TRIM(dataset_doi) <> '' AND metadata_synced = 0",
     ),
     Probe(
         "P-10",
@@ -654,8 +658,9 @@ PROBES = (
     Probe(
         "P-22",
         "descriptions with markup",
-        "C-01 (E5): copied as they are; re-sanitising them waits for DS-1 "
-        "(content.DEFERRED)",
+        "C-01, C-29 (E5): cleaned again as html_legacy, the originals in "
+        "quarantine_description (B0's after the hotfix D1); the report counts "
+        "each element and the active content (content.describe)",
         "SELECT id FROM {s}.ds_meta_data WHERE description LIKE '%<%'",
     ),
     Probe(
@@ -682,9 +687,10 @@ PROBES = (
     Probe(
         "P-25b",
         "DOIs that are not Zenodo's, or not their deposition's",
-        "C-30 (E5): a conflict, doi_not_zenodo or doi_not_its_deposition",
+        "C-30 (E5): a conflict, doi_not_zenodo or doi_not_its_deposition; "
+        "one whose record does not validate is doi_record_missing",
         "SELECT id, dataset_doi, deposition_id FROM {s}.ds_meta_data "
-        "WHERE dataset_doi IS NOT NULL AND (dataset_doi NOT LIKE '10.5281/zenodo.%' "
+        "WHERE TRIM(dataset_doi) <> '' AND (dataset_doi NOT LIKE '10.5281/zenodo.%' "
         "OR deposition_id IS NULL OR dataset_doi <> CONCAT('10.5281/zenodo.', deposition_id))",
     ),
     Probe(

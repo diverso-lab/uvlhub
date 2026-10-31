@@ -51,14 +51,20 @@ CONFLICTS = {
     "identity_second_link": "C-14 (P-11): every identity of the pair is held",
     "identity_other_account": "C-14: the row of orcid or github is held",
     "identity_second_identity": "C-14: the row of orcid or github is held",
-    # E5
+    # E5. A lineage its concept DOI does not repair (content.repair_lineages)
+    # is decided in curation.toml (RU-06): a branch accepted as it is fails
+    # V-09, which blocks.
     "lineage_origin_not_loaded": "C-05: it loads as an original",
     "lineage_no_origin": "C-05: it loads as it is",
-    "lineage_branch": "C-05: the branches load as they are",
+    "lineage_branch": "C-05: the branches load as they are, and V-09 stops E7",
     "lineage_gap": "C-05: it loads as it is",
     "metadata_shared": "P-03: the datasets load, sharing it",
     "doi_not_zenodo": "C-30: it loads with its DOI",
     "doi_not_its_deposition": "C-30: it loads with its DOI",
+    "doi_record_missing": "C-30 (§4.3): it loads with its DOI, published at its "
+    "created_at",
+    "deposition_record_mismatch": "C-09 (§4.3, A15-04): it loads as failed, "
+    "without the record's DOI",
     "doi_repeated": "C-10: the datasets load, each with it",
     "file_two_datasets": "C-07: the feature model follows its file's dataset",
     "duplicate_path": "C-11: the name with ~<id> DM-10 gives is another "

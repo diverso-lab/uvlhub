@@ -171,14 +171,14 @@ role = "load"
 id = { type = "int(11)", nullable = false, source = "ds_meta_data.id" }
 deposition_id = { type = "int(11)", nullable = true, source = "ds_meta_data.deposition_id" }
 title = { type = "varchar(120)", nullable = false, collation = "utf8mb4_unicode_ci", source = "ds_meta_data.title" }
-description = { type = "text", nullable = false, collation = "utf8mb4_unicode_ci", source = "ds_meta_data.description", rule = "as v2.12 stored it, html_legacy; dataset cleans it with its allowlist whenever it is shown (DS-1)" }
-description_format = { type = "varchar(16)", nullable = false, collation = "utf8mb4_unicode_ci", rule = "html_legacy: every description of v2.12 is TinyMCE's HTML (D21); the column's default, so a load that leaves it out writes the same" }
+description = { type = "text", nullable = false, collation = "utf8mb4_unicode_ci", source = "ds_meta_data.description", rule = "cleaned again by dataset's descriptions.clean_html, as v2.12 has it now (C-01, DS-1); the original of one that changes in quarantine_description, B0's after the hotfix D1 (C-29); V-13 cleans it once more" }
+description_format = { type = "varchar(16)", nullable = false, collation = "utf8mb4_unicode_ci", rule = "html_legacy: every description of v2.12 is TinyMCE's HTML (D21), written explicitly" }
 publication_type = { type = "enum('ANNOTATION_COLLECTION','BOOK','BOOK_SECTION','CONFERENCE_PAPER','DATA_MANAGEMENT_PLAN','JOURNAL_ARTICLE','PATENT','PREPRINT','PROJECT_DELIVERABLE','PROJECT_MILESTONE','PROPOSAL','REPORT','SOFTWARE_DOCUMENTATION','TAXONOMIC_TREATMENT','TECHNICAL_NOTE','THESIS','WORKING_PAPER','OTHER')", nullable = true, collation = "utf8mb4_unicode_ci", source = "ds_meta_data.publication_type" }
-publication_doi = { type = "varchar(120)", nullable = true, collation = "utf8mb4_unicode_ci", source = "ds_meta_data.publication_doi" }
-dataset_doi = { type = "varchar(120)", nullable = true, collation = "utf8mb4_unicode_ci", source = "ds_meta_data.dataset_doi" }
-dataset_concept_doi = { type = "varchar(120)", nullable = true, collation = "utf8mb4_unicode_ci", source = "ds_meta_data.dataset_concept_doi" }
+publication_doi = { type = "varchar(120)", nullable = true, collation = "utf8mb4_unicode_ci", source = "ds_meta_data.publication_doi", rule = "a DOI bare, an http(s) address trimmed, as dataset's publication_doi_of reads it; anything else as it is (C-16)" }
+dataset_doi = { type = "varchar(120)", nullable = true, collation = "utf8mb4_unicode_ci", source = "ds_meta_data.dataset_doi", rule = "as it is; without one, the DOI of the deposition's record in zenodo_snapshot when it validates by id and title (A15-04)" }
+dataset_concept_doi = { type = "varchar(120)", nullable = true, collation = "utf8mb4_unicode_ci", source = "ds_meta_data.dataset_concept_doi", rule = "without one, the conceptdoi of its record in zenodo_snapshot when it validates (CT-4)" }
 api_publisher_user_id = { type = "int(11)", nullable = true, source = "ds_meta_data.api_publisher_user_id", rule = "NULL when that account is not loaded" }
-tags = { type = "varchar(120)", nullable = true, collation = "utf8mb4_unicode_ci", source = "ds_meta_data.tags" }
+tags = { type = "varchar(120)", nullable = true, collation = "utf8mb4_unicode_ci", source = "ds_meta_data.tags", rule = "split on commas, each trimmed, empty and repeated ones gone, the spelling kept, joined by ',' (C-23, a string as decided)" }
 ds_metrics_id = { type = "int(11)", nullable = true, source = "ds_meta_data.ds_metrics_id" }
 dataset_anonymous = { type = "tinyint(1)", nullable = true, source = "ds_meta_data.dataset_anonymous" }
 metadata_synced = { type = "tinyint(1)", nullable = false, source = "ds_meta_data.metadata_synced" }
@@ -197,18 +197,18 @@ ds_meta_data_id = { type = "int(11)", nullable = false, source = "datasets.ds_me
 created_at = { type = "datetime", nullable = false, source = "datasets.created_at", rule = "a tombstone's is its record's in zenodo_snapshot, else T0, with a conflict (DM-4)" }
 feature_model_count = { type = "int(11)", nullable = false, rule = "the feature models loaded for the dataset; 0 for a tombstone" }
 dataset_version = { type = "int(11)", nullable = false, source = "datasets.dataset_version", rule = "1 for a tombstone" }
-dataset_origin_id = { type = "int(11)", nullable = true, source = "datasets.dataset_origin_id", rule = "NULL when the origin is not loaded, with a conflict (C-05)" }
+dataset_origin_id = { type = "int(11)", nullable = true, source = "datasets.dataset_origin_id", rule = "the curation's (RU-06); else the one before it among the datasets of its concept DOI, by created_at, where their versions rise (C-05); NULL when the origin is not loaded, with a conflict" }
 updated_at = { type = "datetime", nullable = false, rule = "datasets.created_at (dataset0002), or the tombstone's" }
-status = { type = "varchar(20)", nullable = false, collation = "utf8mb4_unicode_ci", rule = "dataset's state_from_metadata (4.3); withdrawn for a tombstone (DM-4)" }
+status = { type = "varchar(20)", nullable = false, collation = "utf8mb4_unicode_ci", rule = "dataset's state_from_metadata (4.3), with the DOI Zenodo minted where v2.12 saved none (A15-04); withdrawn for a tombstone (DM-4)" }
 visibility = { type = "varchar(32)", nullable = false, collation = "utf8mb4_unicode_ci", rule = "dataset's state_from_metadata (4.3)" }
 publisher_record_id = { type = "varchar(255)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "ds_meta_data.deposition_id as text" }
-published_at = { type = "datetime", nullable = true, rule = "datasets.created_at when published (first pass; Zenodo's date in the final E5); a tombstone's record's publication_date" }
+published_at = { type = "datetime", nullable = true, rule = "when published, the publication_date of its record in zenodo_snapshot (4.3), datasets.created_at while doi_record_missing is open; a tombstone's record's publication_date" }
 withdrawn_at = { type = "datetime", nullable = true, rule = "NULL: v2.12 kept no date of a deletion" }
 withdrawal_reason = { type = "varchar(32)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "other for a tombstone (DM-4), NULL otherwise" }
 withdrawal_note = { type = "varchar(500)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "content.TOMBSTONE_NOTE for a tombstone, NULL otherwise" }
 withdrawn_by_id = { type = "int(11)", nullable = true, rule = "NULL" }
 provider = { type = "varchar(32)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "zenodo when ds_meta_data has a DOI or a deposition_id, NULL otherwise (dataset0005)" }
-pid = { type = "varchar(255)", nullable = true, collation = "utf8mb4_bin", rule = "ds_meta_data.dataset_doi, which stays there too, NULL without one (dataset0005, exact since dataset0012)" }
+pid = { type = "varchar(255)", nullable = true, collation = "utf8mb4_bin", rule = "ds_meta_data.dataset_doi as loaded (the minted one, A15-04), which stays there too, NULL without one (dataset0005, exact since dataset0012)" }
 pid_scheme = { type = "varchar(16)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "doi with a pid, NULL otherwise (dataset0005)" }
 publication_error = { type = "longtext", nullable = true, collation = "utf8mb4_bin", rule = "NULL" }
 public_id = { type = "varchar(26)", nullable = false, collation = "utf8mb4_unicode_ci", rule = "a ULID of created_at whose random bits are the first 80 of HMAC-SHA256(MIGRATION_PUBLIC_ID_KEY, 'dataset:<id>'), the same every run (CO-5, 4.2)" }
@@ -260,15 +260,17 @@ feature_model_id = { type = "int(11)", nullable = true, source = "hubfiles.featu
 [tables.hubfile_metrics]
 # Copied by name, every column, and made again in E9 by factlabel's
 # metrics-backfill --force from each FactLabel it computes; a file whose
-# FactLabel fails keeps v2.12's. Plan §7.3 asks for status = 'legacy', a
-# column factlabel does not have yet.
+# FactLabel fails keeps v2.12's. Plan §7.3's status = 'legacy' is
+# extractor_version, in factlabel's own terms: a row of another version
+# than its EXTRACTOR_VERSION is stale, so metrics-status counts it and
+# metrics-backfill extracts it again.
 owner = "splent_feature_factlabel"
 role = "load"
 
 [tables.hubfile_metrics.columns]
 hubfile_id = { type = "int(11)", nullable = false, source = "hubfile_metrics.hubfile_id" }
 extracted_at = { type = "datetime", nullable = false, source = "hubfile_metrics.extracted_at" }
-extractor_version = { type = "varchar(20)", nullable = false, collation = "utf8mb4_unicode_ci", source = "hubfile_metrics.extractor_version" }
+extractor_version = { type = "varchar(20)", nullable = false, collation = "utf8mb4_unicode_ci", source = "hubfile_metrics.extractor_version", rule = "'legacy:<v2.12's>' until factlabel extracts it again (7.3)" }
 parse_error = { type = "text", nullable = true, collation = "utf8mb4_unicode_ci", source = "hubfile_metrics.parse_error" }
 features = { type = "int(11)", nullable = true, source = "hubfile_metrics.features" }
 abstract_features = { type = "int(11)", nullable = true, source = "hubfile_metrics.abstract_features" }

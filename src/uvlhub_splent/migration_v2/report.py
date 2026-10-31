@@ -6,11 +6,12 @@ success. The run's row gets completed_at only when every stage went
 through: that is what the next run's E0 reads as migration.completed.
 
 ``ready_for_cutover`` is True only for a run with nothing pending: no stage
-skipped, no open conflict, no check failed, no first pass, and SECRET_KEY
-checked to be another than v2.12's (DM-1, E0). It is never True in this
-version, since E5 is a first pass. The report is signed with the
-operator's name and the sha256 of its own content; a real signature (GPG,
-the operator's key) is the runbook's.
+skipped or stopped, no open conflict, no blocking check failed, E5 a final
+pass with nothing deferred (content.FIRST_PASS, content.DEFERRED), and
+SECRET_KEY checked to be another than v2.12's (DM-1, E0). E9's checks do
+not count: what they make is made again once 3.0 is up, and the alerts say
+which. The report is signed with the operator's name and the sha256 of its
+own content; a real signature (GPG, the operator's key) is the runbook's.
 """
 
 from __future__ import annotations
@@ -22,7 +23,7 @@ from collections import Counter
 import sqlalchemy as sa
 
 from uvlhub_splent.migration_v2 import MIGRATOR_VERSION, NOT_YET
-from uvlhub_splent.migration_v2.content import DEFERRED
+from uvlhub_splent.migration_v2.content import DEFERRED, FIRST_PASS
 from uvlhub_splent.migration_v2.db import insert_batches
 from uvlhub_splent.migration_v2.ledger import DECIDED, to_json
 
@@ -67,7 +68,7 @@ def build(ctx, stopped=None) -> dict:
         "stopped": None
         if stopped is None
         else {"stage": stopped.stage, "reasons": stopped.reasons},
-        "e5_first_pass": {"first_pass": True, "deferred": list(DEFERRED)},
+        "e5_first_pass": {"first_pass": FIRST_PASS, "deferred": list(DEFERRED)},
         "facts": ctx.facts,
         "counts": list(ledger.counts.values()),
         "dropped": [
@@ -116,6 +117,7 @@ def build(ctx, stopped=None) -> dict:
         and not open_conflicts
         and not failed
         and not report["e5_first_pass"]["first_pass"]
+        and not report["e5_first_pass"]["deferred"]
         and report["dm1"]["rotation_checked"]
     )
     body = to_json(report)

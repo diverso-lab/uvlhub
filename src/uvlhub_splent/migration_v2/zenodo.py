@@ -3,9 +3,11 @@
 For every deposition of the source, Zenodo's public record
 (``GET /api/records/<id>``, no token) is kept whole in
 ``uvlhub_migration_inputs.zenodo_snapshot`` with its sha256, as
-``rules.zenodo_dates`` validates it: E5 dates the tombstones of DM-4 with
-it, and the final pass reads ``published_at`` and the concept DOIs that
-repair the lineages (C-05) from it.
+``rules.zenodo_dates`` validates it: E5 reads from it the day each
+dataset was published (``published_at``) and the dates of the tombstones
+of DM-4, the concept DOIs v2.12 left empty, which repair the lineages
+(C-05), and the DOIs Zenodo minted that v2.12 never saved (A15-04,
+``rules.minted_record``).
 
 It runs from the host of operation, never from staging (R-07), and before
 every rehearsal: an input, not an output, so a run reads the same snapshot

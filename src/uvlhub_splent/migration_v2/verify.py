@@ -1,9 +1,9 @@
 """E7, post-load: counters with their margin, every foreign key, the counts
 and the checks of §9.2 (V-*).
 
-A check is blocking or not. Blocking ones stop the run when they fail. The
-ones that depend on what the final E5 does (V-09, a lineage repaired by
-concept DOI) are reported and do not block in this first pass.
+A check is blocking or not. Blocking ones stop the run when they fail; the
+gate of the migration (§9.2) asks every V-* to be green. Only E9's do not
+block: what they make is made again once 3.0 is up.
 """
 
 from __future__ import annotations
@@ -13,6 +13,7 @@ from dataclasses import dataclass
 import sqlalchemy as sa
 
 from splent_io.splent_feature_auth.models import canonical_email
+from splent_io.splent_feature_dataset.descriptions import HTML_LEGACY, clean_html
 
 from uvlhub_splent.migration_v2 import contract as contract_module
 from uvlhub_splent.migration_v2 import rules
@@ -263,7 +264,10 @@ def v07_identities(ctx, connection) -> Check:
 
 
 def v09_lineages(ctx, connection) -> Check:
-    """V-09: no branch, and no version twice in a lineage (by its root)."""
+    """V-09: no branch, and no version twice in a lineage (by its root), so
+    UNIQUE(lineage_root_id, dataset_version) can follow. E5 repairs what a
+    concept DOI repairs (C-05); what it cannot is decided in curation.toml
+    (RU-06), never accepted as it is."""
     p = ctx.params
     datasets = qualified(p.target_schema, "datasets")
     branches = list(
@@ -284,11 +288,9 @@ def v09_lineages(ctx, connection) -> Check:
             )
         )
     ]
-    # Advisory in this pass: the repair by concept DOI is the final E5's.
     return Check(
         "V-09",
         not branches and not repeated,
-        blocking=False,
         detail={"branches": branches, "repeated_versions": repeated}
         if branches or repeated
         else None,
@@ -306,6 +308,31 @@ def v10_votes(ctx, connection) -> Check:
         )
     ).scalar()
     return Check("V-10", not off_root, detail=off_root or None)
+
+
+def v13_descriptions(ctx, connection) -> Check:
+    """V-13 (C-01): every description is html_legacy, and cleaning it again
+    with dataset's own sanitiser leaves it as it is: what E5 loaded is what
+    the pages show, and nothing in it runs."""
+    rows = connection.execute(
+        sa.text(
+            "SELECT id, description, description_format FROM "
+            f"{qualified(ctx.params.target_schema, 'ds_meta_data')}"
+        )
+    ).all()
+    other_format = [r.id for r in rows if r.description_format != HTML_LEGACY]
+    unclean = [
+        r.id
+        for r in rows
+        if str(clean_html(r.description or "")).strip() != (r.description or "")
+    ]
+    return Check(
+        "V-13",
+        not other_format and not unclean,
+        detail={"other_format": other_format, "cleaned_again_changes": unclean}
+        if other_format or unclean
+        else None,
+    )
 
 
 def v11_copied(ctx, connection) -> Check:
@@ -449,6 +476,7 @@ def post_load(ctx) -> None:
             v09_lineages(ctx, connection),
             v10_votes(ctx, connection),
             v11_copied(ctx, connection),
+            v13_descriptions(ctx, connection),
             v15_accounts(ctx, connection),
             v16_nothing_signed(ctx, connection),
         ]
