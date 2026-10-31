@@ -826,15 +826,30 @@ ORPHAN_RECORD = {
 }
 
 
+# And the record of dataset 3, which gives the concept DOI v2.12 did not keep
+# (§4.3, CT-4).
+DATASET_3_CONCEPT = "10.5281/zenodo.1004"
+DATASET_3_RECORD = {
+    "id": 1005,
+    "doi": "10.5281/zenodo.1005",
+    "conceptdoi": DATASET_3_CONCEPT,
+    "created": "2025-06-01T10:00:00.000000+00:00",
+    "metadata": {"publication_date": "2025-06-01", "title": "Sync pending"},
+}
+
+
 def zenodo_snapshot():
-    record = json.dumps(ORPHAN_RECORD, sort_keys=True)
-    return [
-        {
-            "deposition_id": ORPHAN_RECORD["id"],
-            "record": record,
-            "sha256": sha256(record.encode("utf-8")),
-        }
-    ]
+    found = []
+    for record in (ORPHAN_RECORD, DATASET_3_RECORD):
+        text = json.dumps(record, sort_keys=True)
+        found.append(
+            {
+                "deposition_id": record["id"],
+                "record": text,
+                "sha256": sha256(text.encode("utf-8")),
+            }
+        )
+    return found
 
 
 def zenodo_files():

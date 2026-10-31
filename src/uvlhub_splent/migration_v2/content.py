@@ -89,7 +89,8 @@ DEFERRED = (
     "them by concept DOI waits for the Zenodo snapshot (MIG-06)",
     "§4.3: published_at is created_at, and a deposition without a DOI is "
     "failed; Zenodo's date and its published records (A15-04) wait for the "
-    "snapshot",
+    "final pass (the concept DOIs v2.12 left empty come from the snapshot "
+    "already)",
     "C-10, C-30: found and left open, for the decisions",
     "C-16, C-23: publication_doi and tags are copied as they are (DS-1 and "
     "dataset_tag do not exist in the pinned features)",
@@ -277,20 +278,41 @@ def lineage_roots(origins: dict[int, int | None]) -> dict[int, int]:
     return roots
 
 
-def identify(ctx, dataset_rows, metas, origins) -> None:
+def identify(ctx, dataset_rows, metas, origins, concepts) -> None:
     """CO-5, DL-9, CT-4: each row's public_id, lineage_root_id and
-    concept_pid."""
+    concept_pid, its metadata's concept DOI or the one Zenodo gives."""
     roots = lineage_roots(origins)
     key = ctx.params.public_id_key
     for row in dataset_rows:
-        concept = (metas[row["ds_meta_data_id"]]["dataset_concept_doi"] or "").strip()
+        meta_id = row["ds_meta_data_id"]
+        concept = (metas[meta_id]["dataset_concept_doi"] or "").strip() or (
+            concepts.get(meta_id) or ""
+        )
         row["public_id"] = public_id_of(key, row["id"], row["created_at"])
         row["lineage_root_id"] = roots.get(row["id"], row["id"])
         row["concept_pid"] = concept or None
 
 
+def zenodo_concepts(ctx, metas, datasets_of_meta, snapshots) -> dict[int, str]:
+    """§4.3, CT-4: the concept DOI of every metadata with a DOI and none of
+    its own, from its record in zenodo_snapshot when the record validates,
+    by metadata id. A concept DOI v2.12 kept is never changed."""
+    found = {}
+    for meta in metas.values():
+        doi = _doi(meta)
+        if doi is None or (meta["dataset_concept_doi"] or "").strip():
+            continue
+        concept = rules.zenodo_concept(snapshots.get(meta["deposition_id"]), doi)
+        if concept:
+            found[meta["id"]] = concept
+    ctx.facts["concepts_from_zenodo"] = sorted(
+        dataset["id"] for meta_id in found for dataset in datasets_of_meta[meta_id]
+    )
+    return found
+
+
 def build_metadata(
-    ctx, metas, datasets_of_meta, chosen, tombstones, authors_of, linked
+    ctx, metas, datasets_of_meta, chosen, tombstones, authors_of, linked, concepts
 ):
     """ds_meta_data rows of the loaded datasets and of the tombstones;
     metadata of neither dropped (P-01); DOIs checked (C-10, C-30)."""
@@ -359,7 +381,8 @@ def build_metadata(
                 "publication_type": meta["publication_type"],
                 "publication_doi": meta["publication_doi"],
                 "dataset_doi": meta["dataset_doi"],
-                "dataset_concept_doi": meta["dataset_concept_doi"],
+                "dataset_concept_doi": meta["dataset_concept_doi"]
+                or concepts.get(meta["id"]),
                 "api_publisher_user_id": publisher,
                 "tags": meta["tags"],
                 "ds_metrics_id": meta["ds_metrics_id"],
@@ -583,8 +606,9 @@ def content(ctx) -> None:
     tombstones = build_tombstones(
         ctx, metas, datasets_of_meta, source["datasets"], snapshots
     )
+    concepts = zenodo_concepts(ctx, metas, datasets_of_meta, snapshots)
     meta_rows = build_metadata(
-        ctx, metas, datasets_of_meta, chosen, tombstones, authors_of, linked
+        ctx, metas, datasets_of_meta, chosen, tombstones, authors_of, linked, concepts
     )
     loaded_metas = {row["id"] for row in meta_rows}
     anonymous_metas = {row["id"] for row in meta_rows if row["dataset_anonymous"] == 1}
@@ -741,7 +765,7 @@ def content(ctx) -> None:
             }
         )
     dataset_rows += tombstones.values()
-    identify(ctx, dataset_rows, metas, origins)
+    identify(ctx, dataset_rows, metas, origins, concepts)
 
     rating_rows = build_ratings(ctx, source["dataset_rating"], chosen, origins)
     transfer_rows = build_transfers(ctx, source["dataset_transfer_request"], chosen)

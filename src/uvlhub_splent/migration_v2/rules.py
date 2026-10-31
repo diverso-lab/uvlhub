@@ -327,11 +327,11 @@ def suffixed_name(name: str, hubfile_id: int, limit: int) -> str:
     return stem[: max(limit - len(suffix), 1)] + suffix
 
 
-def zenodo_dates(snapshot, doi):
-    """(created, published) of a dataset's record in zenodo_snapshot, as
-    naive UTC, or None when there is no record or it does not validate: its
-    sha256 is not the snapshot's, or its DOI is not ``doi`` (§4.3, compared
-    without case or surrounding spaces). ``snapshot`` is the row of
+def zenodo_record(snapshot, doi):
+    """A dataset's record in zenodo_snapshot, as JSON, or None when there is
+    no record or it does not validate: its sha256 is not the snapshot's, or
+    its DOI is not ``doi`` (§4.3, compared without case or surrounding
+    spaces). ``snapshot`` is the row of
     uvlhub_migration_inputs.zenodo_snapshot, or None."""
     if snapshot is None:
         return None
@@ -345,6 +345,24 @@ def zenodo_dates(snapshot, doi):
     if not isinstance(record, dict) or (record.get("doi") or "").strip().lower() != (
         (doi or "").strip().lower()
     ):
+        return None
+    return record
+
+
+def zenodo_concept(snapshot, doi) -> str | None:
+    """The concept DOI Zenodo gives the record of ``doi`` (§4.3, CT-4), when
+    its record in zenodo_snapshot validates (zenodo_record)."""
+    record = zenodo_record(snapshot, doi)
+    concept = (record or {}).get("conceptdoi") or ""
+    return concept.strip() or None
+
+
+def zenodo_dates(snapshot, doi):
+    """(created, published) of a dataset's record in zenodo_snapshot, as
+    naive UTC, or None when there is no record or it does not validate
+    (zenodo_record)."""
+    record = zenodo_record(snapshot, doi)
+    if record is None:
         return None
     created = published = None
     try:

@@ -417,8 +417,22 @@ def test_e5_gives_each_dataset_its_public_id_root_and_concept(migrated):
         5: 5,
         30: 30,
     }
-    assert {i for i, d in datasets.items() if d["concept_pid"]} == {1, 2, 14}
+    assert {i for i, d in datasets.items() if d["concept_pid"]} == {1, 2, 3, 14}
     assert datasets[1]["concept_pid"] == synthetic.CONCEPT_DOI
+
+
+def test_e5_takes_the_concept_doi_v2_12_did_not_keep_from_zenodo(migrated):
+    """§4.3, CT-4: dataset 3's record in zenodo_snapshot gives its concept
+    DOI, in concept_pid and in the metadata /doi/<concept> resolves by; a
+    concept DOI v2.12 kept stays as it was."""
+    datasets = by_id(target(migrated, "datasets"))
+    metas = by_id(target(migrated, "ds_meta_data"))
+    assert datasets[3]["concept_pid"] == synthetic.DATASET_3_CONCEPT
+    assert (
+        metas[datasets[3]["ds_meta_data_id"]]["dataset_concept_doi"]
+        == synthetic.DATASET_3_CONCEPT
+    )
+    assert migrated.report["facts"]["concepts_from_zenodo"] == [3]
 
 
 def test_e5_orphan_metadata_becomes_a_tombstone_or_goes(migrated):
