@@ -116,10 +116,12 @@ def derived(ctx) -> None:
         ok, said = True, []
         for command in plan[name]:
             ok, said = run_command(command, env)
-            # explore 0.7.0 and later go through with no index to fill; for
-            # uvlhub, whose search is Elasticsearch's, that is a reindex
-            # that did not happen.
-            if name == "reindex" and any("No search index" in line for line in said):
+            # explore goes through with no search engine (the search reads
+            # the database) and says so; for uvlhub, whose search is
+            # Elasticsearch's, that is a reindex that did not happen.
+            if name == "reindex" and any(
+                "No search index" in line or "No search engine" in line for line in said
+            ):
                 ok = False
             if not ok:
                 break

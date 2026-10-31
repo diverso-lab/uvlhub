@@ -675,8 +675,9 @@ def test_e8_recovers_a_published_file_with_zenodos_bytes(migrated):
     """§6.2 step 5: file 4 of published dataset 3 is in the mirror with
     other bytes than its row says; Zenodo's are the row's. They go to its
     key as a new file, so the mirror keeps its own, the row says
-    recovered, what uvl derived from the mirror's bytes goes, and
-    file_repair keeps what the row and the mirror had."""
+    recovered, what uvl derived from the mirror's bytes goes, the mirror's
+    bytes stay beside it as the file's readable copy, and file_repair keeps
+    what the row and the mirror had."""
     store = migrated.params.store_root
     row = by_id(target(migrated, "hubfiles"))[4]
     content = synthetic.content_of(4)
@@ -693,6 +694,8 @@ def test_e8_recovers_a_published_file_with_zenodos_bytes(migrated):
     assert row["content_sha256"] == synthetic.sha256(content)
     derived = store / "datasets" / "3" / "derived" / "4" / "glencoe"
     assert not derived.exists() or derived.read_bytes() != b"{}"
+    readable = store / "datasets" / "3" / "derived" / "4" / "readable"
+    assert readable.read_bytes() == mirror.read_bytes()
 
     (repair,) = work(migrated, "file_repair")
     assert repair == {
@@ -719,6 +722,7 @@ def test_e8_recovers_a_published_file_with_zenodos_bytes(migrated):
         "by_origin": {"file": 1},
         "by_outcome": {"replaced": 1},
         "rows_changed": 0,
+        "readable_copies_kept": 1,
         "not_recovered": [],
     }
 

@@ -30,7 +30,11 @@ EXDEV across mounts, even within one file system (R-27). E8 then:
    checksum (in the row's algorithm) and sha256, and says ``recovered``;
    when the mirror's bytes are Zenodo's already, the row was the wrong
    part, and only the row changes. The row's old values, and the mirror's
-   size and sha256, go to uvlhub_migration.file_repair. What Zenodo cannot
+   size and sha256, go to uvlhub_migration.file_repair. The bytes the hub
+   served, when Zenodo's replace them, are kept as the file's readable copy
+   (hubfile's READABLE): they were edited after publication so that
+   today's parsers read them, and the analyses and the code view read that
+   copy. What Zenodo cannot
    give stays a conflict, with its dataset, DOI and path, and stops the
    cutover;
 6. checks V-08: every file of a published dataset is ok or recovered and
@@ -49,11 +53,12 @@ from types import SimpleNamespace
 import sqlalchemy as sa
 from splent_io.splent_feature_hubfile.storage import (
     DATASETS,
+    LocalStorageBackend,
+    READABLE,
+    StorageService,
     TEMPORARY,
     TRASH,
     UPLOADS,
-    LocalStorageBackend,
-    StorageService,
     checksum_algorithm,
 )
 
@@ -264,6 +269,7 @@ def repair_from_zenodo(ctx, connection, rows, store: Path):
     ]
     given = recovery_inputs(ctx, connection, [row.id for row in wanted])
     repairs, unrecovered = [], {}
+    kept_readable = 0
     for row in wanted:
         entry = given.get(row.id)
         if entry is None:
@@ -290,17 +296,29 @@ def repair_from_zenodo(ctx, connection, rows, store: Path):
         repair["mirror_size"] = mirror_size
         key = row.storage_key or storage.source_key(row.dataset_id, row.id)
         if repair["outcome"] != ROW_FIXED:
+            owner = SimpleNamespace(dataset_id=row.dataset_id, id=row.id)
+            # The bytes the hub served, edited after publication so that
+            # today's parsers read them: kept as the file's readable copy
+            # (hubfile's READABLE), which the analyses and the code view
+            # read, while the file itself becomes what the DOI cites.
+            served = (
+                (store / row.storage_key).read_bytes()
+                if repair["outcome"] == REPLACED and row.storage_key
+                else None
+            )
             # A new file renamed over the key: the mirror's, linked there,
             # is never written to.
             with storage.backend.writing(key) as part:
                 Path(part).write_bytes(content)
             # What uvl derived from the bytes that were there goes; E9 makes
-            # it again from these.
-            storage.backend.delete(
-                storage.derived_prefix(
-                    SimpleNamespace(dataset_id=row.dataset_id, id=row.id)
-                )
-            )
+            # it again from the readable copy, or from these without one.
+            storage.backend.delete(storage.derived_prefix(owner))
+            if served is not None and served != content:
+                with storage.backend.writing(
+                    storage.derived_key(owner, READABLE)
+                ) as part:
+                    Path(part).write_bytes(served)
+                kept_readable += 1
         if connection.in_transaction():
             connection.commit()
         with connection.begin():
@@ -341,6 +359,7 @@ def repair_from_zenodo(ctx, connection, rows, store: Path):
             if (r["size"], r["checksum"]) != (r["old_size"], r["old_checksum"])
         ),
         "not_recovered": sorted(unrecovered),
+        "readable_copies_kept": kept_readable,
     }
     written = {r["hubfile_id"] for r in repairs if r["outcome"] != ROW_FIXED}
     return unrecovered, written
