@@ -9,6 +9,7 @@ with ``python -m``, in an ephemeral container of the 3.0 image (§3.4):
     python -m uvlhub_splent.migration_v2 run ...           # E0 to E10
     python -m uvlhub_splent.migration_v2 contract [--check]
     python -m uvlhub_splent.migration_v2 zenodo-snapshot ...  # MIG-06, Zenodo's records
+    python -m uvlhub_splent.migration_v2 zenodo-files ...     # §6.2 step 5, their files
 
 Passwords come from the environment only (MIGRATION_DB_PASSWORD,
 MIGRATION_DB_ROOT_PASSWORD), never from the command line, which the
@@ -354,6 +355,61 @@ def zenodo_snapshot(
         echo=click.echo,
     )
     click.echo(json.dumps(zenodo.summary(outcome), indent=2))
+
+
+@main.command("zenodo-files")
+@_server_options
+@click.option(
+    "--source-schema",
+    default="uvlhub_v2_src",
+    show_default=True,
+    help="Where the source is restored (E1 restores it there).",
+)
+@click.option("--inputs-schema", default="uvlhub_migration_inputs", show_default=True)
+@click.option(
+    "--store-root",
+    envvar="MIGRATION_STORE_ROOT",
+    required=True,
+    type=click.Path(path_type=Path),
+    help="hubfile's store; the mirror of uploads/ is <store>/.legacy_mirror.",
+)
+@click.option(
+    "--cache",
+    envvar="MIGRATION_ZENODO_CACHE",
+    required=True,
+    type=click.Path(path_type=Path),
+    help="Where the files downloaded are kept, so a second run downloads none.",
+)
+def zenodo_files_command(
+    db_host,
+    db_port,
+    db_user,
+    db_root_user,
+    source_schema,
+    inputs_schema,
+    store_root,
+    cache,
+):
+    """§6.2 step 5: fetch from Zenodo every file of a published dataset the
+    mirror lacks or holds otherwise, for E8. From the host of operation only."""
+    from uvlhub_splent.migration_v2 import zenodo_files
+    from uvlhub_splent.migration_v2.db import make_engine
+
+    mirror = store_root / ".legacy_mirror"
+    if not mirror.is_dir():
+        raise click.BadParameter(f"no mirror at {mirror}", param_hint="--store-root")
+    engine = make_engine(
+        db_host, db_port, db_user, os.environ.get("MIGRATION_DB_PASSWORD", "")
+    )
+    try:
+        outcome = zenodo_files.fetch_files(
+            engine, source_schema, inputs_schema, mirror, cache, echo=click.echo
+        )
+    except RuntimeError as error:
+        raise click.ClickException(str(error)) from error
+    finally:
+        engine.dispose()
+    click.echo(json.dumps(zenodo_files.summary(outcome), indent=2))
 
 
 @main.command("contract")

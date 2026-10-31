@@ -837,6 +837,31 @@ def zenodo_snapshot():
     ]
 
 
+def zenodo_files():
+    """What ``zenodo-files`` keeps for the published file the mirror holds
+    otherwise (§6.2 step 5): file 4 of dataset 3, as Zenodo published it,
+    the bytes its row says."""
+    content = content_of(4)
+    return [
+        {
+            "hubfile_id": 4,
+            "dataset_id": 3,
+            "deposition_id": 1005,
+            "doi": "10.5281/zenodo.1005",
+            "path": "drift.uvl",
+            "origin": "file",
+            "zenodo_key": "drift.uvl",
+            "zip_entry": None,
+            "zenodo_md5": md5(content),
+            "size": len(content),
+            "md5": md5(content),
+            "sha256": sha256(content),
+            "content": content,
+            "status": "ok",
+        }
+    ]
+
+
 # The counters a dump carries, ahead of the rows (§4.1).
 COUNTERS = {"user": 40, "external_identity": 50, "datasets": 30, "hubfiles": 25}
 
@@ -907,6 +932,7 @@ def write_mirror(mirror: Path) -> None:
         "user_1/dataset_99/uvl/lost.uvl": uvl("Lost"),
         "temp/1/half.uvl": uvl("Half"),
         "user_1/dataset_1/glencoe/model one.json": b"{}",
+        "user_2/dataset_3/glencoe/drift.json": b"{}",
     }
     for relative, content in extras.items():
         path = mirror / relative

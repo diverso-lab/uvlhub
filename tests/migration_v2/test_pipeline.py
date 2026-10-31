@@ -572,11 +572,10 @@ def test_e7_gives_every_table_its_counter_with_the_margin(migrated):
 def test_e7_checks_pass_but_the_ones_this_pass_cannot_meet(migrated):
     checks = {c["name"]: c for c in migrated.report["checks"]}
     failing = {name for name, c in checks.items() if not c["ok"]}
-    # V-08: dataset 3 is published and its file is in mismatch (recovery
-    # from Zenodo is not in this pass); V-09: the branch of dataset 1 waits
-    # for the repair by concept DOI; E9-reindex: the rehearsal has no search
-    # node (test_derived).
-    assert failing == {"V-08", "V-09", "E9-reindex"}
+    # V-08 holds: dataset 3's file in mismatch comes back from Zenodo (§6.2
+    # step 5); V-09: the branch of dataset 1 waits for the repair by concept
+    # DOI; E9-reindex: the rehearsal has no search node (test_derived).
+    assert failing == {"V-09", "E9-reindex"}
     assert not checks["V-09"]["blocking"]
     for name in (
         "V-01",
@@ -606,7 +605,7 @@ def test_e8_links_every_file_to_its_key_and_says_what_it_found(migrated):
     files = by_id(target(migrated, "hubfiles"))
     status = {i: f["storage_status"] for i, f in files.items()}
     assert (
-        status[4] == "mismatch"
+        status[4] == "recovered"
         and status[6] == "missing"
         and status[15] == "unverified"
     )
@@ -646,13 +645,68 @@ def test_e8_writes_the_manifest_with_what_no_row_names(migrated):
         "temp/1/half.uvl": "temp",
         "user_1/dataset_1/glencoe/model one.json": "derived",
         "user_1/dataset_99/uvl/lost.uvl": "orphan",
+        "user_2/dataset_3/glencoe/drift.json": "derived",
         "user_17/dataset_11/uvl/held.uvl": "orphan",
         "user_5/dataset_12/uvl/file1.uvl": "orphan",
     }
     rows_ = {m["hubfile_id"]: m for m in manifest if m["hubfile_id"]}
     assert rows_[2]["path"] == "user_1/dataset_1/uvl/sub dir/a#b/b#2.uvl"
     assert rows_[6]["status"] == "missing"
-    assert ("file_mismatch", "4") in conflicts(migrated)
+    assert rows_[4]["status"] == "recovered"
+    # Dataset 5 is a draft: its missing file is no conflict (§6.2 step 6).
+    assert not any(kind.startswith("file_") for kind, _ref in conflicts(migrated))
+
+
+def test_e8_recovers_a_published_file_with_zenodos_bytes(migrated):
+    """§6.2 step 5: file 4 of published dataset 3 is in the mirror with
+    other bytes than its row says; Zenodo's are the row's. They go to its
+    key as a new file, so the mirror keeps its own, the row says
+    recovered, what uvl derived from the mirror's bytes goes, and
+    file_repair keeps what the row and the mirror had."""
+    store = migrated.params.store_root
+    row = by_id(target(migrated, "hubfiles"))[4]
+    content = synthetic.content_of(4)
+    stored = store / row["storage_key"]
+    mirror = store / ".legacy_mirror" / "user_2" / "dataset_3" / "uvl" / "drift.uvl"
+    assert stored.read_bytes() == content
+    assert stored.stat().st_nlink == 1
+    assert mirror.read_bytes() == content + b"// edited after it was uploaded\n"
+    assert (row["size"], row["checksum"], row["checksum_algo"]) == (
+        len(content),
+        synthetic.sha256(content),
+        "sha256",
+    )
+    assert row["content_sha256"] == synthetic.sha256(content)
+    derived = store / "datasets" / "3" / "derived" / "4" / "glencoe"
+    assert not derived.exists() or derived.read_bytes() != b"{}"
+
+    (repair,) = work(migrated, "file_repair")
+    assert repair == {
+        "hubfile_id": 4,
+        "dataset_id": 3,
+        "deposition_id": 1005,
+        "outcome": "replaced",
+        "origin": "file",
+        "zenodo_key": "drift.uvl",
+        "zip_entry": None,
+        "old_status": "mismatch",
+        "old_size": len(content),
+        "old_checksum": synthetic.sha256(content),
+        "old_checksum_algo": "sha256",
+        "mirror_size": mirror.stat().st_size,
+        "mirror_sha256": synthetic.sha256(mirror.read_bytes()),
+        "size": len(content),
+        "checksum": synthetic.sha256(content),
+        "checksum_algo": "sha256",
+        "content_sha256": synthetic.sha256(content),
+    }
+    assert migrated.report["facts"]["zenodo_repair"] == {
+        "recovered": 1,
+        "by_origin": {"file": 1},
+        "by_outcome": {"replaced": 1},
+        "rows_changed": 0,
+        "not_recovered": [],
+    }
 
 
 # ── The cutover's run, and a second one ──────────────────────────────────

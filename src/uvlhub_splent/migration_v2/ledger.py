@@ -21,6 +21,7 @@ from collections import Counter
 from datetime import date, datetime
 
 import sqlalchemy as sa
+from sqlalchemy.dialects import mysql
 
 from uvlhub_splent.migration_v2.db import insert_batches, quote
 from uvlhub_splent.migration_v2.params import Refused
@@ -165,6 +166,32 @@ def _outputs(schema: str) -> sa.MetaData:
         sa.Column("status", sa.String(16), nullable=False),
     )
     sa.Table(
+        "file_repair",
+        metadata,
+        # §6.2 step 5: what E8 changed of a file of a published dataset with
+        # Zenodo's bytes, and what its row and the mirror had before.
+        sa.Column("hubfile_id", sa.Integer, primary_key=True, autoincrement=False),
+        sa.Column("dataset_id", sa.Integer, nullable=False),
+        sa.Column("deposition_id", sa.Integer, nullable=False),
+        # restored (no file), replaced (other bytes) or row_fixed (the
+        # mirror's bytes were Zenodo's, the row was wrong).
+        sa.Column("outcome", sa.String(16), nullable=False),
+        sa.Column("origin", sa.String(8), nullable=False),
+        sa.Column("zenodo_key", sa.String(1024), nullable=False),
+        sa.Column("zip_entry", sa.String(1024)),
+        sa.Column("old_status", sa.String(16)),
+        sa.Column("old_size", sa.BigInteger),
+        sa.Column("old_checksum", sa.String(120)),
+        sa.Column("old_checksum_algo", sa.String(16)),
+        # The mirror's file, when there was one.
+        sa.Column("mirror_size", sa.BigInteger),
+        sa.Column("mirror_sha256", sa.String(64)),
+        sa.Column("size", sa.BigInteger, nullable=False),
+        sa.Column("checksum", sa.String(120), nullable=False),
+        sa.Column("checksum_algo", sa.String(16), nullable=False),
+        sa.Column("content_sha256", sa.String(64), nullable=False),
+    )
+    sa.Table(
         "tombstone",
         metadata,
         sa.Column("doi", sa.String(120), primary_key=True),
@@ -269,10 +296,28 @@ def _inputs(schema: str) -> sa.MetaData:
     sa.Table(
         "zenodo_files",
         metadata,
-        sa.Column("id", sa.Integer, primary_key=True),
+        # §6.2 step 5 (zenodo_files.py): a file of a published dataset the
+        # mirror lacks or holds otherwise, as Zenodo's record of its DOI
+        # gives it, or why it does not (status).
+        sa.Column("hubfile_id", sa.Integer, primary_key=True, autoincrement=False),
+        sa.Column("dataset_id", sa.Integer, nullable=False),
         sa.Column("deposition_id", sa.Integer, nullable=False),
-        sa.Column("name", sa.String(1024), nullable=False),
-        sa.Column("sha256", sa.String(64), nullable=False),
+        sa.Column("doi", sa.String(120), nullable=False),
+        # Its place in the dataset, directory_path/name.
+        sa.Column("path", sa.String(1024), nullable=False),
+        # file (a loose file of the record) or zip (an entry of one of its
+        # archives), its key in the record, and the entry.
+        sa.Column("origin", sa.String(8)),
+        sa.Column("zenodo_key", sa.String(1024)),
+        sa.Column("zip_entry", sa.String(1024)),
+        # The md5 Zenodo publishes of zenodo_key, which the download matched.
+        sa.Column("zenodo_md5", sa.String(32)),
+        sa.Column("size", sa.BigInteger),
+        sa.Column("md5", sa.String(32)),
+        sa.Column("sha256", sa.String(64)),
+        sa.Column("content", mysql.LONGBLOB),
+        # ok, or why the file could not be had.
+        sa.Column("status", sa.String(32), nullable=False),
     )
     sa.Table(
         "contract_collation",

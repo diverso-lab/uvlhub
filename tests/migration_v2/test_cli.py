@@ -26,7 +26,14 @@ def test_the_module_runs_as_a_command():
         check=False,
     )
     assert result.returncode == 0
-    for command in ("run", "preflight", "grants", "contract"):
+    for command in (
+        "run",
+        "preflight",
+        "grants",
+        "contract",
+        "zenodo-snapshot",
+        "zenodo-files",
+    ):
         assert command in result.stdout
 
 
@@ -150,6 +157,7 @@ def test_the_product_command_is_the_migrators(app_with_a_pool):
         "grants",
         "contract",
         "zenodo-snapshot",
+        "zenodo-files",
     }
 
 

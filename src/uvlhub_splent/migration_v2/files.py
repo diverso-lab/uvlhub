@@ -21,21 +21,41 @@ EXDEV across mounts, even within one file system (R-27). E8 then:
    keeps the old folder and name of each, so /hubfiles/raw/<id>/<old name>
    answers a 308 to the new one (hubfile 0.9.0), and the check
    unique-paths holds every path to one file;
-5. checks V-08: every file of a published dataset is ok and has its
-   content_sha256, and the bytes in the store are the rows' sizes. A
-   published file missing or in mismatch is recovered from Zenodo (§6.2
-   step 5, zenodo_files), which this pass does not do: it is a conflict,
-   and stops the cutover. A draft may miss its files (§6.2 step 6).
+5. recovers from Zenodo every file of a published dataset that is
+   missing or in mismatch (§6.2 step 5, repair_from_zenodo), with the
+   bytes ``zenodo-files`` put in uvlhub_migration_inputs.zenodo_files:
+   for a published dataset Zenodo's bytes are what its DOI cites, so they
+   win. They go to the file's key as a new file (never through the hard
+   link, which would change the mirror), the row takes their size,
+   checksum (in the row's algorithm) and sha256, and says ``recovered``;
+   when the mirror's bytes are Zenodo's already, the row was the wrong
+   part, and only the row changes. The row's old values, and the mirror's
+   size and sha256, go to uvlhub_migration.file_repair. What Zenodo cannot
+   give stays a conflict, with its dataset, DOI and path, and stops the
+   cutover;
+6. checks V-08: every file of a published dataset is ok or recovered and
+   has its content_sha256, and the bytes in the store are the rows'
+   sizes. A draft may miss its files (§6.2 step 6).
 """
 
 from __future__ import annotations
 
+import hashlib
 import os
 import shutil
 from pathlib import Path
+from types import SimpleNamespace
 
 import sqlalchemy as sa
-from splent_io.splent_feature_hubfile.storage import DATASETS, TEMPORARY, TRASH, UPLOADS
+from splent_io.splent_feature_hubfile.storage import (
+    DATASETS,
+    TEMPORARY,
+    TRASH,
+    UPLOADS,
+    LocalStorageBackend,
+    StorageService,
+    checksum_algorithm,
+)
 
 from uvlhub_splent.migration_v2.db import insert_batches, qualified, reflect
 from uvlhub_splent.migration_v2.ledger import stop_on_conflicts
@@ -43,7 +63,11 @@ from uvlhub_splent.migration_v2.params import Refused
 from uvlhub_splent.migration_v2.schema import child_env, run_child
 from uvlhub_splent.migration_v2.verify import Check
 
-OK, MISSING = "ok", "missing"
+OK, MISSING, MISMATCH, RECOVERED = "ok", "missing", "mismatch", "recovered"
+# What a row of a published dataset may say once E8 is done (V-08).
+SOUND = (OK, RECOVERED)
+# What file_repair says was done.
+RESTORED, REPLACED, ROW_FIXED = "restored", "replaced", "row_fixed"
 # The folders of v2.12's uploads/ that are no file of a dataset (§2.2):
 # the staging of uploads under way, and what flamapy derived, which 3.0
 # makes again (UV-4).
@@ -165,6 +189,163 @@ def source_rows(ctx, ids) -> dict[int, dict]:
         return {row["id"]: dict(row) for row in found}
 
 
+def checksum_in(algo: str | None, content: bytes) -> tuple[str, str]:
+    """(checksum, algorithm) of ``content`` in the row's algorithm: md5 for a
+    row of uvlhub before 2.0 (DM-16), sha256 for any other."""
+    if algo == "md5":
+        return hashlib.md5(content).hexdigest(), "md5"
+    return hashlib.sha256(content).hexdigest(), "sha256"
+
+
+def recovery_inputs(ctx, connection, ids) -> dict[int, dict]:
+    """The rows of zenodo_files for ``ids``, without their content."""
+    if not ids:
+        return {}
+    table = ctx.inputs["zenodo_files"]
+    columns = [c for c in table.c if c.name != "content"]
+    rows = connection.execute(
+        sa.select(*columns).where(table.c.hubfile_id.in_(ids))
+    ).mappings()
+    return {row["hubfile_id"]: dict(row) for row in rows}
+
+
+def recovered_content(ctx, connection, hubfile_id: int) -> bytes:
+    table = ctx.inputs["zenodo_files"]
+    return connection.execute(
+        sa.select(table.c.content).where(table.c.hubfile_id == hubfile_id)
+    ).scalar_one()
+
+
+def plan_repair(row, given: dict, content: bytes, mirror_sha256) -> dict:
+    """What E8 does with a file of a published dataset that Zenodo gave
+    back: the row of file_repair, whose ``outcome`` says what changes."""
+    checksum, algo = checksum_in(
+        row.checksum_algo or checksum_algorithm(row.checksum), content
+    )
+    sha256 = hashlib.sha256(content).hexdigest()
+    if row.storage_status == MISSING:
+        outcome = RESTORED
+    elif mirror_sha256 == sha256:
+        outcome = ROW_FIXED
+    else:
+        outcome = REPLACED
+    return {
+        "hubfile_id": row.id,
+        "dataset_id": row.dataset_id,
+        "deposition_id": given["deposition_id"],
+        "outcome": outcome,
+        "origin": given["origin"],
+        "zenodo_key": given["zenodo_key"],
+        "zip_entry": given["zip_entry"],
+        "old_status": row.storage_status,
+        "old_size": row.size,
+        "old_checksum": row.checksum,
+        "old_checksum_algo": row.checksum_algo,
+        "mirror_size": None,
+        "mirror_sha256": mirror_sha256,
+        "size": len(content),
+        "checksum": checksum,
+        "checksum_algo": algo,
+        "content_sha256": sha256,
+    }
+
+
+def repair_from_zenodo(ctx, connection, rows, store: Path):
+    """§6.2 step 5 on the files of published datasets that are missing or in
+    mismatch. Answers why each one that stays so could not be recovered, by
+    id, and the ids whose bytes it wrote."""
+    target = qualified(ctx.params.target_schema, "hubfiles")
+    storage = StorageService(LocalStorageBackend(str(store)))
+    wanted = [
+        row
+        for row in rows
+        if row.storage_status in (MISSING, MISMATCH, None)
+        and row.dataset_id in ctx.published
+    ]
+    given = recovery_inputs(ctx, connection, [row.id for row in wanted])
+    repairs, unrecovered = [], {}
+    for row in wanted:
+        entry = given.get(row.id)
+        if entry is None:
+            unrecovered[row.id] = "zenodo_files has no row for it (run zenodo-files)"
+            continue
+        if entry["status"] != "ok":
+            unrecovered[row.id] = (
+                f"Zenodo's record does not give it ({entry['status']})"
+            )
+            continue
+        content = recovered_content(ctx, connection, row.id)
+        if (
+            entry["dataset_id"] != row.dataset_id
+            or len(content) != entry["size"]
+            or hashlib.sha256(content).hexdigest() != entry["sha256"]
+        ):
+            unrecovered[row.id] = "its row of zenodo_files does not hold what it says"
+            continue
+        mirror_size = mirror_sha256 = None
+        if row.storage_status == MISMATCH and row.storage_key:
+            path = store / row.storage_key
+            mirror_size, mirror_sha256 = path.stat().st_size, row.content_sha256
+        repair = plan_repair(row, entry, content, mirror_sha256)
+        repair["mirror_size"] = mirror_size
+        key = row.storage_key or storage.source_key(row.dataset_id, row.id)
+        if repair["outcome"] != ROW_FIXED:
+            # A new file renamed over the key: the mirror's, linked there,
+            # is never written to.
+            with storage.backend.writing(key) as part:
+                Path(part).write_bytes(content)
+            # What uvl derived from the bytes that were there goes; E9 makes
+            # it again from these.
+            storage.backend.delete(
+                storage.derived_prefix(
+                    SimpleNamespace(dataset_id=row.dataset_id, id=row.id)
+                )
+            )
+        if connection.in_transaction():
+            connection.commit()
+        with connection.begin():
+            connection.execute(
+                sa.text(
+                    f"UPDATE {target} SET storage_key = :key, storage_status = :status, "
+                    "size = :size, checksum = :checksum, checksum_algo = :algo, "
+                    "content_sha256 = :sha256 WHERE id = :id"
+                ),
+                {
+                    "key": key,
+                    "status": RECOVERED,
+                    "size": repair["size"],
+                    "checksum": repair["checksum"],
+                    "algo": repair["checksum_algo"],
+                    "sha256": repair["content_sha256"],
+                    "id": row.id,
+                },
+            )
+        repairs.append(repair)
+    table = ctx.outputs["file_repair"]
+    if connection.in_transaction():
+        connection.commit()
+    with connection.begin():
+        connection.execute(table.delete())
+    insert_batches(connection, table, repairs, key="hubfile_id")
+    outcomes, origins = {}, {}
+    for repair in repairs:
+        outcomes[repair["outcome"]] = outcomes.get(repair["outcome"], 0) + 1
+        origins[repair["origin"]] = origins.get(repair["origin"], 0) + 1
+    ctx.facts["zenodo_repair"] = {
+        "recovered": len(repairs),
+        "by_origin": origins,
+        "by_outcome": outcomes,
+        "rows_changed": sum(
+            1
+            for r in repairs
+            if (r["size"], r["checksum"]) != (r["old_size"], r["old_checksum"])
+        ),
+        "not_recovered": sorted(unrecovered),
+    }
+    written = {r["hubfile_id"] for r in repairs if r["outcome"] != ROW_FIXED}
+    return unrecovered, written
+
+
 def files(ctx) -> None:
     params, ledger = ctx.params, ctx.ledger
     store, mirror = params.store_root, params.mirror
@@ -184,15 +365,18 @@ def files(ctx) -> None:
     ctx.facts["storage_migrate_output"] = output.strip().splitlines()[-20:]
 
     target = params.target_schema
+    select = sa.text(
+        "SELECT h.id, h.dataset_id, d.user_id, d.pid, h.name, h.directory_path, "
+        "h.checksum, h.size, h.storage_key, h.storage_status, h.checksum_algo, "
+        f"h.content_sha256 FROM {qualified(target, 'hubfiles')} h "
+        f"JOIN {qualified(target, 'datasets')} d ON d.id = h.dataset_id ORDER BY h.id"
+    )
     with ctx.engine.connect() as connection:
-        rows = connection.execute(
-            sa.text(
-                "SELECT h.id, h.dataset_id, d.user_id, h.name, h.directory_path, h.checksum, "
-                "h.size, h.storage_key, h.storage_status, h.checksum_algo, h.content_sha256 "
-                f"FROM {qualified(target, 'hubfiles')} h "
-                f"JOIN {qualified(target, 'datasets')} d ON d.id = h.dataset_id ORDER BY h.id"
-            )
-        ).all()
+        unrecovered, written = repair_from_zenodo(
+            ctx, connection, connection.execute(select).all(), store
+        )
+        connection.commit()
+        rows = connection.execute(select).all()
         manifest, accounted = [], set()
         for row in rows:
             path = legacy_path(row)
@@ -250,13 +434,13 @@ def files(ctx) -> None:
         ],
     )
     for row in rows:
-        if row.storage_status == OK:
+        if row.storage_status in SOUND:
             if not row.content_sha256:
                 without_digest.append(row.id)
             path = store / row.storage_key
             stored_bytes += path.stat().st_size
             expected_bytes += row.size
-            if path.stat().st_nlink < 2:
+            if path.stat().st_nlink < 2 and row.id not in written:
                 not_linked.append(row.id)
         elif row.dataset_id in ctx.published:
             unsound.append(row)
@@ -265,7 +449,8 @@ def files(ctx) -> None:
                 "hubfiles",
                 row.id,
                 [source[row.id]],
-                detail=f"a file of published dataset {row.dataset_id}: recover it from Zenodo (§6.2 step 5)",
+                detail=f"a file of published dataset {row.dataset_id} ({row.pid}), "
+                f"{legacy_path(row)}: {unrecovered.get(row.id, 'not recovered')} (§6.2 step 5)",
             )
     ctx.checks.append(
         Check(

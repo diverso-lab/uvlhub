@@ -362,6 +362,7 @@ def migrated(make_params, synthetic_dump, store, seedless, root_engine):
         connection.execute(
             inputs["zenodo_snapshot"].insert(), synthetic.zenodo_snapshot()
         )
+        connection.execute(inputs["zenodo_files"].insert(), synthetic.zenodo_files())
         connection.commit()
     with ListenerSpy() as spy:
         report = run(params)
