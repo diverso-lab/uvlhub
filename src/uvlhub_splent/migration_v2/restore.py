@@ -12,6 +12,13 @@ every table (§4.1), and the triggers, routines, events and views (P-28).
 Those should not exist, since 3306 was exposed (R-26): they are listed in
 the run and dropped from uvlhub_v2_src, so none of them acts on the reads
 that follow.
+
+B0 (C-29, DM-17), when the run is given one, is the dump of ds_meta_data
+that the upgrade notes of the hotfix D1 take before its revision
+f7a8b9c0d1e2 cleans the descriptions in place, keeping no copy. E1 restores
+it as root in a schema of its own, reads the descriptions E5 quarantines as
+the originals, and drops it at once: nothing else of it is needed, and no
+copy of it stays on the server of 3.0 (R-08).
 """
 
 from __future__ import annotations
@@ -60,7 +67,7 @@ def _client() -> str:
     raise Refused("E1", "no mariadb client on PATH to restore the dump with")
 
 
-def restore_dump(server, schema: str, dump) -> None:
+def restore_dump(server, schema: str, dump, what: str = "the dump") -> None:
     """Pipe ``dump`` into ``schema`` with the mariadb client, as root, with
     sql_log_bin off for the session."""
     with tempfile.TemporaryDirectory(prefix="migration-v2-") as folder:
@@ -85,7 +92,7 @@ def restore_dump(server, schema: str, dump) -> None:
             )
     if result.returncode != 0:
         tail = result.stderr.decode("utf-8", "replace").strip().splitlines()[-5:]
-        raise Refused("E1", ["the dump did not restore"] + tail)
+        raise Refused("E1", [f"{what} did not restore"] + tail)
 
 
 def restore(ctx) -> None:
@@ -132,3 +139,48 @@ def restore(ctx) -> None:
         ).all()
         ctx.source_counters = {table: counter for table, counter in counters}
         ctx.facts["source_counters"] = ctx.source_counters
+
+    restore_b0(ctx)
+
+
+def restore_b0(ctx) -> None:
+    """C-29: the descriptions of B0 by metadata id in ctx.b0, None without
+    a B0. The schema it is restored in goes as soon as they are read."""
+    params = ctx.params
+    ctx.b0 = None
+    ctx.facts["b0"] = None
+    if params.b0 is None:
+        return
+    if not params.b0.is_file():
+        raise Refused("E1", f"no B0 at {params.b0}")
+    schema = quote(params.b0_schema)
+    with ctx.root.connect() as connection:
+        connection.exec_driver_sql(f"DROP DATABASE IF EXISTS {schema}")
+        connection.exec_driver_sql(f"CREATE DATABASE {schema}")
+        connection.commit()
+    try:
+        restore_dump(params.server, params.b0_schema, params.b0, what="B0")
+        with ctx.root.connect() as connection:
+            found = connection.execute(
+                sa.text(
+                    "SELECT COUNT(*) FROM information_schema.tables "
+                    "WHERE table_schema = :s AND table_name = 'ds_meta_data'"
+                ),
+                {"s": params.b0_schema},
+            ).scalar()
+            if not found:
+                raise Refused("E1", f"B0 ({params.b0}) holds no ds_meta_data")
+            rows = connection.execute(
+                sa.text(f"SELECT id, description FROM {schema}.ds_meta_data")
+            ).all()
+            connection.rollback()
+    finally:
+        with ctx.root.connect() as connection:
+            connection.exec_driver_sql(f"DROP DATABASE IF EXISTS {schema}")
+            connection.commit()
+    ctx.b0 = {row.id: row.description or "" for row in rows}
+    ctx.facts["b0"] = {
+        "path": str(params.b0),
+        "sha256": sha256_of(params.b0),
+        "rows": len(ctx.b0),
+    }

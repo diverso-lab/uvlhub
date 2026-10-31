@@ -102,6 +102,13 @@ def _run_options(command):
             help="B1's logical dump of v2.12.",
         ),
         click.option(
+            "--b0",
+            envvar="MIGRATION_B0",
+            type=click.Path(path_type=Path),
+            help="B0: the dump of ds_meta_data taken before the hotfix D1 "
+            "cleaned the descriptions (C-29).",
+        ),
+        click.option(
             "--store-root",
             envvar="MIGRATION_STORE_ROOT",
             type=click.Path(path_type=Path),
@@ -216,6 +223,7 @@ def _params(options: dict) -> Params:
         expected_head=options["expected_head"],
         admin_emails=split_list(options["admin_emails"]),
         dump=options["dump"],
+        b0=options["b0"],
         store_root=options["store_root"],
         report=options["report"],
         operator=options["operator"],

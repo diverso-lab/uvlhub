@@ -62,6 +62,8 @@ class Context:
         self.admins: list[int] = []
         self.renames: list[dict] = []
         self.source_counters: dict = {}
+        # B0's descriptions by metadata id (E1, C-29), None without a B0.
+        self.b0: dict[int, str] | None = None
         self.stages_done: list[str] = []
         self.outputs = None
         self.inputs = None

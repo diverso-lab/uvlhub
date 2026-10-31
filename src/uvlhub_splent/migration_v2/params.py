@@ -59,6 +59,10 @@ class Params:
     # MIGRATION_ADMIN_EMAILS (DM-13): the only accounts loaded as admin.
     admin_emails: tuple[str, ...] = ()
     dump: Path | None = None
+    # B0 (C-29, DM-17): the dump of ds_meta_data taken before the hotfix D1
+    # cleaned the descriptions in place, MIGRATION_B0. E1 reads the
+    # originals from it, in b0_schema, which it drops right away.
+    b0: Path | None = None
     # The hubfile store (HUBFILE_STORAGE_ROOT) and, inside it on the same
     # mount, the mirror of v2.12's uploads/ the operator rsyncs (§6.2).
     store_root: Path | None = None
@@ -93,6 +97,7 @@ class Params:
     mail_from: str = ""
     hold_tag: str = "rb2"
     source_schema: str = "uvlhub_v2_src"
+    b0_schema: str = "uvlhub_v2_b0"
     # The clean v2.12 that E2 makes to compare the source with (P-00).
     reference_schema: str = "uvlhub_v2_ref"
     target_schema: str = "uvlhub3"
