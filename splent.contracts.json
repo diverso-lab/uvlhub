@@ -2226,7 +2226,7 @@
       }
     },
     "splent_feature_dataset": {
-      "entry": "splent_io/splent_feature_dataset@v0.16.1",
+      "entry": "splent_io/splent_feature_dataset@v0.16.2",
       "extensible": {
         "services": [
           "AuthorService",

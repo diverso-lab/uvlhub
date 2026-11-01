@@ -63,7 +63,7 @@ features = [
     "splent-io/splent_feature_reset@v2.4.0",
     "splent-io/splent_feature_mail@v1.7.0",
     "splent-io/splent_feature_hubfile@v0.13.0",
-    "splent-io/splent_feature_dataset@v0.16.1",
+    "splent-io/splent_feature_dataset@v0.16.2",
     "splent-io/splent_feature_generator@v0.4.0",
     "splent-io/splent_feature_apidocs@v0.5.0",
     "splent-io/splent_feature_legacy_urls@v0.2.0",
@@ -113,8 +113,8 @@ DATASET_QR_LOGO = "media/logos/uvlhub_ball.png"
 DATASET_HOME_ORDER = "items"
 DATASET_PUBLISH_POLICY = "curated"
 CURATION_TRUSTED_ACCOUNTS = "carried_over"
-OBSERVABILITY_BACKEND = "glitchtip"
-OBSERVABILITY_ALERT_CHANNELS = ["email", "matrix"]
+OBSERVABILITY_BACKEND = "email"
+OBSERVABILITY_ALERT_CHANNELS = ["email"]
 ANALYTICS_PROVIDER = "plausible"
 SPLENT_DERIVED_KEYS = true
 CITATION_REFERENCES_FILE = "citation_references.toml"
