@@ -1393,7 +1393,7 @@
       }
     },
     "splent_feature_citation": {
-      "entry": "splent_io/splent_feature_citation@v0.3.0",
+      "entry": "splent_io/splent_feature_citation@v0.3.1",
       "extensible": {
         "services": [
           "CitationService"
