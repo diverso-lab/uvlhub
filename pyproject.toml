@@ -15,7 +15,7 @@ dependencies = []
 
 [project.optional-dependencies]
 dev = [
-    "watchdog",
+    "watchdog>=4,<7",
     "locust",
 ]
 core = [
