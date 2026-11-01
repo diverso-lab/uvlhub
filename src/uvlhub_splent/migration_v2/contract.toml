@@ -47,7 +47,7 @@ splent_feature_academic_profile = { version = "0.2.0", head = "pu0002" }
 splent_feature_apikeys = { version = "0.11.0", head = "apikeys0003_resources" }
 splent_feature_audit = { version = "0.2.0", head = "audit0001_events" }
 splent_feature_auth = { version = "1.28.0", head = "auth0009_email_collation" }
-splent_feature_citation = { version = "0.3.0", head = "citation0001_references" }
+splent_feature_citation = { version = "0.3.1", head = "citation0001_references" }
 splent_feature_confirmemail = { version = "2.4.0", head = "confirmemail0002_drop_scaffold" }
 splent_feature_curation = { version = "0.2.0", head = "curation0001_requests" }
 splent_feature_dataset = { version = "0.16.2", head = "dataset0012_pid_exact" }

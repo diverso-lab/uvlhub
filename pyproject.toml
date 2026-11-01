@@ -52,7 +52,7 @@ features = [
     "splent-io/splent_feature_explore@v0.10.0",
     "splent-io/splent_feature_factlabel@v0.8.1",
     "splent-io/splent_feature_statistics@v0.7.0",
-    "splent-io/splent_feature_citation@v0.3.0",
+    "splent-io/splent_feature_citation@v0.3.1",
     "splent-io/splent_feature_settings@v0.6.0",
     "splent-io/splent_feature_media@v0.13.0",
     "splent-io/splent_feature_team@v0.10.0",
