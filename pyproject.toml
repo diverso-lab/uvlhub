@@ -50,7 +50,7 @@ features = [
     "splent-io/splent_feature_analytics@v0.2.0",
     "splent-io/splent_feature_rating@v0.7.0",
     "splent-io/splent_feature_explore@v0.10.0",
-    "splent-io/splent_feature_factlabel@v0.8.0",
+    "splent-io/splent_feature_factlabel@v0.8.1",
     "splent-io/splent_feature_statistics@v0.7.0",
     "splent-io/splent_feature_citation@v0.3.0",
     "splent-io/splent_feature_settings@v0.6.0",
@@ -67,8 +67,10 @@ features = [
     "splent-io/splent_feature_generator@v0.4.0",
     "splent-io/splent_feature_apidocs@v0.5.0",
     "splent-io/splent_feature_legacy_urls@v0.2.0",
-    "splent-io/splent_feature_dataset_api@v0.5.0",
+    "splent-io/splent_feature_dataset_api@v0.5.1",
     "splent-io/splent_feature_dataset_transfer@v0.2.0",
+    "splent-io/splent_feature_icons@v0.1.0",
+    "splent-io/splent_feature_search@v0.5.0",
 ]
 features_dev = ["splent-io/splent_feature_mailhog@v1.3.0", "splent-io/splent_feature_phpmyadmin@v1.2.0"]
 features_prod = []
