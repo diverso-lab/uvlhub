@@ -82,9 +82,9 @@ registries = ["forge"]
 
 [tool.splent.spl_model]
 mirror = "uvlhub.io"
-doi = "10.5281/zenodo.23649960"
+doi = "10.5281/zenodo.23859989"
 concept_doi = ""
-version = "10"
+version = "11"
 file = "openhubs_spl.uvl"
 
 [tool.splent.config]
