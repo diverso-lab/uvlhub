@@ -21,6 +21,7 @@ services:
       # PROTECTED_UPLOADS_DIR.
       PROTECTED_UPLOADS_DIR: ${PROTECTED_UPLOADS_DIR:-/workspace/uvlhub_splent/protected_uploads}
       ARCHIVE_DIR: ${ARCHIVE_DIR:-/workspace/uvlhub_splent/archive}
+      SPLENT_STORAGE_DIR: ${SPLENT_STORAGE_DIR:-/workspace/uvlhub_splent/storage}
     ports:
       # Host interface and port for the web app, from SPLENT_WEB_BIND_HOST
       # and SPLENT_WEB_PORT in deploy/.env. Every interface by default;
@@ -29,7 +30,9 @@ services:
       - "${SPLENT_WEB_BIND_HOST:-0.0.0.0}:${SPLENT_WEB_PORT:-5012}:5000"
     volumes:
       # Uploaded and generated files live inside the container and are lost
-      # on every redeploy unless they are kept on named volumes.
+      # on every redeploy unless they are kept on named volumes. Each feature
+      # that uses splent_framework.storage keeps its own under the storage.
+      - uvlhub_splent_web_deploy_storage:${SPLENT_STORAGE_DIR:-/workspace/uvlhub_splent/storage}
       - uvlhub_splent_web_deploy_uploads:/workspace/uvlhub_splent/src/uvlhub_splent/static/uploads
       - uvlhub_splent_web_deploy_protected_uploads:${PROTECTED_UPLOADS_DIR:-/workspace/uvlhub_splent/protected_uploads}
       - uvlhub_splent_web_deploy_archive:${ARCHIVE_DIR:-/workspace/uvlhub_splent/archive}
@@ -83,6 +86,7 @@ services:
 
 volumes:
   uvlhub_splent_db_deploy_data:
+  uvlhub_splent_web_deploy_storage:
   uvlhub_splent_web_deploy_uploads:
   uvlhub_splent_web_deploy_protected_uploads:
   uvlhub_splent_web_deploy_archive:

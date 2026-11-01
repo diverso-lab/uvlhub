@@ -29,4 +29,12 @@ if [ -f "$FRESH_DB_MARKER" ]; then
     fi
 fi
 
+# What the features kept in the shared folders of before goes into their
+# own folders of the storage, once; on every other start it finds nothing.
+# An image pinned to a CLI before the storage has no such command and
+# nothing to move.
+if splent storage:migrate --help >/dev/null 2>&1; then
+    splent storage:migrate
+fi
+
 echo ""

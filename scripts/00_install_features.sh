@@ -174,8 +174,9 @@ fi
 # working copy at the workspace root or the snapshot in .splent_cache), which
 # the owner's next release then could not rewrite. It goes back to whoever
 # owns the workspace, unless that is root.
-owner="$(stat -c %u:%g /workspace)"
-if [ "$(id -u)" = 0 ] && [ "${owner%%:*}" != 0 ]; then
+# GNU stat in the containers, BSD stat where the test suite runs on macOS.
+owner="$(stat -c %u:%g /workspace 2>/dev/null || stat -f %u:%g /workspace 2>/dev/null || true)"
+if [ -n "$owner" ] && [ "$(id -u)" = 0 ] && [ "${owner%%:*}" != 0 ]; then
     for path in "${install_paths[@]}"; do
         find -H "$path" -user 0 -exec chown -h "$owner" {} + 2>/dev/null || true
     done
