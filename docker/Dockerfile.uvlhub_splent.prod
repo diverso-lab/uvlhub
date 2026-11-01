@@ -127,8 +127,12 @@ RUN cd uvlhub_splent && \
 # docker/frontend.lock.json lists (splent product:build writes it) has the
 # manifest the lock names, of the version it names, and the files of its
 # assets/dist match that manifest. One that does not stops the build here,
-# instead of an image that serves another bundle, or none.
-RUN splent feature:compile --verify
+# instead of an image that serves another bundle, or none. pip compiles every
+# .py it installs, the Python a bundle ships to the browser included
+# (generator's pyodide wrapper), and that bytecode is no file of the bundle.
+RUN find /usr/local/lib /workspace -path '*/assets/dist/*' -name __pycache__ -type d \
+        -prune -exec rm -rf {} + \
+    && splent feature:compile --verify
 
 # What only the build needed: the frontend toolchain and pip's build tree.
 # The runtime stage copies /workspace, so they would ship otherwise.
