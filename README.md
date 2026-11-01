@@ -1,6 +1,8 @@
-# uvlhub_splent
+# uvlhub
 
-A web application built with SPLENT, derived from the `openhubs_spl` product line (OpenHubs).
+The open repository of UVL feature models, live at <https://www.uvlhub.io>.
+uvlhub 3.0 is built with SPLENT and derived from the `openhubs_spl` product line
+(OpenHubs).
 
 This repository is a thin shell. It declares which features the product installs
 (see `pyproject.toml`) and SPLENT composes, validates and runs them.
@@ -17,9 +19,9 @@ SPLENT tooling repositories.
 
 ```bash
 mkdir splent_workspace && cd splent_workspace
-git clone https://github.com/diverso-lab/splent_framework.git
-git clone https://github.com/diverso-lab/splent_cli.git
-git clone <url-of-this-repository>
+git clone https://git.splent.io/splent-io/splent_framework.git
+git clone https://git.splent.io/splent-io/splent_cli.git
+git clone https://github.com/diverso-lab/uvlhub.git uvlhub_splent
 ```
 
 Those three are all you need to run the product. The variability model this
@@ -110,7 +112,7 @@ and put the step back, until the CLI's template fetches the model itself.
   fails when what the build writes differs from what is committed:
   `deploy/`, `splent.contracts.json`, `docker/spl/` and
   `docker/requirements.lock`. Last, `check:vendor`: none of the commercial
-  theme the monolith was drawn with, in the product or in any feature it
+  theme uvlhub 2.x was drawn with, in the product or in any feature it
   pins, for production or development. It searches by content, prose
   included, so not even this readme names the theme.
 - **lint** runs Ruff 0.11.8, the CLI's, on `src/uvlhub_splent`.
@@ -129,8 +131,7 @@ volumes, the probes, the Docker socket), the boot in production
 
 `splent-upgrade.yml` opens a pull request with newer feature releases
 every Monday. Nothing deploys from the CI: a release is
-`splent product:release`, by hand, and none is made until D9 and D3 are
-decided.
+`splent product:release`, by hand.
 
 ### When validate says the deploy artifacts differ
 
@@ -315,8 +316,8 @@ The others exit with 0 when there is nothing to do.
 `python -m uvlhub_splent.migration_v2` is the migrator of the cutover: it
 restores a dump of v2.12, builds an empty `uvlhub3` with the pinned
 features' migrations and fills it, held to a versioned data contract
-(`src/uvlhub_splent/migration_v2/contract.toml`). It is a first pass, and
-its tests run on a MariaDB of their own:
+(`src/uvlhub_splent/migration_v2/contract.toml`). Its tests run on a MariaDB
+of their own:
 
 ```bash
 bash uvlhub_splent/tests/migration_v2/run_with_throwaway_db.sh -q
