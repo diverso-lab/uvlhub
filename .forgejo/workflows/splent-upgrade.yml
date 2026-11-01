@@ -1,0 +1,89 @@
+# splent-generated sha256 ff5bd1c3cace4078028ff03dabc185d7fd46f841a632e621e5efb3d7eed5e8aa
+# Written by splent (product:create, product:sync-template --ci). While
+# it stays as written, which the line above records, the commands that
+# change the product's features rewrite it. Once edited it is left
+# alone, and product:sync-template --ci shows and applies the difference.
+#
+# On a schedule the pinned features are compared with what the forge and PyPI
+# serve. When pip finds newer releases that install together, keep every
+# migration history continuous and still validate against the line's model,
+# the new pins go to the branch splent/feature-upgrades and a pull request
+# lists every version that changes and the migrations it brings. Nothing is
+# released or deployed from here. Merging, and running splent product:release,
+# stays a person's decision. The schedule is upgrade_schedule under
+# [tool.splent.ci] in pyproject.toml.
+name: SPLENT feature upgrades
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+jobs:
+  upgrade:
+    runs-on: ubuntu-latest
+    env:
+      WORKING_DIR: ${{ github.workspace }}
+      SPLENT_APP: uvlhub_splent
+      SPLENT_FORGE_HOST: git.splent.io
+      SPLENT_FORGE_TOKEN: ""
+      GITHUB_TOKEN: ""
+      # The runner has no SSH key, so clones go straight to HTTPS.
+      SPLENT_CLONE_TRANSPORT: https
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: uvlhub_splent
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install the SPLENT CLI
+        run: pip install --quiet --upgrade "splent_cli[uvl]" splent_framework
+
+      - name: Upgrade the pinned features
+        run: |
+          set -o pipefail
+          splent product:resolve --prod --strict
+          splent feature:upgrade --yes 2>&1 | tee upgrade.log
+
+      - name: Open a pull request
+        working-directory: uvlhub_splent
+        env:
+          FORGE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: splent/feature-upgrades
+        run: |
+          if git diff --quiet -- pyproject.toml; then
+            echo "Every feature is at its newest compatible release."
+            exit 0
+          fi
+          git config user.name "splent-ci"
+          git config user.email "ci@git.splent.io"
+          git checkout -B "$BRANCH"
+          git add pyproject.toml
+          git commit -m "Upgrade the pinned features"
+          git push --force "https://x-access-token:${FORGE_TOKEN}@git.splent.io/${GITHUB_REPOSITORY}.git" "$BRANCH"
+          # The pull request goes to the branch the repository calls its default.
+          export BASE=$(curl --silent -H "Authorization: token ${FORGE_TOKEN}" \
+            "https://git.splent.io/api/v1/repos/${GITHUB_REPOSITORY}" \
+            | python3 -c 'import json, sys; print(json.load(sys.stdin).get("default_branch") or "main")' \
+            || echo main)
+          python3 - <<'PY' > pr.json
+          import json
+          import os
+          log = open("../upgrade.log", encoding="utf-8", errors="replace").read()
+          body = (
+              "The pinned features have newer releases that install together and "
+              "keep the product valid in its line. Review the plan below, merge, "
+              "and publish with splent product:release.\n\n```\n" + log[-60000:] + "\n```\n"
+          )
+          print(json.dumps({"head": "splent/feature-upgrades", "base": os.environ.get("BASE") or "main",
+                            "title": "Upgrade the pinned features", "body": body}))
+          PY
+          curl --silent --show-error --fail -X POST \
+            -H "Authorization: token ${FORGE_TOKEN}" \
+            -H "Content-Type: application/json" \
+            --data @pr.json \
+            "https://git.splent.io/api/v1/repos/${GITHUB_REPOSITORY}/pulls" \
+            || echo "The branch is pushed. A pull request for it is already open, or the token cannot open one."

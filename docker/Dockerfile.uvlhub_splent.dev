@@ -1,0 +1,55 @@
+FROM python:3.13
+WORKDIR /workspace
+
+ENV PIP_ROOT_USER_ACTION=ignore
+
+# System packages first. They never depend on the workspace, so every later
+# derive reuses these layers instead of reinstalling apt and Node.js.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc libc-dev python3-dev libffi-dev build-essential curl mariadb-client \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        ca-certificates gnupg curl \
+    && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends nodejs \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# The build backend features use. 00_install_features builds them without an
+# isolated environment, which otherwise downloads setuptools again for every
+# feature each time the container is recreated.
+RUN pip install --no-cache-dir "setuptools>=80.3.1" wheel
+
+# Dev runs the workspace framework and CLI, not a PyPI snapshot. Installing them
+# editable BEFORE the product means pip resolves the product's framework/cli
+# dependency against the local source instead of fetching a release, and the
+# dev compose mounts the workspace over /workspace, so a fix in the source is
+# live without a re-release. Features are already editable-mounted; this puts
+# the framework on the same footing and is why a product could run stale
+# framework code under an unchanged version number.
+#
+# Only each project's metadata is copied, never its source. The dev compose
+# mounts the workspace over /workspace, and the editable installs point at
+# src/ through a path entry, so the code the container runs is always the
+# mounted one. Copying whole directories (or even src/) carried files that
+# change on every run (bytecode caches, the product's manifest and .env,
+# node_modules), so each derive rebuilt every layer from here on and a restart
+# took minutes. Now only a change to a pyproject.toml rebuilds anything.
+# The license files go along because pyproject.toml names them. The patterns
+# match whatever each project has (LICENSE, COPYING, COPYING.LESSER), and a
+# product that has none still builds, since the metadata files always match.
+COPY splent_framework/pyproject.toml splent_framework/README.md splent_framework/LICENSE* splent_framework/COPYING* splent_framework/
+COPY splent_cli/pyproject.toml splent_cli/README.md splent_cli/LICENSE* splent_cli/COPYING* splent_cli/
+# splent_framework[dev] brings pytest: feature:test and product:test run it
+# inside this container, and nothing else in the image installs it.
+RUN mkdir -p splent_framework/src splent_cli/src \
+    && pip install --no-cache-dir -e "./splent_framework[dev]" -e ./splent_cli
+
+COPY uvlhub_splent/pyproject.toml uvlhub_splent/README.md uvlhub_splent/LICENSE* uvlhub_splent/COPYING* uvlhub_splent/
+RUN mkdir -p uvlhub_splent/src \
+    && pip install --no-cache-dir -e "./uvlhub_splent[dev]"
+
+EXPOSE 5000

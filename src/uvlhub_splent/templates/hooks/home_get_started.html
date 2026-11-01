@@ -1,0 +1,20 @@
+{#- uvlhub's first card beside the top datasets, for visitors: sign up or
+    sign in. The product's, in public's home.aside slot (create_app). -#}
+<div class="card uvl-home-card uvl-home-start uvl-home-roomy shadow-sm">
+    <div class="card-body text-center">
+        <h2 class="mb-3">{{ _("Let's get started!") }}</h2>
+        <p class="mb-4">
+            {{ _('Ready to upload your amazing feature models in UVL format and share them with the world?') }}
+        </p>
+        <div class="d-grid gap-3">
+            <a href="{{ url_for('signup.show_signup_form') }}" class="btn btn-primary btn-lg">
+                {{ icon('user-plus', size=24) }}
+                <span>{{ _('Sign Up') }}</span>
+            </a>
+            <a href="{{ url_for('auth.login') }}" class="btn btn-outline-primary btn-lg">
+                {{ icon('log-in', size=24) }}
+                <span>{{ _("I'm already registered") }}</span>
+            </a>
+        </div>
+    </div>
+</div>

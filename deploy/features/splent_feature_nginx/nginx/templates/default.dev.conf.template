@@ -1,0 +1,343 @@
+# Development server for the product's web container.
+#
+# It mirrors default.prod.conf.template line for line, except for what only
+# makes sense in one of them: here the WebSocket upgrade for the reloader
+# and a readable answer to a Host nobody configured; there the ACME
+# challenge. A rule that protects production (the trust boundary, the rate
+# limit, the redacted log) is exercised here first, so a product finds out
+# in development that it depends on something production refuses.
+#
+# The image renders this file with envsubst on every start, replacing the
+# ${NGINX_*} variables docker-compose.dev.yml passes. Everything written as
+# $name without braces is an nginx variable and is left alone.
+
+# ── Trust boundary for the forwarded headers ─────────────────────────────
+#
+# A remote client must never be able to assert its own X-Forwarded-*
+# headers, so whatever it sends is overwritten unless its peer address is
+# listed as a trusted proxy in NGINX_TRUSTED_PROXY_CIDRS. That variable is
+# empty by default, so no peer is trusted and the headers are rewritten
+# from $scheme and $host.
+#
+# Turn the trust on when a TLS terminator runs on the host in front of this
+# container, which is the teaching wiki deployment (the VM host terminates
+# HTTPS and forwards to the published port). Packets forwarded from the
+# host reach the container with the docker gateway as peer address, not
+# with 127.0.0.1, so the value is the docker network range, for example
+# NGINX_TRUSTED_PROXY_CIDRS=172.16.0.0/12 (add 192.168.65.0/24 on Docker
+# Desktop, or 127.0.0.1/32 when nginx runs with host networking). Publish
+# the HTTP port on loopback, NGINX_BIND_HOST=127.0.0.1, whenever a range
+# that wide is trusted, so that only the host terminator can reach this
+# server.
+#
+# A trusted peer also names the client. The realip module takes the client
+# from the X-Forwarded-For it sends, walking past every trusted address from
+# the right, and makes it $remote_addr: the rate limits below count clients
+# and not the terminator, the access log shows them, and the app is told
+# about them. $realip_remote_addr keeps the peer itself, which is what the
+# trust is decided on.
+#
+# docker-entrypoint.d/15-splent-trusted-proxies.sh writes the variable into
+# the two files included below on every container start, and writes them
+# empty when nothing is trusted. The paths are spelled out because an
+# include inside a geo block takes a plain file name, not a wildcard.
+real_ip_header X-Forwarded-For;
+real_ip_recursive on;
+include /etc/nginx/trusted_proxies/realip.conf;
+
+geo $realip_remote_addr $from_trusted_proxy {
+    default 0;
+    include /etc/nginx/trusted_proxies/trusted.conf;
+}
+
+# What the peer claims, with a fallback for the trusted proxy that sends no
+# header at all. Only read when the peer is trusted.
+map $http_x_forwarded_proto $client_forwarded_proto {
+    default $http_x_forwarded_proto;
+    ""      $scheme;
+}
+
+# What is actually forwarded upstream. An untrusted peer gets the scheme
+# this server can prove, which is what the app needs for CSRF checks and
+# for building absolute links such as password reset mails.
+map $from_trusted_proxy $forwarded_proto {
+    default $scheme;
+    1       $client_forwarded_proto;
+}
+
+# The host is never the peer's to say, trusted or not. X-Forwarded-Host is
+# $host, the name the request was matched to a server by, so the app only
+# ever hears a name in NGINX_SERVER_NAME: a terminator that passes a
+# client's own X-Forwarded-Host through cannot get another one to the app.
+
+# ── Request id ────────────────────────────────────────────────────────────
+#
+# One id per request, in the access log, in X-Request-ID to the app and in
+# X-Request-ID back to the browser, so a report of a failure can be matched
+# with the lines it left. It is this server's own $request_id, unless a
+# trusted proxy already gave the request one, which is kept so the id is
+# the same on every hop. An id from anyone else, or one that is not a plain
+# token, is replaced: it would let a client write into the log.
+map $http_x_request_id $client_request_id {
+    "~^[A-Za-z0-9._-]{1,128}$" $http_x_request_id;
+    default                    $request_id;
+}
+
+map $from_trusted_proxy $splent_request_id {
+    default $request_id;
+    1       $client_request_id;
+}
+
+# ── Access log without secrets ────────────────────────────────────────────
+#
+# A link that signs someone in carries its secret in the address: the
+# password reset (/reset/password/<token>), the email confirmation
+# (/confirm_user/<token>), the end of a sign-up through ORCID or GitHub
+# (/account/complete-signup/<token>), an OAuth callback (?code=&state=) and
+# any API call made with ?token= or ?api_key=. The stock "combined" format
+# writes the request line and the Referer verbatim, and the page such a
+# link opens sends its own address as the Referer of every asset it loads,
+# so the secret would land in the log several times per visit. The format
+# below writes the path, the query and the Referer through these maps
+# instead.
+#
+# The path: the segment after a token route, replaced. $uri is the decoded,
+# normalised path, so an encoded or dotted spelling of the route is caught
+# too.
+map $uri $loggable_path {
+    "~^(/(?:reset/password|confirm_user|account/complete-signup)/)[^/]+(.*)$" "$1***$2";
+    default $uri;
+}
+
+# The query: the value of every parameter whose name says it carries a
+# secret (token, access_token, api_key, code, state, password, signature,
+# ...), replaced. Each map replaces one value, the last one not replaced
+# yet, so three of them cover an OAuth callback and an API call with room
+# to spare; the fourth drops the whole query when even more are left. The
+# name is matched within 40 characters on either side of the keyword, so
+# the regex stays linear on an address made to be slow.
+map $args $loggable_args_1 {
+    "~*^((?:.*&)?[^&=]{0,40}(?:token|key|secret|passw|signature|code|state)[^&=]{0,40}=)(?!\*\*\*(?:&|$))[^&]+(.*)$" "$1***$2";
+    default $args;
+}
+
+map $loggable_args_1 $loggable_args_2 {
+    "~*^((?:.*&)?[^&=]{0,40}(?:token|key|secret|passw|signature|code|state)[^&=]{0,40}=)(?!\*\*\*(?:&|$))[^&]+(.*)$" "$1***$2";
+    default $loggable_args_1;
+}
+
+map $loggable_args_2 $loggable_args_3 {
+    "~*^((?:.*&)?[^&=]{0,40}(?:token|key|secret|passw|signature|code|state)[^&=]{0,40}=)(?!\*\*\*(?:&|$))[^&]+(.*)$" "$1***$2";
+    default $loggable_args_2;
+}
+
+map $loggable_args_3 $loggable_query {
+    ""                                                                                              "";
+    "~*(?:^|&)[^&=]{0,40}(?:token|key|secret|passw|signature|code|state)[^&=]{0,40}=(?!\*\*\*(?:&|$))[^&]" "?***";
+    default                                                                                         "?$loggable_args_3";
+}
+
+# The Referer: the same token routes in its path, and its whole query when
+# a parameter there carries a secret. A request without one is logged with
+# the "-" the combined format has always written there.
+map $http_referer $referer_without_path_token {
+    "~^([^?#]*/(?:reset/password|confirm_user|account/complete-signup)/)[^/?#]+(.*)$" "$1***$2";
+    default $http_referer;
+}
+
+map $referer_without_path_token $loggable_referer {
+    "" "-";
+    "~*^([^?#]*)\?(?:[^#]*&)?[^&=#]{0,40}(?:token|key|secret|passw|signature|code|state)[^&=#]{0,40}=" "$1?***";
+    default $referer_without_path_token;
+}
+
+# The "combined" layout, so the tools that read it still do, with the
+# request line and the Referer redacted, then the request id, the peer the
+# request came from (the TLS terminator when one is trusted, which is how
+# to check NGINX_TRUSTED_PROXY_CIDRS) and the time spent, by nginx and by
+# the app. Neither the Authorization header nor the cookies are written.
+log_format splent '$remote_addr - $remote_user [$time_local] '
+                  '"$request_method $loggable_path$loggable_query $server_protocol" '
+                  '$status $body_bytes_sent "$loggable_referer" "$http_user_agent" '
+                  'request_id=$splent_request_id peer=$realip_remote_addr '
+                  'request_time=$request_time upstream_time=$upstream_response_time';
+
+# ── Rate limit on the account forms ───────────────────────────────────────
+#
+# Signing in, asking for a reset link, signing up and drawing a captcha are
+# what a script hammers, and every one of them costs a password hash, a
+# mail or an image. This is the coarse limit at the door, per client
+# address, so a flood never reaches the app; the app's own throttle still
+# counts the failures per account. NGINX_AUTH_RATE_LIMIT is the sustained
+# rate (nginx's r/s or r/m) and NGINX_AUTH_RATE_BURST how many requests
+# above it are answered at once before the 429s start. The defaults let a
+# classroom behind one NAT address sign up together.
+limit_req_zone $binary_remote_addr zone=splent_auth:10m rate=${NGINX_AUTH_RATE_LIMIT};
+
+# WebSocket upgrade for the development reloader, and a plain close for
+# every other request, which is what nginx sends upstream by default.
+map $http_upgrade $connection_upgrade {
+    default upgrade;
+    ""      close;
+}
+
+# ── Hosts nobody configured ───────────────────────────────────────────────
+#
+# Every request whose Host is not NGINX_SERVER_NAME ends here, and so does
+# one with no Host at all. The app builds absolute links (password resets,
+# email confirmations, OAuth callbacks) from the Host it is given, so a
+# forged one must never reach it. Production closes the connection without
+# an answer; development explains itself, since the usual reason is opening
+# the site by an address the .env does not name (127.0.0.1, the machine's
+# LAN address). Add that address to NGINX_SERVER_NAME, which takes several
+# names separated by spaces, to use it.
+server {
+    listen 80 default_server;
+    server_name _;
+    access_log /var/log/nginx/access.log splent;
+
+    default_type text/plain;
+    return 421 "This server answers only to ${NGINX_SERVER_NAME}. Add the address you used to NGINX_SERVER_NAME to open the site with it.\n";
+}
+
+# ── Other names of the site ───────────────────────────────────────────────
+#
+# A name that only leads to the site (the bare domain of a www. site, an
+# old domain) is redirected for good to the first name of NGINX_SERVER_NAME,
+# the canonical one, path and query included, and never reaches the app:
+# every link the app builds and every address a search engine keeps then
+# name one host. NGINX_REDIRECT_SERVER_NAMES lists those names, separated
+# by spaces. docker-entrypoint.d/16-splent-redirects.sh writes their server
+# into the directory below on every start, and nothing when it is empty; an
+# include whose pattern matches no file is no error.
+include /etc/nginx/redirects/*.conf;
+
+# ── Healthcheck ───────────────────────────────────────────────────────────
+#
+# What the compose healthcheck asks, from inside the container: loopback
+# only, never published, and answered by nginx itself, so the container is
+# healthy when nginx serves, whether or not the app is up (the app has its
+# own healthcheck).
+server {
+    listen 127.0.0.1:8080;
+    server_name splent-healthcheck;
+    access_log /var/log/nginx/access.log splent;
+
+    location = /healthz {
+        access_log off;
+        default_type text/plain;
+        return 200 "ok\n";
+    }
+
+    location / {
+        return 404;
+    }
+}
+
+server {
+    listen 80;
+    server_name ${NGINX_SERVER_NAME};
+    access_log /var/log/nginx/access.log splent;
+
+    # The web container, by name, resolved per request through Docker's
+    # embedded DNS (127.0.0.11 on every user-defined network, which
+    # splent_network is) and cached for 10 seconds. An upstream block
+    # resolved it once, at start: nginx refused to start while the web
+    # container did not exist yet ("host not found in upstream") and kept
+    # the old address once it was recreated, answering 502 until restarted.
+    # Through a variable, nginx starts on its own, answers 502 while the
+    # web container is away and finds it again when it is back. ipv6=off
+    # because the app listens on IPv4 only.
+    resolver 127.0.0.11 valid=10s ipv6=off;
+    resolver_timeout 5s;
+    set $splent_upstream ${NGINX_UPSTREAM_HOST}:${NGINX_UPSTREAM_PORT};
+
+    client_max_body_size 256M;
+
+    # Hardening headers, and the request id back to the browser. "always"
+    # makes nginx attach them to every response, including error pages.
+    # add_header is not inherited inside a location that declares
+    # add_header directives of its own, so repeat these there if you add
+    # one.
+    add_header X-Content-Type-Options nosniff always;
+    add_header X-Frame-Options SAMEORIGIN always;
+    add_header Referrer-Policy strict-origin-when-cross-origin always;
+    add_header X-Request-ID $splent_request_id always;
+
+    # Compress text responses above 1 KB. text/html is always compressed by
+    # the gzip module and must not be listed in gzip_types.
+    gzip on;
+    gzip_min_length 1024;
+    gzip_comp_level 5;
+    gzip_vary on;
+    gzip_proxied any;
+    gzip_types text/css text/javascript application/javascript application/json;
+
+    # How every location below talks to the app. They are set here, once,
+    # and inherited by each location that sets no proxy_set_header of its
+    # own; a location added through locations/ that does set one has to
+    # repeat them all.
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    # One address, the client this server vouches for: the peer, or the
+    # client a trusted proxy named (see realip above). The app reads it
+    # with SPLENT_TRUSTED_PROXIES=1, whatever stands in front of nginx,
+    # because nginx is the only hop the app has to believe.
+    proxy_set_header X-Forwarded-For $remote_addr;
+    proxy_set_header X-Forwarded-Proto $forwarded_proto;
+    proxy_set_header X-Forwarded-Host $host;
+    proxy_set_header X-Request-ID $splent_request_id;
+    proxy_read_timeout 120s;
+    proxy_buffering off;
+
+    # WebSocket support (dev hot-reload)
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection $connection_upgrade;
+
+    limit_req_status 429;
+
+    # Extension point for products and other features. Every *.conf file in
+    # /etc/nginx/conf.d/locations/ is loaded inside this server block, so a
+    # deployment can add locations of its own (a static alias, an internal
+    # location for X-Accel-Redirect downloads, ...) without patching this
+    # feature. It comes before the locations below, so a regex location
+    # there wins over the ones here. This feature mounts its own
+    # docker/nginx/locations directory there, so in dev the files are
+    # dropped at
+    #   <workspace>/splent_feature_nginx/docker/nginx/locations/
+    # Another feature cannot contribute by shipping a compose fragment for
+    # this service, because the CLI runs every feature compose as its own
+    # project in dev and replaces same-named services when merging in prod.
+    # See locations/protected-files.conf.example for a worked example.
+    include /etc/nginx/conf.d/locations/*.conf;
+
+    # The account forms of auth, reset, signup and the captcha features,
+    # under the limit declared above.
+    location ~ ^/(?:login|signup|reset/forgot|captcha)(?:/|$) {
+        limit_req zone=splent_auth burst=${NGINX_AUTH_RATE_BURST} nodelay;
+        proxy_pass http://$splent_upstream;
+    }
+
+    # What still runs inside the request for minutes: publishing to Zenodo
+    # (the upload wizard, metadata edits, a new version, sync and retry,
+    # and their API twins) and building a dataset's ZIP, or every dataset's,
+    # before the first byte is sent. Zenodo bounds each of its calls, not a
+    # publication, and with its defaults a first publication can wait about
+    # four minutes and a new version close to six (see zenodo's README), so
+    # 120 s cut them short and left a DOI minted on Zenodo that the hub
+    # never stored. NGINX_LONG_REQUEST_TIMEOUT applies to these addresses
+    # only; keep the worker's timeout (GUNICORN_TIMEOUT) a little above it,
+    # so nginx gives up first and the worker still records what Zenodo
+    # answered. Everything else keeps 120 s. Until publications run as
+    # background jobs this is the stopgap.
+    location ~ ^/(?:datasets/upload|dataset/edit/\d+|dataset/\d+/new-version|datasets/(?:retry-)?sync/\d+|api/v1/datasets/\d+/(?:publish|new-version)|datasets/download/(?:\d+|all))/?$ {
+        proxy_read_timeout ${NGINX_LONG_REQUEST_TIMEOUT};
+        proxy_send_timeout ${NGINX_LONG_REQUEST_TIMEOUT};
+        proxy_pass http://$splent_upstream;
+    }
+
+    location / {
+        proxy_pass http://$splent_upstream;
+    }
+}

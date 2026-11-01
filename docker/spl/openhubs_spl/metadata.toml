@@ -1,0 +1,10 @@
+[spl]
+name = "openhubs_spl"
+description = ""
+
+[spl.uvl]
+mirror = "uvlhub.io"
+doi = "10.5281/zenodo.23859989"
+concept_doi = ""
+version = "11"
+file = "openhubs_spl.uvl"

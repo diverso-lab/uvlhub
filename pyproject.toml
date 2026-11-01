@@ -1,250 +1,167 @@
 [build-system]
-requires = ["setuptools>=80.3.1", "wheel"]
+requires = [
+    "setuptools>=80.3.1",
+    "wheel",
+]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "uvlhub"
-version = "1.0.0"
-description = "UVLHub — Flask product built on splent_framework."
+name = "uvlhub_splent"
+version = "0.0.1"
+description = "uvlhub_splent is an app built with SPLENT (https://www.splent.io)"
+readme = "README.md"
 requires-python = ">=3.13"
-dependencies = [
-    "afmparser==1.0.3",
-    "alembic==1.18.4",
-    "aniso8601==10.0.1",
-    "antlr4-python3-runtime==4.13.1",
-    "astutils==0.0.6",
-    "async-generator==1.10",
-    "attrs==25.4.0",
-    "Authlib==1.6.12",
-    "autoflake==2.3.3",
-    "Babel==2.18.0",
-    "beautifulsoup4==4.14.3",
-    "bidict==0.23.1",
-    "black==26.3.1",
-    "bleach==6.4.0",
-    "blinker==1.9.0",
-    "brotli==1.2.0",
-    "bs4==0.0.2",
-    "cachelib==0.13.0",
-    "captcha==0.7.1",
-    "certifi==2026.2.25",
-    "cffi==2.0.0",
-    "charset-normalizer==3.4.4",
-    "click==8.3.3",
-    "ConfigArgParse==1.7.1",
-    "coverage==7.13.4",
-    "croniter==6.0.0",
-    "cryptography==50.0.1",
-    "dd==0.6.0",
-    "detect-secrets==1.5.0",
-    "dnspython==2.8.0",
-    "docker==7.1.0",
-    "elastic-transport==8.17.1",
-    "elasticsearch==8.18.1",
-    "email-validator==2.3.0",
-    "Faker==40.5.1",
-    "fakeredis==2.34.1",
-    "flake8==7.3.0",
-    "Flake8-pyproject==1.2.4",
-    "flamapy==2.5.0",
-    "flamapy-bdd==2.5.0",
-    "flamapy-fm==2.5.0",
-    "flamapy-fw==2.5.0",
-    "flamapy-sat==2.5.0",
-    "flasgger==0.9.7.2.dev2",
-    "Flask==3.1.0",
-    "Flask-Babel==4.0.0",
-    "flask-cors==6.0.2",
-    "Flask-Login==0.6.3",
-    "Flask-Mail==0.10.0",
-    "Flask-Migrate==4.1.0",
-    "Flask-RESTful==0.3.10",
-    "Flask-Session==0.8.0",
-    "Flask-SQLAlchemy==3.1.1",
-    "Flask-WTF==1.2.2",
-    "fmfactlabel==1.8.2",
-    "gevent==25.9.1",
-    "geventhttpclient==2.3.8",
-    "graphviz==0.21",
-    "greenlet==3.3.2",
-    "gunicorn==25.1.0",
-    "h11==0.16.0",
-    "h2==4.4.1",
-    "hpack==4.2.0",
-    "hyperframe==6.1.0",
-    "idna==3.19",
-    "importlib_metadata==8.7.1",
-    "iniconfig==2.3.0",
-    "isort==8.0.1",
-    "itsdangerous==2.2.0",
-    "Jinja2==3.1.6",
-    "jsonschema==4.26.0",
-    "jsonschema-specifications==2025.9.1",
-    "kaitaistruct==0.11",
-    "locust==2.43.4.dev13",
-    "locust-cloud==1.30.0",
-    "Mako==1.3.12",
-    "MarkupSafe==3.0.3",
-    "mccabe==0.7.0",
-    "mistune==3.3.4",
-    "msgpack==1.2.2",
-    "msgspec==0.20.0",
-    "mypy_extensions==1.1.0",
-    "networkx==3.6.1",
-    "outcome==1.3.0.post0",
-    "packaging==26.0",
-    "pathspec==1.0.4",
-    "pillow==12.3.0",
-    "platformdirs==4.9.2",
-    "pluggy==1.6.0",
-    "ply==3.10",
-    "psutil==6.1.1",
-    "pyasn1==0.6.4",
-    "pycodestyle==2.14.0",
-    "pycparser==3.0",
-    "pydot==4.0.1",
-    "pyflakes==3.4.0",
-    "Pygments==2.20.0",
-    "PyMySQL==1.1.1",
-    "pyOpenSSL==26.4.0",
-    "pyparsing==3.3.2",
-    "PySocks==1.7.1",
-    "pytest==9.0.3",
-    "pytest-cov==7.0.0",
-    "pytest-mock==3.15.1",
-    "python-dateutil==2.9.0.post0",
-    "python-dotenv==1.0.1",
-    "python-engineio==4.13.5",
-    "python-sat==0.1.8.dev17",
-    "python-socketio==5.16.4",
-    "pytokens==0.4.1",
-    "pytz==2024.2",
-    "PyYAML==6.0.3",
-    "pyzmq==27.1.0",
-    "qrcode==7.4.2",
-    "redis==5.2.1",
-    "referencing==0.37.0",
-    "requests==2.33.0",
-    "rpds-py==0.30.0",
-    "rq==2.7.0",
-    "selenium==4.41.0",
-    "selenium-wire==5.1.0",
-    "setuptools==83.0.0",
-    "simple-websocket==1.1.0",
-    "six==1.17.0",
-    "sniffio==1.3.1",
-    "sortedcontainers==2.4.0",
-    "soupsieve==2.8.4",
-    "splent_framework==1.6.1",
-    "SQLAlchemy==2.0.37",
-    "SQLAlchemy-Utils==0.42.1",
-    "trio==0.33.0",
-    "trio-typing==0.10.0",
-    "trio-websocket==0.12.2",
-    "types-certifi==2021.10.8.3",
-    "types-urllib3==1.26.25.14",
-    "typing_extensions==4.15.0",
-    "tzdata==2025.3",
-    "Unidecode==1.4.0",
-    "urllib3==2.7.0",
-    "uvlparser==2.5.0",
-    "webdriver-manager==4.0.2",
-    "webencodings==0.5.1",
-    "websocket-client==1.9.0",
-    "Werkzeug==3.1.6",
-    "wheel==0.46.3",
-    "wsproto==1.3.2",
-    "WTForms==3.2.1",
-    "zipp==3.23.0",
-    "zope.event==6.1",
-    "zope.interface==8.2",
-    "zstandard==0.25.0",
-]
+dependencies = []
 
-# The product itself ships no importable package via pip: `app` is imported
-# from the working directory (PYTHONPATH=/app). `pip install .` exists only to
-# install the pinned dependencies declared above.
-[tool.setuptools]
-packages = []
+[project.optional-dependencies]
+dev = [
+    "watchdog>=4,<7",
+    "locust",
+]
+core = [
+    "splent_framework",
+]
 
 [tool.splent]
+cli_version = "1.49.0"
 features = [
-    "apikeys",
-    "auth",
-    "captcha",
-    "confirmemail",
-    "dataset",
-    "downloadqueue",
-    "elasticsearch",
-    "explore",
-    "factlabel",
-    "featuremodel",
-    "flamapy",
-    "generator",
-    "github",
-    "hubfile",
-    "mail",
-    "orcid",
-    "profile",
-    "public",
-    "rating",
-    "reset",
-    "statistics",
-    "team",
-    "webhook",
-    "zenodo",
+    "splent-io/splent_feature_academic_profile@v0.2.0",
+    "splent-io/splent_feature_elasticsearch@v0.3.0",
+    "splent-io/splent_feature_redis@v1.7.0",
+    "splent-io/splent_feature_session_redis@v1.3.0",
+    "splent-io/splent_feature_captcha_image@v0.3.0",
+    "splent-io/splent_feature_captcha@v0.3.0",
+    "splent-io/splent_feature_admin@v1.10.0",
+    "splent-io/splent_feature_signup@v0.5.0",
+    "splent-io/splent_feature_nginx@v1.7.0",
+    "splent-io/splent_feature_theme@v0.17.0",
+    "splent-io/splent_feature_public@v1.13.0",
+    "splent-io/splent_feature_hub_shell@v0.2.0",
+    "splent-io/splent_feature_orcid@v0.5.0",
+    "splent-io/splent_feature_github@v0.5.0",
+    "splent-io/splent_feature_autodeploy@v0.5.0",
+    "splent-io/splent_feature_identities@v0.6.0",
+    "splent-io/splent_feature_apikeys@v0.11.0",
+    "splent-io/splent_feature_zenodo@v0.6.0",
+    "splent-io/splent_feature_backup@v0.2.0",
+    "splent-io/splent_feature_curation@v0.2.0",
+    "splent-io/splent_feature_observability@v0.2.0",
+    "splent-io/splent_feature_audit@v0.2.0",
+    "splent-io/splent_feature_analytics@v0.2.0",
+    "splent-io/splent_feature_rating@v0.7.0",
+    "splent-io/splent_feature_explore@v0.10.0",
+    "splent-io/splent_feature_factlabel@v0.8.1",
+    "splent-io/splent_feature_statistics@v0.7.0",
+    "splent-io/splent_feature_citation@v0.3.0",
+    "splent-io/splent_feature_settings@v0.6.0",
+    "splent-io/splent_feature_media@v0.13.0",
+    "splent-io/splent_feature_team@v0.10.0",
+    "splent-io/splent_feature_uvl@v0.6.0",
+    "splent-io/splent_feature_auth@v1.28.0",
+    "splent-io/splent_feature_profile@v1.9.0",
+    "splent-io/splent_feature_confirmemail@v2.4.0",
+    "splent-io/splent_feature_reset@v2.4.0",
+    "splent-io/splent_feature_mail@v1.7.0",
+    "splent-io/splent_feature_hubfile@v0.13.0",
+    "splent-io/splent_feature_dataset@v0.16.1",
+    "splent-io/splent_feature_generator@v0.4.0",
+    "splent-io/splent_feature_apidocs@v0.5.0",
+    "splent-io/splent_feature_legacy_urls@v0.2.0",
+    "splent-io/splent_feature_dataset_api@v0.5.1",
+    "splent-io/splent_feature_dataset_transfer@v0.2.0",
+    "splent-io/splent_feature_icons@v0.1.0",
+    "splent-io/splent_feature_search@v0.5.0",
 ]
-features_dev = []
+features_dev = ["splent-io/splent_feature_mailhog@v1.3.0", "splent-io/splent_feature_phpmyadmin@v1.2.0"]
 features_prod = []
+spl = "openhubs_spl"
 
-# --------------------
-# Formatting & linting
-# --------------------
+[tool.splent.release]
+channels = ["forge", "docker"]
+registries = ["forge"]
 
-[tool.black]
-line-length = 120
-target-version = ["py313"]
-# Skip vendored third-party sources — we track them but don't own their style.
-extend-exclude = '''
-/(
-    .*/vendor
-  | .*/node_modules
-  | .*/migrations
-)/
-'''
+[tool.splent.spl_model]
+mirror = "uvlhub.io"
+doi = "10.5281/zenodo.23859989"
+concept_doi = ""
+version = "11"
+file = "openhubs_spl.uvl"
 
-[tool.isort]
-line_length = 120
-profile = "black"
-extend_skip_glob = [
-    "*/vendor/*",
-    "*/node_modules/*",
-    "*/migrations/*",
+[tool.splent.config]
+SITE_NAME = "uvlhub"
+SITE_TAGLINE = "Repository of feature models in UVL format integrated with Zenodo and FlamaPy"
+SITE_LOGO = "media/logos/default-dark.svg"
+HUB_SHELL_LOGO_COMPACT = "media/logos/uvlhub_ball.png"
+HUB_SHELL_FOOTER_YEAR = "2025"
+HUB_SHELL_FOOTER_CREDITS = "University of Seville · University of Malaga · University of Ulm"
+HUB_SHELL_REPOSITORY_URL = "https://github.com/diverso-lab/uvlhub"
+MEDIA_MAX_UPLOAD_SIZE = "20M"
+MEDIA_PUBLIC_GALLERY = false
+AUTH_MIGRATION_LEGACY_ROLE = "user"
+AUTH_PASSWORD_CONFIRM = true
+AUTH_REQUIRE_VERIFIED_EMAIL = true
+PUBLIC_SIDEBAR_HOME_LINK = false
+PUBLIC_HOME_TITLE = "Top datasets with the most feature models"
+EXTERNAL_LOGIN_PASSWORD_HINT = false
+APIKEYS_SCOPES = ["read_dataset", "write_dataset"]
+APIKEYS_DEFAULT_SCOPES = ["read_dataset"]
+APIKEYS_HEADER_ALIASES = ["X-API-Key"]
+CAPTCHA_PROTECTED_FORMS = ["signup"]
+DATASET_PUBLISHER_NAME = "uvlhub"
+DATASET_CATALOG_URL = "https://www.uvlhub.io"
+DATASET_QR_LOGO = "media/logos/uvlhub_ball.png"
+DATASET_HOME_ORDER = "items"
+DATASET_PUBLISH_POLICY = "curated"
+CURATION_TRUSTED_ACCOUNTS = "carried_over"
+OBSERVABILITY_BACKEND = "glitchtip"
+OBSERVABILITY_ALERT_CHANNELS = ["email", "matrix"]
+ANALYTICS_PROVIDER = "plausible"
+SPLENT_DERIVED_KEYS = true
+CITATION_REFERENCES_FILE = "citation_references.toml"
+DATASET_DEPOSIT_CONTENT = "sources_and_derived"
+ZENODO_KEYWORDS = ["uvlhub"]
+UVL_MAX_SIZE = "20M"
+BACKUP_PATHS = [
+    "/workspace/uvlhub_splent/protected_uploads",
+    "/workspace/uvlhub_splent/src/uvlhub_splent/static/uploads",
+    "/workspace/uvlhub_splent/archive",
+]
+BACKUP_VERIFY_FILES = ["Hubfile.get_full_path:size"]
+TEAM_SHOW_EMPTY_ROLES = true
+TEAM_CARD_EMAIL_ADDRESS = true
+SITE_BREADCRUMBS = "all"
+THEME_TOKENS = """{\
+"primary": "#0b6fe0", "primary_contrast": "#ffffff", "accent": "#1f6fa3", \
+"bg": "#ffffff", "surface": "#f9f9f9", "text": "#071437", \
+"heading": "#071437", "muted": "#646c82", "border": "#f1f1f4", \
+"radius": ".475rem", \
+"font_body": "Inter, Helvetica, sans-serif", \
+"font_heading": "Inter, Helvetica, sans-serif", \
+"font_display": "Inter, Helvetica, sans-serif", \
+"font_url": ""}"""
+
+[tool.splent.csp]
+generator = ["script-src 'wasm-unsafe-eval'", "connect-src https://huggingface.co https://*.huggingface.co https://*.hf.co https://raw.githubusercontent.com"]
+
+[tool.splent.layout.menu]
+order = { team = 30 }
+
+[tool.splent.test]
+env = ["MIGRATION_V2_TEST_*"]
+
+[tool.splent.runtime]
+splent_framework = "1.30.0"
+splent_cli = "1.50.1"
+gunicorn = ">=23,<24"
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.setuptools.packages.find]
+where = [
+    "src",
 ]
 
-[tool.flake8]
-max-line-length = 120
-extend-ignore = ["E203", "W503"]
-extend-exclude = [
-    "*/vendor/*",
-    "*/node_modules/*",
-    "*/migrations/*",
-]
-
-# --------------------
-# Testing
-# --------------------
-
-[tool.pytest.ini_options]
-testpaths = ["app/features", "tests"]
-python_files = ["test_*.py"]
-filterwarnings = ["ignore::DeprecationWarning"]
-markers = [
-    "unit: pure unit tests, no Flask app, no database",
-    "repository: repository tests against the database (no business logic)",
-    "service: service-level tests against the database (orchestration + repos)",
-    "integration: HTTP-level integration tests via Flask test client",
-    "e2e: browser-driven end-to-end tests (requires the selenium grid)",
-    "load: locust load tests (run via `rosemary locust`)",
-    "slow: long-running tests (Pyodide boot, browser E2E) — skip with `-m 'not slow'`",
-]
+[tool.setuptools.package-data]
+"uvlhub_splent" = ["citation_references.toml"]
+"uvlhub_splent.migration_v2" = ["contract.toml", "curation.toml"]

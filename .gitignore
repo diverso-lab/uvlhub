@@ -18,9 +18,10 @@ app.log.*
 build/
 dist/
 
-# Python egg info
-rosemary.egg-info/
-*.egg-info/
+# Webpack bundles and source maps
+*.bundle.js
+*.bundle.js.map
+*.map
 
 # Coverage reports
 .coverage
@@ -28,29 +29,50 @@ htmlcov/
 
 # pytest cache
 .pytest_cache/
+*.egg-info
 
 # Virtual environments
 venv/
+.venv/
 
 # Temporary files for testing and deployment
 uploads/
-test_file.txt
-ubuntu-bionic-18.04-cloudimg-console.log
-.vagrant/
-nginx.prod.ssl.conf
-.version
-entrypoint.sh
-deployments.log
-.last_env
+
+# Runtime state, never code. instance/protected_uploads holds files a
+# feature keeps behind an access check, which for a course wiki means
+# material withheld until a release date. Committing it would put the very
+# content the product protects into a repository, so it is excluded here
+# rather than left to whoever notices.
+src/instance/
 
 # Node.js dependencies
 node_modules/
 
-# Selenium videos generated with selenium-grid
-docker/tmp/videos/
+# Feature symlinks at the product root, filled by product:resolve. Anchored,
+# because docker/features/ is a deploy artifact (product:build copies the
+# Dockerfiles and templates of features that build their own image there)
+# and a host that clones the product has to find it, or docker compose
+# cannot build those images.
+/features
 
-# Config files
-.moduleignore
+# Per-machine lifecycle state, written by the CLI: it records when each
+# feature was installed and migrated ON THIS MACHINE. Sharing it between
+# machines is meaningless, and versioning it makes every deployment pull
+# conflict with whatever the last machine recorded.
+splent.manifest.json
 
-# Local scratch/debug screenshots
-scripts/_*.png
+# Real environment files. product:deploy writes docker/.env.deploy with the
+# database passwords the operator typed, and a plain ".env" rule does not
+# match it, so it would sit untracked next to the tracked templates waiting
+# for someone to run git add -A on a server. Only the hand-maintained
+# *.example templates belong here.
+.env
+.env.*
+!.env.example
+!.env.dev.example
+!.env.prod.example
+# The deploy template and compose are versioned on purpose: a clean clone
+# must deploy with git and docker alone, no CLI installed. product:build
+# regenerates both; when a rebuild changes them, commit the diff.
+!.env.deploy.example
+pyproject.toml.bak

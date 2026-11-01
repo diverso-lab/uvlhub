@@ -1,0 +1,2637 @@
+{
+  "format": 1,
+  "features": {
+    "splent_feature_academic_profile": {
+      "entry": "splent_io/splent_feature_academic_profile@v0.2.0",
+      "refinement": {
+        "refines": "splent_feature_profile",
+        "extends": {
+          "models": [
+            {
+              "target": "UserProfile",
+              "mixin": "AcademicProfileMixin"
+            }
+          ]
+        }
+      },
+      "extensible": {
+        "services": [],
+        "templates": [],
+        "models": [],
+        "hooks": [],
+        "routes": true
+      }
+    },
+    "splent_feature_elasticsearch": {
+      "entry": "splent_io/splent_feature_elasticsearch@v0.3.0",
+      "extensible": {
+        "services": [
+          "ElasticsearchService"
+        ],
+        "templates": [],
+        "models": [],
+        "hooks": [],
+        "routes": true
+      },
+      "config_schema": {
+        "ELASTICSEARCH_URL": {
+          "type": "url",
+          "bind": "deploy",
+          "default": "http://localhost:9200",
+          "pattern": "https?://.+",
+          "help": "The search node. The feature's docker/.env points it at its own service."
+        },
+        "ELASTICSEARCH_ENABLED": {
+          "type": "bool",
+          "bind": "deploy",
+          "default": true,
+          "help": "Kill switch. Off, every operation degrades at once without opening a connection."
+        },
+        "ELASTICSEARCH_INDEX_PREFIX": {
+          "type": "str",
+          "bind": "deploy",
+          "default": "__PRODUCT__",
+          "help": "The namespace of this product's indices on the node. Empty or __PRODUCT__ is the running product's name."
+        },
+        "ELASTICSEARCH_USERNAME": {
+          "type": "str",
+          "bind": "deploy",
+          "default": "elastic",
+          "help": "Who the app signs in as on a node with security on, with ELASTICSEARCH_PASSWORD."
+        },
+        "ELASTICSEARCH_PASSWORD": {
+          "type": "secret",
+          "bind": "deploy",
+          "help": "The password of ELASTICSEARCH_USERNAME. Empty on a node without security."
+        },
+        "ELASTICSEARCH_API_KEY": {
+          "type": "secret",
+          "bind": "deploy",
+          "help": "An API key of a cluster this feature does not run. It wins over the user and the password."
+        }
+      }
+    },
+    "splent_feature_redis": {
+      "entry": "splent_io/splent_feature_redis@v1.7.0",
+      "extensible": {
+        "services": [],
+        "templates": [],
+        "models": [],
+        "hooks": [],
+        "routes": true
+      },
+      "config_schema": {
+        "REDIS_URL": {
+          "type": "str",
+          "bind": "deploy",
+          "default": "redis://localhost:6379",
+          "pattern": "(redis|rediss|unix)://.+",
+          "help": "How the app reaches the server. The feature's docker/.env points it at its own; REDIS_PASSWORD goes into it unless it names credentials."
+        },
+        "REDIS_PASSWORD": {
+          "type": "secret",
+          "bind": "deploy",
+          "help": "The password of the server this feature runs. Empty in development."
+        },
+        "REDIS_SESSION_DB": {
+          "type": "int",
+          "bind": "deploy",
+          "default": 0,
+          "min": 0,
+          "help": "Logical database of the sessions."
+        },
+        "REDIS_TASKS_DB": {
+          "type": "int",
+          "bind": "deploy",
+          "default": 1,
+          "min": 0,
+          "help": "Logical database of background tasks and their queue."
+        },
+        "REDIS_CACHE_DB": {
+          "type": "int",
+          "bind": "deploy",
+          "default": 2,
+          "min": 0,
+          "help": "Logical database of caches, which may be flushed at any time."
+        }
+      }
+    },
+    "splent_feature_session_redis": {
+      "entry": "splent_io/splent_feature_session_redis@v1.3.0",
+      "extensible": {
+        "services": [],
+        "templates": [],
+        "models": [],
+        "hooks": [],
+        "routes": true
+      }
+    },
+    "splent_feature_captcha_image": {
+      "entry": "splent_io/splent_feature_captcha_image@v0.3.0",
+      "extensible": {
+        "services": [
+          "ImageCaptchaService"
+        ],
+        "templates": [
+          "captcha_image/widget.html"
+        ],
+        "models": [],
+        "hooks": [
+          "layout.scripts"
+        ],
+        "routes": true
+      }
+    },
+    "splent_feature_captcha": {
+      "entry": "splent_io/splent_feature_captcha@v0.3.0",
+      "extensible": {
+        "services": [
+          "CaptchaService"
+        ],
+        "templates": [],
+        "models": [],
+        "hooks": [
+          "auth.login.form_fields",
+          "reset.form_fields",
+          "signup.form_fields"
+        ],
+        "routes": true
+      },
+      "config_schema": {
+        "CAPTCHA_PROTECTED_FORMS": {
+          "type": "list",
+          "bind": "derivation",
+          "default": [
+            "signup"
+          ],
+          "label": "Protected forms",
+          "help": "The forms whose submissions are checked, by the name of their signal",
+          "choices": [
+            "signup",
+            "login",
+            "reset",
+            "contact",
+            "comment",
+            "careers"
+          ],
+          "uvl": true
+        }
+      }
+    },
+    "splent_feature_admin": {
+      "entry": "splent_io/splent_feature_admin@v1.10.0",
+      "extensible": {
+        "services": [
+          "AdminService"
+        ],
+        "templates": [
+          "admin/dashboard.html",
+          "admin/delete.html",
+          "admin/error.html",
+          "admin/form.html",
+          "admin/list.html"
+        ],
+        "models": [],
+        "hooks": [
+          "admin.bar.context",
+          "admin.dashboard.cards",
+          "layout.authenticated_sidebar",
+          "layout.body_start",
+          "layout.head.css"
+        ],
+        "routes": true
+      }
+    },
+    "splent_feature_signup": {
+      "entry": "splent_io/splent_feature_signup@v0.5.0",
+      "extensible": {
+        "services": [],
+        "templates": [
+          "hooks/login_footer.html",
+          "hooks/navbar_signup.html",
+          "hooks/sidebar_signup.html",
+          "signup/signup_form.html"
+        ],
+        "models": [],
+        "hooks": [
+          "auth.login.form_footer",
+          "layout.anonymous_sidebar",
+          "layout.navbar.anonymous",
+          "signup.form_fields",
+          "signup.form_footer",
+          "signup.providers"
+        ],
+        "routes": true
+      },
+      "config_schema": {
+        "SIGNUP_MAX_PER_HOUR": {
+          "type": "int",
+          "bind": "deploy",
+          "default": 200,
+          "min": 0,
+          "help": "Sign-ups one address may make an hour. 0 for no limit."
+        }
+      }
+    },
+    "splent_feature_nginx": {
+      "entry": "splent_io/splent_feature_nginx@v1.7.0",
+      "extensible": {
+        "services": [],
+        "templates": [],
+        "models": [],
+        "hooks": [
+          "layout.authenticated_sidebar"
+        ],
+        "routes": true
+      },
+      "config_schema": {
+        "SPLENT_TRUSTED_PROXIES": {
+          "type": "int",
+          "bind": "deploy",
+          "default": 1,
+          "min": 0,
+          "help": "The proxies the app trusts for X-Forwarded-*: 1, nginx, whether nginx is the edge or sits behind a TLS terminator."
+        }
+      }
+    },
+    "splent_feature_theme": {
+      "entry": "splent_io/splent_feature_theme@v0.17.0",
+      "extensible": {
+        "services": [],
+        "templates": [
+          "blocks/breadcrumb.html",
+          "blocks/hero.html",
+          "errors/404.html",
+          "errors/500.html",
+          "public_base.html",
+          "theme/admin/appearance.html",
+          "theme/admin/menus.html"
+        ],
+        "models": [],
+        "hooks": [
+          "layout.authenticated_sidebar",
+          "layout.body_start",
+          "layout.footer",
+          "layout.head",
+          "layout.hero",
+          "layout.nav",
+          "layout.nav.end",
+          "layout.scripts"
+        ],
+        "routes": true
+      },
+      "config_schema": {
+        "SITE_NAME": {
+          "type": "str",
+          "bind": "runtime",
+          "default": "",
+          "label": "Site name",
+          "help": "What the site calls itself in its header, the browser tab and the footer. Empty falls back to the package name."
+        },
+        "SITE_TAGLINE": {
+          "type": "str",
+          "bind": "runtime",
+          "default": "",
+          "label": "Tagline",
+          "help": "The line under the site's name."
+        },
+        "SITE_BRAND_MODE": {
+          "type": "enum",
+          "bind": "runtime",
+          "default": "both",
+          "label": "Header brand",
+          "choices": [
+            "both",
+            "logo",
+            "text"
+          ]
+        },
+        "SITE_LOGO_SIZE": {
+          "type": "int",
+          "bind": "runtime",
+          "default": 40,
+          "min": 16,
+          "max": 200,
+          "label": "Logo height (px)"
+        },
+        "SITE_LOGO": {
+          "type": "str",
+          "bind": "runtime",
+          "default": "",
+          "label": "Logo",
+          "help": "A path inside the product's static folder, like media/logos/logo.svg. Empty draws no logo."
+        },
+        "THEME_TOKENS": {
+          "type": "map",
+          "bind": "derivation",
+          "default": {},
+          "help": "The palette and fonts over the theme's defaults, token name to CSS value. A token the theme does not have stops the boot."
+        },
+        "SITE_BREADCRUMBS": {
+          "type": "enum",
+          "bind": "runtime",
+          "default": "deep",
+          "label": "Breadcrumbs",
+          "choices": [
+            "deep",
+            "all",
+            "off"
+          ]
+        }
+      }
+    },
+    "splent_feature_public": {
+      "entry": "splent_io/splent_feature_public@v1.13.0",
+      "extensible": {
+        "services": [],
+        "templates": [
+          "public/index.html"
+        ],
+        "models": [],
+        "hooks": [
+          "home.aside",
+          "home.hero",
+          "home.section",
+          "layout.sidebar.top"
+        ],
+        "routes": true
+      },
+      "config_schema": {
+        "PUBLIC_SIDEBAR_HOME_LINK": {
+          "type": "bool",
+          "bind": "derivation",
+          "default": true,
+          "help": "The Home entry at the top of the product sidebar. Deprecated: hide home in [tool.splent.layout.menu] instead."
+        },
+        "PUBLIC_HOME_TITLE": {
+          "type": "str",
+          "bind": "derivation",
+          "default": "",
+          "help": "The home page's title. Empty keeps the site's name and tagline."
+        }
+      }
+    },
+    "splent_feature_hub_shell": {
+      "entry": "splent_io/splent_feature_hub_shell@v0.2.0",
+      "extensible": {
+        "services": [],
+        "templates": [
+          "400.html",
+          "401.html",
+          "403.html",
+          "500.html",
+          "base_template.html",
+          "hub_shell/app.html",
+          "hub_shell/errors/400.html",
+          "hub_shell/errors/401.html",
+          "hub_shell/errors/500.html",
+          "hub_shell/public.html"
+        ],
+        "models": [],
+        "hooks": [
+          "layout.anonymous_sidebar",
+          "layout.authenticated_sidebar",
+          "layout.footer",
+          "layout.head.css",
+          "layout.header.menu",
+          "layout.navbar.anonymous",
+          "layout.navbar.authenticated",
+          "layout.navbar.items",
+          "layout.navbar.user",
+          "layout.scripts",
+          "layout.sidebar.authenticated.items",
+          "layout.sidebar.top"
+        ],
+        "routes": true
+      },
+      "config_schema": {
+        "HUB_SHELL_LOGO_COMPACT": {
+          "type": "str",
+          "bind": "derivation",
+          "default": "",
+          "label": "Compact logo",
+          "help": "The small logo of a phone's header, a path inside the product's static folder, like media/logos/icon.png. Empty draws the site's name."
+        },
+        "HUB_SHELL_FOOTER_YEAR": {
+          "type": "str",
+          "bind": "derivation",
+          "default": "",
+          "pattern": "[0-9]{4}(-[0-9]{4})?",
+          "label": "Copyright year",
+          "help": "The year of the footer's copyright, or a span of years, as in 2025 or 2019-2025. Empty draws none."
+        },
+        "HUB_SHELL_FOOTER_CREDITS": {
+          "type": "text",
+          "bind": "derivation",
+          "default": "",
+          "label": "Footer credits",
+          "help": "Who the footer credits, after the year: the organisations behind the hub. Per language as es:...|en:... if it differs."
+        },
+        "HUB_SHELL_REPOSITORY_URL": {
+          "type": "url",
+          "bind": "derivation",
+          "default": "",
+          "label": "Source repository",
+          "help": "The repository of the hub's source code. The footer links it, and the sidebar links the release the site runs to its notes there (GitHub, GitLab, or a Forgejo or Gitea). Empty links neither."
+        }
+      }
+    },
+    "splent_feature_orcid": {
+      "entry": "splent_io/splent_feature_orcid@v0.5.0",
+      "refinement": {
+        "refines": "splent_feature_profile",
+        "extends": {
+          "models": [
+            {
+              "target": "UserProfile",
+              "mixin": "UserProfileOrcidMixin"
+            }
+          ]
+        }
+      },
+      "extensible": {
+        "services": [
+          "OrcidService"
+        ],
+        "templates": [
+          "hooks/orcid_login_button.html",
+          "hooks/orcid_profile_row.html"
+        ],
+        "models": [],
+        "hooks": [
+          "auth.login.providers",
+          "layout.head.css",
+          "profile.edit.sections",
+          "signup.providers"
+        ],
+        "routes": true
+      },
+      "config_schema": {
+        "ORCID_CLIENT_ID": {
+          "type": "str",
+          "bind": "deploy",
+          "default": "",
+          "help": "The client ID of the application registered at https://orcid.org/developer-tools."
+        },
+        "ORCID_CLIENT_SECRET": {
+          "type": "secret",
+          "bind": "deploy",
+          "help": "The client secret of that application."
+        },
+        "ORCID_BASE_URL": {
+          "type": "url",
+          "bind": "deploy",
+          "default": "https://orcid.org",
+          "pattern": "https?://.+",
+          "help": "The ORCID the application is registered with: https://orcid.org, or https://sandbox.orcid.org."
+        },
+        "ORCID_SCOPE": {
+          "type": "str",
+          "bind": "derivation",
+          "default": "/authenticate",
+          "help": "What the sign-in asks ORCID for."
+        }
+      }
+    },
+    "splent_feature_github": {
+      "entry": "splent_io/splent_feature_github@v0.5.0",
+      "extensible": {
+        "services": [],
+        "templates": [
+          "hooks/github_login_button.html",
+          "hooks/github_profile_row.html"
+        ],
+        "models": [],
+        "hooks": [
+          "auth.login.providers",
+          "layout.head.css",
+          "profile.edit.sections",
+          "signup.providers"
+        ],
+        "routes": true
+      },
+      "config_schema": {
+        "GITHUB_CLIENT_ID": {
+          "type": "str",
+          "bind": "deploy",
+          "default": "",
+          "help": "The client ID of the OAuth app registered at https://github.com/settings/developers."
+        },
+        "GITHUB_CLIENT_SECRET": {
+          "type": "secret",
+          "bind": "deploy",
+          "help": "The client secret of that OAuth app."
+        },
+        "GITHUB_SCOPE": {
+          "type": "str",
+          "bind": "derivation",
+          "default": "user:email",
+          "help": "What the sign-in asks GitHub for."
+        }
+      }
+    },
+    "splent_feature_autodeploy": {
+      "entry": "splent_io/splent_feature_autodeploy@v0.5.0",
+      "extensible": {
+        "services": [
+          "AutodeployService"
+        ],
+        "templates": [
+          "autodeploy/index.html",
+          "hooks/sidebar_deployments.html"
+        ],
+        "models": [],
+        "hooks": [
+          "layout.authenticated_sidebar"
+        ],
+        "routes": true
+      },
+      "config_schema": {
+        "AUTODEPLOY_URL": {
+          "type": "url",
+          "bind": "deploy",
+          "default": "http://__PRODUCT___autodeploy:8080",
+          "pattern": "https?://.+",
+          "help": "Where the web side finds the agent's API, on the product network."
+        },
+        "AUTODEPLOY_SECRET": {
+          "type": "secret",
+          "bind": "deploy",
+          "help": "Shared by the web container and the agent; every API call carries it."
+        },
+        "AUTODEPLOY_IMAGE": {
+          "type": "str",
+          "bind": "deploy",
+          "default": "",
+          "help": "The registry image the agent follows, shown while it cannot be reached. Empty means SPLENT_IMAGE."
+        },
+        "AUTODEPLOY_WINDOW": {
+          "type": "str",
+          "bind": "deploy",
+          "default": "",
+          "pattern": "\\s*[0-9]{1,2}:[0-9]{2}\\s*-\\s*[0-9]{1,2}:[0-9]{2}\\s*",
+          "help": "Daily UTC span in which a deploy may start, like 02:00-05:00. Empty means any time."
+        },
+        "AUTODEPLOY_INTERVAL": {
+          "type": "int",
+          "bind": "deploy",
+          "default": 300,
+          "min": 30,
+          "help": "Seconds between two looks at the registry."
+        }
+      }
+    },
+    "splent_feature_identities": {
+      "entry": "splent_io/splent_feature_identities@v0.6.0",
+      "extensible": {
+        "services": [
+          "IdentitiesService"
+        ],
+        "templates": [
+          "hooks/disconnect_modal.html",
+          "hooks/login_password_hint.html",
+          "hooks/reauthenticate_providers.html",
+          "identities/complete_signup.html",
+          "identities/confirm_signup.html",
+          "identities/identities.html"
+        ],
+        "models": [
+          "ExternalIdentity"
+        ],
+        "hooks": [
+          "auth.login.error_hint",
+          "auth.reauthenticate.methods",
+          "layout.scripts"
+        ],
+        "routes": true
+      },
+      "config_schema": {
+        "EXTERNAL_LOGIN_PASSWORD_HINT": {
+          "type": "bool",
+          "bind": "derivation",
+          "default": false,
+          "help": "After a wrong password, name the providers the account signs in with."
+        },
+        "OAUTH_REDIRECT_BASE_URL": {
+          "type": "url",
+          "bind": "deploy",
+          "default": "",
+          "pattern": "https?://.+",
+          "help": "The address people reach the site at, which every provider's callback is built on. Empty builds it from the request."
+        },
+        "OAUTH_TIMEOUT": {
+          "type": "float",
+          "bind": "deploy",
+          "default": 10.0,
+          "min": 0.1,
+          "help": "Seconds to wait for a provider on every request of the sign-in."
+        }
+      }
+    },
+    "splent_feature_apikeys": {
+      "entry": "splent_io/splent_feature_apikeys@v0.11.0",
+      "extensible": {
+        "services": [
+          "ApiTokenService"
+        ],
+        "templates": [
+          "apikeys/admin.html",
+          "apikeys/created.html",
+          "apikeys/index.html",
+          "apikeys/macros.html",
+          "apikeys/new.html",
+          "hooks/sidebar_tokens.html"
+        ],
+        "models": [
+          "ApiToken",
+          "ApiTokenResource"
+        ],
+        "hooks": [
+          "apikeys.sidebar.developer",
+          "layout.authenticated_sidebar"
+        ],
+        "routes": true
+      },
+      "config_schema": {
+        "APIKEYS_DEFAULT_TTL_DAYS": {
+          "type": "int",
+          "bind": "derivation",
+          "default": 90,
+          "min": 1,
+          "max": 365,
+          "help": "Days a key issued without an explicit expiry is good for."
+        },
+        "APIKEYS_MAX_TTL_DAYS": {
+          "type": "int",
+          "bind": "derivation",
+          "default": 365,
+          "min": 1,
+          "max": 365,
+          "help": "The longest life a token may be given, in days. Not below APIKEYS_DEFAULT_TTL_DAYS."
+        },
+        "APIKEYS_ALLOW_NO_EXPIRY": {
+          "type": "bool",
+          "bind": "derivation",
+          "default": false,
+          "help": "Whether a token may be issued that never expires."
+        },
+        "APIKEYS_EXPIRY_NOTICE_DAYS": {
+          "type": "list",
+          "bind": "derivation",
+          "default": [
+            30,
+            7
+          ],
+          "help": "Days before a token expires its owner is mailed, once per threshold. Empty mails nothing.",
+          "items": "int"
+        },
+        "APIKEYS_MAX_ACTIVE_TOKENS": {
+          "type": "int",
+          "bind": "derivation",
+          "default": 50,
+          "min": 0,
+          "help": "Tokens one account may hold that are neither revoked nor expired. 0 turns the cap off."
+        },
+        "APIKEYS_PURGE_AFTER_DAYS": {
+          "type": "int",
+          "bind": "deploy",
+          "default": 90,
+          "min": 1,
+          "help": "Days a revoked or expired token is kept before the purge command removes it."
+        },
+        "APIKEYS_REVOKE_ON": {
+          "type": "list",
+          "bind": "derivation",
+          "default": [
+            "password_changed",
+            "account_disabled"
+          ],
+          "help": "What happening to an account revokes its tokens.",
+          "choices": [
+            "password_changed",
+            "account_disabled"
+          ]
+        },
+        "APIKEYS_MAX_LOGIN_ATTEMPTS": {
+          "type": "int",
+          "bind": "deploy",
+          "default": 5,
+          "min": 0,
+          "help": "Failed exchanges allowed from one address against one account in a window."
+        },
+        "APIKEYS_LOGIN_WINDOW_SECONDS": {
+          "type": "int",
+          "bind": "deploy",
+          "default": 300,
+          "min": 1,
+          "help": "The window the three budgets are counted over, in seconds."
+        },
+        "APIKEYS_MAX_ACCOUNT_ATTEMPTS": {
+          "type": "int",
+          "bind": "deploy",
+          "default": 20,
+          "min": 0,
+          "help": "Failed exchanges allowed against one account from every address together."
+        },
+        "APIKEYS_MAX_ADDRESS_ATTEMPTS": {
+          "type": "int",
+          "bind": "deploy",
+          "default": 200,
+          "min": 0,
+          "help": "Failed exchanges allowed from one address against every account together."
+        },
+        "APIKEYS_THROTTLE_MAX_KEYS": {
+          "type": "int",
+          "bind": "deploy",
+          "default": 10000,
+          "min": 1,
+          "help": "Counters one worker holds while auth's shared table is missing."
+        },
+        "APIKEYS_MAX_BODY_BYTES": {
+          "type": "int",
+          "bind": "deploy",
+          "default": 8192,
+          "min": 1,
+          "help": "Largest body accepted on the token endpoints, in bytes."
+        },
+        "APIKEYS_PUBLIC_READS_PER_MINUTE": {
+          "type": "int",
+          "bind": "deploy",
+          "default": 60,
+          "min": 0,
+          "max": 100000,
+          "help": "Calls a client without a token may make each minute from one address to the public routes. 0 asks every caller for a token."
+        },
+        "APIKEYS_SCOPES": {
+          "type": "list",
+          "bind": "derivation",
+          "default": [],
+          "help": "The registered scopes this product hands out. Empty offers every one."
+        },
+        "APIKEYS_DEFAULT_SCOPES": {
+          "type": "list",
+          "bind": "derivation",
+          "default": [],
+          "help": "What a token gets when its creator does not choose. Empty grants the offered scopes registered as a default."
+        },
+        "APIKEYS_HEADER_ALIASES": {
+          "type": "list",
+          "bind": "derivation",
+          "default": [],
+          "pattern": "[A-Za-z0-9!#$%&'*+.^_`|~-]+",
+          "help": "Request headers besides Authorization: Bearer that carry the raw token."
+        }
+      }
+    },
+    "splent_feature_zenodo": {
+      "entry": "splent_io/splent_feature_zenodo@v0.6.0",
+      "extensible": {
+        "services": [
+          "ZenodoProvider",
+          "ZenodoService"
+        ],
+        "templates": [],
+        "models": [],
+        "hooks": [],
+        "routes": true
+      },
+      "config_schema": {
+        "ZENODO_ACCESS_TOKEN": {
+          "type": "secret",
+          "bind": "deploy",
+          "help": "A personal access token with the deposit:write and deposit:actions scopes."
+        },
+        "ZENODO_API_URL": {
+          "type": "str",
+          "bind": "deploy",
+          "default": "",
+          "help": "The deposition API. Empty: zenodo.org in production, the sandbox anywhere else."
+        },
+        "ZENODO_ALLOW_PRODUCTION": {
+          "type": "bool",
+          "bind": "deploy",
+          "default": false,
+          "help": "Whether calls to zenodo.org are allowed, in production too."
+        },
+        "ZENODO_CONNECT_TIMEOUT": {
+          "type": "float",
+          "bind": "deploy",
+          "default": 5.0,
+          "min": 0.1,
+          "help": "Seconds to wait for Zenodo to accept a connection."
+        },
+        "ZENODO_READ_TIMEOUT": {
+          "type": "float",
+          "bind": "deploy",
+          "default": 30.0,
+          "min": 0.1,
+          "help": "Seconds to wait for Zenodo's answer to any call but the upload."
+        },
+        "ZENODO_UPLOAD_TIMEOUT": {
+          "type": "float",
+          "bind": "deploy",
+          "default": 90.0,
+          "min": 0.1,
+          "help": "Seconds to wait for Zenodo's answer once the ZIP is sent."
+        },
+        "ZENODO_MAX_RETRIES": {
+          "type": "int",
+          "bind": "deploy",
+          "default": 2,
+          "min": 0,
+          "help": "Times a read, an update or a delete is sent again after a failed connection or a 429, 502, 503 or 504."
+        },
+        "ZENODO_KEYWORDS": {
+          "type": "list",
+          "bind": "derivation",
+          "default": [],
+          "help": "Keywords every deposit gets after the dataset's own tags, such as the hub's name."
+        },
+        "ZENODO_COMMUNITY": {
+          "type": "str",
+          "bind": "derivation",
+          "default": "",
+          "pattern": "[a-z0-9][a-z0-9_-]*",
+          "help": "The Zenodo community each deposit asks to join. Empty asks to join none."
+        },
+        "ZENODO_ACCESS_RIGHT": {
+          "type": "enum",
+          "bind": "derivation",
+          "default": "open",
+          "help": "open, or closed for records whose files only their owner sees on Zenodo.",
+          "choices": [
+            "open",
+            "closed"
+          ]
+        }
+      }
+    },
+    "splent_feature_backup": {
+      "entry": "splent_io/splent_feature_backup@v0.2.0",
+      "extensible": {
+        "services": [
+          "BackupService"
+        ],
+        "templates": [],
+        "models": [],
+        "hooks": [],
+        "routes": true
+      },
+      "config_schema": {
+        "BACKUP_DESTINATION": {
+          "type": "str",
+          "bind": "deploy",
+          "help": "A directory mounted from another machine, or s3://bucket/prefix."
+        },
+        "BACKUP_AGE_RECIPIENTS": {
+          "type": "list",
+          "bind": "deploy",
+          "pattern": "age1[0-9a-z]+",
+          "help": "The age public keys every backup is encrypted to."
+        },
+        "BACKUP_AGE_IDENTITY": {
+          "type": "secret",
+          "bind": "deploy",
+          "help": "An age private key, for a restore only."
+        },
+        "BACKUP_PATHS": {
+          "type": "list",
+          "bind": "deploy",
+          "default": [],
+          "help": "The directories archived with the database. Empty means the protected uploads directory."
+        },
+        "BACKUP_RETENTION_DAYS": {
+          "type": "int",
+          "bind": "deploy",
+          "default": 30,
+          "min": 1,
+          "help": "Days a backup is kept."
+        },
+        "BACKUP_KEEP_MIN": {
+          "type": "int",
+          "bind": "deploy",
+          "default": 7,
+          "min": 1,
+          "help": "Backups kept whatever their age."
+        },
+        "BACKUP_STAGING_DIR": {
+          "type": "str",
+          "bind": "deploy",
+          "default": "",
+          "help": "Where a backup is put together. Empty means the system's temporary directory."
+        },
+        "BACKUP_S3_ENDPOINT": {
+          "type": "str",
+          "bind": "deploy",
+          "default": "",
+          "help": "The S3-compatible endpoint, https://... Empty means AWS."
+        },
+        "BACKUP_S3_REGION": {
+          "type": "str",
+          "bind": "deploy",
+          "default": ""
+        },
+        "BACKUP_S3_ACCESS_KEY_ID": {
+          "type": "secret",
+          "bind": "deploy"
+        },
+        "BACKUP_S3_SECRET_ACCESS_KEY": {
+          "type": "secret",
+          "bind": "deploy"
+        },
+        "BACKUP_VERIFY_FILES": {
+          "type": "list",
+          "bind": "derivation",
+          "default": [],
+          "pattern": "[A-Za-z_][A-Za-z0-9_]*\\.[A-Za-z_][A-Za-z0-9_]*(:[A-Za-z_][A-Za-z0-9_]*)?",
+          "help": "The rows that name a file: <Model>.<path>[:<size>]."
+        }
+      }
+    },
+    "splent_feature_curation": {
+      "entry": "splent_io/splent_feature_curation@v0.2.0",
+      "extensible": {
+        "services": [
+          "CurationService"
+        ],
+        "templates": [
+          "curation/admin/queue.html",
+          "curation/admin/request.html",
+          "hooks/withdrawal_request.html"
+        ],
+        "models": [
+          "CurationRequest"
+        ],
+        "hooks": [
+          "dataset.view.actions"
+        ],
+        "routes": true
+      },
+      "config_schema": {
+        "CURATION_TRUSTED_ACCOUNTS": {
+          "type": "enum",
+          "bind": "derivation",
+          "default": "published",
+          "help": "Which accounts publish without review on a curated hub: none, those with a published dataset, or those carried over from an older site with one (D4).",
+          "choices": [
+            "none",
+            "published",
+            "carried_over"
+          ]
+        },
+        "CURATION_REVIEWER_ROLES": {
+          "type": "list",
+          "bind": "derivation",
+          "default": [
+            "admin"
+          ],
+          "help": "Roles of the accounts that review publications and withdrawals.",
+          "choices": [
+            "admin",
+            "staff"
+          ]
+        },
+        "CURATION_NOTIFY_REVIEWERS": {
+          "type": "bool",
+          "bind": "derivation",
+          "default": true,
+          "help": "Whether the reviewers are mailed when something new waits for them."
+        }
+      }
+    },
+    "splent_feature_observability": {
+      "entry": "splent_io/splent_feature_observability@v0.2.0",
+      "extensible": {
+        "services": [
+          "ObservabilityService"
+        ],
+        "templates": [],
+        "models": [],
+        "hooks": [],
+        "routes": true
+      },
+      "config_schema": {
+        "OBSERVABILITY_BACKEND": {
+          "type": "enum",
+          "bind": "derivation",
+          "default": "none",
+          "help": "Where the errors go.",
+          "choices": [
+            "glitchtip",
+            "sentry",
+            "email",
+            "none"
+          ],
+          "uvl": true
+        },
+        "OBSERVABILITY_DSN": {
+          "type": "secret",
+          "bind": "deploy",
+          "help": "The DSN of the GlitchTip or Sentry project."
+        },
+        "OBSERVABILITY_ENVIRONMENT": {
+          "type": "str",
+          "bind": "deploy",
+          "default": "",
+          "pattern": "[A-Za-z0-9_.-]{1,64}",
+          "help": "The environment the reports are filed under. Empty: the app's profile."
+        },
+        "OBSERVABILITY_RELEASE": {
+          "type": "str",
+          "bind": "deploy",
+          "default": "",
+          "pattern": "[^\\s/]{1,200}",
+          "help": "The release the reports are filed under. Empty: <product>@<version>."
+        },
+        "OBSERVABILITY_SAMPLE_RATE": {
+          "type": "float",
+          "bind": "deploy",
+          "default": 1.0,
+          "min": 0,
+          "max": 1,
+          "help": "The share of errors sent."
+        },
+        "OBSERVABILITY_TRACES_SAMPLE_RATE": {
+          "type": "float",
+          "bind": "deploy",
+          "default": 0.0,
+          "min": 0,
+          "max": 1,
+          "help": "The share of requests traced."
+        },
+        "OBSERVABILITY_ALERT_CHANNELS": {
+          "type": "list",
+          "bind": "derivation",
+          "default": [],
+          "help": "Who is told when something breaks.",
+          "choices": [
+            "email",
+            "matrix",
+            "telegram"
+          ],
+          "uvl": true
+        },
+        "OBSERVABILITY_ALERT_ON": {
+          "type": "list",
+          "bind": "derivation",
+          "default": [
+            "errors",
+            "readiness",
+            "degraded"
+          ],
+          "help": "What is alerted on.",
+          "choices": [
+            "errors",
+            "readiness",
+            "degraded"
+          ]
+        },
+        "OBSERVABILITY_ALERT_DEDUP_MINUTES": {
+          "type": "int",
+          "bind": "deploy",
+          "default": 60,
+          "min": 1,
+          "max": 10080,
+          "help": "Minutes the same alert is not sent again."
+        },
+        "OBSERVABILITY_READINESS_GRACE_SECONDS": {
+          "type": "int",
+          "bind": "deploy",
+          "default": 60,
+          "min": 0,
+          "max": 3600,
+          "help": "Seconds a readiness check fails before it is alerted on."
+        },
+        "OBSERVABILITY_EMAIL_TO": {
+          "type": "list",
+          "bind": "deploy",
+          "default": [],
+          "pattern": "[^@\\s]+@[^@\\s]+",
+          "help": "The addresses of the email backend and channel."
+        },
+        "OBSERVABILITY_MATRIX_HOMESERVER": {
+          "type": "url",
+          "bind": "deploy",
+          "default": "",
+          "help": "The Matrix homeserver, https://matrix.example.org."
+        },
+        "OBSERVABILITY_MATRIX_ROOM_ID": {
+          "type": "secret",
+          "bind": "deploy",
+          "help": "The room the alerts go to, !id:server."
+        },
+        "OBSERVABILITY_MATRIX_TOKEN": {
+          "type": "secret",
+          "bind": "deploy",
+          "help": "The access token of the account that posts the alerts."
+        },
+        "OBSERVABILITY_TELEGRAM_BOT_TOKEN": {
+          "type": "secret",
+          "bind": "deploy",
+          "help": "The token of the bot that posts the alerts."
+        },
+        "OBSERVABILITY_TELEGRAM_CHAT_ID": {
+          "type": "secret",
+          "bind": "deploy",
+          "help": "The chat the alerts go to."
+        },
+        "OBSERVABILITY_HTTP_TIMEOUT": {
+          "type": "int",
+          "bind": "deploy",
+          "default": 5,
+          "min": 1,
+          "max": 60,
+          "help": "Seconds a Matrix or Telegram request may take."
+        },
+        "OBSERVABILITY_STATE_DIR": {
+          "type": "str",
+          "bind": "deploy",
+          "default": "",
+          "help": "Where the processes agree on what was alerted. Empty: the temporary directory."
+        }
+      }
+    },
+    "splent_feature_audit": {
+      "entry": "splent_io/splent_feature_audit@v0.2.0",
+      "extensible": {
+        "services": [
+          "AuditService"
+        ],
+        "templates": [
+          "audit/admin/events.html"
+        ],
+        "models": [
+          "AuditEvent"
+        ],
+        "hooks": [],
+        "routes": true
+      },
+      "config_schema": {
+        "AUDIT_RETENTION_DAYS": {
+          "type": "int",
+          "bind": "derivation",
+          "default": 90,
+          "min": 1,
+          "max": 3650,
+          "help": "Days an event is kept."
+        },
+        "AUDIT_PSEUDONYMIZE_AFTER_DAYS": {
+          "type": "int",
+          "bind": "derivation",
+          "default": 0,
+          "min": 0,
+          "max": 3650,
+          "help": "Days after which an event's address is blurred. 0: never before it is deleted."
+        },
+        "AUDIT_SIGN_INS": {
+          "type": "bool",
+          "bind": "derivation",
+          "default": true,
+          "help": "Whether every sign-in and sign-out is an event."
+        }
+      }
+    },
+    "splent_feature_analytics": {
+      "entry": "splent_io/splent_feature_analytics@v0.2.0",
+      "extensible": {
+        "services": [],
+        "templates": [],
+        "models": [],
+        "hooks": [
+          "layout.scripts"
+        ],
+        "routes": true
+      },
+      "config_schema": {
+        "ANALYTICS_PROVIDER": {
+          "type": "enum",
+          "bind": "derivation",
+          "default": "plausible",
+          "help": "Who counts the visits.",
+          "choices": [
+            "plausible",
+            "matomo"
+          ]
+        },
+        "ANALYTICS_SCRIPT_URL": {
+          "type": "url",
+          "bind": "deploy",
+          "default": "",
+          "help": "The provider's script. Empty loads nothing."
+        },
+        "ANALYTICS_SITE_ID": {
+          "type": "str",
+          "bind": "deploy",
+          "default": "",
+          "pattern": "[A-Za-z0-9.:_-]{1,253}",
+          "help": "The site's domain in Plausible, or its id in Matomo."
+        },
+        "ANALYTICS_EXCLUDED_PATHS": {
+          "type": "list",
+          "bind": "derivation",
+          "default": [
+            "/admin",
+            "/account",
+            "/login",
+            "/logout",
+            "/signup",
+            "/reset",
+            "/confirmemail",
+            "/confirm_email_change",
+            "/confirm_user",
+            "/developer",
+            "/api",
+            "/orcid",
+            "/github",
+            "/legal/accept"
+          ],
+          "pattern": "/.*",
+          "help": "The paths, and everything under them, never counted."
+        },
+        "ANALYTICS_SIGNED_IN": {
+          "type": "bool",
+          "bind": "derivation",
+          "default": false,
+          "help": "Whether the pages of a signed-in account are counted."
+        }
+      }
+    },
+    "splent_feature_rating": {
+      "entry": "splent_io/splent_feature_rating@v0.7.0",
+      "extensible": {
+        "services": [
+          "RatingService"
+        ],
+        "templates": [],
+        "models": [
+          "DatasetRating"
+        ],
+        "hooks": [
+          "dataset.view.meta"
+        ],
+        "routes": true
+      },
+      "config_schema": {
+        "RATING_ALLOW_DISLIKE": {
+          "type": "bool",
+          "bind": "derivation",
+          "default": true,
+          "help": "Whether readers may dislike a dataset."
+        },
+        "RATING_WORST_RATED_PANEL": {
+          "type": "bool",
+          "bind": "derivation",
+          "default": false,
+          "help": "Whether statistics' dashboard shows the worst rated datasets."
+        },
+        "RATING_PANEL_MIN_VOTES": {
+          "type": "int",
+          "bind": "derivation",
+          "default": 3,
+          "min": 1,
+          "max": 1000,
+          "help": "Votes a dataset needs to stand in the best and worst rated panels."
+        }
+      }
+    },
+    "splent_feature_explore": {
+      "entry": "splent_io/splent_feature_explore@v0.10.0",
+      "extensible": {
+        "services": [
+          "ExploreService",
+          "UvlhubSearchService"
+        ],
+        "templates": [
+          "explore/index.html",
+          "hooks/admin_index_card.html",
+          "hooks/header_search.html",
+          "hooks/home_explore_more.html"
+        ],
+        "models": [],
+        "hooks": [
+          "admin.dashboard.cards",
+          "dataset.home.actions",
+          "explore.aside",
+          "layout.head.css",
+          "layout.header.menu",
+          "layout.scripts"
+        ],
+        "routes": true
+      },
+      "config_schema": {
+        "EXPLORE_HEADER_SEARCH": {
+          "type": "bool",
+          "bind": "derivation",
+          "default": true,
+          "help": "Whether the header carries explore's search box."
+        }
+      }
+    },
+    "splent_feature_factlabel": {
+      "entry": "splent_io/splent_feature_factlabel@v0.8.1",
+      "extensible": {
+        "services": [
+          "FactlabelService"
+        ],
+        "templates": [
+          "hooks/factlabel_actions.html",
+          "hooks/factlabel_dataset_section.html",
+          "hooks/factlabel_modal.html",
+          "hooks/factlabel_panel.html",
+          "hooks/factlabel_scripts.html",
+          "hooks/factlabel_statistics_corpus.html"
+        ],
+        "models": [
+          "FactLabel",
+          "HubfileMetrics"
+        ],
+        "hooks": [
+          "dataset.view.scripts",
+          "dataset.view.sections",
+          "hubfile.workbench.content",
+          "hubfile.workbench.views"
+        ],
+        "routes": true
+      },
+      "config_schema": {
+        "FACTLABEL_ANALYSIS_TIMEOUT": {
+          "type": "int",
+          "bind": "deploy",
+          "default": 300,
+          "min": 10,
+          "help": "Seconds one model's analysis may take before it is recorded as too slow to analyse."
+        },
+        "FACTLABEL_ANALYSIS_MEMORY_MB": {
+          "type": "int",
+          "bind": "deploy",
+          "default": 1536,
+          "min": 128,
+          "help": "Megabytes one model's analysis may use before it is recorded as too large to analyse."
+        }
+      }
+    },
+    "splent_feature_statistics": {
+      "entry": "splent_io/splent_feature_statistics@v0.7.0",
+      "extensible": {
+        "services": [
+          "DashboardService"
+        ],
+        "templates": [
+          "hooks/home_statistics.html",
+          "statistics/index.html"
+        ],
+        "models": [
+          "UsageDaily",
+          "UsageEvent",
+          "UsageNote",
+          "UsageSalt"
+        ],
+        "hooks": [
+          "home.aside"
+        ],
+        "routes": true
+      }
+    },
+    "splent_feature_citation": {
+      "entry": "splent_io/splent_feature_citation@v0.3.0",
+      "extensible": {
+        "services": [
+          "CitationService"
+        ],
+        "templates": [
+          "citation/cite_us.html",
+          "hooks/citation_dataset_button.html",
+          "hooks/citation_dataset_dialog.html",
+          "hooks/citation_dataset_head.html",
+          "hooks/citation_home_card.html"
+        ],
+        "models": [
+          "Reference"
+        ],
+        "hooks": [
+          "dataset.view.head",
+          "dataset.view.primary_actions",
+          "dataset.view.scripts",
+          "home.aside"
+        ],
+        "routes": true
+      },
+      "config_schema": {
+        "CITATION_QR_LOGO": {
+          "type": "str",
+          "bind": "derivation",
+          "default": "",
+          "help": "An image in the product's static folder for the middle of the QR codes."
+        },
+        "CITATION_QR_CACHE_SECONDS": {
+          "type": "int",
+          "bind": "derivation",
+          "default": 86400,
+          "min": 0,
+          "max": 31536000,
+          "help": "How long a browser may keep a QR code, in seconds."
+        },
+        "CITATION_REFERENCES_FILE": {
+          "type": "str",
+          "bind": "derivation",
+          "default": "",
+          "help": "A TOML file of the hub's own references, from the product's package."
+        },
+        "CITATION_HOME_CARD": {
+          "type": "bool",
+          "bind": "derivation",
+          "default": true,
+          "help": "Whether the home page has the Cite us! card."
+        },
+        "CITATION_COSTLY_PER_MINUTE": {
+          "type": "int",
+          "bind": "deploy",
+          "default": 60,
+          "min": 0,
+          "max": 100000,
+          "help": "The QR codes drawn and the RDF answers one address may have a minute (CT-3). 0 for no limit."
+        }
+      }
+    },
+    "splent_feature_settings": {
+      "entry": "splent_io/splent_feature_settings@v0.6.0",
+      "extensible": {
+        "services": [
+          "SettingsService"
+        ],
+        "templates": [
+          "settings/admin/feature.html",
+          "settings/admin/index.html"
+        ],
+        "models": [
+          "Setting"
+        ],
+        "hooks": [
+          "layout.authenticated_sidebar"
+        ],
+        "routes": true
+      }
+    },
+    "splent_feature_media": {
+      "entry": "splent_io/splent_feature_media@v0.13.0",
+      "extensible": {
+        "services": [
+          "MediaService"
+        ],
+        "templates": [
+          "media/admin.html",
+          "media/admin_detail.html",
+          "media/gallery.html",
+          "media/hooks/home_section.html"
+        ],
+        "models": [
+          "MediaItem"
+        ],
+        "hooks": [
+          "home.section",
+          "layout.authenticated_sidebar"
+        ],
+        "routes": true
+      },
+      "config_schema": {
+        "MEDIA_PUBLIC_GALLERY": {
+          "type": "bool",
+          "bind": "runtime",
+          "default": true,
+          "label": "Public gallery",
+          "help": "The gallery page at /media, browsable by anyone. Off answers 404 so visitors cannot enumerate the library."
+        },
+        "MEDIA_NAV_LABEL": {
+          "type": "text",
+          "bind": "derivation",
+          "default": "",
+          "help": "Main-nav label for the gallery page. Empty keeps it out of the nav."
+        },
+        "MEDIA_HOME_COUNT": {
+          "type": "int",
+          "bind": "runtime",
+          "default": 0,
+          "min": 0,
+          "label": "Photos on the homepage",
+          "help": "How many of the latest public photos the homepage shows. Zero hides the section."
+        },
+        "MEDIA_GALLERY_VIEW": {
+          "type": "enum",
+          "bind": "runtime",
+          "default": "grid",
+          "label": "Default gallery view",
+          "choices": [
+            "grid",
+            "mosaic"
+          ]
+        },
+        "MEDIA_GALLERY_PAGE_SIZE": {
+          "type": "int",
+          "bind": "runtime",
+          "default": 48,
+          "min": 1,
+          "label": "Photos per scroll page"
+        },
+        "MEDIA_SLIDESHOW_SECONDS": {
+          "type": "int",
+          "bind": "runtime",
+          "default": 4,
+          "min": 1,
+          "label": "Slideshow interval (seconds)"
+        },
+        "MEDIA_UPLOAD_IN_GALLERY": {
+          "type": "bool",
+          "bind": "runtime",
+          "default": true,
+          "label": "New uploads go to the gallery"
+        },
+        "MEDIA_MAX_UPLOAD_SIZE": {
+          "type": "size",
+          "bind": "deploy",
+          "default": 104857600,
+          "help": "Largest file the library accepts, as 100M, 1G or a number of bytes. 0 means no limit."
+        },
+        "PROTECTED_UPLOADS_DIR": {
+          "type": "str",
+          "bind": "deploy",
+          "default": "",
+          "help": "Where files that are not public live. Empty means the framework's default."
+        },
+        "PROTECTED_FILES_ACCEL_PREFIX": {
+          "type": "str",
+          "bind": "deploy",
+          "default": "",
+          "pattern": "/.+",
+          "help": "Internal nginx prefix for X-Accel-Redirect. Empty streams the file through Python."
+        }
+      }
+    },
+    "splent_feature_team": {
+      "entry": "splent_io/splent_feature_team@v0.10.0",
+      "extensible": {
+        "services": [
+          "TeamService"
+        ],
+        "templates": [
+          "team/admin/form.html",
+          "team/admin/list.html",
+          "team/admin/role_form.html",
+          "team/admin/roles.html",
+          "team/detail.html",
+          "team/list.html"
+        ],
+        "models": [
+          "Role",
+          "TeamMember"
+        ],
+        "hooks": [
+          "layout.authenticated_sidebar"
+        ],
+        "routes": true
+      },
+      "config_schema": {
+        "TEAM_SHOW_EMPTY_ROLES": {
+          "type": "bool",
+          "bind": "derivation",
+          "default": false,
+          "help": "Whether /team also lists the roles with no published member."
+        },
+        "TEAM_CARD_EMAIL_ADDRESS": {
+          "type": "bool",
+          "bind": "derivation",
+          "default": false,
+          "help": "Whether a member's card shows the address itself instead of the word Email."
+        }
+      }
+    },
+    "splent_feature_uvl": {
+      "entry": "splent_io/splent_feature_uvl@v0.6.0",
+      "refinement": {
+        "refines": "splent_feature_hubfile",
+        "extends": {
+          "models": [
+            {
+              "target": "Hubfile",
+              "mixin": "HubfileFeatureModelMixin"
+            }
+          ]
+        }
+      },
+      "extensible": {
+        "services": [
+          "FeatureModelService",
+          "FlamapyService"
+        ],
+        "templates": [
+          "hooks/uvl_export_items.html",
+          "hooks/uvl_ide_link.html",
+          "hooks/uvl_latex_button.html",
+          "hooks/uvl_latex_dialogs.html",
+          "hooks/uvl_workbench_scripts.html",
+          "uvl/import.html"
+        ],
+        "models": [
+          "FeatureModel"
+        ],
+        "hooks": [
+          "dataset.files.nouns",
+          "dataset.form.scripts",
+          "hubfile.workbench.actions",
+          "hubfile.workbench.content",
+          "hubfile.workbench.dialogs",
+          "hubfile.workbench.export_items",
+          "hubfile.workbench.file_urls",
+          "hubfile.workbench.file_view",
+          "hubfile.workbench.panel",
+          "hubfile.workbench.scripts"
+        ],
+        "routes": true
+      },
+      "config_schema": {
+        "FLAMAPY_IDE_ORIGINS": {
+          "type": "list",
+          "bind": "derivation",
+          "default": [
+            "https://ide.flamapy.org"
+          ],
+          "pattern": "https?://[A-Za-z0-9.-]+(:[0-9]+)?/?",
+          "help": "Sites of flamapyIDE that reach the hub with the user's session. Exact origins, never a pattern."
+        },
+        "FLAMAPY_IDE_URL": {
+          "type": "url",
+          "bind": "derivation",
+          "default": "https://ide.flamapy.org",
+          "help": "The flamapyIDE a model opens in. Empty draws no link."
+        },
+        "UVL_EXTENSIONS": {
+          "type": "list",
+          "bind": "derivation",
+          "default": [
+            ".uvl"
+          ],
+          "pattern": "\\.?[A-Za-z0-9][A-Za-z0-9._-]*",
+          "help": "Extensions of a UVL model, whatever their case."
+        },
+        "UVL_MAX_SIZE": {
+          "type": "size",
+          "bind": "derivation",
+          "default": 10485760,
+          "help": "Largest UVL model the hub takes, as 10M, 1G or a number of bytes. 0 means no limit."
+        },
+        "UVL_DERIVED_FORMATS": {
+          "type": "list",
+          "bind": "derivation",
+          "default": [
+            "glencoe",
+            "dimacs",
+            "splot"
+          ],
+          "help": "Formats every model is transformed into.",
+          "choices": [
+            "glencoe",
+            "dimacs",
+            "splot"
+          ]
+        },
+        "UVL_IMPORT_ALLOWED_HOSTS": {
+          "type": "list",
+          "bind": "derivation",
+          "default": [
+            "ide.flamapy.org",
+            "raw.githubusercontent.com"
+          ],
+          "pattern": "[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?(\\.[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?)*\\.?",
+          "help": "Host names a model may be imported from by URL, each by its exact name."
+        },
+        "UVL_IMPORT_MAX_SIZE": {
+          "type": "size",
+          "bind": "derivation",
+          "default": 10485760,
+          "help": "Most an imported model may have, as 10M or a number of bytes. 0 keeps the default: an import always has a cap."
+        },
+        "UVL_IMPORT_TIMEOUT": {
+          "type": "int",
+          "bind": "derivation",
+          "default": 15,
+          "min": 1,
+          "max": 300,
+          "help": "Seconds the fetch of an imported model may take in all."
+        },
+        "UVL_TRANSFORM_TIMEOUT": {
+          "type": "int",
+          "bind": "deploy",
+          "default": 300,
+          "min": 10,
+          "help": "Seconds the derived formats of one model may take before they are left unmade."
+        },
+        "UVL_TRANSFORM_MEMORY_MB": {
+          "type": "int",
+          "bind": "deploy",
+          "default": 1536,
+          "min": 128,
+          "help": "Megabytes making the derived formats of one model may use before they are left unmade."
+        }
+      }
+    },
+    "splent_feature_auth": {
+      "entry": "splent_io/splent_feature_auth@v1.28.0",
+      "extensible": {
+        "services": [
+          "AuthenticationService",
+          "OneTimeTokenService"
+        ],
+        "templates": [
+          "auth/admin/user_form.html",
+          "auth/admin/users.html",
+          "auth/confirm_email.html",
+          "auth/delete_account.html",
+          "auth/login_form.html",
+          "auth/logout.html",
+          "auth/my_account.html",
+          "auth/reauthenticate.html",
+          "hooks/anonymous_sidebar_items.html",
+          "hooks/authenticated_sidebar_items.html",
+          "hooks/footer_login.html",
+          "hooks/my_account_sidebar_item.html",
+          "hooks/navbar_anonymous.html",
+          "hooks/navbar_authenticated.html",
+          "hooks/public_nav.html",
+          "hooks/users_sidebar_item.html"
+        ],
+        "models": [
+          "AuthToken",
+          "ThrottleFailure",
+          "User"
+        ],
+        "hooks": [
+          "admin.bar.context",
+          "auth.login.error_hint",
+          "auth.login.form_footer",
+          "auth.login.providers",
+          "auth.reauthenticate.methods",
+          "layout.anonymous_sidebar",
+          "layout.authenticated_sidebar",
+          "layout.footer",
+          "layout.nav.end",
+          "layout.navbar.anonymous",
+          "layout.navbar.authenticated",
+          "layout.scripts"
+        ],
+        "routes": true
+      },
+      "config_schema": {
+        "AUTH_NAV_LOGIN": {
+          "type": "bool",
+          "bind": "runtime",
+          "default": true,
+          "label": "Log in link in the header",
+          "help": "The way in at the far right of the public nav. Off suits a site where staff reach the panel by typing the URL."
+        },
+        "AUTH_FOOTER_LOGIN": {
+          "type": "bool",
+          "bind": "runtime",
+          "default": false,
+          "label": "Log in link in the footer",
+          "help": "A quiet way in from the footer, for sites that keep it out of the nav."
+        },
+        "AUTH_LOGIN_LAYOUT": {
+          "type": "template",
+          "bind": "derivation",
+          "default": "",
+          "help": "The shell the sign-in page renders in. Empty means the application shell."
+        },
+        "AUTH_MIGRATION_LEGACY_ROLE": {
+          "type": "str",
+          "bind": "deploy",
+          "default": "",
+          "pattern": "admin|staff|user",
+          "help": "The role the migration that introduced roles gives every existing account."
+        },
+        "AUTH_MIGRATION_INACTIVE_ACCOUNTS": {
+          "type": "str",
+          "bind": "deploy",
+          "default": "",
+          "pattern": "pending|disabled",
+          "help": "What the migration that split active reads an inactive account as: pending (waiting for its link) or disabled. Empty lets it decide."
+        },
+        "AUTH_LANDING_ENDPOINT": {
+          "type": "endpoint",
+          "bind": "derivation",
+          "default": "public.index",
+          "help": "Where logging in and out sends a reader who asked for no page. An endpoint the product does not have sends them to /."
+        },
+        "AUTH_LOGIN_MAX_ATTEMPTS": {
+          "type": "int",
+          "bind": "deploy",
+          "default": 10,
+          "min": 0,
+          "help": "Failed logins allowed from one address against one account in a window. 0 turns the check off."
+        },
+        "AUTH_LOGIN_MAX_ACCOUNT_ATTEMPTS": {
+          "type": "int",
+          "bind": "deploy",
+          "default": 50,
+          "min": 0,
+          "help": "Failed logins allowed against one account from every address together. 0 turns the check off."
+        },
+        "AUTH_LOGIN_MAX_ADDRESS_ATTEMPTS": {
+          "type": "int",
+          "bind": "deploy",
+          "default": 200,
+          "min": 0,
+          "help": "Failed logins allowed from one address against every account together. 0 turns the check off."
+        },
+        "AUTH_LOGIN_WINDOW_SECONDS": {
+          "type": "int",
+          "bind": "deploy",
+          "default": 900,
+          "min": 1,
+          "help": "The window the three budgets are counted over, in seconds."
+        },
+        "AUTH_PASSWORD_MIN_LENGTH": {
+          "type": "int",
+          "bind": "derivation",
+          "default": 8,
+          "min": 8,
+          "max": 128,
+          "help": "The shortest password accepted when one is set: sign-up, reset, My account and the accounts screen."
+        },
+        "AUTH_PASSWORD_CONFIRM": {
+          "type": "bool",
+          "bind": "derivation",
+          "default": false,
+          "help": "Whether the forms that follow the policy ask for a new password twice."
+        },
+        "AUTH_PASSWORD_BREACH_CHECK": {
+          "type": "bool",
+          "bind": "derivation",
+          "default": false,
+          "help": "Whether a password found in a known data breach is refused, asking Have I Been Pwned's range API."
+        },
+        "AUTH_PASSWORD_BREACH_URL": {
+          "type": "url",
+          "bind": "deploy",
+          "default": "https://api.pwnedpasswords.com/range/",
+          "pattern": "https?://.+",
+          "help": "The range API the breach check asks."
+        },
+        "AUTH_PASSWORD_BREACH_TIMEOUT": {
+          "type": "float",
+          "bind": "deploy",
+          "default": 3.0,
+          "min": 0.1,
+          "help": "Seconds the breach check waits before letting the password through."
+        },
+        "AUTH_REAUTH_SECONDS": {
+          "type": "int",
+          "bind": "derivation",
+          "default": 900,
+          "min": 1,
+          "help": "Seconds a sign-in counts as recent for what asks for one."
+        },
+        "AUTH_REMEMBER_DAYS": {
+          "type": "int",
+          "bind": "derivation",
+          "default": 30,
+          "min": 0,
+          "help": "Days a Remember me cookie keeps a browser signed in. 0 takes the box off the login form."
+        },
+        "AUTH_LOGOUT_GET": {
+          "type": "bool",
+          "bind": "derivation",
+          "default": true,
+          "help": "Whether a plain GET of /logout still signs out. auth 2.0 turns it off."
+        },
+        "AUTH_SELF_DELETION": {
+          "type": "bool",
+          "bind": "derivation",
+          "default": true,
+          "help": "Whether a person may delete their own account from My account."
+        },
+        "AUTH_REQUIRE_VERIFIED_EMAIL": {
+          "type": "bool",
+          "bind": "derivation",
+          "help": "Whether an account whose address nobody confirmed is kept out of sign-in. Unset: only when a feature that confirms addresses is installed."
+        },
+        "AUTH_NEW_USER_PASSWORD": {
+          "type": "secret",
+          "bind": "deploy",
+          "help": "The password feature:auth create-user gives the new account when --password is left out, read when the command runs."
+        }
+      }
+    },
+    "splent_feature_profile": {
+      "entry": "splent_io/splent_feature_profile@v1.9.0",
+      "extensible": {
+        "services": [
+          "UserProfileService"
+        ],
+        "templates": [
+          "hooks/navbar_user.html",
+          "hooks/navbar_user_name.html",
+          "hooks/sidebar_edit_profile.html",
+          "profile/edit.html"
+        ],
+        "models": [
+          "UserProfile"
+        ],
+        "hooks": [
+          "layout.navbar.authenticated",
+          "layout.navbar.user",
+          "layout.scripts",
+          "layout.sidebar.authenticated.items",
+          "profile.edit.sections"
+        ],
+        "routes": true
+      }
+    },
+    "splent_feature_confirmemail": {
+      "entry": "splent_io/splent_feature_confirmemail@v2.4.0",
+      "extensible": {
+        "services": [
+          "ConfirmemailService"
+        ],
+        "templates": [
+          "confirmemail/confirm.html",
+          "confirmemail/link_invalid.html",
+          "confirmemail/resend.html"
+        ],
+        "models": [],
+        "hooks": [],
+        "routes": true
+      },
+      "config_schema": {
+        "CONFIRM_EMAIL_TOKEN_MAX_AGE": {
+          "type": "int",
+          "bind": "derivation",
+          "default": 86400,
+          "min": 1,
+          "help": "Seconds a confirmation link, or an address change link, works."
+        },
+        "CONFIRM_EMAIL_RESEND_SECONDS": {
+          "type": "int",
+          "bind": "derivation",
+          "default": 300,
+          "min": 1,
+          "help": "Seconds between two confirmation links sent to the same account."
+        }
+      }
+    },
+    "splent_feature_reset": {
+      "entry": "splent_io/splent_feature_reset@v2.4.0",
+      "extensible": {
+        "services": [
+          "ResetService"
+        ],
+        "templates": [
+          "forgot/forgot.html",
+          "forgot/link_invalid.html",
+          "forgot/reset_password.html",
+          "hooks/reset_link.html"
+        ],
+        "models": [
+          "ResetToken"
+        ],
+        "hooks": [
+          "auth.login.form_footer",
+          "layout.scripts",
+          "reset.form_fields"
+        ],
+        "routes": true
+      },
+      "config_schema": {
+        "RESET_TOKEN_MAX_AGE": {
+          "type": "int",
+          "bind": "derivation",
+          "default": 3600,
+          "min": 1,
+          "help": "Seconds a reset link works."
+        }
+      }
+    },
+    "splent_feature_mail": {
+      "entry": "splent_io/splent_feature_mail@v1.7.0",
+      "extensible": {
+        "services": [
+          "MailService"
+        ],
+        "templates": [
+          "mail/admin/outbox.html"
+        ],
+        "models": [
+          "MailOutbox"
+        ],
+        "hooks": [],
+        "routes": true
+      },
+      "config_schema": {
+        "MAIL_HOST": {
+          "type": "str",
+          "bind": "deploy",
+          "default": "localhost",
+          "help": "The SMTP server mail goes through."
+        },
+        "MAIL_PORT": {
+          "type": "int",
+          "bind": "deploy",
+          "default": 1025,
+          "min": 1,
+          "max": 65535,
+          "help": "Its port: 587 with STARTTLS, 465 with TLS from the start."
+        },
+        "MAIL_USE_TLS": {
+          "type": "bool",
+          "bind": "deploy",
+          "default": false,
+          "help": "STARTTLS on a plain connection, with the server's certificate checked."
+        },
+        "MAIL_USE_SSL": {
+          "type": "bool",
+          "bind": "deploy",
+          "default": false,
+          "help": "TLS from the first byte, with the server's certificate checked. Not with MAIL_USE_TLS."
+        },
+        "MAIL_TLS_VERIFY": {
+          "type": "bool",
+          "bind": "deploy",
+          "default": true,
+          "help": "Whether the server's certificate and name are checked. Off only in development with MailHog."
+        },
+        "MAIL_USERNAME": {
+          "type": "str",
+          "bind": "deploy",
+          "default": "",
+          "help": "The account the app signs in to the server with. Empty sends without signing in."
+        },
+        "MAIL_PASSWORD": {
+          "type": "secret",
+          "bind": "deploy",
+          "help": "The password of MAIL_USERNAME on the server."
+        },
+        "MAIL_FROM": {
+          "type": "str",
+          "bind": "deploy",
+          "default": "no-reply@localhost",
+          "pattern": ".+@.+",
+          "help": "The address a recipient sees and may reply to."
+        },
+        "MAIL_TIMEOUT": {
+          "type": "int",
+          "bind": "deploy",
+          "default": 10,
+          "min": 1,
+          "max": 300,
+          "help": "Seconds each exchange with the server may take."
+        },
+        "MAIL_OUTBOX_KEEP_DAYS": {
+          "type": "int",
+          "bind": "deploy",
+          "default": 30,
+          "min": 1,
+          "help": "Days a mail sent or given up on stays in the outbox."
+        }
+      }
+    },
+    "splent_feature_hubfile": {
+      "entry": "splent_io/splent_feature_hubfile@v0.13.0",
+      "extensible": {
+        "services": [
+          "HubfileDownloadRecordService",
+          "HubfileService",
+          "HubfileViewRecordService",
+          "StorageService",
+          "UploadIngestService",
+          "UploadSessionService"
+        ],
+        "templates": [
+          "hooks/upload_zone.html",
+          "hooks/workbench.html",
+          "hooks/workbench_scripts.html"
+        ],
+        "models": [
+          "Hubfile",
+          "HubfileAlias",
+          "HubfileDownloadRecord",
+          "HubfileViewRecord",
+          "StagedFile",
+          "UploadSession"
+        ],
+        "hooks": [
+          "dataset.form.scripts",
+          "dataset.form.upload",
+          "dataset.view.scripts",
+          "dataset.view.workbench",
+          "hubfile.workbench.actions",
+          "hubfile.workbench.content",
+          "hubfile.workbench.dialogs",
+          "hubfile.workbench.export_items",
+          "hubfile.workbench.file_urls",
+          "hubfile.workbench.file_view",
+          "hubfile.workbench.panel",
+          "hubfile.workbench.scripts",
+          "hubfile.workbench.side_panel",
+          "hubfile.workbench.uvl_actions",
+          "hubfile.workbench.views"
+        ],
+        "routes": true
+      },
+      "config_schema": {
+        "HUBFILE_TASKS_MODE": {
+          "type": "enum",
+          "bind": "deploy",
+          "default": "",
+          "help": "sync processes the files right away, in the caller. Any other value leaves it to TASKS_MODE.",
+          "choices": [
+            "",
+            "thread",
+            "rq",
+            "sync"
+          ]
+        },
+        "HUBFILE_STORAGE_ROOT": {
+          "type": "str",
+          "bind": "deploy",
+          "default": "",
+          "help": "Where the files are kept. Empty is the hubfile folder of PROTECTED_UPLOADS_DIR."
+        },
+        "HUBFILE_STORAGE_BACKEND": {
+          "type": "enum",
+          "bind": "deploy",
+          "default": "local",
+          "help": "The store that holds the files.",
+          "choices": [
+            "local"
+          ]
+        },
+        "HUBFILE_UPLOAD_EXPIRY_HOURS": {
+          "type": "int",
+          "bind": "deploy",
+          "default": 24,
+          "min": 1,
+          "help": "Hours an upload under way, and any other temporary, lasts before it is swept."
+        },
+        "HUBFILE_FILE_EXTENSIONS": {
+          "type": "list",
+          "bind": "derivation",
+          "default": [],
+          "pattern": "\\*|\\.?[A-Za-z0-9][A-Za-z0-9._-]*",
+          "help": "Extensions of the generic file type, [\"*\"] for any file. Empty takes none.",
+          "uvl": true
+        },
+        "HUBFILE_FILE_MAX_SIZE": {
+          "type": "size",
+          "bind": "derivation",
+          "default": 20971520,
+          "help": "Largest file of the generic type, as 20M, 1G or a number of bytes. 0 means no limit."
+        },
+        "HUBFILE_UNPACK_ARCHIVES": {
+          "type": "bool",
+          "bind": "derivation",
+          "default": true,
+          "help": "Whether an uploaded ZIP is unpacked into its files. False keeps it as a file of the type that takes it."
+        },
+        "HUBFILE_ZIP_MAX_SIZE": {
+          "type": "size",
+          "bind": "derivation",
+          "default": 104857600,
+          "help": "Largest ZIP an upload takes, before it unpacks. 0 means no limit."
+        },
+        "HUBFILE_MAX_UNZIPPED_BYTES": {
+          "type": "int",
+          "bind": "derivation",
+          "default": 536870912,
+          "min": 1,
+          "help": "Most bytes the ZIPs of one upload may unpack to."
+        },
+        "HUBFILE_MAX_FILES": {
+          "type": "int",
+          "bind": "derivation",
+          "default": 20000,
+          "min": 1,
+          "help": "Most files the ZIPs of one upload may hold."
+        },
+        "HUBFILE_MAX_ZIP_RATIO": {
+          "type": "int",
+          "bind": "derivation",
+          "default": 200,
+          "min": 1,
+          "help": "Most a file of more than 1 MiB may grow from its compressed size."
+        },
+        "HUBFILE_GITHUB_IMPORT": {
+          "type": "bool",
+          "bind": "derivation",
+          "default": true,
+          "help": "Whether the upload zone imports files from GitHub. False leaves out its part of the zone and its routes."
+        }
+      }
+    },
+    "splent_feature_dataset": {
+      "entry": "splent_io/splent_feature_dataset@v0.16.1",
+      "extensible": {
+        "services": [
+          "AuthorService",
+          "DOIMappingService",
+          "DSDownloadRecordService",
+          "DSMetaDataService",
+          "DSViewRecordService",
+          "DataSetService",
+          "DatasetAccessPolicy",
+          "DatasetCommands",
+          "LineageService"
+        ],
+        "templates": [
+          "dataset/authorship_claim.html",
+          "dataset/create_and_edit_dataset.html",
+          "dataset/list_datasets.html",
+          "dataset/tombstone.html",
+          "dataset/view_dataset.html",
+          "hooks/dataset_layout_scripts.html",
+          "hooks/explore_download_all.html",
+          "hooks/home_datasets.html"
+        ],
+        "models": [
+          "Author",
+          "DOIMapping",
+          "DSDownloadRecord",
+          "DSMetaData",
+          "DSMetrics",
+          "DSViewRecord",
+          "DataSet",
+          "IdempotencyKey",
+          "OrcidCheck"
+        ],
+        "hooks": [
+          "dataset.files.nouns",
+          "dataset.form.scripts",
+          "dataset.form.upload",
+          "dataset.home.actions",
+          "dataset.view.actions",
+          "dataset.view.head",
+          "dataset.view.meta",
+          "dataset.view.primary_actions",
+          "dataset.view.scripts",
+          "dataset.view.sections",
+          "dataset.view.workbench",
+          "explore.aside",
+          "home.section",
+          "layout.head.css",
+          "layout.scripts"
+        ],
+        "routes": true
+      },
+      "config_schema": {
+        "DATASET_CREATE_IN_BACKGROUND_FROM": {
+          "type": "int",
+          "bind": "deploy",
+          "default": 300,
+          "min": 1,
+          "help": "Files from which the upload form creates a dataset in the background, showing its progress, instead of in the request."
+        },
+        "DATASET_PUBLISHER_NAME": {
+          "type": "str",
+          "bind": "derivation",
+          "default": "",
+          "help": "Who publishes the datasets, in their metadata, mails and messages. Empty uses SITE_NAME."
+        },
+        "DATASET_CATALOG_URL": {
+          "type": "url",
+          "bind": "derivation",
+          "default": "",
+          "help": "Address of the catalog the metadata names. Empty uses the site's own."
+        },
+        "DATASET_QR_LOGO": {
+          "type": "str",
+          "bind": "derivation",
+          "default": "",
+          "pattern": "[^/.][^:]*\\.(png|jpe?g|gif|webp)",
+          "help": "PNG, JPG, GIF or WebP image in the product's static folder drawn in the middle of the PNG and JPG QR codes. Empty draws none."
+        },
+        "DATASET_LICENSE": {
+          "type": "enum",
+          "bind": "derivation",
+          "default": "CC-BY-4.0",
+          "help": "License every dataset is published under, as an SPDX identifier.",
+          "choices": [
+            "CC-BY-4.0",
+            "CC-BY-SA-4.0",
+            "CC0-1.0"
+          ]
+        },
+        "DATASET_HOME_ORDER": {
+          "type": "enum",
+          "bind": "derivation",
+          "default": "newest",
+          "help": "Datasets the home page puts first: the newest, those with the most items, or the best rated (rating).",
+          "choices": [
+            "newest",
+            "items",
+            "rating"
+          ],
+          "uvl": true
+        },
+        "DATASET_PUBLICATION_PROVIDER": {
+          "type": "str",
+          "bind": "derivation",
+          "default": "",
+          "pattern": "[a-z][a-z0-9_]{0,31}",
+          "help": "Provider a publication goes through when the request names none (zenodo, local_publication). Empty: the only one installed."
+        },
+        "DATASET_PUBLISH_WAIT": {
+          "type": "int",
+          "bind": "deploy",
+          "default": 100,
+          "min": 0,
+          "max": 3600,
+          "help": "Seconds a request that publishes waits for the record before it answers that it is still under way (D5). Under the worker's and the proxy's timeouts."
+        },
+        "DATASET_PUBLISH_MAX_IN_FLIGHT": {
+          "type": "int",
+          "bind": "deploy",
+          "default": 3,
+          "min": 0,
+          "max": 100,
+          "help": "Publications of one account under way at once (429 past it). 0 for no limit."
+        },
+        "DATASET_DEPOSIT_CONTENT": {
+          "type": "enum",
+          "bind": "derivation",
+          "default": "sources",
+          "help": "What a deposit carries: the dataset's files, or also what is derived from them (PB-7).",
+          "choices": [
+            "sources",
+            "sources_and_derived"
+          ]
+        },
+        "DATASET_PUBLISH_POLICY": {
+          "type": "enum",
+          "bind": "derivation",
+          "default": "open",
+          "help": "Who publishes (PB-8): any owner, an owner with a confirmed address, or that and a reviewer's approval for the accounts it does not trust (curated needs curation).",
+          "choices": [
+            "open",
+            "verified",
+            "curated"
+          ],
+          "uvl": true
+        },
+        "DATASET_PUBLISH_PAUSED": {
+          "type": "bool",
+          "bind": "deploy",
+          "default": false,
+          "help": "Hold every publication (a cutover): the web sends it to review, API v1 answers 423 publication_paused."
+        },
+        "DATASET_PUBLISH_PAUSED_RETRY_AFTER": {
+          "type": "int",
+          "bind": "deploy",
+          "default": 3600,
+          "min": 1,
+          "max": 604800,
+          "help": "Seconds the Retry-After of a paused publication says."
+        },
+        "DATASET_DESCRIPTION_ALLOWED_TAGS": {
+          "type": "list",
+          "bind": "derivation",
+          "default": [
+            "p",
+            "br",
+            "hr",
+            "h4",
+            "h5",
+            "h6",
+            "blockquote",
+            "pre",
+            "ul",
+            "ol",
+            "li",
+            "table",
+            "thead",
+            "tbody",
+            "tr",
+            "th",
+            "td",
+            "a",
+            "strong",
+            "em",
+            "b",
+            "i",
+            "u",
+            "s",
+            "del",
+            "code"
+          ],
+          "help": "The elements a dataset's description keeps, Markdown or inherited HTML (DS-1). Empty keeps the default.",
+          "choices": [
+            "p",
+            "br",
+            "hr",
+            "h1",
+            "h2",
+            "h3",
+            "h4",
+            "h5",
+            "h6",
+            "blockquote",
+            "pre",
+            "ul",
+            "ol",
+            "li",
+            "dl",
+            "dt",
+            "dd",
+            "table",
+            "thead",
+            "tbody",
+            "tr",
+            "th",
+            "td",
+            "a",
+            "strong",
+            "em",
+            "b",
+            "i",
+            "u",
+            "s",
+            "del",
+            "ins",
+            "sub",
+            "sup",
+            "mark",
+            "small",
+            "abbr",
+            "code",
+            "kbd",
+            "img"
+          ]
+        },
+        "DATASET_ORCID_CHECK_URL": {
+          "type": "url",
+          "bind": "deploy",
+          "default": "https://pub.orcid.org/v3.0",
+          "help": "orcid.org's public API, asked in the background whether a credited ORCID iD exists (DL-5). Empty asks nothing."
+        }
+      }
+    },
+    "splent_feature_generator": {
+      "entry": "splent_io/splent_feature_generator@v0.4.0",
+      "extensible": {
+        "services": [],
+        "templates": [
+          "generator/index.html",
+          "generator/landing.html",
+          "generator/llm.html",
+          "generator/step1.html",
+          "generator/step2.html",
+          "generator/step3.html",
+          "generator/step4.html",
+          "generator/step5.html",
+          "generator/step6.html"
+        ],
+        "models": [],
+        "hooks": [],
+        "routes": true
+      }
+    },
+    "splent_feature_apidocs": {
+      "entry": "splent_io/splent_feature_apidocs@v0.5.0",
+      "extensible": {
+        "services": [],
+        "templates": [
+          "apidocs/index.html",
+          "hooks/sidebar_apidocs.html"
+        ],
+        "models": [],
+        "hooks": [
+          "apikeys.sidebar.developer"
+        ],
+        "routes": true
+      },
+      "config_schema": {
+        "APIDOCS_TITLE": {
+          "type": "str",
+          "bind": "derivation",
+          "default": "{SITE_NAME} REST API",
+          "help": "Title of the docs page and of the document. {SITE_NAME} becomes the site's name."
+        },
+        "APIDOCS_DESCRIPTION": {
+          "type": "str",
+          "bind": "derivation",
+          "default": "",
+          "help": "What the API is for, under the title. Empty shows nothing."
+        },
+        "APIDOCS_VERSION": {
+          "type": "str",
+          "bind": "derivation",
+          "default": "1.0.0",
+          "pattern": "[0-9A-Za-z.+-]{1,32}",
+          "help": "Version of the API the document describes (info.version)."
+        },
+        "APIDOCS_PATHS": {
+          "type": "list",
+          "bind": "derivation",
+          "default": [
+            "/api/"
+          ],
+          "pattern": "/.*",
+          "help": "The paths that are the API: every rule under them is documented."
+        }
+      }
+    },
+    "splent_feature_legacy_urls": {
+      "entry": "splent_io/splent_feature_legacy_urls@v0.2.0",
+      "extensible": {
+        "services": [
+          "LegacyUrlService"
+        ],
+        "templates": [
+          "legacy_urls/admin/urls.html",
+          "legacy_urls/gone.html"
+        ],
+        "models": [
+          "LegacyUrl"
+        ],
+        "hooks": [],
+        "routes": true
+      }
+    },
+    "splent_feature_dataset_api": {
+      "entry": "splent_io/splent_feature_dataset_api@v0.5.1",
+      "extensible": {
+        "services": [],
+        "templates": [],
+        "models": [],
+        "hooks": [],
+        "routes": true
+      }
+    },
+    "splent_feature_dataset_transfer": {
+      "entry": "splent_io/splent_feature_dataset_transfer@v0.2.0",
+      "extensible": {
+        "services": [
+          "TransferService"
+        ],
+        "templates": [
+          "dataset_transfer/inbox.html",
+          "dataset_transfer/offer.html",
+          "dataset_transfer/offer_page.html",
+          "hooks/transfer_action.html"
+        ],
+        "models": [
+          "DatasetTransferRequest"
+        ],
+        "hooks": [
+          "dataset.view.actions"
+        ],
+        "routes": true
+      },
+      "config_schema": {
+        "DATASET_TRANSFER_EXPIRY_DAYS": {
+          "type": "int",
+          "bind": "derivation",
+          "default": 14,
+          "min": 1,
+          "max": 365,
+          "help": "Days an offer of a dataset waits for its answer before it lapses (DL-17)."
+        },
+        "DATASET_TRANSFER_MAX_OFFERS_PER_DAY": {
+          "type": "int",
+          "bind": "derivation",
+          "default": 10,
+          "min": 0,
+          "max": 1000,
+          "help": "Offers an account makes in a day, whether or not they reach an account (429 past it). 0 for no limit."
+        }
+      }
+    },
+    "splent_feature_icons": {
+      "entry": "splent_io/splent_feature_icons@v0.1.0",
+      "extensible": {
+        "services": [],
+        "templates": [
+          "hooks/icons_scripts.html"
+        ],
+        "models": [],
+        "hooks": [
+          "layout.scripts"
+        ],
+        "routes": true
+      }
+    },
+    "splent_feature_search": {
+      "entry": "splent_io/splent_feature_search@v0.5.0",
+      "extensible": {
+        "services": [
+          "SearchService"
+        ],
+        "templates": [
+          "search/nav_box.html",
+          "search/results.html"
+        ],
+        "models": [],
+        "hooks": [
+          "layout.nav"
+        ],
+        "routes": true
+      }
+    }
+  }
+}

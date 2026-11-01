@@ -1,0 +1,4 @@
+# Keeps this directory in git. It is mounted at /etc/nginx/conf.d/locations
+# inside the nginx container and every *.conf file here is included in the
+# server block. Drop a snippet here to add a location without patching the
+# feature, and read protected-files.conf.example for a worked example.

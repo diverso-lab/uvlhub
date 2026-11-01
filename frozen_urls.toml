@@ -1,0 +1,841 @@
+# Frozen URLs of uvlhub (CO-1)
+#
+# Every public address uvlhub.io 2.12 hands out that uvlhub 3.0 keeps
+# answering: all the rows of the table in 06-plan-migracion-uvlhubio.md
+# §4.4, one entry per Flask rule or request header. tests/test_frozen_urls.py
+# compares the entries with the url_map of the app this product builds, so
+# the manifest says what the product serves today, not what it is meant to
+# serve one day.
+#
+# Each [[url]] entry has
+#
+#   rows       the rows of the §4.4 table it comes from (1 to 19)
+#   rule       the Flask rule, as the 2.12 monolith declared it
+#   methods    the methods clients call it with
+#   v212       where the monolith served it ("mono" is uvlhub_monolith/app)
+#   clients    who calls it
+#   target     what it is in 3.0
+#   status     served         a feature or the product serves it today
+#              alias-pending  3.0 has to answer it (an alias, a bridge or a
+#                             route) and nothing does yet
+#              gone-pending   3.0 has to answer it with a redirect or a 410
+#                             saying where it went, and nothing does yet
+#   endpoint   served: the endpoint that answers it
+#   served_by  served: the feature or the product that owns that endpoint
+#   plan       pending: the plan item that closes it. served: the work still
+#              owed on how it answers, when there is some
+#   note       anything else
+#
+# An entry a client calls from its own site also has
+#
+#   cors_origin      that site. It gets its own origin back, with
+#                    credentials, on the request and on the preflight, and
+#                    any other site gets no CORS at all
+#   signed_out_keys  the keys of the 401 a caller with neither a session
+#                    nor a token gets, which the client reads to send them
+#                    to sign in
+#
+# A header is an entry with kind = "header" instead of a rule: header names
+# it and config the setting that makes the product read it.
+#
+# When a feature release starts or stops serving a rule, or a served one
+# stops answering as cors_origin and signed_out_keys say, the test fails
+# until the entry says so. Those two are checked once the entry is served.
+
+# ── 1. /doi/<doi> and /doi/<doi>/ ─────────────────────────────────────────
+
+[[url]]
+rows = [1, 2]
+rule = "/doi/<path:doi>/"
+methods = ["GET"]
+v212 = "mono/app/features/dataset/routes.py:690"
+clients = ["citations", "QR codes", "marketplace", "CLI spl:outdated"]
+target = "Canonical landing, with a 301 from the form without the slash and a 410 with the citation for tombstones. A concept DOI answers 302 to the latest version"
+status = "served"
+endpoint = "dataset.subdomain_index"
+served_by = "dataset"
+plan = "CT-4"
+note = "Both forms answer 200, with no canonical one yet. A withdrawn dataset answers 410 with the citation (451 for a legal reason) since dataset 0.4.0 (DL-2). A concept DOI (row 2) matches this rule and, since dataset 0.10.0 (CT-4), answers 302 to the newest published version with rel='latest-version'; superseded DOIs already answer 302 through DOIMapping"
+
+[[url]]
+rows = [1]
+rule = "/doi/<path:doi>"
+methods = ["GET"]
+v212 = "mono/app/features/dataset/routes.py:689"
+clients = ["citations", "QR codes", "marketplace"]
+target = "301 to the canonical landing"
+status = "served"
+endpoint = "dataset.subdomain_index"
+served_by = "dataset"
+plan = "CT-4"
+
+# ── 3. /doi/<doi>/files/raw/<f>, with and without the slash ──────────────
+# An encoded file name reaches the same rule: the path converter decodes it.
+
+[[url]]
+rows = [3]
+rule = "/doi/<path:doi>/files/raw/<path:filename>"
+methods = ["GET"]
+v212 = "mono/app/features/dataset/routes.py:787"
+clients = ["CLI", "marketplace", "FAIR metadata"]
+target = "Permanent alias answering 200 with Link rel=canonical and CORS * (D7)"
+status = "served"
+endpoint = "hubfile.doi_file_raw"
+served_by = "hubfile"
+plan = "HF-7"
+note = "Since hubfile 0.11.0, CORS * without credentials for a public file of a published dataset; a PDF or an image goes out as itself, the rest as text/plain, always with nosniff and CSP sandbox. No Link rel='canonical' yet"
+
+[[url]]
+rows = [3]
+rule = "/doi/<path:doi>/files/raw/<path:filename>/"
+methods = ["GET"]
+v212 = "mono/app/features/dataset/routes.py:788"
+clients = ["CLI", "marketplace", "FAIR metadata"]
+target = "Permanent alias answering 200 with Link rel=canonical and CORS * (D7)"
+status = "served"
+endpoint = "hubfile.doi_file_raw"
+served_by = "hubfile"
+plan = "HF-7"
+
+# ── 4. /doi/<doi>/files/<f>, /bibtex and /qr ──────────────────────────────
+
+[[url]]
+rows = [4]
+rule = "/doi/<path:doi>/files/<string:filename>"
+methods = ["GET"]
+v212 = "mono/app/features/hubfile/routes.py:387"
+clients = ["web interface"]
+target = "Permanent alias"
+status = "served"
+endpoint = "hubfile.view_file_by_doi"
+served_by = "hubfile"
+
+[[url]]
+rows = [4]
+rule = "/doi/<path:doi>/bibtex"
+methods = ["GET"]
+v212 = "mono/app/features/dataset/routes.py:446"
+clients = ["web interface"]
+target = "Permanent alias"
+status = "served"
+endpoint = "citation.export_bibtex_by_doi"
+served_by = "citation"
+
+[[url]]
+rows = [4]
+rule = "/doi/<path:doi>/bibtex/"
+methods = ["GET"]
+v212 = "mono/app/features/dataset/routes.py:447"
+clients = ["web interface"]
+target = "Permanent alias"
+status = "served"
+endpoint = "citation.export_bibtex_by_doi"
+served_by = "citation"
+
+[[url]]
+rows = [4]
+rule = "/doi/<path:doi>/qr"
+methods = ["GET"]
+v212 = "mono/app/features/dataset/routes.py:652"
+clients = ["web interface"]
+target = "Permanent alias"
+status = "served"
+endpoint = "citation.dataset_qr_by_doi"
+served_by = "citation"
+
+[[url]]
+rows = [4]
+rule = "/doi/<path:doi>/qr/"
+methods = ["GET"]
+v212 = "mono/app/features/dataset/routes.py:653"
+clients = ["web interface"]
+target = "Permanent alias"
+status = "served"
+endpoint = "citation.dataset_qr_by_doi"
+served_by = "citation"
+
+# ── 5 and 6. /hubfiles/raw ────────────────────────────────────────────────
+
+[[url]]
+rows = [5]
+rule = "/hubfiles/raw/<int:file_id>/<path:filename>"
+methods = ["GET"]
+v212 = "mono/app/features/hubfile/routes.py:426"
+clients = ["flamapyIDE", "FactLabel"]
+target = "The same, with CORS *"
+status = "served"
+endpoint = "hubfile.raw_file"
+served_by = "hubfile"
+note = "Since hubfile 0.11.0, CORS * without credentials only for a public file of a published dataset, not for a draft's file or an error; nosniff and CSP sandbox, and the content type of row 3"
+
+[[url]]
+rows = [6]
+rule = "/hubfiles/raw/<int:file_id>"
+methods = ["GET"]
+v212 = "uvlhub 2.0.1 to 2.1.2, gone from 2.12"
+clients = ["old flamapyIDE links"]
+target = "301 to /hubfiles/raw/<id>/<name>"
+status = "alias-pending"
+plan = "CO-2"
+
+# ── 7. Addresses older than 2.12 ──────────────────────────────────────────
+# hubfile's and dataset's asset routes (/hubfile/<subfolder>/<path:filename>
+# and the same under /dataset) match these paths and answer 404. That is
+# not serving them.
+
+[[url]]
+rows = [7]
+rule = "/dataset/download/<int:dataset_id>"
+methods = ["GET"]
+v212 = "before 2.12"
+clients = ["bookmarks", "API v1 url fields (A10-20)"]
+target = "301 to /datasets/download/<id>"
+status = "alias-pending"
+plan = "CO-2"
+
+[[url]]
+rows = [7]
+rule = "/dataset/download/all"
+methods = ["GET"]
+v212 = "before 2.12"
+clients = ["bookmarks"]
+target = "301 to /datasets/download/all"
+status = "alias-pending"
+plan = "CO-2"
+
+[[url]]
+rows = [7]
+rule = "/dataset/list"
+methods = ["GET"]
+v212 = "before 2.12"
+clients = ["bookmarks"]
+target = "301 to /datasets/list"
+status = "alias-pending"
+plan = "CO-2"
+
+[[url]]
+rows = [7]
+rule = "/hubfile/download/<int:file_id>"
+methods = ["GET"]
+v212 = "before 2.12"
+clients = ["bookmarks", "API v1 url fields (A10-20)"]
+target = "301 to /hubfiles/download/<id>"
+status = "alias-pending"
+plan = "CO-2"
+
+[[url]]
+rows = [7]
+rule = "/hubfile/view/<int:file_id>"
+methods = ["GET"]
+v212 = "before 2.12"
+clients = ["bookmarks"]
+target = "301 to the file's page"
+status = "alias-pending"
+plan = "CO-2"
+
+# ── 8. Interface addresses that become 301 aliases in 3.0 ─────────────────
+# Served by their 2.12 rules today. Each becomes an alias when the route
+# moves (CO-2, CO-5).
+
+[[url]]
+rows = [8]
+rule = "/datasets/download/<int:dataset_id>"
+methods = ["GET"]
+v212 = "mono/app/features/dataset/routes.py:392"
+clients = ["web interface", "API v1 url fields"]
+target = "301 alias"
+status = "served"
+endpoint = "dataset.download_dataset"
+served_by = "dataset"
+
+[[url]]
+rows = [8]
+rule = "/hubfiles/download/<int:file_id>"
+methods = ["GET"]
+v212 = "mono/app/features/hubfile/routes.py:338"
+clients = ["web interface", "API v1 url fields"]
+target = "301 alias"
+status = "served"
+endpoint = "hubfile.download_file"
+served_by = "hubfile"
+
+[[url]]
+rows = [8]
+rule = "/datasets/<int:dataset_id>/qr"
+methods = ["GET"]
+v212 = "mono/app/features/dataset/routes.py:644"
+clients = ["web interface"]
+target = "301 alias"
+status = "served"
+endpoint = "citation.dataset_qr_by_id"
+served_by = "citation"
+
+[[url]]
+rows = [8]
+rule = "/datasets/<int:dataset_id>/qr/"
+methods = ["GET"]
+v212 = "mono/app/features/dataset/routes.py:645"
+clients = ["web interface"]
+target = "301 alias"
+status = "served"
+endpoint = "citation.dataset_qr_by_id"
+served_by = "citation"
+
+[[url]]
+rows = [8]
+rule = "/flamapy/to_glencoe/<int:file_id>"
+methods = ["GET"]
+v212 = "mono/app/features/flamapy/routes.py:25"
+clients = ["web interface"]
+target = "301 alias"
+status = "served"
+endpoint = "uvl.to_glencoe"
+served_by = "uvl"
+
+[[url]]
+rows = [8]
+rule = "/flamapy/to_cnf/<int:file_id>"
+methods = ["GET"]
+v212 = "mono/app/features/flamapy/routes.py:30"
+clients = ["web interface"]
+target = "301 alias"
+status = "served"
+endpoint = "uvl.to_cnf"
+served_by = "uvl"
+
+[[url]]
+rows = [8]
+rule = "/flamapy/to_splot/<int:file_id>"
+methods = ["GET"]
+v212 = "mono/app/features/flamapy/routes.py:35"
+clients = ["web interface"]
+target = "301 alias"
+status = "served"
+endpoint = "uvl.to_splot"
+served_by = "uvl"
+
+[[url]]
+rows = [8]
+rule = "/factlabel/view/<int:file_id>"
+methods = ["GET"]
+v212 = "mono/app/features/factlabel/routes.py:18"
+clients = ["web interface"]
+target = "301 alias"
+status = "served"
+endpoint = "factlabel.view_factlabel"
+served_by = "factlabel"
+
+[[url]]
+rows = [8]
+rule = "/hubfile/to_latex/<int:file_id>"
+methods = ["GET"]
+v212 = "mono/app/features/hubfile/routes.py:542"
+clients = ["web interface"]
+target = "301 alias"
+status = "served"
+endpoint = "uvl.to_latex_content"
+served_by = "uvl"
+
+[[url]]
+rows = [8]
+rule = "/hubfile/to_latex_zip/<int:file_id>"
+methods = ["GET"]
+v212 = "mono/app/features/hubfile/routes.py:557"
+clients = ["web interface"]
+target = "301 alias"
+status = "served"
+endpoint = "uvl.to_latex_zip"
+served_by = "uvl"
+
+# ── 9 and 10. REST API v1: /api/v1/datasets* and /api/v1/files* ──────────
+# The 19 rules of mono/app/features/dataset/routes.py:1000-2451. In 3.0
+# only additive changes: checksum stays and checksum_algorithm is added
+# (D5, PB-2). The upload is also row 12.
+
+[[url]]
+rows = [9, 12]
+rule = "/api/v1/datasets/upload"
+methods = ["POST"]
+v212 = "mono/app/features/dataset/routes.py:1000"
+clients = ["marketplace", "scripts", "flamapyIDE (with the session)"]
+target = "Additive changes only. The IDE's session upload goes through uvl or a bridge (UV-11)"
+status = "served"
+endpoint = "dataset_api.api_upload_dataset"
+served_by = "dataset_api"
+plan = "UV-11"
+cors_origin = "https://ide.flamapy.org"
+signed_out_keys = ["authenticated", "message", "login_url", "signup_url", "orcid_url"]
+note = """The CORS that opens it to FLAMAPY_IDE_ORIGINS with credentials is \
+dataset's up to 0.1.1, featuremodel's from 0.1.1 to 0.4.0, and uvl's from \
+0.1.0 on, the UVL layer: pin uvl in the commit that drops featuremodel, or \
+the upload has no CORS and cors_origin fails. The message of the signed-out \
+401 changed in dataset 0.1.2, keys unchanged: 2.12 said "You need to sign in \
+before saving a model from flamapyIDE to UVLHub." and 3.0 says "You need to \
+sign in before uploading to uvlhub.", since dataset is not the UVL layer. \
+/api/v1/auth/status keeps the 2.12 wording. The contract owner accepts the \
+change or asks for the old text back. Since dataset 0.7.0 the upload \
+takes an optional Idempotency-Key (PB-2): the same key and call get the \
+first answer back for a day, with Idempotent-Replayed: true. Its 409 (the \
+key still being processed) and 422 (the key sent with another call) are \
+answered only when the header is sent, so a client of 2.12, which sends \
+none, sees no new status"""
+
+[[url]]
+rows = [9, 10]
+rule = "/api/v1/datasets/<int:dataset_id>/publish"
+methods = ["POST"]
+v212 = "mono/app/features/dataset/routes.py:1148"
+clients = ["marketplace (irreversible call)"]
+target = "Additive changes only. 423 with Retry-After and {\"error\":\"publication_paused\"} during the cutover window and the retention, never a 5xx or a 202"
+status = "served"
+endpoint = "dataset_api.api_publish_dataset"
+served_by = "dataset_api"
+plan = "PB-2"
+note = """During the cutover nginx answers the 423 while v2.12 still runs \
+behind it (06 §9.3), and "never a 5xx or a 202" now holds for that 423 \
+alone. Since dataset 0.8.0 the app answers a 423 too: publication_paused \
+with Retry-After while DATASET_PUBLISH_PAUSED holds publication, and under \
+the curated policy (D4) publication_under_review (the draft moves to \
+submitted, with status_url), email_unconfirmed or \
+publication_review_unavailable. Since dataset \
+0.7.0 (PB-2, D5 option a, which the contract owner accepted, with the \
+change from 2.12's 200 with a null DOI to an error status) the call \
+waits at most DATASET_PUBLISH_WAIT seconds (540 in production) and answers \
+200 only with the identifier minted; past the wait a 503 \
+publication_pending with status_url, which a client must not read as \
+nothing minted. 202 only to a request with Prefer: respond-async; 409 for \
+a publication under way, or an Idempotency-Key still being processed; 429 \
+for an account with too many publications under way \
+(DATASET_PUBLISH_MAX_IN_FLIGHT, no limit in production); 422 when the \
+provider refuses the metadata, or the Idempotency-Key came with another \
+call. The 200 adds pid, pid_scheme, provider and landing_url"""
+
+[[url]]
+rows = [9, 10]
+rule = "/api/v1/datasets/<int:dataset_id>/new-version"
+methods = ["POST"]
+v212 = "mono/app/features/dataset/routes.py:1240"
+clients = ["marketplace (irreversible call)"]
+target = "Additive changes only. 423 with Retry-After and {\"error\":\"publication_paused\"} during the cutover window and the retention, never a 5xx or a 202"
+status = "served"
+endpoint = "dataset_api.api_new_dataset_version"
+served_by = "dataset_api"
+plan = "PB-2"
+note = """During the cutover nginx answers the 423 while v2.12 still runs \
+behind it (06 §9.3), and "never a 5xx or a 202" now holds for that 423 \
+alone. Since dataset 0.8.0 the app answers a 423 too: publication_paused \
+with Retry-After while DATASET_PUBLISH_PAUSED holds publication, and under \
+the curated policy (D4) publication_under_review (the draft moves to \
+submitted, with status_url), email_unconfirmed or \
+publication_review_unavailable. Since dataset \
+0.7.0 a new version answers as the publish does (PB-2, D5 option a): 200 \
+with the identifier after a wait of at most DATASET_PUBLISH_WAIT seconds, \
+503 publication_pending past it, 202 only with Prefer: respond-async, \
+409, 422 and 429 as there, and the optional Idempotency-Key. The 200 adds \
+pid, pid_scheme, provider and landing_url"""
+
+[[url]]
+rows = [9]
+rule = "/api/v1/datasets/<int:dataset_id>/transfer"
+methods = ["POST"]
+v212 = "mono/app/features/dataset/routes.py:1407"
+clients = ["marketplace", "scripts"]
+target = "Additive changes only"
+status = "served"
+endpoint = "dataset_api.api_transfer_dataset_ownership"
+served_by = "dataset_api"
+note = "DL-17 (dataset_transfer serves the offers): an unknown or inactive target answers 202; to_user_id is null for the sender of an offer by address until it is answered; 429 transfer_limit past the offers of a day"
+
+[[url]]
+rows = [9]
+rule = "/api/v1/datasets/transfers"
+methods = ["GET"]
+v212 = "mono/app/features/dataset/routes.py:1526"
+clients = ["marketplace", "scripts"]
+target = "Additive changes only"
+status = "served"
+endpoint = "dataset_api.api_list_dataset_transfers"
+served_by = "dataset_api"
+note = "DL-17 (dataset_transfer serves the offers): an unknown or inactive target answers 202; to_user_id is null for the sender of an offer by address until it is answered; 429 transfer_limit past the offers of a day"
+
+[[url]]
+rows = [9]
+rule = "/api/v1/datasets/transfers/<int:transfer_id>/accept"
+methods = ["POST"]
+v212 = "mono/app/features/dataset/routes.py:1597"
+clients = ["marketplace", "scripts"]
+target = "Additive changes only"
+status = "served"
+endpoint = "dataset_api.api_accept_dataset_transfer"
+served_by = "dataset_api"
+note = "DL-17 (dataset_transfer serves the offers): an unknown or inactive target answers 202; to_user_id is null for the sender of an offer by address until it is answered; 429 transfer_limit past the offers of a day"
+
+[[url]]
+rows = [9]
+rule = "/api/v1/datasets/transfers/<int:transfer_id>/decline"
+methods = ["POST"]
+v212 = "mono/app/features/dataset/routes.py:1680"
+clients = ["marketplace", "scripts"]
+target = "Additive changes only"
+status = "served"
+endpoint = "dataset_api.api_decline_dataset_transfer"
+served_by = "dataset_api"
+note = "DL-17 (dataset_transfer serves the offers): an unknown or inactive target answers 202; to_user_id is null for the sender of an offer by address until it is answered; 429 transfer_limit past the offers of a day"
+
+[[url]]
+rows = [9]
+rule = "/api/v1/datasets/transfers/<int:transfer_id>/cancel"
+methods = ["POST"]
+v212 = "mono/app/features/dataset/routes.py:1729"
+clients = ["marketplace", "scripts"]
+target = "Additive changes only"
+status = "served"
+endpoint = "dataset_api.api_cancel_dataset_transfer"
+served_by = "dataset_api"
+note = "DL-17 (dataset_transfer serves the offers): an unknown or inactive target answers 202; to_user_id is null for the sender of an offer by address until it is answered; 429 transfer_limit past the offers of a day"
+
+[[url]]
+rows = [9]
+rule = "/api/v1/datasets/<int:dataset_id>"
+methods = ["DELETE"]
+v212 = "mono/app/features/dataset/routes.py:1806"
+clients = ["marketplace", "scripts"]
+target = "Additive changes only"
+status = "served"
+endpoint = "dataset_api.api_delete_dataset"
+served_by = "dataset_api"
+
+[[url]]
+rows = [9]
+rule = "/api/v1/datasets/doi/<path:doi>"
+methods = ["GET"]
+v212 = "mono/app/features/dataset/routes.py:1862"
+clients = ["marketplace", "scripts", "flamapyIDE"]
+target = "Additive changes only"
+status = "served"
+endpoint = "dataset_api.api_dataset_by_doi"
+served_by = "dataset_api"
+
+[[url]]
+rows = [9]
+rule = "/api/v1/datasets/<int:dataset_id>/versions"
+methods = ["GET"]
+v212 = "mono/app/features/dataset/routes.py:1957"
+clients = ["marketplace", "scripts"]
+target = "Additive changes only"
+status = "served"
+endpoint = "dataset_api.api_dataset_versions"
+served_by = "dataset_api"
+
+[[url]]
+rows = [9]
+rule = "/api/v1/datasets/concept-doi/<path:concept_doi>"
+methods = ["GET"]
+v212 = "mono/app/features/dataset/routes.py:2041"
+clients = ["marketplace", "CLI spl:outdated"]
+target = "Additive changes only"
+status = "served"
+endpoint = "dataset_api.api_dataset_lineage_by_concept_doi"
+served_by = "dataset_api"
+
+[[url]]
+rows = [9]
+rule = "/api/v1/datasets"
+methods = ["GET"]
+v212 = "mono/app/features/dataset/routes.py:2107"
+clients = ["marketplace", "scripts"]
+target = "Additive changes only"
+status = "served"
+endpoint = "dataset_api.api_list_datasets"
+served_by = "dataset_api"
+
+[[url]]
+rows = [9]
+rule = "/api/v1/datasets/<int:dataset_id>"
+methods = ["GET"]
+v212 = "mono/app/features/dataset/routes.py:2146"
+clients = ["marketplace", "scripts"]
+target = "Additive changes only"
+status = "served"
+endpoint = "dataset_api.api_dataset_detail"
+served_by = "dataset_api"
+note = "dataset 0.7.0 adds the keys status, provider, pid, pid_scheme and landing_url (PB-2); every key of 2.12 stays"
+
+[[url]]
+rows = [9]
+rule = "/api/v1/datasets/<int:dataset_id>/summary"
+methods = ["GET"]
+v212 = "mono/app/features/dataset/routes.py:2193"
+clients = ["marketplace", "scripts"]
+target = "Additive changes only"
+status = "served"
+endpoint = "dataset_api.api_dataset_summary"
+served_by = "dataset_api"
+
+[[url]]
+rows = [9]
+rule = "/api/v1/datasets/<int:dataset_id>/files"
+methods = ["GET"]
+v212 = "mono/app/features/dataset/routes.py:2269"
+clients = ["marketplace", "scripts", "flamapyIDE"]
+target = "Additive changes only"
+status = "served"
+endpoint = "dataset_api.api_list_files"
+served_by = "dataset_api"
+
+[[url]]
+rows = [9]
+rule = "/api/v1/files/<int:file_id>"
+methods = ["GET"]
+v212 = "mono/app/features/dataset/routes.py:2354"
+clients = ["marketplace", "scripts", "flamapyIDE"]
+target = "Additive changes only"
+status = "served"
+endpoint = "dataset_api.api_file_detail"
+served_by = "dataset_api"
+
+[[url]]
+rows = [9]
+rule = "/api/v1/files/<int:file_id>/raw"
+methods = ["GET"]
+v212 = "mono/app/features/dataset/routes.py:2404"
+clients = ["marketplace", "scripts", "flamapyIDE"]
+target = "Additive changes only"
+status = "served"
+endpoint = "dataset_api.api_file_raw"
+served_by = "dataset_api"
+
+[[url]]
+rows = [9]
+rule = "/api/v1/files/<int:file_id>/metadata"
+methods = ["GET"]
+v212 = "mono/app/features/dataset/routes.py:2451"
+clients = ["marketplace", "scripts"]
+target = "Additive changes only"
+status = "served"
+endpoint = "dataset_api.api_file_metadata"
+served_by = "dataset_api"
+plan = "AP-8"
+note = "AP-8 removes it because it always fails, which this frozen row contradicts. The decision belongs to whoever owns the contract"
+
+# ── 11. X-API-Key ─────────────────────────────────────────────────────────
+
+[[url]]
+rows = [11]
+kind = "header"
+header = "X-API-Key"
+config = "APIKEYS_HEADER_ALIASES"
+v212 = "mono/app/__init__.py (swagger securityDefinitions) and the API decorators"
+clients = ["marketplace", "scripts"]
+target = "Header alias of the token"
+status = "served"
+served_by = "apikeys"
+note = "apikeys reads the token from every header the product lists in APIKEYS_HEADER_ALIASES, besides Authorization: Bearer"
+
+# ── 12. /api/v1/auth/status (the session upload is under row 9) ──────────
+
+[[url]]
+rows = [12]
+rule = "/api/v1/auth/status"
+methods = ["GET"]
+v212 = "mono/app/features/auth/routes.py:71"
+clients = ["flamapyIDE (ide.flamapy.org)"]
+target = "Served by the UVL layer, uvl or a bridge (UV-11)"
+status = "served"
+endpoint = "uvl.auth_status"
+served_by = "uvl"
+plan = "CO-1, UV-11"
+cors_origin = "https://ide.flamapy.org"
+signed_out_keys = ["authenticated", "message", "login_url", "signup_url", "orcid_url"]
+note = "uvl serves it since 0.1.0, the UVL layer, which took it over from featuremodel 0.2.0-0.4.0 (UV-11), with the CORS of FLAMAPY_IDE_ORIGINS that left dataset in 0.2.0. Same contract as 2.12"
+
+# ── 13. /api/me ───────────────────────────────────────────────────────────
+
+[[url]]
+rows = [13]
+rule = "/api/me"
+methods = ["GET"]
+v212 = "mono/app/features/profile/routes.py:55"
+clients = ["authors' JavaScript"]
+target = "Alias of /api/v1/profile/me"
+status = "served"
+endpoint = "uvlhub_aliases.api_me"
+served_by = "uvlhub_splent (src/uvlhub_splent/aliases.py)"
+plan = "CO-2"
+note = "A 308 to /api/v1/profile/me (profile.my_profile), held by the product until legacy_urls takes it over"
+
+# ── 14. Search ────────────────────────────────────────────────────────────
+
+[[url]]
+rows = [14]
+rule = "/api/v1/search"
+methods = ["GET"]
+v212 = "mono/app/features/explore/routes.py:33"
+clients = ["generator"]
+target = "Frozen"
+status = "served"
+endpoint = "explore.api_search"
+served_by = "explore"
+note = "Since explore 0.5.0 its parameters follow a declared schema (DC-3): every key 2.12 returned is kept, the generator reads them, and the response adds keys; a request outside the schema gets a 400 naming each field. One result per lineage (D15). Since explore 0.7.0 a missing index answers an empty result instead of a 500, and a hub without Elasticsearch answers from its database with the same keys"
+
+[[url]]
+rows = [14]
+rule = "/search"
+methods = ["GET"]
+v212 = "mono/app/features/explore/routes.py:18"
+clients = ["header search box"]
+target = "308 or 410"
+status = "served"
+endpoint = "explore.search"
+served_by = "explore"
+plan = "DC-1"
+note = "Served as in 2.12 until DC-1 replaces explore's search with the catalog's. Since explore 0.5.0 it answers {results, total}; since 0.7.0 from the database when the hub has no Elasticsearch"
+
+# ── 15. /developer/api-keys* ──────────────────────────────────────────────
+
+[[url]]
+rows = [15]
+rule = "/developer/api-keys"
+methods = ["GET"]
+v212 = "mono/app/features/apikeys/routes.py:26"
+clients = ["CHANGELOG", "older CLI"]
+target = "301 to /developer/tokens"
+status = "alias-pending"
+plan = "CO-2"
+
+[[url]]
+rows = [15]
+rule = "/developer/api-keys/generate"
+methods = ["GET", "POST"]
+v212 = "mono/app/features/apikeys/routes.py:15"
+clients = ["CHANGELOG", "older CLI"]
+target = "301 to /developer/tokens (308 or 410 where the request has a body, as CO-2 decides)"
+status = "alias-pending"
+plan = "CO-2"
+
+[[url]]
+rows = [15]
+rule = "/developer/api-keys/delete"
+methods = ["POST"]
+v212 = "mono/app/features/apikeys/routes.py:33"
+clients = ["CHANGELOG", "older CLI"]
+target = "308 to /developer/tokens or 410, as CO-2 decides"
+status = "alias-pending"
+plan = "CO-2"
+
+# ── 16. Reproducibility exports ───────────────────────────────────────────
+
+[[url]]
+rows = [16]
+rule = "/statistics/export.csv"
+methods = ["GET"]
+v212 = "mono/app/features/statistics/routes.py:59"
+clients = ["reproducibility"]
+target = "Alias with schema_version"
+status = "served"
+endpoint = "statistics.export_csv"
+served_by = "statistics"
+plan = "UV-12"
+note = "statistics 0.5.0 serves the first export a feature registers in its slots: factlabel's corpus metrics (factlabel 0.6.0), with schema_version; the file is named corpus-metrics-<date>"
+
+[[url]]
+rows = [16]
+rule = "/statistics/export.json"
+methods = ["GET"]
+v212 = "mono/app/features/statistics/routes.py:86"
+clients = ["reproducibility"]
+target = "Alias with schema_version"
+status = "served"
+endpoint = "statistics.export_json"
+served_by = "statistics"
+plan = "UV-12"
+note = "statistics 0.5.0 serves the first export a feature registers in its slots: factlabel's corpus metrics (factlabel 0.6.0), with schema_version; the file is named corpus-metrics-<date>"
+
+# ── 17. Links in mails already sent ───────────────────────────────────────
+
+[[url]]
+rows = [17]
+rule = "/confirm_user/<token>"
+methods = ["GET"]
+v212 = "mono/app/features/confirmemail/routes.py:15"
+clients = ["mails already sent"]
+target = "An 'expired or already used link' page with a resend, never a 500"
+status = "served"
+endpoint = "confirmemail.confirm_user"
+served_by = "confirmemail"
+plan = "ID-15"
+
+[[url]]
+rows = [17]
+rule = "/reset/password/<token>"
+methods = ["GET", "POST"]
+v212 = "mono/app/features/reset/routes.py:25"
+clients = ["mails already sent"]
+target = "An 'expired or already used link' page with a resend, never a 500"
+status = "served"
+endpoint = "reset.reset_password"
+served_by = "reset"
+plan = "ID-15"
+
+# ── 18. OAuth callbacks ───────────────────────────────────────────────────
+
+[[url]]
+rows = [18]
+rule = "/orcid/authorize"
+methods = ["GET"]
+v212 = "mono/app/features/orcid/routes.py:66"
+clients = ["ORCID OAuth app"]
+target = "Kept, or the new callback registered with ORCID before the cutover"
+status = "served"
+endpoint = "orcid.authorize"
+served_by = "orcid"
+
+[[url]]
+rows = [18]
+rule = "/github/authorize"
+methods = ["GET"]
+v212 = "mono/app/features/github/routes.py:39"
+clients = ["GitHub OAuth app"]
+target = "Kept, or the new callback registered with GitHub before the cutover"
+status = "served"
+endpoint = "github.authorize"
+served_by = "github"
+
+# ── 19. API docs ──────────────────────────────────────────────────────────
+
+[[url]]
+rows = [19]
+rule = "/apidocs/"
+methods = ["GET"]
+v212 = "flasgger's default route, mono/app/__init__.py"
+clients = ["integrators"]
+target = "Alias"
+status = "served"
+endpoint = "flasgger.apidocs"
+served_by = "apidocs"
+plan = "AP-6"
+note = "/apidocs without the slash redirects here (Werkzeug's strict slashes)"
+
+[[url]]
+rows = [19]
+rule = "/apispec_1.json"
+methods = ["GET"]
+v212 = "flasgger's default route, mono/app/__init__.py"
+clients = ["integrators"]
+target = "Alias"
+status = "served"
+endpoint = "flasgger.apispec_1"
+served_by = "apidocs"
+plan = "AP-6"
+
+# ── Accepted new routes ───────────────────────────────────────────────────
+# CO-1 also asks that production expose no route that is neither above nor
+# in this list. Which of the routes 3.0 adds are accepted (the token pages,
+# profile's /api/v1/profile/me, team, the admin) is the contract owner's
+# decision, so the list starts empty and that half of CO-1 is not enforced
+# yet: the test reports the rules in neither list as an expected failure,
+# and turns into a check once the owner fills this in. It also checks every
+# rule listed here is served, so the list cannot go stale.
+
+[accepted]
+rules = []

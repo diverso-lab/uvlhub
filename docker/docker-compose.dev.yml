@@ -1,145 +1,92 @@
 services:
 
-  web:
-    container_name: web_app_container
+  uvlhub_splent_web:
     build:
-      context: ../
-      dockerfile: docker/images/Dockerfile.dev
-    depends_on:
-      - db
-      - redis
-      - elasticsearch
-      - selenium-hub
-    env_file:
-      - ../.env
+      context: /workspace
+      dockerfile: /workspace/uvlhub_splent/docker/Dockerfile.uvlhub_splent.dev
+    container_name: uvlhub_splent_web
     volumes:
-      - ../:/workspace
-      - /workspace/node_modules
-      - /var/run/docker.sock:/var/run/docker.sock
-    command: [ "bash", "-c", "bash /workspace/docker/entrypoints/development_entrypoint.sh" ]
-    networks:
-      - uvlhub_network
-
-  worker:
-    container_name: rq_worker_container
-    build:
-      context: ../
-      dockerfile: docker/images/Dockerfile.dev
-    depends_on:
-      - db
-      - redis
+      - ${SPLENT_HOST_PROJECT_DIR}:/workspace
+      # Features are pip-installed into the container each time it is
+      # created, and product:down removes it. Keeping pip's cache in a volume
+      # means a restart installs them from local wheels instead of
+      # downloading every dependency again.
+      - uvlhub_splent_pip_cache:/root/.cache/pip
     env_file:
-      - ../.env
-    volumes:
-      - ../:/workspace
-      - /workspace/node_modules
-      - /var/run/docker.sock:/var/run/docker.sock
-    command: [ "bash", "-c", "bash /workspace/docker/entrypoints/worker_entrypoint.sh" ]
-    networks:
-      - uvlhub_network
-      
-  nginx:
-    container_name: nginx_web_server_container
-    image: nginx:1.29.1
+      - /workspace/uvlhub_splent/docker/.env
+    environment:
+      # Wire the e2e layer to the grid below. The target URL is resolved by
+      # the browser, so it must name a host the browser container can reach.
+      SELENIUM_GRID_URL: http://uvlhub_splent_selenium_hub:4444
+      SELENIUM_TARGET_URL: http://uvlhub_splent_web:5000
     ports:
-      - "80:80"
-    volumes:
-      - ./nginx/nginx.dev.conf:/etc/nginx/nginx.conf
-      - ./nginx/html:/usr/share/nginx/html 
+      - "5012:5000"
+      # Locust web interface, served from inside this container by
+      # 'splent locust'.
+      - "8101:8089"
     depends_on:
-      - web
+      uvlhub_splent_db:
+        condition: service_healthy
     networks:
-      - uvlhub_network
+      - splent_network
+    command: [ "tail", "-f", "/dev/null" ]
 
-  db:
-    container_name: mariadb_container
-    build:
-      context: ../
-      dockerfile: docker/images/Dockerfile.mariadb
+  uvlhub_splent_db:
+    image: mariadb:11.4
+    container_name: uvlhub_splent_db
     env_file:
-      - ../.env
+      - /workspace/uvlhub_splent/docker/.env
     command: --default-authentication-plugin=mysql_native_password
     ports:
-      - "3306:3306"
+      - "33072:3306"
     volumes:
-      - db_data:/var/lib/mysql
+      - uvlhub_splent_db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb -u$${MARIADB_USER} -p$${MARIADB_PASSWORD} -e 'SELECT 1'"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
     networks:
-      - uvlhub_network
+      - splent_network
 
-  redis:
-    container_name: redis_container
-    image: "redis:8.2.1"
-    networks:
-      - uvlhub_network
-
-  elasticsearch:
-    container_name: elasticsearch_container
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.18.4
-    environment:
-      - discovery.type=single-node
-      - xpack.security.enabled=false
-      - xpack.security.transport.ssl.enabled=false
-      - ES_JAVA_OPTS=-Xms512m -Xmx512m
-    ports:
-      - "9200:9200"
-    volumes:
-      - es_data:/usr/share/elasticsearch/data
-    networks:
-      - uvlhub_network
-
-  mailhog:
-    container_name: mailhog_container
-    image: mailhog/mailhog
-    ports:
-      - "8025:8025"
-      - "1025:1025"
-    networks:
-      - uvlhub_network
-
-  selenium-hub:
-    container_name: selenium_hub_container
+  uvlhub_splent_selenium_hub:
     image: selenium/hub:latest
-    ports:
-      - "4442:4442"
-      - "4443:4443"
-      - "4444:4444"
+    container_name: uvlhub_splent_selenium_hub
     networks:
-      - uvlhub_network
+      - splent_network
 
-  selenium-chrome:
-    container_name: selenium_chrome_container
+  uvlhub_splent_selenium_chrome:
     image: selenium/node-chrome:latest
+    container_name: uvlhub_splent_selenium_chrome
     shm_size: 2gb
-    ports:
-      - "5900:5900"
-    env_file:
-      - ../.env.selenium
+    environment:
+      SE_EVENT_BUS_HOST: uvlhub_splent_selenium_hub
+      SE_EVENT_BUS_PUBLISH_PORT: 4442
+      SE_EVENT_BUS_SUBSCRIBE_PORT: 4443
     depends_on:
-      - selenium-hub
+      - uvlhub_splent_selenium_hub
     networks:
-      - uvlhub_network
+      - splent_network
 
-  selenium-firefox:
-    container_name: selenium_firefox_container
+  uvlhub_splent_selenium_firefox:
     image: selenium/node-firefox:latest
+    container_name: uvlhub_splent_selenium_firefox
     shm_size: 2gb
-    ports:
-      - "5901:5900"
-    env_file:
-      - ../.env.selenium
+    environment:
+      SE_EVENT_BUS_HOST: uvlhub_splent_selenium_hub
+      SE_EVENT_BUS_PUBLISH_PORT: 4442
+      SE_EVENT_BUS_SUBSCRIBE_PORT: 4443
     depends_on:
-      - selenium-hub
+      - uvlhub_splent_selenium_hub
     networks:
-      - uvlhub_network
+      - splent_network
 
 volumes:
-  db_data:
-  es_data:
+  uvlhub_splent_db_data:
+  uvlhub_splent_pip_cache:
 
 networks:
-  uvlhub_network:
-    driver: bridge
-    name: uvlhub_network
-  docker_uvlhub_network:
-    driver: bridge
-    name: docker_uvlhub_network
+  splent_network:
+    external: true
+    name: ${SPLENT_NETWORK:-splent_network}

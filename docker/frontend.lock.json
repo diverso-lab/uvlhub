@@ -1,0 +1,311 @@
+{
+  "schema": 1,
+  "product": "uvlhub_splent",
+  "shell": {
+    "source": "package.json",
+    "provides": {}
+  },
+  "features": {
+    "splent_feature_apidocs": {
+      "namespace": "splent_io",
+      "distribution": "splent_feature_apidocs",
+      "version": "0.5.0",
+      "entries": [],
+      "manifest_sha256": "a38f2f01ee6dfed9d0373378d0f7bd318acac55d910d6ff47ca3bc01e45a129b",
+      "bundled": {
+        "swagger-ui-dist": "5.17.14 Apache-2.0"
+      },
+      "peers": {},
+      "shell": {},
+      "consumes": {}
+    },
+    "splent_feature_dataset": {
+      "namespace": "splent_io",
+      "distribution": "splent_feature_dataset",
+      "version": "0.16.1",
+      "entries": [
+        "dataset",
+        "landing",
+        "my_datasets"
+      ],
+      "manifest_sha256": "826b392318a8ba3f810316161d2dfacbd7ec2c7ba189fd057eca38cf5b99404d",
+      "bundled": {
+        "@github/markdown-toolbar-element": "2.2.3 MIT",
+        "@yaireo/tagify": "4.38.0 MIT",
+        "mustache": "4.2.0 MIT",
+        "sortablejs": "1.15.6 MIT",
+        "webpack": "5.112.2 MIT"
+      },
+      "peers": {
+        "bootstrap": {
+          "range": "^5.2.0",
+          "provider": "hub_shell",
+          "version": "5.3.8"
+        }
+      },
+      "shell": {
+        "bootstrap-css": "^5.2.0"
+      },
+      "consumes": {}
+    },
+    "splent_feature_explore": {
+      "namespace": "splent_io",
+      "distribution": "splent_feature_explore",
+      "version": "0.10.0",
+      "entries": [
+        "explore"
+      ],
+      "manifest_sha256": "876a071d05e961ced12bf0b3321d941cccbb0ecc41e1e88d9ed5ab284beec1be",
+      "bundled": {
+        "mustache": "4.2.0 MIT",
+        "webpack": "5.112.2 MIT"
+      },
+      "peers": {
+        "bootstrap": {
+          "range": "^5.2.0",
+          "provider": "hub_shell",
+          "version": "5.3.8"
+        }
+      },
+      "shell": {
+        "bootstrap-css": "^5.2.0",
+        "icons": "feather"
+      },
+      "consumes": {}
+    },
+    "splent_feature_factlabel": {
+      "namespace": "splent_io",
+      "distribution": "splent_feature_factlabel",
+      "version": "0.8.1",
+      "entries": [
+        "factlabel"
+      ],
+      "manifest_sha256": "df869e379b1db16ce1394cc5eac994ccd8f05f295e742fc603d187e4f10bf066",
+      "bundled": {
+        "@fontsource/libre-franklin": "5.3.0 OFL-1.1",
+        "d3": "7.9.0 ISC",
+        "d3-array": "3.2.4 ISC",
+        "d3-brush": "3.0.0 ISC",
+        "d3-color": "3.1.0 ISC",
+        "d3-dispatch": "3.0.1 ISC",
+        "d3-ease": "3.0.1 BSD-3-Clause",
+        "d3-format": "3.1.2 ISC",
+        "d3-interpolate": "3.0.1 ISC",
+        "d3-scale": "4.0.2 ISC",
+        "d3-selection": "3.0.0 ISC",
+        "d3-timer": "3.0.1 ISC",
+        "d3-transition": "3.0.1 ISC",
+        "d3-zoom": "3.0.0 ISC",
+        "webpack": "5.112.2 MIT"
+      },
+      "peers": {
+        "bootstrap": {
+          "range": "^5.2.0",
+          "provider": "hub_shell",
+          "version": "5.3.8"
+        }
+      },
+      "shell": {
+        "bootstrap-css": "^5.2.0",
+        "icons": "feather"
+      },
+      "consumes": {}
+    },
+    "splent_feature_generator": {
+      "namespace": "splent_io",
+      "distribution": "splent_feature_generator",
+      "version": "0.4.0",
+      "entries": [
+        "generator",
+        "llm_page",
+        "ui",
+        "uvl_editor",
+        "wizard",
+        "wizard_spa"
+      ],
+      "manifest_sha256": "78d1d79257f0761f3aeee85955e38157f4aa81183d13305c1199b144eedacbfc",
+      "bundled": {
+        "@mlc-ai/web-llm": "0.2.86 Apache-2.0",
+        "codemirror": "5.65.16 MIT",
+        "file-saver": "2.0.5 MIT",
+        "jszip": "3.10.1 (MIT OR GPL-3.0-or-later)",
+        "nouislider": "15.8.1 MIT",
+        "pyodide": "0.27.7 MPL-2.0",
+        "webpack": "5.112.2 MIT"
+      },
+      "peers": {},
+      "shell": {
+        "bootstrap": "^5.2.0",
+        "bootstrap-css": "^5.2.0",
+        "icons": "feather"
+      },
+      "consumes": {}
+    },
+    "splent_feature_hub_shell": {
+      "namespace": "splent_io",
+      "distribution": "splent_feature_hub_shell",
+      "version": "0.2.0",
+      "entries": [
+        "hub_shell",
+        "hub_shell_error"
+      ],
+      "manifest_sha256": "b9a7bdaf06ba7ad222b7c52ec577c4a60db02a95fc8e732e83d7d8bec5d1736c",
+      "bundled": {
+        "@popperjs/core": "2.11.8 MIT",
+        "bootstrap": "5.3.8 MIT",
+        "inter-ui": "4.1.1 OFL-1.1",
+        "webpack": "5.112.2 MIT"
+      },
+      "peers": {},
+      "shell": {},
+      "consumes": {}
+    },
+    "splent_feature_hubfile": {
+      "namespace": "splent_io",
+      "distribution": "splent_feature_hubfile",
+      "version": "0.13.0",
+      "entries": [
+        "hubfile",
+        "workbench"
+      ],
+      "manifest_sha256": "0894f980c869f9297c5ee3b8b9bfb3274bd770a82bcd6b1bb83306302e06c50a",
+      "bundled": {
+        "codemirror": "5.65.16 MIT",
+        "dropzone": "5.9.3 MIT",
+        "webpack": "5.112.2 MIT"
+      },
+      "peers": {},
+      "shell": {
+        "bootstrap": "^5.2.0",
+        "bootstrap-css": "^5.2.0",
+        "icons": "feather"
+      },
+      "consumes": {}
+    },
+    "splent_feature_icons": {
+      "namespace": "splent_io",
+      "distribution": "splent_feature_icons",
+      "version": "0.1.0",
+      "entries": [
+        "icons"
+      ],
+      "manifest_sha256": "256862469b5668238f6c46765a6f2feca95adf28afe05fe8031950693ca04a7a",
+      "bundled": {
+        "lucide-static": "1.65.0 ISC",
+        "simple-icons": "16.36.0 CC0-1.0",
+        "webpack": "5.112.2 MIT"
+      },
+      "peers": {},
+      "shell": {},
+      "consumes": {}
+    },
+    "splent_feature_media": {
+      "namespace": "splent_io",
+      "distribution": "splent_feature_media",
+      "version": "0.13.0",
+      "entries": [
+        "cropper"
+      ],
+      "manifest_sha256": "8fdb0d68f5105ef19c1c70d8ab5b116a2fad77e24eb095f1ada1d7df1d40e323",
+      "bundled": {
+        "cropperjs": "1.6.2 MIT",
+        "webpack": "5.112.2 MIT"
+      },
+      "peers": {},
+      "shell": {
+        "bootstrap-css": "^5.2.0"
+      },
+      "consumes": {}
+    },
+    "splent_feature_rating": {
+      "namespace": "splent_io",
+      "distribution": "splent_feature_rating",
+      "version": "0.7.0",
+      "entries": [
+        "rating"
+      ],
+      "manifest_sha256": "03fe8a0d50fac23f71fb9337a82b0b866c5ecbad26abb48b978cc534bf2f9492",
+      "bundled": {
+        "webpack": "5.112.2 MIT"
+      },
+      "peers": {
+        "bootstrap": {
+          "range": "^5.2.0",
+          "provider": "hub_shell",
+          "version": "5.3.8"
+        }
+      },
+      "shell": {
+        "bootstrap-css": "^5.2.0",
+        "icons": "feather"
+      },
+      "consumes": {}
+    },
+    "splent_feature_statistics": {
+      "namespace": "splent_io",
+      "distribution": "splent_feature_statistics",
+      "version": "0.7.0",
+      "entries": [
+        "statistics"
+      ],
+      "manifest_sha256": "3fe965c45a0a3ff3287b502db6a9bde4c4dc2b02ab035c8a7619f07e73594e85",
+      "bundled": {
+        "@kurkle/color": "0.3.4 MIT",
+        "chart.js": "4.5.1 MIT",
+        "webpack": "5.112.2 MIT"
+      },
+      "peers": {},
+      "shell": {},
+      "consumes": {}
+    },
+    "splent_feature_theme": {
+      "namespace": "splent_io",
+      "distribution": "splent_feature_theme",
+      "version": "0.17.0",
+      "entries": [
+        "fonts"
+      ],
+      "manifest_sha256": "57199aa3b89ad9d0aab5f36a739a648cf12d2cdff6ec3cb1445a9313e5ea6a01",
+      "bundled": {
+        "@fontsource-variable/inter": "5.3.0 OFL-1.1",
+        "webpack": "5.112.2 MIT"
+      },
+      "peers": {},
+      "shell": {},
+      "consumes": {}
+    },
+    "splent_feature_uvl": {
+      "namespace": "splent_io",
+      "distribution": "splent_feature_uvl",
+      "version": "0.6.0",
+      "entries": [
+        "uvl"
+      ],
+      "manifest_sha256": "757630ca7605f3423148fb8b25c8698dc13fc3a30599798fcff2d8e46cdf5049",
+      "bundled": {
+        "antlr4": "4.13.2 BSD-3-Clause",
+        "uvl-parser": "0.5.0 UNKNOWN",
+        "webpack": "5.112.2 MIT"
+      },
+      "peers": {},
+      "shell": {
+        "bootstrap": "^5.2.0",
+        "bootstrap-css": "^5.2.0",
+        "icons": "feather"
+      },
+      "consumes": {
+        "CodeMirror": {
+          "feature": "hubfile",
+          "range": "^5.65.16"
+        }
+      }
+    }
+  },
+  "legacy": [
+    "splent_feature_auth",
+    "splent_feature_profile",
+    "splent_feature_reset",
+    "splent_feature_settings",
+    "splent_feature_team"
+  ]
+}

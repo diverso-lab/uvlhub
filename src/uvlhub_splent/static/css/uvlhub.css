@@ -1,0 +1,50 @@
+/* uvlhub's skin over hub_shell's, the shell every hub of the line shares.
+ *
+ * hub_shell draws uvlhub.io's look and takes the brand from theme's tokens
+ * (THEME_TOKENS in pyproject.toml): the primary, the accent, the font and
+ * the radius. It mixes every other tone of the primary from it; uvlhub.io's
+ * pressed and light tones are shades of their own, which no mix gives, so
+ * they are written here. The sidebar's current entry is the shell's, the
+ * primary itself, the same blue as the buttons.
+ * Then the cards of uvlhub's own home hooks (templates/hooks/). create_app
+ * registers this file for the app shell at order 200, after the features.
+ */
+
+/* ── uvlhub.io's tones of its blue ─────────────────────────────────────── */
+
+:root {
+    --hub-primary-active: #056ee9;
+    --hub-primary-light: #e9f3ff;
+    --hub-doi-value-bg: linear-gradient(90deg, #2176bd 0%, #2980b9 100%);
+}
+
+/* The dark mode's blue is a shade of its own on uvlhub.io. */
+:root[data-bs-theme="dark"] {
+    --hub-primary: #006ae6;
+    --hub-primary-rgb: 0, 106, 230;
+    --hub-primary-active: #107eff;
+    --hub-primary-light: #172331;
+}
+
+/* ── The cards of uvlhub's home (hooks/home_about.html, home_get_started.html)
+   ─────────────────────────────────────────────────────────────────────── */
+
+/* The words of the two roomy cards are a muted lead; the references of
+   Cite us! keep the text's colour. */
+.uvl-home-roomy p {
+    color: var(--hub-gray-600);
+    font-size: 1.075rem;
+}
+
+.uvl-home-gap {
+    margin-bottom: 2.5rem;
+}
+
+.uvl-home-start h2 {
+    font-size: 2rem;
+}
+
+/* The two cards of words have more room around them. */
+.uvl-home-roomy > .card-body {
+    padding: 2rem;
+}

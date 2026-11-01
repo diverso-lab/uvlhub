@@ -1,0 +1,236 @@
+// OpenHubs: a generic repository core with pluggable artifact types. uvlhub is one product of the line.
+// Version 3 is still a transition model: it holds the packages that exist today, so every product of the line
+// validates now, and it moves towards the target model as the core becomes generic.
+//   - uvl is the UVL artifact type, one package since featuremodel and flamapy merged into it (H4).
+//   - publicacion is mandatory and an or-group of the publication providers (dataset's DepositionProvider, H6):
+//     zenodo deposits on Zenodo with a DOI, local_publication publishes on the hub with an identifier of its own.
+//     A product installs one or both, and each dataset is published through one of them.
+//   - dataset_api (H7) is the REST API of the datasets, out of dataset: dataset_api => apikeys, and dataset no
+//     longer requires apikeys. A hub without an API leaves both out. dataset 0.11.0 still serves the API itself
+//     in a product with apikeys and without dataset_api, for one minor.
+//   - explore and statistics name no artifact type and no rating (H8): uvl, factlabel and rating fill their
+//     registries of facets, orders and dashboard slots when the product has them, so neither requires them.
+//   - explore is the page of the search: the search feature browses the public sources dataset and hubfile
+//     register, with elasticsearch or, on a light hub, in memory (search 0.5.0, explore 0.10.0). So explore
+//     requires search and no longer dataset or hubfile, and search no longer requires elasticsearch.
+//   - citation (H9) cites and describes dataset's records: optional, and nothing requires it.
+//   - hub_shell (H12) is the shell every hub shares, extracted from the products' own layouts: the application and
+//     public layouts, the sidebar from the menu registry, the header, the footer and the error pages, on theme's
+//     site object and tokens. It is mandatory: a hub is drawn in it, and a product names its brand in parameters.
+//   - icons brings the icon sets the framework's icon() draws, from npm (Lucide, simple-icons). Mandatory: the
+//     shell and the features draw their icons with it.
+// The children of the concrete parents (profile, identities, captcha) import their parent. Their constraints
+// repeat what the tree says because the load order and the import check read the constraints alone.
+// A node with a param attribute and no package stands for a value of a feature's parameter (uvl = true in its
+// [tool.splent.config_schema]); the CLI selects it from the product's value before solving, which needs
+// splent_cli 1.40.0 or later. captcha_on_* are the forms of CAPTCHA_PROTECTED_FORMS this line has; contact,
+// comment and careers have no feature here. home_* are the choices of DATASET_HOME_ORDER (dataset 0.6.0).
+// publish_* are the choices of DATASET_PUBLISH_POLICY (dataset 0.8.0, PB-8): curated sends what an account the
+// hub does not trust publishes to review, so it needs a reviewer, curation (GV-2, an optional feature by D10).
+// errors_* are the choices of OBSERVABILITY_BACKEND and alerts_* those of OBSERVABILITY_ALERT_CHANNELS
+// (observability 0.1.0): where a product's errors go and who its alerts reach (D20).
+// legacy_urls keeps the addresses a hub used to answer answering: a 301 or 308 to where they went, or 410
+// (CO-2, an optional feature by D10).
+// dataset_transfer offers a dataset and its versions to another account (DL-17, an optional feature by D10): an
+// inbox in the account area, a mail with a signed link, one answer whether or not the account exists, offers that
+// lapse and a daily limit. dataset moves the lineage once an offer is accepted, and keeps no offers since 0.14.0,
+// so a hub without dataset_transfer has no transfers; with dataset_api too, API v1 serves their routes.
+// tipo_artefacto is the or-group of the kinds of file a hub takes (H11): uvl, the UVL layer, and generic_files,
+// hubfile's generic file type, which takes the extensions HUBFILE_FILE_EXTENSIONS names (["*"] for any file).
+// generic_files has no package: it stands for that parameter when its list is not empty, so a hub of files of
+// any kind (filehub_splent) selects it from its value and leaves uvl out. A hub may take both; neither is a hub
+// that takes no file at all, which the group refuses.
+features
+	openhubs_spl
+		mandatory
+			plataforma
+				mandatory
+					theme {org 'splent-io', package 'splent_feature_theme'}
+					settings {org 'splent-io', package 'splent_feature_settings'}
+					public {org 'splent-io', package 'splent_feature_public'}
+					hub_shell {org 'splent-io', package 'splent_feature_hub_shell'}
+					icons {org 'splent-io', package 'splent_feature_icons'}
+					session
+						alternative
+							session_filesystem {org 'splent-io', package 'splent_feature_session_filesystem'}
+							session_redis {org 'splent-io', package 'splent_feature_session_redis'}
+				optional
+					admin {org 'splent-io', package 'splent_feature_admin'}
+					mail {org 'splent-io', package 'splent_feature_mail'}
+					redis {org 'splent-io', package 'splent_feature_redis'}
+					nginx {org 'splent-io', package 'splent_feature_nginx'}
+					elasticsearch {org 'splent-io', package 'splent_feature_elasticsearch'}
+					autodeploy {org 'splent-io', package 'splent_feature_autodeploy'}
+					backup {org 'splent-io', package 'splent_feature_backup'}
+					observability {org 'splent-io', package 'splent_feature_observability'}
+						mandatory
+							observability_backend {param 'OBSERVABILITY_BACKEND'}
+								alternative
+									errors_glitchtip {value 'glitchtip'}
+									errors_sentry {value 'sentry'}
+									errors_email {value 'email'}
+									errors_none {value 'none'}
+						optional
+							observability_alerts {param 'OBSERVABILITY_ALERT_CHANNELS'}
+								or
+									alerts_email {value 'email'}
+									alerts_matrix {value 'matrix'}
+									alerts_telegram {value 'telegram'}
+					audit {org 'splent-io', package 'splent_feature_audit'}
+					analytics {org 'splent-io', package 'splent_feature_analytics'}
+					mailhog {org 'splent-io', package 'splent_feature_mailhog'}
+					phpmyadmin {org 'splent-io', package 'splent_feature_phpmyadmin'}
+			identidad
+				mandatory
+					auth {org 'splent-io', package 'splent_feature_auth'}
+				optional
+					profile {org 'splent-io', package 'splent_feature_profile'}
+						optional
+							academic_profile {org 'splent-io', package 'splent_feature_academic_profile'}
+					signup {org 'splent-io', package 'splent_feature_signup'}
+					reset {org 'splent-io', package 'splent_feature_reset'}
+					confirmemail {org 'splent-io', package 'splent_feature_confirmemail'}
+					identities {org 'splent-io', package 'splent_feature_identities'}
+						or
+							orcid {org 'splent-io', package 'splent_feature_orcid'}
+							github {org 'splent-io', package 'splent_feature_github'}
+					captcha {org 'splent-io', package 'splent_feature_captcha'}
+						alternative
+							recaptcha {org 'splent-io', package 'splent_feature_recaptcha'}
+							cloudflare {org 'splent-io', package 'splent_feature_cloudflare'}
+							captcha_image {org 'splent-io', package 'splent_feature_captcha_image'}
+						or
+							captcha_on_signup {param 'CAPTCHA_PROTECTED_FORMS', value 'signup'}
+							captcha_on_login {param 'CAPTCHA_PROTECTED_FORMS', value 'login'}
+							captcha_on_reset {param 'CAPTCHA_PROTECTED_FORMS', value 'reset'}
+					apikeys {org 'splent-io', package 'splent_feature_apikeys'}
+			repositorio
+				mandatory
+					dataset {org 'splent-io', package 'splent_feature_dataset'}
+						mandatory
+							dataset_home_order {param 'DATASET_HOME_ORDER'}
+								alternative
+									home_newest {value 'newest'}
+									home_most_items {value 'items'}
+									home_most_rated {value 'rating'}
+							dataset_publish_policy {param 'DATASET_PUBLISH_POLICY'}
+								alternative
+									publish_open {value 'open'}
+									publish_verified {value 'verified'}
+									publish_curated {value 'curated'}
+					hubfile {org 'splent-io', package 'splent_feature_hubfile'}
+					publicacion
+						or
+							zenodo {org 'splent-io', package 'splent_feature_zenodo'}
+							local_publication {org 'splent-io', package 'splent_feature_local_publication'}
+					tipo_artefacto
+						or
+							uvl {org 'splent-io', package 'splent_feature_uvl'}
+								optional
+									factlabel {org 'splent-io', package 'splent_feature_factlabel'}
+									generator {org 'splent-io', package 'splent_feature_generator'}
+							generic_files {param 'HUBFILE_FILE_EXTENSIONS'}
+				optional
+					curation {org 'splent-io', package 'splent_feature_curation'}
+					legacy_urls {org 'splent-io', package 'splent_feature_legacy_urls'}
+					dataset_transfer {org 'splent-io', package 'splent_feature_dataset_transfer'}
+					dataset_api {org 'splent-io', package 'splent_feature_dataset_api'}
+					apidocs {org 'splent-io', package 'splent_feature_apidocs'}
+					rating {org 'splent-io', package 'splent_feature_rating'}
+					explore {org 'splent-io', package 'splent_feature_explore'}
+					search {org 'splent-io', package 'splent_feature_search'}
+					statistics {org 'splent-io', package 'splent_feature_statistics'}
+					citation {org 'splent-io', package 'splent_feature_citation'}
+		optional
+			sitio
+				optional
+					team {org 'splent-io', package 'splent_feature_team'}
+					media {org 'splent-io', package 'splent_feature_media'}
+					legal {org 'splent-io', package 'splent_feature_legal'}
+					about {org 'splent-io', package 'splent_feature_about'}
+
+constraints
+	theme => settings
+	// The shell draws theme's site object and tokens, and the account signed in, so it loads after both.
+	hub_shell => theme
+	hub_shell => auth
+	hub_shell => icons
+	session_redis => redis
+	admin => auth
+	autodeploy => admin
+	autodeploy => auth
+	// mailhog overrides the SMTP settings mail injects, so it loads after mail.
+	mailhog => mail
+	// The email backend and the email channel of observability send through mail's MailService.
+	errors_email => mail
+	alerts_email => mail
+	// audit's screen is for administrators, and the account events it keeps are auth's.
+	audit => auth
+	profile => auth
+	academic_profile => profile
+	signup => auth
+	reset => auth
+	reset => mail
+	confirmemail => auth
+	confirmemail => mail
+	identities => auth
+	identities => profile
+	orcid => auth
+	orcid => identities
+	orcid => profile
+	github => auth
+	github => identities
+	github => profile
+	recaptcha => captcha
+	recaptcha => settings
+	cloudflare => captcha
+	cloudflare => settings
+	captcha_image => captcha
+	// A protected form is one the product has.
+	captcha_on_signup => signup
+	captcha_on_reset => reset
+	apikeys => auth
+	dataset => auth
+	// The REST API of the datasets takes apikeys' tokens, and serves what dataset holds, so it loads after both.
+	dataset_api => apikeys
+	dataset_api => auth
+	dataset_api => dataset
+	// The best rated first is rating's order of the home page.
+	home_most_rated => rating
+	// A curated hub reviews what the accounts it does not trust publish: curation is its reviewer
+	// (dataset's PublicationReviewer), and dataset refuses to start curated without it.
+	publish_curated => curation
+	hubfile => auth
+	hubfile => dataset
+	// uvl extends hubfile's Hubfile and asks dataset who may read a model
+	// (its access policy), so it loads after both.
+	uvl => auth
+	uvl => dataset
+	uvl => hubfile
+	factlabel => hubfile
+	// factlabel fills statistics' corpus panels from the datasets it reads.
+	factlabel => dataset
+	// The providers implement dataset's DepositionProvider (dataset 0.7.0), so they load after it.
+	zenodo => auth
+	zenodo => dataset
+	local_publication => dataset
+	// curation reviews dataset's publications and withdraws through its services, so it loads after it.
+	curation => auth
+	curation => dataset
+	// The screen of the old addresses is for administrators.
+	legacy_urls => auth
+	// dataset_transfer offers dataset's lineages and asks dataset to move one once it is accepted, mails the offer
+	// through mail's MailService, and its pages are for signed-in accounts, so it loads after the three.
+	dataset_transfer => dataset
+	dataset_transfer => auth
+	dataset_transfer => mail
+	rating => auth
+	rating => dataset
+	explore => search
+	statistics => dataset
+	// citation describes dataset's records and fills the slots of its dataset page, so it loads after it.
+	citation => dataset
+	// Its limit on the costly answers counts in auth's shared throttle (citation 0.2.0, CT-3).
+	citation => auth
+	media => auth
+	team => media

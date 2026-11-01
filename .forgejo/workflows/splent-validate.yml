@@ -1,0 +1,281 @@
+# splent-generated sha256 0eaefeea717f4b82576fd2c3e0240cf64a53c0721d202e5a18d15bc5ddffe96a
+# Written by splent (product:create, product:sync-template --ci). While
+# it stays as written, which the line above records, the commands that
+# change the product's features rewrite it. Once edited it is left
+# alone, and product:sync-template --ci shows and applies the difference.
+#
+# Every push and pull request is checked as a configuration of the product
+# line. The features the product pins are resolved at their releases, the
+# selection is checked against the line's UVL model, and the contracts,
+# refiners and dependencies of the features have to agree. Then the deploy
+# artifacts are generated, as product:build would on a server, and what the
+# features' bundles ship is audited as one set. Neither the product nor any
+# feature it pins, for production or development, may carry Keenthemes code. A product that fails here is not a valid product of its
+# line, whatever its own tests say.
+#
+# The product's own code is linted with the Ruff the CLI pins, and, once it
+# validates, the migrations of its features are applied to an empty
+# database and the tests of its features, then its own under tests/, run
+# in this configuration.
+name: SPLENT validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# Without this the forge cancels a run of the workflow when the next push
+# to the same branch starts one, so a push to main stopped the previous
+# commit's test job halfway and that commit was never tested. Runs on main
+# queue in order, each to the end. A pull request's newer push still
+# cancels the run it makes pointless.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    env:
+      WORKING_DIR: ${{ github.workspace }}
+      SPLENT_APP: uvlhub_splent
+      SPLENT_FORGE_HOST: git.splent.io
+      # The features are public, so they are cloned anonymously. Forgejo puts
+      # a token scoped to this repository alone in every job, and with it the
+      # other repositories of the organization would look missing.
+      SPLENT_FORGE_TOKEN: ""
+      GITHUB_TOKEN: ""
+      # The runner has no SSH key, so clones go straight to HTTPS.
+      SPLENT_CLONE_TRANSPORT: https
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: uvlhub_splent
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install the SPLENT CLI
+        run: pip install --quiet --upgrade "splent_cli[uvl]" splent_framework
+
+      - name: Resolve the pinned features
+        run: splent product:resolve --prod --strict
+
+      - name: Validate the product against its line
+        run: splent product:validate
+
+      - name: Generate the deploy artifacts
+        run: splent product:build --no-image
+
+      # What the build writes is versioned, so a host deploys from a clone.
+      # A change to the features or the configuration that skipped
+      # product:build left them behind, and the CI said nothing.
+      - name: The versioned deploy artifacts are the ones the product generates
+        working-directory: uvlhub_splent
+        run: |
+          paths="deploy docker/requirements.lock docker/frontend.lock.json splent.contracts.json docker/spl"
+          if [ -n "$(git status --porcelain -- $paths)" ]; then
+            git status --short -- $paths
+            git --no-pager diff --stat -- $paths
+            echo "These differ from what splent product:build generates."
+            echo "Run splent product:build and commit them."
+            exit 1
+          fi
+
+      # What the features' bundles ship, as one set (docker/frontend.lock.json).
+      # A bundle is immutable, so an advisory published after a feature's
+      # release reaches the product only through a new release of that
+      # feature: a critical one fails here and names the features to release
+      # again. The SBOM of all the bundles is kept with the run.
+      - name: Audit what the features' bundles ship
+        run: splent product:frontend:audit --sbom frontend.sbom.cdx.json
+
+      - name: Keep the SBOM of the bundles
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-sbom
+          path: frontend.sbom.cdx.json
+          if-no-files-found: ignore
+
+      # check:vendor only searches the features that have a local copy, and
+      # the job resolved those of production. The features of development
+      # are resolved too, last, so that the build above saw the production
+      # set alone and no feature the product pins goes unsearched.
+      - name: Resolve the features of development too
+        run: splent product:resolve --dev --strict
+
+      # Metronic, Keenthemes' commercial theme, cannot be redistributed, so
+      # it is looked for by content in the product and in the src/ of every
+      # feature it pins.
+      - name: No Keenthemes code in the product or its features
+        run: splent check:vendor
+
+  lint:
+    runs-on: ubuntu-latest
+    env:
+      WORKING_DIR: ${{ github.workspace }}
+      SPLENT_APP: uvlhub_splent
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: uvlhub_splent
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install the SPLENT CLI and Ruff
+        run: pip install --quiet --upgrade splent_cli splent_framework "ruff==0.11.8"
+
+      # The product's own code, src/uvlhub_splent. Its features were
+      # linted when they were released.
+      - name: Lint the product's code
+        run: splent lint --target app
+
+  # The migrations of every feature the product loads, applied to an empty
+  # database, and the tests of those features, run against the releases
+  # it pins and the refiners it selects, then the product's own tests under
+  # tests/, when it has any. This job stands in for the product's web
+  # container, with a database of its own, so product:test runs here instead
+  # of delegating to uvlhub_splent_web. A product with no tests passes.
+  # Each server a feature runs in its docker compose file runs here too,
+  # under the same name. tests = false under [tool.splent.ci] leaves the job
+  # out.
+  test:
+    needs: validate
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: mariadb:11.4
+        env:
+          MARIADB_ROOT_PASSWORD: uvlhub_splent_db_root_password
+          MARIADB_DATABASE: uvlhub_splent_db_test
+          MARIADB_USER: uvlhub_splent_db_user
+          MARIADB_PASSWORD: uvlhub_splent_db_password
+        options: >-
+          --health-cmd "healthcheck.sh --connect --innodb_initialized"
+          --health-interval 5s --health-timeout 5s --health-retries 30
+      splent_feature_elasticsearch:
+        image: elasticsearch:8.18.4
+        env:
+          discovery.type: single-node
+          xpack.security.enabled: "false"
+          ES_JAVA_OPTS: "-Xms256m -Xmx512m"
+          xpack.security.transport.ssl.enabled: "false"
+        options: >-
+          --health-cmd "curl -fs http://localhost:9200/_cluster/health"
+          --health-interval 10s --health-timeout 5s --health-retries 30
+      splent_feature_redis:
+        image: redis:7.4
+        options: >-
+          --health-cmd "redis-cli ping" --health-interval 5s
+          --health-timeout 5s --health-retries 30
+      splent_feature_mailhog:
+        image: mailhog/mailhog:latest
+    env:
+      WORKING_DIR: ${{ github.workspace }}
+      SPLENT_APP: uvlhub_splent
+      SPLENT_ENV: dev
+      SPLENT_CONTAINER: product
+      SPLENT_FORGE_HOST: git.splent.io
+      SPLENT_FORGE_TOKEN: ""
+      GITHUB_TOKEN: ""
+      SPLENT_CLONE_TRANSPORT: https
+      MARIADB_HOSTNAME: db
+      MARIADB_DATABASE: uvlhub_splent_db
+      MARIADB_TEST_DATABASE: uvlhub_splent_db_test
+      MARIADB_USER: uvlhub_splent_db_user
+      MARIADB_PASSWORD: uvlhub_splent_db_password
+      MARIADB_ROOT_PASSWORD: uvlhub_splent_db_root_password
+      ELASTICSEARCH_URL: http://splent_feature_elasticsearch:9200
+      REDIS_URL: redis://splent_feature_redis:6379
+      MAIL_HOST: splent_feature_mailhog
+      MAIL_PORT: "1025"
+      MAIL_USE_TLS: "false"
+      MAILHOG_HOST: splent_feature_mailhog
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: uvlhub_splent
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      # The framework and CLI versions [tool.splent.runtime] pins, as the
+      # production image installs them, with the framework's dev extra for
+      # pytest. Third-party packages follow docker/requirements.lock.
+      - name: Install what the product runs
+        run: |
+          lock=uvlhub_splent/docker/requirements.lock
+          if [ -f "$lock" ]; then export PIP_CONSTRAINT="$PWD/$lock"; fi
+          python3 - <<'PY' > runtime.txt
+          import tomllib
+          with open("uvlhub_splent/pyproject.toml", "rb") as f:
+              data = tomllib.load(f)
+          pins = {"splent_framework": "", "splent_cli": ""}
+          runtime = data.get("tool", {}).get("splent", {}).get("runtime") or {}
+          pins.update({name: str(spec) for name, spec in runtime.items()})
+          for name, spec in pins.items():
+              extra = "[dev]" if name == "splent_framework" else ""
+              spec = "==" + spec if spec[:1].isdigit() else spec
+              print(name + extra + spec)
+          PY
+          pip install --quiet -r runtime.txt
+
+      - name: Resolve the features
+        run: splent product:resolve --dev --strict
+
+      - name: Install the features and their dependencies
+        run: |
+          lock=uvlhub_splent/docker/requirements.lock
+          if [ -f "$lock" ]; then export PIP_CONSTRAINT="$PWD/$lock"; fi
+          splent feature:pip-install
+
+      # The line's model orders the features, and so their migrations, their
+      # seeders and the app's hooks, as in development and in the image,
+      # which ships docker/spl. Without it the features load in
+      # pyproject.toml order, and a migration that names a table of a
+      # feature loaded later fails. spl:fetch runs with no product selected
+      # and takes the DOI pyproject.toml pins.
+      - name: Fetch the line's model
+        env:
+          SPLENT_APP: ""
+        run: splent spl:fetch openhubs_spl
+
+      # Every migration the features ship, applied in order to an empty
+      # database, as the first start of a deployment applies them. The
+      # tests build their tables from the models, so a migration that
+      # fails, or that needs a table only a later one creates, passed them
+      # and stopped the first start in production. MariaDB's image creates
+      # one database, the tests', so this one is created here.
+      - name: Apply every migration to an empty database
+        run: |
+          python3 - <<'PY'
+          import os
+
+          import pymysql
+
+          database = os.environ["MARIADB_DATABASE"]
+          with pymysql.connect(
+              host=os.environ["MARIADB_HOSTNAME"],
+              user="root",
+              password=os.environ["MARIADB_ROOT_PASSWORD"],
+          ) as conn, conn.cursor() as cur:
+              cur.execute(
+                  f"CREATE DATABASE `{database}` "
+                  "CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+              )
+              cur.execute(
+                  f"GRANT ALL PRIVILEGES ON `{database}`.* TO %s@'%%'",
+                  (os.environ["MARIADB_USER"],),
+              )
+          PY
+          splent db:upgrade
+
+      - name: Run the features' tests, then the product's own
+        run: splent product:test

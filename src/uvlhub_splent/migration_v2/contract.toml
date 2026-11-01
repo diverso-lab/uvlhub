@@ -1,0 +1,560 @@
+# The data contract of uvlhub 3.0 that the migrator of uvlhub.io 2.12 writes
+# to (MIG-03, §3.4 of the migration plan).
+#
+# It says what the schema of the pinned features looks like where the
+# migrator touches it, and where every column it fills comes from. The
+# migrator reads it twice: E0 refuses to run on features of other versions
+# than [features] names, and E3 refuses a uvlhub3 that differs from
+# [tables] (V-12, V-14). tests/migration_v2/test_contract.py compares it with
+# the schema the pinned features create, so a pin that changes a table the
+# migration fills fails there first. Every change of F1 to F5 that touches
+# data carried over updates this file and the migrator in the same commit
+# (plancha:41).
+#
+# Tables have a role:
+#   load   the migrator writes it. Its columns are the table's, all of them,
+#          each with where it comes from: `source` (a v2.12 column copied as
+#          it is) and/or `rule` (what the migrator computes), and `on_null`
+#          when the source admits NULL and the target does not (C-27).
+#   read   the migrator reads the columns listed (a subset), and writes nothing.
+#   empty  the migrator writes nothing, and E7 checks that nothing else did
+#          either (a seed, a listener). Its columns are the feature's business.
+#   derived the migrator writes nothing; E9 has the features' commands fill
+#          it, and E7, before them, checks that nothing did yet.
+# `owner` is the feature whose migrations create the table.
+#
+# Collations (DM-15): the database's default for every text column, but
+# where the column says otherwise: utf8mb4_bin for the identifiers, which
+# auth (1.27.0: email, email_canonical) and identities (0.5.0: provider,
+# provider_id) and dataset (pid, concept_pid) compare exactly. `dm15`
+# names the collation DM-15 asks for where a pinned feature does not give it
+# yet: V-14 checks `collation`, what the schema is, and the report lists
+# every `dm15` still pending, with [dm15] missing below.
+
+[contract]
+version = 3
+plan = "_reference/analisis_uvlhub/06-plan-migracion-uvlhubio.md, revision 2"
+
+[database]
+charset = "utf8mb4"
+collation = "utf8mb4_unicode_ci"
+
+# The heads the migrator was written against: feature, version and the last
+# revision db:upgrade records for it in splent_migrations. Every feature with
+# migrations of the product, so V-12 compares the whole of splent_migrations.
+[features]
+splent_feature_academic_profile = { version = "0.1.0", head = "pu0002" }
+splent_feature_apikeys = { version = "0.10.0", head = "apikeys0003_resources" }
+splent_feature_audit = { version = "0.1.0", head = "audit0001_events" }
+splent_feature_auth = { version = "1.27.0", head = "auth0009_email_collation" }
+splent_feature_citation = { version = "0.2.0", head = "citation0001_references" }
+splent_feature_confirmemail = { version = "2.3.0", head = "confirmemail0002_drop_scaffold" }
+splent_feature_curation = { version = "0.1.1", head = "curation0001_requests" }
+splent_feature_dataset = { version = "0.15.0", head = "dataset0012_pid_exact" }
+splent_feature_dataset_transfer = { version = "0.1.0", head = "dataset_transfer0002_offer_rules" }
+splent_feature_factlabel = { version = "0.7.0", head = "d934ec20c841" }
+splent_feature_github = { version = "0.4.1", head = "github0002_into_ext_identity" }
+splent_feature_hubfile = { version = "0.12.0", head = "hubfile0004_aliases" }
+splent_feature_identities = { version = "0.5.0", head = "identities0003_exact_ids" }
+splent_feature_legacy_urls = { version = "0.1.0", head = "legacy_urls0001_urls" }
+splent_feature_mail = { version = "1.6.0", head = "mail0002_held" }
+splent_feature_media = { version = "0.12.0", head = "media0005_thumbnail" }
+splent_feature_orcid = { version = "0.4.1", head = "orcid0002_into_external_identity" }
+splent_feature_profile = { version = "1.8.0", head = "29f0c82ca134" }
+splent_feature_rating = { version = "0.6.0", head = "3e72750db961" }
+splent_feature_reset = { version = "2.3.0", head = "1c2ed70161dd" }
+splent_feature_settings = { version = "0.5.1", head = "settings0001" }
+splent_feature_statistics = { version = "0.6.0", head = "statistics0002_usage" }
+splent_feature_team = { version = "0.9.1", head = "tm0004_role_details" }
+splent_feature_uvl = { version = "0.5.0", head = "846acdf9eed2" }
+
+# The heads of v2.12 the dump may be at (MIGRATION_EXPECTED_HEAD): the
+# release, or the hotfix D1, whose revision only rewrites descriptions.
+[source]
+heads = ["e5f6a7b8c9d0", "f7a8b9c0d1e2"]
+
+# The scopes of a v2.12 key and the ones the token keeps. They stay as they
+# were: the pinned dataset registers uvlhub's own names (read_dataset,
+# write_dataset), and with dataset_api (AP-4) they are aliases of its
+# datasets:* scopes, so a 2.12 key keeps what it could do. A scope not named
+# here is dropped from the token, and counted.
+[scopes]
+read_dataset = "read_dataset"
+write_dataset = "write_dataset"
+
+# What DM-15 asks for that no pinned feature has: E5 cannot fill a column
+# that does not exist. The report lists them with the `dm15` columns.
+[dm15]
+missing = [
+    "dataset_tag.name (C-23: tags stay a string in ds_meta_data.tags)",
+]
+
+[tables.user]
+owner = "splent_feature_auth"
+role = "load"
+
+[tables.user.columns]
+id = { type = "int(11)", nullable = false, source = "user.id" }
+email = { type = "varchar(256)", nullable = true, collation = "utf8mb4_bin", source = "user.email" }
+password = { type = "varchar(256)", nullable = false, collation = "utf8mb4_unicode_ci", source = "user.password" }
+created_at = { type = "datetime", nullable = false, source = "user.created_at" }
+role = { type = "varchar(32)", nullable = false, collation = "utf8mb4_unicode_ci", rule = "admin for MIGRATION_ADMIN_EMAILS, user otherwise (5.3)" }
+email_canonical = { type = "varchar(256)", nullable = true, collation = "utf8mb4_bin", rule = "auth's canonical_email(user.email)" }
+pending_email = { type = "varchar(256)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "NULL" }
+email_verified_at = { type = "datetime", nullable = true, rule = "when the earliest positive proof was made (5.1), NULL without one" }
+disabled_at = { type = "datetime", nullable = true, rule = "T0 when user.active = 0" }
+last_login_at = { type = "datetime", nullable = true, rule = "NULL" }
+password_changed_at = { type = "datetime", nullable = true, rule = "NULL" }
+session_version = { type = "int(11)", nullable = false, rule = "2, which ends every remember-me cookie of v2.12 (5.4)" }
+account_origin = { type = "varchar(32)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "legacy_v2" }
+email_verified_via = { type = "varchar(32)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "legacy_reset or legacy_github, NULL without a proof" }
+has_usable_password = { type = "tinyint(1)", nullable = false, rule = "5.2 heuristic" }
+is_service_account = { type = "tinyint(1)", nullable = false, rule = "false" }
+must_reset_password = { type = "tinyint(1)", nullable = false, rule = "1 for a probable takeover (C-28), whose password then opens nothing but mails its owner a reset link; 0 otherwise" }
+
+[tables.user_profile]
+owner = "splent_feature_profile"
+role = "load"
+
+[tables.user_profile.columns]
+id = { type = "int(11)", nullable = false, source = "user_profile.id" }
+user_id = { type = "int(11)", nullable = false, source = "user_profile.user_id" }
+name = { type = "varchar(100)", nullable = false, collation = "utf8mb4_unicode_ci", source = "user_profile.name", rule = "stripped" }
+surname = { type = "varchar(100)", nullable = false, collation = "utf8mb4_unicode_ci", source = "user_profile.surname", rule = "stripped" }
+affiliation = { type = "varchar(255)", nullable = true, collation = "utf8mb4_unicode_ci", source = "user_profile.affiliation", rule = "stripped; academic_profile adds the column" }
+
+[tables.external_identity]
+owner = "splent_feature_identities"
+role = "load"
+
+[tables.external_identity.columns]
+id = { type = "int(11)", nullable = false, source = "external_identity.id", rule = "kept; a row folded in from orcid or github takes a new one above the source counter" }
+user_id = { type = "int(11)", nullable = false, source = "external_identity.user_id" }
+provider = { type = "varchar(50)", nullable = false, collation = "utf8mb4_bin", source = "external_identity.provider", rule = "orcid or github exactly, the case and spaces of v2.12 aside; any other provider is a conflict" }
+provider_id = { type = "varchar(256)", nullable = false, collation = "utf8mb4_bin", source = "external_identity.provider_id", rule = "orcid.orcid_id normalised, or github.github_id as text, for a folded row (5.6)" }
+provider_username = { type = "varchar(256)", nullable = true, collation = "utf8mb4_unicode_ci", source = "external_identity.provider_username", rule = "the iD, or github.github_login, when it had none (orcid0002, github0002)" }
+created_at = { type = "datetime", nullable = false, source = "external_identity.created_at", rule = "the earlier of the two dates of a folded row" }
+provider_email_verified = { type = "varchar(256)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "external_identity.email of a github row when it is the account's address (identities0002)" }
+
+[tables.api_token]
+owner = "splent_feature_apikeys"
+role = "load"
+
+[tables.api_token.columns]
+id = { type = "int(11)", nullable = false, source = "api_keys.id" }
+user_id = { type = "int(11)", nullable = false, source = "api_keys.user_id" }
+name = { type = "varchar(128)", nullable = false, collation = "utf8mb4_unicode_ci", rule = "'uvlhub 2 key (<created_at date>)'" }
+token_hash = { type = "varchar(64)", nullable = false, collation = "utf8mb4_unicode_ci", rule = "sha256(api_keys.key)" }
+prefix = { type = "varchar(16)", nullable = false, collation = "utf8mb4_unicode_ci", rule = "api_keys.key[:15]" }
+scopes = { type = "varchar(256)", nullable = false, collation = "utf8mb4_unicode_ci", rule = "api_keys.scopes through [scopes] below; a key whose scopes all go is carried over revoked" }
+created_at = { type = "datetime", nullable = false, source = "api_keys.created_at", on_null = "api_keys.last_used_at, else T0 (D12)" }
+expires_at = { type = "datetime", nullable = true, rule = "T0 + 90 days with write_dataset, 365 otherwise (D12)" }
+revoked_at = { type = "datetime", nullable = true, rule = "T0 for a key carried over revoked (D12)" }
+last_used_at = { type = "datetime", nullable = true, source = "api_keys.last_used_at" }
+revoked_reason = { type = "varchar(32)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "import_no_scopes, import_never_used or import_unused (D12)" }
+expiry_notice_days = { type = "int(11)", nullable = true, rule = "NULL" }
+
+[tables.ds_metrics]
+owner = "splent_feature_dataset"
+role = "load"
+
+[tables.ds_metrics.columns]
+id = { type = "int(11)", nullable = false, source = "ds_metrics.id" }
+number_of_models = { type = "int(11)", nullable = true, source = "ds_metrics.number_of_models" }
+number_of_features = { type = "int(11)", nullable = true, source = "ds_metrics.number_of_features" }
+
+[tables.ds_meta_data]
+owner = "splent_feature_dataset"
+role = "load"
+
+[tables.ds_meta_data.columns]
+id = { type = "int(11)", nullable = false, source = "ds_meta_data.id" }
+deposition_id = { type = "int(11)", nullable = true, source = "ds_meta_data.deposition_id" }
+title = { type = "varchar(120)", nullable = false, collation = "utf8mb4_unicode_ci", source = "ds_meta_data.title" }
+description = { type = "text", nullable = false, collation = "utf8mb4_unicode_ci", source = "ds_meta_data.description", rule = "cleaned again by dataset's descriptions.clean_html, as v2.12 has it now (C-01, DS-1); the original of one that changes in quarantine_description, B0's after the hotfix D1 (C-29); V-13 cleans it once more" }
+description_format = { type = "varchar(16)", nullable = false, collation = "utf8mb4_unicode_ci", rule = "html_legacy: every description of v2.12 is TinyMCE's HTML (D21), written explicitly" }
+publication_type = { type = "enum('ANNOTATION_COLLECTION','BOOK','BOOK_SECTION','CONFERENCE_PAPER','DATA_MANAGEMENT_PLAN','JOURNAL_ARTICLE','PATENT','PREPRINT','PROJECT_DELIVERABLE','PROJECT_MILESTONE','PROPOSAL','REPORT','SOFTWARE_DOCUMENTATION','TAXONOMIC_TREATMENT','TECHNICAL_NOTE','THESIS','WORKING_PAPER','OTHER')", nullable = true, collation = "utf8mb4_unicode_ci", source = "ds_meta_data.publication_type" }
+publication_doi = { type = "varchar(120)", nullable = true, collation = "utf8mb4_unicode_ci", source = "ds_meta_data.publication_doi", rule = "a DOI bare, an http(s) address trimmed, as dataset's publication_doi_of reads it; anything else as it is (C-16)" }
+dataset_doi = { type = "varchar(120)", nullable = true, collation = "utf8mb4_unicode_ci", source = "ds_meta_data.dataset_doi", rule = "as it is; without one, the DOI of the deposition's record in zenodo_snapshot when it validates by id and title (A15-04)" }
+dataset_concept_doi = { type = "varchar(120)", nullable = true, collation = "utf8mb4_unicode_ci", source = "ds_meta_data.dataset_concept_doi", rule = "without one, the conceptdoi of its record in zenodo_snapshot when it validates (CT-4)" }
+api_publisher_user_id = { type = "int(11)", nullable = true, source = "ds_meta_data.api_publisher_user_id", rule = "NULL when that account is not loaded" }
+tags = { type = "varchar(120)", nullable = true, collation = "utf8mb4_unicode_ci", source = "ds_meta_data.tags", rule = "split on commas, each trimmed, empty and repeated ones gone, the spelling kept, joined by ',' (C-23, a string as decided)" }
+ds_metrics_id = { type = "int(11)", nullable = true, source = "ds_meta_data.ds_metrics_id" }
+dataset_anonymous = { type = "tinyint(1)", nullable = true, source = "ds_meta_data.dataset_anonymous" }
+metadata_synced = { type = "tinyint(1)", nullable = false, source = "ds_meta_data.metadata_synced" }
+private_authors = { type = "longtext", nullable = true, collation = "utf8mb4_bin", rule = "the authors of an anonymous dataset, as dataset0003 moves them, each as an author row below (Author.entry)" }
+authors_declared_at = { type = "datetime", nullable = true, rule = "NULL: nobody declared the co-authors in v2.12, and nothing asks it now (D18)" }
+authors_declared_by_id = { type = "int(11)", nullable = true, rule = "NULL (D18)" }
+
+[tables.datasets]
+owner = "splent_feature_dataset"
+role = "load"
+
+[tables.datasets.columns]
+id = { type = "int(11)", nullable = false, source = "datasets.id", rule = "kept; a tombstone takes a new one above the source's counter (DM-4)" }
+user_id = { type = "int(11)", nullable = false, source = "datasets.user_id", rule = "a tombstone's is the first account of MIGRATION_ADMIN_EMAILS (DM-4, DM-13)" }
+ds_meta_data_id = { type = "int(11)", nullable = false, source = "datasets.ds_meta_data_id", rule = "a tombstone's is the metadata left without a dataset" }
+created_at = { type = "datetime", nullable = false, source = "datasets.created_at", rule = "a tombstone's is its record's in zenodo_snapshot, else T0, with a conflict (DM-4)" }
+feature_model_count = { type = "int(11)", nullable = false, rule = "the feature models loaded for the dataset; 0 for a tombstone" }
+dataset_version = { type = "int(11)", nullable = false, source = "datasets.dataset_version", rule = "1 for a tombstone" }
+dataset_origin_id = { type = "int(11)", nullable = true, source = "datasets.dataset_origin_id", rule = "the curation's (RU-06); else the one before it among the datasets of its concept DOI, by created_at, where their versions rise (C-05); NULL when the origin is not loaded, with a conflict" }
+updated_at = { type = "datetime", nullable = false, rule = "datasets.created_at (dataset0002), or the tombstone's" }
+status = { type = "varchar(20)", nullable = false, collation = "utf8mb4_unicode_ci", rule = "dataset's state_from_metadata (4.3), with the DOI Zenodo minted where v2.12 saved none (A15-04); withdrawn for a tombstone (DM-4)" }
+visibility = { type = "varchar(32)", nullable = false, collation = "utf8mb4_unicode_ci", rule = "dataset's state_from_metadata (4.3)" }
+publisher_record_id = { type = "varchar(255)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "ds_meta_data.deposition_id as text" }
+published_at = { type = "datetime", nullable = true, rule = "when published, the publication_date of its record in zenodo_snapshot (4.3), datasets.created_at while doi_record_missing is open; a tombstone's record's publication_date" }
+withdrawn_at = { type = "datetime", nullable = true, rule = "NULL: v2.12 kept no date of a deletion" }
+withdrawal_reason = { type = "varchar(32)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "other for a tombstone (DM-4), NULL otherwise" }
+withdrawal_note = { type = "varchar(500)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "content.TOMBSTONE_NOTE for a tombstone, NULL otherwise" }
+withdrawn_by_id = { type = "int(11)", nullable = true, rule = "NULL" }
+provider = { type = "varchar(32)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "zenodo when ds_meta_data has a DOI or a deposition_id, NULL otherwise (dataset0005)" }
+pid = { type = "varchar(255)", nullable = true, collation = "utf8mb4_bin", rule = "ds_meta_data.dataset_doi as loaded (the minted one, A15-04), which stays there too, NULL without one (dataset0005, exact since dataset0012)" }
+pid_scheme = { type = "varchar(16)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "doi with a pid, NULL otherwise (dataset0005)" }
+publication_error = { type = "longtext", nullable = true, collation = "utf8mb4_bin", rule = "NULL" }
+public_id = { type = "varchar(26)", nullable = false, collation = "utf8mb4_unicode_ci", rule = "a ULID of created_at whose random bits are the first 80 of HMAC-SHA256(MIGRATION_PUBLIC_ID_KEY, 'dataset:<id>'), the same every run (CO-5, 4.2)" }
+lineage_root_id = { type = "int(11)", nullable = true, rule = "the first version of its lineage as it loads, its own id for an original or a tombstone (DL-9)" }
+concept_pid = { type = "varchar(255)", nullable = true, collation = "utf8mb4_bin", rule = "ds_meta_data.dataset_concept_doi stripped, NULL without one (dataset0009, CT-4)" }
+
+[tables.author]
+owner = "splent_feature_dataset"
+role = "load"
+
+[tables.author.columns]
+id = { type = "int(11)", nullable = false, source = "author.id" }
+name = { type = "varchar(120)", nullable = false, collation = "utf8mb4_unicode_ci", source = "author.name" }
+affiliation = { type = "varchar(120)", nullable = true, collation = "utf8mb4_unicode_ci", source = "author.affiliation" }
+orcid = { type = "varchar(19)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "author.orcid normalised, NULL when it is not a valid iD (C-15)" }
+ds_meta_data_id = { type = "int(11)", nullable = false, source = "author.ds_meta_data_id", on_null = "not loaded: an author of no metadata is dropped as an orphan (P-02)" }
+position = { type = "int(11)", nullable = false, rule = "its place in its metadata's credit, from 0 in the order of the ids (dataset0007)" }
+given_name = { type = "varchar(120)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "the part after the comma of a name written \"Family, Given\", with exactly one comma (dataset's names_of); NULL otherwise" }
+family_name = { type = "varchar(120)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "the part before that comma; NULL otherwise" }
+user_id = { type = "int(11)", nullable = true, rule = "the account whose orcid row of external_identity has the author's iD, NULL without one" }
+
+[tables.feature_model]
+# uvl's, which took it over from featuremodel as it was (846acdf9eed2).
+owner = "splent_feature_uvl"
+role = "load"
+
+[tables.feature_model.columns]
+id = { type = "int(11)", nullable = false, source = "feature_model.id" }
+dataset_id = { type = "int(11)", nullable = false, rule = "the dataset of its hubfile, else feature_model.dataset_id (C-07)" }
+
+[tables.hubfiles]
+owner = "splent_feature_hubfile"
+role = "load"
+
+[tables.hubfiles.columns]
+id = { type = "int(11)", nullable = false, source = "hubfiles.id" }
+name = { type = "varchar(120)", nullable = false, collation = "utf8mb4_unicode_ci", source = "hubfiles.name", rule = "~<id> before the extension of every file but the first on a path, written by E8 (DM-10, C-11)" }
+directory_path = { type = "varchar(255)", nullable = false, collation = "utf8mb4_unicode_ci", source = "hubfiles.directory_path" }
+checksum = { type = "varchar(120)", nullable = false, collation = "utf8mb4_unicode_ci", source = "hubfiles.checksum" }
+size = { type = "int(11)", nullable = false, source = "hubfiles.size" }
+dataset_id = { type = "int(11)", nullable = false, source = "hubfiles.dataset_id" }
+storage_key = { type = "varchar(255)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "written by hubfile's storage-migrate in E8" }
+storage_status = { type = "varchar(16)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "written by hubfile's storage-migrate in E8" }
+checksum_algo = { type = "varchar(16)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "hubfile's checksum_algorithm(checksum) (P-24)" }
+content_sha256 = { type = "varchar(64)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "written by hubfile's storage-migrate in E8" }
+artifact_type = { type = "varchar(32)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "uvl for a .uvl name, file otherwise (hubfile0002)" }
+feature_model_id = { type = "int(11)", nullable = true, source = "hubfiles.feature_model_id", rule = "NULL when that feature model is not loaded" }
+
+[tables.hubfile_metrics]
+# Copied by name, every column, and made again in E9 by factlabel's
+# metrics-backfill --force from each FactLabel it computes; a file whose
+# FactLabel fails keeps v2.12's. Plan §7.3's status = 'legacy' is
+# extractor_version, in factlabel's own terms: a row of another version
+# than its EXTRACTOR_VERSION is stale, so metrics-status counts it and
+# metrics-backfill extracts it again.
+owner = "splent_feature_factlabel"
+role = "load"
+
+[tables.hubfile_metrics.columns]
+hubfile_id = { type = "int(11)", nullable = false, source = "hubfile_metrics.hubfile_id" }
+extracted_at = { type = "datetime", nullable = false, source = "hubfile_metrics.extracted_at" }
+extractor_version = { type = "varchar(20)", nullable = false, collation = "utf8mb4_unicode_ci", source = "hubfile_metrics.extractor_version", rule = "'legacy:<v2.12's>' until factlabel extracts it again (7.3)" }
+parse_error = { type = "text", nullable = true, collation = "utf8mb4_unicode_ci", source = "hubfile_metrics.parse_error" }
+features = { type = "int(11)", nullable = true, source = "hubfile_metrics.features" }
+abstract_features = { type = "int(11)", nullable = true, source = "hubfile_metrics.abstract_features" }
+concrete_features = { type = "int(11)", nullable = true, source = "hubfile_metrics.concrete_features" }
+leaf_features = { type = "int(11)", nullable = true, source = "hubfile_metrics.leaf_features" }
+compound_features = { type = "int(11)", nullable = true, source = "hubfile_metrics.compound_features" }
+top_features = { type = "int(11)", nullable = true, source = "hubfile_metrics.top_features" }
+solitary_features = { type = "int(11)", nullable = true, source = "hubfile_metrics.solitary_features" }
+grouped_features = { type = "int(11)", nullable = true, source = "hubfile_metrics.grouped_features" }
+typed_features = { type = "int(11)", nullable = true, source = "hubfile_metrics.typed_features" }
+multi_features = { type = "int(11)", nullable = true, source = "hubfile_metrics.multi_features" }
+tree_relationships = { type = "int(11)", nullable = true, source = "hubfile_metrics.tree_relationships" }
+mandatory_features = { type = "int(11)", nullable = true, source = "hubfile_metrics.mandatory_features" }
+optional_features = { type = "int(11)", nullable = true, source = "hubfile_metrics.optional_features" }
+feature_groups = { type = "int(11)", nullable = true, source = "hubfile_metrics.feature_groups" }
+alternative_groups = { type = "int(11)", nullable = true, source = "hubfile_metrics.alternative_groups" }
+or_groups = { type = "int(11)", nullable = true, source = "hubfile_metrics.or_groups" }
+mutex_groups = { type = "int(11)", nullable = true, source = "hubfile_metrics.mutex_groups" }
+cardinality_groups = { type = "int(11)", nullable = true, source = "hubfile_metrics.cardinality_groups" }
+depth_of_tree = { type = "int(11)", nullable = true, source = "hubfile_metrics.depth_of_tree" }
+mean_depth_of_tree = { type = "float", nullable = true, source = "hubfile_metrics.mean_depth_of_tree" }
+branching_factor = { type = "float", nullable = true, source = "hubfile_metrics.branching_factor" }
+min_children_per_feature = { type = "int(11)", nullable = true, source = "hubfile_metrics.min_children_per_feature" }
+max_children_per_feature = { type = "int(11)", nullable = true, source = "hubfile_metrics.max_children_per_feature" }
+avg_children_per_feature = { type = "float", nullable = true, source = "hubfile_metrics.avg_children_per_feature" }
+cross_tree_constraints = { type = "int(11)", nullable = true, source = "hubfile_metrics.cross_tree_constraints" }
+logical_constraints = { type = "int(11)", nullable = true, source = "hubfile_metrics.logical_constraints" }
+simple_constraints = { type = "int(11)", nullable = true, source = "hubfile_metrics.simple_constraints" }
+requires_constraints = { type = "int(11)", nullable = true, source = "hubfile_metrics.requires_constraints" }
+excludes_constraints = { type = "int(11)", nullable = true, source = "hubfile_metrics.excludes_constraints" }
+complex_constraints = { type = "int(11)", nullable = true, source = "hubfile_metrics.complex_constraints" }
+pseudo_complex_constraints = { type = "int(11)", nullable = true, source = "hubfile_metrics.pseudo_complex_constraints" }
+strict_complex_constraints = { type = "int(11)", nullable = true, source = "hubfile_metrics.strict_complex_constraints" }
+arithmetic_constraints = { type = "int(11)", nullable = true, source = "hubfile_metrics.arithmetic_constraints" }
+aggregation_constraints = { type = "int(11)", nullable = true, source = "hubfile_metrics.aggregation_constraints" }
+features_in_constraints = { type = "int(11)", nullable = true, source = "hubfile_metrics.features_in_constraints" }
+avg_features_per_constraint = { type = "float", nullable = true, source = "hubfile_metrics.avg_features_per_constraint" }
+avg_constraints_per_feature = { type = "float", nullable = true, source = "hubfile_metrics.avg_constraints_per_feature" }
+satisfiable = { type = "tinyint(1)", nullable = true, source = "hubfile_metrics.satisfiable" }
+core_features = { type = "int(11)", nullable = true, source = "hubfile_metrics.core_features" }
+false_optional_features = { type = "int(11)", nullable = true, source = "hubfile_metrics.false_optional_features" }
+dead_features = { type = "int(11)", nullable = true, source = "hubfile_metrics.dead_features" }
+variant_features = { type = "int(11)", nullable = true, source = "hubfile_metrics.variant_features" }
+unique_features = { type = "int(11)", nullable = true, source = "hubfile_metrics.unique_features" }
+pure_optional_features = { type = "int(11)", nullable = true, source = "hubfile_metrics.pure_optional_features" }
+configurations = { type = "double", nullable = true, source = "hubfile_metrics.configurations" }
+configurations_is_upper_bound = { type = "tinyint(1)", nullable = true, source = "hubfile_metrics.configurations_is_upper_bound" }
+total_variability = { type = "float", nullable = true, source = "hubfile_metrics.total_variability" }
+partial_variability = { type = "float", nullable = true, source = "hubfile_metrics.partial_variability" }
+homogeneity = { type = "float", nullable = true, source = "hubfile_metrics.homogeneity" }
+cfg_mean_features = { type = "float", nullable = true, source = "hubfile_metrics.cfg_mean_features" }
+cfg_stddev_features = { type = "float", nullable = true, source = "hubfile_metrics.cfg_stddev_features" }
+cfg_median_features = { type = "float", nullable = true, source = "hubfile_metrics.cfg_median_features" }
+cfg_min_features = { type = "int(11)", nullable = true, source = "hubfile_metrics.cfg_min_features" }
+cfg_max_features = { type = "int(11)", nullable = true, source = "hubfile_metrics.cfg_max_features" }
+
+[tables.dataset_rating]
+owner = "splent_feature_rating"
+role = "load"
+
+[tables.dataset_rating.columns]
+id = { type = "int(11)", nullable = false, source = "dataset_rating.id" }
+user_id = { type = "int(11)", nullable = false, source = "dataset_rating.user_id" }
+dataset_id = { type = "int(11)", nullable = false, rule = "the root of the voted dataset's lineage (DM-8)" }
+is_like = { type = "tinyint(1)", nullable = false, source = "dataset_rating.is_like" }
+created_at = { type = "datetime", nullable = false, source = "dataset_rating.created_at" }
+updated_at = { type = "datetime", nullable = false, source = "dataset_rating.updated_at" }
+
+[tables.dataset_transfer_request]
+# dataset_transfer owns the offers since dataset 0.14.0 (DL-17); E5 cancels
+# the pending ones with the reason "migration" (plan §5.7, D13 b).
+owner = "splent_feature_dataset_transfer"
+role = "load"
+
+[tables.dataset_transfer_request.columns]
+id = { type = "int(11)", nullable = false, source = "dataset_transfer_request.id" }
+dataset_id = { type = "int(11)", nullable = false, source = "dataset_transfer_request.dataset_id" }
+from_user_id = { type = "int(11)", nullable = false, source = "dataset_transfer_request.from_user_id" }
+to_user_id = { type = "int(11)", nullable = true, source = "dataset_transfer_request.to_user_id" }
+to_address = { type = "varchar(256)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "NULL: an offer of 2.12 names its account by to_user_id" }
+to_named_id = { type = "int(11)", nullable = true, rule = "NULL" }
+status = { type = "enum('PENDING','ACCEPTED','DECLINED','CANCELLED')", nullable = false, collation = "utf8mb4_unicode_ci", rule = "CANCELLED for a PENDING offer, as it was otherwise (D13 b)" }
+message = { type = "varchar(500)", nullable = true, collation = "utf8mb4_unicode_ci", source = "dataset_transfer_request.message" }
+created_at = { type = "datetime", nullable = false, source = "dataset_transfer_request.created_at" }
+resolved_at = { type = "datetime", nullable = true, rule = "T0 for an offer it cancels, as it was otherwise" }
+expires_at = { type = "datetime", nullable = true, rule = "NULL: no offer of 2.12 lapses, and none stays pending (D13 b)" }
+cancel_reason = { type = "varchar(16)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "migration for an offer E5 cancels (D13 b), NULL otherwise" }
+pending_key = { type = "varchar(64)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "NULL: no offer is pending after E5" }
+
+[tables.doi_mapping]
+# dataset's /doi routes still redirect by it; E6 loads v2.12's (C-20), and
+# imports the same aliases into legacy_urls' legacy_url.
+owner = "splent_feature_dataset"
+role = "load"
+
+[tables.doi_mapping.columns]
+id = { type = "int(11)", nullable = false, source = "doi_mapping.id" }
+dataset_doi_old = { type = "varchar(120)", nullable = true, collation = "utf8mb4_unicode_ci", source = "doi_mapping.dataset_doi_old" }
+dataset_doi_new = { type = "varchar(120)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "the end of its chain, a DOI a dataset of 3.0 has; a cycle or a dead end loads nowhere (C-20)" }
+
+[tables.usage_daily]
+# DM-5: v2.12's records by dataset or file, kind and day, as E6 aggregates
+# them in uvlhub_migration.usage_daily, which statistics shows next to its
+# own (source live).
+owner = "splent_feature_statistics"
+role = "load"
+
+[tables.usage_daily.columns]
+target_type = { type = "varchar(16)", nullable = false, collation = "utf8mb4_unicode_ci", rule = "dataset or hubfile, the table the record counted (ds_* or hubfile_*_record)" }
+target_id = { type = "int(11)", nullable = false, rule = "the record's dataset_id or file_id" }
+kind = { type = "varchar(16)", nullable = false, collation = "utf8mb4_unicode_ci", rule = "view or download, the table the record is in" }
+day = { type = "date", nullable = false, rule = "DATE of the record's view_date or download_date" }
+source = { type = "varchar(16)", nullable = false, collation = "utf8mb4_unicode_ci", rule = "legacy_v2" }
+visitors = { type = "int(11)", nullable = false, rule = "distinct accounts, else cookies, else records, that day (DM-5)" }
+records = { type = "int(11)", nullable = false, rule = "the records of that day: not the owner's, of a published dataset loaded, with a target and a date" }
+
+[tables.usage_note]
+# DM-5: the public note that says why the figures went down.
+owner = "splent_feature_statistics"
+role = "load"
+
+[tables.usage_note.columns]
+source = { type = "varchar(16)", nullable = false, collation = "utf8mb4_unicode_ci", rule = "legacy_v2" }
+note = { type = "text", nullable = false, collation = "utf8mb4_unicode_ci", rule = "the report's dm5 note" }
+until = { type = "date", nullable = true, rule = "the day before T0, the last the legacy figures count" }
+
+[tables.hubfile_alias]
+# DM-10: the old folder and name of every file E8 renames, whose
+# /hubfiles/raw/<id>/<old name> answers a 308 to the new one.
+owner = "splent_feature_hubfile"
+role = "load"
+
+[tables.hubfile_alias.columns]
+id = { type = "int(11)", nullable = false, rule = "numbered by the table, in the order of the files" }
+hubfile_id = { type = "int(11)", nullable = false, rule = "a file E8 renamed (DM-10, C-11)" }
+directory_path = { type = "varchar(255)", nullable = false, collation = "utf8mb4_bin", source = "hubfiles.directory_path" }
+name = { type = "varchar(120)", nullable = false, collation = "utf8mb4_bin", source = "hubfiles.name", rule = "the name v2.12 gave it, before ~<id>" }
+created_at = { type = "datetime", nullable = false, rule = "T0" }
+
+[tables.legacy_url]
+# CO-2: the addresses of v2.12 that answer somewhere else now, through
+# splent feature:legacy_urls import (E6).
+owner = "splent_feature_legacy_urls"
+role = "load"
+
+[tables.legacy_url.columns]
+id = { type = "int(11)", nullable = false, rule = "numbered by the import" }
+path = { type = "varchar(512)", nullable = false, collation = "utf8mb4_bin", rule = "/doi/<dataset_doi_old>/ of a doi_mapping that loads (C-20)" }
+target = { type = "varchar(1024)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "/doi/<the end of its chain>/" }
+status = { type = "smallint(6)", nullable = false, rule = "308" }
+ref = { type = "varchar(255)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "doi_mapping:<id>" }
+created_at = { type = "datetime", nullable = false, rule = "T0" }
+updated_at = { type = "datetime", nullable = false, rule = "T0" }
+
+[tables.mail_outbox]
+# D13 b, 5.5: the notices of the move, held until RB-2 ends (E6). E0 reads
+# it too: a mail sent means 3.0 has opened.
+owner = "splent_feature_mail"
+role = "load"
+
+[tables.mail_outbox.columns]
+id = { type = "bigint(20)", nullable = false, rule = "numbered from 1 in the order of the notices" }
+recipients = { type = "text", nullable = false, collation = "utf8mb4_unicode_ci", source = "user.email", rule = "the address of the account the notice is for", on_null = "no notice: an account without an address gets none, and the ledger notes it" }
+sender = { type = "varchar(320)", nullable = false, collation = "utf8mb4_unicode_ci", rule = "MAIL_FROM" }
+reply_to = { type = "varchar(320)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "NULL" }
+subject = { type = "varchar(998)", nullable = false, collation = "utf8mb4_unicode_ci", rule = "the notice's, legacy.py" }
+body_text = { type = "mediumtext", nullable = false, collation = "utf8mb4_unicode_ci", rule = "the notice, in English and Spanish, with no link (MIG-09)" }
+body_html = { type = "mediumtext", nullable = true, collation = "utf8mb4_unicode_ci", rule = "NULL" }
+retryable = { type = "tinyint(1)", nullable = false, rule = "1: no link, kept whole" }
+state = { type = "varchar(16)", nullable = false, collation = "utf8mb4_unicode_ci", rule = "held" }
+attempts = { type = "int(11)", nullable = false, rule = "0" }
+last_error = { type = "varchar(500)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "NULL" }
+hold_tag = { type = "varchar(64)", nullable = true, collation = "utf8mb4_unicode_ci", rule = "--hold-tag, rb2" }
+created_at = { type = "datetime", nullable = false, rule = "T0" }
+last_attempt_at = { type = "datetime", nullable = true, rule = "NULL" }
+sent_at = { type = "datetime", nullable = true, rule = "NULL" }
+
+[tables.splent_migrations]
+# What db:upgrade applied (V-12).
+owner = "splent_framework"
+role = "read"
+
+[tables.splent_migrations.columns]
+feature = { type = "varchar(255)", nullable = false, collation = "utf8mb4_unicode_ci" }
+last_migration = { type = "varchar(255)", nullable = true, collation = "utf8mb4_unicode_ci" }
+
+# Left empty: what 3.0 makes once it runs. The usage records of v2.12 are
+# aggregated by E6 into usage_daily above (DM-5), and v2.12's counters are
+# in the report (DC-7).
+[tables.api_token_resource]
+# The datasets a token is limited to (AP-4); a v2.12 key is limited to none.
+owner = "splent_feature_apikeys"
+role = "empty"
+
+[tables.audit_event]
+owner = "splent_feature_audit"
+role = "empty"
+
+[tables.auth_throttle_failure]
+owner = "splent_feature_auth"
+role = "empty"
+
+[tables.auth_token]
+owner = "splent_feature_auth"
+role = "empty"
+
+[tables.curation_request]
+owner = "splent_feature_curation"
+role = "empty"
+
+[tables.dataset_idempotency_key]
+owner = "splent_feature_dataset"
+role = "empty"
+
+[tables.dataset_orcid_check]
+# A cache of what orcid.org said of each iD credited, filled as 3.0 runs.
+owner = "splent_feature_dataset"
+role = "empty"
+
+[tables.ds_download_record]
+owner = "splent_feature_dataset"
+role = "empty"
+
+[tables.ds_view_record]
+owner = "splent_feature_dataset"
+role = "empty"
+
+[tables.hubfile_download_record]
+owner = "splent_feature_hubfile"
+role = "empty"
+
+[tables.hubfile_view_record]
+owner = "splent_feature_hubfile"
+role = "empty"
+
+[tables.hubfile_factlabel]
+# factlabel generate fills it in E9 (DM-6).
+owner = "splent_feature_factlabel"
+role = "derived"
+
+[tables.media_item]
+owner = "splent_feature_media"
+role = "empty"
+
+[tables.reset_token]
+owner = "splent_feature_reset"
+role = "empty"
+
+[tables.role]
+owner = "splent_feature_team"
+role = "empty"
+
+[tables.setting]
+owner = "splent_feature_settings"
+role = "empty"
+
+[tables.staged_file]
+owner = "splent_feature_hubfile"
+role = "empty"
+
+[tables.usage_event]
+# The visits of 3.0, a visitor a day, which E6's aggregates do not come
+# from.
+owner = "splent_feature_statistics"
+role = "empty"
+
+[tables.usage_salt]
+owner = "splent_feature_statistics"
+role = "empty"
+
+[tables.citation_reference]
+# The hub's "Cite us", which citation loads from the product's
+# citation_references.toml as 3.0 runs.
+owner = "splent_feature_citation"
+role = "empty"
+
+[tables.team_member]
+owner = "splent_feature_team"
+role = "empty"
+
+[tables.team_member_role]
+owner = "splent_feature_team"
+role = "empty"
+
+[tables.upload_session]
+owner = "splent_feature_hubfile"
+role = "empty"
