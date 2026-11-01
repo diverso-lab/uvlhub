@@ -37,7 +37,7 @@ x-required:
   BACKUP_HOST_DIR: ${BACKUP_HOST_DIR:?BACKUP_HOST_DIR is required, set it in .env}
 services:
   uvlhub_splent_web_deploy:
-    image: ${SPLENT_IMAGE:-uvlhub_splent:0.0.1}
+    image: ${SPLENT_IMAGE:-uvlhub_splent:3.0.0}
     container_name: uvlhub_splent_web_deploy
     restart: unless-stopped
     env_file:
@@ -45,9 +45,11 @@ services:
     environment:
       PROTECTED_UPLOADS_DIR: ${PROTECTED_UPLOADS_DIR:-/workspace/uvlhub_splent/protected_uploads}
       ARCHIVE_DIR: ${ARCHIVE_DIR:-/workspace/uvlhub_splent/archive}
+      SPLENT_STORAGE_DIR: ${SPLENT_STORAGE_DIR:-/workspace/uvlhub_splent/storage}
     ports:
     - ${SPLENT_WEB_BIND_HOST:-0.0.0.0}:${SPLENT_WEB_PORT:-5012}:5000
     volumes:
+    - uvlhub_splent_web_deploy_storage:${SPLENT_STORAGE_DIR:-/workspace/uvlhub_splent/storage}
     - uvlhub_splent_web_deploy_uploads:/workspace/uvlhub_splent/src/uvlhub_splent/static/uploads
     - uvlhub_splent_web_deploy_protected_uploads:${PROTECTED_UPLOADS_DIR:-/workspace/uvlhub_splent/protected_uploads}
     - uvlhub_splent_web_deploy_archive:${ARCHIVE_DIR:-/workspace/uvlhub_splent/archive}
@@ -211,6 +213,7 @@ services:
     image: splent/splent_feature_autodeploy:latest
 volumes:
   uvlhub_splent_db_deploy_data: null
+  uvlhub_splent_web_deploy_storage: null
   uvlhub_splent_web_deploy_uploads: null
   uvlhub_splent_web_deploy_protected_uploads: null
   uvlhub_splent_web_deploy_archive: null
