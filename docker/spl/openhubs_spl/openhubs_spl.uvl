@@ -10,12 +10,15 @@
 //     in a product with apikeys and without dataset_api, for one minor.
 //   - explore and statistics name no artifact type and no rating (H8): uvl, factlabel and rating fill their
 //     registries of facets, orders and dashboard slots when the product has them, so neither requires them.
-//   - explore searches the database when the product has no elasticsearch (explore 0.7.0), so a light hub runs
-//     no search node and explore no longer requires it. search, the catalog's, still does.
+//   - explore is the page of the search: the search feature browses the public sources dataset and hubfile
+//     register, with elasticsearch or, on a light hub, in memory (search 0.5.0, explore 0.10.0). So explore
+//     requires search and no longer dataset or hubfile, and search no longer requires elasticsearch.
 //   - citation (H9) cites and describes dataset's records: optional, and nothing requires it.
 //   - hub_shell (H12) is the shell every hub shares, extracted from the products' own layouts: the application and
 //     public layouts, the sidebar from the menu registry, the header, the footer and the error pages, on theme's
 //     site object and tokens. It is mandatory: a hub is drawn in it, and a product names its brand in parameters.
+//   - icons brings the icon sets the framework's icon() draws, from npm (Lucide, simple-icons). Mandatory: the
+//     shell and the features draw their icons with it.
 // The children of the concrete parents (profile, identities, captcha) import their parent. Their constraints
 // repeat what the tree says because the load order and the import check read the constraints alone.
 // A node with a param attribute and no package stands for a value of a feature's parameter (uvl = true in its
@@ -46,6 +49,7 @@ features
 					settings {org 'splent-io', package 'splent_feature_settings'}
 					public {org 'splent-io', package 'splent_feature_public'}
 					hub_shell {org 'splent-io', package 'splent_feature_hub_shell'}
+					icons {org 'splent-io', package 'splent_feature_icons'}
 					session
 						alternative
 							session_filesystem {org 'splent-io', package 'splent_feature_session_filesystem'}
@@ -150,6 +154,7 @@ constraints
 	// The shell draws theme's site object and tokens, and the account signed in, so it loads after both.
 	hub_shell => theme
 	hub_shell => auth
+	hub_shell => icons
 	session_redis => redis
 	admin => auth
 	autodeploy => admin
@@ -221,9 +226,7 @@ constraints
 	dataset_transfer => mail
 	rating => auth
 	rating => dataset
-	explore => dataset
-	explore => hubfile
-	search => elasticsearch
+	explore => search
 	statistics => dataset
 	// citation describes dataset's records and fills the slots of its dataset page, so it loads after it.
 	citation => dataset
