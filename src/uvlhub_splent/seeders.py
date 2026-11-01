@@ -67,7 +67,7 @@ APPEARANCE = {
 MEMBERS = [
     {
         "name": "David Romero-Organvidez",
-        "position": "PhD Student / Project leader",
+        "position": "PhD / Project leader",
         "email": "drorganvidez@us.es",
         "organisation": "University of Seville, Spain",
         "photo": "team/david_romero_organvidez.jpg",
