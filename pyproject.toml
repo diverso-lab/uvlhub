@@ -80,6 +80,10 @@ spl = "openhubs_spl"
 channels = ["forge", "docker"]
 registries = ["forge"]
 
+[tool.splent.release.source_mirror]
+url = "https://github.com/diverso-lab/uvlhub"
+branches = ["main", "develop"]
+
 [tool.splent.spl_model]
 mirror = "uvlhub.io"
 doi = "10.5281/zenodo.23859989"
@@ -151,7 +155,7 @@ env = ["MIGRATION_V2_TEST_*"]
 
 [tool.splent.runtime]
 splent_framework = "1.30.0"
-splent_cli = "1.50.1"
+splent_cli = "1.51.0"
 gunicorn = ">=23,<24"
 
 [tool.setuptools.package-dir]
