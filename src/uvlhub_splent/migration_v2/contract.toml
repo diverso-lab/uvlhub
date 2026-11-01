@@ -50,7 +50,7 @@ splent_feature_auth = { version = "1.28.0", head = "auth0009_email_collation" }
 splent_feature_citation = { version = "0.3.1", head = "citation0001_references" }
 splent_feature_confirmemail = { version = "2.4.0", head = "confirmemail0002_drop_scaffold" }
 splent_feature_curation = { version = "0.2.0", head = "curation0001_requests" }
-splent_feature_dataset = { version = "0.16.2", head = "dataset0012_pid_exact" }
+splent_feature_dataset = { version = "0.16.3", head = "dataset0012_pid_exact" }
 splent_feature_dataset_transfer = { version = "0.2.0", head = "dataset_transfer0002_offer_rules" }
 splent_feature_factlabel = { version = "0.8.1", head = "d934ec20c841" }
 splent_feature_github = { version = "0.5.0", head = "github0002_into_ext_identity" }
