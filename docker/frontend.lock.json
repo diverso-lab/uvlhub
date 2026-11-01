@@ -9,9 +9,9 @@
     "splent_feature_apidocs": {
       "namespace": "splent_io",
       "distribution": "splent_feature_apidocs",
-      "version": "0.4.0",
+      "version": "0.5.0",
       "entries": [],
-      "manifest_sha256": "31aa7ab35293dee26b31c9f0391c32af04b41b9448a46807ec034464f3f5db0c",
+      "manifest_sha256": "a38f2f01ee6dfed9d0373378d0f7bd318acac55d910d6ff47ca3bc01e45a129b",
       "bundled": {
         "swagger-ui-dist": "5.17.14 Apache-2.0"
       },
@@ -22,14 +22,15 @@
     "splent_feature_dataset": {
       "namespace": "splent_io",
       "distribution": "splent_feature_dataset",
-      "version": "0.15.0",
+      "version": "0.16.1",
       "entries": [
         "dataset",
         "landing",
         "my_datasets"
       ],
-      "manifest_sha256": "0a19772f5976f1e2ff8a113338ecbb33f678f8b940ff12b74325aeda9d31e442",
+      "manifest_sha256": "826b392318a8ba3f810316161d2dfacbd7ec2c7ba189fd057eca38cf5b99404d",
       "bundled": {
+        "@github/markdown-toolbar-element": "2.2.3 MIT",
         "@yaireo/tagify": "4.38.0 MIT",
         "mustache": "4.2.0 MIT",
         "sortablejs": "1.15.6 MIT",
@@ -39,7 +40,7 @@
         "bootstrap": {
           "range": "^5.2.0",
           "provider": "hub_shell",
-          "version": "5.2.0"
+          "version": "5.3.8"
         }
       },
       "shell": {
@@ -50,11 +51,11 @@
     "splent_feature_explore": {
       "namespace": "splent_io",
       "distribution": "splent_feature_explore",
-      "version": "0.9.0",
+      "version": "0.10.0",
       "entries": [
         "explore"
       ],
-      "manifest_sha256": "20f402541e971acba326df806fb769cf0b16562acea2f87bc252d62ee67da7e7",
+      "manifest_sha256": "876a071d05e961ced12bf0b3321d941cccbb0ecc41e1e88d9ed5ab284beec1be",
       "bundled": {
         "mustache": "4.2.0 MIT",
         "webpack": "5.112.2 MIT"
@@ -63,7 +64,7 @@
         "bootstrap": {
           "range": "^5.2.0",
           "provider": "hub_shell",
-          "version": "5.2.0"
+          "version": "5.3.8"
         }
       },
       "shell": {
@@ -75,11 +76,11 @@
     "splent_feature_factlabel": {
       "namespace": "splent_io",
       "distribution": "splent_feature_factlabel",
-      "version": "0.7.0",
+      "version": "0.8.1",
       "entries": [
         "factlabel"
       ],
-      "manifest_sha256": "e87317491c8956450d104ae68499f8a08d654889aff7c0947167554c9fe99e30",
+      "manifest_sha256": "df869e379b1db16ce1394cc5eac994ccd8f05f295e742fc603d187e4f10bf066",
       "bundled": {
         "@fontsource/libre-franklin": "5.3.0 OFL-1.1",
         "d3": "7.9.0 ISC",
@@ -101,7 +102,7 @@
         "bootstrap": {
           "range": "^5.2.0",
           "provider": "hub_shell",
-          "version": "5.2.0"
+          "version": "5.3.8"
         }
       },
       "shell": {
@@ -113,7 +114,7 @@
     "splent_feature_generator": {
       "namespace": "splent_io",
       "distribution": "splent_feature_generator",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "entries": [
         "generator",
         "llm_page",
@@ -122,7 +123,7 @@
         "wizard",
         "wizard_spa"
       ],
-      "manifest_sha256": "91af385676565634f424afc3183fef7fba905cfb90ed7ff1a2afbdab7deaf3e5",
+      "manifest_sha256": "78d1d79257f0761f3aeee85955e38157f4aa81183d13305c1199b144eedacbfc",
       "bundled": {
         "@mlc-ai/web-llm": "0.2.86 Apache-2.0",
         "codemirror": "5.65.16 MIT",
@@ -143,18 +144,15 @@
     "splent_feature_hub_shell": {
       "namespace": "splent_io",
       "distribution": "splent_feature_hub_shell",
-      "version": "0.1.1",
+      "version": "0.2.0",
       "entries": [
         "hub_shell",
         "hub_shell_error"
       ],
-      "manifest_sha256": "9d89bbc5df1b786984874f776b943e7d855c759d2c61bd39cb48dbed5fe0bc07",
+      "manifest_sha256": "b9a7bdaf06ba7ad222b7c52ec577c4a60db02a95fc8e732e83d7d8bec5d1736c",
       "bundled": {
-        "@adminkit/core": "3.3.0 MIT",
-        "@phosphor-icons/core": "2.1.1 MIT",
         "@popperjs/core": "2.11.8 MIT",
-        "bootstrap": "5.2.0 MIT",
-        "feather-icons": "4.29.0 MIT",
+        "bootstrap": "5.3.8 MIT",
         "inter-ui": "4.1.1 OFL-1.1",
         "webpack": "5.112.2 MIT"
       },
@@ -165,12 +163,12 @@
     "splent_feature_hubfile": {
       "namespace": "splent_io",
       "distribution": "splent_feature_hubfile",
-      "version": "0.12.0",
+      "version": "0.13.0",
       "entries": [
         "hubfile",
         "workbench"
       ],
-      "manifest_sha256": "2596a837a6f4cce85f2719030e663df7f86affdfac986d5c13e5cb6c419f6252",
+      "manifest_sha256": "0894f980c869f9297c5ee3b8b9bfb3274bd770a82bcd6b1bb83306302e06c50a",
       "bundled": {
         "codemirror": "5.65.16 MIT",
         "dropzone": "5.9.3 MIT",
@@ -184,14 +182,31 @@
       },
       "consumes": {}
     },
+    "splent_feature_icons": {
+      "namespace": "splent_io",
+      "distribution": "splent_feature_icons",
+      "version": "0.1.0",
+      "entries": [
+        "icons"
+      ],
+      "manifest_sha256": "256862469b5668238f6c46765a6f2feca95adf28afe05fe8031950693ca04a7a",
+      "bundled": {
+        "lucide-static": "1.65.0 ISC",
+        "simple-icons": "16.36.0 CC0-1.0",
+        "webpack": "5.112.2 MIT"
+      },
+      "peers": {},
+      "shell": {},
+      "consumes": {}
+    },
     "splent_feature_media": {
       "namespace": "splent_io",
       "distribution": "splent_feature_media",
-      "version": "0.12.0",
+      "version": "0.13.0",
       "entries": [
         "cropper"
       ],
-      "manifest_sha256": "6c042f1619cd6cfa91c53893cfc5aceb87d7e768dd2bacf80e0eb7a6793833f1",
+      "manifest_sha256": "8fdb0d68f5105ef19c1c70d8ab5b116a2fad77e24eb095f1ada1d7df1d40e323",
       "bundled": {
         "cropperjs": "1.6.2 MIT",
         "webpack": "5.112.2 MIT"
@@ -205,11 +220,11 @@
     "splent_feature_rating": {
       "namespace": "splent_io",
       "distribution": "splent_feature_rating",
-      "version": "0.6.0",
+      "version": "0.7.0",
       "entries": [
         "rating"
       ],
-      "manifest_sha256": "0e8fbbed415579d851e0b2d8755f7034064273c8d570f62833596d845e97b635",
+      "manifest_sha256": "03fe8a0d50fac23f71fb9337a82b0b866c5ecbad26abb48b978cc534bf2f9492",
       "bundled": {
         "webpack": "5.112.2 MIT"
       },
@@ -217,7 +232,7 @@
         "bootstrap": {
           "range": "^5.2.0",
           "provider": "hub_shell",
-          "version": "5.2.0"
+          "version": "5.3.8"
         }
       },
       "shell": {
@@ -229,11 +244,11 @@
     "splent_feature_statistics": {
       "namespace": "splent_io",
       "distribution": "splent_feature_statistics",
-      "version": "0.6.0",
+      "version": "0.7.0",
       "entries": [
         "statistics"
       ],
-      "manifest_sha256": "2b0c5cb8203ac27362425003ba9f53c19d30af7a12c02be1cad638320f011d84",
+      "manifest_sha256": "3fe965c45a0a3ff3287b502db6a9bde4c4dc2b02ab035c8a7619f07e73594e85",
       "bundled": {
         "@kurkle/color": "0.3.4 MIT",
         "chart.js": "4.5.1 MIT",
@@ -246,7 +261,7 @@
     "splent_feature_theme": {
       "namespace": "splent_io",
       "distribution": "splent_feature_theme",
-      "version": "0.16.0",
+      "version": "0.17.0",
       "entries": [
         "fonts"
       ],
@@ -262,11 +277,11 @@
     "splent_feature_uvl": {
       "namespace": "splent_io",
       "distribution": "splent_feature_uvl",
-      "version": "0.5.0",
+      "version": "0.6.0",
       "entries": [
         "uvl"
       ],
-      "manifest_sha256": "7e8f49f35c6ffc9c8bdd2c157ba2224e4553280cd878c07b4f31b4c0b80e1f13",
+      "manifest_sha256": "757630ca7605f3423148fb8b25c8698dc13fc3a30599798fcff2d8e46cdf5049",
       "bundled": {
         "antlr4": "4.13.2 BSD-3-Clause",
         "uvl-parser": "0.5.0 UNKNOWN",

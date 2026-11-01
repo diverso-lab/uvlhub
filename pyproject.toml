@@ -151,7 +151,7 @@ env = ["MIGRATION_V2_TEST_*"]
 
 [tool.splent.runtime]
 splent_framework = "1.30.0"
-splent_cli = "1.50.0"
+splent_cli = "1.50.1"
 gunicorn = ">=23,<24"
 
 [tool.setuptools.package-dir]
