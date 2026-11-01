@@ -342,6 +342,15 @@ signs nothing. uvlhub turns it on from its first start
 there is nothing signed before the cutover to keep, since the key rotates
 anyway. The migrator signs nothing either way.
 
+## After the run: the product's own content
+
+The migrator leaves `role`, `team_member`, `citation_reference`, `setting` and
+`media_item` empty, and `splent db:seed` refuses production because it brings
+the demo data. So once 3.0 is up, load uvlhub's own content by itself: in the
+web container, as the app's user, `UvlhubTeamSeeder().run()` and
+`UvlhubAppearanceSeeder().run()` from `uvlhub_splent.seeders` in an app context,
+then `splent feature:citation references-load` and `splent feature:dataset dump`.
+
 ## The data contract
 
 `src/uvlhub_splent/migration_v2/contract.toml` (MIG-03) holds the heads of

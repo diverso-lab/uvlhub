@@ -287,6 +287,7 @@ app runs as:
 */15 * * * * docker exec -u splent uvlhub_splent_web_deploy splent feature:mail retry
 20 4 * * *   docker exec -u splent uvlhub_splent_web_deploy splent feature:mail purge
 0 * * * *    docker exec -u splent uvlhub_splent_web_deploy splent feature:hubfile uploads-cleanup
+30 * * * *   docker exec -u splent uvlhub_splent_web_deploy splent feature:dataset dump
 40 3 * * *   docker exec -u splent uvlhub_splent_web_deploy splent feature:apikeys notify-expiring
 50 3 * * 0   docker exec -u splent uvlhub_splent_web_deploy splent feature:apikeys purge
 30 4 * * *   docker exec -u splent uvlhub_splent_web_deploy splent feature:audit purge
@@ -304,6 +305,8 @@ app runs as:
 - `mail retry` sends again what lost its retries, `mail purge` drops what
   is older than `MAIL_OUTBOX_KEEP_DAYS`.
 - `uploads-cleanup` removes the uploads that expired with their files.
+- `dataset dump` builds the ZIP of every public dataset, which Download all
+  sends, and brings it up to date when a publication's own update was lost.
 - `notify-expiring` mails the owners of the tokens about to expire, and
   `apikeys purge` deletes the ones revoked or expired long ago.
 - `audit purge` deletes the audit events older than
