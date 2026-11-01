@@ -37,7 +37,7 @@ x-required:
   BACKUP_HOST_DIR: ${BACKUP_HOST_DIR:?BACKUP_HOST_DIR is required, set it in .env}
 services:
   uvlhub_splent_web_deploy:
-    image: ${SPLENT_IMAGE:-uvlhub_splent:3.0.0}
+    image: ${SPLENT_IMAGE:-git.splent.io/splent-io/uvlhub_splent:stable}
     container_name: uvlhub_splent_web_deploy
     restart: unless-stopped
     env_file:
@@ -74,11 +74,6 @@ services:
       timeout: 5s
       retries: 3
       start_period: 180s
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile.uvlhub_splent.prod
-      args:
-        SPLENT_FORGE_HOST: git.splent.io
   uvlhub_splent_db_deploy:
     image: mariadb:11.4
     container_name: uvlhub_splent_db_deploy

@@ -40,9 +40,13 @@ example the output of `openssl rand -hex 32`. Choose the database
 passwords before the first start, because the database keeps the
 ones it starts with.
 
-The web image is built from this repository on the first
-`docker compose up`. The framework, the CLI and every feature are
-installed from PyPI, at the versions the repository pins.
+The web service runs `git.splent.io/splent-io/uvlhub_splent:stable`, the image the product's releases
+publish. `SPLENT_IMAGE` in `.env` names another one. To build the
+image from this repository instead, run
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+```
 
 Every other setting in `.env` has a working default. The optional ones
 at the end are commented out, each with what it does.
@@ -51,7 +55,8 @@ To upgrade, run these from this directory.
 
 ```bash
 git pull
-docker compose up -d --build
+docker compose pull
+docker compose up -d
 ```
 
 The database and the uploaded files live on named volumes, so they
