@@ -92,4 +92,4 @@ tzdata==2026.6
 urllib3==2.8.0
 uvlparser==2.5.0
 Werkzeug==3.1.9
-WTForms==3.3.1
+WTForms==3.3.2

@@ -2226,7 +2226,7 @@
       }
     },
     "splent_feature_dataset": {
-      "entry": "splent_io/splent_feature_dataset@v0.16.2",
+      "entry": "splent_io/splent_feature_dataset@v0.16.3",
       "extensible": {
         "services": [
           "AuthorService",
@@ -2247,7 +2247,8 @@
           "dataset/view_dataset.html",
           "hooks/dataset_layout_scripts.html",
           "hooks/explore_download_all.html",
-          "hooks/home_datasets.html"
+          "hooks/home_datasets.html",
+          "hooks/navbar_download_all.html"
         ],
         "models": [
           "Author",
@@ -2275,6 +2276,7 @@
           "explore.aside",
           "home.section",
           "layout.head.css",
+          "layout.navbar.items",
           "layout.scripts"
         ],
         "routes": true
