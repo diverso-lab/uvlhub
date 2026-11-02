@@ -2619,7 +2619,7 @@
       }
     },
     "splent_feature_search": {
-      "entry": "splent_io/splent_feature_search@v0.5.0",
+      "entry": "splent_io/splent_feature_search@v0.5.1",
       "extensible": {
         "services": [
           "SearchService"
@@ -2633,6 +2633,14 @@
           "layout.nav"
         ],
         "routes": true
+      },
+      "config_schema": {
+        "SEARCH_PAGE": {
+          "type": "bool",
+          "bind": "derivation",
+          "default": true,
+          "help": "Whether the feature serves its own search page and box. Off when another feature draws the search, as explore does in a hub."
+        }
       }
     }
   }
