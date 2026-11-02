@@ -93,6 +93,7 @@ file = "openhubs_spl.uvl"
 
 [tool.splent.config]
 SITE_NAME = "uvlhub"
+SEARCH_PAGE = "false"
 SITE_TAGLINE = "Repository of feature models in UVL format integrated with Zenodo and FlamaPy"
 SITE_LOGO = "media/logos/default-dark.svg"
 HUB_SHELL_LOGO_COMPACT = "media/logos/uvlhub_ball.png"
