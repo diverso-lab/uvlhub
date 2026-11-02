@@ -90,7 +90,7 @@ jobs:
       # feature: a critical one fails here and names the features to release
       # again. The SBOM of all the bundles is kept with the run.
       - name: Audit what the features' bundles ship
-        run: splent product:frontend:audit --sbom frontend.sbom.cdx.json
+        run: splent product:frontend-audit --sbom frontend.sbom.cdx.json
 
       - name: Keep the SBOM of the bundles
         if: always()
