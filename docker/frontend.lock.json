@@ -22,7 +22,7 @@
     "splent_feature_dataset": {
       "namespace": "splent_io",
       "distribution": "splent_feature_dataset",
-      "version": "0.16.4",
+      "version": "0.17.0",
       "entries": [
         "dataset",
         "landing",
@@ -51,7 +51,7 @@
     "splent_feature_explore": {
       "namespace": "splent_io",
       "distribution": "splent_feature_explore",
-      "version": "0.10.0",
+      "version": "0.11.0",
       "entries": [
         "explore"
       ],
@@ -76,7 +76,7 @@
     "splent_feature_factlabel": {
       "namespace": "splent_io",
       "distribution": "splent_feature_factlabel",
-      "version": "0.8.2",
+      "version": "0.8.3",
       "entries": [
         "factlabel"
       ],
@@ -144,12 +144,12 @@
     "splent_feature_hub_shell": {
       "namespace": "splent_io",
       "distribution": "splent_feature_hub_shell",
-      "version": "0.2.1",
+      "version": "0.2.2",
       "entries": [
         "hub_shell",
         "hub_shell_error"
       ],
-      "manifest_sha256": "d1b3234fc1ae581a0b0fb20f8ccf25f7f471598e389ce3ac07c4c66109e2dd25",
+      "manifest_sha256": "452d07798a998d2f036b5f168fccfc69a666b837e1942d623ccfa0d3cd5f53b4",
       "bundled": {
         "@popperjs/core": "2.11.8 MIT",
         "bootstrap": "5.3.8 MIT",
@@ -163,7 +163,7 @@
     "splent_feature_hubfile": {
       "namespace": "splent_io",
       "distribution": "splent_feature_hubfile",
-      "version": "0.13.0",
+      "version": "0.13.1",
       "entries": [
         "hubfile",
         "workbench"
@@ -220,7 +220,7 @@
     "splent_feature_rating": {
       "namespace": "splent_io",
       "distribution": "splent_feature_rating",
-      "version": "0.7.0",
+      "version": "0.7.1",
       "entries": [
         "rating"
       ],
@@ -244,7 +244,7 @@
     "splent_feature_statistics": {
       "namespace": "splent_io",
       "distribution": "splent_feature_statistics",
-      "version": "0.7.1",
+      "version": "0.7.2",
       "entries": [
         "statistics"
       ],

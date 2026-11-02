@@ -372,7 +372,7 @@
       }
     },
     "splent_feature_hub_shell": {
-      "entry": "splent_io/splent_feature_hub_shell@v0.2.1",
+      "entry": "splent_io/splent_feature_hub_shell@v0.2.2",
       "extensible": {
         "services": [],
         "templates": [
@@ -629,7 +629,7 @@
       }
     },
     "splent_feature_apikeys": {
-      "entry": "splent_io/splent_feature_apikeys@v0.11.0",
+      "entry": "splent_io/splent_feature_apikeys@v0.12.0",
       "extensible": {
         "services": [
           "ApiTokenService"
@@ -637,6 +637,7 @@
         "templates": [
           "apikeys/admin.html",
           "apikeys/created.html",
+          "apikeys/identity_required.html",
           "apikeys/index.html",
           "apikeys/macros.html",
           "apikeys/new.html",
@@ -684,6 +685,12 @@
           ],
           "help": "Days before a token expires its owner is mailed, once per threshold. Empty mails nothing.",
           "items": "int"
+        },
+        "APIKEYS_REQUIRED_IDENTITY": {
+          "type": "str",
+          "bind": "derivation",
+          "default": "",
+          "help": "The sign-in provider an account has to have linked to create a token, such as orcid. Empty lets any account."
         },
         "APIKEYS_MAX_ACTIVE_TOKENS": {
           "type": "int",
@@ -1257,7 +1264,7 @@
       }
     },
     "splent_feature_rating": {
-      "entry": "splent_io/splent_feature_rating@v0.7.0",
+      "entry": "splent_io/splent_feature_rating@v0.7.1",
       "extensible": {
         "services": [
           "RatingService"
@@ -1295,7 +1302,7 @@
       }
     },
     "splent_feature_explore": {
-      "entry": "splent_io/splent_feature_explore@v0.10.0",
+      "entry": "splent_io/splent_feature_explore@v0.11.0",
       "extensible": {
         "services": [
           "ExploreService",
@@ -1328,7 +1335,7 @@
       }
     },
     "splent_feature_factlabel": {
-      "entry": "splent_io/splent_feature_factlabel@v0.8.2",
+      "entry": "splent_io/splent_feature_factlabel@v0.8.3",
       "extensible": {
         "services": [
           "FactlabelService"
@@ -1371,7 +1378,7 @@
       }
     },
     "splent_feature_statistics": {
-      "entry": "splent_io/splent_feature_statistics@v0.7.1",
+      "entry": "splent_io/splent_feature_statistics@v0.7.2",
       "extensible": {
         "services": [
           "DashboardService"
@@ -1393,7 +1400,7 @@
       }
     },
     "splent_feature_citation": {
-      "entry": "splent_io/splent_feature_citation@v0.3.1",
+      "entry": "splent_io/splent_feature_citation@v0.3.2",
       "extensible": {
         "services": [
           "CitationService"
@@ -2093,7 +2100,7 @@
       }
     },
     "splent_feature_hubfile": {
-      "entry": "splent_io/splent_feature_hubfile@v0.13.0",
+      "entry": "splent_io/splent_feature_hubfile@v0.13.1",
       "extensible": {
         "services": [
           "HubfileDownloadRecordService",
@@ -2226,7 +2233,7 @@
       }
     },
     "splent_feature_dataset": {
-      "entry": "splent_io/splent_feature_dataset@v0.16.4",
+      "entry": "splent_io/splent_feature_dataset@v0.17.0",
       "extensible": {
         "services": [
           "AuthorService",
@@ -2556,7 +2563,7 @@
       }
     },
     "splent_feature_dataset_api": {
-      "entry": "splent_io/splent_feature_dataset_api@v0.5.1",
+      "entry": "splent_io/splent_feature_dataset_api@v0.5.2",
       "extensible": {
         "services": [],
         "templates": [],
