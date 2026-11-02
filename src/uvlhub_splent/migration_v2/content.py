@@ -736,6 +736,7 @@ def build_tombstones(ctx, metas, datasets_of_meta, datasets, snapshots, dois):
             "withdrawal_reason": TOMBSTONE_REASON,
             "withdrawal_note": TOMBSTONE_NOTE,
             "withdrawn_by_id": None,
+            "hidden_at": None,
             "provider": LEGACY_PROVIDER,
             "pid": doi,
             "pid_scheme": DOI_SCHEME,
@@ -1049,6 +1050,7 @@ def content(ctx) -> None:
                 "withdrawal_reason": None,
                 "withdrawal_note": None,
                 "withdrawn_by_id": None,
+                "hidden_at": None,
                 "provider": (
                     LEGACY_PROVIDER
                     if doi or meta["deposition_id"] is not None
