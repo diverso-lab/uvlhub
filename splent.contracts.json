@@ -179,7 +179,7 @@
       }
     },
     "splent_feature_admin": {
-      "entry": "splent_io/splent_feature_admin@v1.10.1",
+      "entry": "splent_io/splent_feature_admin@v1.10.2",
       "extensible": {
         "services": [
           "AdminService"
@@ -372,7 +372,7 @@
       }
     },
     "splent_feature_hub_shell": {
-      "entry": "splent_io/splent_feature_hub_shell@v0.2.2",
+      "entry": "splent_io/splent_feature_hub_shell@v0.2.3",
       "extensible": {
         "services": [],
         "templates": [
@@ -437,7 +437,7 @@
       }
     },
     "splent_feature_orcid": {
-      "entry": "splent_io/splent_feature_orcid@v0.5.0",
+      "entry": "splent_io/splent_feature_orcid@v0.5.1",
       "refinement": {
         "refines": "splent_feature_profile",
         "extends": {
@@ -494,7 +494,7 @@
       }
     },
     "splent_feature_github": {
-      "entry": "splent_io/splent_feature_github@v0.5.0",
+      "entry": "splent_io/splent_feature_github@v0.5.1",
       "extensible": {
         "services": [],
         "templates": [
@@ -629,7 +629,7 @@
       }
     },
     "splent_feature_apikeys": {
-      "entry": "splent_io/splent_feature_apikeys@v0.12.0",
+      "entry": "splent_io/splent_feature_apikeys@v0.12.1",
       "extensible": {
         "services": [
           "ApiTokenService"
@@ -1480,7 +1480,7 @@
       }
     },
     "splent_feature_media": {
-      "entry": "splent_io/splent_feature_media@v0.13.0",
+      "entry": "splent_io/splent_feature_media@v0.13.1",
       "extensible": {
         "services": [
           "MediaService"
@@ -1574,7 +1574,7 @@
       }
     },
     "splent_feature_team": {
-      "entry": "splent_io/splent_feature_team@v0.10.0",
+      "entry": "splent_io/splent_feature_team@v0.10.1",
       "extensible": {
         "services": [
           "TeamService"
@@ -2481,7 +2481,7 @@
       }
     },
     "splent_feature_generator": {
-      "entry": "splent_io/splent_feature_generator@v0.4.1",
+      "entry": "splent_io/splent_feature_generator@v0.4.2",
       "extensible": {
         "services": [],
         "templates": [

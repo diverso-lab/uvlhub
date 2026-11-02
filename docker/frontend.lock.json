@@ -114,7 +114,7 @@
     "splent_feature_generator": {
       "namespace": "splent_io",
       "distribution": "splent_feature_generator",
-      "version": "0.4.1",
+      "version": "0.4.2",
       "entries": [
         "generator",
         "llm_page",
@@ -123,7 +123,7 @@
         "wizard",
         "wizard_spa"
       ],
-      "manifest_sha256": "78d1d79257f0761f3aeee85955e38157f4aa81183d13305c1199b144eedacbfc",
+      "manifest_sha256": "d27a033eabfed0ab6283ba360cf0f229ca442b31c5559e6d77037b4537afe5e2",
       "bundled": {
         "@mlc-ai/web-llm": "0.2.86 Apache-2.0",
         "codemirror": "5.65.16 MIT",
@@ -144,12 +144,12 @@
     "splent_feature_hub_shell": {
       "namespace": "splent_io",
       "distribution": "splent_feature_hub_shell",
-      "version": "0.2.2",
+      "version": "0.2.3",
       "entries": [
         "hub_shell",
         "hub_shell_error"
       ],
-      "manifest_sha256": "452d07798a998d2f036b5f168fccfc69a666b837e1942d623ccfa0d3cd5f53b4",
+      "manifest_sha256": "df543ef83cc6f5679510a980ff2baddad3bb97514593bd0a72793f8b7668ef2d",
       "bundled": {
         "@popperjs/core": "2.11.8 MIT",
         "bootstrap": "5.3.8 MIT",
@@ -202,11 +202,11 @@
     "splent_feature_media": {
       "namespace": "splent_io",
       "distribution": "splent_feature_media",
-      "version": "0.13.0",
+      "version": "0.13.1",
       "entries": [
         "cropper"
       ],
-      "manifest_sha256": "8fdb0d68f5105ef19c1c70d8ab5b116a2fad77e24eb095f1ada1d7df1d40e323",
+      "manifest_sha256": "ff3564c141d69fa2b49d9a19ded4489a50645bd0ebe1a54fb1460b3087a48a0d",
       "bundled": {
         "cropperjs": "1.6.2 MIT",
         "webpack": "5.112.2 MIT"
