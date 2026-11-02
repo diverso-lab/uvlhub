@@ -179,7 +179,7 @@
       }
     },
     "splent_feature_admin": {
-      "entry": "splent_io/splent_feature_admin@v1.10.0",
+      "entry": "splent_io/splent_feature_admin@v1.10.1",
       "extensible": {
         "services": [
           "AdminService"
@@ -372,7 +372,7 @@
       }
     },
     "splent_feature_hub_shell": {
-      "entry": "splent_io/splent_feature_hub_shell@v0.2.0",
+      "entry": "splent_io/splent_feature_hub_shell@v0.2.1",
       "extensible": {
         "services": [],
         "templates": [
@@ -1328,7 +1328,7 @@
       }
     },
     "splent_feature_factlabel": {
-      "entry": "splent_io/splent_feature_factlabel@v0.8.1",
+      "entry": "splent_io/splent_feature_factlabel@v0.8.2",
       "extensible": {
         "services": [
           "FactlabelService"
@@ -1371,7 +1371,7 @@
       }
     },
     "splent_feature_statistics": {
-      "entry": "splent_io/splent_feature_statistics@v0.7.0",
+      "entry": "splent_io/splent_feature_statistics@v0.7.1",
       "extensible": {
         "services": [
           "DashboardService"
@@ -2226,7 +2226,7 @@
       }
     },
     "splent_feature_dataset": {
-      "entry": "splent_io/splent_feature_dataset@v0.16.3",
+      "entry": "splent_io/splent_feature_dataset@v0.16.4",
       "extensible": {
         "services": [
           "AuthorService",
@@ -2474,7 +2474,7 @@
       }
     },
     "splent_feature_generator": {
-      "entry": "splent_io/splent_feature_generator@v0.4.0",
+      "entry": "splent_io/splent_feature_generator@v0.4.1",
       "extensible": {
         "services": [],
         "templates": [
@@ -2494,7 +2494,7 @@
       }
     },
     "splent_feature_apidocs": {
-      "entry": "splent_io/splent_feature_apidocs@v0.5.0",
+      "entry": "splent_io/splent_feature_apidocs@v0.5.1",
       "extensible": {
         "services": [],
         "templates": [

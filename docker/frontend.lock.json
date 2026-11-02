@@ -9,7 +9,7 @@
     "splent_feature_apidocs": {
       "namespace": "splent_io",
       "distribution": "splent_feature_apidocs",
-      "version": "0.5.0",
+      "version": "0.5.1",
       "entries": [],
       "manifest_sha256": "a38f2f01ee6dfed9d0373378d0f7bd318acac55d910d6ff47ca3bc01e45a129b",
       "bundled": {
@@ -22,7 +22,7 @@
     "splent_feature_dataset": {
       "namespace": "splent_io",
       "distribution": "splent_feature_dataset",
-      "version": "0.16.3",
+      "version": "0.16.4",
       "entries": [
         "dataset",
         "landing",
@@ -76,7 +76,7 @@
     "splent_feature_factlabel": {
       "namespace": "splent_io",
       "distribution": "splent_feature_factlabel",
-      "version": "0.8.1",
+      "version": "0.8.2",
       "entries": [
         "factlabel"
       ],
@@ -114,7 +114,7 @@
     "splent_feature_generator": {
       "namespace": "splent_io",
       "distribution": "splent_feature_generator",
-      "version": "0.4.0",
+      "version": "0.4.1",
       "entries": [
         "generator",
         "llm_page",
@@ -144,12 +144,12 @@
     "splent_feature_hub_shell": {
       "namespace": "splent_io",
       "distribution": "splent_feature_hub_shell",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "entries": [
         "hub_shell",
         "hub_shell_error"
       ],
-      "manifest_sha256": "b9a7bdaf06ba7ad222b7c52ec577c4a60db02a95fc8e732e83d7d8bec5d1736c",
+      "manifest_sha256": "d1b3234fc1ae581a0b0fb20f8ccf25f7f471598e389ce3ac07c4c66109e2dd25",
       "bundled": {
         "@popperjs/core": "2.11.8 MIT",
         "bootstrap": "5.3.8 MIT",
@@ -244,7 +244,7 @@
     "splent_feature_statistics": {
       "namespace": "splent_io",
       "distribution": "splent_feature_statistics",
-      "version": "0.7.0",
+      "version": "0.7.1",
       "entries": [
         "statistics"
       ],
