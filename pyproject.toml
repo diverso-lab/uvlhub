@@ -70,7 +70,7 @@ features = [
     "splent-io/splent_feature_dataset_api@v0.5.1",
     "splent-io/splent_feature_dataset_transfer@v0.2.0",
     "splent-io/splent_feature_icons@v0.1.0",
-    "splent-io/splent_feature_search@v0.5.0",
+    "splent-io/splent_feature_search@v0.5.1",
 ]
 features_dev = ["splent-io/splent_feature_mailhog@v1.3.0", "splent-io/splent_feature_phpmyadmin@v1.2.0"]
 features_prod = []

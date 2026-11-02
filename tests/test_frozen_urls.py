@@ -137,6 +137,13 @@ def test_a_served_entry_is_served(app, entry):
     assert entry["endpoint"] in {rule.endpoint for rule in rules}
     allowed = set().union(*(rule.methods for rule in rules))
     assert set(entry["methods"]) <= allowed
+    # The rule that answers, not only one that exists: of two features that
+    # claim an address, the one registered first takes every request.
+    if "<" not in entry["rule"]:
+        answering = app.url_map.bind("localhost").match(
+            entry["rule"], method=entry["methods"][0]
+        )
+        assert answering[0] == entry["endpoint"]
 
 
 @pytest.mark.parametrize(

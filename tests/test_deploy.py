@@ -197,6 +197,17 @@ def test_the_database_is_on_a_named_volume():
 # ── Backups ──────────────────────────────────────────────────────────────
 
 
+def test_every_setting_of_the_product_reaches_the_deploy_bundle():
+    """A value in [tool.splent.config] that no feature declares stayed out of
+    deploy/.env.example, so it held in development and not in production: that
+    is how SEARCH_PAGE=false left search's page in front of explore's /search."""
+    root = Path(__file__).resolve().parents[1]
+    config = tomllib.loads((root / "pyproject.toml").read_text())["tool"]["splent"]
+    example = (root / "deploy" / ".env.example").read_text()
+    missing = [key for key in config["config"] if f"\n{key}=" not in f"\n{example}"]
+    assert not missing
+
+
 def test_every_storage_root_is_backed_up():
     """BACKUP_PATHS are the targets of the web service's named volumes, as
     they are by default: a root left out would come back empty from a
