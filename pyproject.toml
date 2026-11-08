@@ -23,23 +23,23 @@ core = [
 ]
 
 [tool.splent]
-cli_version = "1.60.0"
+cli_version = "1.61.0"
 features = [
     "splent-io/splent_feature_academic_profile@v0.2.0",
-    "splent-io/splent_feature_elasticsearch@v0.3.0",
-    "splent-io/splent_feature_redis@v1.7.0",
+    "splent-io/splent_feature_elasticsearch@v0.3.1",
+    "splent-io/splent_feature_redis@v1.7.1",
     "splent-io/splent_feature_session_redis@v1.3.0",
     "splent-io/splent_feature_captcha_image@v0.3.0",
     "splent-io/splent_feature_captcha@v0.3.0",
     "splent-io/splent_feature_admin@v1.10.2",
     "splent-io/splent_feature_signup@v0.5.0",
-    "splent-io/splent_feature_nginx@v1.7.0",
+    "splent-io/splent_feature_nginx@v1.7.1",
     "splent-io/splent_feature_theme@v0.17.0",
     "splent-io/splent_feature_public@v1.13.0",
     "splent-io/splent_feature_hub_shell@v0.2.3",
     "splent-io/splent_feature_orcid@v0.5.1",
     "splent-io/splent_feature_github@v0.5.1",
-    "splent-io/splent_feature_autodeploy@v0.5.0",
+    "splent-io/splent_feature_autodeploy@v0.5.1",
     "splent-io/splent_feature_identities@v0.6.0",
     "splent-io/splent_feature_apikeys@v0.12.1",
     "splent-io/splent_feature_zenodo@v0.6.0",
@@ -72,7 +72,7 @@ features = [
     "splent-io/splent_feature_icons@v0.1.0",
     "splent-io/splent_feature_search@v0.5.1",
 ]
-features_dev = ["splent-io/splent_feature_mailhog@v1.3.0", "splent-io/splent_feature_phpmyadmin@v1.2.0"]
+features_dev = ["splent-io/splent_feature_mailhog@v1.3.1", "splent-io/splent_feature_phpmyadmin@v1.2.1"]
 features_prod = []
 spl = "openhubs_spl"
 
@@ -157,8 +157,8 @@ order = { team = 30 }
 env = ["MIGRATION_V2_TEST_*"]
 
 [tool.splent.runtime]
-splent_framework = "1.31.0"
-splent_cli = "1.60.0"
+splent_framework = "1.32.0"
+splent_cli = "1.61.0"
 gunicorn = ">=23,<24"
 
 [tool.setuptools.package-dir]
