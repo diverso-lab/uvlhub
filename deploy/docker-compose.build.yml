@@ -1,8 +1,9 @@
 services:
   uvlhub_splent_web_deploy:
-    image: uvlhub_splent:3.0.8
+    image: uvlhub_splent:3.0.9
     build:
       context: ..
       dockerfile: docker/Dockerfile.uvlhub_splent.prod
       args:
         SPLENT_FORGE_HOST: git.splent.io
+    pull_policy: build

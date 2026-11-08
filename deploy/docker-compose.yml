@@ -94,7 +94,7 @@ services:
       retries: 30
       start_period: 10s
   splent_feature_elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.18.4
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.18.4@sha256:e8726a9a59f5776274181bc398f799db9249f1a7f483ea684201c9832e933c57
     restart: always
     environment:
     - discovery.type=single-node
@@ -116,7 +116,7 @@ services:
       retries: 12
       start_period: 30s
   splent_feature_redis:
-    image: redis:7.4
+    image: redis:7.4.12@sha256:2e3eb11462c4e3759e6972678dd051d150ff54b1e60714b3c33b701260172a90
     restart: always
     command:
     - redis-server
@@ -138,6 +138,7 @@ services:
       context: features/splent_feature_nginx
       dockerfile: Dockerfile.prod
     image: splent/splent_feature_nginx:latest
+    pull_policy: build
     restart: always
     ports:
     - ${NGINX_BIND_HOST:-0.0.0.0}:${NGINX_HTTP_HOST_PORT}:80
@@ -206,6 +207,7 @@ services:
       retries: 3
       start_period: 10s
     image: splent/splent_feature_autodeploy:latest
+    pull_policy: build
 volumes:
   uvlhub_splent_db_deploy_data: null
   uvlhub_splent_web_deploy_storage: null

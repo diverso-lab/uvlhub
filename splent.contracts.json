@@ -23,7 +23,7 @@
       }
     },
     "splent_feature_elasticsearch": {
-      "entry": "splent_io/splent_feature_elasticsearch@v0.3.0",
+      "entry": "splent_io/splent_feature_elasticsearch@v0.3.1",
       "extensible": {
         "services": [
           "ElasticsearchService"
@@ -72,7 +72,7 @@
       }
     },
     "splent_feature_redis": {
-      "entry": "splent_io/splent_feature_redis@v1.7.0",
+      "entry": "splent_io/splent_feature_redis@v1.7.1",
       "extensible": {
         "services": [],
         "templates": [],
@@ -127,7 +127,7 @@
       }
     },
     "splent_feature_captcha_image": {
-      "entry": "splent_io/splent_feature_captcha_image@v0.3.0",
+      "entry": "splent_io/splent_feature_captcha_image@v0.3.1",
       "extensible": {
         "services": [
           "ImageCaptchaService"
@@ -234,7 +234,7 @@
       }
     },
     "splent_feature_nginx": {
-      "entry": "splent_io/splent_feature_nginx@v1.7.0",
+      "entry": "splent_io/splent_feature_nginx@v1.7.1",
       "extensible": {
         "services": [],
         "templates": [],
@@ -531,7 +531,7 @@
       }
     },
     "splent_feature_autodeploy": {
-      "entry": "splent_io/splent_feature_autodeploy@v0.5.0",
+      "entry": "splent_io/splent_feature_autodeploy@v0.5.1",
       "extensible": {
         "services": [
           "AutodeployService"

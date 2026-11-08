@@ -1,7 +1,7 @@
 # The autodeploy agent. product:build copies this directory to the product's
 # docker/features/splent_feature_autodeploy/ and the deploy compose builds it
 # from there.
-FROM python:3.13-slim
+FROM python:3.13.18-slim-trixie@sha256:e48f59cdba69a3cbd9ed2cf0f348d90d45a8d350d98134cf1070bc106ee9ed90
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
