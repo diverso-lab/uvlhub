@@ -50,13 +50,13 @@ features = [
     "splent-io/splent_feature_analytics@v0.2.0",
     "splent-io/splent_feature_rating@v0.7.1",
     "splent-io/splent_feature_explore@v0.11.0",
-    "splent-io/splent_feature_factlabel@v0.8.3",
+    "splent-io/splent_feature_factlabel@v0.8.4",
     "splent-io/splent_feature_statistics@v0.7.2",
     "splent-io/splent_feature_citation@v0.3.2",
     "splent-io/splent_feature_settings@v0.6.0",
     "splent-io/splent_feature_media@v0.13.1",
     "splent-io/splent_feature_team@v0.10.1",
-    "splent-io/splent_feature_uvl@v0.6.0",
+    "splent-io/splent_feature_uvl@v0.6.1",
     "splent-io/splent_feature_auth@v1.28.0",
     "splent-io/splent_feature_profile@v1.9.0",
     "splent-io/splent_feature_confirmemail@v2.4.0",
@@ -64,7 +64,7 @@ features = [
     "splent-io/splent_feature_mail@v1.7.0",
     "splent-io/splent_feature_hubfile@v0.13.1",
     "splent-io/splent_feature_dataset@v0.17.0",
-    "splent-io/splent_feature_generator@v0.4.2",
+    "splent-io/splent_feature_generator@v0.4.3",
     "splent-io/splent_feature_apidocs@v0.5.1",
     "splent-io/splent_feature_legacy_urls@v0.2.0",
     "splent-io/splent_feature_dataset_api@v0.5.2",
@@ -156,8 +156,8 @@ order = { team = 30 }
 env = ["MIGRATION_V2_TEST_*"]
 
 [tool.splent.runtime]
-splent_framework = "1.30.0"
-splent_cli = "1.54.0"
+splent_framework = "1.31.0"
+splent_cli = "1.60.0"
 gunicorn = ">=23,<24"
 
 [tool.setuptools.package-dir]
