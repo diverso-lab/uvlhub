@@ -131,6 +131,7 @@ BACKUP_PATHS = [
     "/workspace/uvlhub_splent/protected_uploads",
     "/workspace/uvlhub_splent/src/uvlhub_splent/static/uploads",
     "/workspace/uvlhub_splent/archive",
+    "/workspace/uvlhub_splent/storage",
 ]
 BACKUP_VERIFY_FILES = ["Hubfile.get_full_path:size"]
 TEAM_SHOW_EMPTY_ROLES = true
