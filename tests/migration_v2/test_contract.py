@@ -18,6 +18,8 @@ import sqlalchemy as sa
 
 from uvlhub_splent.migration_v2 import contract as contract_module
 
+from .conftest import needs_pins
+
 PRODUCT = Path(__file__).resolve().parents[2]
 
 
@@ -74,6 +76,7 @@ def test_v14_reads_the_contract_from_the_inputs_schema(migrated, contract):
     assert different == []
 
 
+@needs_pins
 def test_the_contract_is_written_for_the_pinned_features(contract):
     """Every feature of the product that has migrations is in [features],
     at the version the product pins."""
@@ -97,6 +100,7 @@ def test_the_contract_is_written_for_the_pinned_features(contract):
         assert entry["version"] == pinned[name], name
 
 
+@needs_pins
 def test_each_head_is_the_last_revision_of_its_feature(contract):
     revision = re.compile(r"^revision\s*(?::[^=\n]*)?=\s*['\"]([^'\"]+)['\"]", re.M)
     down = re.compile(r"^down_revision\s*(?::[^=\n]*)?=\s*(.*)$", re.M)
@@ -199,11 +203,12 @@ def test_a_drift_is_named(contract):
 def test_heads_and_versions_are_held_to_the_contract(contract):
     applied = {name: entry["head"] for name, entry in contract.features.items()}
     assert contract_module.head_differences(contract, applied) == []
-    applied["splent_feature_dataset"] = "dataset0013_something"
+    expected = applied["splent_feature_dataset"]
+    applied["splent_feature_dataset"] = "dataset9999_something"
     # A feature of a later milestone (dataset_api), which no contract knows yet.
     applied["splent_feature_dataset_api"] = "dataset_api0001"
     assert contract_module.head_differences(contract, applied) == [
-        "splent_feature_dataset at dataset0013_something, the contract expects dataset0012_pid_exact",
+        f"splent_feature_dataset at dataset9999_something, the contract expects {expected}",
         "splent_feature_dataset_api migrated, a feature the contract does not know",
     ]
     older = replace(
@@ -212,7 +217,10 @@ def test_heads_and_versions_are_held_to_the_contract(contract):
             contract.features, splent_feature_auth={"version": "1.0.0", "head": "x"}
         ),
     )
-    assert contract_module.version_differences(older) == [
+    # Against what is installed, so an editable checkout's own differences
+    # are left out: only the version the test changed may add one.
+    already = set(contract_module.version_differences(contract))
+    assert set(contract_module.version_differences(older)) - already == {
         f"splent_feature_auth is {contract_module.installed_version('splent_feature_auth')}, "
         "the contract was written for 1.0.0"
-    ]
+    }

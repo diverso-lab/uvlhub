@@ -23,6 +23,7 @@ import os
 import shutil
 import subprocess
 import time
+import tomllib
 import uuid
 from dataclasses import dataclass, replace
 from pathlib import Path
@@ -43,6 +44,23 @@ SYNTHETIC_SCHEMA = "uvlhub_v2_synth"
 # The prefix of the schemas a test that runs a stage on its own uses, so it
 # never touches the rehearsal the other tests read.
 ISOLATED = "iso"
+
+PRODUCT = Path(__file__).resolve().parents[2]
+
+
+def _unpinned_features() -> list[str]:
+    splent = tomllib.loads((PRODUCT / "pyproject.toml").read_text())["tool"]["splent"]
+    entries = splent["features"] + splent.get("features_prod", [])
+    return [entry for entry in entries if "@" not in entry]
+
+
+# What the contract holds is checked against the features the product pins.
+# A development checkout with editable features has no pins to read: CI and
+# the release image check these on the pinned layout.
+needs_pins = pytest.mark.skipif(
+    bool(_unpinned_features()),
+    reason="the product's features are not pinned (editable checkout)",
+)
 
 
 @dataclass(frozen=True)

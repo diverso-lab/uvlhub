@@ -15,6 +15,8 @@ from click.testing import CliRunner
 
 from uvlhub_splent.migration_v2.cli import REFUSED, main
 
+from .conftest import needs_pins
+
 RUN = ["--db-host", "nowhere", "--t0", "2026-11-20T00:00:00"]
 
 
@@ -61,6 +63,11 @@ def test_contract_says_what_it_holds():
     summary = json.loads(result.output)
     assert summary["database"] == "utf8mb4 utf8mb4_unicode_ci"
     assert "user" in summary["tables"]["load"]
+
+
+@needs_pins
+def test_the_installed_features_are_the_contracts():
+    summary = json.loads(CliRunner().invoke(main, ["contract"]).output)
     assert summary["versions"] == []
 
 

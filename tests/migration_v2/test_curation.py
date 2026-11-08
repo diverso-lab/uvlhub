@@ -265,7 +265,7 @@ def test_the_curation_r1_decided():
     assert {
         lineage.name: [i for i, _doi in lineage.members] for lineage in decided.lineages
     } == {
-        "openhubs_spl": list(range(108, 117)),
+        "openhubs_spl": [*range(108, 117), 120],
         "cms_spl": [87, 94, 95, 96, 97, 104],
         "Sample SPLENT app": [74, 75, 81, 82, 99],
         "marketplace_spl": [88, 101, 102],
