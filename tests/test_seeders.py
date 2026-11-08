@@ -37,7 +37,7 @@ def seeders(app):
         ElasticsearchError,
         ElasticsearchService,
     )
-    from splent_io.splent_feature_explore.services import INDEX
+    from splent_framework.search.search_registry import get_search_sources
 
     found, errors = get_installed_seeders()
     assert errors == [], errors
@@ -50,8 +50,9 @@ def seeders(app):
         yield found
         with app.app_context():
             _reset_db()
-            with contextlib.suppress(ElasticsearchError):
-                ElasticsearchService().delete_index(INDEX)
+            for source in get_search_sources():
+                with contextlib.suppress(ElasticsearchError):
+                    ElasticsearchService().delete_index(source["key"])
 
 
 def test_every_seeder_runs_and_the_products_come_last(seeders):
