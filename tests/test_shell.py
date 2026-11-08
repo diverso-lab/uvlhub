@@ -701,7 +701,9 @@ def test_the_fonts_are_served_by_the_shell(browsers):
     """Inter, from hub_shell's stylesheet, where the toolchain puts it from
     npm; the product carries no copy of it, nor of the chrome's icons."""
     stylesheet = (
-        browsers["anonymous"].get("/hub_shell/dist/hub_shell.css").get_data(as_text=True)
+        browsers["anonymous"]
+        .get("/hub_shell/dist/hub_shell.css")
+        .get_data(as_text=True)
     )
     fonts = re.findall(r"url\((assets/Inter-[\w.-]+\.woff2)\)", stylesheet)
 
