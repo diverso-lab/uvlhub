@@ -23,7 +23,7 @@ core = [
 ]
 
 [tool.splent]
-cli_version = "1.49.0"
+cli_version = "1.60.0"
 features = [
     "splent-io/splent_feature_academic_profile@v0.2.0",
     "splent-io/splent_feature_elasticsearch@v0.3.0",
