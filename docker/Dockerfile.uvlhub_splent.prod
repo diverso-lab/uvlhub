@@ -7,16 +7,25 @@
 # Everything the image needs besides the product's own code comes from PyPI,
 # at versions the repository pins: the framework and the CLI in
 # [tool.splent.runtime] and every feature in [tool.splent] of pyproject.toml,
-# every third-party package in docker/requirements.lock. splent product:build
-# writes those pins, and the two files the image reads, splent.contracts.json
-# and docker/spl/. A clone of the repository builds the same image a release
-# published.
+# every third-party package in docker/requirements.lock, with the versions
+# docker/requirements.overrides imposes over what a dependency asks. splent
+# product:build writes those pins, and the two files the image reads,
+# splent.contracts.json and docker/spl/. A clone of the repository builds the
+# same image a release published.
+#
+# The image is built in layers that change at different paces, and each is
+# only rebuilt when what it is made from changes: the third-party packages
+# when the lock does, the framework, the CLI and the features when their
+# pins do, the product with every commit. uv and pip keep what they download
+# and build in a BuildKit cache, so a layer that is rebuilt takes from there
+# what an earlier build already fetched or compiled. A server that updates
+# the image pulls only the layers that changed.
 
-# ── Stage 1: Builder ─────────────────────────────────────────────────────────
+# ── Stage 1: Third-party packages ────────────────────────────────────────────
 # Both stages on the same Debian release, so the packages the builder compiles
 # run on the runtime's libraries. The Python patch release follows the image,
 # which is how its security fixes arrive.
-FROM python:3.13-trixie AS builder
+FROM python:3.13-trixie AS deps
 WORKDIR /workspace
 
 # System dependencies for building
@@ -39,58 +48,84 @@ RUN ln -s ../lib/node_modules/npm/bin/npm-cli.js /opt/node/bin/npm \
     && ln -s ../lib/node_modules/npm/bin/npx-cli.js /opt/node/bin/npx
 ENV PATH=/opt/node/bin:$PATH
 
-# The product. Dockerfile.uvlhub_splent.prod.dockerignore keeps the env
-# files (credentials), the development links and the deploy bundle out.
-COPY . uvlhub_splent/
-
-# Same protection for a builder that ignores that file (the classic builder,
-# DOCKER_BUILDKIT=0). Only the runtime stage is pushed, and it copies
-# /workspace from this stage, so the env files never reach a published image.
-RUN find uvlhub_splent/docker -maxdepth 1 -name '.env*' ! -name '*.example' \
-        \( -type f -o -type l \) -delete
-
-# The SPL's UVL model. The framework orders features, and their migrations,
-# by its constraints and looks for it in .splent_cache/spls/. splent
-# product:build keeps the model pyproject.toml pins in docker/spl/, and this
-# puts it where the framework and the CLI look. Without it every boot warns
-# that features load in pyproject.toml order.
-RUN if [ -d uvlhub_splent/docker/spl ]; then \
-        mkdir -p .splent_cache/spls && \
-        cp -R uvlhub_splent/docker/spl/. .splent_cache/spls/; \
-    fi
-
 ENV PIP_ROOT_USER_ACTION=ignore
+
+# uv installs the third-party packages and the features: it is several times
+# faster than pip and the only one of the two that applies overrides. Pinned
+# by digest, and kept out of /usr/local, which the runtime stage copies. Its
+# cache is a mount of its own, so it copies instead of hard-linking, and it
+# compiles bytecode as pip does.
+COPY --from=ghcr.io/astral-sh/uv:0.13.7@sha256:96f40d3904aad8d0bd010539001d36c8e2188b981e1334471a90c4a1d93bb490 /uv /opt/uv/bin/uv
+ENV PATH=/opt/uv/bin:$PATH
+ENV UV_LINK_MODE=copy
+ENV UV_COMPILE_BYTECODE=1
 
 # Every third-party package at the version docker/requirements.lock pins, as
 # a constraint on every pip install below, so a clone of a release builds the
 # set the release built. splent product:build and product:release write the
 # lock by building with SPLENT_FRESH_LOCK=1, which resolves without it.
+COPY docker/requirements.loc[k] docker/requirements.override[s] /tmp/lock/
 ARG SPLENT_FRESH_LOCK=""
-RUN if [ -n "$SPLENT_FRESH_LOCK" ] || [ ! -f uvlhub_splent/docker/requirements.lock ]; then \
+RUN if [ -n "$SPLENT_FRESH_LOCK" ] || [ ! -f /tmp/lock/requirements.lock ]; then \
         : > /tmp/constraints.txt; \
     else \
-        cp uvlhub_splent/docker/requirements.lock /tmp/constraints.txt; \
+        cp /tmp/lock/requirements.lock /tmp/constraints.txt; \
     fi
 ENV PIP_CONSTRAINT=/tmp/constraints.txt
 
-# The framework, the CLI and the WSGI server, at the versions
-# [tool.splent.runtime] in pyproject.toml pins (a bare version means exactly
-# that version). splent product:build keeps the framework and the CLI at the
-# versions the product is built with, and a release of the product refuses
-# one PyPI does not serve.
-RUN python -c "import sys, tomllib; \
-runtime = tomllib.load(open('uvlhub_splent/pyproject.toml', 'rb')).get('tool', {}).get('splent', {}).get('runtime') \
-    or sys.exit('[tool.splent.runtime] is missing from pyproject.toml. Run splent product:build.'); \
-print('\\n'.join(name + ('==' + str(spec) if str(spec)[:1].isdigit() else str(spec)) for name, spec in runtime.items()))" \
-        > /tmp/runtime.txt \
-    && pip install --no-cache-dir -r /tmp/runtime.txt
-RUN pip install --no-cache-dir ./uvlhub_splent
+# The packages the lock pins, installed before anything SPLENT, so this layer
+# only changes with the lock and the overrides.
+RUN --mount=type=cache,target=/root/.cache/uv \
+    if grep -q '^[^#[:space:]]' /tmp/constraints.txt; then \
+        overrides=""; \
+        if [ -f /tmp/lock/requirements.overrides ]; then \
+            overrides="--overrides /tmp/lock/requirements.overrides"; \
+        fi; \
+        uv pip install --system $overrides -r /tmp/constraints.txt; \
+    fi
 
-# Install the features with pip, from PyPI. This is the ONLY place features are
-# installed in a production image: scripts/00_install_features.sh (pip install -e
-# against the local checkout) belongs to the dev entrypoint and never runs here.
-# A feature declared without a version becomes a bare package name, so pip picks
-# whatever PyPI serves rather than the code in the workspace.
+# ── Stage 2: Pins ────────────────────────────────────────────────────────────
+# What the builder installs from pyproject.toml, and nothing else of it: the
+# requirements of [tool.splent.runtime] and [project].dependencies, and the
+# features of [tool.splent]. Its version and settings change with every
+# release, and the builder then reinstalls nothing, because these files are
+# the same.
+FROM python:3.13-trixie AS pins
+WORKDIR /pins
+COPY pyproject.toml /tmp/pyproject.toml
+
+# The framework, the CLI and the WSGI server, at the versions
+# [tool.splent.runtime] pins (a bare version means exactly that version),
+# then what the product itself depends on. splent product:build keeps the
+# framework and the CLI at the versions the product is built with, and a
+# release of the product refuses one PyPI does not serve.
+RUN python -c "import sys, tomllib; \
+data = tomllib.load(open('/tmp/pyproject.toml', 'rb')); \
+runtime = data.get('tool', {}).get('splent', {}).get('runtime') \
+    or sys.exit('[tool.splent.runtime] is missing from pyproject.toml. Run splent product:build.'); \
+print('\\n'.join([name + ('==' + str(spec) if str(spec)[:1].isdigit() else str(spec)) for name, spec in runtime.items()] \
+    + list(data.get('project', {}).get('dependencies', []))))" \
+        > /pins/runtime.txt
+
+# The features, with the PyPI names of those published under one of their
+# own, as feature:pip-install reads them.
+RUN python -c "import json, tomllib; \
+splent = tomllib.load(open('/tmp/pyproject.toml', 'rb')).get('tool', {}).get('splent', {}); \
+lines = ['[tool.splent]'] + [key + ' = ' + json.dumps(splent[key]) for key in ('features', 'features_dev', 'features_prod') if key in splent]; \
+lines += ['[tool.splent.distributions]'] + [json.dumps(k) + ' = ' + json.dumps(v) for k, v in (splent.get('distributions') or {}).items()]; \
+print('\\n'.join(lines))" \
+        > /pins/pyproject.toml
+
+# ── Stage 3: Builder ─────────────────────────────────────────────────────────
+FROM deps AS builder
+
+# Everything SPLENT goes to its own prefix, pip's user site, rather than next
+# to the third-party packages: the runtime stage copies each in its own layer.
+# The product goes to another, since it changes with every commit.
+ENV PYTHONUSERBASE=/opt/splent
+ENV PYTHONPATH=/opt/product
+ENV PATH=/opt/splent/bin:$PATH
+
 ENV SPLENT_APP=uvlhub_splent
 ENV WORKING_DIR=/workspace
 # The CLI's in-container detection keys on /.dockerenv, which the classic
@@ -112,11 +147,51 @@ ENV SPLENT_FORGE_HOST=${SPLENT_FORGE_HOST}
 ENV SPLENT_FORGE_SSH_HOST=${SPLENT_FORGE_SSH_HOST}
 ENV SPLENT_FORGE_SSH_PORT=${SPLENT_FORGE_SSH_PORT}
 ENV SPLENT_FORGE_API=${SPLENT_FORGE_API}
-RUN splent feature:pip-install
+
+COPY --from=pins /pins/runtime.txt /tmp/runtime.txt
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --user -r /tmp/runtime.txt
+
+# Install the features from PyPI, through uv with the product's overrides.
+# This is the ONLY place features are installed in a production image:
+# scripts/00_install_features.sh (an editable install of the local checkout)
+# belongs to the dev entrypoint and never runs here. A feature declared
+# without a version becomes a bare package name, so uv picks whatever PyPI
+# serves rather than the code in the workspace.
+COPY --from=pins /pins/pyproject.toml uvlhub_splent/pyproject.toml
+COPY docker/requirements.override[s] uvlhub_splent/docker/
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=cache,target=/root/.cache/pip \
+    PIP_USER=1 splent feature:pip-install
+
+# The product. Dockerfile.uvlhub_splent.prod.dockerignore keeps the env
+# files (credentials), the development links and the deploy bundle out.
+COPY . uvlhub_splent/
+
+# Same protection for a builder that ignores that file (the classic builder,
+# DOCKER_BUILDKIT=0). Only the runtime stage is pushed, and it copies
+# /workspace from this stage, so the env files never reach a published image.
+RUN find uvlhub_splent/docker -maxdepth 1 -name '.env*' ! -name '*.example' \
+        \( -type f -o -type l \) -delete
+
+# The SPL's UVL model. The framework orders features, and their migrations,
+# by its constraints and looks for it in .splent_cache/spls/. splent
+# product:build keeps the model pyproject.toml pins in docker/spl/, and this
+# puts it where the framework and the CLI look. Without it every boot warns
+# that features load in pyproject.toml order.
+RUN if [ -d uvlhub_splent/docker/spl ]; then \
+        mkdir -p .splent_cache/spls && \
+        cp -R uvlhub_splent/docker/spl/. .splent_cache/spls/; \
+    fi
+
+# What it depends on is already installed, with the runtime.
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --no-deps --target /opt/product ./uvlhub_splent
 
 # The product's own frontend, when its package.json has a build script,
 # installed from its lock exactly as committed.
-RUN cd uvlhub_splent && \
+RUN --mount=type=cache,target=/root/.npm \
+    cd uvlhub_splent && \
     if [ -f package.json ] && [ "$(npm pkg get scripts.build)" != "{}" ]; then \
         test -f package-lock.json || \
             { echo "package-lock.json is missing: run npm install in the product and commit it"; exit 1; }; \
@@ -134,7 +209,7 @@ RUN splent feature:compile --verify
 # The runtime stage copies /workspace, so they would ship otherwise.
 RUN rm -rf uvlhub_splent/node_modules uvlhub_splent/build
 
-# ── Stage 2: Runtime ─────────────────────────────────────────────────────────
+# ── Stage 4: Runtime ─────────────────────────────────────────────────────────
 FROM python:3.13-slim-trixie
 WORKDIR /workspace
 
@@ -150,6 +225,9 @@ ENV PIP_ROOT_USER_ACTION=ignore
 ENV SPLENT_APP=uvlhub_splent
 ENV WORKING_DIR=/workspace
 ENV SPLENT_CONTAINER=product
+ENV PYTHONUSERBASE=/opt/splent
+ENV PYTHONPATH=/opt/product
+ENV PATH=/opt/splent/bin:$PATH
 
 # The user the app runs as. The image keeps root as its user so the entrypoint
 # can hand the named volumes to this one before it drops to it: see
@@ -160,9 +238,12 @@ RUN groupadd --system --gid 10001 splent \
     && mkdir -p /var/log/splent \
     && chown splent:splent /var/log/splent
 
-# Copy installed Python packages from builder
-COPY --from=builder /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
-COPY --from=builder /usr/local/bin /usr/local/bin
+# The installed packages, one layer each: the third-party ones, then the
+# framework, the CLI and the features, then the product.
+COPY --from=deps /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
+COPY --from=deps /usr/local/bin /usr/local/bin
+COPY --from=builder /opt/splent /opt/splent
+COPY --from=builder /opt/product /opt/product
 
 # Copy product source (includes compiled assets, templates, migrations,
 # entrypoints), owned by the app user, which writes its state file there.

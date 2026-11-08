@@ -41,6 +41,8 @@ run_step () {
   local step="$1"
   local script="$2"
 
+  local started=$SECONDS
+
   echo ""
   echo "  [$step]"
   bash "$script"
@@ -49,7 +51,7 @@ run_step () {
   echo "  FAIL [$step] (rc=$rc)"
   exit $rc
   fi
-  echo "  ok [$step]"
+  echo "  ok [$step] ($((SECONDS - started))s)"
 }
 
 # The container's settings are its environment, which the deploy bundle hands

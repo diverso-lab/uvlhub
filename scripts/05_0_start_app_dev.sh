@@ -25,7 +25,13 @@ if [ "$(id -u)" = 0 ] && [ "$owner_uid" != 0 ] && command -v setpriv >/dev/null;
         find -H "$path" -name node_modules -prune -o -user 0 \
             -exec chown -h "$owner" {} + 2>/dev/null || true
     done
-    find /tmp -mindepth 1 -maxdepth 1 -user 0 -exec chown -R "$owner" {} + 2>/dev/null || true
+    # Not the bytecode prefix. The image ships it precompiled, and a chown
+    # copies every file out of the image layer, 7 seconds of a fresh
+    # container. The app reads it as is and compiles in memory what it
+    # cannot write there.
+    find /tmp -mindepth 1 -maxdepth 1 -user 0 \
+        ! -path "${PYTHONPYCACHEPREFIX:-/nonexistent}" \
+        -exec chown -R "$owner" {} + 2>/dev/null || true
     home="/tmp/splent-home-$owner_uid"
     mkdir -p "$home" && chown "$owner" "$home"
     as_owner=(setpriv --reuid="$owner_uid" --regid="$owner_gid" --clear-groups

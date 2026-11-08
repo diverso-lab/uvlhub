@@ -20,8 +20,18 @@ RUN apt-get update \
 
 # The build backend features use. 00_install_features builds them without an
 # isolated environment, which otherwise downloads setuptools again for every
-# feature each time the container is recreated.
-RUN pip install --no-cache-dir "setuptools>=80.3.1" wheel
+# feature each time the container is recreated. uv installs the same packages
+# as pip in a fraction of the time; the layers below and 00_install_features
+# use it, and pip stays for everything else.
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install "setuptools>=80.3.1" wheel "uv>=0.13,<1"
+# uv's cache is a mount of its own, so it copies instead of hard-linking.
+# The dev compose keeps bytecode under PYTHONPYCACHEPREFIX (the working
+# copies are the host's), and Python then ignores every __pycache__ in the
+# image. The last layer compiles the interpreter's packages into that prefix,
+# or every new container would compile Flask and SQLAlchemy again first.
+ENV UV_LINK_MODE=copy \
+    PYTHONPYCACHEPREFIX=/tmp/splent-pycache
 
 # Dev runs the workspace framework and CLI, not a PyPI snapshot. Installing them
 # editable BEFORE the product means pip resolves the product's framework/cli
@@ -37,7 +47,11 @@ RUN pip install --no-cache-dir "setuptools>=80.3.1" wheel
 # mounted one. Copying whole directories (or even src/) carried files that
 # change on every run (bytecode caches, the product's manifest and .env,
 # node_modules), so each derive rebuilt every layer from here on and a restart
-# took minutes. Now only a change to a pyproject.toml rebuilds anything.
+# took minutes. Now only a change to a pyproject.toml rebuilds anything, and
+# the installer's cache lives outside the image, so even that takes seconds.
+# It matters more than it seems. BuildKit keys a COPY on each file's mode and
+# owner as well as its content, so the same workspace cloned by another user
+# (or from inside a container) rebuilds these layers anyway.
 # The license files go along because pyproject.toml names them. The patterns
 # match whatever each project has (LICENSE, COPYING, COPYING.LESSER), and a
 # product that has none still builds, since the metadata files always match.
@@ -45,11 +59,17 @@ COPY splent_framework/pyproject.toml splent_framework/README.md splent_framework
 COPY splent_cli/pyproject.toml splent_cli/README.md splent_cli/LICENSE* splent_cli/COPYING* splent_cli/
 # splent_framework[dev] brings pytest: feature:test and product:test run it
 # inside this container, and nothing else in the image installs it.
-RUN mkdir -p splent_framework/src splent_cli/src \
-    && pip install --no-cache-dir -e "./splent_framework[dev]" -e ./splent_cli
+RUN --mount=type=cache,target=/root/.cache/uv \
+    mkdir -p splent_framework/src splent_cli/src \
+    && uv pip install --system -e "./splent_framework[dev]" -e ./splent_cli
 
 COPY uvlhub_splent/pyproject.toml uvlhub_splent/README.md uvlhub_splent/LICENSE* uvlhub_splent/COPYING* uvlhub_splent/
-RUN mkdir -p uvlhub_splent/src \
-    && pip install --no-cache-dir -e "./uvlhub_splent[dev]"
+RUN --mount=type=cache,target=/root/.cache/uv \
+    mkdir -p uvlhub_splent/src \
+    && uv pip install --system -e "./uvlhub_splent[dev]"
+
+RUN python -m compileall -q -j0 \
+        "$(python -c 'import sysconfig; print(sysconfig.get_path("stdlib"))')" \
+        >/dev/null || true
 
 EXPOSE 5000

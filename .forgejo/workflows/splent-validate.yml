@@ -1,4 +1,4 @@
-# splent-generated sha256 0eaefeea717f4b82576fd2c3e0240cf64a53c0721d202e5a18d15bc5ddffe96a
+# splent-generated sha256 9e3f0deb2b4a472390d9b0fc2c23d203cc2fab8dd123b6da9ee2b6b94808cb32
 # Written by splent (product:create, product:sync-template --ci). While
 # it stays as written, which the line above records, the commands that
 # change the product's features rewrite it. Once edited it is left
@@ -57,8 +57,15 @@ jobs:
         with:
           python-version: "3.13"
 
+      # uv applies the overrides the CLI declares, which pip has no way to:
+      # flamapy-sat pins a python-sat with no wheel for Python 3.13, and pip
+      # compiled it for two minutes. The later steps find uv too.
       - name: Install the SPLENT CLI
-        run: pip install --quiet --upgrade "splent_cli[uvl]" splent_framework
+        run: |
+          pip install --quiet uv
+          overrides="$(mktemp)"
+          printf '%s\n' 'python-sat>=1.8.dev19' > "$overrides"
+          uv pip install --system --quiet --upgrade --overrides "$overrides" "splent_cli[uvl]" splent_framework
 
       - name: Resolve the pinned features
         run: splent product:resolve --prod --strict

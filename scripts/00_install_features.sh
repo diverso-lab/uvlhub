@@ -43,6 +43,30 @@ if [ -z "$features" ]; then
     exit 0
 fi
 
+# What is installed, read once. A pip show per feature started a Python each.
+declare -A have_version have_location
+while IFS=$'\t' read -r dist version location; do
+    [ -n "${have_version[$dist]+set}" ] && continue
+    have_version[$dist]=$version
+    have_location[$dist]=$location
+done < <(python3 - <<'PY'
+import importlib.metadata as md
+import json
+import re
+from urllib.parse import unquote, urlparse
+
+for dist in md.distributions():
+    name = re.sub(r"[-_.]+", "_", dist.metadata["Name"] or "").lower()
+    try:
+        info = json.loads(dist.read_text("direct_url.json") or "{}")
+    except ValueError:
+        info = {}
+    editable = info.get("dir_info", {}).get("editable")
+    location = unquote(urlparse(info.get("url", "")).path) if editable else ""
+    print(f"{name}\t{dist.version}\t{location}")
+PY
+)
+
 installed=0
 skipped=0
 to_install=()
@@ -63,7 +87,10 @@ for feature in $features; do
     [ "$declared_version" = "$name_ver" ] && declared_version=""
 
     # Check if already installed
-    current_version=$(pip show "$pkg_name" 2>/dev/null | grep "^Version:" | awk '{print $2}')
+    key=${pkg_name,,}
+    key=${key//-/_}
+    key=${key//./_}
+    current_version=${have_version[$key]:-}
 
     if [ -n "$declared_version" ]; then
         # Pinned feature: check version match
@@ -89,7 +116,7 @@ for feature in $features; do
             continue
         fi
 
-        editable_loc=$(pip show "$pkg_name" 2>/dev/null | grep "Editable project location" | cut -d' ' -f4-)
+        editable_loc=${have_location[$key]:-}
         if [ -n "$editable_loc" ]; then
             real_path=$(cd "$found_path" 2>/dev/null && pwd -P) || real_path=""
             current_real=$(cd "$editable_loc" 2>/dev/null && pwd -P) || current_real=""
@@ -138,15 +165,39 @@ PY
 
 # The dev image ships setuptools, so building without isolation needs no
 # network. A feature with another build backend falls back to an isolated
-# build. All features go to pip at once, which resolves their dependencies
+# build. All features go in one install, which resolves their dependencies
 # once instead of once per feature; if that fails, they are installed one by
-# one so the failing feature is named.
+# one so the failing feature is named. uv does it in a fraction of pip's time
+# (it runs on every container the product gets); an image built before it
+# shipped uv, or anything uv refuses, goes to pip as before. uv also applies
+# the dependency overrides of the product and of the features it installs
+# (their [tool.uv] override-dependencies, see
+# splent_cli.utils.dependency_overrides); pip has none to apply.
+overrides_file=""
+collect_overrides() {
+    overrides_file="$(mktemp)"
+    if ! python3 -m splent_cli.utils.dependency_overrides \
+            "/workspace/uvlhub_splent" "${install_paths[@]}" > "$overrides_file"; then
+        echo "    WARN: the dependency overrides could not be merged, installing without them"
+        : > "$overrides_file"
+    fi
+}
+
 pip_install() {
+    if command -v uv >/dev/null 2>&1; then
+        local uv_overrides=()
+        if [ -s "$overrides_file" ]; then
+            uv_overrides=(--overrides "$overrides_file")
+        fi
+        uv pip install --system "${uv_overrides[@]}" --no-build-isolation "$@" >/dev/null 2>&1 && return 0
+        uv pip install --system "${uv_overrides[@]}" "$@" >/dev/null 2>&1 && return 0
+    fi
     pip install --root-user-action=ignore --no-build-isolation "$@" >/dev/null 2>&1 \
         || pip install --root-user-action=ignore "$@" >/dev/null 2>&1
 }
 
 if [ "$pending" -gt 0 ]; then
+    collect_overrides
     editable_args=()
     for path in "${install_paths[@]}"; do
         editable_args+=(-e "$path")
@@ -182,4 +233,5 @@ if [ -n "$owner" ] && [ "$(id -u)" = 0 ] && [ "${owner%%:*}" != 0 ]; then
     done
 fi
 
+[ -n "$overrides_file" ] && rm -f "$overrides_file"
 echo "    $installed installed, $skipped already up to date."
