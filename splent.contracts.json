@@ -1335,7 +1335,7 @@
       }
     },
     "splent_feature_factlabel": {
-      "entry": "splent_io/splent_feature_factlabel@v0.8.3",
+      "entry": "splent_io/splent_feature_factlabel@v0.8.4",
       "extensible": {
         "services": [
           "FactlabelService"
@@ -1612,7 +1612,7 @@
       }
     },
     "splent_feature_uvl": {
-      "entry": "splent_io/splent_feature_uvl@v0.6.0",
+      "entry": "splent_io/splent_feature_uvl@v0.6.1",
       "refinement": {
         "refines": "splent_feature_hubfile",
         "extends": {
@@ -2481,7 +2481,7 @@
       }
     },
     "splent_feature_generator": {
-      "entry": "splent_io/splent_feature_generator@v0.4.2",
+      "entry": "splent_io/splent_feature_generator@v0.4.3",
       "extensible": {
         "services": [],
         "templates": [

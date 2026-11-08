@@ -76,11 +76,11 @@
     "splent_feature_factlabel": {
       "namespace": "splent_io",
       "distribution": "splent_feature_factlabel",
-      "version": "0.8.3",
+      "version": "0.8.4",
       "entries": [
         "factlabel"
       ],
-      "manifest_sha256": "df869e379b1db16ce1394cc5eac994ccd8f05f295e742fc603d187e4f10bf066",
+      "manifest_sha256": "9f9d2b543a3b32cd3e97782cc19e610e68a24ff6722c0de12b74a9e388472451",
       "bundled": {
         "@fontsource/libre-franklin": "5.3.0 OFL-1.1",
         "d3": "7.9.0 ISC",
@@ -114,7 +114,7 @@
     "splent_feature_generator": {
       "namespace": "splent_io",
       "distribution": "splent_feature_generator",
-      "version": "0.4.2",
+      "version": "0.4.3",
       "entries": [
         "generator",
         "llm_page",
@@ -123,7 +123,7 @@
         "wizard",
         "wizard_spa"
       ],
-      "manifest_sha256": "d27a033eabfed0ab6283ba360cf0f229ca442b31c5559e6d77037b4537afe5e2",
+      "manifest_sha256": "e72e4ca399e011c76a01dc67af3e1a0e7e82cc71be0245b2ab8d065480e39d5e",
       "bundled": {
         "@mlc-ai/web-llm": "0.2.86 Apache-2.0",
         "codemirror": "5.65.16 MIT",
@@ -277,11 +277,11 @@
     "splent_feature_uvl": {
       "namespace": "splent_io",
       "distribution": "splent_feature_uvl",
-      "version": "0.6.0",
+      "version": "0.6.1",
       "entries": [
         "uvl"
       ],
-      "manifest_sha256": "757630ca7605f3423148fb8b25c8698dc13fc3a30599798fcff2d8e46cdf5049",
+      "manifest_sha256": "828a703a73807c6133b224e62fe7601e56661576cfcf6bc4e93db8b40593bb99",
       "bundled": {
         "antlr4": "4.13.2 BSD-3-Clause",
         "uvl-parser": "0.5.0 UNKNOWN",

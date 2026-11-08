@@ -10,8 +10,8 @@ Authlib==1.6.12
 babel==2.18.0
 beautifulsoup4==4.14.3
 blinker==1.9.0
-boto3==1.43.123
-botocore==1.43.123
+boto3==1.43.126
+botocore==1.43.126
 cachelib==0.17.0
 captcha==0.7.1
 certifi==2026.10.23
@@ -20,7 +20,7 @@ charset-normalizer==3.5.2
 click==8.1.8
 cryptography==50.0.2
 dd==0.6.0
-dnspython==2.9.1
+dnspython==2.9.2
 elastic-transport==8.19.0
 elasticsearch==8.19.3
 email-validator==2.3.0
@@ -28,7 +28,6 @@ flamapy-bdd==2.5.0
 flamapy-fm==2.5.0
 flamapy-fw==2.5.0
 flamapy-sat==2.5.0
-flamapy==2.5.0
 flasgger==0.9.7.2.dev2
 flask-babel==4.0.0
 flask-cors==6.0.2
@@ -71,7 +70,7 @@ pypng==0.20220715.0
 pyrage==1.4.0
 python-dateutil==2.9.0.post0
 python-dotenv==1.0.1
-python-sat==0.1.8.dev17
+python-sat==1.9.dev21
 pytz==2024.2
 PyYAML==6.0.3
 qrcode==7.4.2
@@ -81,14 +80,13 @@ referencing==0.37.0
 requests==2.34.2
 rpds-py==2026.9.1
 s3transfer==0.19.3
-sentry-sdk==2.73.0
+sentry-sdk==2.74.0
 setuptools==84.2.1
 six==1.17.0
-soupsieve==3.0.4
+soupsieve==4.0.1
 SQLAlchemy==2.0.37
 tomli_w==1.2.0
 typing_extensions==4.16.0
-tzdata==2026.6
 urllib3==2.8.0
 uvlparser==2.5.0
 Werkzeug==3.1.9
