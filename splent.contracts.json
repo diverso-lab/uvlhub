@@ -582,7 +582,7 @@
       }
     },
     "splent_feature_identities": {
-      "entry": "splent_io/splent_feature_identities@v0.6.0",
+      "entry": "splent_io/splent_feature_identities@v0.7.0",
       "extensible": {
         "services": [
           "IdentitiesService"
