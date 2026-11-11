@@ -1,5 +1,5 @@
 """
-Configuration for uvlhub_splent.
+Configuration for uvlhub.
 
 Each class extends the framework's base configuration. Only override
 what your product needs — everything else is inherited automatically.

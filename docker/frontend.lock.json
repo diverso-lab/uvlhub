@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "product": "uvlhub_splent",
+  "product": "uvlhub",
   "shell": {
     "source": "package.json",
     "provides": {}

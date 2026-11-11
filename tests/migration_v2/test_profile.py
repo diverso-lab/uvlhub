@@ -15,11 +15,11 @@ from dataclasses import replace
 import pytest
 import sqlalchemy as sa
 
-from uvlhub_splent.migration_v2.db import make_engine
-from uvlhub_splent.migration_v2.ledger import fingerprint
-from uvlhub_splent.migration_v2.params import Refused
-from uvlhub_splent.migration_v2.pipeline import run
-from uvlhub_splent.migration_v2.profile import (
+from uvlhub.migration_v2.db import make_engine
+from uvlhub.migration_v2.ledger import fingerprint
+from uvlhub.migration_v2.params import Refused
+from uvlhub.migration_v2.pipeline import run
+from uvlhub.migration_v2.profile import (
     COLLATION_RULE,
     PROBES,
     Drift,

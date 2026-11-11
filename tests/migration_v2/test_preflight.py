@@ -14,10 +14,10 @@ from dataclasses import replace
 import pytest
 import sqlalchemy as sa
 
-from uvlhub_splent.migration_v2 import contract as contract_module
-from uvlhub_splent.migration_v2.params import Refused
-from uvlhub_splent.migration_v2.pipeline import Context
-from uvlhub_splent.migration_v2.preflight import LOCK_NAME, preflight, release_lock
+from uvlhub.migration_v2 import contract as contract_module
+from uvlhub.migration_v2.params import Refused
+from uvlhub.migration_v2.pipeline import Context
+from uvlhub.migration_v2.preflight import LOCK_NAME, preflight, release_lock
 
 from . import synthetic
 
@@ -84,7 +84,7 @@ def test_it_refuses_unless_nothing_seeds(params, monkeypatch):
 
 
 def test_it_refuses_while_another_run_holds_the_lock(params, server):
-    from uvlhub_splent.migration_v2.db import make_engine
+    from uvlhub.migration_v2.db import make_engine
 
     engine = make_engine(server.host, 3306, "migrator", server.migrator_password)
     with engine.connect() as other:
@@ -99,7 +99,7 @@ def test_it_refuses_while_another_run_holds_the_lock(params, server):
 
 
 def test_it_refuses_while_anyone_else_is_connected(params, server, root_engine):
-    from uvlhub_splent.migration_v2.db import make_engine
+    from uvlhub.migration_v2.db import make_engine
 
     execute(
         root_engine,
@@ -242,7 +242,7 @@ def test_e0_refuses_the_secret_key_of_v2_12(
     """DM-1: E0 holds SECRET_KEY to the sha256 of v2.12's, never the key."""
     from types import SimpleNamespace
 
-    from uvlhub_splent.migration_v2.preflight import secret_key_rotated
+    from uvlhub.migration_v2.preflight import secret_key_rotated
 
     for name, value in (
         ("SECRET_KEY", secret_key),

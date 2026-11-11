@@ -1,46 +1,46 @@
 services:
 
-  uvlhub_splent_web:
+  uvlhub_web:
     build:
       context: /workspace
-      dockerfile: /workspace/uvlhub_splent/docker/Dockerfile.uvlhub_splent.dev
-    container_name: uvlhub_splent_web
+      dockerfile: /workspace/uvlhub/docker/Dockerfile.uvlhub.dev
+    container_name: uvlhub_web
     volumes:
       - ${SPLENT_HOST_PROJECT_DIR}:/workspace
       # Features are pip-installed into the container each time it is
       # created, and product:down removes it. Keeping pip's cache in a volume
       # means a restart installs them from local wheels instead of
       # downloading every dependency again.
-      - uvlhub_splent_pip_cache:/root/.cache/pip
+      - uvlhub_pip_cache:/root/.cache/pip
     env_file:
-      - /workspace/uvlhub_splent/docker/.env
+      - /workspace/uvlhub/docker/.env
     environment:
       # Wire the e2e layer to the grid below. The target URL is resolved by
       # the browser, so it must name a host the browser container can reach.
-      SELENIUM_GRID_URL: http://uvlhub_splent_selenium_hub:4444
-      SELENIUM_TARGET_URL: http://uvlhub_splent_web:5000
+      SELENIUM_GRID_URL: http://uvlhub_selenium_hub:4444
+      SELENIUM_TARGET_URL: http://uvlhub_web:5000
     ports:
       - "5012:5000"
       # Locust web interface, served from inside this container by
       # 'splent locust'.
       - "8101:8089"
     depends_on:
-      uvlhub_splent_db:
+      uvlhub_db:
         condition: service_healthy
     networks:
       - splent_network
     command: [ "tail", "-f", "/dev/null" ]
 
-  uvlhub_splent_db:
+  uvlhub_db:
     image: mariadb:11.4
-    container_name: uvlhub_splent_db
+    container_name: uvlhub_db
     env_file:
-      - /workspace/uvlhub_splent/docker/.env
+      - /workspace/uvlhub/docker/.env
     command: --default-authentication-plugin=mysql_native_password
     ports:
       - "33072:3306"
     volumes:
-      - uvlhub_splent_db_data:/var/lib/mysql
+      - uvlhub_db_data:/var/lib/mysql
     healthcheck:
       test: ["CMD-SHELL", "mariadb -u$${MARIADB_USER} -p$${MARIADB_PASSWORD} -e 'SELECT 1'"]
       interval: 5s
@@ -50,41 +50,41 @@ services:
     networks:
       - splent_network
 
-  uvlhub_splent_selenium_hub:
+  uvlhub_selenium_hub:
     image: selenium/hub:latest
-    container_name: uvlhub_splent_selenium_hub
+    container_name: uvlhub_selenium_hub
     networks:
       - splent_network
 
-  uvlhub_splent_selenium_chrome:
+  uvlhub_selenium_chrome:
     image: selenium/node-chrome:latest
-    container_name: uvlhub_splent_selenium_chrome
+    container_name: uvlhub_selenium_chrome
     shm_size: 2gb
     environment:
-      SE_EVENT_BUS_HOST: uvlhub_splent_selenium_hub
+      SE_EVENT_BUS_HOST: uvlhub_selenium_hub
       SE_EVENT_BUS_PUBLISH_PORT: 4442
       SE_EVENT_BUS_SUBSCRIBE_PORT: 4443
     depends_on:
-      - uvlhub_splent_selenium_hub
+      - uvlhub_selenium_hub
     networks:
       - splent_network
 
-  uvlhub_splent_selenium_firefox:
+  uvlhub_selenium_firefox:
     image: selenium/node-firefox:latest
-    container_name: uvlhub_splent_selenium_firefox
+    container_name: uvlhub_selenium_firefox
     shm_size: 2gb
     environment:
-      SE_EVENT_BUS_HOST: uvlhub_splent_selenium_hub
+      SE_EVENT_BUS_HOST: uvlhub_selenium_hub
       SE_EVENT_BUS_PUBLISH_PORT: 4442
       SE_EVENT_BUS_SUBSCRIBE_PORT: 4443
     depends_on:
-      - uvlhub_splent_selenium_hub
+      - uvlhub_selenium_hub
     networks:
       - splent_network
 
 volumes:
-  uvlhub_splent_db_data:
-  uvlhub_splent_pip_cache:
+  uvlhub_db_data:
+  uvlhub_pip_cache:
 
 networks:
   splent_network:

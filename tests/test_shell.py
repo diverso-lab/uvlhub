@@ -43,7 +43,7 @@ from splent_framework.fixtures.fixtures import _reset_db
 from splent_framework.hooks import template_hooks
 
 PRODUCT = Path(__file__).resolve().parents[1]
-PACKAGE = PRODUCT / "src" / "uvlhub_splent"
+PACKAGE = PRODUCT / "src" / "uvlhub"
 STATIC = PACKAGE / "static"
 TEMPLATES = PACKAGE / "templates"
 
@@ -313,7 +313,7 @@ def test_the_home_is_headed_as_uvlhub_ios(app, browsers, monkeypatch):
 
 def test_the_team_is_teams_page_under_the_trail(app, browsers, monkeypatch):
     """team's own list in the app shell, headed by its name without the
-    site's ("Team — uvlhub_splent" in its title block), under the trail theme
+    site's ("Team — uvlhub" in its title block), under the trail theme
     derives for it with uvlhub's SITE_BREADCRUMBS."""
     _until_the_shell_is_public(app, "/team")
     monkeypatch.setitem(app.config, "SITE_BREADCRUMBS", "all")
@@ -583,7 +583,7 @@ def uvlhub_appearance(app):
     taken out again afterwards."""
     from splent_framework.services.service_locator import service_proxy
 
-    from uvlhub_splent.seeders import APPEARANCE, UvlhubAppearanceSeeder
+    from uvlhub.seeders import APPEARANCE, UvlhubAppearanceSeeder
 
     with app.app_context():
         UvlhubAppearanceSeeder().run()

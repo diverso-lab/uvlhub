@@ -1,7 +1,7 @@
 """A MariaDB server of its own for the migrator's tests, and a dirty v2.12.
 
 The migrator drops and creates whole databases, so its tests never touch
-the development database or the shared test one (uvlhub_splent_db_test,
+the development database or the shared test one (uvlhub_db_test,
 which other test runs use). They run on a throwaway server, of the same
 major version as the product's (mariadb:11.4, docker/docker-compose.*.yml):
 
@@ -31,15 +31,15 @@ from pathlib import Path
 import pytest
 import sqlalchemy as sa
 
-from uvlhub_splent.migration_v2.cli import grant_statements
-from uvlhub_splent.migration_v2.ledger import ensure_inputs
-from uvlhub_splent.migration_v2.params import Params, Server
+from uvlhub.migration_v2.cli import grant_statements
+from uvlhub.migration_v2.ledger import ensure_inputs
+from uvlhub.migration_v2.params import Params, Server
 
 from . import synthetic
 
 IMAGE = os.getenv("MIGRATION_V2_TEST_DB_IMAGE", "mariadb:11.4")
 # The development and test databases' server: never this one.
-SHARED_HOSTS = {"uvlhub_splent_db", "uvlhub_splent_db_test"}
+SHARED_HOSTS = {"uvlhub_db", "uvlhub_db_test"}
 SYNTHETIC_SCHEMA = "uvlhub_v2_synth"
 # The prefix of the schemas a test that runs a stage on its own uses, so it
 # never touches the rehearsal the other tests read.
@@ -400,7 +400,7 @@ class Migrated:
 @pytest.fixture(scope="session")
 def migrated(make_params, synthetic_dump, store, seedless, root_engine):
     """One rehearsal of the whole pipeline on the dirty v2.12, as R0 runs it."""
-    from uvlhub_splent.migration_v2.pipeline import run
+    from uvlhub.migration_v2.pipeline import run
 
     report_path = store.parent / "report.json"
     params = make_params(

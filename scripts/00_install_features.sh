@@ -4,14 +4,14 @@
 #
 # It is the DEVELOPMENT install path, and it never contacts PyPI. Every install
 # below is `pip install -e` against a directory under
-# /workspace/uvlhub_splent/features/, which `splent product:resolve` fills
+# /workspace/uvlhub/features/, which `splent product:resolve` fills
 # in: pinned features are cloned from GitHub at their tag into
 # .splent_cache/features/ and symlinked here, editable ones are symlinked
 # straight to the checkout at the workspace root.
 #
 # The production image does not run this script. entrypoints/entrypoint.dev.sh
 # is its only caller; the prod image installs features with pip from PyPI in
-# the builder stage of docker/Dockerfile.uvlhub_splent.prod.
+# the builder stage of docker/Dockerfile.uvlhub.prod.
 #
 # Pinned features: skip if already pip-installed at the correct version.
 # Editable features: skip if already installed from the same path.
@@ -23,7 +23,7 @@ echo ""
 
 features=$(python3 -c '
 import os, tomllib
-with open("/workspace/uvlhub_splent/pyproject.toml", "rb") as f:
+with open("/workspace/uvlhub/pyproject.toml", "rb") as f:
     data = tomllib.load(f)
 splent = data.get("tool", {}).get("splent", {})
 feats = list(splent.get("features", []))
@@ -102,7 +102,7 @@ for feature in $features; do
     else
         # Editable feature: check if installed from the right path
         found_path=""
-        for org_dir in /workspace/uvlhub_splent/features/*; do
+        for org_dir in /workspace/uvlhub/features/*; do
             [ -d "$org_dir" ] || continue
             candidate="$org_dir/$pkg_name"
             if [ -d "$candidate" ]; then
@@ -129,7 +129,7 @@ for feature in $features; do
 
     # Install
     found_path=""
-    for org_dir in /workspace/uvlhub_splent/features/*; do
+    for org_dir in /workspace/uvlhub/features/*; do
         [ -d "$org_dir" ] || continue
         for candidate in "$org_dir/$name_ver" "$org_dir/$pkg_name"; do
             if [ -d "$candidate" ]; then
@@ -177,7 +177,7 @@ overrides_file=""
 collect_overrides() {
     overrides_file="$(mktemp)"
     if ! python3 -m splent_cli.utils.dependency_overrides \
-            "/workspace/uvlhub_splent" "${install_paths[@]}" > "$overrides_file"; then
+            "/workspace/uvlhub" "${install_paths[@]}" > "$overrides_file"; then
         echo "    WARN: the dependency overrides could not be merged, installing without them"
         : > "$overrides_file"
     fi

@@ -4,7 +4,7 @@ set -e
 
 echo ""
 
-PRODUCT_DIR="/workspace/${SPLENT_APP:-uvlhub_splent}"
+PRODUCT_DIR="/workspace/${SPLENT_APP:-uvlhub}"
 
 if [ ! -d "$PRODUCT_DIR/node_modules/.bin" ]; then
     echo "    installing npm dependencies..."

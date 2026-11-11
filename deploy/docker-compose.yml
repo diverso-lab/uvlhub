@@ -1,4 +1,4 @@
-name: uvlhub_splent_deploy
+name: uvlhub_deploy
 x-required:
   ELASTICSEARCH_PASSWORD: ${ELASTICSEARCH_PASSWORD:?ELASTICSEARCH_PASSWORD is required,
     set it in .env}
@@ -36,31 +36,31 @@ x-required:
   SERVER_NAME: ${SERVER_NAME:?SERVER_NAME is required, set it in .env}
   BACKUP_HOST_DIR: ${BACKUP_HOST_DIR:?BACKUP_HOST_DIR is required, set it in .env}
 services:
-  uvlhub_splent_web_deploy:
-    image: ${SPLENT_IMAGE:-git.splent.io/splent-io/uvlhub_splent:stable}
-    container_name: uvlhub_splent_web_deploy
+  uvlhub_web_deploy:
+    image: ${SPLENT_IMAGE:-git.splent.io/splent-io/uvlhub:stable}
+    container_name: uvlhub_web_deploy
     restart: unless-stopped
     env_file:
     - .env
     environment:
-      PROTECTED_UPLOADS_DIR: ${PROTECTED_UPLOADS_DIR:-/workspace/uvlhub_splent/protected_uploads}
-      ARCHIVE_DIR: ${ARCHIVE_DIR:-/workspace/uvlhub_splent/archive}
-      SPLENT_STORAGE_DIR: ${SPLENT_STORAGE_DIR:-/workspace/uvlhub_splent/storage}
+      PROTECTED_UPLOADS_DIR: ${PROTECTED_UPLOADS_DIR:-/workspace/uvlhub/protected_uploads}
+      ARCHIVE_DIR: ${ARCHIVE_DIR:-/workspace/uvlhub/archive}
+      SPLENT_STORAGE_DIR: ${SPLENT_STORAGE_DIR:-/workspace/uvlhub/storage}
     ports:
     - ${SPLENT_WEB_BIND_HOST:-0.0.0.0}:${SPLENT_WEB_PORT:-5012}:5000
     volumes:
-    - uvlhub_splent_web_deploy_storage:${SPLENT_STORAGE_DIR:-/workspace/uvlhub_splent/storage}
-    - uvlhub_splent_web_deploy_uploads:/workspace/uvlhub_splent/src/uvlhub_splent/static/uploads
-    - uvlhub_splent_web_deploy_protected_uploads:${PROTECTED_UPLOADS_DIR:-/workspace/uvlhub_splent/protected_uploads}
-    - uvlhub_splent_web_deploy_archive:${ARCHIVE_DIR:-/workspace/uvlhub_splent/archive}
+    - uvlhub_web_deploy_storage:${SPLENT_STORAGE_DIR:-/workspace/uvlhub/storage}
+    - uvlhub_web_deploy_uploads:/workspace/uvlhub/src/uvlhub/static/uploads
+    - uvlhub_web_deploy_protected_uploads:${PROTECTED_UPLOADS_DIR:-/workspace/uvlhub/protected_uploads}
+    - uvlhub_web_deploy_archive:${ARCHIVE_DIR:-/workspace/uvlhub/archive}
     - ${BACKUP_HOST_DIR:?mount the off-host backup disk and name it in BACKUP_HOST_DIR}:/backups
     depends_on:
-      uvlhub_splent_db_deploy:
+      uvlhub_db_deploy:
         condition: service_healthy
     command:
     - bash
     - -c
-    - bash /workspace/uvlhub_splent/entrypoints/entrypoint.prod.sh
+    - bash /workspace/uvlhub/entrypoints/entrypoint.prod.sh
     healthcheck:
       test:
       - CMD
@@ -74,9 +74,9 @@ services:
       timeout: 5s
       retries: 3
       start_period: 180s
-  uvlhub_splent_db_deploy:
+  uvlhub_db_deploy:
     image: mariadb:11.4
-    container_name: uvlhub_splent_db_deploy
+    container_name: uvlhub_db_deploy
     restart: unless-stopped
     env_file:
     - .env
@@ -84,7 +84,7 @@ services:
     ports:
     - ${SPLENT_DB_BIND_HOST:-127.0.0.1}:${SPLENT_DB_PORT:-33072}:3306
     volumes:
-    - uvlhub_splent_db_deploy_data:/var/lib/mysql
+    - uvlhub_db_deploy_data:/var/lib/mysql
     healthcheck:
       test:
       - CMD-SHELL
@@ -209,11 +209,11 @@ services:
     image: splent/splent_feature_autodeploy:latest
     pull_policy: build
 volumes:
-  uvlhub_splent_db_deploy_data: null
-  uvlhub_splent_web_deploy_storage: null
-  uvlhub_splent_web_deploy_uploads: null
-  uvlhub_splent_web_deploy_protected_uploads: null
-  uvlhub_splent_web_deploy_archive: null
+  uvlhub_db_deploy_data: null
+  uvlhub_web_deploy_storage: null
+  uvlhub_web_deploy_uploads: null
+  uvlhub_web_deploy_protected_uploads: null
+  uvlhub_web_deploy_archive: null
   elasticsearch_data: null
   redis_data: null
   letsencrypt: null

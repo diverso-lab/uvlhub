@@ -6,9 +6,9 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "uvlhub_splent"
+name = "uvlhub"
 version = "3.0.9"
-description = "uvlhub_splent is an app built with SPLENT (https://www.splent.io)"
+description = "uvlhub is an app built with SPLENT (https://www.splent.io)"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = []
@@ -37,10 +37,10 @@ features = [
     "splent-io/splent_feature_theme@v0.17.0",
     "splent-io/splent_feature_public@v1.13.0",
     "splent-io/splent_feature_hub_shell@v0.2.3",
-    "splent-io/splent_feature_orcid@v0.5.1",
+    "splent-io/splent_feature_orcid",
     "splent-io/splent_feature_github@v0.5.1",
     "splent-io/splent_feature_autodeploy@v0.5.1",
-    "splent-io/splent_feature_identities@v0.6.0",
+    "splent-io/splent_feature_identities",
     "splent-io/splent_feature_apikeys@v0.12.1",
     "splent-io/splent_feature_zenodo@v0.6.0",
     "splent-io/splent_feature_backup@v0.2.0",
@@ -128,10 +128,10 @@ DATASET_DEPOSIT_CONTENT = "sources_and_derived"
 ZENODO_KEYWORDS = ["uvlhub"]
 UVL_MAX_SIZE = "20M"
 BACKUP_PATHS = [
-    "/workspace/uvlhub_splent/protected_uploads",
-    "/workspace/uvlhub_splent/src/uvlhub_splent/static/uploads",
-    "/workspace/uvlhub_splent/archive",
-    "/workspace/uvlhub_splent/storage",
+    "/workspace/uvlhub/protected_uploads",
+    "/workspace/uvlhub/src/uvlhub/static/uploads",
+    "/workspace/uvlhub/archive",
+    "/workspace/uvlhub/storage",
 ]
 BACKUP_VERIFY_FILES = ["Hubfile.get_full_path:size"]
 TEAM_SHOW_EMPTY_ROLES = true
@@ -170,8 +170,8 @@ where = [
 ]
 
 [tool.setuptools.package-data]
-"uvlhub_splent" = ["citation_references.toml"]
-"uvlhub_splent.migration_v2" = ["contract.toml", "curation.toml"]
+"uvlhub" = ["citation_references.toml"]
+"uvlhub.migration_v2" = ["contract.toml", "curation.toml"]
 
 [tool.splent.ui_audit]
 start = ["/", "/account", "/developer/tokens", "/datasets/list", "/admin"]

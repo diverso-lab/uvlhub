@@ -1,4 +1,4 @@
-# Build-context filter for Dockerfile.uvlhub_splent.dev (BuildKit reads
+# Build-context filter for Dockerfile.uvlhub.dev (BuildKit reads
 # <Dockerfile>.dockerignore next to the Dockerfile). Paths are relative to the
 # context, the workspace root. The image only copies pyproject files, so this
 # just keeps caches and dependencies out of the context sent to the builder.

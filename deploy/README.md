@@ -1,4 +1,4 @@
-# Running uvlhub_splent
+# Running uvlhub
 
 Everything a host needs is in this directory. It takes Docker with the
 Compose plugin, and nothing else.
@@ -40,7 +40,7 @@ example the output of `openssl rand -hex 32`. Choose the database
 passwords before the first start, because the database keeps the
 ones it starts with.
 
-The web service runs `git.splent.io/splent-io/uvlhub_splent:stable`, the image the product's releases
+The web service runs `git.splent.io/splent-io/uvlhub:stable`, the image the product's releases
 publish. `SPLENT_IMAGE` in `.env` names another one. To build the
 image from this repository instead, run
 

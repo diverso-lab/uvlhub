@@ -23,8 +23,8 @@ from datetime import date, datetime
 import sqlalchemy as sa
 from sqlalchemy.dialects import mysql
 
-from uvlhub_splent.migration_v2.db import insert_batches, quote
-from uvlhub_splent.migration_v2.params import Refused
+from uvlhub.migration_v2.db import insert_batches, quote
+from uvlhub.migration_v2.params import Refused
 
 OPEN, DECIDED = "open", "decided"
 # Why a row is not loaded, where many tables share the reason.

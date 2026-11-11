@@ -33,9 +33,9 @@ import sqlalchemy as sa
 from splent_io.splent_feature_apikeys.services import MAX_TTL_DAYS
 from splent_io.splent_feature_mail.outbox import HOLD_TAG
 
-from uvlhub_splent.migration_v2 import contract as contract_module
-from uvlhub_splent.migration_v2.db import qualified, schema_exists, table_exists
-from uvlhub_splent.migration_v2.params import Refused
+from uvlhub.migration_v2 import contract as contract_module
+from uvlhub.migration_v2.db import qualified, schema_exists, table_exists
+from uvlhub.migration_v2.params import Refused
 
 LOCK_NAME = "uvlhub_migration"
 # A B2 older than this does not let --force through (§3.4).

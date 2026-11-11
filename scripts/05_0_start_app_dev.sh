@@ -20,7 +20,7 @@ owner_uid="$(stat -c %u /workspace)"
 owner_gid="$(stat -c %g /workspace)"
 if [ "$(id -u)" = 0 ] && [ "$owner_uid" != 0 ] && command -v setpriv >/dev/null; then
     owner="$owner_uid:$owner_gid"
-    for path in /workspace/uvlhub_splent /workspace/uploads; do
+    for path in /workspace/uvlhub /workspace/uploads; do
         [ -e "$path" ] || continue
         find -H "$path" -name node_modules -prune -o -user 0 \
             -exec chown -h "$owner" {} + 2>/dev/null || true
@@ -50,7 +50,7 @@ fi
 EXCLUDE="*/instance/*:*/uploads/*:*/node_modules/*:*/__pycache__/*:/workspace/splent_cli/*"
 
 "${as_owner[@]}" watchmedo auto-restart \
-    --directory=/workspace/uvlhub_splent/src/uvlhub_splent \
+    --directory=/workspace/uvlhub/src/uvlhub \
     --pattern=*.py \
     --ignore-patterns="*/instance/*;*/uploads/*" \
     --recursive \

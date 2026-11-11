@@ -15,11 +15,11 @@ import sqlalchemy as sa
 from splent_io.splent_feature_auth.models import canonical_email
 from splent_io.splent_feature_dataset.descriptions import HTML_LEGACY, clean_html
 
-from uvlhub_splent.migration_v2 import contract as contract_module
-from uvlhub_splent.migration_v2 import rules
-from uvlhub_splent.migration_v2.db import qualified, quote
-from uvlhub_splent.migration_v2.ledger import to_json
-from uvlhub_splent.migration_v2.params import Refused
+from uvlhub.migration_v2 import contract as contract_module
+from uvlhub.migration_v2 import rules
+from uvlhub.migration_v2.db import qualified, quote
+from uvlhub.migration_v2.ledger import to_json
+from uvlhub.migration_v2.params import Refused
 
 # The tables whose ids are kept, and the source table each one's come from.
 KEPT_IDS = {

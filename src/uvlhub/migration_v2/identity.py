@@ -40,15 +40,15 @@ import sqlalchemy as sa
 from splent_io.splent_feature_apikeys.services import imported_token_fields
 from splent_io.splent_feature_auth.models import ORIGIN_LEGACY, canonical_email
 
-from uvlhub_splent.migration_v2 import rules
-from uvlhub_splent.migration_v2.db import (
+from uvlhub.migration_v2 import rules
+from uvlhub.migration_v2.db import (
     all_rows,
     foreign_keys_off,
     insert_batches,
     qualified,
     reflect,
 )
-from uvlhub_splent.migration_v2.ledger import HELD, ORPHAN, SEED, stop_on_conflicts
+from uvlhub.migration_v2.ledger import HELD, ORPHAN, SEED, stop_on_conflicts
 
 # The scopes of a v2.12 key that write (the plan's FIND_IN_SET('write_dataset')).
 WRITING_SCOPES = ("write_dataset",)

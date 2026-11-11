@@ -39,7 +39,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       WORKING_DIR: ${{ github.workspace }}
-      SPLENT_APP: uvlhub_splent
+      SPLENT_APP: uvlhub
       SPLENT_FORGE_HOST: git.splent.io
       # The features are public, so they are cloned anonymously. Forgejo puts
       # a token scoped to this repository alone in every job, and with it the
@@ -51,7 +51,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          path: uvlhub_splent
+          path: uvlhub
 
       - uses: actions/setup-python@v5
         with:
@@ -80,7 +80,7 @@ jobs:
       # A change to the features or the configuration that skipped
       # product:build left them behind, and the CI said nothing.
       - name: The versioned deploy artifacts are the ones the product generates
-        working-directory: uvlhub_splent
+        working-directory: uvlhub
         run: |
           paths="deploy docker/requirements.lock docker/frontend.lock.json splent.contracts.json docker/spl"
           if [ -n "$(git status --porcelain -- $paths)" ]; then
@@ -125,11 +125,11 @@ jobs:
     runs-on: ubuntu-latest
     env:
       WORKING_DIR: ${{ github.workspace }}
-      SPLENT_APP: uvlhub_splent
+      SPLENT_APP: uvlhub
     steps:
       - uses: actions/checkout@v4
         with:
-          path: uvlhub_splent
+          path: uvlhub
 
       - uses: actions/setup-python@v5
         with:
@@ -138,7 +138,7 @@ jobs:
       - name: Install the SPLENT CLI and Ruff
         run: pip install --quiet --upgrade splent_cli splent_framework "ruff==0.11.8"
 
-      # The product's own code, src/uvlhub_splent. Its features were
+      # The product's own code, src/uvlhub. Its features were
       # linted when they were released.
       - name: Lint the product's code
         run: splent lint --target app
@@ -148,7 +148,7 @@ jobs:
   # it pins and the refiners it selects, then the product's own tests under
   # tests/, when it has any. This job stands in for the product's web
   # container, with a database of its own, so product:test runs here instead
-  # of delegating to uvlhub_splent_web. A product with no tests passes.
+  # of delegating to uvlhub_web. A product with no tests passes.
   # Each server a feature runs in its docker compose file runs here too,
   # under the same name. tests = false under [tool.splent.ci] leaves the job
   # out.
@@ -159,10 +159,10 @@ jobs:
       db:
         image: mariadb:11.4
         env:
-          MARIADB_ROOT_PASSWORD: uvlhub_splent_db_root_password
-          MARIADB_DATABASE: uvlhub_splent_db_test
-          MARIADB_USER: uvlhub_splent_db_user
-          MARIADB_PASSWORD: uvlhub_splent_db_password
+          MARIADB_ROOT_PASSWORD: uvlhub_db_root_password
+          MARIADB_DATABASE: uvlhub_db_test
+          MARIADB_USER: uvlhub_db_user
+          MARIADB_PASSWORD: uvlhub_db_password
         options: >-
           --health-cmd "healthcheck.sh --connect --innodb_initialized"
           --health-interval 5s --health-timeout 5s --health-retries 30
@@ -185,7 +185,7 @@ jobs:
         image: mailhog/mailhog:latest
     env:
       WORKING_DIR: ${{ github.workspace }}
-      SPLENT_APP: uvlhub_splent
+      SPLENT_APP: uvlhub
       SPLENT_ENV: dev
       SPLENT_CONTAINER: product
       SPLENT_FORGE_HOST: git.splent.io
@@ -193,11 +193,11 @@ jobs:
       GITHUB_TOKEN: ""
       SPLENT_CLONE_TRANSPORT: https
       MARIADB_HOSTNAME: db
-      MARIADB_DATABASE: uvlhub_splent_db
-      MARIADB_TEST_DATABASE: uvlhub_splent_db_test
-      MARIADB_USER: uvlhub_splent_db_user
-      MARIADB_PASSWORD: uvlhub_splent_db_password
-      MARIADB_ROOT_PASSWORD: uvlhub_splent_db_root_password
+      MARIADB_DATABASE: uvlhub_db
+      MARIADB_TEST_DATABASE: uvlhub_db_test
+      MARIADB_USER: uvlhub_db_user
+      MARIADB_PASSWORD: uvlhub_db_password
+      MARIADB_ROOT_PASSWORD: uvlhub_db_root_password
       ELASTICSEARCH_URL: http://splent_feature_elasticsearch:9200
       REDIS_URL: redis://splent_feature_redis:6379
       MAIL_HOST: splent_feature_mailhog
@@ -207,7 +207,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          path: uvlhub_splent
+          path: uvlhub
 
       - uses: actions/setup-python@v5
         with:
@@ -218,11 +218,11 @@ jobs:
       # pytest. Third-party packages follow docker/requirements.lock.
       - name: Install what the product runs
         run: |
-          lock=uvlhub_splent/docker/requirements.lock
+          lock=uvlhub/docker/requirements.lock
           if [ -f "$lock" ]; then export PIP_CONSTRAINT="$PWD/$lock"; fi
           python3 - <<'PY' > runtime.txt
           import tomllib
-          with open("uvlhub_splent/pyproject.toml", "rb") as f:
+          with open("uvlhub/pyproject.toml", "rb") as f:
               data = tomllib.load(f)
           pins = {"splent_framework": "", "splent_cli": ""}
           runtime = data.get("tool", {}).get("splent", {}).get("runtime") or {}
@@ -239,7 +239,7 @@ jobs:
 
       - name: Install the features and their dependencies
         run: |
-          lock=uvlhub_splent/docker/requirements.lock
+          lock=uvlhub/docker/requirements.lock
           if [ -f "$lock" ]; then export PIP_CONSTRAINT="$PWD/$lock"; fi
           splent feature:pip-install
 

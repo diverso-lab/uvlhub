@@ -62,11 +62,11 @@ from splent_io.splent_feature_hubfile.storage import (
     checksum_algorithm,
 )
 
-from uvlhub_splent.migration_v2.db import insert_batches, qualified, reflect
-from uvlhub_splent.migration_v2.ledger import stop_on_conflicts
-from uvlhub_splent.migration_v2.params import Refused
-from uvlhub_splent.migration_v2.schema import child_env, run_child
-from uvlhub_splent.migration_v2.verify import Check
+from uvlhub.migration_v2.db import insert_batches, qualified, reflect
+from uvlhub.migration_v2.ledger import stop_on_conflicts
+from uvlhub.migration_v2.params import Refused
+from uvlhub.migration_v2.schema import child_env, run_child
+from uvlhub.migration_v2.verify import Check
 
 OK, MISSING, MISMATCH, RECOVERED = "ok", "missing", "mismatch", "recovered"
 # What a row of a published dataset may say once E8 is done (V-08).

@@ -1,4 +1,4 @@
-# Build-context filter for Dockerfile.uvlhub_splent.prod (BuildKit reads
+# Build-context filter for Dockerfile.uvlhub.prod (BuildKit reads
 # <Dockerfile>.dockerignore next to the Dockerfile). The context is the
 # product's own repository, so paths are relative to its root.
 **/.git

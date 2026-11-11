@@ -33,10 +33,10 @@ import subprocess
 import sqlalchemy as sa
 from splent_io.splent_feature_hubfile.storage import DATASETS
 
-from uvlhub_splent.migration_v2 import DERIVED
-from uvlhub_splent.migration_v2.db import qualified
-from uvlhub_splent.migration_v2.schema import child_env
-from uvlhub_splent.migration_v2.verify import Check
+from uvlhub.migration_v2 import DERIVED
+from uvlhub.migration_v2.db import qualified
+from uvlhub.migration_v2.schema import child_env
+from uvlhub.migration_v2.verify import Check
 
 # The tables of the load E9 writes again: their rows carry the moment they
 # were made, so they are not the same from one run to the next (principle 2

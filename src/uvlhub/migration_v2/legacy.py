@@ -43,15 +43,15 @@ from pathlib import Path
 
 import sqlalchemy as sa
 
-from uvlhub_splent.migration_v2.content import PUBLISHED
-from uvlhub_splent.migration_v2.db import (
+from uvlhub.migration_v2.content import PUBLISHED
+from uvlhub.migration_v2.db import (
     all_rows,
     insert_batches,
     qualified,
     reflect,
 )
-from uvlhub_splent.migration_v2.ledger import HELD, stop_on_conflicts
-from uvlhub_splent.migration_v2.schema import child_env, run_child
+from uvlhub.migration_v2.ledger import HELD, stop_on_conflicts
+from uvlhub.migration_v2.schema import child_env, run_child
 
 # The records of v2.12 (§7.2): table, what it counts, the kind, and its
 # columns for the target, the moment and the cookie.

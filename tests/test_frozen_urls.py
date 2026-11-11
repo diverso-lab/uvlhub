@@ -17,14 +17,14 @@ expected failure until the contract owner decides which ones are accepted.
 
 Run it in the product's web container, which has the features installed:
 
-    docker exec uvlhub_splent_web bash -lc \
-        'cd /workspace/uvlhub_splent && python -m pytest tests -q -p no:cacheprovider'
+    docker exec uvlhub_web bash -lc \
+        'cd /workspace/uvlhub && python -m pytest tests -q -p no:cacheprovider'
 
 The app loads the features the product pins. To see a working copy instead,
 name it in SPLENT_FEATURE_SOURCES, as feature:test does:
 
     docker exec -e SPLENT_FEATURE_SOURCES=splent_feature_uvl=/workspace/splent_feature_uvl \
-        uvlhub_splent_web bash -lc 'cd /workspace/uvlhub_splent && python -m pytest tests -q -p no:cacheprovider'
+        uvlhub_web bash -lc 'cd /workspace/uvlhub && python -m pytest tests -q -p no:cacheprovider'
 """
 
 import re

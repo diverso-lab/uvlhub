@@ -10,8 +10,8 @@ from __future__ import annotations
 from datetime import datetime
 from types import SimpleNamespace
 
-from uvlhub_splent.migration_v2 import content
-from uvlhub_splent.migration_v2.ledger import Ledger
+from uvlhub.migration_v2 import content
+from uvlhub.migration_v2.ledger import Ledger
 
 ORIGINAL = '<p>Hi <a href="https://uvlhub.io" target="_blank">there</a></p><script>x()</script>'
 # What the hotfix D1 (bleach, strip=True) left of it.

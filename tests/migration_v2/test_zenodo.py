@@ -6,7 +6,7 @@ talk to Zenodo are checked here with a fake session.
 
 import requests
 
-from uvlhub_splent.migration_v2 import zenodo
+from uvlhub.migration_v2 import zenodo
 
 
 class FakeResponse:
@@ -102,7 +102,7 @@ class EveryRecord:
 
 
 def test_the_snapshot_keeps_each_record_once(migrated, root_engine):
-    from uvlhub_splent.migration_v2.db import make_engine
+    from uvlhub.migration_v2.db import make_engine
 
     schema = "iso_zenodo_snapshot_inputs"
     server = migrated.params.server

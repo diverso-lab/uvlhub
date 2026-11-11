@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
-from uvlhub_splent.migration_v2 import DERIVED, NOT_YET, STAGES
+from uvlhub.migration_v2 import DERIVED, NOT_YET, STAGES
 
 
 class Refused(Exception):

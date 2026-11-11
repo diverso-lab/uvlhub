@@ -3,7 +3,7 @@
 R0 starts from "a v2.12 database created with the monolith's migrations up
 to the head deployed" (§9.1), and E2 compares the dump with the same
 schema (P-00). The monolith is not part of this repository, so its DDL is
-kept in the migrator's package (uvlhub_splent.migration_v2.v2_12_schema),
+kept in the migrator's package (uvlhub.migration_v2.v2_12_schema),
 made by running its Alembic chain here; test_v2_schema.py runs the chain
 again when the monolith is in the workspace (_reference/uvlhub_monolith)
 and fails when the two differ. After R1, the production DDL (mariadb-dump
@@ -29,7 +29,7 @@ from pathlib import Path
 
 import sqlalchemy as sa
 
-from uvlhub_splent.migration_v2 import v2_12_schema
+from uvlhub.migration_v2 import v2_12_schema
 
 WORKSPACE = Path(__file__).resolve().parents[3]
 MONOLITH_VERSIONS = (

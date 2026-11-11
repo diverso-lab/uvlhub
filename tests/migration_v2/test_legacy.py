@@ -14,8 +14,8 @@ from datetime import date, datetime, timedelta
 import pytest
 import sqlalchemy as sa
 
-from uvlhub_splent.migration_v2 import rules
-from uvlhub_splent.migration_v2.legacy import follow_mappings
+from uvlhub.migration_v2 import rules
+from uvlhub.migration_v2.legacy import follow_mappings
 
 from . import synthetic
 

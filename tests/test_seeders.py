@@ -19,14 +19,14 @@ import contextlib
 import pytest
 from splent_framework.fixtures.fixtures import _reset_db
 
-from uvlhub_splent.seeders import APPEARANCE, MEMBERS, ORGANISATIONS
+from uvlhub.seeders import APPEARANCE, MEMBERS, ORGANISATIONS
 
-PRODUCT_SEEDERS = "uvlhub_splent.seeders"
+PRODUCT_SEEDERS = "uvlhub.seeders"
 TEAM_SEEDERS = "splent_io.splent_feature_team.seeders"
 # The seed indexes its datasets for /explore. Under a prefix of its own, so
 # the test database's datasets never reach the search index of the
 # development app on the same node; the index goes afterwards.
-SEARCH_PREFIX = "uvlhub_splent_test_seed"
+SEARCH_PREFIX = "uvlhub_test_seed"
 
 
 @pytest.fixture(scope="module")

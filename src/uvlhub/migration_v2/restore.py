@@ -31,8 +31,8 @@ import tempfile
 
 import sqlalchemy as sa
 
-from uvlhub_splent.migration_v2.db import quote
-from uvlhub_splent.migration_v2.params import Refused
+from uvlhub.migration_v2.db import quote
+from uvlhub.migration_v2.params import Refused
 
 # P-28, as the plan writes it.
 UNEXPECTED_OBJECTS = """
