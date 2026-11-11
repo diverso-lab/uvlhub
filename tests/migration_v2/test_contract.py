@@ -16,7 +16,7 @@ from pathlib import Path
 import pytest
 import sqlalchemy as sa
 
-from uvlhub.migration_v2 import contract as contract_module
+from uvlhub_splent.migration_v2 import contract as contract_module
 
 from .conftest import needs_pins
 
@@ -60,7 +60,7 @@ def test_uvlhub3_defaults_to_the_contracts_collation(migrated, contract):
 
 
 def test_v14_reads_the_contract_from_the_inputs_schema(migrated, contract):
-    from uvlhub.migration_v2.schema import V14
+    from uvlhub_splent.migration_v2.schema import V14
 
     with migrated.engine.connect() as connection:
         copied = connection.execute(

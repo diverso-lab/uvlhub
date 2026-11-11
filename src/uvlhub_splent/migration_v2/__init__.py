@@ -38,9 +38,9 @@ a command that needs the app (``splent db:upgrade``, ``splent
 feature:hubfile storage-migrate``) it runs in a process of its own, as a
 separate step.
 
-Run it with ``python -m uvlhub.migration_v2 --help``, the entry of
+Run it with ``python -m uvlhub_splent.migration_v2 --help``, the entry of
 the cutover, which builds no app; ``splent product:migrate-v2`` gives the
-same commands inside the CLI (uvlhub/commands.py). The data
+same commands inside the CLI (uvlhub_splent/commands.py). The data
 contract it writes to is ``contract.toml``.
 """
 

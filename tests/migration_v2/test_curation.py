@@ -15,8 +15,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from uvlhub.migration_v2 import curation
-from uvlhub.migration_v2.params import Refused
+from uvlhub_splent.migration_v2 import curation
+from uvlhub_splent.migration_v2.params import Refused
 
 
 def dataset(dataset_id, created, origin=None, version=1, owner=1):

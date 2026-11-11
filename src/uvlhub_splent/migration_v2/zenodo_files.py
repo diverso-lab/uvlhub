@@ -47,9 +47,9 @@ import requests
 import sqlalchemy as sa
 from splent_io.splent_feature_hubfile.legacy import MISMATCH, MISSING, verify
 
-from uvlhub.migration_v2 import db as dbm
-from uvlhub.migration_v2 import ledger, rules, zenodo
-from uvlhub.migration_v2.files import legacy_path
+from uvlhub_splent.migration_v2 import db as dbm
+from uvlhub_splent.migration_v2 import ledger, rules, zenodo
+from uvlhub_splent.migration_v2.files import legacy_path
 
 FILE_URL = "https://zenodo.org/api/records/{id}/files/{key}/content"
 #: Where a file may be downloaded from: Zenodo itself, whatever a record says.

@@ -18,7 +18,7 @@ from splent_framework.nav.menu_registry import (
     register_user_menu_item,
 )
 
-from uvlhub.aliases import aliases_bp
+from uvlhub_splent.aliases import aliases_bp
 
 # Lower renders first within a slot; features default to 100.
 FIRST = 10

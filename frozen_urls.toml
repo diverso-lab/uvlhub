@@ -660,7 +660,7 @@ clients = ["authors' JavaScript"]
 target = "Alias of /api/v1/profile/me"
 status = "served"
 endpoint = "uvlhub_aliases.api_me"
-served_by = "uvlhub (src/uvlhub/aliases.py)"
+served_by = "uvlhub_splent (src/uvlhub_splent/aliases.py)"
 plan = "CO-2"
 note = "A 308 to /api/v1/profile/me (profile.my_profile), held by the product until legacy_urls takes it over"
 

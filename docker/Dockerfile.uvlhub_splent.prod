@@ -1,8 +1,8 @@
-# The production image of uvlhub.
+# The production image of uvlhub_splent.
 #
 # The build context is this repository and nothing else:
 #
-#     docker build -f docker/Dockerfile.uvlhub.prod .
+#     docker build -f docker/Dockerfile.uvlhub_splent.prod .
 #
 # Everything the image needs besides the product's own code comes from PyPI,
 # at versions the repository pins: the framework and the CLI in
@@ -126,7 +126,7 @@ ENV PYTHONUSERBASE=/opt/splent
 ENV PYTHONPATH=/opt/product
 ENV PATH=/opt/splent/bin:$PATH
 
-ENV SPLENT_APP=uvlhub
+ENV SPLENT_APP=uvlhub_splent
 ENV WORKING_DIR=/workspace
 # The CLI's in-container detection keys on /.dockerenv, which the classic
 # builder created inside RUN steps and BuildKit does not. Restore the marker
@@ -158,20 +158,20 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 # belongs to the dev entrypoint and never runs here. A feature declared
 # without a version becomes a bare package name, so uv picks whatever PyPI
 # serves rather than the code in the workspace.
-COPY --from=pins /pins/pyproject.toml uvlhub/pyproject.toml
-COPY docker/requirements.override[s] uvlhub/docker/
+COPY --from=pins /pins/pyproject.toml uvlhub_splent/pyproject.toml
+COPY docker/requirements.override[s] uvlhub_splent/docker/
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=cache,target=/root/.cache/pip \
     PIP_USER=1 splent feature:pip-install
 
-# The product. Dockerfile.uvlhub.prod.dockerignore keeps the env
+# The product. Dockerfile.uvlhub_splent.prod.dockerignore keeps the env
 # files (credentials), the development links and the deploy bundle out.
-COPY . uvlhub/
+COPY . uvlhub_splent/
 
 # Same protection for a builder that ignores that file (the classic builder,
 # DOCKER_BUILDKIT=0). Only the runtime stage is pushed, and it copies
 # /workspace from this stage, so the env files never reach a published image.
-RUN find uvlhub/docker -maxdepth 1 -name '.env*' ! -name '*.example' \
+RUN find uvlhub_splent/docker -maxdepth 1 -name '.env*' ! -name '*.example' \
         \( -type f -o -type l \) -delete
 
 # The SPL's UVL model. The framework orders features, and their migrations,
@@ -179,19 +179,19 @@ RUN find uvlhub/docker -maxdepth 1 -name '.env*' ! -name '*.example' \
 # product:build keeps the model pyproject.toml pins in docker/spl/, and this
 # puts it where the framework and the CLI look. Without it every boot warns
 # that features load in pyproject.toml order.
-RUN if [ -d uvlhub/docker/spl ]; then \
+RUN if [ -d uvlhub_splent/docker/spl ]; then \
         mkdir -p .splent_cache/spls && \
-        cp -R uvlhub/docker/spl/. .splent_cache/spls/; \
+        cp -R uvlhub_splent/docker/spl/. .splent_cache/spls/; \
     fi
 
 # What it depends on is already installed, with the runtime.
 RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install --no-deps --target /opt/product ./uvlhub
+    pip install --no-deps --target /opt/product ./uvlhub_splent
 
 # The product's own frontend, when its package.json has a build script,
 # installed from its lock exactly as committed.
 RUN --mount=type=cache,target=/root/.npm \
-    cd uvlhub && \
+    cd uvlhub_splent && \
     if [ -f package.json ] && [ "$(npm pkg get scripts.build)" != "{}" ]; then \
         test -f package-lock.json || \
             { echo "package-lock.json is missing: run npm install in the product and commit it"; exit 1; }; \
@@ -207,7 +207,7 @@ RUN splent feature:compile --verify
 
 # What only the build needed: the frontend toolchain and pip's build tree.
 # The runtime stage copies /workspace, so they would ship otherwise.
-RUN rm -rf uvlhub/node_modules uvlhub/build
+RUN rm -rf uvlhub_splent/node_modules uvlhub_splent/build
 
 # ── Stage 4: Runtime ─────────────────────────────────────────────────────────
 FROM python:3.13-slim-trixie
@@ -222,7 +222,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 ENV PIP_ROOT_USER_ACTION=ignore
-ENV SPLENT_APP=uvlhub
+ENV SPLENT_APP=uvlhub_splent
 ENV WORKING_DIR=/workspace
 ENV SPLENT_CONTAINER=product
 ENV PYTHONUSERBASE=/opt/splent

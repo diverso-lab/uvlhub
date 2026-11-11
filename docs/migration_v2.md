@@ -1,6 +1,6 @@
 # Migrating uvlhub.io 2.12 into uvlhub 3.0
 
-`uvlhub.migration_v2` is the migrator of the cutover (CO-3): strategy
+`uvlhub_splent.migration_v2` is the migrator of the cutover (CO-3): strategy
 C of the migration plan, `_reference/analisis_uvlhub/06-plan-migracion-uvlhubio.md`
 in the workspace. A dump of v2.12 is restored in a schema of its own, an
 empty `uvlhub3` is brought to the head of the pinned features by their own
@@ -47,15 +47,15 @@ web and the worker of 3.0 not created yet. Root restores the dump; every
 other step uses a `migrator` account made for the cutover:
 
 ```bash
-python -m uvlhub.migration_v2 grants        # the SQL for root to create it (five schemas)
+python -m uvlhub_splent.migration_v2 grants        # the SQL for root to create it (five schemas)
 ```
 
 ```bash
 export MIGRATION_DB_PASSWORD=...  MIGRATION_DB_ROOT_PASSWORD=...  RUN_DB_SEED=false
 export SECRET_KEY=<3.0's new key>  MIGRATION_V2_SECRET_KEY_SHA256=<sha256 of v2.12's>
 export MIGRATION_PUBLIC_ID_KEY=<a key kept for every rehearsal and the cutover>  MAIL_FROM=<3.0's sender>
-python -m uvlhub.migration_v2 preflight --db-host <db> --t0 2026-11-20T00:00:00 --expected-head e5f6a7b8c9d0
-python -m uvlhub.migration_v2 run --db-host <db> \
+python -m uvlhub_splent.migration_v2 preflight --db-host <db> --t0 2026-11-20T00:00:00 --expected-head e5f6a7b8c9d0
+python -m uvlhub_splent.migration_v2 run --db-host <db> \
     --t0 2026-11-20T00:00:00 --expected-head e5f6a7b8c9d0 \
     --admin-email someone@uvlhub.io \
     --dump /b1/uvlhub_v2_12.sql --store-root <HUBFILE_STORAGE_ROOT> \
@@ -95,7 +95,7 @@ python -m uvlhub.migration_v2 run --db-host <db> \
   iD.
 
 Inside the CLI, `splent product:migrate-v2 <command>` gives the same
-commands (`src/uvlhub/commands.py`). The CLI builds the product's
+commands (`src/uvlhub_splent/commands.py`). The CLI builds the product's
 app for it, so before anything runs the command closes the connections the
 app's engines keep, and refuses while one is still in use: E0 would count
 it as somebody else's. The cutover keeps `python -m`, which builds no app.
@@ -116,8 +116,8 @@ one), only GET, with no token, and keep what they fetch in
 `uvlhub_migration_inputs`, which every run reads and none drops.
 
 ```bash
-python -m uvlhub.migration_v2 zenodo-snapshot --db-host <db>
-python -m uvlhub.migration_v2 zenodo-files --db-host <db> \
+python -m uvlhub_splent.migration_v2 zenodo-snapshot --db-host <db>
+python -m uvlhub_splent.migration_v2 zenodo-files --db-host <db> \
     --store-root <HUBFILE_STORAGE_ROOT> --cache <a folder of the operator's>
 ```
 
@@ -201,7 +201,7 @@ a run that has E2.
 
 ## E5: the curation (RU-06)
 
-`src/uvlhub/migration_v2/curation.toml` says what R1 decided on the
+`src/uvlhub_splent/migration_v2/curation.toml` says what R1 decided on the
 datasets uvlhub.io published more than once, and E5 applies it as it loads,
 never by hand on the database. `--curation` (or `MIGRATION_CURATION`)
 names another file, and `none` applies none.
@@ -348,19 +348,19 @@ The migrator leaves `role`, `team_member`, `citation_reference`, `setting` and
 `media_item` empty, and `splent db:seed` refuses production because it brings
 the demo data. So once 3.0 is up, load uvlhub's own content by itself: in the
 web container, as the app's user, `UvlhubTeamSeeder().run()` and
-`UvlhubAppearanceSeeder().run()` from `uvlhub.seeders` in an app context,
+`UvlhubAppearanceSeeder().run()` from `uvlhub_splent.seeders` in an app context,
 then `splent feature:citation references-load` and `splent feature:dataset dump`.
 
 ## The data contract
 
-`src/uvlhub/migration_v2/contract.toml` (MIG-03) holds the heads of
+`src/uvlhub_splent/migration_v2/contract.toml` (MIG-03) holds the heads of
 every feature with migrations (V-12) and, for every table the migrator
 writes, its columns, types, nullability and collations, each column with
 where it comes from (`source`, `rule`, and `on_null` where v2.12 admits a
 NULL the target refuses, C-27). The tables it does not fill are listed
 too, so a feature that adds one is an unknown that stops E3.
 
-`python -m uvlhub.migration_v2 contract` prints a summary, with what
+`python -m uvlhub_splent.migration_v2 contract` prints a summary, with what
 DM-15 asks for that the pinned features do not give yet, and
 `contract --check <host>` compares a live `uvlhub3`.
 
@@ -381,7 +381,7 @@ They never use the development database or the shared test one. From the
 CLI container,
 
 ```bash
-flock /tmp/splent-test.lock bash uvlhub/tests/migration_v2/run_with_throwaway_db.sh
+flock /tmp/splent-test.lock bash uvlhub_splent/tests/migration_v2/run_with_throwaway_db.sh
 ```
 
 starts a MariaDB 11.4 of their own on the web container's network, names it
@@ -393,7 +393,7 @@ product's other tests use. With pytest arguments it runs the migrator's
 tests alone, without the lock:
 
 ```bash
-bash uvlhub/tests/migration_v2/run_with_throwaway_db.sh -q -k preflight
+bash uvlhub_splent/tests/migration_v2/run_with_throwaway_db.sh -q -k preflight
 ```
 
 A plain `splent product:test --own-tests` runs the ones that need no

@@ -22,9 +22,9 @@ import subprocess
 
 import sqlalchemy as sa
 
-from uvlhub.migration_v2 import contract as contract_module
-from uvlhub.migration_v2.db import qualified, quote
-from uvlhub.migration_v2.params import Refused
+from uvlhub_splent.migration_v2 import contract as contract_module
+from uvlhub_splent.migration_v2.db import qualified, quote
+from uvlhub_splent.migration_v2.params import Refused
 
 # V-14, as the plan writes it.
 V14 = """

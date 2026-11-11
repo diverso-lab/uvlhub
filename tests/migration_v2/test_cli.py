@@ -1,4 +1,4 @@
-"""``python -m uvlhub.migration_v2``: the commands, without a server.
+"""``python -m uvlhub_splent.migration_v2``: the commands, without a server.
 
 What reaches a database is test_pipeline's; these check what the commands
 say and refuse before they connect.
@@ -13,7 +13,7 @@ import sys
 import pytest
 from click.testing import CliRunner
 
-from uvlhub.migration_v2.cli import REFUSED, main
+from uvlhub_splent.migration_v2.cli import REFUSED, main
 
 from .conftest import needs_pins
 
@@ -22,7 +22,7 @@ RUN = ["--db-host", "nowhere", "--t0", "2026-11-20T00:00:00"]
 
 def test_the_module_runs_as_a_command():
     result = subprocess.run(
-        [sys.executable, "-m", "uvlhub.migration_v2", "--help"],
+        [sys.executable, "-m", "uvlhub_splent.migration_v2", "--help"],
         capture_output=True,
         text=True,
         check=False,
@@ -99,10 +99,10 @@ def test_the_features_processes_reach_the_migrators_server(monkeypatch):
     """E3 and E8 run the features' commands with the server, the port
     (MARIADB_PORT, splent_framework 1.24.0), the account and uvlhub3 of the
     run, and never a seed, whatever the product's .env says."""
-    from uvlhub.migration_v2.params import Params, Server, parse_t0
-    from uvlhub.migration_v2.schema import child_env
+    from uvlhub_splent.migration_v2.params import Params, Server, parse_t0
+    from uvlhub_splent.migration_v2.schema import child_env
 
-    monkeypatch.setenv("MARIADB_HOSTNAME", "uvlhub_db")
+    monkeypatch.setenv("MARIADB_HOSTNAME", "uvlhub_splent_db")
     monkeypatch.setenv("RUN_DB_SEED", "true")
     params = Params(
         server=Server(host="cutover-db", port=3407, user="migrator", password="pw"),
@@ -155,7 +155,7 @@ def app_with_a_pool(tmp_path):
 
 
 def test_the_product_command_is_the_migrators(app_with_a_pool):
-    from uvlhub.commands import cli_commands, migrate_v2
+    from uvlhub_splent.commands import cli_commands, migrate_v2
 
     assert cli_commands == [migrate_v2]
     assert set(migrate_v2.commands) == {
@@ -171,7 +171,7 @@ def test_the_product_command_is_the_migrators(app_with_a_pool):
 def test_the_product_command_lets_the_apps_connections_go_before_e0(
     app_with_a_pool, monkeypatch
 ):
-    from uvlhub.commands import migrate_v2
+    from uvlhub_splent.commands import migrate_v2
 
     monkeypatch.setenv("RUN_DB_SEED", "false")
     result = CliRunner().invoke(
@@ -184,7 +184,7 @@ def test_the_product_command_lets_the_apps_connections_go_before_e0(
 def test_the_product_command_refuses_while_the_app_holds_a_connection(
     app_with_a_pool,
 ):
-    from uvlhub.commands import migrate_v2
+    from uvlhub_splent.commands import migrate_v2
 
     with app_with_a_pool.engine.connect():
         result = CliRunner().invoke(migrate_v2, ["grants"])
@@ -205,8 +205,8 @@ def test_a_curation_that_does_not_hold_is_a_usage_error(tmp_path):
 
 
 def test_the_curation_is_r1s_unless_told_otherwise():
-    from uvlhub.migration_v2 import curation
-    from uvlhub.migration_v2.cli import _curation
+    from uvlhub_splent.migration_v2 import curation
+    from uvlhub_splent.migration_v2.cli import _curation
 
     assert _curation(None) == curation.CURATION
     assert _curation("none") is None

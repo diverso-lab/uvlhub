@@ -41,21 +41,21 @@ from typing import Callable
 import sqlalchemy as sa
 from splent_io.splent_feature_auth.models import canonical_email
 
-from uvlhub.migration_v2 import contract as contract_module
-from uvlhub.migration_v2 import rules, v2_12_schema
-from uvlhub.migration_v2.db import (
+from uvlhub_splent.migration_v2 import contract as contract_module
+from uvlhub_splent.migration_v2 import rules, v2_12_schema
+from uvlhub_splent.migration_v2.db import (
     all_rows,
     insert_batches,
     qualified,
     quote,
     reflect,
 )
-from uvlhub.migration_v2.identity import (
+from uvlhub_splent.migration_v2.identity import (
     OWN,
     classify_reset_token,
     collation_clashes,
 )
-from uvlhub.migration_v2.ledger import (
+from uvlhub_splent.migration_v2.ledger import (
     CONFLICTS,
     RESOLUTIONS,
     SCHEMA,
@@ -63,7 +63,7 @@ from uvlhub.migration_v2.ledger import (
     stop_on_conflicts,
     to_json,
 )
-from uvlhub.migration_v2.params import Refused
+from uvlhub_splent.migration_v2.params import Refused
 
 # What uvlhub_migration.profile keeps of what a probe found.
 SAMPLE = 20

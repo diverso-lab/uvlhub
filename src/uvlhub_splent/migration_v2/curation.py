@@ -34,8 +34,8 @@ from pathlib import Path
 
 from splent_io.splent_feature_dataset.models import DatasetStatus, state_from_metadata
 
-from uvlhub.migration_v2 import rules
-from uvlhub.migration_v2.params import Refused
+from uvlhub_splent.migration_v2 import rules
+from uvlhub_splent.migration_v2.params import Refused
 
 #: The decisions R1 took on uvlhub.io's datasets.
 CURATION = Path(__file__).with_name("curation.toml")

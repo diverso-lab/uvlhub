@@ -17,12 +17,12 @@ from datetime import datetime, timedelta
 import pytest
 import sqlalchemy as sa
 
-from uvlhub.migration_v2 import contract as contract_module
-from uvlhub.migration_v2.verify import empty_tables, foreign_key_orphans
-from uvlhub.migration_v2.derived import REWRITTEN
-from uvlhub.migration_v2.params import Refused
-from uvlhub.migration_v2.pipeline import run
-from uvlhub.migration_v2.schema import child_env
+from uvlhub_splent.migration_v2 import contract as contract_module
+from uvlhub_splent.migration_v2.verify import empty_tables, foreign_key_orphans
+from uvlhub_splent.migration_v2.derived import REWRITTEN
+from uvlhub_splent.migration_v2.params import Refused
+from uvlhub_splent.migration_v2.pipeline import run
+from uvlhub_splent.migration_v2.schema import child_env
 
 from . import synthetic
 
@@ -453,7 +453,7 @@ def test_e5_gives_each_dataset_its_public_id_root_and_concept(migrated):
     """CO-5, §4.2: a ULID of created_at whose random bits come from the
     key and the id, the same every run; DL-9: the root of the lineage as
     it loads; CT-4: the concept DOI as concept_pid."""
-    from uvlhub.migration_v2.content import public_id_of
+    from uvlhub_splent.migration_v2.content import public_id_of
 
     datasets = by_id(target(migrated, "datasets"))
     key = migrated.params.public_id_key
@@ -980,7 +980,7 @@ def test_v16_finds_a_signed_value_carried_over(migrated):
     is something the rotated key would leave behind; V-16 names it."""
     from types import SimpleNamespace
 
-    from uvlhub.migration_v2.verify import v16_nothing_signed
+    from uvlhub_splent.migration_v2.verify import v16_nothing_signed
 
     ctx = SimpleNamespace(contract=contract_module.load(), params=migrated.params)
     link = synthetic.reset_link("alice@uvlhub.test")
@@ -1095,7 +1095,7 @@ def test_a_second_run_is_refused_then_forced_and_gives_the_same_database(
 
 
 def test_e8_empties_only_what_hubfile_keeps(tmp_path):
-    from uvlhub.migration_v2.files import empty_store
+    from uvlhub_splent.migration_v2.files import empty_store
 
     mirror = tmp_path / ".legacy_mirror"
     (mirror / "user_1").mkdir(parents=True)

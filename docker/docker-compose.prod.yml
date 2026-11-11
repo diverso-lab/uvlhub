@@ -1,12 +1,12 @@
 services:
 
-  uvlhub_web_deploy:
+  uvlhub_splent_web_deploy:
     # The image product:build made on this host, unless SPLENT_IMAGE in
     # deploy/.env names one a release published to a registry (for example
     # the stable channel, which the autodeploy feature follows). The deploy
     # bundle product:build writes defaults to the published image.
-    image: ${SPLENT_IMAGE:-uvlhub:latest}
-    container_name: uvlhub_web_deploy
+    image: ${SPLENT_IMAGE:-uvlhub_splent:latest}
+    container_name: uvlhub_splent_web_deploy
     # Back up after a host reboot, a docker daemon restart or an OOM kill.
     # Only an explicit `docker stop` (or product:deploy --down) keeps it down.
     restart: unless-stopped
@@ -19,9 +19,9 @@ services:
       # moves both, never one, so no file is ever written to the container's
       # own layer and lost with it. Dataset files live under
       # PROTECTED_UPLOADS_DIR.
-      PROTECTED_UPLOADS_DIR: ${PROTECTED_UPLOADS_DIR:-/workspace/uvlhub/protected_uploads}
-      ARCHIVE_DIR: ${ARCHIVE_DIR:-/workspace/uvlhub/archive}
-      SPLENT_STORAGE_DIR: ${SPLENT_STORAGE_DIR:-/workspace/uvlhub/storage}
+      PROTECTED_UPLOADS_DIR: ${PROTECTED_UPLOADS_DIR:-/workspace/uvlhub_splent/protected_uploads}
+      ARCHIVE_DIR: ${ARCHIVE_DIR:-/workspace/uvlhub_splent/archive}
+      SPLENT_STORAGE_DIR: ${SPLENT_STORAGE_DIR:-/workspace/uvlhub_splent/storage}
     ports:
       # Host interface and port for the web app, from SPLENT_WEB_BIND_HOST
       # and SPLENT_WEB_PORT in deploy/.env. Every interface by default;
@@ -32,21 +32,21 @@ services:
       # Uploaded and generated files live inside the container and are lost
       # on every redeploy unless they are kept on named volumes. Each feature
       # that uses splent_framework.storage keeps its own under the storage.
-      - uvlhub_web_deploy_storage:${SPLENT_STORAGE_DIR:-/workspace/uvlhub/storage}
-      - uvlhub_web_deploy_uploads:/workspace/uvlhub/src/uvlhub/static/uploads
-      - uvlhub_web_deploy_protected_uploads:${PROTECTED_UPLOADS_DIR:-/workspace/uvlhub/protected_uploads}
-      - uvlhub_web_deploy_archive:${ARCHIVE_DIR:-/workspace/uvlhub/archive}
+      - uvlhub_splent_web_deploy_storage:${SPLENT_STORAGE_DIR:-/workspace/uvlhub_splent/storage}
+      - uvlhub_splent_web_deploy_uploads:/workspace/uvlhub_splent/src/uvlhub_splent/static/uploads
+      - uvlhub_splent_web_deploy_protected_uploads:${PROTECTED_UPLOADS_DIR:-/workspace/uvlhub_splent/protected_uploads}
+      - uvlhub_splent_web_deploy_archive:${ARCHIVE_DIR:-/workspace/uvlhub_splent/archive}
       # Where splent_feature_backup sends the backups, BACKUP_DESTINATION
       # =/backups: a disk of another machine, mounted on the host at
       # BACKUP_HOST_DIR. A bind mount, never a named volume, which would be
       # on the very disk it backs up.
       - ${BACKUP_HOST_DIR:?mount the off-host backup disk and name it in BACKUP_HOST_DIR}:/backups
     depends_on:
-      uvlhub_db_deploy:
+      uvlhub_splent_db_deploy:
         condition: service_healthy
     networks:
       - splent_network
-    command: [ "bash", "-c", "bash /workspace/uvlhub/entrypoints/entrypoint.prod.sh" ]
+    command: [ "bash", "-c", "bash /workspace/uvlhub_splent/entrypoints/entrypoint.prod.sh" ]
     # Python is in every production image, so the probe needs no extra
     # package. Ready, not just alive: the framework's /readyz answers 200
     # when the database and the services the product declares answer,
@@ -61,9 +61,9 @@ services:
       retries: 3
       start_period: 180s
 
-  uvlhub_db_deploy:
+  uvlhub_splent_db_deploy:
     image: mariadb:11.4
-    container_name: uvlhub_db_deploy
+    container_name: uvlhub_splent_db_deploy
     restart: unless-stopped
     env_file:
       - ../deploy/.env
@@ -74,7 +74,7 @@ services:
       # on loopback unless SPLENT_DB_BIND_HOST in deploy/.env says otherwise.
       - "${SPLENT_DB_BIND_HOST:-127.0.0.1}:${SPLENT_DB_PORT:-33072}:3306"
     volumes:
-      - uvlhub_db_deploy_data:/var/lib/mysql
+      - uvlhub_splent_db_deploy_data:/var/lib/mysql
     healthcheck:
       test: ["CMD-SHELL", "mariadb -u$${MARIADB_USER} -p$${MARIADB_PASSWORD} -e 'SELECT 1'"]
       interval: 5s
@@ -85,11 +85,11 @@ services:
       - splent_network
 
 volumes:
-  uvlhub_db_deploy_data:
-  uvlhub_web_deploy_storage:
-  uvlhub_web_deploy_uploads:
-  uvlhub_web_deploy_protected_uploads:
-  uvlhub_web_deploy_archive:
+  uvlhub_splent_db_deploy_data:
+  uvlhub_splent_web_deploy_storage:
+  uvlhub_splent_web_deploy_uploads:
+  uvlhub_splent_web_deploy_protected_uploads:
+  uvlhub_splent_web_deploy_archive:
 
 networks:
   splent_network:

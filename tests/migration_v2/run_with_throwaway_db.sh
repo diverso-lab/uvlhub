@@ -13,12 +13,12 @@
 # product, as product:test --own-tests does, so it takes the shared test
 # database's lock as any product:test run does:
 #
-#     flock /tmp/splent-test.lock bash uvlhub/tests/migration_v2/run_with_throwaway_db.sh
+#     flock /tmp/splent-test.lock bash uvlhub_splent/tests/migration_v2/run_with_throwaway_db.sh
 #
 # With arguments it runs the migrator's tests alone, with those pytest
 # arguments, in the web container; they need no lock:
 #
-#     bash uvlhub/tests/migration_v2/run_with_throwaway_db.sh -q -k preflight
+#     bash uvlhub_splent/tests/migration_v2/run_with_throwaway_db.sh -q -k preflight
 #
 set -euo pipefail
 

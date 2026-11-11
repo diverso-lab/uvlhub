@@ -2,18 +2,18 @@
 
 ``product:migrate-v2`` is the migrator of uvlhub.io 2.12 (docs/migration_v2.md)
 with the CLI's conveniences: the commands of
-``python -m uvlhub.migration_v2``, under one group. The CLI runs it
+``python -m uvlhub_splent.migration_v2``, under one group. The CLI runs it
 in the product's app, whose engine may keep pooled connections to the
 server, and E0 refuses a server with connections that are not the
 migrator's. So before anything runs, the app's session gives its
 connection back and every engine of the app is disposed; a connection
 something still holds refuses the command. The cutover keeps
-``python -m uvlhub.migration_v2``, which builds no app at all.
+``python -m uvlhub_splent.migration_v2``, which builds no app at all.
 """
 
 import click
 
-from uvlhub.migration_v2.cli import main as migrator
+from uvlhub_splent.migration_v2.cli import main as migrator
 
 
 def release_app_connections() -> None:
@@ -29,14 +29,14 @@ def release_app_connections() -> None:
             raise click.ClickException(
                 f"the app holds {held} connection(s) to "
                 f"{engine.url.host or engine.url.database}; "
-                "run python -m uvlhub.migration_v2 instead"
+                "run python -m uvlhub_splent.migration_v2 instead"
             )
         engine.dispose()
 
 
 @click.group("migrate-v2")
 def migrate_v2():
-    """The migrator of uvlhub.io 2.12 (python -m uvlhub.migration_v2)."""
+    """The migrator of uvlhub.io 2.12 (python -m uvlhub_splent.migration_v2)."""
     release_app_connections()
 
 

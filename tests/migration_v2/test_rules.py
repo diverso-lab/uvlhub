@@ -18,7 +18,7 @@ from types import SimpleNamespace
 import pytest
 from itsdangerous import URLSafeTimedSerializer
 
-from uvlhub.migration_v2 import rules
+from uvlhub_splent.migration_v2 import rules
 
 from . import synthetic
 

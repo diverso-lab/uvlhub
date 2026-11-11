@@ -22,10 +22,10 @@ from collections import Counter
 
 import sqlalchemy as sa
 
-from uvlhub.migration_v2 import MIGRATOR_VERSION, NOT_YET
-from uvlhub.migration_v2.content import DEFERRED, FIRST_PASS
-from uvlhub.migration_v2.db import insert_batches
-from uvlhub.migration_v2.ledger import DECIDED, to_json
+from uvlhub_splent.migration_v2 import MIGRATOR_VERSION, NOT_YET
+from uvlhub_splent.migration_v2.content import DEFERRED, FIRST_PASS
+from uvlhub_splent.migration_v2.db import insert_batches
+from uvlhub_splent.migration_v2.ledger import DECIDED, to_json
 
 # What the stages this version does not have would need (MIG-01, MIG-06,
 # MIG-07, MIG-11), for the report to say.

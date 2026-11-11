@@ -21,7 +21,7 @@ SPLENT tooling repositories.
 mkdir splent_workspace && cd splent_workspace
 git clone https://git.splent.io/splent-io/splent_framework.git
 git clone https://git.splent.io/splent-io/splent_cli.git
-git clone https://github.com/diverso-lab/uvlhub.git uvlhub
+git clone https://github.com/diverso-lab/uvlhub.git uvlhub_splent
 ```
 
 Those three are all you need to run the product. The variability model this
@@ -55,7 +55,7 @@ also use `docker exec splent_cli_container splent <command>`.
 ### 4. Bring the product up
 
 ```bash
-splent product:select uvlhub
+splent product:select uvlhub_splent
 splent product:resolve        # install the features declared in pyproject.toml
 splent product:derive --dev   # build images, run migrations, start the stack
 splent db:seed -y             # load demo data, optional
@@ -115,7 +115,7 @@ and put the step back, until the CLI's template fetches the model itself.
   theme uvlhub 2.x was drawn with, in the product or in any feature it
   pins, for production or development. It searches by content, prose
   included, so not even this readme names the theme.
-- **lint** runs Ruff 0.11.8, the CLI's, on `src/uvlhub`.
+- **lint** runs Ruff 0.11.8, the CLI's, on `src/uvlhub_splent`.
 - **test**, once validate passes, stands in for the web container: MariaDB
   11.4, Redis, Elasticsearch and MailHog as services, the framework and the
   CLI at `[tool.splent.runtime]`, every migration applied to an empty
@@ -170,7 +170,7 @@ the database and service passwords and asking for what only the operator
 knows. `docker/.env.prod.example` explains each value; this is the picture.
 
 ```
-browser --443--> TLS terminator on the host --127.0.0.1:92--> nginx (splent_feature_nginx) --> uvlhub_web_deploy:5000
+browser --443--> TLS terminator on the host --127.0.0.1:92--> nginx (splent_feature_nginx) --> uvlhub_splent_web_deploy:5000
 ```
 
 The nginx feature listens on HTTP only, so HTTPS comes from a terminator on
@@ -252,7 +252,7 @@ the links.
 ### Files, deploys and backups
 
 - Dataset files live under `PROTECTED_UPLOADS_DIR`, on the named volume
-  `uvlhub_web_deploy_protected_uploads`. The compose file gives the
+  `uvlhub_splent_web_deploy_protected_uploads`. The compose file gives the
   app the very path the volume is mounted at, so the two cannot disagree.
   The public uploads and the database are on named volumes too.
 - The web service is healthy when `/readyz` answers 200: the database and
@@ -282,15 +282,15 @@ periodic commands of the features in the web container, as the user the
 app runs as:
 
 ```
-15 3 * * *   docker exec -u splent uvlhub_web_deploy splent feature:backup run --tag daily
-*/15 * * * * docker exec -u splent uvlhub_web_deploy splent feature:dataset publication-reconcile
-*/15 * * * * docker exec -u splent uvlhub_web_deploy splent feature:mail retry
-20 4 * * *   docker exec -u splent uvlhub_web_deploy splent feature:mail purge
-0 * * * *    docker exec -u splent uvlhub_web_deploy splent feature:hubfile uploads-cleanup
-30 * * * *   docker exec -u splent uvlhub_web_deploy splent feature:dataset dump
-40 3 * * *   docker exec -u splent uvlhub_web_deploy splent feature:apikeys notify-expiring
-50 3 * * 0   docker exec -u splent uvlhub_web_deploy splent feature:apikeys purge
-30 4 * * *   docker exec -u splent uvlhub_web_deploy splent feature:audit purge
+15 3 * * *   docker exec -u splent uvlhub_splent_web_deploy splent feature:backup run --tag daily
+*/15 * * * * docker exec -u splent uvlhub_splent_web_deploy splent feature:dataset publication-reconcile
+*/15 * * * * docker exec -u splent uvlhub_splent_web_deploy splent feature:mail retry
+20 4 * * *   docker exec -u splent uvlhub_splent_web_deploy splent feature:mail purge
+0 * * * *    docker exec -u splent uvlhub_splent_web_deploy splent feature:hubfile uploads-cleanup
+30 * * * *   docker exec -u splent uvlhub_splent_web_deploy splent feature:dataset dump
+40 3 * * *   docker exec -u splent uvlhub_splent_web_deploy splent feature:apikeys notify-expiring
+50 3 * * 0   docker exec -u splent uvlhub_splent_web_deploy splent feature:apikeys purge
+30 4 * * *   docker exec -u splent uvlhub_splent_web_deploy splent feature:audit purge
 ```
 
 - `backup run` takes the daily backup and prunes those older than
@@ -316,14 +316,14 @@ The others exit with 0 when there is nothing to do.
 
 ## Migrating uvlhub.io 2.12
 
-`python -m uvlhub.migration_v2` is the migrator of the cutover: it
+`python -m uvlhub_splent.migration_v2` is the migrator of the cutover: it
 restores a dump of v2.12, builds an empty `uvlhub3` with the pinned
 features' migrations and fills it, held to a versioned data contract
-(`src/uvlhub/migration_v2/contract.toml`). Its tests run on a MariaDB
+(`src/uvlhub_splent/migration_v2/contract.toml`). Its tests run on a MariaDB
 of their own:
 
 ```bash
-bash uvlhub/tests/migration_v2/run_with_throwaway_db.sh -q
+bash uvlhub_splent/tests/migration_v2/run_with_throwaway_db.sh -q
 ```
 
 [docs/migration_v2.md](docs/migration_v2.md) has the stages, how to run

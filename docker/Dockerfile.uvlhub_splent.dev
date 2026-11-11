@@ -63,10 +63,10 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     mkdir -p splent_framework/src splent_cli/src \
     && uv pip install --system -e "./splent_framework[dev]" -e ./splent_cli
 
-COPY uvlhub/pyproject.toml uvlhub/README.md uvlhub/LICENSE* uvlhub/COPYING* uvlhub/
+COPY uvlhub_splent/pyproject.toml uvlhub_splent/README.md uvlhub_splent/LICENSE* uvlhub_splent/COPYING* uvlhub_splent/
 RUN --mount=type=cache,target=/root/.cache/uv \
-    mkdir -p uvlhub/src \
-    && uv pip install --system -e "./uvlhub[dev]"
+    mkdir -p uvlhub_splent/src \
+    && uv pip install --system -e "./uvlhub_splent[dev]"
 
 RUN python -m compileall -q -j0 \
         "$(python -c 'import sysconfig; print(sysconfig.get_path("stdlib"))')" \

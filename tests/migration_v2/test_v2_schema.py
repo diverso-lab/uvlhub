@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from uvlhub.migration_v2 import v2_12_schema
+from uvlhub_splent.migration_v2 import v2_12_schema
 
 from . import v2_schema
 

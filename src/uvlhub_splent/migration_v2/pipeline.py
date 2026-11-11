@@ -12,27 +12,27 @@ from dataclasses import asdict
 
 import sqlalchemy as sa
 
-from uvlhub.migration_v2 import MIGRATOR_VERSION, NOT_YET
-from uvlhub.migration_v2 import contract as contract_module
-from uvlhub.migration_v2.content import content
-from uvlhub.migration_v2.derived import derived
-from uvlhub.migration_v2.db import make_engine
-from uvlhub.migration_v2.files import files
-from uvlhub.migration_v2.identity import identity
-from uvlhub.migration_v2.legacy import legacy
-from uvlhub.migration_v2.ledger import (
+from uvlhub_splent.migration_v2 import MIGRATOR_VERSION, NOT_YET
+from uvlhub_splent.migration_v2 import contract as contract_module
+from uvlhub_splent.migration_v2.content import content
+from uvlhub_splent.migration_v2.derived import derived
+from uvlhub_splent.migration_v2.db import make_engine
+from uvlhub_splent.migration_v2.files import files
+from uvlhub_splent.migration_v2.identity import identity
+from uvlhub_splent.migration_v2.legacy import legacy
+from uvlhub_splent.migration_v2.ledger import (
     Ledger,
     create_outputs,
     ensure_inputs,
     to_json,
 )
-from uvlhub.migration_v2.params import Params, Refused
-from uvlhub.migration_v2.preflight import preflight, release_lock
-from uvlhub.migration_v2.profile import profile
-from uvlhub.migration_v2.report import finish
-from uvlhub.migration_v2.restore import restore
-from uvlhub.migration_v2.schema import build_schema
-from uvlhub.migration_v2.verify import post_load
+from uvlhub_splent.migration_v2.params import Params, Refused
+from uvlhub_splent.migration_v2.preflight import preflight, release_lock
+from uvlhub_splent.migration_v2.profile import profile
+from uvlhub_splent.migration_v2.report import finish
+from uvlhub_splent.migration_v2.restore import restore
+from uvlhub_splent.migration_v2.schema import build_schema
+from uvlhub_splent.migration_v2.verify import post_load
 
 
 class Context:

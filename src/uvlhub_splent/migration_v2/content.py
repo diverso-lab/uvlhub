@@ -85,16 +85,16 @@ from splent_io.splent_feature_dataset.models import (
 )
 from splent_io.splent_feature_hubfile.storage import checksum_algorithm
 
-from uvlhub.migration_v2 import curation, rules
-from uvlhub.migration_v2.db import (
+from uvlhub_splent.migration_v2 import curation, rules
+from uvlhub_splent.migration_v2.db import (
     all_rows,
     foreign_keys_off,
     insert_batches,
     qualified,
     reflect,
 )
-from uvlhub.migration_v2.identity import PROVIDERS
-from uvlhub.migration_v2.ledger import stop_on_conflicts, to_json
+from uvlhub_splent.migration_v2.identity import PROVIDERS
+from uvlhub_splent.migration_v2.ledger import stop_on_conflicts, to_json
 
 # The final pass: what the first one left (the descriptions, the lineages by
 # concept DOI, Zenodo's dates and minted DOIs, the publication DOI and the

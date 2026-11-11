@@ -32,7 +32,7 @@ MARK = "uvlhub-production-boot "
 BOOT = f"""
 import json
 
-from uvlhub import create_app
+from uvlhub_splent import create_app
 
 app = create_app("production")
 client = app.test_client()
@@ -54,7 +54,7 @@ print({MARK!r} + json.dumps({{
                     "PREFERRED_URL_SCHEME")
     }},
     "healthz": answer("/healthz", "127.0.0.1:5000"),
-    "readyz": answer("/readyz", "uvlhub_web_deploy:5000"),
+    "readyz": answer("/readyz", "uvlhub_splent_web_deploy:5000"),
     "login": answer("/login", {HOST!r}, **{{"X-Forwarded-Proto": "https"}}),
     "forged": answer("/login", "attacker.example", **{{"X-Forwarded-Proto": "https"}}),
 }}))

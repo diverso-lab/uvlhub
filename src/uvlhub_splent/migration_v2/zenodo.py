@@ -27,8 +27,8 @@ from dataclasses import dataclass, field
 import requests
 import sqlalchemy as sa
 
-from uvlhub.migration_v2 import db as dbm
-from uvlhub.migration_v2 import ledger
+from uvlhub_splent.migration_v2 import db as dbm
+from uvlhub_splent.migration_v2 import ledger
 
 RECORDS_URL = "https://zenodo.org/api/records/{id}"
 

@@ -61,7 +61,7 @@ if [ -d /workspace/splent_framework ]; then
     fi
 else
     echo "    installing splent_framework from pyproject.toml [core]..."
-    pip install --no-cache-dir "uvlhub[core]"
+    pip install --no-cache-dir "uvlhub_splent[core]"
 fi
 
 if [ -d /workspace/splent_cli ]; then

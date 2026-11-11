@@ -26,12 +26,12 @@ import pytest
 import yaml
 from flask import url_for
 
-from uvlhub.config import canonical_host
+from uvlhub_splent.config import canonical_host
 
 PRODUCT = Path(__file__).resolve().parents[1]
 COMPOSE = PRODUCT / "docker" / "docker-compose.prod.yml"
 FEATURES = PRODUCT / "features"
-WEB = "uvlhub_web_deploy"
+WEB = "uvlhub_splent_web_deploy"
 HOST = "www.uvlhub.io"
 SOCKET = "/var/run/docker.sock"
 # The one service that may hold the socket: the deploy agent, in a
@@ -67,7 +67,7 @@ def _pinned_feature_dirs() -> list[Path]:
 def production_host(app):
     """The test app with the host settings production builds from its .env,
     and the scheme production builds links with outside a request."""
-    from uvlhub.config import ProductionConfig
+    from uvlhub_splent.config import ProductionConfig
 
     settings = canonical_host({"SERVER_NAME": HOST})
     settings["PREFERRED_URL_SCHEME"] = ProductionConfig.PREFERRED_URL_SCHEME
@@ -91,7 +91,7 @@ def test_production_answers_by_the_public_host():
 
 
 def test_the_production_config_carries_them(monkeypatch):
-    from uvlhub.config import ProductionConfig
+    from uvlhub_splent.config import ProductionConfig
 
     monkeypatch.setenv("SECRET_KEY", "a-production-key-long-enough-for-the-check")
     monkeypatch.setenv("SERVER_NAME", HOST)
@@ -165,8 +165,8 @@ def _config() -> dict:
 @pytest.mark.parametrize(
     "variable, default",
     [
-        ("PROTECTED_UPLOADS_DIR", "/workspace/uvlhub/protected_uploads"),
-        ("ARCHIVE_DIR", "/workspace/uvlhub/archive"),
+        ("PROTECTED_UPLOADS_DIR", "/workspace/uvlhub_splent/protected_uploads"),
+        ("ARCHIVE_DIR", "/workspace/uvlhub_splent/archive"),
     ],
 )
 def test_each_storage_root_is_the_target_of_a_named_volume(variable, default):
@@ -184,13 +184,13 @@ def test_each_storage_root_is_the_target_of_a_named_volume(variable, default):
 def test_the_public_uploads_are_on_a_named_volume():
     compose = yaml.safe_load(COMPOSE.read_text(encoding="utf-8"))
     mounts = _mounts(compose["services"][WEB])
-    source = mounts["/workspace/uvlhub/src/uvlhub/static/uploads"]
+    source = mounts["/workspace/uvlhub_splent/src/uvlhub_splent/static/uploads"]
     assert source in compose["volumes"]
 
 
 def test_the_database_is_on_a_named_volume():
     compose = yaml.safe_load(COMPOSE.read_text(encoding="utf-8"))
-    mounts = _mounts(compose["services"]["uvlhub_db_deploy"])
+    mounts = _mounts(compose["services"]["uvlhub_splent_db_deploy"])
     assert mounts["/var/lib/mysql"] in compose["volumes"]
 
 

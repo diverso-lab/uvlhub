@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       WORKING_DIR: ${{ github.workspace }}
-      SPLENT_APP: uvlhub
+      SPLENT_APP: uvlhub_splent
       SPLENT_FORGE_HOST: git.splent.io
       SPLENT_FORGE_TOKEN: ""
       GITHUB_TOKEN: ""
@@ -33,7 +33,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          path: uvlhub
+          path: uvlhub_splent
 
       - uses: actions/setup-python@v5
         with:
@@ -56,7 +56,7 @@ jobs:
           splent feature:upgrade --yes 2>&1 | tee upgrade.log
 
       - name: Open a pull request
-        working-directory: uvlhub
+        working-directory: uvlhub_splent
         env:
           FORGE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BRANCH: splent/feature-upgrades

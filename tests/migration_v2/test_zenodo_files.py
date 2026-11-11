@@ -18,9 +18,9 @@ import pytest
 import requests
 import sqlalchemy as sa
 
-from uvlhub.migration_v2 import zenodo, zenodo_files
-from uvlhub.migration_v2.db import make_engine
-from uvlhub.migration_v2.zenodo_files import (
+from uvlhub_splent.migration_v2 import zenodo, zenodo_files
+from uvlhub_splent.migration_v2.db import make_engine
+from uvlhub_splent.migration_v2.zenodo_files import (
     ARCHIVE,
     LOOSE,
     Wanted,
@@ -434,7 +434,7 @@ GIVEN = {
 
 
 def test_a_missing_file_is_restored_with_its_rows_algorithm():
-    from uvlhub.migration_v2.files import plan_repair
+    from uvlhub_splent.migration_v2.files import plan_repair
 
     content = b"zenodo"
     repair = plan_repair(a_row("missing", md5(b"old"), 3, "md5"), GIVEN, content, None)
@@ -449,7 +449,7 @@ def test_a_missing_file_is_restored_with_its_rows_algorithm():
 
 
 def test_bytes_the_mirror_has_already_mend_the_row_only():
-    from uvlhub.migration_v2.files import plan_repair
+    from uvlhub_splent.migration_v2.files import plan_repair
 
     content = b"zenodo"
     sha256 = hashlib.sha256(content).hexdigest()
@@ -465,7 +465,7 @@ def test_bytes_the_mirror_has_already_mend_the_row_only():
 
 
 def test_a_checksum_of_no_algorithm_becomes_a_sha256():
-    from uvlhub.migration_v2.files import checksum_in
+    from uvlhub_splent.migration_v2.files import checksum_in
 
     assert checksum_in(None, b"x") == (hashlib.sha256(b"x").hexdigest(), "sha256")
     assert checksum_in("md5", b"x") == (md5(b"x"), "md5")

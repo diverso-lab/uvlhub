@@ -69,17 +69,17 @@ join_step () {
 # ---------------------------------------------------------------------------
 # MAIN STARTUP SEQUENCE
 # ---------------------------------------------------------------------------
-run_step "00_core_requirements_dev" "/workspace/uvlhub/scripts/00_core_requirements_dev.sh"
-run_step "00_install_features"      "/workspace/uvlhub/scripts/00_install_features.sh"
+run_step "00_core_requirements_dev" "/workspace/uvlhub_splent/scripts/00_core_requirements_dev.sh"
+run_step "00_install_features"      "/workspace/uvlhub_splent/scripts/00_install_features.sh"
 # npm and webpack need no database, and the database steps need no assets.
-start_step "01_compile_assets"      "/workspace/uvlhub/scripts/01_compile_assets.sh"
-run_step "02_0_db_wait"             "/workspace/uvlhub/scripts/02_0_db_wait_connection.sh"
-run_step "02_1_db_create_test"      "/workspace/uvlhub/scripts/02_1_db_create_db_test.sh"
-run_step "02_2_db_splent_migrations" "/workspace/uvlhub/scripts/02_2_db_create_splent_migrations.sh"
-run_step "03_init_migrations"       "/workspace/uvlhub/scripts/03_initialize_migrations.sh"
-run_step "04_handle_migrations"     "/workspace/uvlhub/scripts/04_handle_migrations.sh"
+start_step "01_compile_assets"      "/workspace/uvlhub_splent/scripts/01_compile_assets.sh"
+run_step "02_0_db_wait"             "/workspace/uvlhub_splent/scripts/02_0_db_wait_connection.sh"
+run_step "02_1_db_create_test"      "/workspace/uvlhub_splent/scripts/02_1_db_create_db_test.sh"
+run_step "02_2_db_splent_migrations" "/workspace/uvlhub_splent/scripts/02_2_db_create_splent_migrations.sh"
+run_step "03_init_migrations"       "/workspace/uvlhub_splent/scripts/03_initialize_migrations.sh"
+run_step "04_handle_migrations"     "/workspace/uvlhub_splent/scripts/04_handle_migrations.sh"
 join_step
-run_step "05_0_start_app_dev"       "/workspace/uvlhub/scripts/05_0_start_app_dev.sh"
+run_step "05_0_start_app_dev"       "/workspace/uvlhub_splent/scripts/05_0_start_app_dev.sh"
 
 echo ""
 echo "  entrypoint finished"

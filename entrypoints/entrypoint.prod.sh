@@ -60,11 +60,11 @@ run_step () {
 # ---------------------------------------------------------------------------
 # MAIN STARTUP SEQUENCE
 # ---------------------------------------------------------------------------
-run_step "02_0_db_wait"             "/workspace/uvlhub/scripts/02_0_db_wait_connection.sh"
-run_step "02_2_db_splent_migrations" "/workspace/uvlhub/scripts/02_2_db_create_splent_migrations.sh"
-run_step "03_init_migrations"       "/workspace/uvlhub/scripts/03_initialize_migrations.sh"
-run_step "04_handle_migrations"     "/workspace/uvlhub/scripts/04_handle_migrations.sh"
-run_step "05_1_start_app_prod"      "/workspace/uvlhub/scripts/05_1_start_app_prod.sh"
+run_step "02_0_db_wait"             "/workspace/uvlhub_splent/scripts/02_0_db_wait_connection.sh"
+run_step "02_2_db_splent_migrations" "/workspace/uvlhub_splent/scripts/02_2_db_create_splent_migrations.sh"
+run_step "03_init_migrations"       "/workspace/uvlhub_splent/scripts/03_initialize_migrations.sh"
+run_step "04_handle_migrations"     "/workspace/uvlhub_splent/scripts/04_handle_migrations.sh"
+run_step "05_1_start_app_prod"      "/workspace/uvlhub_splent/scripts/05_1_start_app_prod.sh"
 
 echo ""
 echo "  entrypoint finished"

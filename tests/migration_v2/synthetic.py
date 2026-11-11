@@ -73,8 +73,8 @@ import sqlalchemy as sa
 from itsdangerous import TimestampSigner, URLSafeTimedSerializer
 from werkzeug.security import generate_password_hash
 
-from uvlhub.migration_v2 import v2_12_schema
-from uvlhub.migration_v2.rules import orcid_check_digit
+from uvlhub_splent.migration_v2 import v2_12_schema
+from uvlhub_splent.migration_v2.rules import orcid_check_digit
 
 T0 = datetime(2026, 11, 20)
 SECRET_KEY = "the SECRET_KEY of a synthetic uvlhub 2.12"

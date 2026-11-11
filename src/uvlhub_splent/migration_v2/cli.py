@@ -1,15 +1,15 @@
-"""``python -m uvlhub.migration_v2``: the migrator's commands.
+"""``python -m uvlhub_splent.migration_v2``: the migrator's commands.
 
 SPLENT has no command registry for a product (the CLI loads the features'
 commands from the app), so the migrator is a module of the product run
 with ``python -m``, in an ephemeral container of the 3.0 image (§3.4):
 
-    python -m uvlhub.migration_v2 grants            # SQL for the migrator account
-    python -m uvlhub.migration_v2 preflight ...     # E0 alone, touching nothing
-    python -m uvlhub.migration_v2 run ...           # E0 to E10
-    python -m uvlhub.migration_v2 contract [--check]
-    python -m uvlhub.migration_v2 zenodo-snapshot ...  # MIG-06, Zenodo's records
-    python -m uvlhub.migration_v2 zenodo-files ...     # §6.2 step 5, their files
+    python -m uvlhub_splent.migration_v2 grants            # SQL for the migrator account
+    python -m uvlhub_splent.migration_v2 preflight ...     # E0 alone, touching nothing
+    python -m uvlhub_splent.migration_v2 run ...           # E0 to E10
+    python -m uvlhub_splent.migration_v2 contract [--check]
+    python -m uvlhub_splent.migration_v2 zenodo-snapshot ...  # MIG-06, Zenodo's records
+    python -m uvlhub_splent.migration_v2 zenodo-files ...     # §6.2 step 5, their files
 
 Passwords come from the environment only (MIGRATION_DB_PASSWORD,
 MIGRATION_DB_ROOT_PASSWORD), never from the command line, which the
@@ -26,9 +26,9 @@ from pathlib import Path
 
 import click
 
-from uvlhub.migration_v2 import DERIVED, STAGES
-from uvlhub.migration_v2 import contract as contract_module
-from uvlhub.migration_v2.params import (
+from uvlhub_splent.migration_v2 import DERIVED, STAGES
+from uvlhub_splent.migration_v2 import contract as contract_module
+from uvlhub_splent.migration_v2.params import (
     Params,
     Refused,
     Server,
@@ -252,7 +252,7 @@ def _params(options: dict) -> Params:
 def _curation(value) -> Path | None:
     """The curation file, read once here so a fault in it stops the command
     before it connects."""
-    from uvlhub.migration_v2 import curation
+    from uvlhub_splent.migration_v2 import curation
 
     if value is not None and str(value).lower() == "none":
         return None
@@ -281,7 +281,7 @@ def main():
 @_run_options
 def run(**options):
     """Run the migration, E0 to E10, and write the report."""
-    from uvlhub.migration_v2.pipeline import run as run_pipeline
+    from uvlhub_splent.migration_v2.pipeline import run as run_pipeline
 
     params = _params(options)
     try:
@@ -301,8 +301,8 @@ def run(**options):
 @_run_options
 def preflight(**options):
     """Run E0 alone: the safeguards, without touching any schema."""
-    from uvlhub.migration_v2.pipeline import Context
-    from uvlhub.migration_v2.preflight import preflight as check
+    from uvlhub_splent.migration_v2.pipeline import Context
+    from uvlhub_splent.migration_v2.preflight import preflight as check
 
     ctx = Context(_params(options))
     try:
@@ -373,8 +373,8 @@ def zenodo_snapshot(
 ):
     """MIG-06: keep Zenodo's public record of every deposition of the source
     in the inputs, for E5 (§4.3). From the host of operation only."""
-    from uvlhub.migration_v2 import zenodo
-    from uvlhub.migration_v2.db import make_engine
+    from uvlhub_splent.migration_v2 import zenodo
+    from uvlhub_splent.migration_v2.db import make_engine
 
     engine = make_engine(
         db_host, db_port, db_user, os.environ.get("MIGRATION_DB_PASSWORD", "")
@@ -425,8 +425,8 @@ def zenodo_files_command(
 ):
     """§6.2 step 5: fetch from Zenodo every file of a published dataset the
     mirror lacks or holds otherwise, for E8. From the host of operation only."""
-    from uvlhub.migration_v2 import zenodo_files
-    from uvlhub.migration_v2.db import make_engine
+    from uvlhub_splent.migration_v2 import zenodo_files
+    from uvlhub_splent.migration_v2.db import make_engine
 
     mirror = store_root / ".legacy_mirror"
     if not mirror.is_dir():
@@ -476,7 +476,7 @@ def contract_command(check_host, db_port, db_user, schema):
         }
         click.echo(json.dumps(summary, indent=2))
         return
-    from uvlhub.migration_v2.db import make_engine
+    from uvlhub_splent.migration_v2.db import make_engine
 
     engine = make_engine(
         check_host, db_port, db_user, os.environ.get("MIGRATION_DB_PASSWORD", "")
