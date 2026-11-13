@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "uvlhub_splent"
-version = "3.0.10"
+version = "3.0.11"
 description = "uvlhub_splent is an app built with SPLENT (https://www.splent.io)"
 readme = "README.md"
 requires-python = ">=3.13"
@@ -158,7 +158,7 @@ env = ["MIGRATION_V2_TEST_*"]
 
 [tool.splent.runtime]
 splent_framework = "1.33.0"
-splent_cli = "1.63.0"
+splent_cli = "1.63.1"
 gunicorn = ">=23,<24"
 
 [tool.setuptools.package-dir]
