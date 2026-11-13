@@ -791,7 +791,7 @@
       }
     },
     "splent_feature_zenodo": {
-      "entry": "splent_io/splent_feature_zenodo@v0.6.0",
+      "entry": "splent_io/splent_feature_zenodo@v0.7.0",
       "extensible": {
         "services": [
           "ZenodoProvider",
@@ -1007,7 +1007,7 @@
       }
     },
     "splent_feature_observability": {
-      "entry": "splent_io/splent_feature_observability@v0.2.0",
+      "entry": "splent_io/splent_feature_observability@v0.3.0",
       "extensible": {
         "services": [
           "ObservabilityService"
