@@ -437,7 +437,7 @@
       }
     },
     "splent_feature_orcid": {
-      "entry": "splent_io/splent_feature_orcid@v0.5.1",
+      "entry": "splent_io/splent_feature_orcid@v0.5.2",
       "refinement": {
         "refines": "splent_feature_profile",
         "extends": {
@@ -2546,7 +2546,7 @@
       }
     },
     "splent_feature_legacy_urls": {
-      "entry": "splent_io/splent_feature_legacy_urls@v0.2.0",
+      "entry": "splent_io/splent_feature_legacy_urls@v0.2.1",
       "extensible": {
         "services": [
           "LegacyUrlService"

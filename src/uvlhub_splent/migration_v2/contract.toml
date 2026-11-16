@@ -55,11 +55,11 @@ splent_feature_dataset_transfer = { version = "0.2.0", head = "dataset_transfer0
 splent_feature_factlabel = { version = "0.8.4", head = "d934ec20c841" }
 splent_feature_github = { version = "0.5.1", head = "github0002_into_ext_identity" }
 splent_feature_hubfile = { version = "0.13.1", head = "hubfile0004_aliases" }
-splent_feature_identities = { version = "0.6.0", head = "identities0003_exact_ids" }
-splent_feature_legacy_urls = { version = "0.2.0", head = "legacy_urls0001_urls" }
+splent_feature_identities = { version = "0.7.0", head = "identities0003_exact_ids" }
+splent_feature_legacy_urls = { version = "0.2.1", head = "legacy_urls0001_urls" }
 splent_feature_mail = { version = "1.7.0", head = "mail0002_held" }
 splent_feature_media = { version = "0.13.1", head = "media0005_thumbnail" }
-splent_feature_orcid = { version = "0.5.1", head = "orcid0002_into_external_identity" }
+splent_feature_orcid = { version = "0.5.2", head = "orcid0002_into_external_identity" }
 splent_feature_profile = { version = "1.9.0", head = "29f0c82ca134" }
 splent_feature_rating = { version = "0.7.1", head = "3e72750db961" }
 splent_feature_reset = { version = "2.4.0", head = "1c2ed70161dd" }
