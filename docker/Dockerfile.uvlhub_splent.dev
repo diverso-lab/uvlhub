@@ -1,4 +1,4 @@
-FROM python:3.13
+FROM python:3.13.18-trixie@sha256:51db6babcbd039687e5362a676db5444b5926739abb03b10c8c6a8144872611f
 WORKDIR /workspace
 
 ENV PIP_ROOT_USER_ACTION=ignore
@@ -63,10 +63,14 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     mkdir -p splent_framework/src splent_cli/src \
     && uv pip install --system -e "./splent_framework[dev]" -e ./splent_cli
 
-COPY uvlhub_splent/pyproject.toml uvlhub_splent/README.md uvlhub_splent/LICENSE* uvlhub_splent/COPYING* uvlhub_splent/
+# The folder the product is checked out in, which need not be its name. The
+# editable install records this path, and the workspace mounted at run time
+# has the product there.
+ARG SPLENT_APP_DIR=uvlhub_splent
+COPY ${SPLENT_APP_DIR}/pyproject.toml ${SPLENT_APP_DIR}/README.md ${SPLENT_APP_DIR}/LICENSE* ${SPLENT_APP_DIR}/COPYING* ${SPLENT_APP_DIR}/
 RUN --mount=type=cache,target=/root/.cache/uv \
-    mkdir -p uvlhub_splent/src \
-    && uv pip install --system -e "./uvlhub_splent[dev]"
+    mkdir -p "${SPLENT_APP_DIR}/src" \
+    && uv pip install --system -e "./${SPLENT_APP_DIR}[dev]"
 
 RUN python -m compileall -q -j0 \
         "$(python -c 'import sysconfig; print(sysconfig.get_path("stdlib"))')" \

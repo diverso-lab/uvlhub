@@ -4,7 +4,7 @@
 #
 # It is the DEVELOPMENT install path, and it never contacts PyPI. Every install
 # below is `pip install -e` against a directory under
-# /workspace/uvlhub_splent/features/, which `splent product:resolve` fills
+# /workspace/<product folder>/features/, which `splent product:resolve` fills
 # in: pinned features are cloned from GitHub at their tag into
 # .splent_cache/features/ and symlinked here, editable ones are symlinked
 # straight to the checkout at the workspace root.
@@ -23,7 +23,8 @@ echo ""
 
 features=$(python3 -c '
 import os, tomllib
-with open("/workspace/uvlhub_splent/pyproject.toml", "rb") as f:
+folder = os.getenv("SPLENT_APP_DIR") or "uvlhub_splent"
+with open("/workspace/" + folder + "/pyproject.toml", "rb") as f:
     data = tomllib.load(f)
 splent = data.get("tool", {}).get("splent", {})
 feats = list(splent.get("features", []))
@@ -102,7 +103,7 @@ for feature in $features; do
     else
         # Editable feature: check if installed from the right path
         found_path=""
-        for org_dir in /workspace/uvlhub_splent/features/*; do
+        for org_dir in /workspace/${SPLENT_APP_DIR:-uvlhub_splent}/features/*; do
             [ -d "$org_dir" ] || continue
             candidate="$org_dir/$pkg_name"
             if [ -d "$candidate" ]; then
@@ -129,7 +130,7 @@ for feature in $features; do
 
     # Install
     found_path=""
-    for org_dir in /workspace/uvlhub_splent/features/*; do
+    for org_dir in /workspace/${SPLENT_APP_DIR:-uvlhub_splent}/features/*; do
         [ -d "$org_dir" ] || continue
         for candidate in "$org_dir/$name_ver" "$org_dir/$pkg_name"; do
             if [ -d "$candidate" ]; then
@@ -156,7 +157,8 @@ mark_installed() {
 import os, sys
 from splent_cli.utils.lifecycle import advance_state, resolve_feature_key_from_entry
 app = os.getenv("SPLENT_APP", "")
-product_path = os.path.join(os.getenv("WORKING_DIR", "/workspace"), app)
+folder = os.getenv("SPLENT_APP_DIR") or app
+product_path = os.path.join(os.getenv("WORKING_DIR", "/workspace"), folder)
 for entry in sys.argv[1:]:
     key, ns, name, ver = resolve_feature_key_from_entry(entry)
     advance_state(product_path, app, key, to="installed", namespace=ns, name=name, version=ver)
@@ -177,7 +179,7 @@ overrides_file=""
 collect_overrides() {
     overrides_file="$(mktemp)"
     if ! python3 -m splent_cli.utils.dependency_overrides \
-            "/workspace/uvlhub_splent" "${install_paths[@]}" > "$overrides_file"; then
+            "/workspace/${SPLENT_APP_DIR:-uvlhub_splent}" "${install_paths[@]}" > "$overrides_file"; then
         echo "    WARN: the dependency overrides could not be merged, installing without them"
         : > "$overrides_file"
     fi

@@ -3,7 +3,11 @@ services:
   uvlhub_splent_web:
     build:
       context: /workspace
-      dockerfile: /workspace/uvlhub_splent/docker/Dockerfile.uvlhub_splent.dev
+      # The folder the product is checked out in, which need not be its
+      # name: this repository is uvlhub, the product uvlhub_splent.
+      args:
+        SPLENT_APP_DIR: ${SPLENT_APP_DIR:-uvlhub_splent}
+      dockerfile: /workspace/${SPLENT_APP_DIR:-uvlhub_splent}/docker/Dockerfile.uvlhub_splent.dev
     container_name: uvlhub_splent_web
     volumes:
       - ${SPLENT_HOST_PROJECT_DIR}:/workspace
@@ -13,8 +17,12 @@ services:
       # downloading every dependency again.
       - uvlhub_splent_pip_cache:/root/.cache/pip
     env_file:
-      - /workspace/uvlhub_splent/docker/.env
+      - /workspace/${SPLENT_APP_DIR:-uvlhub_splent}/docker/.env
     environment:
+      # The product's name, and the folder of the workspace it is in.
+      SPLENT_APP: uvlhub_splent
+      SPLENT_APP_DIR: ${SPLENT_APP_DIR:-uvlhub_splent}
+      PYTHONPATH: /workspace/${SPLENT_APP_DIR:-uvlhub_splent}/src
       # Wire the e2e layer to the grid below. The target URL is resolved by
       # the browser, so it must name a host the browser container can reach.
       SELENIUM_GRID_URL: http://uvlhub_splent_selenium_hub:4444
@@ -27,6 +35,8 @@ services:
     depends_on:
       uvlhub_splent_db:
         condition: service_healthy
+      uvlhub_splent_db_test:
+        condition: service_healthy
     networks:
       - splent_network
     command: [ "tail", "-f", "/dev/null" ]
@@ -35,7 +45,7 @@ services:
     image: mariadb:11.4
     container_name: uvlhub_splent_db
     env_file:
-      - /workspace/uvlhub_splent/docker/.env
+      - /workspace/${SPLENT_APP_DIR:-uvlhub_splent}/docker/.env
     command: --default-authentication-plugin=mysql_native_password
     ports:
       - "33072:3306"
@@ -47,6 +57,32 @@ services:
       timeout: 5s
       retries: 30
       start_period: 10s
+    networks:
+      - splent_network
+
+  # The tests' own database server. Its data lives in memory and it does
+  # not wait for the disk on every commit: tests need neither.
+  # Development's database above keeps its durability.
+  uvlhub_splent_db_test:
+    image: mariadb:11.4
+    container_name: uvlhub_splent_db_test
+    env_file:
+      - /workspace/${SPLENT_APP_DIR:-uvlhub_splent}/docker/.env
+    command:
+      - --default-authentication-plugin=mysql_native_password
+      - --innodb-flush-log-at-trx-commit=0
+      - --innodb-doublewrite=0
+      - --sync-binlog=0
+      - --skip-log-bin
+      - --max-connections=500
+    tmpfs:
+      - /var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb -u$${MARIADB_USER} -p$${MARIADB_PASSWORD} -e 'SELECT 1'"]
+      interval: 2s
+      timeout: 5s
+      retries: 60
+      start_period: 30s
     networks:
       - splent_network
 
@@ -64,6 +100,10 @@ services:
       SE_EVENT_BUS_HOST: uvlhub_splent_selenium_hub
       SE_EVENT_BUS_PUBLISH_PORT: 4442
       SE_EVENT_BUS_SUBSCRIBE_PORT: 4443
+      # Browsers at once, so the UI audit measures several views together.
+      # product:env writes the number this machine takes.
+      SE_NODE_MAX_SESSIONS: ${SPLENT_BROWSER_SESSIONS:-4}
+      SE_NODE_OVERRIDE_MAX_SESSIONS: "true"
     depends_on:
       - uvlhub_splent_selenium_hub
     networks:
