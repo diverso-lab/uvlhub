@@ -179,7 +179,7 @@
       }
     },
     "splent_feature_admin": {
-      "entry": "splent_io/splent_feature_admin@v1.10.2",
+      "entry": "splent_io/splent_feature_admin@v1.10.3",
       "extensible": {
         "services": [
           "AdminService"
@@ -1461,7 +1461,7 @@
       }
     },
     "splent_feature_settings": {
-      "entry": "splent_io/splent_feature_settings@v0.6.0",
+      "entry": "splent_io/splent_feature_settings@v0.6.1",
       "extensible": {
         "services": [
           "SettingsService"
@@ -1741,7 +1741,7 @@
       }
     },
     "splent_feature_auth": {
-      "entry": "splent_io/splent_feature_auth@v1.28.0",
+      "entry": "splent_io/splent_feature_auth@v1.28.1",
       "extensible": {
         "services": [
           "AuthenticationService",

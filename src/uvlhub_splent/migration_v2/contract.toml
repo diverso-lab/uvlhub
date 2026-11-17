@@ -46,7 +46,7 @@ collation = "utf8mb4_unicode_ci"
 splent_feature_academic_profile = { version = "0.2.0", head = "pu0002" }
 splent_feature_apikeys = { version = "0.12.1", head = "apikeys0003_resources" }
 splent_feature_audit = { version = "0.2.0", head = "audit0001_events" }
-splent_feature_auth = { version = "1.28.0", head = "auth0009_email_collation" }
+splent_feature_auth = { version = "1.28.1", head = "auth0009_email_collation" }
 splent_feature_citation = { version = "0.3.2", head = "citation0001_references" }
 splent_feature_confirmemail = { version = "2.4.0", head = "confirmemail0002_drop_scaffold" }
 splent_feature_curation = { version = "0.2.0", head = "curation0001_requests" }
@@ -63,7 +63,7 @@ splent_feature_orcid = { version = "0.5.2", head = "orcid0002_into_external_iden
 splent_feature_profile = { version = "1.9.0", head = "29f0c82ca134" }
 splent_feature_rating = { version = "0.7.1", head = "3e72750db961" }
 splent_feature_reset = { version = "2.4.0", head = "1c2ed70161dd" }
-splent_feature_settings = { version = "0.6.0", head = "settings0001" }
+splent_feature_settings = { version = "0.6.1", head = "settings0001" }
 splent_feature_statistics = { version = "0.7.2", head = "statistics0002_usage" }
 splent_feature_team = { version = "0.10.1", head = "tm0004_role_details" }
 splent_feature_uvl = { version = "0.6.1", head = "846acdf9eed2" }
