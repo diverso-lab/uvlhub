@@ -203,7 +203,7 @@
       }
     },
     "splent_feature_signup": {
-      "entry": "splent_io/splent_feature_signup@v0.5.0",
+      "entry": "splent_io/splent_feature_signup@v0.6.2",
       "extensible": {
         "services": [],
         "templates": [
