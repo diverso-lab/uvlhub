@@ -18,11 +18,13 @@
     --hub-doi-value-bg: linear-gradient(90deg, #2176bd 0%, #2980b9 100%);
 }
 
-/* The dark mode's blue is a shade of its own on uvlhub.io. */
+/* The dark mode's blue is a shade of its own on uvlhub.io. Its active shade
+   is darker than it, not lighter: white on uvlhub.io's #107eff reads at
+   3.85:1, under the 4.5:1 text needs (the BibTeX button of /cite-us). */
 :root[data-bs-theme="dark"] {
     --hub-primary: #006ae6;
     --hub-primary-rgb: 0, 106, 230;
-    --hub-primary-active: #107eff;
+    --hub-primary-active: #0058c2;
     --hub-primary-light: #172331;
 }
 
