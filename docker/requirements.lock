@@ -10,8 +10,8 @@ Authlib==1.6.12
 babel==2.18.0
 beautifulsoup4==4.14.3
 blinker==1.9.0
-boto3==1.44.2
-botocore==1.44.2
+boto3==1.44.4
+botocore==1.44.4
 cachelib==0.17.2
 captcha==0.7.1
 certifi==2026.10.23
@@ -21,9 +21,9 @@ click==8.1.8
 cryptography==50.0.2
 dd==0.6.0
 dnspython==2.9.2
-elastic-transport==8.19.0
+elastic-transport==8.19.1
 elasticsearch==8.19.3
-email-validator==2.3.0
+email-validator==2.4.0
 flamapy-bdd==2.5.0
 flamapy-fm==2.5.0
 flamapy-fw==2.5.0
@@ -57,7 +57,7 @@ mdurl==0.1.2
 mistune==3.4.0
 msgspec==0.22.0
 networkx==3.7
-nh3==0.3.7
+nh3==0.3.8
 packaging==26.3
 pillow==13.0.0
 ply==3.10
@@ -83,7 +83,7 @@ s3transfer==0.19.3
 sentry-sdk==2.75.0
 setuptools==84.2.1
 six==1.17.0
-soupsieve==4.1
+soupsieve==4.1.1
 SQLAlchemy==2.0.37
 tomli_w==1.2.0
 typing_extensions==4.16.0
