@@ -42,6 +42,9 @@ collation = "utf8mb4_unicode_ci"
 # The heads the migrator was written against: feature, version and the last
 # revision db:upgrade records for it in splent_migrations. Every feature with
 # migrations of the product, so V-12 compares the whole of splent_migrations.
+# The head is what is checked (E0, V-12); the version is the release the
+# contract was written with, so a release that changes no migration needs
+# no new contract.
 [features]
 splent_feature_academic_profile = { version = "0.2.0", head = "pu0002" }
 splent_feature_apikeys = { version = "0.12.1", head = "apikeys0003_resources" }
@@ -65,7 +68,7 @@ splent_feature_rating = { version = "0.7.1", head = "3e72750db961" }
 splent_feature_reset = { version = "2.4.0", head = "1c2ed70161dd" }
 splent_feature_settings = { version = "0.6.1", head = "settings0001" }
 splent_feature_statistics = { version = "0.7.2", head = "statistics0002_usage" }
-splent_feature_team = { version = "0.10.1", head = "tm0004_role_details" }
+splent_feature_team = { version = "0.10.2", head = "tm0004_role_details" }
 splent_feature_uvl = { version = "0.6.1", head = "846acdf9eed2" }
 
 # The heads of v2.12 the dump may be at (MIGRATION_EXPECTED_HEAD): the

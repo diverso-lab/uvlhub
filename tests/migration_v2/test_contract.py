@@ -8,7 +8,6 @@ first, and the contract and the migrator change in the same commit.
 
 from __future__ import annotations
 
-import re
 import tomllib
 from dataclasses import replace
 from pathlib import Path
@@ -78,8 +77,8 @@ def test_v14_reads_the_contract_from_the_inputs_schema(migrated, contract):
 
 @needs_pins
 def test_the_contract_is_written_for_the_pinned_features(contract):
-    """Every feature of the product that has migrations is in [features],
-    at the version the product pins."""
+    """Every feature of the product that has migrations is in [features].
+    Its head, not its version, is held to what the product pins (below)."""
     pins = tomllib.loads((PRODUCT / "pyproject.toml").read_text())["tool"]["splent"]
     pinned = {}
     for entry in pins["features"] + pins.get("features_prod", []):
@@ -96,28 +95,24 @@ def test_the_contract_is_written_for_the_pinned_features(contract):
         )
     }
     assert set(contract.features) == with_migrations
-    for name, entry in contract.features.items():
-        assert entry["version"] == pinned[name], name
 
 
 @needs_pins
 def test_each_head_is_the_last_revision_of_its_feature(contract):
-    revision = re.compile(r"^revision\s*(?::[^=\n]*)?=\s*['\"]([^'\"]+)['\"]", re.M)
-    down = re.compile(r"^down_revision\s*(?::[^=\n]*)?=\s*(.*)$", re.M)
+    """At the version the product pins, whatever version the contract was
+    written with: a release that adds no migration keeps the head."""
+    pins = tomllib.loads((PRODUCT / "pyproject.toml").read_text())["tool"]["splent"]
+    pinned = {}
+    for entry in pins["features"] + pins.get("features_prod", []):
+        name, _, version = entry.split("/")[-1].partition("@")
+        pinned[name] = version.lstrip("v")
     for name, entry in contract.features.items():
         folder = next(
             (PRODUCT / "features" / "splent_io").glob(
-                f"{name}@v{entry['version']}/src/splent_io/{name}/migrations/versions"
+                f"{name}@v{pinned[name]}/src/splent_io/{name}/migrations/versions"
             )
         )
-        revisions, parents = set(), set()
-        for script in folder.glob("*.py"):
-            text = script.read_text(encoding="utf-8")
-            if match := revision.search(text):
-                revisions.add(match.group(1))
-            if match := down.search(text):
-                parents.update(re.findall(r"['\"]([^'\"]+)['\"]", match.group(1)))
-        assert revisions - parents == {entry["head"]}, name
+        assert contract_module.migration_heads(folder) == {entry["head"]}, name
 
 
 def test_every_column_loaded_says_where_it_comes_from(contract):
@@ -211,16 +206,31 @@ def test_heads_and_versions_are_held_to_the_contract(contract):
         f"splent_feature_dataset at dataset9999_something, the contract expects {expected}",
         "splent_feature_dataset_api migrated, a feature the contract does not know",
     ]
-    older = replace(
+    auth = contract.features["splent_feature_auth"]
+    # Against what is installed, so an editable checkout's own differences
+    # are left out: only what the test changed may add one.
+    already = set(contract_module.version_differences(contract))
+    # Another release with the same head is no difference: it changed no
+    # migration, so the migrator reads the same schema.
+    released = replace(
         contract,
         features=dict(
-            contract.features, splent_feature_auth={"version": "1.0.0", "head": "x"}
+            contract.features,
+            splent_feature_auth={"version": "1.0.0", "head": auth["head"]},
         ),
     )
-    # Against what is installed, so an editable checkout's own differences
-    # are left out: only the version the test changed may add one.
-    already = set(contract_module.version_differences(contract))
-    assert set(contract_module.version_differences(older)) - already == {
-        f"splent_feature_auth is {contract_module.installed_version('splent_feature_auth')}, "
-        "the contract was written for 1.0.0"
+    assert set(contract_module.version_differences(released)) == already
+    # Another head is.
+    moved = replace(
+        contract,
+        features=dict(
+            contract.features,
+            splent_feature_auth={"version": auth["version"], "head": "x"},
+        ),
+    )
+    installed = contract_module.installed_version("splent_feature_auth")
+    head = contract_module.installed_head("splent_feature_auth")
+    assert set(contract_module.version_differences(moved)) - already == {
+        f"splent_feature_auth {installed} ends its migrations at {head}, "
+        "the contract expects x"
     }

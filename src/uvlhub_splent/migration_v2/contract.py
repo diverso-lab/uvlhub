@@ -8,6 +8,9 @@ migration fills fails there first.
 
 from __future__ import annotations
 
+import importlib.util
+import re
+
 import tomllib
 from dataclasses import dataclass
 from functools import cache
@@ -190,15 +193,63 @@ def installed_version(feature: str) -> str | None:
         return None
 
 
+_REVISION = re.compile(r"^revision\s*(?::[^=\n]*)?=\s*['\"]([^'\"]+)['\"]", re.M)
+_DOWN_REVISION = re.compile(r"^down_revision\s*(?::[^=\n]*)?=\s*(.*)$", re.M)
+
+
+def migration_heads(versions: Path) -> set[str]:
+    """The revisions of a migrations/versions folder that no other follows."""
+    revisions, parents = set(), set()
+    for script in versions.glob("*.py"):
+        text = script.read_text(encoding="utf-8")
+        if match := _REVISION.search(text):
+            revisions.add(match.group(1))
+        if match := _DOWN_REVISION.search(text):
+            parents.update(re.findall(r"['\"]([^'\"]+)['\"]", match.group(1)))
+    return revisions - parents
+
+
+def installed_head(feature: str) -> str | None:
+    """Where the migrations of the installed feature end, or None.
+
+    Several heads are given together, sorted, so they never equal the one
+    head a contract names.
+    """
+    try:
+        spec = importlib.util.find_spec(f"splent_io.{feature}")
+    except (ImportError, ValueError):
+        spec = None
+    for location in (spec.submodule_search_locations or []) if spec else []:
+        versions = Path(location) / "migrations" / "versions"
+        if versions.is_dir():
+            heads = migration_heads(versions)
+            return ", ".join(sorted(heads)) if heads else None
+    return None
+
+
 def version_differences(contract: Contract) -> list[str]:
-    """The features installed in another version than the contract's (E0)."""
+    """The features installed with migrations that end elsewhere than the
+    contract's head (E0).
+
+    The migrator reads and writes the schema those migrations build, so the
+    head is what it was written against. A release that changes no
+    migration (a template, a style, a test) needs no new contract; the
+    version in it says which release the contract was written with.
+    """
     found = []
     for feature, entry in sorted(contract.features.items()):
         installed = installed_version(feature)
-        if installed != entry["version"]:
+        if installed is None:
             found.append(
-                f"{feature} is {installed or 'not installed'}, the contract was "
-                f"written for {entry['version']}"
+                f"{feature} is not installed, the contract expects its "
+                f"migrations at {entry['head']}"
+            )
+            continue
+        head = installed_head(feature)
+        if head != entry["head"]:
+            found.append(
+                f"{feature} {installed} ends its migrations at {head or 'none'}, "
+                f"the contract expects {entry['head']}"
             )
     return found
 
