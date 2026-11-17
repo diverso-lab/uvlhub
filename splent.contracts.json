@@ -372,7 +372,7 @@
       }
     },
     "splent_feature_hub_shell": {
-      "entry": "splent_io/splent_feature_hub_shell@v0.2.3",
+      "entry": "splent_io/splent_feature_hub_shell@v0.2.4",
       "extensible": {
         "services": [],
         "templates": [
@@ -1574,7 +1574,7 @@
       }
     },
     "splent_feature_team": {
-      "entry": "splent_io/splent_feature_team@v0.10.1",
+      "entry": "splent_io/splent_feature_team@v0.10.2",
       "extensible": {
         "services": [
           "TeamService"

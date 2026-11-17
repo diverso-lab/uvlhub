@@ -144,12 +144,12 @@
     "splent_feature_hub_shell": {
       "namespace": "splent_io",
       "distribution": "splent_feature_hub_shell",
-      "version": "0.2.3",
+      "version": "0.2.4",
       "entries": [
         "hub_shell",
         "hub_shell_error"
       ],
-      "manifest_sha256": "df543ef83cc6f5679510a980ff2baddad3bb97514593bd0a72793f8b7668ef2d",
+      "manifest_sha256": "e8d960313c6a0d425176eb2e8baf8561b1812463c843ef137be13188ce781567",
       "bundled": {
         "@popperjs/core": "2.11.8 MIT",
         "bootstrap": "5.3.8 MIT",
