@@ -1,4 +1,4 @@
-# splent-generated sha256 9e3f0deb2b4a472390d9b0fc2c23d203cc2fab8dd123b6da9ee2b6b94808cb32
+# splent-generated sha256 96e63dcf7f530017833e2edac3bacf34e071c5aca033078b0f4cfc00d62adab6
 # Written by splent (product:create, product:sync-template --ci). While
 # it stays as written, which the line above records, the commands that
 # change the product's features rewrite it. Once edited it is left
@@ -157,7 +157,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       db:
-        image: mariadb:11.4
+        image: mariadb:11.4.13@sha256:d1891ede5a559f1086f55053bb8cc1569b0298338c4d72d71725a7f74f6ba620
         env:
           MARIADB_ROOT_PASSWORD: uvlhub_splent_db_root_password
           MARIADB_DATABASE: uvlhub_splent_db_test
@@ -177,12 +177,12 @@ jobs:
           --health-cmd "curl -fs http://localhost:9200/_cluster/health"
           --health-interval 10s --health-timeout 5s --health-retries 30
       splent_feature_redis:
-        image: redis:7.4
+        image: redis:7.4.12@sha256:2e3eb11462c4e3759e6972678dd051d150ff54b1e60714b3c33b701260172a90
         options: >-
           --health-cmd "redis-cli ping" --health-interval 5s
           --health-timeout 5s --health-retries 30
       splent_feature_mailhog:
-        image: mailhog/mailhog:latest
+        image: mailhog/mailhog:v1.0.1@sha256:8d76a3d4ffa32a3661311944007a415332c4bb855657f4f6c57996405c009bea
     env:
       WORKING_DIR: ${{ github.workspace }}
       SPLENT_APP: uvlhub_splent
@@ -286,3 +286,16 @@ jobs:
 
       - name: Run the features' tests, then the product's own
         run: splent product:test
+
+  # While the workflow fails on main an issue stays open on the product's
+  # repository, so whoever watches it hears of it. The first run that passes
+  # closes it.
+  alert:
+    needs: [validate, lint, test]
+    if: always() && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: https://git.splent.io/splent-io/splent_ci_alert@v1
+        with:
+          needs: ${{ toJSON(needs) }}
+

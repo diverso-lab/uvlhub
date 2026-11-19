@@ -1,4 +1,4 @@
-# splent-generated sha256 28a7c614406fbca7b7626ffd563aea430a3c2d986837a41f2e401196d5b169d9
+# splent-generated sha256 84158e1e357425dc63a9576d200a9df5dc593ac518620f561d8ca739a494339e
 # Written by splent (product:create, product:sync-template --ci). While
 # it stays as written, which the line above records, the commands that
 # change the product's features rewrite it. Once edited it is left
@@ -94,3 +94,16 @@ jobs:
             --data @pr.json \
             "https://git.splent.io/api/v1/repos/${GITHUB_REPOSITORY}/pulls" \
             || echo "The branch is pushed. A pull request for it is already open, or the token cannot open one."
+
+  # A schedule nobody watches fails in silence. While it fails an issue
+  # stays open on the product's repository, and the first run that passes
+  # closes it.
+  alert:
+    needs: [upgrade]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: https://git.splent.io/splent-io/splent_ci_alert@v1
+        with:
+          needs: ${{ toJSON(needs) }}
+
