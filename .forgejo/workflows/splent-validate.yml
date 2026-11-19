@@ -1,4 +1,4 @@
-# splent-generated sha256 96e63dcf7f530017833e2edac3bacf34e071c5aca033078b0f4cfc00d62adab6
+# splent-generated sha256 5c5161dea345b709f41b1344cca3530e83141f2d4765c1f4ffec323eedd0e75a
 # Written by splent (product:create, product:sync-template --ci). While
 # it stays as written, which the line above records, the commands that
 # change the product's features rewrite it. Once edited it is left
@@ -49,9 +49,13 @@ jobs:
       # The runner has no SSH key, so clones go straight to HTTPS.
       SPLENT_CLONE_TRANSPORT: https
     steps:
+      # With the tags. product:build names the image a release published
+      # only for a product with a v* tag, and a checkout of one commit has
+      # none, so the bundle it wrote built the image instead.
       - uses: actions/checkout@v4
         with:
           path: uvlhub_splent
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
