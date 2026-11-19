@@ -1,4 +1,4 @@
-# Running uvlhub
+# Running uvlhub_splent
 
 Everything a host needs is in this directory. It takes Docker with the
 Compose plugin, and nothing else.

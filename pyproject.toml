@@ -157,8 +157,8 @@ order = { team = 30 }
 env = ["MIGRATION_V2_TEST_*"]
 
 [tool.splent.runtime]
-splent_framework = "1.33.0"
-splent_cli = "1.63.1"
+splent_framework = "1.34.0"
+splent_cli = "1.65.0"
 gunicorn = ">=23,<24"
 
 [tool.setuptools.package-dir]
