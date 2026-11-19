@@ -1,4 +1,4 @@
-# splent-generated sha256 5c5161dea345b709f41b1344cca3530e83141f2d4765c1f4ffec323eedd0e75a
+# splent-generated sha256 2ecef799729542ffdf72637f46930442aef97f4e2b1fdf4c322f764f1a039071
 # Written by splent (product:create, product:sync-template --ci). While
 # it stays as written, which the line above records, the commands that
 # change the product's features rewrite it. Once edited it is left
@@ -171,7 +171,7 @@ jobs:
           --health-cmd "healthcheck.sh --connect --innodb_initialized"
           --health-interval 5s --health-timeout 5s --health-retries 30
       splent_feature_elasticsearch:
-        image: elasticsearch:8.18.4
+        image: elasticsearch:8.14.3
         env:
           discovery.type: single-node
           xpack.security.enabled: "false"
@@ -219,9 +219,12 @@ jobs:
 
       # The framework and CLI versions [tool.splent.runtime] pins, as the
       # production image installs them, with the framework's dev extra for
-      # pytest. Third-party packages follow docker/requirements.lock.
+      # pytest. Third-party packages follow docker/requirements.lock. uv is
+      # installed first, outside the lock: feature:pip-install installs the
+      # features with it, because only uv applies docker/requirements.overrides.
       - name: Install what the product runs
         run: |
+          pip install --quiet uv
           lock=uvlhub_splent/docker/requirements.lock
           if [ -f "$lock" ]; then export PIP_CONSTRAINT="$PWD/$lock"; fi
           python3 - <<'PY' > runtime.txt
