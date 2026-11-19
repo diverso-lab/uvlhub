@@ -179,3 +179,6 @@ logins = ["user1@example.com:1234", "admin@admin.com:admin"]
 theme_key = "hub-theme"
 skip = ["/flamapy", "/factlabel/.*\\.", "/cite/"]
 ignore = [".CodeMirror", ".hub-skip-link", ".hub-header-label", ".swagger-ui"]
+
+[tool.splent.ci.services.splent_feature_elasticsearch]
+image = "elasticsearch:8.14.3"
