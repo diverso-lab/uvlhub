@@ -277,7 +277,7 @@
     "splent_feature_uvl": {
       "namespace": "splent_io",
       "distribution": "splent_feature_uvl",
-      "version": "0.7.0",
+      "version": "0.7.1",
       "entries": [
         "uvl"
       ],
