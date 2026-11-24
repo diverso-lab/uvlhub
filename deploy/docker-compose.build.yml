@@ -1,6 +1,6 @@
 services:
   uvlhub_splent_web_deploy:
-    image: uvlhub_splent:3.0.13
+    image: uvlhub_splent:3.0.14
     build:
       context: ..
       dockerfile: docker/Dockerfile.uvlhub_splent.prod
