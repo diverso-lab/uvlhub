@@ -163,12 +163,12 @@
     "splent_feature_hubfile": {
       "namespace": "splent_io",
       "distribution": "splent_feature_hubfile",
-      "version": "0.13.1",
+      "version": "0.14.0",
       "entries": [
         "hubfile",
         "workbench"
       ],
-      "manifest_sha256": "0894f980c869f9297c5ee3b8b9bfb3274bd770a82bcd6b1bb83306302e06c50a",
+      "manifest_sha256": "be70e90ab15f5b011b68978b4ca60e24cff5f3379e1358c9509d971585ff66df",
       "bundled": {
         "codemirror": "5.65.16 MIT",
         "dropzone": "5.9.3 MIT",
@@ -277,7 +277,7 @@
     "splent_feature_uvl": {
       "namespace": "splent_io",
       "distribution": "splent_feature_uvl",
-      "version": "0.6.1",
+      "version": "0.7.0",
       "entries": [
         "uvl"
       ],
