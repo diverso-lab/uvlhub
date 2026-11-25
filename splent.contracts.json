@@ -1642,7 +1642,7 @@
       }
     },
     "splent_feature_uvl": {
-      "entry": "splent_io/splent_feature_uvl@v0.9.0",
+      "entry": "splent_io/splent_feature_uvl@v0.10.0",
       "refinement": {
         "refines": "splent_feature_hubfile",
         "extends": {
@@ -1767,6 +1767,13 @@
           "default": 1536,
           "min": 128,
           "help": "Megabytes making the derived formats of one model may use before they are left unmade."
+        },
+        "UVL_WORKBENCH_STORAGE": {
+          "type": "str",
+          "bind": "derivation",
+          "default": "uvl.wb",
+          "pattern": "[A-Za-z0-9][A-Za-z0-9._-]{0,63}",
+          "help": "Browser storage prefix of the workbench's collapsed panels. A hub that kept them under another prefix sets it, so visitors keep their panels."
         }
       },
       "schedule": {
