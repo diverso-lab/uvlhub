@@ -791,7 +791,7 @@
       }
     },
     "splent_feature_zenodo": {
-      "entry": "splent_io/splent_feature_zenodo@v0.7.0",
+      "entry": "splent_io/splent_feature_zenodo@v0.7.1",
       "extensible": {
         "services": [
           "ZenodoProvider",
@@ -1159,7 +1159,7 @@
       }
     },
     "splent_feature_audit": {
-      "entry": "splent_io/splent_feature_audit@v0.2.0",
+      "entry": "splent_io/splent_feature_audit@v0.3.0",
       "extensible": {
         "services": [
           "AuditService"
@@ -1195,6 +1195,14 @@
           "bind": "derivation",
           "default": true,
           "help": "Whether every sign-in and sign-out is an event."
+        }
+      },
+      "schedule": {
+        "purge": {
+          "command": "purge",
+          "cron": "30 4 * * *",
+          "timeout": 3600,
+          "help": "Delete the audit events older than AUDIT_RETENTION_DAYS."
         }
       }
     },
