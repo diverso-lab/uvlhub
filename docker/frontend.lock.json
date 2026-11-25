@@ -261,11 +261,11 @@
     "splent_feature_theme": {
       "namespace": "splent_io",
       "distribution": "splent_feature_theme",
-      "version": "0.17.0",
+      "version": "0.17.2",
       "entries": [
         "fonts"
       ],
-      "manifest_sha256": "57199aa3b89ad9d0aab5f36a739a648cf12d2cdff6ec3cb1445a9313e5ea6a01",
+      "manifest_sha256": "7ce4bc7e3aee093d939a0f5f2c58fe0a1c2af917b73aaf0b0345d6c8d1d0f7b2",
       "bundled": {
         "@fontsource-variable/inter": "5.3.0 OFL-1.1",
         "webpack": "5.112.2 MIT"
