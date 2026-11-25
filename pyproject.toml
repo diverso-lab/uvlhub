@@ -63,7 +63,7 @@ features = [
     "splent-io/splent_feature_reset@v2.4.0",
     "splent-io/splent_feature_mail@v1.9.0",
     "splent-io/splent_feature_hubfile@v0.15.1",
-    "splent-io/splent_feature_dataset@v0.19.0",
+    "splent-io/splent_feature_dataset@v0.20.0",
     "splent-io/splent_feature_generator@v0.4.4",
     "splent-io/splent_feature_apidocs@v0.5.1",
     "splent-io/splent_feature_legacy_urls@v0.2.1",
@@ -163,7 +163,7 @@ env = ["MIGRATION_V2_TEST_*"]
 
 [tool.splent.runtime]
 splent_framework = "1.37.0"
-splent_cli = "1.71.0"
+splent_cli = "1.71.1"
 gunicorn = ">=23,<24"
 
 [tool.setuptools.package-dir]

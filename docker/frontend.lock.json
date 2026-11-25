@@ -22,7 +22,7 @@
     "splent_feature_dataset": {
       "namespace": "splent_io",
       "distribution": "splent_feature_dataset",
-      "version": "0.19.0",
+      "version": "0.20.0",
       "entries": [
         "dataset",
         "landing",
