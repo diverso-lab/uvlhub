@@ -202,7 +202,7 @@
     "splent_feature_media": {
       "namespace": "splent_io",
       "distribution": "splent_feature_media",
-      "version": "0.14.0",
+      "version": "0.14.1",
       "entries": [
         "cropper"
       ],
