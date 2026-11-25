@@ -1302,7 +1302,7 @@
       }
     },
     "splent_feature_explore": {
-      "entry": "splent_io/splent_feature_explore@v0.11.0",
+      "entry": "splent_io/splent_feature_explore@v0.11.1",
       "extensible": {
         "services": [
           "ExploreService",

@@ -51,11 +51,11 @@
     "splent_feature_explore": {
       "namespace": "splent_io",
       "distribution": "splent_feature_explore",
-      "version": "0.11.0",
+      "version": "0.11.1",
       "entries": [
         "explore"
       ],
-      "manifest_sha256": "876a071d05e961ced12bf0b3321d941cccbb0ecc41e1e88d9ed5ab284beec1be",
+      "manifest_sha256": "2014eade3e4d9c6c05c7f95f1131a8446aaa4c3d07715a26bc01518b93ee5a62",
       "bundled": {
         "mustache": "4.2.0 MIT",
         "webpack": "5.112.2 MIT"
