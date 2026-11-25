@@ -1408,7 +1408,7 @@
       }
     },
     "splent_feature_citation": {
-      "entry": "splent_io/splent_feature_citation@v0.3.2",
+      "entry": "splent_io/splent_feature_citation@v0.3.3",
       "extensible": {
         "services": [
           "CitationService"
@@ -2108,7 +2108,7 @@
       }
     },
     "splent_feature_hubfile": {
-      "entry": "splent_io/splent_feature_hubfile@v0.14.0",
+      "entry": "splent_io/splent_feature_hubfile@v0.15.0",
       "extensible": {
         "services": [
           "HubfileDownloadRecordService",
@@ -2237,6 +2237,14 @@
           "bind": "derivation",
           "default": true,
           "help": "Whether the upload zone imports files from GitHub. False leaves out its part of the zone and its routes."
+        }
+      },
+      "schedule": {
+        "uploads-cleanup": {
+          "command": "uploads-cleanup",
+          "cron": "0 * * * *",
+          "timeout": 1800,
+          "help": "Remove the uploads that expired, with their files."
         }
       }
     },

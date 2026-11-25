@@ -163,7 +163,7 @@
     "splent_feature_hubfile": {
       "namespace": "splent_io",
       "distribution": "splent_feature_hubfile",
-      "version": "0.14.0",
+      "version": "0.15.0",
       "entries": [
         "hubfile",
         "workbench"
