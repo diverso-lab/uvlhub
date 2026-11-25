@@ -76,7 +76,7 @@
     "splent_feature_factlabel": {
       "namespace": "splent_io",
       "distribution": "splent_feature_factlabel",
-      "version": "0.8.4",
+      "version": "0.8.5",
       "entries": [
         "factlabel"
       ],
@@ -220,11 +220,11 @@
     "splent_feature_rating": {
       "namespace": "splent_io",
       "distribution": "splent_feature_rating",
-      "version": "0.7.1",
+      "version": "0.7.2",
       "entries": [
         "rating"
       ],
-      "manifest_sha256": "03fe8a0d50fac23f71fb9337a82b0b866c5ecbad26abb48b978cc534bf2f9492",
+      "manifest_sha256": "8360224d26875f7f7825d3dd64d3b8dff51c775dd94a5c33686d597acc4ef4aa",
       "bundled": {
         "webpack": "5.112.2 MIT"
       },

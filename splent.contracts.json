@@ -1264,7 +1264,7 @@
       }
     },
     "splent_feature_rating": {
-      "entry": "splent_io/splent_feature_rating@v0.7.1",
+      "entry": "splent_io/splent_feature_rating@v0.7.2",
       "extensible": {
         "services": [
           "RatingService"
@@ -1335,7 +1335,7 @@
       }
     },
     "splent_feature_factlabel": {
-      "entry": "splent_io/splent_feature_factlabel@v0.8.4",
+      "entry": "splent_io/splent_feature_factlabel@v0.8.5",
       "extensible": {
         "services": [
           "FactlabelService"
