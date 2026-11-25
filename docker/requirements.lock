@@ -80,7 +80,7 @@ referencing==0.37.0
 requests==2.34.2
 rpds-py==2026.9.1
 s3transfer==0.19.3
-sentry-sdk==2.76.0
+sentry-sdk==2.77.0
 setuptools==84.2.1
 six==1.17.0
 soupsieve==4.1.3
