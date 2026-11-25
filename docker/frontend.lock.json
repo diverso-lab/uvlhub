@@ -22,13 +22,13 @@
     "splent_feature_dataset": {
       "namespace": "splent_io",
       "distribution": "splent_feature_dataset",
-      "version": "0.17.0",
+      "version": "0.18.0",
       "entries": [
         "dataset",
         "landing",
         "my_datasets"
       ],
-      "manifest_sha256": "826b392318a8ba3f810316161d2dfacbd7ec2c7ba189fd057eca38cf5b99404d",
+      "manifest_sha256": "d597aaecb0180eb71a6508f532b41760b59fe83b12908e611b1af05d248b1110",
       "bundled": {
         "@github/markdown-toolbar-element": "2.2.3 MIT",
         "@yaireo/tagify": "4.38.0 MIT",
@@ -277,7 +277,7 @@
     "splent_feature_uvl": {
       "namespace": "splent_io",
       "distribution": "splent_feature_uvl",
-      "version": "0.8.0",
+      "version": "0.9.0",
       "entries": [
         "uvl"
       ],

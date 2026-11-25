@@ -277,22 +277,37 @@ the links.
 
 ### Scheduled jobs
 
-Nothing in the stack runs on a schedule, so the host's crontab runs the
-periodic commands of the features in the web container, as the user the
-app runs as:
+The features declare their periodic jobs in `[tool.splent.schedule]`, and
+the app runs them: the framework's scheduler, on in the production profile,
+lives in the web container's server processes, and one of them leads by a
+lock in the product's Redis. Nothing is set up on the host, and a deploy
+(autodeploy included) takes the jobs along with the new image.
 
+| Job | When (UTC) | Command |
+|-----|------------|---------|
+| `backup.daily` | `15 3 * * *` | `feature:backup run --tag daily` |
+| `dataset.publication-reconcile` | `*/15 * * * *` | `feature:dataset publication-reconcile` |
+| `mail.retry` | `*/15 * * * *` | `feature:mail retry` |
+| `mail.purge` | `20 4 * * *` | `feature:mail purge` |
+| `hubfile.uploads-cleanup` | `0 * * * *` | `feature:hubfile uploads-cleanup` |
+| `dataset.dump` | `30 * * * *` | `feature:dataset dump` |
+| `apikeys.notify-expiring` | `40 3 * * *` | `feature:apikeys notify-expiring` |
+| `apikeys.purge` | `50 3 * * 0` | `feature:apikeys purge` |
+| `audit.purge` | `30 4 * * *` | `feature:audit purge` |
+| `uvl.check-watch` | `10 5 * * *` | `feature:uvl check --watch` |
+
+```bash
+docker exec -u splent uvlhub_splent_web_deploy splent schedule:list
+docker exec -u splent uvlhub_splent_web_deploy splent schedule:run uvl.check-watch
 ```
-15 3 * * *   docker exec -u splent uvlhub_splent_web_deploy splent feature:backup run --tag daily
-*/15 * * * * docker exec -u splent uvlhub_splent_web_deploy splent feature:dataset publication-reconcile
-*/15 * * * * docker exec -u splent uvlhub_splent_web_deploy splent feature:mail retry
-20 4 * * *   docker exec -u splent uvlhub_splent_web_deploy splent feature:mail purge
-0 * * * *    docker exec -u splent uvlhub_splent_web_deploy splent feature:hubfile uploads-cleanup
-30 * * * *   docker exec -u splent uvlhub_splent_web_deploy splent feature:dataset dump
-40 3 * * *   docker exec -u splent uvlhub_splent_web_deploy splent feature:apikeys notify-expiring
-50 3 * * 0   docker exec -u splent uvlhub_splent_web_deploy splent feature:apikeys purge
-30 4 * * *   docker exec -u splent uvlhub_splent_web_deploy splent feature:audit purge
-10 5 * * *   docker exec -u splent uvlhub_splent_web_deploy splent feature:uvl check --watch
-```
+
+`schedule:list` shows each job with its next and last run and which
+process leads (`--check` exits with 1 when something needs attention);
+`schedule:run` runs one now. A run that fails or outlives its timeout is
+reported as degraded, which observability mails. To move a job, change its
+timeout or turn it off, write it by its id in this pyproject's
+`[tool.splent.schedule]` (`"mail.purge" = "off"`); `SPLENT_SCHEDULER=off`
+in `deploy/.env` stops them all.
 
 - `backup run` takes the daily backup and prunes those older than
   `BACKUP_RETENTION_DAYS` (30), keeping the newest `BACKUP_KEEP_MIN` (7),

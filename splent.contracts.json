@@ -888,7 +888,7 @@
       }
     },
     "splent_feature_backup": {
-      "entry": "splent_io/splent_feature_backup@v0.2.0",
+      "entry": "splent_io/splent_feature_backup@v0.3.0",
       "extensible": {
         "services": [
           "BackupService"
@@ -966,6 +966,14 @@
           "default": [],
           "pattern": "[A-Za-z_][A-Za-z0-9_]*\\.[A-Za-z_][A-Za-z0-9_]*(:[A-Za-z_][A-Za-z0-9_]*)?",
           "help": "The rows that name a file: <Model>.<path>[:<size>]."
+        }
+      },
+      "schedule": {
+        "daily": {
+          "command": "run --tag daily",
+          "cron": "15 3 * * *",
+          "timeout": 14400,
+          "help": "Take the daily backup and prune the ones past their retention."
         }
       }
     },
@@ -1634,7 +1642,7 @@
       }
     },
     "splent_feature_uvl": {
-      "entry": "splent_io/splent_feature_uvl@v0.8.0",
+      "entry": "splent_io/splent_feature_uvl@v0.9.0",
       "refinement": {
         "refines": "splent_feature_hubfile",
         "extends": {
@@ -1759,6 +1767,14 @@
           "default": 1536,
           "min": 128,
           "help": "Megabytes making the derived formats of one model may use before they are left unmade."
+        }
+      },
+      "schedule": {
+        "check-watch": {
+          "command": "check --watch",
+          "cron": "10 5 * * *",
+          "timeout": 21600,
+          "help": "Check the stored UVL models that are new or changed, and alert when some stop passing."
         }
       }
     },
@@ -2287,7 +2303,7 @@
       }
     },
     "splent_feature_dataset": {
-      "entry": "splent_io/splent_feature_dataset@v0.17.0",
+      "entry": "splent_io/splent_feature_dataset@v0.18.0",
       "extensible": {
         "services": [
           "AuthorService",
@@ -2531,6 +2547,20 @@
           "bind": "deploy",
           "default": "https://pub.orcid.org/v3.0",
           "help": "orcid.org's public API, asked in the background whether a credited ORCID iD exists (DL-5). Empty asks nothing."
+        }
+      },
+      "schedule": {
+        "publication-reconcile": {
+          "command": "publication-reconcile",
+          "cron": "*/15 * * * *",
+          "timeout": 840,
+          "help": "Settle what the publications to Zenodo left behind."
+        },
+        "dump": {
+          "command": "dump",
+          "cron": "30 * * * *",
+          "timeout": 3600,
+          "help": "Bring the ZIP of every public dataset up to date."
         }
       }
     },
