@@ -372,7 +372,7 @@
       }
     },
     "splent_feature_hub_shell": {
-      "entry": "splent_io/splent_feature_hub_shell@v0.2.4",
+      "entry": "splent_io/splent_feature_hub_shell@v0.2.5",
       "extensible": {
         "services": [],
         "templates": [
@@ -629,7 +629,7 @@
       }
     },
     "splent_feature_apikeys": {
-      "entry": "splent_io/splent_feature_apikeys@v0.12.1",
+      "entry": "splent_io/splent_feature_apikeys@v0.13.0",
       "extensible": {
         "services": [
           "ApiTokenService"
@@ -787,6 +787,20 @@
           "default": [],
           "pattern": "[A-Za-z0-9!#$%&'*+.^_`|~-]+",
           "help": "Request headers besides Authorization: Bearer that carry the raw token."
+        }
+      },
+      "schedule": {
+        "notify-expiring": {
+          "command": "notify-expiring",
+          "cron": "40 3 * * *",
+          "timeout": 1800,
+          "help": "Mail the owners of the tokens about to expire."
+        },
+        "purge": {
+          "command": "purge",
+          "cron": "50 3 * * 0",
+          "timeout": 1800,
+          "help": "Delete the tokens revoked or expired long ago."
         }
       }
     },
