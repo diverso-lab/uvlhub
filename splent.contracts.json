@@ -2025,7 +2025,7 @@
       }
     },
     "splent_feature_mail": {
-      "entry": "splent_io/splent_feature_mail@v1.7.0",
+      "entry": "splent_io/splent_feature_mail@v1.9.0",
       "extensible": {
         "services": [
           "MailService"
@@ -2104,6 +2104,30 @@
           "default": 30,
           "min": 1,
           "help": "Days a mail sent or given up on stays in the outbox."
+        },
+        "MAIL_LAYOUT": {
+          "type": "enum",
+          "bind": "derivation",
+          "default": "",
+          "help": "Empty sends a text mail alone; branded adds an HTML part in the site's colours.",
+          "choices": [
+            "",
+            "branded"
+          ]
+        }
+      },
+      "schedule": {
+        "retry": {
+          "command": "retry",
+          "cron": "*/15 * * * *",
+          "timeout": 840,
+          "help": "Send again what lost its retries."
+        },
+        "purge": {
+          "command": "purge",
+          "cron": "20 4 * * *",
+          "timeout": 1800,
+          "help": "Drop the outbox entries older than MAIL_OUTBOX_KEEP_DAYS."
         }
       }
     },
@@ -2579,7 +2603,7 @@
       }
     },
     "splent_feature_dataset_api": {
-      "entry": "splent_io/splent_feature_dataset_api@v0.5.2",
+      "entry": "splent_io/splent_feature_dataset_api@v0.5.3",
       "extensible": {
         "services": [],
         "templates": [],
