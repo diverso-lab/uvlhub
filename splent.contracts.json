@@ -978,7 +978,7 @@
       }
     },
     "splent_feature_curation": {
-      "entry": "splent_io/splent_feature_curation@v0.2.1",
+      "entry": "splent_io/splent_feature_curation@v0.2.2",
       "extensible": {
         "services": [
           "CurationService"
@@ -1332,11 +1332,10 @@
       }
     },
     "splent_feature_explore": {
-      "entry": "splent_io/splent_feature_explore@v0.11.1",
+      "entry": "splent_io/splent_feature_explore@v0.12.0",
       "extensible": {
         "services": [
-          "ExploreService",
-          "UvlhubSearchService"
+          "ExploreService"
         ],
         "templates": [
           "explore/index.html",
