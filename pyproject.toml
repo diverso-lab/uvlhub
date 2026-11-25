@@ -28,7 +28,7 @@ features = [
     "splent-io/splent_feature_academic_profile@v0.2.0",
     "splent-io/splent_feature_elasticsearch@v0.3.1",
     "splent-io/splent_feature_redis@v1.7.1",
-    "splent-io/splent_feature_session_redis@v1.3.0",
+    "splent-io/splent_feature_session_redis@v1.3.1",
     "splent-io/splent_feature_captcha_image@v0.3.1",
     "splent-io/splent_feature_captcha@v0.3.0",
     "splent-io/splent_feature_admin@v1.10.3",
@@ -64,7 +64,7 @@ features = [
     "splent-io/splent_feature_mail@v1.7.0",
     "splent-io/splent_feature_hubfile@v0.14.0",
     "splent-io/splent_feature_dataset@v0.17.0",
-    "splent-io/splent_feature_generator@v0.4.3",
+    "splent-io/splent_feature_generator@v0.4.4",
     "splent-io/splent_feature_apidocs@v0.5.1",
     "splent-io/splent_feature_legacy_urls@v0.2.1",
     "splent-io/splent_feature_dataset_api@v0.5.2",
@@ -72,7 +72,7 @@ features = [
     "splent-io/splent_feature_icons@v0.1.0",
     "splent-io/splent_feature_search@v0.5.1",
 ]
-features_dev = ["splent-io/splent_feature_mailhog@v1.3.1", "splent-io/splent_feature_phpmyadmin@v1.2.1"]
+features_dev = ["splent-io/splent_feature_mailhog@v1.3.2", "splent-io/splent_feature_phpmyadmin@v1.2.1"]
 features_prod = []
 spl = "openhubs_spl"
 

@@ -114,7 +114,7 @@
     "splent_feature_generator": {
       "namespace": "splent_io",
       "distribution": "splent_feature_generator",
-      "version": "0.4.3",
+      "version": "0.4.4",
       "entries": [
         "generator",
         "llm_page",
