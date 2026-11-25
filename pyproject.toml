@@ -127,6 +127,11 @@ CITATION_REFERENCES_FILE = "citation_references.toml"
 DATASET_DEPOSIT_CONTENT = "sources_and_derived"
 ZENODO_KEYWORDS = ["uvlhub"]
 UVL_MAX_SIZE = "20M"
+# The prefix its visitors' browsers already keep the workbench panels under.
+UVL_WORKBENCH_STORAGE = "uvlhub.wb"
+# The clock of the site and of its scheduled jobs, said here rather than
+# left to the framework's default.
+TIMEZONE = "Europe/Madrid"
 BACKUP_PATHS = [
     "/workspace/uvlhub_splent/protected_uploads",
     "/workspace/uvlhub_splent/src/uvlhub_splent/static/uploads",
@@ -157,8 +162,8 @@ order = { team = 30 }
 env = ["MIGRATION_V2_TEST_*"]
 
 [tool.splent.runtime]
-splent_framework = "1.35.0"
-splent_cli = "1.69.1"
+splent_framework = "1.37.0"
+splent_cli = "1.71.0"
 gunicorn = ">=23,<24"
 
 [tool.setuptools.package-dir]
