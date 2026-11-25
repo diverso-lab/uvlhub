@@ -244,11 +244,11 @@
     "splent_feature_statistics": {
       "namespace": "splent_io",
       "distribution": "splent_feature_statistics",
-      "version": "0.7.2",
+      "version": "0.7.3",
       "entries": [
         "statistics"
       ],
-      "manifest_sha256": "3fe965c45a0a3ff3287b502db6a9bde4c4dc2b02ab035c8a7619f07e73594e85",
+      "manifest_sha256": "1e9f2547b6e0f4e3d21c4d3a4d2ab3b5d8ebcd6af4ba4d15b2c2713025779084",
       "bundled": {
         "@kurkle/color": "0.3.4 MIT",
         "chart.js": "4.5.1 MIT",
