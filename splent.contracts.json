@@ -1480,7 +1480,7 @@
       }
     },
     "splent_feature_media": {
-      "entry": "splent_io/splent_feature_media@v0.13.1",
+      "entry": "splent_io/splent_feature_media@v0.14.0",
       "extensible": {
         "services": [
           "MediaService"

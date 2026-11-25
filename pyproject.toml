@@ -54,7 +54,7 @@ features = [
     "splent-io/splent_feature_statistics@v0.7.2",
     "splent-io/splent_feature_citation@v0.3.2",
     "splent-io/splent_feature_settings@v0.7.0",
-    "splent-io/splent_feature_media@v0.13.1",
+    "splent-io/splent_feature_media@v0.14.0",
     "splent-io/splent_feature_team@v0.11.0",
     "splent-io/splent_feature_uvl@v0.8.0",
     "splent-io/splent_feature_auth@v1.28.1",
