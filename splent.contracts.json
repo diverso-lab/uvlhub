@@ -2642,7 +2642,7 @@
       }
     },
     "splent_feature_search": {
-      "entry": "splent_io/splent_feature_search@v0.5.1",
+      "entry": "splent_io/splent_feature_search@v0.5.3",
       "extensible": {
         "services": [
           "SearchService"
